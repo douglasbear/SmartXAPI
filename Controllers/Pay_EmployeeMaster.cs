@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
                             if (nUserEmpID == myFunctions.getIntVAL(nIsManager.ToString()))
                                 flag = true;
                         }
-                         if (nIsCoordinator != null)
+                        if (nIsCoordinator != null)
                         {
                             if (nUserEmpID == myFunctions.getIntVAL(nIsCoordinator.ToString()))
                                 flag = true;
@@ -123,9 +123,9 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                             sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + projectFilter + " and (N_Status = 0 OR N_Status = 1) and N_EmpID="+nUserEmpID+" group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo";
+                            sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + projectFilter + " and (N_Status = 0 OR N_Status = 1) and N_EmpID=" + nUserEmpID + " group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo";
                         }
-                   
+
                     }
 
 
@@ -454,9 +454,10 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyId"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
-                int nEmpUpdateID = myFunctions.getIntVAL(MasterRow["N_EmpUpdateID"].ToString());
+                int nEmpUpdateID = myFunctions.getIntVAL(MasterRow["n_EmpUpdateID"].ToString());
                 int N_UserID = myFunctions.getIntVAL(MasterRow["N_UserID"].ToString());
                 int N_NextApproverID = 0;
+                int N_SaveDraft = 0;
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -466,16 +467,17 @@ namespace SmartxAPI.Controllers
                     EmpParams.Add("@nCompanyID", nCompanyID);
                     EmpParams.Add("@nEmpID", nEmpID);
                     EmpParams.Add("@nFnYearID", nFnYearID);
+                    EmpParams.Add("@nEmpUpdateID", nEmpUpdateID);
                     object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);
 
-                    if ( myFunctions.getIntVAL(ApprovalRow["isApprovalSystem"].ToString())==0 ||((!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())) && nEmpUpdateID > 0))
+                    if ((myFunctions.getIntVAL(ApprovalRow["isApprovalSystem"].ToString()) == 0 || !myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())) && nEmpUpdateID > 0)
                     {
                         int N_PkeyID = nEmpUpdateID;
                         string X_Criteria = "N_EmpUpdateID=" + nEmpUpdateID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_EmployeeUpdate", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "EMPLOYEE", N_PkeyID, X_EmpUpdateCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
-                        EmpParams.Add("@nEmpUpdateID", nEmpUpdateID);
-                        int N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(CAST(B_IsSaveDraft as INT),0) from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID", EmpParams, connection, transaction).ToString());
+
+                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(CAST(B_IsSaveDraft as INT),0) from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID", EmpParams, connection, transaction).ToString());
 
                         if (N_SaveDraft == 0)
                         {
@@ -705,11 +707,17 @@ namespace SmartxAPI.Controllers
                         if (empImage.Length > 0)
                             dLayer.SaveImage("Pay_EmployeeUpdate", "i_Employe_Image", empImageBitmap, "n_EmpID", nEmpID, connection, transaction);
 
-                        EmpParams.Add("@nEmpUpdateID", nEmpUpdateID);
+                        // EmpParams.Add("@nEmpUpdateID", nEmpUpdateID);
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "EMPLOYEE", nEmpUpdateID, X_EmpUpdateCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
-
-                        int N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID", EmpParams, connection, transaction).ToString());
-
+                        object bSaveDraft = dLayer.ExecuteScalar("select isnull(B_IsSaveDraft,0) from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID", EmpParams, connection, transaction);
+                        if (bSaveDraft == null)
+                        {
+                            N_SaveDraft = 0;
+                        }
+                        else
+                        {
+                            N_SaveDraft = myFunctions.getIntVAL(bSaveDraft.ToString());
+                        }
                         if (ContactsTable.Rows.Count > 0)
                         {
                             foreach (DataRow dRow in ContactsTable.Rows)
@@ -831,40 +839,43 @@ namespace SmartxAPI.Controllers
                             }
 
                             //Update Contacts
-                            if (myFunctions.getIntVAL(ContactsTable.Rows[0]["N_ContactDetailsID"].ToString()) > 0)
+                            if (ContactsTable.Rows.Count > 0)
                             {
-                                QueryParams.Add("@N_ContactDetailsID", myFunctions.getIntVAL(ContactsTable.Rows[0]["N_ContactDetailsID"].ToString()));
-
-                                string ContactQry = "update Pay_EmployeeSub set X_EmergencyContctPerson=" + ContactsTable.Rows[0]["X_EmergencyContctPerson"].ToString() + ", X_EmergencyContctPersonH=" + ContactsTable.Rows[0]["X_EmergencyContctPersonH"].ToString() + ", X_EmergencyRelation=" + ContactsTable.Rows[0]["X_EmergencyRelation"].ToString() + ", X_EmergencyRelationH=" + ContactsTable.Rows[0]["X_EmergencyRelationH"].ToString() + ", X_EmergencyEmail=" + ContactsTable.Rows[0]["X_EmergencyEmail"].ToString() + ", X_EmergencyEmailH=" + ContactsTable.Rows[0]["X_EmergencyEmailH"].ToString() + ","
-                                                    + "X_EmergencyAddress=" + ContactsTable.Rows[0]["X_EmergencyAddress"].ToString() + ", X_EmergencyAddressH=" + ContactsTable.Rows[0]["X_EmergencyAddressH"].ToString() + ", X_EmergencyNum=" + ContactsTable.Rows[0]["X_EmergencyNum"].ToString() + ", X_EmergencyNumH=" + ContactsTable.Rows[0]["X_EmergencyNumH"].ToString() + ", X_EmergencyTelNo=" + ContactsTable.Rows[0]["X_EmergencyTelNo"].ToString() + ", X_EmergencyPOBoxNo=" + ContactsTable.Rows[0]["X_EmergencyPOBoxNo"].ToString() + ","
-                                                    + " X_EmergencyCity=" + ContactsTable.Rows[0]["X_EmergencyCity"].ToString() + ", X_EmergencyTelNoH=" + ContactsTable.Rows[0]["X_EmergencyTelNoH"].ToString() + ", X_EmergencyPOBoxNoH=" + ContactsTable.Rows[0]["X_EmergencyPOBoxNoH"].ToString() + ", X_EmergencyCityH=" + ContactsTable.Rows[0]["X_EmergencyCityH"].ToString() + ", X_WCAddress=" + ContactsTable.Rows[0]["X_WCAddress"].ToString() + ", X_WCCity=" + ContactsTable.Rows[0]["X_WCCity"].ToString() + ", X_WCMobileNo=" + ContactsTable.Rows[0]["X_WCMobileNo"].ToString() + ","
-                                                    + " X_WCTelNo=" + ContactsTable.Rows[0]["X_WCTelNo"].ToString() + ", X_WCEmail=" + ContactsTable.Rows[0]["X_WCEmail"].ToString() + ", X_WCPOBoxNo=" + ContactsTable.Rows[0]["X_WCPOBoxNo"].ToString() + ", X_HCAddress=" + ContactsTable.Rows[0]["X_HCAddress"].ToString() + ", X_HCCity=" + ContactsTable.Rows[0]["X_HCCity"].ToString() + ", X_HCMobileNo=" + ContactsTable.Rows[0]["X_HCMobileNo"].ToString() + ", X_HCTelNo=" + ContactsTable.Rows[0]["X_HCTelNo"].ToString() + ", "
-                                                    + "X_HCEmail=" + ContactsTable.Rows[0]["X_HCEmail"].ToString() + ", X_HCPOBoxNo=" + ContactsTable.Rows[0]["X_HCPOBoxNo"].ToString() + ", X_KinContctPerson=" + ContactsTable.Rows[0]["X_KinContctPerson"].ToString() + ", X_KinRelation=" + ContactsTable.Rows[0]["X_KinRelation"].ToString() + ", X_KinContactNo=" + ContactsTable.Rows[0]["X_KinContactNo"].ToString() + ", X_KinTelNo=" + ContactsTable.Rows[0]["X_KinTelNo"].ToString() + ", X_KinEmail=" + ContactsTable.Rows[0]["X_KinEmail"].ToString() + ","
-                                                    + " X_KinAddress=" + ContactsTable.Rows[0]["X_KinAddress"].ToString() + ", X_KinPOBoxNo=" + ContactsTable.Rows[0]["X_KinPOBoxNo"].ToString() + ", X_KinCity=" + ContactsTable.Rows[0]["X_KinCity"].ToString() + ", X_KinCountry=" + ContactsTable.Rows[0]["X_KinCountry"].ToString() + ", N_KinCountryID=" + myFunctions.getIntVAL(ContactsTable.Rows[0]["N_KinCountryID"].ToString()) + ", X_RefName=" + ContactsTable.Rows[0]["X_RefName"].ToString() + ", "
-                                                    + "X_RefRelation=" + ContactsTable.Rows[0]["X_RefRelation"].ToString() + ", X_RefRelationInfo=" + ContactsTable.Rows[0]["X_RefRelationInfo"].ToString() + ", X_PrevRefName=" + ContactsTable.Rows[0]["X_PrevRefName"].ToString() + ", X_PrevRefJob=" + ContactsTable.Rows[0]["X_PrevRefJob"].ToString() + ", X_PrevRefDepartment=" + ContactsTable.Rows[0]["X_PrevRefDepartment"].ToString() + ", X_PrevRefCompany=" + ContactsTable.Rows[0]["X_PrevRefCompany"].ToString() + ", X_PrevRefContactNo=" + ContactsTable.Rows[0]["X_PrevRefContactNo"].ToString() + ", X_PrevRefEmail=" + ContactsTable.Rows[0]["X_PrevRefEmail"].ToString() + " "
-                                                    + " where N_CompanyID=@N_CompanyID and N_EmpID=@nEmpID and N_ContactDetailsID=@N_ContactDetailsID";
-
-                                dLayer.ExecuteNonQuery(ContactQry, QueryParams, connection, transaction);
-                            }
-                            else
-                            {
-                                if (ContactsTable.Columns.Contains("N_ContactDetailsUpdateID"))
-                                    ContactsTable.Columns.Remove("N_ContactDetailsUpdateID");
-                                if (ContactsTable.Columns.Contains("N_EmpUpdateID"))
-                                    ContactsTable.Columns.Remove("N_EmpUpdateID");
-
-                                foreach (DataRow dRow in ContactsTable.Rows)
+                                if (myFunctions.getIntVAL(ContactsTable.Rows[0]["N_ContactDetailsID"].ToString()) > 0)
                                 {
-                                    dRow["N_EmpID"] = nEmpID;
+                                    QueryParams.Add("@N_ContactDetailsID", myFunctions.getIntVAL(ContactsTable.Rows[0]["N_ContactDetailsID"].ToString()));
+
+                                    string ContactQry = "update Pay_EmployeeSub set X_EmergencyContctPerson=" + ContactsTable.Rows[0]["X_EmergencyContctPerson"].ToString() + ", X_EmergencyContctPersonH=" + ContactsTable.Rows[0]["X_EmergencyContctPersonH"].ToString() + ", X_EmergencyRelation=" + ContactsTable.Rows[0]["X_EmergencyRelation"].ToString() + ", X_EmergencyRelationH=" + ContactsTable.Rows[0]["X_EmergencyRelationH"].ToString() + ", X_EmergencyEmail=" + ContactsTable.Rows[0]["X_EmergencyEmail"].ToString() + ", X_EmergencyEmailH=" + ContactsTable.Rows[0]["X_EmergencyEmailH"].ToString() + ","
+                                                        + "X_EmergencyAddress=" + ContactsTable.Rows[0]["X_EmergencyAddress"].ToString() + ", X_EmergencyAddressH=" + ContactsTable.Rows[0]["X_EmergencyAddressH"].ToString() + ", X_EmergencyNum=" + ContactsTable.Rows[0]["X_EmergencyNum"].ToString() + ", X_EmergencyNumH=" + ContactsTable.Rows[0]["X_EmergencyNumH"].ToString() + ", X_EmergencyTelNo=" + ContactsTable.Rows[0]["X_EmergencyTelNo"].ToString() + ", X_EmergencyPOBoxNo=" + ContactsTable.Rows[0]["X_EmergencyPOBoxNo"].ToString() + ","
+                                                        + " X_EmergencyCity=" + ContactsTable.Rows[0]["X_EmergencyCity"].ToString() + ", X_EmergencyTelNoH=" + ContactsTable.Rows[0]["X_EmergencyTelNoH"].ToString() + ", X_EmergencyPOBoxNoH=" + ContactsTable.Rows[0]["X_EmergencyPOBoxNoH"].ToString() + ", X_EmergencyCityH=" + ContactsTable.Rows[0]["X_EmergencyCityH"].ToString() + ", X_WCAddress=" + ContactsTable.Rows[0]["X_WCAddress"].ToString() + ", X_WCCity=" + ContactsTable.Rows[0]["X_WCCity"].ToString() + ", X_WCMobileNo=" + ContactsTable.Rows[0]["X_WCMobileNo"].ToString() + ","
+                                                        + " X_WCTelNo=" + ContactsTable.Rows[0]["X_WCTelNo"].ToString() + ", X_WCEmail=" + ContactsTable.Rows[0]["X_WCEmail"].ToString() + ", X_WCPOBoxNo=" + ContactsTable.Rows[0]["X_WCPOBoxNo"].ToString() + ", X_HCAddress=" + ContactsTable.Rows[0]["X_HCAddress"].ToString() + ", X_HCCity=" + ContactsTable.Rows[0]["X_HCCity"].ToString() + ", X_HCMobileNo=" + ContactsTable.Rows[0]["X_HCMobileNo"].ToString() + ", X_HCTelNo=" + ContactsTable.Rows[0]["X_HCTelNo"].ToString() + ", "
+                                                        + "X_HCEmail=" + ContactsTable.Rows[0]["X_HCEmail"].ToString() + ", X_HCPOBoxNo=" + ContactsTable.Rows[0]["X_HCPOBoxNo"].ToString() + ", X_KinContctPerson=" + ContactsTable.Rows[0]["X_KinContctPerson"].ToString() + ", X_KinRelation=" + ContactsTable.Rows[0]["X_KinRelation"].ToString() + ", X_KinContactNo=" + ContactsTable.Rows[0]["X_KinContactNo"].ToString() + ", X_KinTelNo=" + ContactsTable.Rows[0]["X_KinTelNo"].ToString() + ", X_KinEmail=" + ContactsTable.Rows[0]["X_KinEmail"].ToString() + ","
+                                                        + " X_KinAddress=" + ContactsTable.Rows[0]["X_KinAddress"].ToString() + ", X_KinPOBoxNo=" + ContactsTable.Rows[0]["X_KinPOBoxNo"].ToString() + ", X_KinCity=" + ContactsTable.Rows[0]["X_KinCity"].ToString() + ", X_KinCountry=" + ContactsTable.Rows[0]["X_KinCountry"].ToString() + ", N_KinCountryID=" + myFunctions.getIntVAL(ContactsTable.Rows[0]["N_KinCountryID"].ToString()) + ", X_RefName=" + ContactsTable.Rows[0]["X_RefName"].ToString() + ", "
+                                                        + "X_RefRelation=" + ContactsTable.Rows[0]["X_RefRelation"].ToString() + ", X_RefRelationInfo=" + ContactsTable.Rows[0]["X_RefRelationInfo"].ToString() + ", X_PrevRefName=" + ContactsTable.Rows[0]["X_PrevRefName"].ToString() + ", X_PrevRefJob=" + ContactsTable.Rows[0]["X_PrevRefJob"].ToString() + ", X_PrevRefDepartment=" + ContactsTable.Rows[0]["X_PrevRefDepartment"].ToString() + ", X_PrevRefCompany=" + ContactsTable.Rows[0]["X_PrevRefCompany"].ToString() + ", X_PrevRefContactNo=" + ContactsTable.Rows[0]["X_PrevRefContactNo"].ToString() + ", X_PrevRefEmail=" + ContactsTable.Rows[0]["X_PrevRefEmail"].ToString() + " "
+                                                        + " where N_CompanyID=@N_CompanyID and N_EmpID=@nEmpID and N_ContactDetailsID=@N_ContactDetailsID";
+
+                                    dLayer.ExecuteNonQuery(ContactQry, QueryParams, connection, transaction);
                                 }
-
-                                ContactsTable.AcceptChanges();
-
-                                int nContactsID = dLayer.SaveData("Pay_EmployeeSub", "N_ContactDetailsID", ContactsTable, connection, transaction);
-                                if (nContactsID <= 0)
+                                else
                                 {
-                                    transaction.Rollback();
-                                    return Ok(_api.Error(User, "Unable to save"));
+                                    if (ContactsTable.Columns.Contains("N_ContactDetailsUpdateID"))
+                                        ContactsTable.Columns.Remove("N_ContactDetailsUpdateID");
+                                    if (ContactsTable.Columns.Contains("N_EmpUpdateID"))
+                                        ContactsTable.Columns.Remove("N_EmpUpdateID");
+
+                                    foreach (DataRow dRow in ContactsTable.Rows)
+                                    {
+                                        dRow["N_EmpID"] = nEmpID;
+                                    }
+
+                                    ContactsTable.AcceptChanges();
+
+                                    int nContactsID = dLayer.SaveData("Pay_EmployeeSub", "N_ContactDetailsID", ContactsTable, connection, transaction);
+                                    if (nContactsID <= 0)
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, "Unable to save"));
+                                    }
                                 }
                             }
 
