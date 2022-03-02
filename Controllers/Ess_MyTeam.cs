@@ -127,7 +127,7 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    if (listType == "myDepartment")
+                    if (listType == "myTeam")
                     {
                         Criteria = Criteria + " and N_ManagerID=@nEmpID";
                     }
