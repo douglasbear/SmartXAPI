@@ -81,9 +81,12 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection con = new SqlConnection(connectionString))
                 {
                     con.Open();
-                    if (!myFunctions.CheckVersion(xVersion, dLayer, con))
+                    if(appID!=2 && appID!=8)
                     {
-                        return Ok(_api.Warning("Please clear browser cache (press Ctrl+F5) and try again!!"));
+                        if (!myFunctions.CheckVersion(xVersion, dLayer, con))
+                        {
+                            return Ok(_api.Warning("Please clear browser cache (press Ctrl+F5) and try again!!"));
+                        }
                     }
                     // SortedList Params = new SortedList();
                     // string xAppVersion="";

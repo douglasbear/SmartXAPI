@@ -346,6 +346,11 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
                 DataTable Attachment = ds.Tables["attachments"];
+
+                DataTable Approvals;
+                Approvals = ds.Tables["approval"];
+                DataRow ApprovalRow = Approvals.Rows[0];
+
                 SortedList Params = new SortedList();
                 int n_PayReceiptID = 0;
                 string PayReceiptNo = "";
@@ -372,6 +377,9 @@ namespace SmartxAPI.Controllers
                     nAmount = myFunctions.getVAL(Master["n_Amount"].ToString());
                     nAmountF = myFunctions.getVAL(Master["n_AmountF"].ToString());
                     int n_PartyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PartyID"].ToString());
+                    int N_SaveDraft = myFunctions.getIntVAL(Master["b_IsSaveDraft"].ToString());
+                    int nUserID = myFunctions.GetUserID(User);
+                    int N_NextApproverID=0;
                    
                      if (!myFunctions.CheckActiveYearTransaction(nCompanyId, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_Date"].ToString()), dLayer, connection, transaction))
                     {
@@ -399,7 +407,39 @@ namespace SmartxAPI.Controllers
                     if (MasterTable.Columns.Contains("x_Desc"))
                         MasterTable.Columns.Remove("x_Desc");
 
-                    
+                    SortedList VendParams = new SortedList();
+                    VendParams.Add("@nCompanyID", nCompanyId);
+                    VendParams.Add("@n_PartyID", n_PartyID);
+                    VendParams.Add("@nFnYearID", nFnYearID);
+                    object objVendName = dLayer.ExecuteScalar("Select X_VendorName From Inv_Vendor where N_VendorID=@n_PartyID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", VendParams, connection, transaction);                   
+
+                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && n_PayReceiptID > 0)
+                    {
+                        int N_PkeyID = n_PayReceiptID;
+                        string X_Criteria = "N_PayReceiptId=" + n_PayReceiptID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearID;
+                        myFunctions.UpdateApproverEntry(Approvals, "Inv_PayReceipt", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearID.ToString()), "PURCHASE PAYMENT", N_PkeyID, x_VoucherNo, 1, "", 0, "", User, dLayer, connection, transaction);
+
+                        myAttachments.SaveAttachment(dLayer, Attachment,PayReceiptNo, n_PayReceiptID,objVendName.ToString().Trim(),PayReceiptNo, n_PayReceiptID, "VendorPayment Document", User, connection, transaction);
+
+                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_PayReceipt where N_PayReceiptId=" + n_PayReceiptID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
+                        if (N_SaveDraft == 0)
+                        {
+                            SortedList PostingParams = new SortedList();
+                            PostingParams.Add("N_CompanyID", nCompanyId);
+                            PostingParams.Add("X_InventoryMode", x_Type);
+                            PostingParams.Add("N_InternalID", n_PayReceiptID);
+                            PostingParams.Add("N_UserID", myFunctions.GetUserID(User));
+                            PostingParams.Add("X_SystemName", "ERP Cloud");
+                            object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
+
+                        }
+
+                        myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "PURCHASE PAYMENT", x_VoucherNo, dLayer, connection, transaction, User);
+                        transaction.Commit();
+                        return Ok(api.Success("Vendor Payment Approved " + "-" + x_VoucherNo));
+                    }
+
 
                     if (x_VoucherNo == "@Auto")
                     {
@@ -453,6 +493,10 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(api.Error(User, "Error"));
                     }
+
+                    N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearID.ToString()), "PURCHASE PAYMENT", n_PayReceiptID, x_VoucherNo, 1, "", 0, "", User, dLayer, connection, transaction);
+                    N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_PayReceipt where N_PayReceiptId=" + n_PayReceiptID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
+
                     if (x_Type == "PA")
                     {
 
@@ -565,13 +609,8 @@ namespace SmartxAPI.Controllers
 
                     }
                     transaction.Commit();
-              SortedList VendParams = new SortedList();
-                    VendParams.Add("@nCompanyID", nCompanyId);
-                    VendParams.Add("@n_PartyID", n_PartyID);
-                    VendParams.Add("@nFnYearID", nFnYearID);
-              object objVendName = dLayer.ExecuteScalar("Select X_VendorName From Inv_Vendor where N_VendorID=@n_PartyID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", VendParams, connection, transaction);
-                   
-                     if (Attachment.Rows.Count > 0)
+           
+                    if (Attachment.Rows.Count > 0)
                     {
                         try
                         {
@@ -597,28 +636,65 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpDelete]
-        public ActionResult DeleteData(int nPayReceiptId, string xTransType, int nFnyearID)
+        public ActionResult DeleteData(int nPayReceiptId, string xTransType, int nFnyearID,int nCompanyID,string comments)
         {
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList(); 
+                    ParamList.Add("@nTransID", nPayReceiptId);
+                    ParamList.Add("@nFnYearID", nFnyearID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                    string xButtonAction = "Delete";
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,X_VoucherNo,N_PayReceiptId from Inv_PayReceipt where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_PayReceiptId=@nTransID";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                    if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+
+                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.N_FormID, nPayReceiptId, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnyearID, 0, 0, User, dLayer, connection));
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
                     SqlTransaction transaction = connection.BeginTransaction();
 
-                    if (nPayReceiptId > 0)
-                    {
-                        SortedList DeleteParams = new SortedList(){
-                                {"N_CompanyID",myFunctions.GetCompanyID(User)},
-                                {"X_TransType",xTransType},
-                                {"N_VoucherID",nPayReceiptId}};
+                    string X_Criteria = "N_PayReceiptId=" + nPayReceiptId + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnyearID;
+                    string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
 
-                        int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection,transaction);
-                        if (result > 0)
+                    if (ButtonTag == "6" || ButtonTag == "0")
+                    {
+                        if (nPayReceiptId > 0)
                         {
-                            myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnyearID,67, User, transaction, connection);
+                            SortedList DeleteParams = new SortedList(){
+                                    {"N_CompanyID",myFunctions.GetCompanyID(User)},
+                                    {"X_TransType",xTransType},
+                                    {"N_VoucherID",nPayReceiptId}};
+
+                            int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection,transaction);
+                            if (result > 0)
+                            {
+                                myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnyearID,67, User, transaction, connection);
+                                transaction.Commit();
+                                return Ok(api.Success("Vendor Payment Deleted"));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        string status = myFunctions.UpdateApprovals(Approvals, nFnyearID, "PURCHASE PAYMENT", nPayReceiptId, TransRow["X_VoucherNo"].ToString(), ProcStatus, "Inv_PayReceipt", X_Criteria, "", User, dLayer, connection, transaction);
+                        if (status != "Error")
+                        {
                             transaction.Commit();
-                            return Ok(api.Success("Vendor Payment Deleted"));
+                            return Ok(api.Success("Vendor Payment " + status + " Successfully"));
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, "Unable to delete Vendor Payment"));
                         }
                     }
                 }
