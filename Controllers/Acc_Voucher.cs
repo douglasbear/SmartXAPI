@@ -202,9 +202,9 @@ namespace SmartxAPI.Controllers
                 InfoTable = ds.Tables["info"];
                 SortedList Params = new SortedList();
 
-                DataTable Approvals;
-                Approvals = ds.Tables["approval"];
-                DataRow ApprovalRow = Approvals.Rows[0];
+                // DataTable Approvals;
+                // Approvals = ds.Tables["approval"];
+                // DataRow ApprovalRow = Approvals.Rows[0];
 
                 DataRow masterRow = MasterTable.Rows[0];
                 var xVoucherNo = masterRow["x_VoucherNo"].ToString();
@@ -216,7 +216,7 @@ namespace SmartxAPI.Controllers
                 var nUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var nFormID = 0;
                 int N_NextApproverID=0;
-                int N_SaveDraft = myFunctions.getIntVAL(masterRow["b_IsSaveDraft"].ToString());
+                //int N_SaveDraft = myFunctions.getIntVAL(masterRow["b_IsSaveDraft"].ToString());
 
 
 
@@ -260,30 +260,30 @@ namespace SmartxAPI.Controllers
                 //             return Ok(api.Error(User, "Transaction date must be in the active Financial Year."));
                 //         }
                 //     }
-                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_VoucherID > 0)
-                    {
-                        int N_PkeyID = N_VoucherID;
-                        string X_Criteria = "N_VoucherID=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId;
-                        myFunctions.UpdateApproverEntry(Approvals, "Acc_VoucherMaster", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearId.ToString()), xTransType, N_PkeyID, xVoucherNo, 1, "", 0, "", User, dLayer, connection, transaction);
-                        //myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_SalesID, objCustName.ToString().Trim(), objCustCode.ToString(), N_CustomerID, "Customer Document", User, connection, transaction);
+                    // if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_VoucherID > 0)
+                    // {
+                    //     int N_PkeyID = N_VoucherID;
+                    //     string X_Criteria = "N_VoucherID=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId;
+                    //     myFunctions.UpdateApproverEntry(Approvals, "Acc_VoucherMaster", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                    //     N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearId.ToString()), xTransType, N_PkeyID, xVoucherNo, 1, "", 0, "", User, dLayer, connection, transaction);
+                    //     //myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_SalesID, objCustName.ToString().Trim(), objCustCode.ToString(), N_CustomerID, "Customer Document", User, connection, transaction);
 
-                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Acc_VoucherMaster where N_VoucherID=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, connection, transaction).ToString());
-                        if (N_SaveDraft == 0)
-                        {
-                            SortedList PostingParams = new SortedList();
-                            PostingParams.Add("N_CompanyID", nCompanyId);
-                            PostingParams.Add("X_InventoryMode", xTransType);
-                            PostingParams.Add("N_InternalID", N_VoucherID);
-                            PostingParams.Add("N_UserID", nUserId);
-                            PostingParams.Add("X_SystemName", "ERP Cloud");
-                            object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
-                        }
+                    //     N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Acc_VoucherMaster where N_VoucherID=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, connection, transaction).ToString());
+                    //     if (N_SaveDraft == 0)
+                    //     {
+                    //         SortedList PostingParams = new SortedList();
+                    //         PostingParams.Add("N_CompanyID", nCompanyId);
+                    //         PostingParams.Add("X_InventoryMode", xTransType);
+                    //         PostingParams.Add("N_InternalID", N_VoucherID);
+                    //         PostingParams.Add("N_UserID", nUserId);
+                    //         PostingParams.Add("X_SystemName", "ERP Cloud");
+                    //         object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
+                    //     }
 
-                        myFunctions.SendApprovalMail(N_NextApproverID, nFormID, N_PkeyID, xTransType, xVoucherNo, dLayer, connection, transaction, User);
-                        transaction.Commit();
-                        return Ok(api.Success("Voucher Approved " + "-" + xVoucherNo));
-                    }
+                    //     myFunctions.SendApprovalMail(N_NextApproverID, nFormID, N_PkeyID, xTransType, xVoucherNo, dLayer, connection, transaction, User);
+                    //     transaction.Commit();
+                    //     return Ok(api.Success("Voucher Approved " + "-" + xVoucherNo));
+                    // }
                     
                     if (xVoucherNo == "@Auto")
                     {
@@ -330,14 +330,14 @@ namespace SmartxAPI.Controllers
                     MasterTable.Rows[0]["n_UserID"] = myFunctions.GetUserID(User);
                     MasterTable.AcceptChanges();
 
-                    MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+                    // MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
 
                     N_VoucherID = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId", DupCriteria, "", MasterTable, connection, transaction);
                     if (N_VoucherID > 0)
                     {
 
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearId.ToString()), xTransType, N_VoucherID, xVoucherNo, 1, "", 0, "", User, dLayer, connection, transaction);
-                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Acc_VoucherMaster where N_VoucherId=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, connection, transaction).ToString());
+                        // N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearId.ToString()), xTransType, N_VoucherID, xVoucherNo, 1, "", 0, "", User, dLayer, connection, transaction);
+                        // N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Acc_VoucherMaster where N_VoucherId=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, connection, transaction).ToString());
 
                         SortedList LogParams = new SortedList();
                         LogParams.Add("N_CompanyID", nCompanyId);
@@ -430,38 +430,39 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    DataTable TransData = new DataTable();
-                    SortedList ParamList = new SortedList(); 
-                    ParamList.Add("@nTransID", nVoucherID);
-                    ParamList.Add("@nFnYearID", nFnYearID);
-                    ParamList.Add("@nCompanyID", nCompanyID);
-                    string xButtonAction = "Delete";
-                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,X_VoucherNo,N_VoucherID from Acc_VoucherMaster where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_VoucherID=@nTransID";
-                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
-                    if (TransData.Rows.Count == 0)
-                    {
-                        return Ok(api.Error(User, "Transaction not Found"));
-                    }
-                    DataRow TransRow = TransData.Rows[0];
+                    // DataTable TransData = new DataTable();
+                    // SortedList ParamList = new SortedList(); 
+                    // ParamList.Add("@nTransID", nVoucherID);
+                    // ParamList.Add("@nFnYearID", nFnYearID);
+                    // ParamList.Add("@nCompanyID", nCompanyID);
+                    // string xButtonAction = "Delete";
+                    // string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,X_VoucherNo,N_VoucherID from Acc_VoucherMaster where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_VoucherID=@nTransID";
+                    // TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                    // if (TransData.Rows.Count == 0)
+                    // {
+                    //     return Ok(api.Error(User, "Transaction not Found"));
+                    // }
+                    // DataRow TransRow = TransData.Rows[0];
 
-                    int nFormID=0;
-                    if (xTransType.ToLower() == "pv")
-                        nFormID = 44;
-                    else if (xTransType.ToLower() == "rv")
-                        nFormID = 45;
-                    else if (xTransType.ToLower() == "jv")
-                        nFormID = 46;
+                    // int nFormID=0;
+                    // if (xTransType.ToLower() == "pv")
+                    //     nFormID = 44;
+                    // else if (xTransType.ToLower() == "rv")
+                    //     nFormID = 45;
+                    // else if (xTransType.ToLower() == "jv")
+                    //     nFormID = 46;
 
-                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, nFormID, nVoucherID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
-                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
-                    SqlTransaction transaction = connection.BeginTransaction();
+                    // DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, nFormID, nVoucherID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
+                    // Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
+                    // SqlTransaction transaction = connection.BeginTransaction();
 
-                    string X_Criteria = "N_VoucherID=" + nVoucherID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
-                    string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
-                    int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
+                    // string X_Criteria = "N_VoucherID=" + nVoucherID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
+                    // string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    // int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
 
-                     if (ButtonTag == "6" || ButtonTag == "0")
-                    {
+                    //  if (ButtonTag == "6" || ButtonTag == "0")
+                    // {
+                        SqlTransaction transaction = connection.BeginTransaction();
                         SortedList Params = new SortedList();
                         Params.Add("N_CompanyID", myFunctions.GetCompanyID(User));
                         Params.Add("X_TransType", xTransType);
@@ -478,21 +479,7 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(api.Error(User, "Unable to delete Voucher"));
                         }
-                    }
-                    else
-                    {
-                        string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, xTransType, nVoucherID, TransRow["X_VoucherNo"].ToString(), ProcStatus, "Acc_VoucherMaster", X_Criteria, "", User, dLayer, connection, transaction);
-                        if (status != "Error")
-                        {
-                            transaction.Commit();
-                            return Ok(api.Success("Voucher " + status + " Successfully"));
-                        }
-                        else
-                        {
-                            transaction.Rollback();
-                            return Ok(api.Error(User, "Unable to delete Voucher"));
-                        }
-                    }
+                  
                 }
 
             }
