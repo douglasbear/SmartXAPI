@@ -486,6 +486,7 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
+                    MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
 
                     n_PayReceiptID = dLayer.SaveData("Inv_PayReceipt", "n_PayReceiptID", MasterTable, connection, transaction);
                     if (n_PayReceiptID <= 0)
