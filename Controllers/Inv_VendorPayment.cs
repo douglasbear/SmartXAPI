@@ -486,6 +486,7 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
+                    MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
 
                     n_PayReceiptID = dLayer.SaveData("Inv_PayReceipt", "n_PayReceiptID", MasterTable, connection, transaction);
                     if (n_PayReceiptID <= 0)
@@ -494,7 +495,7 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Error(User, "Error"));
                     }
 
-                    N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearID.ToString()), "PURCHASE PAYMENT", n_PayReceiptID, x_VoucherNo, 1, "", 0, "", User, dLayer, connection, transaction);
+                    N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearID.ToString()), "PURCHASE PAYMENT", n_PayReceiptID, PayReceiptNo, 1, "", 0, "", User, dLayer, connection, transaction);
                     N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_PayReceipt where N_PayReceiptId=" + n_PayReceiptID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
 
                     if (x_Type == "PA")
