@@ -43,8 +43,8 @@ namespace SmartxAPI.Controllers
             if (UserPattern != "")
             {
                 Params.Add("@UserPattern", UserPattern);
-                Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern";
-                AssigneePattern =" and (Left(X_Pattern,Len(@UserPattern))=@UserPattern or N_LoginUserID="+nUserID+")";
+                Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
+                AssigneePattern =" and (Left(X_Pattern,Len(@UserPattern))=@UserPattern or N_LoginUserID="+nUserID+") ";
             }
             else
             {

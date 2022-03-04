@@ -62,7 +62,7 @@ namespace SmartxAPI.Controllers
 
                     if (UserPattern != "")
                      {
-                    Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern";
+                    Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
                     Params.Add("@UserPattern", UserPattern);
                      }  
                      else
@@ -81,13 +81,13 @@ namespace SmartxAPI.Controllers
                     bool bLocationChange = myFunctions.CheckPermission(myFunctions.GetCompanyID(User), 564, myFunctions.GetUserCategory(User).ToString(), "", dLayer, connection);
 
                     if (nCustomerID > 0)
-                        cndn = "and N_CustomerID=@nCustomerID";
+                        cndn = "and N_CustomerID=@nCustomerID ";
 
                     if (screen == "Invoice")
-                        criteria = "and MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP)";
+                        criteria = " and MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP) ";
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_OrderNo like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or cast([Invoice Date] as VarChar) like '%" + xSearchkey + "%' or X_BillAmt like '%" + xSearchkey + "%')";
+                        Searchkey = " and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_OrderNo like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or cast([Invoice Date] as VarChar) like '%" + xSearchkey + "%' or X_BillAmt like '%" + xSearchkey + "%')";
                     if (CheckClosedYear == false)
                     {
                         if (bAllBranchData == true && bLocationChange==true)
@@ -103,11 +103,11 @@ namespace SmartxAPI.Controllers
                     {
                         if (bAllBranchData == true && bLocationChange==true)
                         {
-                            Searchkey = Searchkey + "and X_TransType = '" + X_TransType + "' and N_SalesType = 0 and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1";
+                            Searchkey = Searchkey + " and X_TransType = '" + X_TransType + "' and N_SalesType = 0 and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1";
                         }
                         else
                         {
-                            Searchkey = Searchkey + "and X_TransType = '" + X_TransType + "' and N_SalesType = 0 and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and N_BranchID=" + nBranchID + " and N_LocationID =" + n_LocationID + " and isnull(N_Hold,0)<>1";
+                            Searchkey = Searchkey + " and X_TransType = '" + X_TransType + "' and N_SalesType = 0 and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and N_BranchID=" + nBranchID + " and N_LocationID =" + n_LocationID + " and isnull(N_Hold,0)<>1";
                         }
                     }
                     if (xSortBy == null || xSortBy.Trim() == "")
