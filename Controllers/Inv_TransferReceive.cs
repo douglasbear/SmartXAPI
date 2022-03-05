@@ -130,14 +130,14 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("transferList")]
-        public ActionResult GettransferList(int nFnYearID)
-        {
+        public ActionResult GettransferList(int nFnYearID,int locationID)
+    {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearID);
-            string sqlCommandText = "select [reference No] as x_reference,* from vw_InvTransfer_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Processed=0";
+            string sqlCommandText = "select [reference No] as x_reference,* from vw_InvTransfer_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_LocationTo="+locationID+" and  N_Processed=0";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
