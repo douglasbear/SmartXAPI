@@ -702,7 +702,7 @@ namespace SmartxAPI.Controllers
                                 myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnyearID,67, User, transaction, connection);
                                 transaction.Commit();
                                 return Ok(api.Success("Vendor Payment Deleted"));
-                            }
+                            }         
                         }
                     }
                     else

@@ -347,6 +347,69 @@ namespace SmartxAPI.Controllers
 
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = api.Format(DetailTable, "Details");
+
+                    bool InvoiceProcessed=false;
+                    if(myFunctions.getBoolVAL(MasterTable.Rows[0]["N_Processed"].ToString()))
+                    {
+                        object InvoiceNotProcessed=false;
+                        for(int i=0;i<DetailTable.Rows.Count;i++)
+                        {
+                            Object POQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseOrderdetails where n_porderid="+N_POrderID+" and N_PorderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
+                            Object InvQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseDetails where n_porderid="+N_POrderID+" and N_POrderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
+                            if(POQty!=null && InvQty!=null)
+                            {
+                                if(myFunctions.getIntVAL(POQty.ToString())!= myFunctions.getIntVAL(InvQty.ToString()))
+                                {
+                                // InvoiceNotProcessed = true;
+                                    MasterTable.Rows[0]["N_Processed"]=0;
+                                    InvoiceProcessed=false;
+                                    break;
+                                }
+                                else
+                                {
+                                    MasterTable.Rows[0]["N_Processed"]=1;
+                                    InvoiceProcessed=true;
+                                }
+                            }
+                            else
+                            {
+                                MasterTable.Rows[0]["N_Processed"]=1;
+                                InvoiceProcessed=true;
+                            }
+                        }
+                    }
+
+                    if(!InvoiceProcessed)
+                    {
+                        object GRNNotProcessed=false;
+                        for(int i=0;i<DetailTable.Rows.Count;i++)
+                        {
+                            Object POQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseOrderdetails where n_porderid="+N_POrderID+" and N_PorderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
+                            Object GRNQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_MRNDetails where N_PONo="+N_POrderID+" and N_PorderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
+                            if(POQty!=null && GRNQty!=null)
+                            {
+                                if(myFunctions.getIntVAL(POQty.ToString())!= myFunctions.getIntVAL(GRNQty.ToString()))
+                                {
+                                    //GRNNotProcessed = true;
+                                    MasterTable.Rows[0]["N_Processed"]=0;
+                                    break;
+                                }
+                                else
+                                {
+                                    MasterTable.Rows[0]["N_Processed"]=1;
+                                }
+                            }
+                            else
+                            {
+                                MasterTable.Rows[0]["N_Processed"]=1;
+                            }
+                        }
+                    }
+
+                   
+                    // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "GRNNotProcessed", typeof(bool),GRNNotProcessed);
+                    // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "InvoiceNotProcessed", typeof(bool),InvoiceNotProcessed);
+
                      DataTable Attachments =new DataTable();
                     if(MasterTable.Rows.Count>0)
                     Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_VendorID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString()), this.FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
