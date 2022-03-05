@@ -352,6 +352,7 @@ namespace SmartxAPI.Controllers
                             if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                             MasterTable = _api.Format(MasterTable, "Master");
                             N_salesOrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_salesOrderID"].ToString());
+                            xDeliveryNoteID = nDeliveryNoteId.ToString();
                         }
                         else
                         {
@@ -372,7 +373,11 @@ namespace SmartxAPI.Controllers
 
 
                         string DeliveryNoteAppend = "0";
-                        DataTable DeliveryNoteID = dLayer.ExecuteDataTable("select N_DeliveryNoteID from Inv_SalesDetails Where N_SalesOrderID=" + N_salesOrderID + "", QueryParamsList, Con);
+                        DataTable DeliveryNoteID = new DataTable();
+
+                        if(N_salesOrderID>0)
+                        DeliveryNoteID = dLayer.ExecuteDataTable("select N_DeliveryNoteID from Inv_SalesDetails Where N_SalesOrderID=" + N_salesOrderID + "", QueryParamsList, Con);
+                       
                         if (DeliveryNoteID.Rows.Count > 0)
                         {
 
@@ -389,7 +394,7 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            if (xDeliveryNoteID == "" || xDeliveryNoteID == null)
+                            if ((xDeliveryNoteID == "" || xDeliveryNoteID == null) && N_salesOrderID>0)
                                 DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " ";
                             else
                                 DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  ";
