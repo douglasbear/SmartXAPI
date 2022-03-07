@@ -59,7 +59,7 @@ namespace SmartxAPI.Controllers
                     string Pattern = "";
                 if (UserPattern != "")
                 {
-                    Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern";
+                    Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
                     Params.Add("@UserPattern",UserPattern);
 
                 }
@@ -358,7 +358,7 @@ namespace SmartxAPI.Controllers
                             Object InvQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseDetails where n_porderid="+N_POrderID+" and N_POrderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
                             if(POQty!=null && InvQty!=null)
                             {
-                                if(myFunctions.getIntVAL(POQty.ToString())!= myFunctions.getIntVAL(InvQty.ToString()))
+                                if(myFunctions.getVAL(POQty.ToString())!= myFunctions.getVAL(InvQty.ToString()))
                                 {
                                 // InvoiceNotProcessed = true;
                                     MasterTable.Rows[0]["N_Processed"]=0;
@@ -388,7 +388,7 @@ namespace SmartxAPI.Controllers
                             Object GRNQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_MRNDetails where N_PONo="+N_POrderID+" and N_PorderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
                             if(POQty!=null && GRNQty!=null)
                             {
-                                if(myFunctions.getIntVAL(POQty.ToString())!= myFunctions.getIntVAL(GRNQty.ToString()))
+                                if(myFunctions.getVAL(POQty.ToString())!= myFunctions.getVAL(GRNQty.ToString()))
                                 {
                                     //GRNNotProcessed = true;
                                     MasterTable.Rows[0]["N_Processed"]=0;

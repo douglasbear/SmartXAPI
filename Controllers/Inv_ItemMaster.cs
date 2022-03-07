@@ -210,7 +210,7 @@ namespace SmartxAPI.Controllers
                         xSortBy = "Cast(REPLACE(n_Rate,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
                         break;
                         case "partNo":
-                        xSortBy = "order by [Part No] desc ";
+                        xSortBy = "[Part No] desc ";
                         break;
                     default: break;
                 }
