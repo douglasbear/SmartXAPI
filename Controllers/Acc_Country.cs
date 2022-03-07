@@ -95,10 +95,10 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User,"Unable to generate Country Master")); }
                         MasterTable.Rows[0]["X_CountryCode"] = CountryCode;
                     }
-                     else
-                    {
-                        dLayer.DeleteData("Acc_Country", "N_CountryID", N_CountryID, "", connection, transaction);
-                    }
+                    //  else
+                    // {
+                    //     dLayer.DeleteData("Acc_Country", "N_CountryID", N_CountryID, "", connection, transaction);
+                    // }
 
                      MasterTable.Columns.Remove("n_FnYearId");
                      

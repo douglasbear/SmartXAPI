@@ -139,9 +139,14 @@ namespace SmartxAPI.Controllers
                         string PKey = dRow["X_PKey"].ToString();
                         string UserPattern = myFunctions.GetUserPattern(User);
                         string Pattern = "";
+
                         if (UserPattern != "")
                         {
-                            Pattern = " and Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern;
+                            if (nTableViewID == 1)
+                                Pattern = " and ( Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern + " or N_CreatorID=" + myFunctions.GetUserID(User) + ")";
+                            else
+                                Pattern = " and ( Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern;
+
                         }
 
                         if (Count == 0)

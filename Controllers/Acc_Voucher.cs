@@ -35,6 +35,11 @@ namespace SmartxAPI.Controllers
         [HttpGet("list")]
         public ActionResult GetPaymentVoucherList(int? nCompanyId, int nFnYearId, string voucherType, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
@@ -42,7 +47,22 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string sqlCommandCount = "";
             string Searchkey = "";
+            string UserPattern = myFunctions.GetUserPattern(User);
+            int nUserID = myFunctions.GetUserID(User);
+            string Pattern = "";
+            if (UserPattern != "")
+            {
+                Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
+                Params.Add("@UserPattern", UserPattern);
+            }
+            else
+            {
+                 object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
 
+                if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    Pattern = " and N_UserID=" + nUserID;
+               
+            }
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and ([Voucher No] like '%" + xSearchkey + "%' or Account like '%" + xSearchkey + "%' or X_Remarks like '%" + xSearchkey + "%' or [Voucher Date] like '%" + xSearchkey + "%' or n_Amount like '%" + xSearchkey + "%' )";
 
@@ -68,9 +88,9 @@ namespace SmartxAPI.Controllers
 
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + Pattern + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and X_TransType=@p3 and N_VoucherId not in (select top(" + Count + ") N_VoucherId from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + Searchkey + " and X_TransType=@p3 and N_VoucherId not in (select top(" + Count + ") N_VoucherId from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + xSortBy + " ) " + xSortBy;
 
 
             Params.Add("@p1", nCompanyId);
@@ -78,13 +98,9 @@ namespace SmartxAPI.Controllers
             Params.Add("@p3", voucherType);
             SortedList OutPut = new SortedList();
 
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
+           
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,2)) ) as TotalAmount from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,2)) ) as TotalAmount from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + Pattern + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -97,7 +113,7 @@ namespace SmartxAPI.Controllers
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     OutPut.Add("TotalSum", TotalSum);
-                }
+                
                 if (dt.Rows.Count == 0)
                 {
                     // return Ok(api.Warning("No Results Found"));
@@ -106,6 +122,7 @@ namespace SmartxAPI.Controllers
                 else
                 {
                     return Ok(api.Success(OutPut));
+                }
                 }
             }
             catch (Exception e)
@@ -480,21 +497,9 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(api.Error(User, "Unable to delete Voucher"));
                         }
-                    }
-                    else
-                    {
-                        string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, xTransType, nVoucherID, TransRow["X_VoucherNo"].ToString(), ProcStatus, "Acc_VoucherMaster", X_Criteria, "", User, dLayer, connection, transaction);
-                        if (status != "Error")
-                        {
-                            transaction.Commit();
-                            return Ok(api.Success("Voucher " + status + " Successfully"));
-                        }
-                        else
-                        {
-                            transaction.Rollback();
-                            return Ok(api.Error(User, "Unable to delete Voucher"));
-                        }
-                    }
+                  
+                }
+                return Ok(api.Success("Voucher deleted"));
                 }
 
             }

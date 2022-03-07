@@ -162,9 +162,12 @@ namespace SmartxAPI.Controllers
                     using (SqlConnection con = new SqlConnection(connectionString))
                     {
                         con.Open();
-                        if (!myFunctions.CheckVersion(version, dLayer, con))
+                        if(appType!=2 && appType!=8)
                         {
-                            return Ok(_api.Warning("Please clear browser cache (press Ctrl+F5) and try again!!"));
+                            if (!myFunctions.CheckVersion(version, dLayer, con))
+                            {
+                                return Ok(_api.Warning("Please clear browser cache (press Ctrl+F5) and try again!!"));
+                            }
                         }
                     }
 
