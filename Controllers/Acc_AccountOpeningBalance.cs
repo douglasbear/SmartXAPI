@@ -300,12 +300,15 @@ namespace SmartxAPI.Controllers
                     if (DetailTable.Columns.Contains("n_Credit"))
                         DetailTable.Columns.Remove("n_Credit");
 
-                    int N_VoucherDetailsID = 0;
+                   
                     // for (int j = 0; j < DetailTable.Rows.Count; j++)
                     // {
                     //     N_VoucherDetailsID = dLayer.SaveDataWithIndex("Acc_VoucherMaster_Details", "N_VoucherDetailsID","", "", j, DetailTable, connection, transaction);
+                   if(DetailTable.Rows.Count>0)
+                   {
+                        int N_VoucherDetailsID = 0;
                     N_VoucherDetailsID = dLayer.SaveData("Acc_VoucherMaster_Details", "N_VoucherDetailsID", DetailTable, connection, transaction);
-
+                   
                     if (N_VoucherDetailsID > 0)
                     {
                         //         for (int k = 0; k < Details_SegmentsTable.Rows.Count; k++)
@@ -329,6 +332,7 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(api.Error(User, "Unable to save"));
                     }
+                   }
                     //}
                     // if (Details_SegmentsTable.Columns.Contains("rowID"))
                     //     Details_SegmentsTable.Columns.Remove("rowID");
