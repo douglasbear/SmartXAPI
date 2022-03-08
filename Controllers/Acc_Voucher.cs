@@ -440,7 +440,7 @@ namespace SmartxAPI.Controllers
             }
         }
         //Delete....
-        [HttpDelete()]
+ [HttpDelete()]
         public ActionResult DeleteData(int nVoucherID, string xTransType,int nCompanyID, int nFnYearID,string comments)
         {
             int Results = 0;
@@ -497,9 +497,21 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(api.Error(User, "Unable to delete Voucher"));
                         }
-                  
-                }
-                return Ok(api.Success("Voucher deleted"));
+                    }
+                    else
+                    {
+                        string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, xTransType, nVoucherID, TransRow["X_VoucherNo"].ToString(), ProcStatus, "Acc_VoucherMaster", X_Criteria, "", User, dLayer, connection, transaction);
+                        if (status != "Error")
+                        {
+                            transaction.Commit();
+                            return Ok(api.Success("Voucher " + status + " Successfully"));
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, "Unable to delete Voucher"));
+                        }
+                    }
                 }
 
             }
