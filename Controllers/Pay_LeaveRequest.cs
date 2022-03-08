@@ -300,7 +300,7 @@ namespace SmartxAPI.Controllers
 
         //List
         [HttpGet("vacationList")]
-        public ActionResult GetVacationList(string nEmpID)
+        public ActionResult GetVacationList(string nEmpID,int bIsAdjusted)
         {
             DataTable dt = new DataTable();
             SortedList QueryParams = new SortedList();
@@ -314,7 +314,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable("Select *,dbo.Fn_CalcAvailDays(@nCompanyID,N_VacTypeID,@nEmpID,@today,0,2) As AvlDays,dbo.Fn_CalcAvailDays(@nCompanyID,N_VacTypeID,@nEmpID,@today,0,1) As Accrude from vw_pay_Vacation_List where X_Type='B' and N_EmpId=@nEmpID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                    dt = dLayer.ExecuteDataTable("Select *,dbo.Fn_CalcAvailDays(@nCompanyID,N_VacTypeID,@nEmpID,@today,0,2) As AvlDays,dbo.Fn_CalcAvailDays(@nCompanyID,N_VacTypeID,@nEmpID,@today,0,"+(bIsAdjusted==1?"3":"1")+") As Accrude from vw_pay_Vacation_List where X_Type='B' and N_EmpId=@nEmpID and N_CompanyID=@nCompanyID", QueryParams, connection);
 
                 }
                 dt = api.Format(dt);
@@ -451,7 +451,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("getAvailable")]
-        public ActionResult GetAvailableDays(int nVacTypeID, DateTime dDateFrom, int nEmpID, int nVacationGroupID)
+        public ActionResult GetAvailableDays(int nVacTypeID, DateTime dDateFrom, int nEmpID, int nVacationGroupID,int bIsAdjusted)
         {
             DataTable dt = new DataTable();
             SortedList output = new SortedList();
@@ -463,12 +463,13 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@nVacationGroupID", nVacationGroupID);
             QueryParams.Add("@today", dDateFrom);
             QueryParams.Add("@nVacTypeID", nVacTypeID);
+            
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable("Select dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID,2) As AvlDays,dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID,1) As Accrude", QueryParams, connection);
+                    dt = dLayer.ExecuteDataTable("Select dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID,2) As AvlDays,dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID,"+(bIsAdjusted==1?"3":"1")+") As Accrude", QueryParams, connection);
 
 
                 }
