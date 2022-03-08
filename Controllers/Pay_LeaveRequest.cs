@@ -451,7 +451,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("getAvailable")]
-        public ActionResult GetAvailableDays(int nVacTypeID, DateTime dDateFrom, int nEmpID, int nVacationGroupID,int bIsAdjusted)
+        public ActionResult GetAvailableDays(int nVacTypeID, DateTime dDateFrom, int nEmpID, int nVacationGroupID)
         {
             DataTable dt = new DataTable();
             SortedList output = new SortedList();
@@ -463,13 +463,12 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@nVacationGroupID", nVacationGroupID);
             QueryParams.Add("@today", dDateFrom);
             QueryParams.Add("@nVacTypeID", nVacTypeID);
-            QueryParams.Add("@bIsAdjusted", bIsAdjusted);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable("Select dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID,2,@bIsAdjusted) As AvlDays,dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID,1,@bIsAdjusted) As Accrude", QueryParams, connection);
+                    dt = dLayer.ExecuteDataTable("Select dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID,2) As AvlDays,dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID,1) As Accrude", QueryParams, connection);
 
 
                 }
@@ -1010,6 +1009,7 @@ namespace SmartxAPI.Controllers
                 DateTime DateTo = Convert.ToDateTime(dDateTo.ToString());
 
                 if (var["d_VacDateFrom"].ToString() == "" || var["d_VacDateTo"].ToString() == "") continue;
+
 
                 if (checkperiod(Convert.ToDateTime(dDateTo), nCompanyID, nFnYearID, nEmpID, Params, connection, transaction))
                 {
