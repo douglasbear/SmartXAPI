@@ -77,14 +77,21 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("screenlist")]
-        public ActionResult GetScreenlist(int nLanguageId)
+        public ActionResult GetScreenlist(int nLanguageId,int nModuleID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             //int nCompanyId=myFunctions.GetCompanyID(User);
-             Params.Add("@p1", nLanguageId);
-            string sqlCommandText = "select N_MenuID,N_LanguageId,N_ParentMenuID,B_AllowApproval,X_Text from vw_UserPrevilegesDisp where N_LanguageId=@p1 ";
-           
+            Params.Add("@p1", nLanguageId);
+            Params.Add("@p2", nModuleID);
+            string sqlcondition="";
+
+            if(nModuleID>0)
+                sqlcondition=" N_LanguageId=@p1 and N_ParentMenuID=@p2 and B_AllowApproval<>0";
+            else
+                sqlcondition=" N_LanguageId=@p1 and B_AllowApproval<>0";
+
+            string sqlCommandText = "select N_MenuID,N_LanguageId,N_ParentMenuID,B_AllowApproval,X_Text from vw_UserPrevilegesDisp where "+sqlcondition;           
 
             try
             {
