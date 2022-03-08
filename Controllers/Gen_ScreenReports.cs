@@ -144,7 +144,7 @@ namespace SmartxAPI.Controllers
                         {
                             if (nTableViewID == 1)
                                 Pattern = " and ( Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern + " or N_CreatorID=" + myFunctions.GetUserID(User) + ")";
-                            else
+                            else 
                                 Pattern = " and ( Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern;
 
                         }

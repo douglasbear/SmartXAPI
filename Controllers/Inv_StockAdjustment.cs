@@ -184,7 +184,7 @@ namespace SmartxAPI.Controllers
                             {
                                 if (stockItem["N_ItemID"].ToString() == DetailItem["N_ItemID"].ToString())
                                 {
-                                    if (stockItem["N_Stock"].ToString() != DetailItem["N_QtyOnHand"].ToString())
+                                    if (myFunctions.getVAL(stockItem["N_Stock"].ToString()) !=myFunctions.getVAL(DetailItem["N_QtyOnHand"].ToString()))
                                     {
                                         bStockMisMatch = true;
                                      
