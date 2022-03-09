@@ -86,8 +86,8 @@ namespace SmartxAPI.Controllers
                             xTableName = "Mig_Employee";
                         if (dt.TableName.ToString().ToLower() == "products stock")
                             xTableName = "Mig_Stock";
-                        if (dt.TableName.ToString().ToLower() == "fixedassets list")
-                            xTableName = "_Mig_AssetList";
+                        if (dt.TableName.ToString().ToLower() == "fixedassets list" || dt.TableName.ToString().ToLower() == "fixed assets")
+                            xTableName = "Mig_AssetList";
                         if (dt.TableName.ToString().ToLower() == "salary history")
                             xTableName = "Mig_EmployeeSalaryHistory";
                         if (dt.TableName.ToString().ToLower() == "employee salary")
@@ -98,6 +98,9 @@ namespace SmartxAPI.Controllers
                             xTableName = "Mig_CustomerOpening";
                         if (dt.TableName.ToString().ToLower() == "vendor balances")
                             xTableName = "Mig_VendorOpening";
+                        if (dt.TableName.ToString().ToLower() == "deliverynote" || dt.TableName.ToString().ToLower() == "delivery note")
+                            xTableName = "Mig_Deliverynote";
+                        
 
                         if (dt.TableName.ToString().ToLower() == "product list" || dt.TableName.ToString().ToLower() == "products")
                         {
@@ -180,7 +183,7 @@ namespace SmartxAPI.Controllers
 
                                     FieldValues = FieldValues + "|" + values;
                                     if (j == 0)
-                                        FieldList = FieldList + "," + Mastertable.Columns[k].ColumnName.ToString();
+                                        FieldList = FieldList + ",[" + Mastertable.Columns[k].ColumnName.ToString().Replace("/","").Replace("(","").Replace(")","")+"]";
 
 
                                 }
