@@ -330,6 +330,8 @@ namespace SmartxAPI.Controllers
                     MasterTable.Rows[0]["indexKey"] = dLayer.ExecuteScalar("select isnull(max(cast(indexkey as numeric)),0)+1 from pay_timesheetlog", connection,transaction).ToString();
                     MasterTable.AcceptChanges();
 
+              
+
                     // nTimesheetID = dLayer.SaveData("Pay_TimeSheetImport", "N_SheetID", MasterTable, connection, transaction);
                     nTimesheetID = dLayer.SaveData("Pay_TimeSheetLog", "indexKey", MasterTable, connection, transaction);
 
