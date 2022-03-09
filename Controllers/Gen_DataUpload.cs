@@ -183,7 +183,7 @@ namespace SmartxAPI.Controllers
 
                                     FieldValues = FieldValues + "|" + values;
                                     if (j == 0)
-                                        FieldList = FieldList + ",[" + Mastertable.Columns[k].ColumnName.ToString().Replace("/","")+"]";
+                                        FieldList = FieldList + ",[" + Mastertable.Columns[k].ColumnName.ToString().Replace("/","").Replace("(","").Replace(")","")+"]";
 
 
                                 }
