@@ -440,7 +440,7 @@ namespace SmartxAPI.Controllers
             }
         }
         //Delete....
-        [HttpDelete()]
+    [HttpDelete()]
         public ActionResult DeleteData(int nVoucherID, string xTransType,int nCompanyID, int nFnYearID,string comments)
         {
             int Results = 0;
@@ -513,8 +513,11 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error(User, "Unable to delete Voucher"));
                         }
                     }
+<<<<<<< HEAD
 
                 return Ok(api.Success("Voucher deleted"));
+=======
+>>>>>>> dec0a568809f45fdbc5b68e69ab963a6c83e0a8d
                 }
 
             }
