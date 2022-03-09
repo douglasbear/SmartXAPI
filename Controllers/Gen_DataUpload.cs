@@ -87,7 +87,14 @@ namespace SmartxAPI.Controllers
                         if (dt.TableName.ToString().ToLower() == "products stock")
                             xTableName = "Mig_Stock";
                         if (dt.TableName.ToString().ToLower() == "fixedassets list" || dt.TableName.ToString().ToLower() == "fixed assets")
+                        {
                             xTableName = "Mig_AssetList";
+                            Mastertable.Columns.Add("N_CompanyID");
+                            foreach (DataRow dtRow in Mastertable.Rows)
+                            {
+                                dtRow["N_CompanyID"] = nCompanyID;
+                            }
+                        }
                         if (dt.TableName.ToString().ToLower() == "salary history")
                             xTableName = "Mig_EmployeeSalaryHistory";
                         if (dt.TableName.ToString().ToLower() == "employee salary")
@@ -100,7 +107,7 @@ namespace SmartxAPI.Controllers
                             xTableName = "Mig_VendorOpening";
                         if (dt.TableName.ToString().ToLower() == "deliverynote" || dt.TableName.ToString().ToLower() == "delivery note")
                             xTableName = "Mig_Deliverynote";
-                        
+
 
                         if (dt.TableName.ToString().ToLower() == "product list" || dt.TableName.ToString().ToLower() == "products")
                         {
@@ -171,19 +178,21 @@ namespace SmartxAPI.Controllers
                                     }
                                     else
                                     {
-                                         if (Mastertable.Rows[j][k] == DBNull.Value) 
-                                         {
-                                        values = "";
+                                        if (Mastertable.Rows[j][k] == DBNull.Value)
+                                        {
+                                            values = "";
 
-                                         }else{
-                                        values = Mastertable.Rows[j][k].ToString();
-                                         }
+                                        }
+                                        else
+                                        {
+                                            values = Mastertable.Rows[j][k].ToString();
+                                        }
                                         values = values.Replace("|", " ");
                                     }
 
                                     FieldValues = FieldValues + "|" + values;
                                     if (j == 0)
-                                        FieldList = FieldList + ",[" + Mastertable.Columns[k].ColumnName.ToString().Replace("/","").Replace("(","").Replace(")","")+"]";
+                                        FieldList = FieldList + ",[" + Mastertable.Columns[k].ColumnName.ToString().Replace("/", "").Replace("(", "").Replace(")", "") + "]";
 
 
                                 }
@@ -201,7 +210,7 @@ namespace SmartxAPI.Controllers
                                     totalCount = totalCount + rowCount;
                                     FieldValuesArray = FieldValuesArray.Substring(1);
                                     string inserStript = "insert into " + xTableName + " (" + FieldList + ") values" + FieldValuesArray;
-                                    dLayer.ExecuteNonQuery(inserStript, connection, transaction); 
+                                    dLayer.ExecuteNonQuery(inserStript, connection, transaction);
                                     FieldValuesArray = "";
                                     rowCount = 0;
                                 }
@@ -209,9 +218,9 @@ namespace SmartxAPI.Controllers
                             }
 
 
- 
+
                             //  nMasterID = dLayer.SaveData(xTableName, "PKey_Code", Mastertable, connection, transaction);
-                            nMasterID= myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Count(1) from "+xTableName, connection, transaction).ToString());
+                            nMasterID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Count(1) from " + xTableName, connection, transaction).ToString());
 
                             object ValFlag;
                             SortedList ValidationParam = new SortedList();
