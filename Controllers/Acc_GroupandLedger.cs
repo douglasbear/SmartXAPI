@@ -105,7 +105,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
-            sqlCommandText = "Select *,[Account Code] as X_LedgerCode,[Account] as X_LedgerName from vw_AccMastLedger Where N_CompanyID= @p1 and N_FnYearID=@p2 Order By N_GroupID";
+            sqlCommandText = "Select *,[Account Code] as X_LedgerCode,[Account] as X_LedgerName from vw_AccMastLedger Where N_CompanyID= @p1 and N_FnYearID=@p2 Order By [Account Code]";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
 
