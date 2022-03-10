@@ -52,7 +52,7 @@ namespace SmartxAPI.Controllers
             string Pattern = "";
             if (UserPattern != "")
             {
-                Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern";
+                Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
                 Params.Add("@UserPattern", UserPattern);
             }
             else
@@ -440,7 +440,7 @@ namespace SmartxAPI.Controllers
             }
         }
         //Delete....
-        [HttpDelete()]
+    [HttpDelete()]
         public ActionResult DeleteData(int nVoucherID, string xTransType,int nCompanyID, int nFnYearID,string comments)
         {
             int Results = 0;

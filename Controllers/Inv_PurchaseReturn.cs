@@ -56,7 +56,7 @@ namespace SmartxAPI.Controllers
                     
                      if (UserPattern != "")
                      {
-                    Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern";
+                    Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
                     Params.Add("@UserPattern",UserPattern);
 
                        }
