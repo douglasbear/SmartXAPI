@@ -479,28 +479,6 @@ namespace SmartxAPI.Controllers
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
 
-                     if (ButtonTag == "6" || ButtonTag == "0")
-                    {
-                        SortedList Params = new SortedList();
-                        Params.Add("N_CompanyID", myFunctions.GetCompanyID(User));
-                        Params.Add("X_TransType", xTransType);
-                        Params.Add("N_VoucherID", nVoucherID);
-                        Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", Params, connection, transaction);
-
-                        if (Results > 0)
-                        {
-                            transaction.Commit();
-                            return Ok(api.Success("Voucher deleted"));
-                        }
-                        else
-                        {
-                            transaction.Rollback();
-                            return Ok(api.Error(User, "Unable to delete Voucher"));
-                        }
-                  
-                    }
-                    else
-                    {
                         string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, xTransType, nVoucherID, TransRow["X_VoucherNo"].ToString(), ProcStatus, "Acc_VoucherMaster", X_Criteria, "", User, dLayer, connection, transaction);
                         if (status != "Error")
                         {
@@ -512,12 +490,7 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(api.Error(User, "Unable to delete Voucher"));
                         }
-                    }
-<<<<<<< HEAD
-
                 return Ok(api.Success("Voucher deleted"));
-=======
->>>>>>> dec0a568809f45fdbc5b68e69ab963a6c83e0a8d
                 }
 
             }
