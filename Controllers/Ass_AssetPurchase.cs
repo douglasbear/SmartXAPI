@@ -676,7 +676,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCompanyID, int N_AssetInventoryID, int FormID)
+        public ActionResult DeleteData(int nCompanyID, int N_AssetInventoryID, int FormID,string xTransType)
         {
             int Results = 0;
 
@@ -687,10 +687,27 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                    int N_UserID = myFunctions.GetUserID(User);
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@N_AssetInventoryID", N_AssetInventoryID);
                     if (N_AssetInventoryID > 0)
                     {
+                        SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"X_TransType",xTransType},
+                                {"N_VoucherID",N_AssetInventoryID},
+                                {"N_UserID",N_UserID},
+                                {"X_SystemName",System.Environment.MachineName}};
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts ", DeleteParams, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, ex));
+                        }
+
                         if (FormID == 129)
                         {
                             dLayer.ExecuteNonQuery("DELETE FROM Ass_AssetMaster WHERE Ass_AssetMaster.N_CompanyID = @nCompanyID AND Ass_AssetMaster.N_AssetInventoryDetailsID IN (SELECT N_AssetInventoryDetailsID FROM Ass_PurchaseDetails WHERE Ass_PurchaseDetails.N_AssetInventoryID =@N_AssetInventoryID AND Ass_PurchaseDetails.N_CompanyID = @nCompanyID)", Params, connection, transaction);
