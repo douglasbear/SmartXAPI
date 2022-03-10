@@ -137,7 +137,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearID);
-            string sqlCommandText = "select [reference No] as x_reference,* from vw_InvTransfer_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_LocationTo="+locationID+" and  N_Processed=0";
+            string sqlCommandText = "select [reference No] as x_reference,* from vw_InvTransfer_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_LocationTo="+locationID+" and  N_Processed=0 order by [Reference No] desc";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
