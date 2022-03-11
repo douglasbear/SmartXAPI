@@ -29,28 +29,31 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("list")]
-        public ActionResult GetLocationDetails(int? nCompanyId, string prs, bool bLocationRequired, bool bAllBranchData, int nBranchID)
+        public ActionResult GetLocationDetails(int? nCompanyId, string prs, bool bLocationRequired, bool bAllBranchData, int nBranchID,string xBarcode)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            string xQuery="";
+            if (xBarcode != "" && xBarcode != null)
+                 xQuery=" and X_Barcode='" + xBarcode+"'";
 
             string sqlCommandText = "";
             if (prs == null || prs == "")
-                sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 order by N_LocationID DESC";
+                sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1"+xQuery+" order by N_LocationID DESC";
             else
             {
                 if (!bLocationRequired)
                 {
                     if (bAllBranchData == true)
-                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where N_MainLocationID =0 and N_CompanyID=" + nCompanyId;
+                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where N_MainLocationID =0 and N_CompanyID=" + nCompanyId + xQuery;
 
                     else
-                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where  N_MainLocationID =0 and N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID;
+                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where  N_MainLocationID =0 and N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID + xQuery;
 
                 }
                 else
                 {
-                    sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where  isnull(N_MainLocationID,0) =0 and N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID;
+                    sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where  isnull(N_MainLocationID,0) =0 and N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID+xQuery;
                 }
             }
 
