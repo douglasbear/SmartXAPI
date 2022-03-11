@@ -810,7 +810,7 @@ namespace SmartxAPI.Controllers
                             }
 
                         }
-
+ 
                     }
 
                     SortedList deleteParams = new SortedList()

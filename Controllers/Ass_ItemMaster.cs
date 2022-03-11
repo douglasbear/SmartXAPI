@@ -233,10 +233,7 @@ namespace SmartxAPI.Controllers
                     {
                         i = i + 1;
                     }
-                    object endDate = HistoryTable.Rows[i]["D_EndDate"];
-                    DateTime today =new DateTime();
-                    if(endDate.GetType()!=typeof(DBNull))
-                     today = Convert.ToDateTime(endDate);
+                    DateTime today = Convert.ToDateTime(HistoryTable.Rows[i]["D_EndDate"]);
                     if (today.Month == 12)
                     {
                         //DateTime endOfMonth = new DateTime(today.Year + 1, 1, DateTime.DaysInMonth(today.Year + 1, 1));

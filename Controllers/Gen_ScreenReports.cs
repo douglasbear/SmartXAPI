@@ -110,7 +110,7 @@ namespace SmartxAPI.Controllers
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (X_TaskSummery like '%" + xSearchkey + "%' OR X_TaskDescription like '%" + xSearchkey + "%' OR X_Assignee like '%" + xSearchkey + "%' OR X_Submitter like '%" + xSearchkey + "%' OR X_ClosedUser like '%" + xSearchkey + "%'  OR X_ProjectName like '%" + xSearchkey + "%' )";
 
-            if (xSortBy == null || xSortBy.Trim() == "" || xSortBy.Trim() == "null")
+            if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_TaskID desc";
             else
                 xSortBy = " order by " + xSortBy;
@@ -144,8 +144,8 @@ namespace SmartxAPI.Controllers
                         {
                             if (nTableViewID == 1)
                                 Pattern = " and ( Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern + " or N_CreatorID=" + myFunctions.GetUserID(User) + ")";
-                            else
-                                Pattern = " and  Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern;
+                            else 
+                                Pattern = " and ( Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern;
 
                         }
 
