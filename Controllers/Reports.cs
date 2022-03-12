@@ -449,7 +449,8 @@ namespace SmartxAPI.Controllers
                             }
 
                         }
-                        ReportName = FormName + "_" + docNumber + "_" + partyName.Trim()+"_"+ random + ".pdf";
+                        ReportName = FormName + "_" + docNumber + "_" + partyName.Trim()+".pdf";
+                        // ReportName = FormName + "_" + docNumber + "_" + partyName.Trim()+"_"+ random + ".pdf";
                         path.Wait();
                         if (env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName))
                             return Ok(_api.Error(User, "Report Generation Failed"));
