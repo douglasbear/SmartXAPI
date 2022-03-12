@@ -170,6 +170,12 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to save"));
                     }
 
+                    
+
+                    //Inv_ItemMaster Creation
+                    
+                    
+
                      for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["N_AsnID"] = nAsnID;
@@ -182,6 +188,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to save"));
 
                     }
+
 
                      transaction.Commit();
                     SortedList Result = new SortedList();
