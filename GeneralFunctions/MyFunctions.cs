@@ -844,7 +844,7 @@ namespace SmartxAPI.GeneralFunctions
         //     return Response;
         // }
 
-public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID, int nTransUserID, int nTransStatus, int nTransApprovalLevel, int nNextApprovalLevel, int nApprovalID, int nGroupID, int nFnYearID, int nEmpID, int nActionID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection)
+        public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID, int nTransUserID, int nTransStatus, int nTransApprovalLevel, int nNextApprovalLevel, int nApprovalID, int nGroupID, int nFnYearID, int nEmpID, int nActionID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection)
         {
             DataTable SecUserLevel = new DataTable();
             DataTable GenStatus = new DataTable();
@@ -1428,33 +1428,33 @@ public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID,
             }
             return MasterTable;
         }
-  
-   public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User)
+
+        public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User)
         {
             try
             {
                 int companyid = GetCompanyID(User);
                 int nUserID = GetUserID(User);
                 SortedList Params = new SortedList();
-                DataTable dtEmail=new DataTable();
+                DataTable dtEmail = new DataTable();
                 string Toemail = "";
-                object Email ="";
-                string sqlCmd="";
-                if(N_NextApproverID!=0)
+                object Email = "";
+                string sqlCmd = "";
+                if (N_NextApproverID != 0)
                 {
                     // Email=dLayer.ExecuteScalar("select TOP(1) ISNULL(X_Email,'') from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID=" + N_NextApproverID + " order by n_fnyearid desc", Params, connection, transaction);
                     // Toemail = Email.ToString();
-                    sqlCmd="select TOP(1) ISNULL(X_Email,'') as X_Email from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID=" + N_NextApproverID + " order by n_fnyearid desc";
+                    sqlCmd = "select TOP(1) ISNULL(X_Email,'') as X_Email from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID=" + N_NextApproverID + " order by n_fnyearid desc";
                 }
                 else
                 {
-                    sqlCmd="select  ISNULL(X_Email,'') AS X_Email from vw_UserEmp where N_CompanyID="+companyid+" and N_UserID in ( "+
-                            " select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID="+companyid+" and N_FormID="+FormID+" and N_TransID="+TransID+" and N_ActionTypeID=110 and N_HierarchyID> "+
-                            " (select MAX(N_HierarchyID) from Gen_ApprovalCodesTrans where N_CompanyID="+companyid+" and N_FormID="+FormID+" and N_TransID="+TransID+" and N_Status=1)) "+
+                    sqlCmd = "select  ISNULL(X_Email,'') AS X_Email from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID in ( " +
+                            " select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=" + companyid + " and N_FormID=" + FormID + " and N_TransID=" + TransID + " and N_ActionTypeID=110 and N_HierarchyID> " +
+                            " (select MAX(N_HierarchyID) from Gen_ApprovalCodesTrans where N_CompanyID=" + companyid + " and N_FormID=" + FormID + " and N_TransID=" + TransID + " and N_Status=1)) " +
                             " group by vw_UserEmp.X_Email";
                 }
-                dtEmail=dLayer.ExecuteDataTable(sqlCmd,Params,connection,transaction);
-                if(dtEmail.Rows.Count==0)return false;
+                dtEmail = dLayer.ExecuteDataTable(sqlCmd, Params, connection, transaction);
+                if (dtEmail.Rows.Count == 0) return false;
                 object CurrentStatus = dLayer.ExecuteScalar("select ISNULL(X_CurrentStatus,'') from vw_ApprovalPending where N_FormID=" + FormID + " and X_TransCode='" + TransCode + "' and N_TransID=" + TransID + " and X_Type='" + TransType + "'", Params, connection, transaction);
                 object EmployeeName = dLayer.ExecuteScalar("select x_empname from vw_UserDetails where N_UserID=" + nUserID + " and N_CompanyID=" + companyid, Params, connection, transaction);
                 object companyemail = "";
@@ -1463,9 +1463,9 @@ public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID,
                 companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, Params, connection, transaction);
                 companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + companyid, Params, connection, transaction);
 
-                for(int i=0;i<dtEmail.Rows.Count;i++)
+                for (int i = 0; i < dtEmail.Rows.Count; i++)
                 {
-                    Toemail=dtEmail.Rows[i]["X_Email"].ToString();
+                    Toemail = dtEmail.Rows[i]["X_Email"].ToString();
                     if (Toemail.ToString() != "")
                     {
                         if (companyemail.ToString() != "")
@@ -1637,7 +1637,7 @@ public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID,
             }
         }
 
-   public int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
+        public int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             DataRow ApprovalRow = Approvals.Rows[0];
             string X_Action = ApprovalRow["btnSaveText"].ToString();
@@ -1711,9 +1711,12 @@ public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID,
                         string TableID = dLayer.ExecuteScalar("select X_IDName from vw_ScreenTables where N_FormID=@nFormID", NewParam, connection, transaction).ToString();
 
                         dLayer.ExecuteScalar("update " + TableName + " set B_IssaveDraft=0 where " + TableID + "=@nTransID and N_CompanyID=@nCompanyID", NewParam, connection, transaction);
+                        object UserObj = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=108", NewParam, connection, transaction);
+                        if (UserObj == null)
+                            UserObj = 0;
 
-                        int EntrUsrID =this.getIntVAL(dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=108", NewParam, connection, transaction).ToString());
-                        SendApprovalMail(EntrUsrID, N_FormID,  N_TransID,  X_TransType,  X_TransCode,  dLayer,  connection,  transaction,  User);
+                        int EntrUsrID = this.getIntVAL(UserObj.ToString());
+                        SendApprovalMail(EntrUsrID, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User);
                     }
                 }
             }
@@ -2170,26 +2173,26 @@ public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID,
             return res;
         }
 
-        public bool CheckVersion(string xSrcVersion,IDataAccessLayer dLayer,SqlConnection connection)
+        public bool CheckVersion(string xSrcVersion, IDataAccessLayer dLayer, SqlConnection connection)
         {
             SortedList Params = new SortedList();
-            string xAppVersion="";
-            String xAPIVersion=myCompanyID._APIVersion;
+            string xAppVersion = "";
+            String xAPIVersion = myCompanyID._APIVersion;
 
             object AppVersion = dLayer.ExecuteScalar("select TOP 1 X_AppVersion from Gen_SystemSettings order by D_EntryDate DESC", Params, connection);
-            if(AppVersion!=null)xAppVersion=AppVersion.ToString();
+            if (AppVersion != null) xAppVersion = AppVersion.ToString();
 
-            if(xAppVersion!="")
+            if (xAppVersion != "")
             {
-                if((xAppVersion!=xSrcVersion)||(xAppVersion!=xAPIVersion)||(xSrcVersion!=xAPIVersion))
-                {                   
+                if ((xAppVersion != xSrcVersion) || (xAppVersion != xAPIVersion) || (xSrcVersion != xAPIVersion))
+                {
                     return false;
                 }
             }
             return true;
         }
 
-        public bool Depreciation(IDataAccessLayer dLayer,int N_CompanyID,int N_FnYearID,int N_UserID, int N_ItemID, DateTime D_EndDate, String X_DeprNo,SqlConnection connection, SqlTransaction transaction)
+        public bool Depreciation(IDataAccessLayer dLayer, int N_CompanyID, int N_FnYearID, int N_UserID, int N_ItemID, DateTime D_EndDate, String X_DeprNo, SqlConnection connection, SqlTransaction transaction)
         {
 
             DataSet dsFunction = new DataSet();
@@ -2206,11 +2209,11 @@ public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID,
             DataTable DepTable;
             DataTable AssSuspensionTable;
             DataTable AssTransactionTable;
-            string SqlCmd1="",SqlCmd2="",SqlCmd3="";
+            string SqlCmd1 = "", SqlCmd2 = "", SqlCmd3 = "";
             SortedList Params = new SortedList();
 
-            SqlCmd1="SELECT max(dbo.Ass_Depreciation.D_EndDate) AS  D_EndDate,dbo.Ass_AssetMaster.N_ItemID,dbo.Ass_AssetMaster.X_ItemCode, dbo.Ass_AssetMaster.N_BookValue, dbo.Ass_AssetMaster.N_LifePeriod, dbo.Ass_PurchaseDetails.D_PurchaseDate, dbo.Ass_AssetMaster.N_BranchID, dbo.Ass_PurchaseDetails.N_Price,dbo.Ass_AssetMaster.D_PlacedDate,dbo.Ass_AssetMaster.N_CategoryID,dbo.Ass_AssetMaster.N_SalvageAmt FROM   dbo.Ass_AssetMaster INNER JOIN dbo.Ass_PurchaseDetails ON dbo.Ass_AssetMaster.N_AssetInventoryDetailsID = dbo.Ass_PurchaseDetails.N_AssetInventoryDetailsID left outer join Ass_Depreciation on Ass_Depreciation.N_ItemID =Ass_AssetMaster.N_ItemID and Ass_Depreciation.N_CompanyID=Ass_AssetMaster.N_CompanyID Where Ass_AssetMaster.N_ItemID=" + N_ItemID + " group by dbo.Ass_AssetMaster.N_ItemID,dbo.Ass_AssetMaster.X_ItemCode, dbo.Ass_AssetMaster.N_BookValue, dbo.Ass_AssetMaster.N_LifePeriod, dbo.Ass_PurchaseDetails.D_PurchaseDate, dbo.Ass_AssetMaster.N_BranchID, dbo.Ass_PurchaseDetails.N_Price,dbo.Ass_AssetMaster.D_PlacedDate,dbo.Ass_AssetMaster.N_CategoryID,dbo.Ass_AssetMaster.N_SalvageAmt";
-            DepTable = dLayer.ExecuteDataTable(SqlCmd1, Params, connection,transaction);
+            SqlCmd1 = "SELECT max(dbo.Ass_Depreciation.D_EndDate) AS  D_EndDate,dbo.Ass_AssetMaster.N_ItemID,dbo.Ass_AssetMaster.X_ItemCode, dbo.Ass_AssetMaster.N_BookValue, dbo.Ass_AssetMaster.N_LifePeriod, dbo.Ass_PurchaseDetails.D_PurchaseDate, dbo.Ass_AssetMaster.N_BranchID, dbo.Ass_PurchaseDetails.N_Price,dbo.Ass_AssetMaster.D_PlacedDate,dbo.Ass_AssetMaster.N_CategoryID,dbo.Ass_AssetMaster.N_SalvageAmt FROM   dbo.Ass_AssetMaster INNER JOIN dbo.Ass_PurchaseDetails ON dbo.Ass_AssetMaster.N_AssetInventoryDetailsID = dbo.Ass_PurchaseDetails.N_AssetInventoryDetailsID left outer join Ass_Depreciation on Ass_Depreciation.N_ItemID =Ass_AssetMaster.N_ItemID and Ass_Depreciation.N_CompanyID=Ass_AssetMaster.N_CompanyID Where Ass_AssetMaster.N_ItemID=" + N_ItemID + " group by dbo.Ass_AssetMaster.N_ItemID,dbo.Ass_AssetMaster.X_ItemCode, dbo.Ass_AssetMaster.N_BookValue, dbo.Ass_AssetMaster.N_LifePeriod, dbo.Ass_PurchaseDetails.D_PurchaseDate, dbo.Ass_AssetMaster.N_BranchID, dbo.Ass_PurchaseDetails.N_Price,dbo.Ass_AssetMaster.D_PlacedDate,dbo.Ass_AssetMaster.N_CategoryID,dbo.Ass_AssetMaster.N_SalvageAmt";
+            DepTable = dLayer.ExecuteDataTable(SqlCmd1, Params, connection, transaction);
 
             if (DepTable.Rows.Count > 0)
             {
@@ -2272,8 +2275,8 @@ public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID,
 
                 //-------- SUSPENSION 
 
-                SqlCmd2="select N_SuspendID,D_FromDate,D_ToDate from Ass_Suspension Where N_ItemID ='" + N_ItemID + "'  and D_FromDate <='" + StartDate.ToString("s") + "'";
-                AssSuspensionTable= dLayer.ExecuteDataTable(SqlCmd2, Params, connection,transaction);
+                SqlCmd2 = "select N_SuspendID,D_FromDate,D_ToDate from Ass_Suspension Where N_ItemID ='" + N_ItemID + "'  and D_FromDate <='" + StartDate.ToString("s") + "'";
+                AssSuspensionTable = dLayer.ExecuteDataTable(SqlCmd2, Params, connection, transaction);
 
                 if (D_PlacedDate <= EndDate)
                 {
@@ -2328,14 +2331,14 @@ public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID,
                         }
 
                         //--Taking Current book value amount
-                        SqlCmd3="select MAX(N_LifePeriod) AS N_LifePeriod, SUM(N_Amount) AS N_BookValue from Ass_Transactions where X_Type <> 'Depreciation' and D_EndDate <='" + EndDate.ToString("yyyy-MM-dd") + "' and  N_ItemID=" + N_ItemID;
-                        AssTransactionTable = dLayer.ExecuteDataTable(SqlCmd3, Params, connection,transaction);
+                        SqlCmd3 = "select MAX(N_LifePeriod) AS N_LifePeriod, SUM(N_Amount) AS N_BookValue from Ass_Transactions where X_Type <> 'Depreciation' and D_EndDate <='" + EndDate.ToString("yyyy-MM-dd") + "' and  N_ItemID=" + N_ItemID;
+                        AssTransactionTable = dLayer.ExecuteDataTable(SqlCmd3, Params, connection, transaction);
 
                         BookValue = this.getVAL(AssTransactionTable.Rows[0]["N_BookValue"].ToString());
                         LifePeriod = this.getVAL(AssTransactionTable.Rows[0]["N_LifePeriod"].ToString());
 
                         //--Taking Total Depreciation processed amount
-                        TotalDepAmt = this.getVAL(dLayer.ExecuteScalar("select SUM(N_Amount) from Ass_Depreciation where N_ItemID = " + N_ItemID,Params,connection,transaction).ToString());
+                        TotalDepAmt = this.getVAL(dLayer.ExecuteScalar("select SUM(N_Amount) from Ass_Depreciation where N_ItemID = " + N_ItemID, Params, connection, transaction).ToString());
 
                         //--Check Total Dep Amount with Book value
                         if (BookValue >= TotalDepAmt)
@@ -2348,15 +2351,15 @@ public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID,
                                 TotalDays = 30;
                             else
                                 TotalDays = this.getIntVAL(ts.Days.ToString()) + 1;
-                            
+
                             DepreciationAmt = Math.Round(((this.getVAL((TotalDays).ToString()) / (LifePeriod * 12.0 * 30.0))) * BookValue, 2);
-                            
+
                             double SalvageAmt = this.getVAL(DepTable.Rows[0]["N_SalvageAmt"].ToString());
 
                             if (DepreciationAmt > BookValue - SalvageAmt - TotalDepAmt)
-                                DepreciationAmt = BookValue - SalvageAmt - TotalDepAmt; 
+                                DepreciationAmt = BookValue - SalvageAmt - TotalDepAmt;
 
-   
+
                             if (BookValue - TotalDepAmt + DepreciationAmt > SalvageAmt)
                             {
                                 DataTable DepreciationTable = new DataTable();
@@ -2418,14 +2421,14 @@ public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID,
                                 row1["X_Type"] = "Depreciation";
                                 row1["N_Amount"] = DepreciationAmt;
                                 row1["N_ItemID"] = N_ItemID;
-                                row1["N_AssetInventoryDetailsID"] = N_DprID;       
+                                row1["N_AssetInventoryDetailsID"] = N_DprID;
                                 TransTable.Rows.Add(row1);
 
                                 int N_TransID = dLayer.SaveData("Ass_Transactions", "N_ActionID", TransTable, connection, transaction);
                                 if (N_TransID <= 0)
                                 {
                                     transaction.Rollback();
-                                }  
+                                }
                             }
                         }
 
@@ -2515,7 +2518,7 @@ public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID,
         public string GetTempFilePath();
         public string RandomString(int length = 6);
         public bool writeImageFile(string FileString, string Path, string Name);
-        public bool CheckVersion(string xSrcVersion,IDataAccessLayer dLayer,SqlConnection connection);
-        public bool Depreciation(IDataAccessLayer dLayer,int N_CompanyID,int N_FnYearID,int N_UserID, int N_ItemID, DateTime D_EndDate, String X_DeprNo,SqlConnection connection, SqlTransaction transaction);
+        public bool CheckVersion(string xSrcVersion, IDataAccessLayer dLayer, SqlConnection connection);
+        public bool Depreciation(IDataAccessLayer dLayer, int N_CompanyID, int N_FnYearID, int N_UserID, int N_ItemID, DateTime D_EndDate, String X_DeprNo, SqlConnection connection, SqlTransaction transaction);
     }
 }
