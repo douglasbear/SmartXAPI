@@ -170,14 +170,14 @@ namespace SmartxAPI.Controllers
 
             if (isMyApprovals)
             {
-                isMyApprovalsCriteria = " and N_VacationGroupID in ( select N_TransID from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_FnYearID=@nFnyearID and X_Type='LEAVE REQUEST' and N_NextApproverID=" + myFunctions.GetUserID(User) + ") ";
+                isMyApprovalsCriteria = " and N_VacationGroupID in ( select N_TransID from vw_ApprovalPending where N_CompanyID=@nCompanyID and X_Type='LEAVE REQUEST' and N_NextApproverID=" + myFunctions.GetUserID(User) + ") ";
             }
 
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") [Emp Code],[Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays,N_VacationGroupID,ISNULL(B_IsSaveDraft,0) AS B_IsSaveDraft  From vw_PayVacationList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnyearID  " + isAdjestmentCriteria + isMyApprovalsCriteria + Searchkey + "  group by [Emp Code],[Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,N_VacationGroupID,B_IsSaveDraft  " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") [Emp Code],[Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays,N_VacationGroupID,ISNULL(B_IsSaveDraft,0) AS B_IsSaveDraft  From vw_PayVacationList where N_CompanyID=@nCompanyID   " + isAdjestmentCriteria + isMyApprovalsCriteria + Searchkey + "  group by [Emp Code],[Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,N_VacationGroupID,B_IsSaveDraft  " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") [Emp Code],[Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays,N_VacationGroupID,ISNULL(B_IsSaveDraft,0) AS B_IsSaveDraft From vw_PayVacationList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnyearID " + isAdjestmentCriteria + isMyApprovalsCriteria + Searchkey + " and N_VacationGroupID not in (select top(" + Count + ") N_VacationGroupID from vw_PayVacationList where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnyearID " + isAdjestmentCriteria + isMyApprovalsCriteria + Searchkey + "   group by [Emp Code],[Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,N_VacationGroupID,B_IsSaveDraft order by CAST(ISNULL(B_IsSaveDraft,0) as int) desc,N_VacationGroupID desc)  group by [Emp Code],[Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,N_VacationGroupID,B_IsSaveDraft " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") [Emp Code],[Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays,N_VacationGroupID,ISNULL(B_IsSaveDraft,0) AS B_IsSaveDraft From vw_PayVacationList where N_CompanyID=@nCompanyID  " + isAdjestmentCriteria + isMyApprovalsCriteria + Searchkey + " and N_VacationGroupID not in (select top(" + Count + ") N_VacationGroupID from vw_PayVacationList where  N_CompanyID=@nCompanyID  " + isAdjestmentCriteria + isMyApprovalsCriteria + Searchkey + "   group by [Emp Code],[Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,N_VacationGroupID,B_IsSaveDraft order by CAST(ISNULL(B_IsSaveDraft,0) as int) desc,N_VacationGroupID desc)  group by [Emp Code],[Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,N_VacationGroupID,B_IsSaveDraft " + xSortBy;
 
             SortedList OutPut = new SortedList();
 
@@ -188,7 +188,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                    sqlCommandCount = "select count(*) as N_Count from (select N_VacationGroupID From vw_PayVacationList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnyearID " + isAdjestmentCriteria + Searchkey + isMyApprovalsCriteria + " group by N_VacationGroupID ) as tbl";
+                    sqlCommandCount = "select count(*) as N_Count from (select N_VacationGroupID From vw_PayVacationList where N_CompanyID=@nCompanyID " + isAdjestmentCriteria + Searchkey + isMyApprovalsCriteria + " group by N_VacationGroupID ) as tbl";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
                     dt = api.Format(dt);
                     OutPut.Add("Details", api.Format(dt));
@@ -630,6 +630,13 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Warning("Vacation already requested in this date range."));
                     }
 
+                    if(myFunctions.getIntVAL(MasterRow["B_IsAdjustEntry"].ToString())==1)
+                     if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, Convert.ToDateTime(DetailTable.Rows[0]["D_VacDateFrom"].ToString()), dLayer, connection, transaction))
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error(User, "As of Date must be in the active Financial Year."));
+                    }
+
                     EmpParams.Add("@nCompanyID", nCompanyID);
                     EmpParams.Add("@nEmpID", nEmpID);
                     EmpParams.Add("@nFnYearID", nFnYearID);
@@ -651,7 +658,7 @@ namespace SmartxAPI.Controllers
 
                     if (x_VacationGroupCode == "@Auto")
                     {
-                        if (!checkSalaryProcess(DetailTable, nCompanyID, nFnYearID, nEmpID, EmpParams, connection, transaction))
+                        if (!checkSalaryProcess(DetailTable, nCompanyID, nFnYearID, nEmpID, EmpParams,myFunctions.getIntVAL(MasterRow["B_IsAdjustEntry"].ToString()), connection, transaction))
                         {
                             transaction.Rollback();
                             return Ok(api.Warning("Salary Already Processed!"));
@@ -982,7 +989,7 @@ namespace SmartxAPI.Controllers
 
                         myAttachments.DeleteAttachment(dLayer, 1, n_VacationGroupID, EmpID, nFnYearID, this.FormID, User, transaction, connection);
                         transaction.Commit();
-                        return Ok(api.Success("Leave Request " + " Successfully"));
+                        return Ok(api.Success("Leave Request Deleted Successfully"));
                     }
 
 
@@ -1012,12 +1019,13 @@ namespace SmartxAPI.Controllers
         //     }
         // }
 
-        private bool checkSalaryProcess(DataTable DetailTable, int nCompanyID, int nFnYearID, int nEmpID, SortedList Params, SqlConnection connection, SqlTransaction transaction)
+        private bool checkSalaryProcess(DataTable DetailTable, int nCompanyID, int nFnYearID, int nEmpID, SortedList Params,int isAdj, SqlConnection connection, SqlTransaction transaction)
         {
             foreach (DataRow var in DetailTable.Rows)
             {
                 bool nonpaidLeave = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select b_DeductSalary from Pay_VacationType where N_VacTypeID=" + myFunctions.getIntVAL(var["n_VacTypeID"].ToString()) + "and N_CompanyID=" + nCompanyID + "", Params, connection, transaction).ToString());
-                if (!nonpaidLeave) continue;
+                if(isAdj==0)
+                if (!nonpaidLeave ) continue;
 
                 var dDateFrom = var["d_VacDateFrom"].ToString();
                 var dDateTo = var["d_VacDateTo"].ToString();
