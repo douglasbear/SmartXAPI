@@ -796,6 +796,11 @@ namespace SmartxAPI.Controllers
                     DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.N_FormID, nPayReceiptId, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
                     Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
                     SqlTransaction transaction = connection.BeginTransaction();
+
+                    string X_Criteria = "N_PayReceiptId=" + nPayReceiptId + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
+                    string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
+
                     if (xType == "SA")
                     {
 
@@ -813,25 +818,25 @@ namespace SmartxAPI.Controllers
  
                     }
 
-                    SortedList deleteParams = new SortedList()
-                                {
-                                    {"N_CompanyID",nCompanyId},
-                                    {"X_TransType",xType},
-                                    {"N_VoucherID",nPayReceiptId}
-                                };
-                    int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
+                    // SortedList deleteParams = new SortedList()
+                    //             {
+                    //                 {"N_CompanyID",nCompanyId},
+                    //                 {"X_TransType",xType},
+                    //                 {"N_VoucherID",nPayReceiptId}
+                    //             };
+                    // int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
 
-                    if (result > 0)
-                    {
-                        myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnYearID, 66, User, transaction, connection);
+                    // if (result > 0)
+                    // {
+                    //     myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnYearID, 66, User, transaction, connection);
 
-                        transaction.Commit();
-                        return Ok(api.Success("Sales Receipt Deleted"));
-                    }
-                    else
-                    {
+                    //     transaction.Commit();
+                    //     return Ok(api.Success("Sales Receipt Deleted"));
+                    // }
+                    // else
+                    // {
 
-                    }
+                    // }
                     // }
                     //     else
                     // {
@@ -847,6 +852,32 @@ namespace SmartxAPI.Controllers
                     //         return Ok(api.Error(User, "Unable to delete Sales Receipt"));
                     //     }
                     // }
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "SALES RECEIPT", nPayReceiptId, TransRow["X_VoucherNo"].ToString(), ProcStatus, "Inv_PayReceipt", X_Criteria, "", User, dLayer, connection, transaction);
+                    if (status != "Error")
+                    {
+                        if (ButtonTag == "6" || ButtonTag == "0")
+                        {
+                            SortedList deleteParams = new SortedList()
+                                {
+                                    {"N_CompanyID",nCompanyId},
+                                    {"X_TransType",xType},
+                                    {"N_VoucherID",nPayReceiptId}
+                                };
+                            int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
+
+                            if (result > 0)
+                            {
+                                myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnYearID, 66, User, transaction, connection);
+                            }
+                        }
+                        transaction.Commit();
+                        return Ok(api.Success("Sales Receipt " + status + " Successfully"));
+                    }
+                    else
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error(User, "Unable to delete Sales Receipt"));
+                    }
 
                 }
 

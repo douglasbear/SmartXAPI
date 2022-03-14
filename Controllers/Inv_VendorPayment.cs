@@ -586,15 +586,6 @@ namespace SmartxAPI.Controllers
                         else
                             myFunctions.AddNewColumnToDataTable(DetailTable, "n_PayReceiptDetailsId", typeof(int), 0);
 
-
-
-
-
-
-
-
-
-
                         // row["N_CompanyID"] = myFunctions.getIntVAL(Master["n_CompanyID"].ToString());
                         // row["N_PayReceiptId"] = n_PayReceiptID;
                         // row["N_InventoryId"] = n_PayReceiptID;
@@ -687,37 +678,67 @@ namespace SmartxAPI.Controllers
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
 
-                    if (ButtonTag == "6" || ButtonTag == "0")
-                    {
-                        if (nPayReceiptId > 0)
-                        {
-                            SortedList DeleteParams = new SortedList(){
-                                    {"N_CompanyID",myFunctions.GetCompanyID(User)},
-                                    {"X_TransType",xTransType},
-                                    {"N_VoucherID",nPayReceiptId}};
+                    // if (ButtonTag == "6" || ButtonTag == "0")
+                    // {
+                    //     if (nPayReceiptId > 0)
+                    //     {
+                    //         SortedList DeleteParams = new SortedList(){
+                    //                 {"N_CompanyID",myFunctions.GetCompanyID(User)},
+                    //                 {"X_TransType",xTransType},
+                    //                 {"N_VoucherID",nPayReceiptId}};
 
-                            int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection,transaction);
-                            if (result > 0)
+                    //         int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection,transaction);
+                    //         if (result > 0)
+                    //         {
+                    //             myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnyearID,67, User, transaction, connection);
+                    //             transaction.Commit();
+                    //             return Ok(api.Success("Vendor Payment Deleted"));
+                    //         }         
+                    //     }
+                    // }
+                    // else
+                    // {
+                    //     string status = myFunctions.UpdateApprovals(Approvals, nFnyearID, "PURCHASE PAYMENT", nPayReceiptId, TransRow["X_VoucherNo"].ToString(), ProcStatus, "Inv_PayReceipt", X_Criteria, "", User, dLayer, connection, transaction);
+                    //     if (status != "Error")
+                    //     {
+                    //         transaction.Commit();
+                    //         return Ok(api.Success("Vendor Payment " + status + " Successfully"));
+                    //     }
+                    //     else
+                    //     {
+                    //         transaction.Rollback();
+                    //         return Ok(api.Error(User, "Unable to delete Vendor Payment"));
+                    //     }
+                    // }
+
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnyearID, "PURCHASE PAYMENT", nPayReceiptId, TransRow["X_VoucherNo"].ToString(), ProcStatus, "Inv_PayReceipt", X_Criteria, "", User, dLayer, connection, transaction);
+                    if (status != "Error")
+                    {
+                        if (ButtonTag == "6" || ButtonTag == "0")
+                        {
+                            if (nPayReceiptId > 0)
                             {
-                                myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnyearID,67, User, transaction, connection);
-                                transaction.Commit();
-                                return Ok(api.Success("Vendor Payment Deleted"));
-                            }         
+                                SortedList DeleteParams = new SortedList(){
+                                        {"N_CompanyID",myFunctions.GetCompanyID(User)},
+                                        {"X_TransType",xTransType},
+                                        {"N_VoucherID",nPayReceiptId}};
+
+                                int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection,transaction);
+                                if (result > 0)
+                                {
+                                    myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnyearID,67, User, transaction, connection);
+                                    transaction.Commit();
+                                    return Ok(api.Success("Vendor Payment Deleted"));
+                                }         
+                            }
                         }
+                        transaction.Commit();
+                        return Ok(api.Success("Vendor Payment " + status + " Successfully"));
                     }
                     else
                     {
-                        string status = myFunctions.UpdateApprovals(Approvals, nFnyearID, "PURCHASE PAYMENT", nPayReceiptId, TransRow["X_VoucherNo"].ToString(), ProcStatus, "Inv_PayReceipt", X_Criteria, "", User, dLayer, connection, transaction);
-                        if (status != "Error")
-                        {
-                            transaction.Commit();
-                            return Ok(api.Success("Vendor Payment " + status + " Successfully"));
-                        }
-                        else
-                        {
-                            transaction.Rollback();
-                            return Ok(api.Error(User, "Unable to delete Vendor Payment"));
-                        }
+                        transaction.Rollback();
+                        return Ok(api.Error(User, "Unable to delete Vendor Payment"));
                     }
                 }
                 return Ok(api.Warning("Unable to delete Vendor Payment"));

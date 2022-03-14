@@ -562,24 +562,24 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "customerKey", typeof(string), "");
-                    if (crmcustomerID > 0)
-                    {
-                        dt.Rows[0]["x_CustomerCode"] = "@Auto";
-
-                    }
-                    else
-                    {
-                        string seperator = "$e$-!";
-                        dt.Rows[0]["customerKey"] = myFunctions.EncryptString(myFunctions.GetCompanyID(User).ToString()) + seperator + myFunctions.EncryptString(dt.Rows[0]["n_CustomerID"].ToString());
-                    }
-                    dt.AcceptChanges();
-
                     if (dt.Rows.Count == 0)
                     {
                         return Ok(api.Notice("No Results Found"));
                     }
                     else
                     {
+                        if (crmcustomerID > 0)
+                        {
+                            dt.Rows[0]["x_CustomerCode"] = "@Auto";
+
+                        }
+                        else
+                        {
+                            string seperator = "$e$-!";
+                            dt.Rows[0]["customerKey"] = myFunctions.EncryptString(myFunctions.GetCompanyID(User).ToString()) + seperator + myFunctions.EncryptString(dt.Rows[0]["n_CustomerID"].ToString());
+                        }
+                        dt.AcceptChanges();
+                    
                         DataTable Attachments = myAttachments.ViewAttachment(dLayer, nCustomerID, 0, 51, nFnYearID, User, connection);
                         Attachments = api.Format(Attachments, "attachments");
                         dt = api.Format(dt, "master");
