@@ -1777,11 +1777,19 @@ namespace SmartxAPI.GeneralFunctions
                         string TableID = dLayer.ExecuteScalar("select X_IDName from vw_ScreenTables where N_FormID=@nFormID", NewParam, connection, transaction).ToString();
 
                         dLayer.ExecuteScalar("update " + TableName + " set B_IssaveDraft=0 where " + TableID + "=@nTransID and N_CompanyID=@nCompanyID", NewParam, connection, transaction);
+                        object UserObj = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=108", NewParam, connection, transaction);
+                        if (UserObj == null)
+                            UserObj = 0;
 
+<<<<<<< HEAD
                         EntrUsrID = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=108", NewParam, connection, transaction);
                         if(EntrUsrID!=null)
                             N_EntrUsrID=this.getIntVAL(EntrUsrID.ToString());
                         SendApprovalMail(N_EntrUsrID, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User);
+=======
+                        int EntrUsrID = this.getIntVAL(UserObj.ToString());
+                        SendApprovalMail(EntrUsrID, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User);
+>>>>>>> 44fc12a5960f8ead5c14ef56ea76775589890888
                     }
                 }
             }
@@ -2269,6 +2277,10 @@ namespace SmartxAPI.GeneralFunctions
             }
             return true;
         }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 44fc12a5960f8ead5c14ef56ea76775589890888
         public bool Depreciation(IDataAccessLayer dLayer, int N_CompanyID, int N_FnYearID, int N_UserID, int N_ItemID, DateTime D_EndDate, String X_DeprNo, SqlConnection connection, SqlTransaction transaction)
         {
 
@@ -2906,9 +2918,12 @@ namespace SmartxAPI.GeneralFunctions
         public bool writeImageFile(string FileString, string Path, string Name);
         public bool CheckVersion(string xSrcVersion, IDataAccessLayer dLayer, SqlConnection connection);
         public bool Depreciation(IDataAccessLayer dLayer, int N_CompanyID, int N_FnYearID, int N_UserID, int N_ItemID, DateTime D_EndDate, String X_DeprNo, SqlConnection connection, SqlTransaction transaction);
+<<<<<<< HEAD
         public string EncryptStringForUrl(String input, System.Text.Encoding encoding);
         public string DecryptStringFromUrl(String hexInput, System.Text.Encoding encoding);
         public bool CreatePortalUser(int nCompanyID, int nBranchID, string xPartyName, string emailID, string type, string partyCode, int partyID, bool active, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public bool SendMailWithAttachments(int nFormID, int nFnYearID, int nPkeyID,int nPartyID ,string partyName, string Subject, string docNumber, string mail, string xBody, IDataAccessLayer dLayer, ClaimsPrincipal User);
+=======
+>>>>>>> 44fc12a5960f8ead5c14ef56ea76775589890888
     }
 }
