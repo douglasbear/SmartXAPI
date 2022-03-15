@@ -118,15 +118,6 @@ namespace SmartxAPI.Controllers
 
                     // string Criteria = " Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_SupervisorID=@nEmpID and N_EmpID<>@nEmpID "; //and N_EmpID<>@nEmpID and (N_ManagerID=@nEmpID or N_SupervisorID=@nEmpID)
                     string Criteria = " Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ";
-<<<<<<< HEAD
-                    int PositionID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_PositionID from Pay_employee where N_EmpID=" + nEmpID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", Params, connection).ToString());
-                    if (PositionID > 0)
-                    {
-                        string xPattern = dLayer.ExecuteScalar("select X_LevelPattern from Pay_Position Where  N_CompanyID=" + nCompanyID + " and N_PositionID=" + PositionID + " ", Params, connection).ToString();
-                        if(xPattern!=null && xPattern!="")
-                        Pattern = " and N_EmpID<>"+nEmpID +" and Left(X_LevelPattern,Len(" + xPattern + "))=" + xPattern;
-                    }
-=======
                     // int PositionID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_PositionID from Pay_employee where N_EmpID=" + nEmpID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", Params, connection).ToString());
                     // if (PositionID > 0)
                     // {
@@ -136,7 +127,6 @@ namespace SmartxAPI.Controllers
                     // }
 
                     object nDepartmentID= myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(N_DepartmentID,null) from Pay_Employee Where  N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and N_FnYearID=@nFnYearID ", Params, connection).ToString());
->>>>>>> 44fc12a5960f8ead5c14ef56ea76775589890888
 
                     
 
