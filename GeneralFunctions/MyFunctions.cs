@@ -1990,6 +1990,14 @@ namespace SmartxAPI.GeneralFunctions
                         X_Action = "Delete";
                         B_IsDelete = true;
                         break;
+                    case 64://Sales
+                    case 65://Purchase
+                    case 66://Sales Receipt
+                    case 67://Vendor Payment
+                        DeleteStatus=1;
+                        X_Action = "Delete";
+                        B_IsDelete = true;
+                        break;
                     default:
                         DeleteStatus = dLayer.ExecuteNonQuery("DELETE FROM " + X_ScreenTable + " where " + X_Criteria, connection, transaction);
                         X_Action = "Delete";
