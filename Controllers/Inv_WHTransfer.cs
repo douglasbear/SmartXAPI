@@ -129,6 +129,8 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     string sql = pageQry + sqlComandText + pageQryEnd;
                     dt = dLayer.ExecuteDataTable(sql, Params, connection);
+                   
+                    dt.AcceptChanges();
                     dt = myFunctions.AddNewColumnToDataTable(dt, "SubItems", typeof(DataTable), null);
 
                     foreach (DataRow item in dt.Rows)
