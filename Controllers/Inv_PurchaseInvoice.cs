@@ -330,8 +330,8 @@ namespace SmartxAPI.Controllers
                     }
 
                     //PURCHASE INVOICE DETAILS
-                    bool B_MRNVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", "X_UserCategory", dLayer, connection);
-
+                    object mrnCount = dLayer.ExecuteScalar("SELECT count(Sec_UserPrevileges.N_MenuID) as Count FROM Sec_UserPrevileges INNER JOIN Sec_UserCategory ON Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID and Sec_UserPrevileges.N_MenuID=555 and Sec_UserCategory.N_CompanyID="+nCompanyID+" and Sec_UserPrevileges.B_Visible=1", connection);
+                    bool B_MRNVisible =myFunctions.getIntVAL(mrnCount.ToString())>0?true:false;
                     if (nPurchaseNO != null)
                     {
                         if (B_MRNVisible)
@@ -595,7 +595,9 @@ namespace SmartxAPI.Controllers
                         }
                     }
                     MasterTable.AcceptChanges();
-                    bool B_MRNVisible = myFunctions.CheckPermission(nCompanyID, 555, "Administrator", "X_UserCategory", dLayer, connection, transaction);
+
+                    object mrnCount = dLayer.ExecuteScalar("SELECT count(Sec_UserPrevileges.N_MenuID) as Count FROM Sec_UserPrevileges INNER JOIN Sec_UserCategory ON Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID and Sec_UserPrevileges.N_MenuID=555 and Sec_UserCategory.N_CompanyID="+nCompanyID+" and Sec_UserPrevileges.B_Visible=1", connection, transaction);
+                    bool B_MRNVisible =myFunctions.getIntVAL(mrnCount.ToString())>0?true:false;
 
                     if (B_MRNVisible && n_MRNID != 0) Dir_Purchase = 0;
 
@@ -997,7 +999,8 @@ namespace SmartxAPI.Controllers
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
 
-                    bool B_MRNVisible = myFunctions.CheckPermission(nCompanyID, 555, "Administrator", "X_UserCategory", dLayer, connection, transaction);
+                    object mrnCount = dLayer.ExecuteScalar("SELECT count(Sec_UserPrevileges.N_MenuID) as Count FROM Sec_UserPrevileges INNER JOIN Sec_UserCategory ON Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID and Sec_UserPrevileges.N_MenuID=555 and Sec_UserCategory.N_CompanyID="+nCompanyID+" and Sec_UserPrevileges.B_Visible=1", connection, transaction);
+                    bool B_MRNVisible =myFunctions.getIntVAL(mrnCount.ToString())>0?true:false;
 
                     if (ButtonTag == "6" || ButtonTag == "0")
                     {
