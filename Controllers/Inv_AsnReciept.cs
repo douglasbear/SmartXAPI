@@ -137,6 +137,7 @@ namespace SmartxAPI.Controllers
                     int nAsnID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AsnID"].ToString());
                     int N_CustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
+                    int N_BranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
                     string X_AsnDocNo = "";
                     var values = MasterTable.Rows[0]["X_AsnDocNo"].ToString();
 
@@ -188,6 +189,21 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to save"));
 
                     }
+
+                     SortedList ProductParams = new SortedList();
+                            ProductParams.Add("N_CompanyID", nCompanyID);
+                            ProductParams.Add("N_ASNID", nAsnID);
+                            ProductParams.Add("N_FnYearID", N_FnYearID);
+                            ProductParams.Add("N_BranchID", N_BranchID);
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_ASNProductInsert", ProductParams, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
 
 
                      transaction.Commit();
