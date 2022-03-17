@@ -167,14 +167,14 @@ namespace SmartxAPI.Controllers
                     bool b_TransferProducts = false;
                     int n_LocationFromID = 0;
                     string TransferSql="";
-                    if (LocationCount != null && limit != null)
-                    {
-                        if (myFunctions.getIntVAL(LocationCount.ToString()) >= myFunctions.getIntVAL(limit.ToString()))
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, "Location Limit exceeded!!!"));
-                        }
-                    }
+                    // if (LocationCount != null && limit != null)
+                    // {
+                    //     if (myFunctions.getIntVAL(LocationCount.ToString()) >= myFunctions.getIntVAL(limit.ToString()))
+                    //     {
+                    //         transaction.Rollback();
+                    //         return Ok(_api.Error(User, "Location Limit exceeded!!!"));
+                    //     }
+                    // }
                     if (MasterTable.Columns.Contains("b_TransferProducts"))
                     {
                         b_TransferProducts = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_TransferProducts"].ToString());
