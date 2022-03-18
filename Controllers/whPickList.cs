@@ -197,45 +197,37 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        // [HttpDelete("delete")]
-        // public ActionResult DeleteData(int nEvalID, int nCompanyID, int nFnYearID)
-        // {
-        //     int Results = 0;
-        //     try
-        //     {
-        //         SortedList QueryParams = new SortedList();
-        //         QueryParams.Add("@nCompanyID", nCompanyID);
-        //         QueryParams.Add("@nFnYearID", nFnYearID);
-        //         QueryParams.Add("@nEvalID", nEvalID);
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nPickListID, int nCompanyID, int nFnYearID)
+        {
+            int Results = 0;
+            try
+            {
+                SortedList QueryParams = new SortedList();
+                QueryParams.Add("@nCompanyID", nCompanyID);
+                QueryParams.Add("@nFnYearID", nFnYearID);
+                QueryParams.Add("@nPickListID", nPickListID);
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    Results = dLayer.DeleteData("Wh_PickList", "N_PickListID", nPickListID, "", connection);
 
-        //             Results = dLayer.DeleteData("Pay_EmpEvaluation", "N_EvalID", nEvalID, "", connection);
-
-
-        //             if (Results > 0)
-        //             {
-        //                 dLayer.DeleteData("Pay_EmpEvaluationDetails", "N_EvalID", nEvalID, "", connection);
-        //                 return Ok(_api.Success("Employee Evaluation deleted"));
-        //             }
-        //             else
-        //             {
-        //                 return Ok(_api.Error(User,"Unable to delete"));
-        //             }
-
-        //         }
-
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return Ok(_api.Error(User,ex));
-        //     }
-
-
-        // }
-
-
-           }
+                    if (Results > 0)
+                    {
+                        dLayer.DeleteData("Wh_PickListDetails", "N_PickListID", nPickListID, "", connection);
+                        return Ok(_api.Success("Warehouse Picklist deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error(User,"Unable to delete"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User,ex));
+            }
+        }
+    }
 }
     
