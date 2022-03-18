@@ -670,23 +670,56 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Success("Purchase Approved " + "-" + values));
                     }
 
-                    if (values == "@Auto")
-                    {
-                        N_SaveDraft = myFunctions.getIntVAL(masterRow["b_IsSaveDraft"].ToString());
+                    // if (values == "@Auto")
+                    // {
+                    //     N_SaveDraft = myFunctions.getIntVAL(masterRow["b_IsSaveDraft"].ToString());
 
-                        Params.Add("N_CompanyID", nCompanyID);
-                        Params.Add("N_YearID", nFnYearID);
-                        Params.Add("N_FormID", this.N_FormID);
-                        Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
+                    //     Params.Add("N_CompanyID", nCompanyID);
+                    //     Params.Add("N_YearID", nFnYearID);
+                    //     Params.Add("N_FormID", this.N_FormID);
+                    //     Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
 
-                        InvoiceNo = dLayer.GetAutoNumber("Inv_Purchase", "x_InvoiceNo", Params, connection, transaction);
-                        if (InvoiceNo == "")
+                    //     InvoiceNo = dLayer.GetAutoNumber("Inv_Purchase", "x_InvoiceNo", Params, connection, transaction);
+                    //     if (InvoiceNo == "")
+                    //     {
+                    //         transaction.Rollback();
+                    //         return Ok(_api.Error(User, "Unable to generate Invoice Number"));
+                    //     }
+                    //     MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
+                    // }
+                    if (N_PurchaseID == 0 && values != "@Auto")
                         {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, "Unable to generate Invoice Number"));
+                            object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_Purchase Where X_InvoiceNo ='" + values + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                            if (N_DocNumber == null)
+                            {
+                                N_DocNumber = 0;
+                            }
+                            if (myFunctions.getVAL(N_DocNumber.ToString()) >= 1)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, "Invoice number already in use"));
+                            }
                         }
-                        MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
-                    }
+                        if (values == "@Auto")
+                        {
+                            Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
+                            Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
+                            Params.Add("N_FormID", this.N_FormID);
+
+                            while (true)
+                            {
+                                InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                                object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Purchase Where X_InvoiceNo ='" + values + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                                if (N_Result == null)
+                                    break;
+                            }
+                            if (InvoiceNo == "")
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, "Unable to generate Invoice Number"));
+                            }
+                            MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
+                        }
 
                     if (N_PurchaseID > 0)
                     {
