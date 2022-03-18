@@ -687,9 +687,9 @@ namespace SmartxAPI.Controllers
                     //     }
                     //     MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
                     // }
-                    if (N_PurchaseID == 0 && InvoiceNo != "@Auto")
+                    if (N_PurchaseID == 0 && values != "@Auto")
                         {
-                            object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_Purchase Where X_InvoiceNo ='" + InvoiceNo + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                            object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_Purchase Where X_InvoiceNo ='" + values + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
                             if (N_DocNumber == null)
                             {
                                 N_DocNumber = 0;
@@ -700,7 +700,7 @@ namespace SmartxAPI.Controllers
                                 return Ok(_api.Error(User, "Invoice number already in use"));
                             }
                         }
-                        if (InvoiceNo == "@Auto")
+                        if (values == "@Auto")
                         {
                             Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
                             Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
@@ -709,7 +709,7 @@ namespace SmartxAPI.Controllers
                             while (true)
                             {
                                 InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
-                                object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Purchase Where X_InvoiceNo ='" + InvoiceNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                                object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Purchase Where X_InvoiceNo ='" + values + "' and N_CompanyID= " + nCompanyID, connection, transaction);
                                 if (N_Result == null)
                                     break;
                             }
