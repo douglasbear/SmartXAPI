@@ -182,7 +182,6 @@ namespace SmartxAPI.Controllers
                     DataTable DetailTable = new DataTable();
                     DataTable HistoryTable = new DataTable();
                     DataTable CommentsTable = new DataTable();
-                    DataTable TimeTable = new DataTable();
                     DataTable options = new DataTable();
 
 
@@ -192,7 +191,6 @@ namespace SmartxAPI.Controllers
                     string CommentsSql = "";
                     string ActionSql = "";
                     string nextAction = "";
-                    string timeSql = "";
 
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
@@ -217,51 +215,17 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nTaskID", TaskID);
                     MasterTable = _api.Format(MasterTable, "Master");
 
-
-                    // TimeTable
-                    timeSql = "select * from vw_Tsk_TaskStatus where N_TaskID=" + TaskID + " ";
-                    TimeTable = dLayer.ExecuteDataTable(timeSql, Params, connection);
-                    double seconds = 0;
-
-                    DateTime entryDateHold = new DateTime();
-                    DateTime entryDateStart = new DateTime();
-                    foreach (DataRow row in TimeTable.Rows)
-                    {
-
-
-                        if (row["N_Status"].ToString() == "7")
-                        {
-                            entryDateStart = Convert.ToDateTime(row["d_EntryDate"].ToString());
-
-                        }
-                        if (row["N_Status"].ToString() == "6")
-                        {
-                            entryDateHold = Convert.ToDateTime(row["d_EntryDate"].ToString());
-                        }
-                        if (row["N_Status"].ToString() == "6")
-                        {
-                            seconds = seconds + (entryDateHold - entryDateStart).TotalSeconds;
-                        }
-                    }
-
-
-
                     //Detail
                     DetailSql = "select * from vw_Tsk_TaskCurrentStatus where N_CompanyId=@nCompanyID and N_TaskID=@nTaskID ";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     nextAction = DetailTable.Rows[0]["X_NextActions"].ToString();
-                    DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "seconds", typeof(double), seconds);
-
                     DetailTable = _api.Format(DetailTable, "Details");
 
 
-
-
-
                     //History
-                    HistorySql = "select * from (select N_TaskID,N_CreaterID, D_EntryDate,X_HistoryText,X_Assignee,D_DueDate,D_TaskDate,X_Creator,N_Status from vw_Tsk_TaskStatus  where N_TaskID=" + TaskID + " " +
+                    HistorySql = "select * from (select N_TaskID,N_CreaterID, D_EntryDate,X_HistoryText,X_Assignee,D_DueDate,D_TaskDate,X_Creator from vw_Tsk_TaskStatus  where N_TaskID=" + TaskID + " " +
                      "union all " +
-                     "select N_ActionID as N_TaskID ,N_Creator as N_CreaterID,D_EntryDate,'Commented by #CREATOR on #TIME - ' + X_Comments as X_HistoryText,'' as x_Assignee,GETDATE() as D_DueDate,GETDATE() as D_TaskDate,X_UserName as X_Creator,'' as N_Status  from vw_Tsk_TaskComments  where N_ActionID=" + TaskID + "  ) as temptable order by D_EntryDate";
+                     "select N_ActionID as N_TaskID ,N_Creator as N_CreaterID,D_EntryDate,'Commented by #CREATOR on #TIME - ' + X_Comments as X_HistoryText,'' as x_Assignee,GETDATE() as D_DueDate,GETDATE() as D_TaskDate,X_UserName as X_Creator from vw_Tsk_TaskComments  where N_ActionID=" + TaskID + "  ) as temptable order by D_EntryDate";
                     HistoryTable = dLayer.ExecuteDataTable(HistorySql, Params, connection);
 
 
@@ -695,7 +659,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nTaskID, int nFnyearID)
+        public ActionResult DeleteData(int nTaskID,int nFnyearID)
         {
             int Results = 0;
             try
@@ -708,9 +672,9 @@ namespace SmartxAPI.Controllers
                     Results = dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskID, "", connection);
                     if (Results > 0)
                     {
-                        SqlTransaction transaction = connection.BeginTransaction();
+                         SqlTransaction transaction = connection.BeginTransaction();
 
-                        myAttachments.DeleteAttachment(dLayer, 1, nTaskID, nTaskID, nFnyearID, 1324, User, transaction, connection);
+                        myAttachments.DeleteAttachment(dLayer, 1, nTaskID, nTaskID, nFnyearID,1324, User, transaction, connection);
                         transaction.Commit();
                         return Ok(_api.Success("deleted"));
                     }
@@ -741,7 +705,7 @@ namespace SmartxAPI.Controllers
                 Criteria = " and N_AssigneeID=@nUserID ";
             }
 
-            string sqlCommandText = "Select case when x_ProjectName is null then X_TaskSummery else X_TaskSummery + ' - ' + x_ProjectName end  as title,'true' as allDay,cast(D_TaskDate as Date) as start, dateadd(dd,1,cast(D_DueDate as date)) as 'end', N_TaskID,X_TaskCode  from vw_Tsk_TaskCurrentStatus Where isnull(B_Closed,0) =0 and N_CompanyID= " + nCompanyID + " " + Criteria;
+            string sqlCommandText = "Select case when x_ProjectName is null then X_TaskSummery else X_TaskSummery + ' - ' + x_ProjectName end  as title,'true' as allDay,cast(D_TaskDate as Date) as start, dateadd(dd,1,cast(D_DueDate as date)) as 'end', N_TaskID,X_TaskCode  from vw_Tsk_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " " + Criteria;
 
 
             try

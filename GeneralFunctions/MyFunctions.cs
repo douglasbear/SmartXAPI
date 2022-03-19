@@ -1761,8 +1761,6 @@ namespace SmartxAPI.GeneralFunctions
                 dLayer.ExecuteNonQuery("SP_Log_Approval_Status @nCompanyID,@nFnYearID,@xTransType,@nTransID,@nFormID,@nApprovalUserID,@nApprovalUserCatID,@xAction,@xSystemName,@xTransCode,@dTransDate,@nApprovalLevelID,@nApprovalUserID,@nProcStatusID,@xComments,@xPartyName,@nNxtUserID", LogParams, connection, transaction);
 
                 object Count = null;
-                object EntrUsrID = null;
-                int N_EntrUsrID=0;
                 SortedList NewParam = new SortedList();
                 NewParam.Add("@nCompanyID", N_CompanyID);
                 NewParam.Add("@nFormID", N_FormID);
@@ -1778,10 +1776,8 @@ namespace SmartxAPI.GeneralFunctions
 
                         dLayer.ExecuteScalar("update " + TableName + " set B_IssaveDraft=0 where " + TableID + "=@nTransID and N_CompanyID=@nCompanyID", NewParam, connection, transaction);
 
-                        EntrUsrID = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=108", NewParam, connection, transaction);
-                        if(EntrUsrID!=null)
-                            N_EntrUsrID=this.getIntVAL(EntrUsrID.ToString());
-                        SendApprovalMail(N_EntrUsrID, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User);
+                        int EntrUsrID = this.getIntVAL(dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=108", NewParam, connection, transaction).ToString());
+                        SendApprovalMail(EntrUsrID, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User);
                     }
                 }
             }
@@ -2827,7 +2823,7 @@ namespace SmartxAPI.GeneralFunctions
                     {
                         if (xCriteria.ToString() != "")
                             critiria = critiria + " and " + xCriteria.ToString();
-                    };
+                    }
                     return true;
                 }
             }

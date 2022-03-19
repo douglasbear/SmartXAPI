@@ -122,7 +122,7 @@ namespace SmartxAPI.Controllers
                     if (PositionID > 0)
                     {
                         string xPattern = dLayer.ExecuteScalar("select X_LevelPattern from Pay_Position Where  N_CompanyID=" + nCompanyID + " and N_PositionID=" + PositionID + " ", Params, connection).ToString();
-                        if(xPattern!=null && xPattern!="")
+                        if(xPattern!=null)
                         Pattern = " and N_EmpID<>"+nEmpID +" and Left(X_LevelPattern,Len(" + xPattern + "))=" + xPattern;
                     }
 

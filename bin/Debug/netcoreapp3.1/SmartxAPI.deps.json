@@ -31,7 +31,6 @@
           "CrystalDecisions.Shared": "1.0.0",
           "CrystalDecisions.Windows.Forms": "1.0.0",
           "Dapper": "2.0.35",
-          "HtmlAgilityPack": "1.11.42",
           "Microsoft.AspNet.WebApi.Cors": "5.2.7",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "3.1.4",
           "Microsoft.AspNetCore.Cors": "2.2.0",
@@ -431,17 +430,6 @@
         },
         "compile": {
           "lib/netstandard2.0/Dapper.dll": {}
-        }
-      },
-      "HtmlAgilityPack/1.11.42": {
-        "runtime": {
-          "lib/netstandard2.0/HtmlAgilityPack.dll": {
-            "assemblyVersion": "1.11.42.0",
-            "fileVersion": "1.11.42.0"
-          }
-        },
-        "compile": {
-          "lib/netstandard2.0/HtmlAgilityPack.dll": {}
         }
       },
       "iTextSharp.LGPLv2.Core/1.7.5": {
@@ -3650,13 +3638,6 @@
       "sha512": "sha512-/xAgd8BO8EDnJ0sURWEV8LptHHvTKxoYiT63YUF2U/yWE2VyUCqR2jcrtEyNngT9Kjzppecz95UKiBla3PnR7g==",
       "path": "dapper/2.0.35",
       "hashPath": "dapper.2.0.35.nupkg.sha512"
-    },
-    "HtmlAgilityPack/1.11.42": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-LDc1bEfF14EY2DZzak4xvzWvbpNXK3vi1u0KQbBpLUN4+cx/VrvXhgCAMSJhSU5vz0oMfW9JZIR20vj/PkDHPA==",
-      "path": "htmlagilitypack/1.11.42",
-      "hashPath": "htmlagilitypack.1.11.42.nupkg.sha512"
     },
     "iTextSharp.LGPLv2.Core/1.7.5": {
       "type": "package",
