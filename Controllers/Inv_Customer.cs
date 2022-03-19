@@ -498,6 +498,7 @@ namespace SmartxAPI.Controllers
             {
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
+                  DataTable TransData = new DataTable();
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nFnYearID", nFnYearID);
                 QueryParams.Add("@nFormID", 51);
@@ -506,14 +507,26 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                   
 
                     if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
                         return Ok(api.Error(User, "Year is closed, Cannot create new Customer..."));
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Inv_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
+                     string Sql = "select count(*) as N_Count  from Inv_CustomerProjects where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID" ;
+                    TransData = dLayer.ExecuteDataTable(Sql, QueryParams, connection);
+                            if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(api.Error(User, "Unable To Delete"));
+                    }
+
+                    DataRow TransRow = TransData.Rows[0];
+                  
                     myAttachments.DeleteAttachment(dLayer, 1, 0, nCustomerID, nFnYearID, 51, User, transaction, connection);
                     transaction.Commit();
                 }
+
+
                 if (Results > 0)
                 {
                     Dictionary<string, string> res = new Dictionary<string, string>();
