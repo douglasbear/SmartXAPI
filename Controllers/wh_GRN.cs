@@ -231,6 +231,30 @@ if (xAsnDocNo != "" || xAsnDocNo != null){
                         }
                         MasterTable.Rows[0]["X_GRNNo"] = X_GRNNo;
                     }
+
+                    if (nGrnID > 0)
+                    {
+  
+
+                        SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"X_TransType","GRN"},
+                                {"N_VoucherID",nGrnID},
+                                {"N_UserID",N_UserID},
+                                {"X_SystemName","WebRequest"},
+                                {"B_MRNVisible","0"}};
+
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User,ex));
+                        }
+                    }
+
                     nGrnID = dLayer.SaveData("wh_GRN", "N_GRNID", MasterTable, connection, transaction);
 
                     if (nGrnID <= 0)
@@ -249,6 +273,31 @@ if (xAsnDocNo != "" || xAsnDocNo != null){
                         return Ok(_api.Error(User, "Unable to save"));
 
                     }
+
+
+                    try
+                        {
+                            
+                            SortedList StockPosting = new SortedList();
+                            StockPosting.Add("N_CompanyID", nCompanyID);
+                            StockPosting.Add("N_MRNID", nGrnID);
+                            StockPosting.Add("N_UserID", N_UserID);
+                            StockPosting.Add("X_SystemName", "ERP Cloud");
+                            dLayer.ExecuteNonQueryPro("[SP_Inv_AllocateNegStock_WHGRN]", StockPosting, connection, transaction);
+
+                            // SortedList PostingParam = new SortedList();
+                            // PostingParam.Add("N_CompanyID", nCompanyID);
+                            // PostingParam.Add("X_InventoryMode", "GRN");
+                            // PostingParam.Add("N_InternalID", nGrnID);
+                            // PostingParam.Add("N_UserID", N_UserID);
+                            // PostingParam.Add("X_SystemName", "ERP Cloud");
+                            // dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User,ex));
+                        }
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
