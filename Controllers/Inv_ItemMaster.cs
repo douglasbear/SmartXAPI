@@ -14,6 +14,12 @@ using System.Text.RegularExpressions;
 using System.IO;
 using System.Net;
 using System.Web;
+using System.Net.Http;
+using Vse.Web.Serialization;
+using Newtonsoft.Json;
+using Olivo.GoogleTranslator;
+
+
 
 namespace SmartxAPI.Controllers
 {
@@ -26,6 +32,7 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private string url;
 
         public Inv_ItemMaster(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
@@ -37,7 +44,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem,int nItemUsedFor)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, int nItemUsedFor)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -86,15 +93,15 @@ namespace SmartxAPI.Controllers
             if (isStockItem)
                 Condition = Condition + " and N_ClassID =2";
 
-            if(nItemUsedFor!=0)
+            if (nItemUsedFor != 0)
             {
-                if(nItemUsedFor==1)
+                if (nItemUsedFor == 1)
                     Condition = Condition + " and vw_InvItem_Search_cloud.B_CanBePurchased =1";
-                else if(nItemUsedFor==2)
+                else if (nItemUsedFor == 2)
                     Condition = Condition + " and vw_InvItem_Search_cloud.B_CanbeSold =1";
-                else if(nItemUsedFor==3)
+                else if (nItemUsedFor == 3)
                     Condition = Condition + " and vw_InvItem_Search_cloud.B_CanBePurchased =1 and vw_InvItem_Search_cloud.B_CanbeSold =1";
-                else if(nItemUsedFor==4)
+                else if (nItemUsedFor == 4)
                     Condition = Condition + " and vw_InvItem_Search_cloud.B_CanbeRawMaterial =1";
             }
 
@@ -194,8 +201,8 @@ namespace SmartxAPI.Controllers
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ItemID desc,[Item Code] desc";
-               
-                
+
+
             else
             {
                 switch (xSortBy.Split(" ")[0])
@@ -210,7 +217,7 @@ namespace SmartxAPI.Controllers
                         xSortBy = "Cast(REPLACE(n_Rate,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
                         break;
                         case "partNo":
-                        xSortBy = "order by [Part No] desc ";
+                        xSortBy = "[Part No] desc ";
                         break;
                     default: break;
                 }
@@ -1337,7 +1344,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("productPurchaseHistory")]
-        public ActionResult GetProductPurchaseHistoryList(int nItemID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,bool bIncludePriceQuote)
+        public ActionResult GetProductPurchaseHistoryList(int nItemID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, bool bIncludePriceQuote)
         {
             try
             {
@@ -1350,7 +1357,7 @@ namespace SmartxAPI.Controllers
                     int Count = (nPage - 1) * nSizeperpage;
                     string sqlCommandText = "";
                     string sqlCommandCount = "";
-                    string Searchkey = "",Cond="";
+                    string Searchkey = "", Cond = "";
 
                     Params.Add("@p1", nCompanyID);
                     Params.Add("@p2", nItemID);
@@ -1365,24 +1372,24 @@ namespace SmartxAPI.Controllers
                         xSortBy = " order by " + xSortBy;
                     }
 
-                    if(!bIncludePriceQuote)
-                        Cond=" and ISNULL(B_IsPriceQuote,0)=0";
+                    if (!bIncludePriceQuote)
+                        Cond = " and ISNULL(B_IsPriceQuote,0)=0";
 
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and N_ItemID=@p2 " + Searchkey + " " +Cond+" "+ xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and N_ItemID=@p2 " + Searchkey + " " + Cond + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + " and N_PurchaseDetailsID not in (select top(" + Count + ") N_PurchaseDetailsID from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + xSearchkey + Cond + xSortBy + " ) " +Cond+" "+ xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + " and N_PurchaseDetailsID not in (select top(" + Count + ") N_PurchaseDetailsID from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + xSearchkey + Cond + xSortBy + " ) " + Cond + " " + xSortBy;
 
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + ""+Cond+" ";
+                    sqlCommandCount = "select count(*) as N_Count from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + "" + Cond + " ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
 
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
-                    return Ok(_api.Success(OutPut)); 
+                    return Ok(_api.Success(OutPut));
                 }
             }
             catch (Exception e)
@@ -1397,7 +1404,9 @@ namespace SmartxAPI.Controllers
             try
             {
                 SortedList OutPut = new SortedList();
-                string Artext = Translate(xText, "en", "ar");
+                Translator t = new Translator();
+                string Artext = t.Translate(xText, (string)"English", (string)"Arabic");
+                // string Artext = Translate(xText, "en", "ar");
                 if (xText == null)
                     Artext = "";
                 OutPut.Add("arabic", Artext);

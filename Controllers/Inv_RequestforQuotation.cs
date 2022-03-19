@@ -405,10 +405,10 @@ namespace SmartxAPI.Controllers
                         _sqlQuery = "Select * from vw_RFQVendorListMaster Where N_CompanyID=@nCompanyID and X_InwardsCode=@X_QuotationNo";
 
                         VendorListMaster = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
-
+                        QueryParams.Add("@NQuotaID", VendorListMaster.Rows[0]["N_QuotationID"].ToString());
                         VendorListMaster = myFunctions.AddNewColumnToDataTable(VendorListMaster, "n_IsDecisionDone", typeof(int), 0);
 
-                        object objDecisionDone = dLayer.ExecuteScalar("select COUNT(N_QuotationID) from Inv_RFQDecisionMaster where N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID", QueryParams, connection);
+                        object objDecisionDone = dLayer.ExecuteScalar("select COUNT(N_QuotationID) from Inv_RFQDecisionMaster where N_CompanyID=@nCompanyID and N_QuotationID=@NQuotaID", QueryParams, connection);
                         if(myFunctions.getIntVAL(objDecisionDone.ToString())!=0)
                             VendorListMaster.Rows[0]["n_IsDecisionDone"]=1;
 
@@ -564,7 +564,7 @@ namespace SmartxAPI.Controllers
             if (bAllBranchData == true)
                 sqlCommandText = "Select *  from vw_Vendor_Request where N_CompanyID=@nCompanyID and N_FnYearId=@nFnYearID";
             else
-                sqlCommandText = "Select *  from vw_Vendor_Request where N_CompanyID=@nCompanyID and N_BranchID=@nBranchID and and N_FnYearId=@nFnYearID";
+                sqlCommandText = "Select *  from vw_Vendor_Request where N_CompanyID=@nCompanyID and N_BranchID=@nBranchID and N_FnYearId=@nFnYearID";
  
             try
             {

@@ -65,8 +65,16 @@ namespace SmartxAPI.GeneralFunctions
             Params.Add("@p1", N_CompanyID);
             Params.Add("@p2", N_MenuID);
             Params.Add("@p3", admin);
-            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and " + FieldName + "=@p3", Params, connection));
-            return Result;
+            if(FieldName!="")
+            {
+                bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and " + FieldName + "=@p3", Params, connection));
+                return Result;
+            }
+            else
+            {
+                bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 ", Params, connection));
+                return Result;
+            }
         }
 
         public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, string FieldName, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
@@ -75,8 +83,16 @@ namespace SmartxAPI.GeneralFunctions
             Params.Add("@p1", N_CompanyID);
             Params.Add("@p2", N_MenuID);
             Params.Add("@p3", admin);
-            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and  " + FieldName + "=@p3", Params, connection, transaction));
-            return Result;
+            if(FieldName!="")
+            {
+                bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and  " + FieldName + "=@p3", Params, connection, transaction));
+                return Result;
+            }
+            else
+            {
+                bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 ", Params, connection, transaction));
+                return Result;
+            }
         }
         public int getIntVAL(string val)
         {
@@ -2638,7 +2654,7 @@ namespace SmartxAPI.GeneralFunctions
                     {
                         string xCriteria="";
                         if(nFormID==618)
-                            xCriteria=" vw_inv_RequestQuotation_Rpt.N_VendorID="+nPartyID;
+                            xCriteria=" {vw_inv_RequestQuotation_Rpt.N_VendorID}="+nPartyID;
                         if (LoadReportDetails(nFnYearID, nFormID, nPkeyID,xCriteria, dLayer, User))
                         {
                             var client = new HttpClient(handler);
@@ -2662,7 +2678,7 @@ namespace SmartxAPI.GeneralFunctions
                             if (docNumber.Contains("/"))
                                 docNumber = docNumber.ToString().Substring(0, Math.Min(3, docNumber.ToString().Length));
 
-                            url = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
+                            url = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + "" + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
                             var path = client.GetAsync(url);
 
                             ReportName = FormName + "_" + docNumber + "_" + partyName.Trim() + ".pdf";
@@ -2800,13 +2816,13 @@ namespace SmartxAPI.GeneralFunctions
                     if (Othercritiria != null)
                     {
                         if (Othercritiria.ToString() != "")
-                            critiria = critiria + "and " + Othercritiria.ToString();
+                            critiria = critiria + " and " + Othercritiria.ToString();
 
                     }
                     if(xCriteria!=null)
                     {
                         if (xCriteria.ToString() != "")
-                            critiria = critiria + "and " + xCriteria.ToString();
+                            critiria = critiria + " and " + xCriteria.ToString();
                     }
                     return true;
                 }

@@ -52,10 +52,24 @@ namespace SmartxAPI.Controllers
                      string criteria = "";
                        int nCompanyID = myFunctions.GetCompanyID(User);
                     int N_decimalPlace = 2;
+                    string UserPattern = myFunctions.GetUserPattern(User);
+                    int nUserID = myFunctions.GetUserID(User);
                     N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Purchase", "Decimal_Place", "N_Value", nCompanyID, dLayer, connection));
                     N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
+                    string Pattern = "";
+                if (UserPattern != "")
+                {
+                    Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
+                    Params.Add("@UserPattern",UserPattern);
 
+                }
+                else
+                {
+                    object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId,Params,connection);
 
+                    if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    Pattern = " and N_UserID=" + nUserID;
+                }
 
 
 
@@ -111,9 +125,9 @@ namespace SmartxAPI.Controllers
                     }
 
                     if (Count == 0)
-                        sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria+ Searchkey + " " + xSortBy;
+                        sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria+ Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria+ Searchkey + " and N_POrderID not in(select top(" + Count + ") N_POrderID from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " +criteria+ xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria+ Searchkey + " and N_POrderID not in(select top(" + Count + ") N_POrderID from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " +criteria+ xSortBy + " ) " + xSortBy;
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
                     SortedList OutPut = new SortedList();
@@ -333,6 +347,69 @@ namespace SmartxAPI.Controllers
 
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = api.Format(DetailTable, "Details");
+
+                    bool InvoiceProcessed=false;
+                    if(myFunctions.getBoolVAL(MasterTable.Rows[0]["N_Processed"].ToString()))
+                    {
+                        object InvoiceNotProcessed=false;
+                        for(int i=0;i<DetailTable.Rows.Count;i++)
+                        {
+                            Object POQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseOrderdetails where n_porderid="+N_POrderID+" and N_PorderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
+                            Object InvQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseDetails where n_porderid="+N_POrderID+" and N_POrderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
+                            if(POQty!=null && InvQty!=null)
+                            {
+                                if(myFunctions.getVAL(POQty.ToString())!= myFunctions.getVAL(InvQty.ToString()))
+                                {
+                                // InvoiceNotProcessed = true;
+                                    MasterTable.Rows[0]["N_Processed"]=0;
+                                    InvoiceProcessed=false;
+                                    break;
+                                }
+                                else
+                                {
+                                    MasterTable.Rows[0]["N_Processed"]=1;
+                                    InvoiceProcessed=true;
+                                }
+                            }
+                            else
+                            {
+                                MasterTable.Rows[0]["N_Processed"]=1;
+                                InvoiceProcessed=true;
+                            }
+                        }
+                    }
+
+                    if(!InvoiceProcessed)
+                    {
+                        object GRNNotProcessed=false;
+                        for(int i=0;i<DetailTable.Rows.Count;i++)
+                        {
+                            Object POQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseOrderdetails where n_porderid="+N_POrderID+" and N_PorderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
+                            Object GRNQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_MRNDetails where N_PONo="+N_POrderID+" and N_PorderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
+                            if(POQty!=null && GRNQty!=null)
+                            {
+                                if(myFunctions.getVAL(POQty.ToString())!= myFunctions.getVAL(GRNQty.ToString()))
+                                {
+                                    //GRNNotProcessed = true;
+                                    MasterTable.Rows[0]["N_Processed"]=0;
+                                    break;
+                                }
+                                else
+                                {
+                                    MasterTable.Rows[0]["N_Processed"]=1;
+                                }
+                            }
+                            else
+                            {
+                                MasterTable.Rows[0]["N_Processed"]=1;
+                            }
+                        }
+                    }
+
+                   
+                    // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "GRNNotProcessed", typeof(bool),GRNNotProcessed);
+                    // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "InvoiceNotProcessed", typeof(bool),InvoiceNotProcessed);
+
                      DataTable Attachments =new DataTable();
                     if(MasterTable.Rows.Count>0)
                     Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_VendorID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString()), this.FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);

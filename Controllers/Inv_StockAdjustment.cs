@@ -69,10 +69,10 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         if (nLocationID > 0)
-                            xCriteria = "and N_FnYearID=@p2 and N_BranchID=@p3 and N_CompanyID=@p1 and N_LoactionID=@p4";
+                            xCriteria = " N_FnYearID=@p2 and N_BranchID=@p3 and N_CompanyID=@p1 and N_LoactionID=@p4";
 
                         else
-                            xCriteria = "and N_FnYearID=@p2 and N_CompanyID=@p1 and N_BranchID=@p3";
+                            xCriteria = " N_FnYearID=@p2 and N_CompanyID=@p1 and N_BranchID=@p3";
                     }
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
@@ -184,7 +184,7 @@ namespace SmartxAPI.Controllers
                             {
                                 if (stockItem["N_ItemID"].ToString() == DetailItem["N_ItemID"].ToString())
                                 {
-                                    if (stockItem["N_Stock"].ToString() != DetailItem["N_QtyOnHand"].ToString())
+                                     if (myFunctions.getVAL(stockItem["N_Stock"].ToString()) !=myFunctions.getVAL(DetailItem["N_QtyOnHand"].ToString()))
                                     {
                                         bStockMisMatch = true;
                                      

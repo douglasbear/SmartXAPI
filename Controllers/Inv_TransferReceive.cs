@@ -62,24 +62,24 @@ namespace SmartxAPI.Controllers
                     if (!CheckClosedYear)
                     {
                         if (bAllBranchData)
-                            Criteria = "and N_FnYearID=@p2 and B_YearEndProcess=0 and N_CompanyID=@p1 ";
+                            Criteria = "and N_FnYearID=@p2 and B_YearEndProcess=0 and N_CompanyID=@p1 and N_LocationID=@p4 ";
                         else
-                            Criteria = "and N_FnYearID=@p2 and  B_YearEndProcess=0 and N_LocationID=@p4 and N_CompanyID=@p1";
+                            Criteria = "and N_FnYearID=@p2 and  B_YearEndProcess=0 and N_LocationID=@p4 and N_CompanyID=@p1 and N_LocationID=@p4";
                     }
                     else
                     {
                         if (bAllBranchData)
-                            Criteria = "and N_PurchaseType=0 and N_FnYearID=@p2 and N_CompanyID=@p1";
+                            Criteria = "and N_PurchaseType=0 and N_FnYearID=@p2 and N_CompanyID=@p1 and  N_LocationID=@p4";
                         else
                             Criteria = "and N_PurchaseType=0 and N_FnYearID=@p2 and N_LocationID=@p4 and N_CompanyID=@p1";
                     }
 
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and [Location Name] like '%" + xSearchkey + "%' or x_ReferenceNo  like '%" + xSearchkey + "%' or Date like '%" + xSearchkey + "%'";
+                        Searchkey = "and ( [Location Name] like '%" + xSearchkey + "%' or x_ReferenceNo  like '%" + xSearchkey + "%' or Date like '%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
-                        xSortBy = " order by N_ReceivableId asc";
+                        xSortBy = " order by N_ReceivableId desc";
                     else
                     {
                      switch (xSortBy.Split(" ")[0])
@@ -130,14 +130,14 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("transferList")]
-        public ActionResult GettransferList(int nFnYearID)
-        {
+        public ActionResult GettransferList(int nFnYearID,int locationID)
+    {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearID);
-            string sqlCommandText = "select [reference No] as x_reference,* from vw_InvTransfer_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Processed=0";
+            string sqlCommandText = "select [reference No] as x_reference,* from vw_InvTransfer_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_LocationTo="+locationID+" and  N_Processed=0";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
