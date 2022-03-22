@@ -132,7 +132,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     
-                    if (xAsnDocNo != "" || xAsnDocNo != null){
+                    if (xAsnDocNo != "" || xAsnDocNo != null || xAsnDocNo != "null"){
                         QueryParams.Add("@xAsnDocNo", xAsnDocNo);
                         _sqlQuery = "Select * from Vw_AsnMasterToGRNMaster Where n_Companyid=@nCompanyID and X_AsnDocNo =@xAsnDocNo and N_FnYearID=@nFnYearID";
                         }
@@ -280,7 +280,7 @@ if (xAsnDocNo != "" || xAsnDocNo != null){
                             
                             SortedList StockPosting = new SortedList();
                             StockPosting.Add("N_CompanyID", nCompanyID);
-                            StockPosting.Add("N_MRNID", nGrnID);
+                            StockPosting.Add("N_GRNID", nGrnID);
                             StockPosting.Add("N_UserID", N_UserID);
                             StockPosting.Add("X_SystemName", "ERP Cloud");
                             dLayer.ExecuteNonQueryPro("[SP_Inv_AllocateNegStock_WHGRN]", StockPosting, connection, transaction);
