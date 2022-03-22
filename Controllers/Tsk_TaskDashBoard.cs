@@ -67,6 +67,17 @@
 //                     ActiveTask = dLayer.ExecuteDataTable(sqlActiveList, Params, connection);
 //                     CompletedTask = dLayer.ExecuteDataTable(sqlCompletedList, Params, connection);
 //                     ClosedTask = dLayer.ExecuteDataTable(sqlClosedList, Params, connection);
+                      
+//                 ActiveEmployees = myFunctions.AddNewColumnToDataTable(ActiveEmployees, "N_ActiveEmloyees", typeof(string),ActiveEmp);
+//                 ScheduledTask = myFunctions.AddNewColumnToDataTable(CurrentLead, "N_Percentage", typeof(string),LeadPercentage);
+//                 CurrentLead.AcceptChanges();
+//                 CurrentCustomer = myFunctions.AddNewColumnToDataTable(CurrentCustomer, "N_LastMonth", typeof(string), CustomerLastMonth);
+//                 CurrentCustomer = myFunctions.AddNewColumnToDataTable(CurrentCustomer, "N_Percentage", typeof(string), CustomerPercentage);
+//                 CurrentCustomer.AcceptChanges();
+//                 CurrentRevenue = myFunctions.AddNewColumnToDataTable(CurrentRevenue, "N_LastMonth", typeof(string), RevenueLastMonth);
+//                 CurrentRevenue = myFunctions.AddNewColumnToDataTable(CurrentRevenue, "N_Percentage", typeof(string),RevenuePercentage);
+//                 CurrentRevenue.AcceptChanges();
+
 
 
                     
