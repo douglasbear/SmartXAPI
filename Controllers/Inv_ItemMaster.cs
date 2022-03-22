@@ -563,7 +563,7 @@ namespace SmartxAPI.Controllers
                                 if (VariantList.Rows[i]["X_Barcode"].ToString() != "")
                                     MasterTable.Rows[j]["X_Barcode"] = VariantList.Rows[i]["X_Barcode"].ToString();
                                 if (VariantList.Rows[i]["N_Rate"].ToString() != "")
-                                    MasterTable.Rows[j]["N_Rate"] = VariantList.Rows[i]["N_Rate"].ToString();
+                                    MasterTable.Rows[j]["N_Rate"] =myFunctions.getVAL(VariantList.Rows[i]["N_Rate"].ToString());
                                 MasterTable.Rows[j]["N_CLassID"] = "2";
                             }
                             else
