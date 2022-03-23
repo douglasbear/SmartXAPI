@@ -51,7 +51,7 @@ namespace SmartxAPI.Controllers
             string meetingCriteria="";
             if (bySalesMan == true)
             {
-                Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
+                Criteria = " and N_CreatedUser=@nUserID and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
             }
 
             else
@@ -63,7 +63,7 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
+                    Criteria = " and N_CreatedUser=@nUserID and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
                 }
             }
             if (isMeeting == true)
