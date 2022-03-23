@@ -25,13 +25,15 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
+         private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
 
-        public Inv_ItemMaster(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Inv_ItemMaster(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf,IMyAttachments myAtt)
         {
             _api = api;
             dLayer = dl;
             myFunctions = myFun;
+             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
@@ -289,6 +291,7 @@ namespace SmartxAPI.Controllers
             DataTable BOMEmpTable = new DataTable();
             DataTable BOMAssetTable = new DataTable();
             DataTable ItemWarrantyTable = new DataTable();
+            DataTable Attachments = new DataTable();
             int N_ItemID = nItemID;
             int companyid = myFunctions.GetCompanyID(User);
 
@@ -306,9 +309,10 @@ namespace SmartxAPI.Controllers
                     string multiqry = "SELECT * from vw_ItemCategoryDisplay where N_ItemID=@nItemID and N_CompanyID=@nCompanyID";
                     multiCategory = dLayer.ExecuteDataTable(multiqry, QueryParams, connection);
                     multiCategory = _api.Format(multiCategory, "multiCategory");
-
-
-
+                    
+                    
+                     Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dt.Rows[0]["N_ItemID"].ToString()), myFunctions.getIntVAL(dt.Rows[0]["N_ItemID"].ToString()), 53, 0, User, connection);
+                        Attachments = _api.Format(Attachments, "attachments");
 
                     if (dt.Rows.Count == 0)
                     {
@@ -430,6 +434,10 @@ namespace SmartxAPI.Controllers
                     ItemWarrantyTable = dLayer.ExecuteDataTable(itemWarranty, QueryParams, connection);
                     ItemWarrantyTable = _api.Format(ItemWarrantyTable, "itemWarranty");
 
+
+
+
+
                 }
                 dt.AcceptChanges();
                 // multiCategory.AcceptChanges();
@@ -452,6 +460,7 @@ namespace SmartxAPI.Controllers
                 dataSet.Tables.Add(BOMEmpTable);
                 dataSet.Tables.Add(BOMAssetTable);
                 dataSet.Tables.Add(ItemWarrantyTable);
+                dataSet.Tables.Add(Attachments);
 
                 return Ok(_api.Success(dataSet));
 
@@ -476,6 +485,7 @@ namespace SmartxAPI.Controllers
                 DataTable BOMAssetTable = new DataTable();
                 DataTable POS = ds.Tables["Pos"];
                 DataTable ECOM = ds.Tables["Ecom"];
+                 DataTable Attachment = ds.Tables["attachments"];
                 MasterTableNew = ds.Tables["master"];
                 GeneralTable = ds.Tables["general"];
                 StockUnit = ds.Tables["stockUnit"];
@@ -494,6 +504,7 @@ namespace SmartxAPI.Controllers
                 itemWarranty = ds.Tables["itemWarranty"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CompanyId"].ToString());
                 int N_ItemID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString());
+                  string XItemName = MasterTableNew.Rows[0]["X_ItemName"].ToString();
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -538,10 +549,12 @@ namespace SmartxAPI.Controllers
 
                     if (myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()) > 0)
                     {
+                         int N_PkeyID = N_ItemID;
                         dLayer.DeleteData("Inv_ItemDetails", "N_MainItemID", myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()), "N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Inv_BOMEmployee", "N_MainItem", myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()), "N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Inv_BOMAsset", "N_MainItemID", myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()), "N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Inv_ItemWarranty", "N_MainItemID", myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()), "N_CompanyID=" + nCompanyID, connection, transaction);
+                    
                     }
                     //Adding variant product in master table
                     MasterTable = MasterTableNew.Clone();
@@ -855,6 +868,20 @@ namespace SmartxAPI.Controllers
                             }
                             itemWarranty.AcceptChanges();
                             dLayer.SaveData("Inv_ItemWarranty", "N_ItemDetailsID", itemWarranty, connection, transaction);
+                        }
+                    }
+
+
+                      if (Attachment.Rows.Count > 0)
+                    {
+                        try
+                        {
+                            myAttachments.SaveAttachment(dLayer, Attachment, ItemCode, N_ItemID, XItemName, ItemCode, N_ItemID, "Product Document", User, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, ex));
                         }
                     }
 
