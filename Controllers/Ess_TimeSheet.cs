@@ -25,6 +25,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int N_FormID = 1305;
+        private static TimeZoneInfo India_Standard_Time = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"); 
 
 
         public Ess_TimeSheet(IDataAccessLayer dl, IApiFunctions apiFun, IMyFunctions myFun, IConfiguration conf)
@@ -299,7 +300,13 @@ namespace SmartxAPI.Controllers
                     int nTimesheetID = 0;
                     string defultTime = "00:00:00";
                     string currentTime = DateTime.Now.ToString("HH:mm:ss");
-                    DateTime date = DateTime.Now;
+                    //DateTime date = DateTime.Now;
+                    
+                    object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID , connection,transaction);
+                    object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID , connection,transaction);
+
+                    DateTime dateTime_Indian = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, India_Standard_Time);  
+                    DateTime date = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, Timezone.ToString());
 
 
                     // string d_in = Convert.ToDateTime(masterRow["d_In"].ToString()).ToString("HH:mm:ss");
