@@ -131,20 +131,22 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    
-                    if (xAsnDocNo != "" || xAsnDocNo != null || xAsnDocNo != "null"){
+
+                    if (xAsnDocNo != "" && xAsnDocNo != null)
+                    {
                         QueryParams.Add("@xAsnDocNo", xAsnDocNo);
                         _sqlQuery = "Select * from Vw_AsnMasterToGRNMaster Where n_Companyid=@nCompanyID and X_AsnDocNo =@xAsnDocNo and N_FnYearID=@nFnYearID";
-                        }
-                    else{
-                                    QueryParams.Add("@XGRNNo", XGRNNo);
+                    }
+                    else
+                    {
+                        QueryParams.Add("@XGRNNo", XGRNNo);
                         if (bShowAllBranchData == true)
                             Condition = " n_Companyid=@nCompanyID and X_GRNNo =@XGRNNo and N_FnYearID=@nFnYearID";
                         else
                             Condition = " n_Companyid=@nCompanyID and X_GRNNo =@XGRNNo and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
 
                         _sqlQuery = "Select * from vw_Wh_GRN_Disp Where " + Condition + "";
-                        }
+                    }
 
 
                     Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
@@ -159,15 +161,18 @@ namespace SmartxAPI.Controllers
                     {
 
                         ds.Tables.Add(Master);
-if (xAsnDocNo != "" || xAsnDocNo != null){
-                        QueryParams.Add("@nAsnID", Master.Rows[0]["N_AsnID"].ToString());
+                        if (xAsnDocNo != "" || xAsnDocNo != null)
+                        {
+                            QueryParams.Add("@nAsnID", Master.Rows[0]["N_AsnID"].ToString());
 
-                        _sqlQuery = "Select * from Vw_AsnDetailsToGRNDetails Where N_CompanyID=@nCompanyID and N_AsnID=@nAsnID";
+                            _sqlQuery = "Select * from Vw_AsnDetailsToGRNDetails Where N_CompanyID=@nCompanyID and N_AsnID=@nAsnID";
 
-}else{
-                        QueryParams.Add("@N_GRNID", Master.Rows[0]["N_GRNID"].ToString());
+                        }
+                        else
+                        {
+                            QueryParams.Add("@N_GRNID", Master.Rows[0]["N_GRNID"].ToString());
 
-                        _sqlQuery = "Select * from vw_Wh_GRNDetails Where N_CompanyID=@nCompanyID and N_GRNID=@N_GRNID";
+                            _sqlQuery = "Select * from vw_Wh_GRNDetails Where N_CompanyID=@nCompanyID and N_GRNID=@N_GRNID";
                         }
 
                         Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
@@ -234,7 +239,7 @@ if (xAsnDocNo != "" || xAsnDocNo != null){
 
                     if (nGrnID > 0)
                     {
-  
+
 
                         SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
@@ -251,7 +256,7 @@ if (xAsnDocNo != "" || xAsnDocNo != null){
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,ex));
+                            return Ok(_api.Error(User, ex));
                         }
                     }
 
@@ -276,28 +281,28 @@ if (xAsnDocNo != "" || xAsnDocNo != null){
 
 
                     try
-                        {
-                            
-                            SortedList StockPosting = new SortedList();
-                            StockPosting.Add("N_CompanyID", nCompanyID);
-                            StockPosting.Add("N_GRNID", nGrnID);
-                            StockPosting.Add("N_UserID", N_UserID);
-                            StockPosting.Add("X_SystemName", "ERP Cloud");
-                            dLayer.ExecuteNonQueryPro("[SP_Inv_AllocateNegStock_WHGRN]", StockPosting, connection, transaction);
+                    {
 
-                            // SortedList PostingParam = new SortedList();
-                            // PostingParam.Add("N_CompanyID", nCompanyID);
-                            // PostingParam.Add("X_InventoryMode", "GRN");
-                            // PostingParam.Add("N_InternalID", nGrnID);
-                            // PostingParam.Add("N_UserID", N_UserID);
-                            // PostingParam.Add("X_SystemName", "ERP Cloud");
-                            // dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
-                        }
-                        catch (Exception ex)
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User,ex));
-                        }
+                        SortedList StockPosting = new SortedList();
+                        StockPosting.Add("N_CompanyID", nCompanyID);
+                        StockPosting.Add("N_GRNID", nGrnID);
+                        StockPosting.Add("N_UserID", N_UserID);
+                        StockPosting.Add("X_SystemName", "ERP Cloud");
+                        dLayer.ExecuteNonQueryPro("[SP_Inv_AllocateNegStock_WHGRN]", StockPosting, connection, transaction);
+
+                        // SortedList PostingParam = new SortedList();
+                        // PostingParam.Add("N_CompanyID", nCompanyID);
+                        // PostingParam.Add("X_InventoryMode", "GRN");
+                        // PostingParam.Add("N_InternalID", nGrnID);
+                        // PostingParam.Add("N_UserID", N_UserID);
+                        // PostingParam.Add("X_SystemName", "ERP Cloud");
+                        // dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, ex));
+                    }
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
