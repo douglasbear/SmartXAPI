@@ -349,7 +349,7 @@ namespace SmartxAPI.Controllers
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
-                    {
+                    { 
                         return Ok(_api.Warning("No Results Found"));
                     }
                     else
