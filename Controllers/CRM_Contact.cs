@@ -114,7 +114,7 @@ namespace SmartxAPI.Controllers
             }
             else
             {
-                Pattern = " and N_UserID=" + nUserID;
+                Pattern = " and N_CreatedUser=" + nUserID;
             }
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";

@@ -48,8 +48,8 @@ namespace SmartxAPI.Controllers
             }
             else
             {
-                 Pattern = " and N_UserID=" + nUserID;
-                 AssigneePattern = " and (N_UserID=" + nUserID + " or N_LoginUserID="+nUserID+")";
+                 Pattern = " and N_CreatedUser=" + nUserID;
+                 AssigneePattern = " and (N_CreatedUser=" + nUserID + " or N_LoginUserID="+nUserID+")";
             }
             string sqlCurrentLead = "SELECT COUNT(*) as N_ThisMonth FROM vw_CRMLeads WHERE MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = "+nCompanyID+""+ Pattern;
             string sqlWin = "select count(*) as N_ThisMonth from vw_CRMOpportunity where N_StatusTypeID=308 and MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = "+nCompanyID+""+ AssigneePattern; 
