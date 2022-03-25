@@ -1305,7 +1305,7 @@ namespace SmartxAPI.GeneralFunctions
                     }
                     else if ((nMaxLevel == nTransApprovalLevel || nSubmitter == nTransApprovalLevel) && nTransUserID != loggedInUserID)
                     {
-                        if (nTransStatus != 918 && nTransStatus != 919 && nTransStatus != 920 && nTransStatus != 929)
+                        if (nTransStatus != 918 && nTransStatus != 919 && nTransStatus != 920 )//&& nTransStatus != 929)
                         {
                             if (nTransStatus == 913 || nTransStatus == 7)
                             {

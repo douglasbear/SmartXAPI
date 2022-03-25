@@ -260,7 +260,7 @@ namespace SmartxAPI.Controllers
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
-            Params.Add("@p3", xPOrderId);
+            Params.Add("@p3", xPOrderId);   
 
 
             try
