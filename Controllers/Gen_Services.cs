@@ -66,6 +66,11 @@ namespace SmartxAPI.Controllers
                         masterTable = "Inv_ItemMaster";
                         column = "X_ItemCode";
                     }
+                    if (formID == 65)
+                    {
+                        masterTable = "Inv_Purchase";
+                        column = "X_InvoiceNo";
+                    }
 
 
 

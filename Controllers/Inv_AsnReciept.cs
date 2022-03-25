@@ -137,6 +137,7 @@ namespace SmartxAPI.Controllers
                     int nAsnID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AsnID"].ToString());
                     int N_CustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
+                    int N_BranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
                     string X_AsnDocNo = "";
                     var values = MasterTable.Rows[0]["X_AsnDocNo"].ToString();
 
@@ -170,6 +171,12 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to save"));
                     }
 
+                    
+
+                    //Inv_ItemMaster Creation
+                    
+                    
+
                      for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["N_AsnID"] = nAsnID;
@@ -182,6 +189,22 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to save"));
 
                     }
+
+                     SortedList ProductParams = new SortedList();
+                            ProductParams.Add("N_CompanyID", nCompanyID);
+                            ProductParams.Add("N_ASNID", nAsnID);
+                            ProductParams.Add("N_FnYearID", N_FnYearID);
+                            ProductParams.Add("N_BranchID", N_BranchID);
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_ASNProductInsert", ProductParams, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
+
 
                      transaction.Commit();
                     SortedList Result = new SortedList();
@@ -268,6 +291,41 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(_api.Error(User,e));
             }
+        }
+       
+       
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nAsnID)
+        {
+            int Results = 0;
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    dLayer.DeleteData("Wh_AsnDetails", "N_AsnID", nAsnID, "N_CompanyID=" + nCompanyID + " and N_AsnID=" + nAsnID, connection, transaction);
+                    Results = dLayer.DeleteData("Wh_AsnMaster", "N_AsnID", nAsnID, "N_CompanyID=" + nCompanyID + " and N_AsnID=" + nAsnID, connection, transaction);
+
+                    if (Results > 0)
+                    {
+                        transaction.Commit();
+                        return Ok(_api.Success("deleted Successfully"));
+                    }
+                    else
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Warning("Unable to delete Request"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User,ex));
+            }
+
+
         }
 
 

@@ -1052,6 +1052,11 @@ namespace SmartxAPI.Controllers
                     int N_TransDetailsID = 0;
                     if (x_Batch.Trim() == "@Auto")
                     {
+                         if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearId, Convert.ToDateTime(MasterTable.Rows[0]["d_TransDate"].ToString()), dLayer, connection, transaction))
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Processing date must be in the active Financial Year."));
+                    }
                         bool OK = true;
                         int NewNo = 0, loop = 1;
                         while (OK)

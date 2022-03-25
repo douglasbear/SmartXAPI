@@ -129,6 +129,8 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     string sql = pageQry + sqlComandText + pageQryEnd;
                     dt = dLayer.ExecuteDataTable(sql, Params, connection);
+                   
+                    dt.AcceptChanges();
                     dt = myFunctions.AddNewColumnToDataTable(dt, "SubItems", typeof(DataTable), null);
 
                     foreach (DataRow item in dt.Rows)
@@ -209,7 +211,7 @@ namespace SmartxAPI.Controllers
                         Searchkey = "and ([Site from] like '%" + xSearchkey + "%' or [Reference No] like '%" + xSearchkey + "%' or [Site To] like '%" + xSearchkey + "%' or Date like '%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
-                        xSortBy = " order by N_TransferID asc";
+                        xSortBy = " order by [Reference No] desc";
                     else
                     {
                         switch (xSortBy.Split(" ")[0])
@@ -237,7 +239,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
 
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvTransfer_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_TransferID not in (select top(" + Count + ") N_TransferID from vw_InvTransfer_Search where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvTransfer_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_TransferID not in (select top(" + Count + ") N_TransferID from vw_InvTransfer_Search where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
                     Params.Add("@nCompanyId", nCompanyId);
 
                     SortedList OutPut = new SortedList();

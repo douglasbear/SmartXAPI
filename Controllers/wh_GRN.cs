@@ -14,7 +14,7 @@ namespace SmartxAPI.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("whgrn")]
     [ApiController]
-    public class whGRN : ControllerBase
+    public class WhGRN : ControllerBase
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
@@ -22,7 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
         private readonly int N_FormID;
-        public whGRN(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf, IMyAttachments myAtt)
+        public WhGRN(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf, IMyAttachments myAtt)
         {
             _api = api;
             dLayer = dl;
@@ -32,180 +32,182 @@ namespace SmartxAPI.Controllers
             N_FormID = 1407;
         }
         [HttpGet("list")]
-        public ActionResult GetwhGRNList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetWhGRNList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
-              try
+            try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-            DataTable dt = new DataTable();
-            DataTable CountTable = new DataTable();
-            SortedList Params = new SortedList();
-            DataSet dataSet = new DataSet();
-            string sqlCommandText = "";
-            string sqlCommandCount = "";
-            string Searchkey = "";
+                    DataTable dt = new DataTable();
+                    DataTable CountTable = new DataTable();
+                    SortedList Params = new SortedList();
+                    DataSet dataSet = new DataSet();
+                    string sqlCommandText = "";
+                    string sqlCommandCount = "";
+                    string Searchkey = "";
 
-            int nUserID = myFunctions.GetUserID(User);
+                    int nUserID = myFunctions.GetUserID(User);
 
 
-            if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([X_GRNNo] like '%" + xSearchkey + "%' or X_CustomerName like '%" + xSearchkey + "%')";
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and ([X_GRNNo] like '%" + xSearchkey + "%' or X_CustomerName like '%" + xSearchkey + "%')";
 
-            if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_GRNID desc";
-            else
-            {
-                switch (xSortBy.Split(" ")[0])
-                {
-                    case "[X_GRNNo]":
-                        xSortBy = "N_GRNID " + xSortBy.Split(" ")[1];
-                        break;
-                    default: break;
-                }
-                xSortBy = " order by " + xSortBy;
-            }
-            int Count = (nPage - 1) * nSizeperpage;
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_CustomerID,N_GRNID,N_FnYearID,D_GRNDate,N_BranchID,[X_GRNNo] AS X_GRNNo,X_CustomerName,D_GRNDate from vw_Wh_GRN where N_CompanyID=@p1 and N_FnYearID=@p2"  + Searchkey + " " + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_CustomerID,N_GRNID,N_FnYearID,D_GRNDate,N_BranchID,[X_GRNNo] AS X_GRNNo,X_CustomerName,D_GRNDate from vw_Wh_GRN where N_CompanyID=@p1 and N_FnYearID=@p2" + Searchkey + " and N_GRNID not in (select top(" + Count + ") N_GRNID from vw_Wh_GRN where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by N_GRNID desc";
+                    else
+                    {
+                        switch (xSortBy.Split(" ")[0])
+                        {
+                            case "[X_GRNNo]":
+                                xSortBy = "N_GRNID " + xSortBy.Split(" ")[1];
+                                break;
+                            default: break;
+                        }
+                        xSortBy = " order by " + xSortBy;
+                    }
+                    int Count = (nPage - 1) * nSizeperpage;
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") [X_GRNNo] AS X_GRNNo,* from vw_Wh_GRN where N_CompanyID=@p1 and N_FnYearID=@p2" + Searchkey + " " + xSortBy;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") [X_GRNNo] AS X_GRNNo,* from vw_Wh_GRN where N_CompanyID=@p1 and N_FnYearID=@p2" + Searchkey + " and N_GRNID not in (select top(" + Count + ") N_GRNID from vw_Wh_GRN where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
 
-            // sqlCommandText = "select * from Inv_MRNDetails where N_CompanyID=@p1";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
-            SortedList OutPut = new SortedList();
+                    // sqlCommandText = "select * from Inv_MRNDetails where N_CompanyID=@p1";
+                    Params.Add("@p1", nCompanyId);
+                    Params.Add("@p2", nFnYearId);
+                    SortedList OutPut = new SortedList();
 
-          
+
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     sqlCommandCount = "select count(*) as N_Count from vw_Wh_GRN where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     if (Summary.Rows.Count > 0)
                     {
-                        DataRow drow = Summary.Rows[0];                        TotalCount = drow["N_Count"].ToString();
+                        DataRow drow = Summary.Rows[0];
+                        TotalCount = drow["N_Count"].ToString();
                     }
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
-                
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Warning("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(OutPut));
-                }
+
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
                 }
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
 
 
- [HttpGet("details")]
-        public ActionResult GetGoodsReceiveDetails(int nCompanyId, int nFnYearId, string nGRNNo, bool showAllBranch, int nBranchId, string poNo)
+        [HttpGet("details")]
+        public ActionResult GetDetails(string XGRNNo, int nFnYearID, int nCompanyID, int nBranchID, bool bShowAllBranchData, string xAsnDocNo)
         {
-            DataSet dt = new DataSet();
+            DataTable Master = new DataTable();
+            DataTable Detail = new DataTable();
+            DataSet ds = new DataSet();
             SortedList Params = new SortedList();
-            DataTable dtGoodReceive = new DataTable();
-            DataTable dtGoodReceiveDetails = new DataTable();
-            int N_GRNID = 0;
-            int N_POrderID = 0;
+            SortedList QueryParams = new SortedList();
 
-            Params.Add("@CompanyID", nCompanyId);
-            Params.Add("@YearID", nFnYearId);
-            Params.Add("@TransType", "GRN");
-            Params.Add("@BranchID", nBranchId);
-            string X_MasterSql = "";
-            string X_DetailsSql = "";
-           
+            int companyid = myFunctions.GetCompanyID(User);
 
-            if (nGRNNo != null)
-            {
-                Params.Add("@GRNNo", nGRNNo);
-                X_MasterSql = "select N_CompanyID,N_CustomerID,N_GRNID,N_FnYearID,D_GRNDate,N_BranchID,[GRN No] AS x_GRNNo,X_CustomerName,GRNDate from vw_Wh_GRN as where N_CompanyID=@CompanyID and [GRN No]=@GRNNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
-            }
-            if (poNo != null)
-            {
-                X_MasterSql = "Select Inv_PurchaseOrder.*,Inv_Location.X_LocationName,Inv_Vendor.* from Inv_PurchaseOrder Inner Join Inv_Vendor On Inv_PurchaseOrder.N_VendorID=Inv_Vendor.N_VendorID and Inv_PurchaseOrder.N_CompanyID=Inv_Vendor.N_CompanyID and Inv_PurchaseOrder.N_FnYearID=Inv_Vendor.N_FnYearID LEFT OUTER JOIN Inv_Location ON Inv_Location.N_LocationID=Inv_PurchaseOrder.N_LocationID Where Inv_PurchaseOrder.N_CompanyID=" + nCompanyId + " and X_POrderNo='" + poNo + "' and Inv_PurchaseOrder.B_IsSaveDraft<>1";
-            }
+            QueryParams.Add("@nCompanyID", nCompanyID);
+
+            QueryParams.Add("@nBranchID", nBranchID);
+            QueryParams.Add("@nFnYearID", nFnYearID);
+            string Condition = "";
+            string _sqlQuery = "";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dtGoodReceive = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
-                    if (dtGoodReceive.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
-                    dtGoodReceive = _api.Format(dtGoodReceive, "Master");
 
-                    if (poNo != null)
-                    {
-                        N_POrderID = myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_POrderid"].ToString());
-                    }
-                    else
-                    {
-                        N_GRNID = myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_GRNID"].ToString());
-
-                    }
-                    if (N_GRNID != 0)
-                    {
-                        X_DetailsSql = "Select * from vw_InvMRNDetails  Where vw_InvMRNDetails.N_CompanyID=@CompanyID and vw_InvMRNDetails.N_RNID=" + N_GRNID + (showAllBranch ? "" : " and vw_InvMRNDetails.N_BranchId=@BranchID");
-                    }
-                    if (N_POrderID != 0)
-                    {
-                        X_DetailsSql = "Select *,dbo.SP_Cost(vw_POMrn_PendingDetail.N_ItemID,vw_POMrn_PendingDetail.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_POMrn_PendingDetail.N_ItemID,vw_POMrn_PendingDetail.N_CompanyID) As N_UnitSPrice  from vw_POMrn_PendingDetail Where N_CompanyID=" + nCompanyId + " and N_POrderID=" + N_POrderID + "";
-
-                    }
-
-
-                    dtGoodReceiveDetails = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
-                    dtGoodReceiveDetails = _api.Format(dtGoodReceiveDetails, "Details");
-
-                  
-                    if (N_POrderID != 0)
-                    {
-                    }
-                    else
-                    {
-                        DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_VendorID"].ToString()), myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_MRNID"].ToString()), this.N_FormID, myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_FnYearID"].ToString()), User, connection);
-                        Attachments = _api.Format(Attachments, "attachments");
-                          dt.Tables.Add(Attachments);
-                       
-                    }
-                    dt.Tables.Add(dtGoodReceive);
-                     dt.Tables.Add(dtGoodReceiveDetails);
                     
+                    if (xAsnDocNo != "" || xAsnDocNo != null){
+                        QueryParams.Add("@xAsnDocNo", xAsnDocNo);
+                        _sqlQuery = "Select * from Vw_AsnMasterToGRNMaster Where n_Companyid=@nCompanyID and X_AsnDocNo =@xAsnDocNo and N_FnYearID=@nFnYearID";
+                        }
+                    else{
+                                    QueryParams.Add("@XGRNNo", XGRNNo);
+                        if (bShowAllBranchData == true)
+                            Condition = " n_Companyid=@nCompanyID and X_GRNNo =@XGRNNo and N_FnYearID=@nFnYearID";
+                        else
+                            Condition = " n_Companyid=@nCompanyID and X_GRNNo =@XGRNNo and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
+
+                        _sqlQuery = "Select * from vw_Wh_GRN_Disp Where " + Condition + "";
+                        }
+
+
+                    Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                    Master = _api.Format(Master, "master");
+
+                    if (Master.Rows.Count == 0)
+                    {
+                        return Ok(_api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+
+                        ds.Tables.Add(Master);
+if (xAsnDocNo != "" || xAsnDocNo != null){
+                        QueryParams.Add("@nAsnID", Master.Rows[0]["N_AsnID"].ToString());
+
+                        _sqlQuery = "Select * from Vw_AsnDetailsToGRNDetails Where N_CompanyID=@nCompanyID and N_AsnID=@nAsnID";
+
+}else{
+                        QueryParams.Add("@N_GRNID", Master.Rows[0]["N_GRNID"].ToString());
+
+                        _sqlQuery = "Select * from vw_Wh_GRNDetails Where N_CompanyID=@nCompanyID and N_GRNID=@N_GRNID";
+                        }
+
+                        Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                        Detail = _api.Format(Detail, "details");
+                        if (Detail.Rows.Count == 0)
+                        {
+                            return Ok(_api.Notice("No Results Found"));
+                        }
+                        ds.Tables.Add(Detail);
+
+                        return Ok(_api.Success(ds));
+                    }
+
 
                 }
-                return Ok(_api.Success(dt));
+
+
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
 
-
-         [HttpPost("save")]
+        [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
-             try
+            try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-             connection.Open();
-             SqlTransaction transaction = connection.BeginTransaction();
-            DataTable MasterTable;
-            DataTable DetailTable;
-            MasterTable = ds.Tables["master"];
-            DetailTable = ds.Tables["details"];
-            SortedList Params = new SortedList();
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    DataTable DetailTable;
+                    MasterTable = ds.Tables["master"];
+                    DetailTable = ds.Tables["details"];
+                    SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
                     int nGrnID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_GRNID"].ToString());
                     int N_UserID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString());
@@ -213,15 +215,15 @@ namespace SmartxAPI.Controllers
                     string X_GRNNo = "";
                     var values = MasterTable.Rows[0]["X_GRNNo"].ToString();
 
-            
-            
+
+
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_FormID", 370);
                         Params.Add("N_YearID", N_FnYearID);
 
-                X_GRNNo = dLayer.GetAutoNumber("wh_GRN", "X_GRNNo", Params, connection, transaction);
+                        X_GRNNo = dLayer.GetAutoNumber("wh_GRN", "X_GRNNo", Params, connection, transaction);
                         if (X_GRNNo == "")
                         {
                             transaction.Rollback();
@@ -240,7 +242,7 @@ namespace SmartxAPI.Controllers
                     {
                         DetailTable.Rows[j]["N_GrnID"] = nGrnID;
                     }
-                      int N_GRNDetailsID = dLayer.SaveData("wh_GRNDetails", "N_GRNDetailsID", DetailTable, connection, transaction);
+                    int N_GRNDetailsID = dLayer.SaveData("wh_GRNDetails", "N_GRNDetailsID", DetailTable, connection, transaction);
                     if (N_GRNDetailsID <= 0)
                     {
                         transaction.Rollback();
@@ -255,14 +257,60 @@ namespace SmartxAPI.Controllers
                     return Ok(_api.Success(Result, "Saved"));
                 }
             }
-        
-          catch (Exception ex)
+
+            catch (Exception ex)
             {
                 return Ok(_api.Error(User, ex));
             }
+
         }
+
+
+
+
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nGRNID, int nCompanyID, int nFnYearID)
+        {
+            int Results = 0;
+            try
+            {
+                SortedList QueryParams = new SortedList();
+                QueryParams.Add("@nCompanyID", nCompanyID);
+                QueryParams.Add("@nFnYearID", nFnYearID);
+                QueryParams.Add("@nGRNID", nGRNID);
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    Results = dLayer.DeleteData("wh_GRN", "N_GRNID", nGRNID, "", connection);
+
+
+                    if (Results > 0)
+                    {
+                        dLayer.DeleteData("wh_GRNDetails", "N_GRNID", nGRNID, "", connection);
+                        return Ok(_api.Success("WhGRN deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error(User, "Unable to delete"));
+                    }
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+
+
+        }
+
+
     }
 }
-                
 
-            
+
+
+
+

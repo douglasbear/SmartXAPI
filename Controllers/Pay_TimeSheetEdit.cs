@@ -367,7 +367,7 @@ namespace SmartxAPI.Controllers
             catch (Exception ex)
             {
                 return Ok(_api.Error(User,ex));
-            }
+            } 
         }
 
         [HttpGet("details")]

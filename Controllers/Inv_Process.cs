@@ -347,7 +347,7 @@ namespace SmartxAPI.Controllers
                     }
                     if (nAssemblyID > 0)
                     {
-                        object result = dLayer.ExecuteScalar("[SP_BuildorUnbuild] 'delete'," + nAssemblyID.ToString() + "," + nAssemblyID.ToString(), connection, transaction);
+                        object result = dLayer.ExecuteScalar("[SP_BuildorUnbuild] 'delete'," + nAssemblyID.ToString() + "," + N_LocationID.ToString() + ",'PRODUCTION ORDER'", connection, transaction);
                         if (result == null || myFunctions.getIntVAL(result.ToString()) < 0)
                         {
                             transaction.Rollback();

@@ -494,26 +494,36 @@ namespace SmartxAPI.Controllers
         {
 
             int Results = 0;
+            SortedList OutPut = new SortedList();
             try
             {
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
+                 DataTable dt = new DataTable();
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nFnYearID", nFnYearID);
                 QueryParams.Add("@nFormID", 51);
                 QueryParams.Add("@nCustomerID", nCustomerID);
+                 string sqlCommandCount = "";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    //   dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
+
+                   
 
                     if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
                         return Ok(api.Error(User, "Year is closed, Cannot create new Customer..."));
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Inv_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
+                   
+                  
                     myAttachments.DeleteAttachment(dLayer, 1, 0, nCustomerID, nFnYearID, 51, User, transaction, connection);
                     transaction.Commit();
                 }
+
+
                 if (Results > 0)
                 {
                     Dictionary<string, string> res = new Dictionary<string, string>();
@@ -528,7 +538,10 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User, ex));
+                if (ex.Message.Contains("REFERENCE constraint"))
+                    return Ok(api.Error(User, "Unable to delete customer! It has been used."));
+                else
+                    return Ok(api.Error(User, ex));
             }
 
 
@@ -562,24 +575,24 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "customerKey", typeof(string), "");
-                    if (crmcustomerID > 0)
-                    {
-                        dt.Rows[0]["x_CustomerCode"] = "@Auto";
-
-                    }
-                    else
-                    {
-                        string seperator = "$e$-!";
-                        dt.Rows[0]["customerKey"] = myFunctions.EncryptString(myFunctions.GetCompanyID(User).ToString()) + seperator + myFunctions.EncryptString(dt.Rows[0]["n_CustomerID"].ToString());
-                    }
-                    dt.AcceptChanges();
-
                     if (dt.Rows.Count == 0)
                     {
                         return Ok(api.Notice("No Results Found"));
                     }
                     else
                     {
+                        if (crmcustomerID > 0)
+                        {
+                            dt.Rows[0]["x_CustomerCode"] = "@Auto";
+
+                        }
+                        else
+                        {
+                            string seperator = "$e$-!";
+                            dt.Rows[0]["customerKey"] = myFunctions.EncryptString(myFunctions.GetCompanyID(User).ToString()) + seperator + myFunctions.EncryptString(dt.Rows[0]["n_CustomerID"].ToString());
+                        }
+                        dt.AcceptChanges();
+                    
                         DataTable Attachments = myAttachments.ViewAttachment(dLayer, nCustomerID, 0, 51, nFnYearID, User, connection);
                         Attachments = api.Format(Attachments, "attachments");
                         dt = api.Format(dt, "master");
