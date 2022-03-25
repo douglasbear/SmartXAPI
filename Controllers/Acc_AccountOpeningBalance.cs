@@ -283,7 +283,7 @@ namespace SmartxAPI.Controllers
                             nAmount = myFunctions.getVAL(DetailTable.Rows[j]["n_Debit"].ToString());
                         else
                             nAmount = (-1) * myFunctions.getVAL(DetailTable.Rows[j]["n_Credit"].ToString());
-                        DetailTable.Rows[j]["N_Amount"] = nAmount;
+                        DetailTable.Rows[j]["N_Amount"] = myFunctions.getVAL(nAmount.ToString());
                         if (nAmount == 0)
                         {
                             DetailTable.Rows[j].Delete();

@@ -414,6 +414,8 @@ namespace SmartxAPI.Controllers
                         
                         if (partyName == "" || partyName==null)
                             partyName = "customer";
+                        if (docNumber == "" || docNumber==null)
+                            docNumber = "DocNo";
                         partyName = partyName.Replace("&", "");
                         partyName = partyName.ToString().Substring(0, Math.Min(12, partyName.ToString().Length));
                         docNumber = Regex.Replace(docNumber, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
