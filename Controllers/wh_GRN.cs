@@ -161,7 +161,7 @@ namespace SmartxAPI.Controllers
                     {
 
                         ds.Tables.Add(Master);
-                        if (xAsnDocNo != "" || xAsnDocNo != null)
+                        if (xAsnDocNo != null)
                         {
                             QueryParams.Add("@nAsnID", Master.Rows[0]["N_AsnID"].ToString());
 
