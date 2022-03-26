@@ -81,6 +81,7 @@ namespace SmartxAPI.Controllers
                    if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
                     Pattern = " and N_UserID=" + nUserID;
                     }
+                    Pattern = "";//Removed pattern from PI
 
 
 

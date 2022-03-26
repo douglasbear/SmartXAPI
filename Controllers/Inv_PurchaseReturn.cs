@@ -67,6 +67,7 @@ namespace SmartxAPI.Controllers
                     if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
                     Pattern = " and N_UserID=" + nUserID;
                         }
+                        Pattern = "";//Removed pattern from PI
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     if (xSearchkey != null && xSearchkey.Trim() != "")
