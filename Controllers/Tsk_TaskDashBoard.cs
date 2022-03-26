@@ -93,13 +93,13 @@ namespace SmartxAPI.Controllers
                 ClosedList.AcceptChanges();
                 TaskStatus.AcceptChanges();
                 
-                if (ActiveEmployees.Rows.Count > 0) Data.Add("ActiveEmployees", ActiveEmployees);
-                if (ScheduledList.Rows.Count > 0) Data.Add("ScheduledList", ScheduledList);
-                if (ActiveList.Rows.Count > 0) Data.Add("ActiveList", ActiveList);
-                if (CompletedList.Rows.Count > 0) Data.Add("CompletedList", CompletedList);
-                if (ClosedList.Rows.Count > 0) Data.Add("ClosedList", ClosedList);
+                if (ActiveEmployees.Rows.Count > 0) Data.Add("activeEmployees", ActiveEmployees);
+                if (ScheduledList.Rows.Count > 0) Data.Add("scheduledList", ScheduledList);
+                if (ActiveList.Rows.Count > 0) Data.Add("activeList", ActiveList);
+                if (CompletedList.Rows.Count > 0) Data.Add("completedList", CompletedList);
+                if (ClosedList.Rows.Count > 0) Data.Add("closedList", ClosedList);
                
-                if (TaskStatus.Rows.Count > 0) Data.Add("TaskStatus", TaskStatus);
+                if (TaskStatus.Rows.Count > 0) Data.Add("taskStatus", TaskStatus);
 
                
                 return Ok(api.Success(Data));
@@ -110,5 +110,10 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, e));
             }
         }
+
+
+
+
+
     }
 }
