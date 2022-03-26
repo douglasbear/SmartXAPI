@@ -67,9 +67,16 @@ namespace SmartxAPI.Controllers
                 // {
                 //     object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId,Params,connection);
 
+<<<<<<< HEAD
                 //     if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
                 //     Pattern = " and N_CreatedUser=" + nUserID;
                 // }
+=======
+                    if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    Pattern = " and N_UserID=" + nUserID;
+                }
+                Pattern = "";//Removed pattern from PI
+>>>>>>> f9e919eeeec0c38639cbfc8f36f5f645412f7f49
 
 
 

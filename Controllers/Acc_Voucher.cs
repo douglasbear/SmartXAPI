@@ -63,6 +63,8 @@ namespace SmartxAPI.Controllers
                     Pattern = " and N_CreatedUser=" + nUserID;
                
             }
+
+            Pattern="";
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and ([Voucher No] like '%" + xSearchkey + "%' or Account like '%" + xSearchkey + "%' or X_Remarks like '%" + xSearchkey + "%' or [Voucher Date] like '%" + xSearchkey + "%' or n_Amount like '%" + xSearchkey + "%' )";
 

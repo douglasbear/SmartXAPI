@@ -109,7 +109,11 @@ namespace SmartxAPI.Controllers
                 break;
                 case "income": criteria= " and (X_Type ='I' or X_Type='L' or X_Type='A') ";
                 break;
+<<<<<<< HEAD
                 case "cost": criteria= " and ( X_Type ='E' OR X_Type ='I' or X_Type='L' or X_Type='A')";
+=======
+               case "cost": criteria= " and ( X_Type ='E' OR X_Type ='I' or X_Type='L' or X_Type='A')";
+>>>>>>> f9e919eeeec0c38639cbfc8f36f5f645412f7f49
                 break;
                 default: return Ok("Invalid Type");
             }
