@@ -70,7 +70,7 @@ namespace SmartxAPI.Controllers
                     object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
 
                     if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
-                    Pattern = " and N_UserID=" + nUserID+" ";
+                    Pattern = " and N_CreatedUser=" + nUserID+" ";
                     }
 
                     int N_decimalPlace = 2;
@@ -984,6 +984,7 @@ namespace SmartxAPI.Controllers
 
                     int N_PaymentMethodID = myFunctions.getIntVAL(MasterRow["n_PaymentMethodID"].ToString());
                     int N_DeliveryNoteID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteId"].ToString());
+                    int N_CreatedUser = myFunctions.getIntVAL(MasterRow["n_CreatedUser"].ToString());
                     int N_UserID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
                     int UserCategoryID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
                     int N_AmtSplit = 0;
@@ -1574,6 +1575,8 @@ namespace SmartxAPI.Controllers
                     object LastInvoiceNO = dLayer.ExecuteScalar("select top(1) N_lastUsedNo from inv_invoicecounter where n_formid=64 and n_companyid=" + nCompanyID + " and N_FnyearID=" + nFnYearID, Params, connection);
                     DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.N_FormID, nInvoiceID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
                     Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
+                   
+
                     SqlTransaction transaction = connection.BeginTransaction();
 
                     string payRecieptqry = "select N_PayReceiptID from  Inv_PayReceipt where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_RefID=" + nInvoiceID + " and N_FormID=" + this.N_FormID + "";
@@ -1588,14 +1591,14 @@ namespace SmartxAPI.Controllers
                                 
                     var xUserCategory = myFunctions.GetUserCategory(User);// User.FindFirst(ClaimTypes.GroupSid)?.Value;
                     var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                    object objSalesReturnProcessed = dLayer.ExecuteScalar("Select Isnull(N_DebitNoteId,0) from Inv_SalesReturnMaster where N_CompanyID=" + nCompanyID + " and N_SalesID=" + nInvoiceID + " and B_IsSaveDraft = 0", connection, transaction);
+                    object objSalesReturnProcessed = dLayer.ExecuteScalar("Select Isnull(N_DebitNoteId,0) from Inv_SalesReturnMaster where N_CompanyID=" + nCompanyID + " and N_SalesId=" + nInvoiceID + " and isnull(B_IsSaveDraft,0)=0", connection, transaction);
                     object objPaymentProcessed = dLayer.ExecuteScalar("Select Isnull(N_PayReceiptId,0) from Inv_PayReceiptDetails where N_CompanyID=" + nCompanyID + " and N_InventoryId=" + nInvoiceID + " and X_TransType='SALES'", connection, transaction);
                     //Results = dLayer.DeleteData("Inv_SalesInvoice", "n_InvoiceID", N_InvoiceID, "",connection,transaction);
                     if (objSalesReturnProcessed == null)
                         objSalesReturnProcessed = 0;
                     if (objPaymentProcessed == null)
                         objPaymentProcessed = 0;
-                    if (myFunctions.getIntVAL(objSalesReturnProcessed.ToString()) == 0 && myFunctions.getIntVAL(objSalesReturnProcessed.ToString()) == 0)
+                    if (myFunctions.getIntVAL(objSalesReturnProcessed.ToString()) == 0 && myFunctions.getIntVAL(objPaymentProcessed.ToString()) == 0)
                     {
                         string X_Criteria = "N_SalesID=" + nInvoiceID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
                         string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
@@ -1677,7 +1680,7 @@ namespace SmartxAPI.Controllers
                             {
                                 SortedList DeleteParams = new SortedList(){
                                         {"N_CompanyID",nCompanyID},
-                                        {"N_UserID",nUserID},
+                                        {"N_UserID",nUserID}, 
                                         {"X_TransType","SALES"},
                                         {"X_SystemName","WebRequest"},
                                         {"N_VoucherID",nInvoiceID}}; 
@@ -1750,6 +1753,7 @@ namespace SmartxAPI.Controllers
                     LogParams.Add("N_TransID", nInvoiceID);
                     LogParams.Add("N_FormID", this.N_FormID);
                     LogParams.Add("N_UserId", nUserID);
+                    //LogParams.Add("N_UserID", nUserID);
                     LogParams.Add("X_Action", xButtonAction);
                     LogParams.Add("X_SystemName", "ERP Cloud");
                     LogParams.Add("X_IP", ipAddress);
@@ -2090,9 +2094,9 @@ namespace SmartxAPI.Controllers
 
             string sqlCommandText = "";
             if (bAllbranchData)
-                sqlCommandText = "Select N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId from vw_Inv_DeliveryNotePending  Where N_CompanyID=@nCompanyID and N_DeliveryNoteID NOT IN (select N_DeliveryNoteID from Inv_SalesDetails where N_CompanyId=@nCompanyID)  and N_CustomerID=@nCustomerID Group By N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId";
+                sqlCommandText = "Select N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId from vw_Inv_DeliveryNotePending  Where N_CompanyID=@nCompanyID and N_DeliveryNoteID NOT IN (select isnull(N_DeliveryNoteID,0) from Inv_SalesDetails where N_CompanyId=@nCompanyID)  and N_CustomerID=@nCustomerID Group By N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId";
             else
-                sqlCommandText = "Select N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId from vw_Inv_DeliveryNotePending  Where N_CompanyID=@nCompanyID and N_BranchID=" + nBranchID + "  and N_CustomerID=@nCustomerID and N_DeliveryNoteID NOT IN (select N_DeliveryNoteID from Inv_SalesDetails where N_CompanyId=@nCompanyID)  Group By N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId";
+                sqlCommandText = "Select N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId from vw_Inv_DeliveryNotePending  Where N_CompanyID=@nCompanyID and N_BranchID=" + nBranchID + "  and N_CustomerID=@nCustomerID and N_DeliveryNoteID NOT IN (select isnull(N_DeliveryNoteID,0) from Inv_SalesDetails where N_CompanyId=@nCompanyID)  Group By N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId";
 
             try
             {

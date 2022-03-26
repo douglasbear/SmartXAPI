@@ -29,31 +29,28 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("list")]
-        public ActionResult GetLocationDetails(int? nCompanyId, string prs, bool bLocationRequired, bool bAllBranchData, int nBranchID,string xBarcode)
+        public ActionResult GetLocationDetails(int? nCompanyId, string prs, bool bLocationRequired, bool bAllBranchData, int nBranchID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string xQuery="";
-            if (xBarcode != "" && xBarcode != null)
-                 xQuery=" and X_Barcode='" + xBarcode+"'";
 
             string sqlCommandText = "";
             if (prs == null || prs == "")
-                sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1"+xQuery+" order by N_LocationID DESC";
+                sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 order by N_LocationID DESC";
             else
             {
                 if (!bLocationRequired)
                 {
                     if (bAllBranchData == true)
-                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where N_MainLocationID =0 and N_CompanyID=" + nCompanyId + xQuery;
+                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where N_MainLocationID =0 and N_CompanyID=" + nCompanyId;
 
                     else
-                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where  N_MainLocationID =0 and N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID + xQuery;
+                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where  N_MainLocationID =0 and N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID;
 
                 }
                 else
                 {
-                    sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where  isnull(N_MainLocationID,0) =0 and N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID+xQuery;
+                    sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where  isnull(N_MainLocationID,0) =0 and N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID;
                 }
             }
 
@@ -196,7 +193,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
                         Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
                         Params.Add("N_FormID", 450);
-                        Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
+                        // Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         LocationCode = dLayer.GetAutoNumber("Inv_Location", "X_LocationCode", Params, connection, transaction);
                         if (LocationCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Location Code")); }
                         MasterTable.Rows[0]["X_LocationCode"] = LocationCode;

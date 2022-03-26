@@ -14,12 +14,6 @@ using System.Text.RegularExpressions;
 using System.IO;
 using System.Net;
 using System.Web;
-using System.Net.Http;
-using Vse.Web.Serialization;
-using Newtonsoft.Json;
-using Olivo.GoogleTranslator;
-
-
 
 namespace SmartxAPI.Controllers
 {
@@ -31,20 +25,21 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
+         private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
-        private string url;
 
-        public Inv_ItemMaster(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Inv_ItemMaster(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf,IMyAttachments myAtt)
         {
             _api = api;
             dLayer = dl;
             myFunctions = myFun;
+             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, int nItemUsedFor)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem,int nItemUsedFor)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -93,15 +88,15 @@ namespace SmartxAPI.Controllers
             if (isStockItem)
                 Condition = Condition + " and N_ClassID =2";
 
-            if (nItemUsedFor != 0)
+            if(nItemUsedFor!=0)
             {
-                if (nItemUsedFor == 1)
+                if(nItemUsedFor==1)
                     Condition = Condition + " and vw_InvItem_Search_cloud.B_CanBePurchased =1";
-                else if (nItemUsedFor == 2)
+                else if(nItemUsedFor==2)
                     Condition = Condition + " and vw_InvItem_Search_cloud.B_CanbeSold =1";
-                else if (nItemUsedFor == 3)
+                else if(nItemUsedFor==3)
                     Condition = Condition + " and vw_InvItem_Search_cloud.B_CanBePurchased =1 and vw_InvItem_Search_cloud.B_CanbeSold =1";
-                else if (nItemUsedFor == 4)
+                else if(nItemUsedFor==4)
                     Condition = Condition + " and vw_InvItem_Search_cloud.B_CanbeRawMaterial =1";
             }
 
@@ -201,8 +196,8 @@ namespace SmartxAPI.Controllers
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ItemID desc,[Item Code] desc";
-
-
+               
+                
             else
             {
                 switch (xSortBy.Split(" ")[0])
@@ -296,6 +291,7 @@ namespace SmartxAPI.Controllers
             DataTable BOMEmpTable = new DataTable();
             DataTable BOMAssetTable = new DataTable();
             DataTable ItemWarrantyTable = new DataTable();
+            DataTable Attachments = new DataTable();
             int N_ItemID = nItemID;
             int companyid = myFunctions.GetCompanyID(User);
 
@@ -313,9 +309,10 @@ namespace SmartxAPI.Controllers
                     string multiqry = "SELECT * from vw_ItemCategoryDisplay where N_ItemID=@nItemID and N_CompanyID=@nCompanyID";
                     multiCategory = dLayer.ExecuteDataTable(multiqry, QueryParams, connection);
                     multiCategory = _api.Format(multiCategory, "multiCategory");
-
-
-
+                    
+                    
+                     Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dt.Rows[0]["N_ItemID"].ToString()), myFunctions.getIntVAL(dt.Rows[0]["N_ItemID"].ToString()), 53, 0, User, connection);
+                        Attachments = _api.Format(Attachments, "attachments");
 
                     if (dt.Rows.Count == 0)
                     {
@@ -437,6 +434,10 @@ namespace SmartxAPI.Controllers
                     ItemWarrantyTable = dLayer.ExecuteDataTable(itemWarranty, QueryParams, connection);
                     ItemWarrantyTable = _api.Format(ItemWarrantyTable, "itemWarranty");
 
+
+
+
+
                 }
                 dt.AcceptChanges();
                 // multiCategory.AcceptChanges();
@@ -459,6 +460,7 @@ namespace SmartxAPI.Controllers
                 dataSet.Tables.Add(BOMEmpTable);
                 dataSet.Tables.Add(BOMAssetTable);
                 dataSet.Tables.Add(ItemWarrantyTable);
+                dataSet.Tables.Add(Attachments);
 
                 return Ok(_api.Success(dataSet));
 
@@ -483,6 +485,7 @@ namespace SmartxAPI.Controllers
                 DataTable BOMAssetTable = new DataTable();
                 DataTable POS = ds.Tables["Pos"];
                 DataTable ECOM = ds.Tables["Ecom"];
+                 DataTable Attachment = ds.Tables["attachments"];
                 MasterTableNew = ds.Tables["master"];
                 GeneralTable = ds.Tables["general"];
                 StockUnit = ds.Tables["stockUnit"];
@@ -501,6 +504,7 @@ namespace SmartxAPI.Controllers
                 itemWarranty = ds.Tables["itemWarranty"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CompanyId"].ToString());
                 int N_ItemID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString());
+                  string XItemName = MasterTableNew.Rows[0]["X_ItemName"].ToString();
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -545,10 +549,12 @@ namespace SmartxAPI.Controllers
 
                     if (myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()) > 0)
                     {
+                         int N_PkeyID = N_ItemID;
                         dLayer.DeleteData("Inv_ItemDetails", "N_MainItemID", myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()), "N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Inv_BOMEmployee", "N_MainItem", myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()), "N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Inv_BOMAsset", "N_MainItemID", myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()), "N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Inv_ItemWarranty", "N_MainItemID", myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()), "N_CompanyID=" + nCompanyID, connection, transaction);
+                    
                     }
                     //Adding variant product in master table
                     MasterTable = MasterTableNew.Clone();
@@ -570,7 +576,7 @@ namespace SmartxAPI.Controllers
                                 if (VariantList.Rows[i]["X_Barcode"].ToString() != "")
                                     MasterTable.Rows[j]["X_Barcode"] = VariantList.Rows[i]["X_Barcode"].ToString();
                                 if (VariantList.Rows[i]["N_Rate"].ToString() != "")
-                                    MasterTable.Rows[j]["N_Rate"] = VariantList.Rows[i]["N_Rate"].ToString();
+                                    MasterTable.Rows[j]["N_Rate"] =myFunctions.getVAL(VariantList.Rows[i]["N_Rate"].ToString());
                                 MasterTable.Rows[j]["N_CLassID"] = "2";
                             }
                             else
@@ -862,6 +868,20 @@ namespace SmartxAPI.Controllers
                             }
                             itemWarranty.AcceptChanges();
                             dLayer.SaveData("Inv_ItemWarranty", "N_ItemDetailsID", itemWarranty, connection, transaction);
+                        }
+                    }
+
+
+                      if (Attachment.Rows.Count > 0)
+                    {
+                        try
+                        {
+                            myAttachments.SaveAttachment(dLayer, Attachment, ItemCode, N_ItemID, XItemName, ItemCode, N_ItemID, "Product Document", User, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, ex));
                         }
                     }
 
@@ -1344,7 +1364,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("productPurchaseHistory")]
-        public ActionResult GetProductPurchaseHistoryList(int nItemID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, bool bIncludePriceQuote)
+        public ActionResult GetProductPurchaseHistoryList(int nItemID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,bool bIncludePriceQuote)
         {
             try
             {
@@ -1357,7 +1377,7 @@ namespace SmartxAPI.Controllers
                     int Count = (nPage - 1) * nSizeperpage;
                     string sqlCommandText = "";
                     string sqlCommandCount = "";
-                    string Searchkey = "", Cond = "";
+                    string Searchkey = "",Cond="";
 
                     Params.Add("@p1", nCompanyID);
                     Params.Add("@p2", nItemID);
@@ -1372,24 +1392,24 @@ namespace SmartxAPI.Controllers
                         xSortBy = " order by " + xSortBy;
                     }
 
-                    if (!bIncludePriceQuote)
-                        Cond = " and ISNULL(B_IsPriceQuote,0)=0";
+                    if(!bIncludePriceQuote)
+                        Cond=" and ISNULL(B_IsPriceQuote,0)=0";
 
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and N_ItemID=@p2 " + Searchkey + " " + Cond + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and N_ItemID=@p2 " + Searchkey + " " +Cond+" "+ xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + " and N_PurchaseDetailsID not in (select top(" + Count + ") N_PurchaseDetailsID from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + xSearchkey + Cond + xSortBy + " ) " + Cond + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + " and N_PurchaseDetailsID not in (select top(" + Count + ") N_PurchaseDetailsID from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + xSearchkey + Cond + xSortBy + " ) " +Cond+" "+ xSortBy;
 
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + "" + Cond + " ";
+                    sqlCommandCount = "select count(*) as N_Count from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + ""+Cond+" ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
 
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
-                    return Ok(_api.Success(OutPut));
+                    return Ok(_api.Success(OutPut)); 
                 }
             }
             catch (Exception e)
@@ -1404,9 +1424,7 @@ namespace SmartxAPI.Controllers
             try
             {
                 SortedList OutPut = new SortedList();
-                Translator t = new Translator();
-                string Artext = t.Translate(xText, (string)"English", (string)"Arabic");
-                // string Artext = Translate(xText, "en", "ar");
+                string Artext = Translate(xText, "en", "ar");
                 if (xText == null)
                     Artext = "";
                 OutPut.Add("arabic", Artext);

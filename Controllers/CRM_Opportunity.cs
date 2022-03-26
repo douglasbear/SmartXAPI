@@ -63,7 +63,7 @@ namespace SmartxAPI.Controllers
             }
             else
             {
-                Pattern = " and (N_UserID=" + nUserID + " or N_LoginUserID="+nUserID+")";
+                Pattern = " and (N_CreatedUser=" + nUserID + " or N_LoginUserID="+nUserID+")";
 
             }
             int Count = (nPage - 1) * nSizeperpage;
