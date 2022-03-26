@@ -26,7 +26,7 @@
 //     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 //     [Route("barcode")]
 //     [ApiController]
-//     public class Barcode1 : ControllerBase
+//     public class Barcode : ControllerBase
 //     {
 //         private readonly IApiFunctions _api;
 //         private readonly IDataAccessLayer dLayer;
@@ -41,7 +41,7 @@
 //         string TableName = "";
 //         string QRurl = "";
 
-//         public Barcode1(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+//         public Barcode(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
 //         {
 //             _api = api;
 //             dLayer = dl;
