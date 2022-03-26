@@ -444,7 +444,6 @@ namespace SmartxAPI.Controllers
             double InvoicePaidAmt = 0, BalanceAmt = 0;
             string PurchaseID = "";
 
-
             string PurchaseSql = "Select N_PurchaseID from vw_Inv_PurchaseDisp Where N_CompanyID=" + nCompanyID + " and X_InvoiceNo='" + x_InvoiceNo + "' and N_FnYearID=" + nFnYearID + " and X_TransType='PURCHASE'";
             DataTable PurchaseTable = dLayer.ExecuteDataTable(PurchaseSql, connection);
             foreach (DataRow kvar in PurchaseTable.Rows)
@@ -452,9 +451,6 @@ namespace SmartxAPI.Controllers
                 PurchaseID += PurchaseID == "" ? kvar["N_PurchaseID"].ToString() : " , " + kvar["N_PurchaseID"].ToString();
 
             }
-
-
-
 
             if (N_PaymentMethod == 2)
             {
@@ -468,7 +464,6 @@ namespace SmartxAPI.Controllers
                 else
                     objPaid = dLayer.ExecuteScalar("Select N_CashPaid from vw_Inv_PurchaseDisp Where N_CompanyID=" + nCompanyID + " and X_InvoiceNo='" + x_InvoiceNo + "' and N_FnYearID=" + nFnYearID + " and N_BranchId=" + n_BranchId + " and N_LocationID =" + n_LocationID + "  and X_TransType='" + x_TransType + "'", connection);
             }
-
 
             if (objPaid == null && N_PaymentMethod == 2)
             {
@@ -534,6 +529,14 @@ namespace SmartxAPI.Controllers
                     TxnStatus["LabelColor"] = "Green";
                     TxnStatus["Alert"] = "";
                 }
+                DataTable dtpayReceipt = dLayer.ExecuteDataTable("SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and dbo.Inv_PayReceiptDetails.N_InventoryId in (" + nPurchaseID + ")", connection);
+                string InvoiceNos = "";
+                foreach (DataRow var in dtpayReceipt.Rows)
+                {
+                    InvoiceNos += var["X_VoucherNo"].ToString() + " , ";
+                }
+                char[] trim = { ',', ' ' };
+                TxnStatus["Label"] = TxnStatus["Label"].ToString() +" (Payment No: " + InvoiceNos.ToString().TrimEnd(trim)+")";
             }
 
 

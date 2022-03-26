@@ -934,7 +934,11 @@ namespace SmartxAPI.Controllers
                 }
                 char[] trim = { ',', ' ' };
                 if (InvoiceNos != "")
+                {
                     TxnStatus["ReceiptNumbers"] = InvoiceNos.ToString().TrimEnd(trim);
+                    char[] trim1 = { ',', ' ' };
+                    TxnStatus["Label"] = TxnStatus["Label"].ToString() +" (Payment No: " + InvoiceNos.ToString().TrimEnd(trim1)+")";
+                }
 
             }
 

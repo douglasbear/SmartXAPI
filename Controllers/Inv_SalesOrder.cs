@@ -607,7 +607,7 @@ namespace SmartxAPI.Controllers
                                 {"N_UserID",nUserID},
                                 {"X_SystemName","WebRequest"},
                                 {"N_BranchID",nBranchID}};
-                        Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+                        Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction); 
                         if (Results <= 0)
                         {
                             transaction.Rollback();
