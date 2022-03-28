@@ -82,20 +82,20 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    if (bAllBranchData)
+                    // if (bAllBranchData)
                         sqlCondition = "N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId";
-                    else
-                        sqlCondition = "N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and N_BranchID=@nBranchID";
+                    // else
+                    //     sqlCondition = "N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and N_BranchID=@nBranchID";
 
 
                     if (Count == 0)
-                        sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_AsnReceipt where " + sqlCondition + " " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_Wh_AsnMaster_Disp where " + sqlCondition + " " + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_AsnReceipt where " + sqlCondition + " " + Searchkey + " and N_AsnID not in (select top(" + Count + ") N_AsnID from vw_AsnReceipt where " + sqlCondition + " " + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_Wh_AsnMaster_Disp where " + sqlCondition + " " + Searchkey + " and N_AsnID not in (select top(" + Count + ") N_AsnID from vw_Wh_AsnMaster_Disp where " + sqlCondition + " " + xSortBy + " ) " + xSortBy;
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_AsnReceipt where " + sqlCondition + " " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count from vw_Wh_AsnMaster_Disp where " + sqlCondition + " " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

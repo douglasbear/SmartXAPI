@@ -68,9 +68,9 @@ namespace SmartxAPI.Controllers
                     }
                     int Count = (nPage - 1) * nSizeperpage;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") [X_GRNNo] AS X_GRNNo,* from vw_Wh_GRN where N_CompanyID=@p1 and N_FnYearID=@p2" + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [X_GRNNo] AS X_GRNNo,* from vw_Wh_GRN_Disp where N_CompanyID=@p1 and N_FnYearID=@p2" + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") [X_GRNNo] AS X_GRNNo,* from vw_Wh_GRN where N_CompanyID=@p1 and N_FnYearID=@p2" + Searchkey + " and N_GRNID not in (select top(" + Count + ") N_GRNID from vw_Wh_GRN where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [X_GRNNo] AS X_GRNNo,* from vw_Wh_GRN_Disp where N_CompanyID=@p1 and N_FnYearID=@p2" + Searchkey + " and N_GRNID not in (select top(" + Count + ") N_GRNID from vw_Wh_GRN_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
 
                     // sqlCommandText = "select * from Inv_MRNDetails where N_CompanyID=@p1";
                     Params.Add("@p1", nCompanyId);
@@ -79,7 +79,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_Wh_GRN where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count from vw_Wh_GRN_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     if (Summary.Rows.Count > 0)
