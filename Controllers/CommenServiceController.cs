@@ -211,8 +211,12 @@ namespace SmartxAPI.Controllers
                             using (SqlConnection cnn = new SqlConnection(connectionString))
                             {
                                 cnn.Open();
+
+                                string companySql="";
+                                if(companyid>0)
+                                companySql=" and Acc_Company.N_CompanyID="+companyid+" ";
                                 string cmpSql = "select Acc_Company.N_CompanyID,Acc_Company.X_CompanyName from Acc_Company LEFT OUTER JOIN Sec_User ON Acc_Company.N_CompanyID = Sec_User.N_CompanyID " +
-                            " where Acc_Company.N_ClientID=@nClientID and  Sec_User.X_UserID=@xEmailID  order by B_IsDefault Desc ";
+                            " where Acc_Company.N_ClientID=@nClientID and  Sec_User.X_UserID=@xEmailID "+companySql+" order by B_IsDefault Desc ";
                                 DataTable companyDt = dLayer.ExecuteDataTable(cmpSql, paramList, cnn);
                                 if (companyDt.Rows.Count == 0)
                                 {

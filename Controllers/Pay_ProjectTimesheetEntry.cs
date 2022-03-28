@@ -110,10 +110,12 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    DataTable MasterTable;
-                    DataTable DetailTable;
+                    DataTable MasterTable, AdnMaster;
+                    DataTable DetailTable, AdnDetails;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
+                    AdnMaster = ds.Tables["adnMaster"];
+                    AdnDetails = ds.Tables["adnDetails"];
                     SortedList Params = new SortedList();
 
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
@@ -137,11 +139,21 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Warning("Unable to generate"));
                         }
                         MasterTable.Rows[0]["X_PrjTimesheetCode"] = X_PrjTimesheetCode;
+
+                        Params["N_FormID"] = 208;
+
+                        string x_Batch = dLayer.GetAutoNumber("Pay_MonthlyAddOrDed", "x_Batch", Params, connection, transaction);
+                        if (x_Batch == "")
+                        {
+                            transaction.Rollback();
+                            return Ok("Unable to generate Code");
+                        }
+                        AdnMaster.Rows[0]["x_Batch"] = x_Batch;
                     }
                     //  if (nTimeSheetID > 0)
                     // {
-                        // dLayer.DeleteData("Prj_TimeSheetEntry", "n_PrjTimeSheetID", nTimeSheetID, "n_CompanyID=" + nCompanyID + " and n_PrjTimeSheetID=" + nTimeSheetID, connection, transaction);
-                        // dLayer.DeleteData("Prj_TimeSheetEntryMaster", "n_PrjTimeSheetID", nTimeSheetID, "n_CompanyID=" + nCompanyID + " and n_PrjTimeSheetID=" + nTimeSheetID, connection, transaction);
+                    // dLayer.DeleteData("Prj_TimeSheetEntry", "n_PrjTimeSheetID", nTimeSheetID, "n_CompanyID=" + nCompanyID + " and n_PrjTimeSheetID=" + nTimeSheetID, connection, transaction);
+                    // dLayer.DeleteData("Prj_TimeSheetEntryMaster", "n_PrjTimeSheetID", nTimeSheetID, "n_CompanyID=" + nCompanyID + " and n_PrjTimeSheetID=" + nTimeSheetID, connection, transaction);
                     // }
 
                     nTimeSheetID = dLayer.SaveData("Prj_TimeSheetEntryMaster", "N_PrjTimeSheetID", MasterTable, connection, transaction);
@@ -152,9 +164,9 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to save"));
                     }
                     SortedList deleteParams = new SortedList();
-                    deleteParams.Add("@nCompanyID",nCompanyID);
-                    deleteParams.Add("@nProjectID",0);
-                    deleteParams.Add("@dDate",null);
+                    deleteParams.Add("@nCompanyID", nCompanyID);
+                    deleteParams.Add("@nProjectID", 0);
+                    deleteParams.Add("@dDate", null);
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["N_PrjTimeSheetID"] = nTimeSheetID;
@@ -163,7 +175,7 @@ namespace SmartxAPI.Controllers
                         deleteParams["@dDate"] = DetailTable.Rows[j]["D_Date"].ToString();
                         deleteParams["@nCompanyID"] = nCompanyID;
                         dLayer.ExecuteNonQuery("DELETE FROM Prj_TimeSheetEntry WHERE N_CompanyID =@nCompanyID AND N_EmpID=@nEmpID and N_ProjectID=@nProjectID and D_Date=@dDate", deleteParams, connection, transaction);
-                            
+
                     }
                     int N_PrjTimeSheetID = dLayer.SaveData("Prj_TimeSheetEntry", "N_TimeSheetID", DetailTable, connection, transaction);
                     if (N_PrjTimeSheetID <= 0)
@@ -171,6 +183,25 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to save"));
 
+                    }
+
+                    int adnID = dLayer.SaveData("Pay_MonthlyAddOrDed", "n_TransID", "", "", AdnMaster, connection, transaction);
+                    if (adnID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok("Unable to save ");
+                    }
+                    for (int j = 0; j < AdnDetails.Rows.Count; j++)
+                    {
+                        AdnDetails.Rows[j]["n_TransID"] = adnID;
+                        AdnDetails.Rows[j]["n_RefID"] = N_PrjTimeSheetID;
+                    }
+                    int adnDetailsID = dLayer.SaveData("Pay_MonthlyAddOrDedDetails", "n_TransDetailsID", "", "", AdnDetails, connection, transaction);
+
+                    if (adnDetailsID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok("Unable to save");
                     }
 
                     transaction.Commit();
@@ -219,20 +250,23 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult GetDetails(string xPrjTimesheetCode, int nFnYearID,  bool bShowAllBranchData, int nProjectID, DateTime date)
+        public ActionResult GetDetails(string xPrjTimesheetCode, int nFnYearID, bool bShowAllBranchData, int nProjectID, DateTime date)
         {
             DataSet ds = new DataSet();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
             DataTable Master = new DataTable();
             DataTable Detail = new DataTable();
+
+            DataTable adnMaster = new DataTable();
+            DataTable adnDetails = new DataTable();
             int nCompanyID = myFunctions.GetCompanyID(User);
             QueryParams.Add("@nCompanyID", nCompanyID);
             if (nProjectID == 0)
             {
                 QueryParams.Add("@xPrjTimesheetCode", xPrjTimesheetCode);
                 // QueryParams.Add("@nBranchID", nBranchID);
-            QueryParams.Add("@nFnYearID", nFnYearID);
+                QueryParams.Add("@nFnYearID", nFnYearID);
             }
             string Condition = "";
             string _sqlQuery = "";
@@ -287,6 +321,21 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Notice("No Results Found"));
                         }
                         ds.Tables.Add(Detail);
+
+                        _sqlQuery = "select * from Pay_MonthlyAddOrDedDetails where B_TimeSheetEntry=1 and N_refID=" + Master.Rows[0]["N_PrjTimeSheetID"].ToString() + " and N_FormID=1231 and N_PayID=38 and N_CompanyID=@nCompanyID ";
+                        adnDetails = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                        adnDetails = _api.Format(adnDetails, "adnDetails");
+                        ds.Tables.Add(adnDetails);
+
+                        if (adnDetails.Rows.Count > 0)
+                        {
+                            _sqlQuery = "select * from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyID and N_TransID=" + adnDetails.Rows[0]["N_TransID"].ToString();
+                            adnMaster = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+                            adnMaster = _api.Format(adnMaster, "adnMaster");
+                        }
+                        ds.Tables.Add(adnMaster);
+
 
                         return Ok(_api.Success(ds));
                     }

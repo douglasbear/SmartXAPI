@@ -51,22 +51,22 @@ namespace SmartxAPI.Controllers
                     N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Purchase", "Decimal_Place", "N_Value", nCompanyID, dLayer, connection));
                     N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
                     int nUserID = myFunctions.GetUserID(User);
-                    string UserPattern = myFunctions.GetUserPattern(User);
-                    string Pattern = "";
+                    // string UserPattern = myFunctions.GetUserPattern(User);
+                    // string Pattern = "";
                     
-                     if (UserPattern != "")
-                     {
-                    Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
-                    Params.Add("@UserPattern",UserPattern);
+                    //  if (UserPattern != "")
+                    //  {
+                    // Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
+                    // Params.Add("@UserPattern",UserPattern);
 
-                       }
-                     else
-                       {
-                    object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId,Params,connection);
+                    //    }
+                    //  else
+                    //    {
+                    // object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId,Params,connection);
 
-                    if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
-                    Pattern = " and N_UserID=" + nUserID;
-                        }
+                    // if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    // Pattern = " and N_CreatedUser=" + nUserID;
+                    //     }
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     if (xSearchkey != null && xSearchkey.Trim() != "")
@@ -111,9 +111,9 @@ namespace SmartxAPI.Controllers
 
 
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern  + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 "   + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern  + Searchkey + " and N_CreditNoteID not in (select top(" + Count + ") N_CreditNoteID from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 "   + Searchkey + " and N_CreditNoteID not in (select top(" + Count + ") N_CreditNoteID from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
@@ -388,14 +388,17 @@ namespace SmartxAPI.Controllers
                     }
 
 
-
-
+                    if(!DetailTable.Columns.Contains("N_QtyDisplay"))
+                    DetailTable= myFunctions.AddNewColumnToDataTable(DetailTable,"N_QtyDisplay",typeof(double),0);
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["N_CreditNoteID"] = N_CreditNoteID;
                         DetailTable.Rows[j]["n_RetQty"] = (myFunctions.getVAL(DetailTable.Rows[j]["n_RetQty"].ToString())) * (myFunctions.getVAL(DetailTable.Rows[j]["N_UnitQty"].ToString()));
+                        DetailTable.Rows[j]["N_QtyDisplay"] = DetailTable.Rows[j]["n_RetQty"];
                     }
+                    if(DetailTable.Columns.Contains("N_UnitQty"))
                     DetailTable.Columns.Remove("N_UnitQty");
+
                     int N_QuotationDetailId = dLayer.SaveData("Inv_PurchaseReturnDetails", "n_CreditNoteDetailsID", DetailTable, connection, transaction);
 
 

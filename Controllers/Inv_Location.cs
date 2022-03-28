@@ -9,7 +9,8 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
-
+using iTextSharp.text.pdf;
+using iTextSharp.text;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -29,31 +30,28 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("list")]
-        public ActionResult GetLocationDetails(int? nCompanyId, string prs, bool bLocationRequired, bool bAllBranchData, int nBranchID,string xBarcode)
+        public ActionResult GetLocationDetails(int? nCompanyId, string prs, bool bLocationRequired, bool bAllBranchData, int nBranchID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string xQuery="";
-            if (xBarcode != "" && xBarcode != null)
-                 xQuery=" and X_Barcode='" + xBarcode+"'";
 
             string sqlCommandText = "";
             if (prs == null || prs == "")
-                sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1"+xQuery+" order by N_LocationID DESC";
+                sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 order by N_LocationID DESC";
             else
             {
                 if (!bLocationRequired)
                 {
                     if (bAllBranchData == true)
-                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where N_MainLocationID =0 and N_CompanyID=" + nCompanyId + xQuery;
+                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where N_MainLocationID =0 and N_CompanyID=" + nCompanyId;
 
                     else
-                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where  N_MainLocationID =0 and N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID + xQuery;
+                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where  N_MainLocationID =0 and N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID;
 
                 }
                 else
                 {
-                    sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where  isnull(N_MainLocationID,0) =0 and N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID+xQuery;
+                    sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where  isnull(N_MainLocationID,0) =0 and N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID;
                 }
             }
 
@@ -166,15 +164,15 @@ namespace SmartxAPI.Controllers
                     object limit = dLayer.ExecuteScalar("select N_LocationLimit from Acc_Company where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
                     bool b_TransferProducts = false;
                     int n_LocationFromID = 0;
-                    string TransferSql="";
-                    if (LocationCount != null && limit != null)
-                    {
-                        if (myFunctions.getIntVAL(LocationCount.ToString()) >= myFunctions.getIntVAL(limit.ToString()))
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, "Location Limit exceeded!!!"));
-                        }
-                    }
+                    string TransferSql = "";
+                    // if (LocationCount != null && limit != null)
+                    // {
+                    //     if (myFunctions.getIntVAL(LocationCount.ToString()) >= myFunctions.getIntVAL(limit.ToString()))
+                    //     {
+                    //         transaction.Rollback();
+                    //         return Ok(_api.Error(User, "Location Limit exceeded!!!"));
+                    //     }
+                    // }
                     if (MasterTable.Columns.Contains("b_TransferProducts"))
                     {
                         b_TransferProducts = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_TransferProducts"].ToString());
@@ -185,8 +183,8 @@ namespace SmartxAPI.Controllers
                     {
                         n_LocationFromID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationFromID"].ToString());
                         MasterTable.Columns.Remove("n_LocationFromID");
-                        if(n_LocationFromID>0)
-                        TransferSql = " and N_ItemID in ( select  N_ItemID from Inv_ItemMasterWHLink where N_CompanyID="+myFunctions.GetCompanyID(User)+" and N_WarehouseID="+n_LocationFromID+" ) ";
+                        if (n_LocationFromID > 0)
+                            TransferSql = " and N_ItemID in ( select  N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_WarehouseID=" + n_LocationFromID + " ) ";
                     }
 
 
@@ -196,7 +194,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
                         Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
                         Params.Add("N_FormID", 450);
-                        Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
+                        // Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         LocationCode = dLayer.GetAutoNumber("Inv_Location", "X_LocationCode", Params, connection, transaction);
                         if (LocationCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Location Code")); }
                         MasterTable.Rows[0]["X_LocationCode"] = LocationCode;
@@ -217,7 +215,7 @@ namespace SmartxAPI.Controllers
                     {
                         if (b_TransferProducts)
                         {
-                            dLayer.ExecuteNonQuery("insert into Inv_ItemMasterWHLink  select ROW_NUMBER()over (Order by N_companyId)+ISNULL((Select MAX(N_RowID) from Inv_ItemMasterWHLink),0) ,N_CompanyID," + N_LocationID + ",N_ItemID,D_Entrydate from Inv_ItemMaster where  N_CompanyID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString())+ TransferSql , Params, connection,transaction);
+                            dLayer.ExecuteNonQuery("insert into Inv_ItemMasterWHLink  select ROW_NUMBER()over (Order by N_companyId)+ISNULL((Select MAX(N_RowID) from Inv_ItemMasterWHLink),0) ,N_CompanyID," + N_LocationID + ",N_ItemID,D_Entrydate from Inv_ItemMaster where  N_CompanyID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString()) + TransferSql, Params, connection, transaction);
                         }
                         transaction.Commit();
                         return GetLocationDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()), N_LocationID);
@@ -263,6 +261,29 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
 
+
+        }
+        [HttpGet("getscreenprint")]
+        public IActionResult GetModulePrint(string xBarcode)
+        {
+            SortedList QueryParams = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction;
+                    transaction = connection.BeginTransaction();
+                    
+
+                    return Ok();
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
 
         }
     }
