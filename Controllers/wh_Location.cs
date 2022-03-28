@@ -31,13 +31,14 @@ namespace SmartxAPI.Controllers
         }
 
 
-           [HttpDelete("update")]
-        public ActionResult ActivityUpdate(int nMainLocationID,int nLocationID,int nCompanyId)
+           [HttpGet("update")]
+        public ActionResult Locationpdate(int nMainLocationID,int nLocationID,int nCompanyId)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
              nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
+             sqlCommandText = "update Inv_Location set N_MainLocationID=@p2 where N_CompanyID=@p1 and N_LocationID=@p3";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nMainLocationID);
             Params.Add("@p3", nLocationID);
@@ -53,8 +54,7 @@ namespace SmartxAPI.Controllers
                     if(nMainLocationID>0)
                         dLayer.ExecuteNonQuery("update Inv_Location set N_MainLocationID=@p2 where N_CompanyID=@p1 and N_LocationID=@p3", Params, connection);
                 }
-                return Ok(_api.Warning("Activity Updated"));
-
+                 return Ok(_api.Success(dt));
             }
             catch (Exception e)
             {

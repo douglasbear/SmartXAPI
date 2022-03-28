@@ -499,15 +499,18 @@ namespace SmartxAPI.Controllers
             {
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
-                  DataTable TransData = new DataTable();
+                 DataTable dt = new DataTable();
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nFnYearID", nFnYearID);
                 QueryParams.Add("@nFormID", 51);
                 QueryParams.Add("@nCustomerID", nCustomerID);
+                 string sqlCommandCount = "";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    //   dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
+
                    
 
                     if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
@@ -520,8 +523,6 @@ namespace SmartxAPI.Controllers
                    }
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Inv_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
-                
-
                   
                     myAttachments.DeleteAttachment(dLayer, 1, 0, nCustomerID, nFnYearID, 51, User, transaction, connection);
                     transaction.Commit();
