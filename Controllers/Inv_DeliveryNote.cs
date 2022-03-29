@@ -124,7 +124,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetDeliveryNoteDetails(int nFnYearId,bool bAllBranchData, int nBranchId, string xInvoiceNo, int nSalesOrderID,int nProformaID)
+        public ActionResult GetDeliveryNoteDetails(int nFnYearId,bool bAllBranchData, int nBranchId, string xInvoiceNo, int nSalesOrderID,int nProformaID,int nPickListID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             try
@@ -205,6 +205,20 @@ namespace SmartxAPI.Controllers
                         MasterTable = _api.Format(MasterTable, "Master");
                         string DetailSql = "";
                         DetailSql = "select * from vw_ProformatoDeliveryNoteDetails where N_CompanyId=@nCompanyID and N_ProformaID=@nProformaID";
+                        DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+
+                        DetailTable = _api.Format(DetailTable, "Details");
+                        dsSalesInvoice.Tables.Add(MasterTable);
+                        dsSalesInvoice.Tables.Add(DetailTable);
+                        return Ok(_api.Success(dsSalesInvoice));
+                    }else if(nPickListID>0){
+                        QueryParamsList.Add("@nPickListID", nPickListID);
+                        string Mastersql = "select N_CompanyID,N_FnYearID,0 as N_DeliveryNoteId,'@Auto' as X_ReceiptNo,GETDATE() as D_DeliveryDate,GETDATE() as D_EntryDate,N_CustomerId,X_CustomerName,0 as B_BiginingBalEntry,0 as N_DeliveryType,N_LocationID,'DELIVERY' as X_TransType,0 as B_IsSaveDraft from vw_WhPickListMaster where N_CompanyId=@nCompanyID and N_PickListID=@nPickListID";
+                        DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
+                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                        MasterTable = _api.Format(MasterTable, "Master");
+                        string DetailSql = "";
+                        DetailSql = "select N_CompanyID,0 as N_DeliveryNoteID,0 as N_DeliveryNoteDetailsID,N_ItemID,X_ItemName,X_ItemCode,X_BatchCode,N_ItemUnitID,X_ItemUnit,N_Qty,0 as N_Sprice,0 as N_IteDiscAmt,2 as N_ClassID,N_Qty as N_QtyDisplay,0 as N_Cost,N_LocationID from vw_WhPickListDetails where N_CompanyId=@nCompanyID and N_PickListID=@nPickListID";
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
 
                         DetailTable = _api.Format(DetailTable, "Details");
