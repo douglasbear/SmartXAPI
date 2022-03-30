@@ -653,7 +653,7 @@ namespace SmartxAPI.Controllers
                             }
                         }
 
-                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nEmpUpdateID, "EMPLOYEE", X_EmpUpdateCode, dLayer, connection, transaction, User);
+                       // myFunctions.SendApprovalMail(N_NextApproverID, FormID, nEmpUpdateID, "EMPLOYEE", X_EmpUpdateCode, dLayer, connection, transaction, User);
                         transaction.Commit();
                         return Ok(_api.Success("Employee update Approved" + "-" + X_EmpUpdateCode));
                     }
@@ -964,7 +964,7 @@ namespace SmartxAPI.Controllers
                             }
                         }
 
-                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nEmpUpdateID, "EMPLOYEE", X_EmpUpdateCode, dLayer, connection, transaction, User);
+                        //myFunctions.SendApprovalMail(N_NextApproverID, FormID, nEmpUpdateID, "EMPLOYEE", X_EmpUpdateCode, dLayer, connection, transaction, User);
                         transaction.Commit();
                     }
                     Dictionary<string, string> res = new Dictionary<string, string>();

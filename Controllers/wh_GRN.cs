@@ -323,11 +323,12 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nGRNID, int nCompanyID, int nFnYearID)
+        public ActionResult DeleteData(int nGRNID, int nFnYearID)
         {
             int Results = 0;
             try
             {
+                int nCompanyID=myFunctions.GetCompanyID(User);
                 SortedList QueryParams = new SortedList();
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nFnYearID", nFnYearID);
@@ -335,19 +336,25 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
 
-                    Results = dLayer.DeleteData("wh_GRN", "N_GRNID", nGRNID, "", connection);
+                    SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"X_TransType","WHGRN"},
+                                {"N_VoucherID",nGRNID},
+                                {"N_UserID",myFunctions.GetUserID(User)},
+                                {"X_SystemName","WebRequest"},
+                                {"@B_MRNVisible","0"}};
 
-
-                    if (Results > 0)
+                    Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
+                    if (Results <= 0)
                     {
-                        dLayer.DeleteData("wh_GRNDetails", "N_GRNID", nGRNID, "", connection);
-                        return Ok(_api.Success("WhGRN deleted"));
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable to Delete Goods Receive Note"));
                     }
-                    else
-                    {
-                        return Ok(_api.Error(User, "Unable to delete"));
-                    }
+                    transaction.Commit();
+                    return Ok(_api.Success("WhGRN deleted"));
+
 
                 }
 
