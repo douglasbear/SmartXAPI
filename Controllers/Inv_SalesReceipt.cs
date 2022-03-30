@@ -571,7 +571,7 @@ namespace SmartxAPI.Controllers
 
                         }
 
-                        myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "SALES RECEIPT", xVoucherNo, dLayer, connection, transaction, User);
+                       // myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "SALES RECEIPT", xVoucherNo, dLayer, connection, transaction, User);
                         transaction.Commit();
                         return Ok(api.Success("Customer Payment Approved " + "-" + xVoucherNo));
                     }
