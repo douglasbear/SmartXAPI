@@ -206,7 +206,7 @@ namespace SmartxAPI.Controllers
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
-                    Result.Add("N_PrjTimeSheetID", nTimeSheetID);
+                    Result.Add("N_PrjTimeSheetID", N_PrjTimeSheetID);
                     Result.Add("X_PrjTimesheetCode", X_PrjTimesheetCode);
                     return Ok(_api.Success(Result, "timeSheet Saved"));
                 }

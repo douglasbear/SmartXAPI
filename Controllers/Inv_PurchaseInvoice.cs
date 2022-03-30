@@ -64,23 +64,23 @@ namespace SmartxAPI.Controllers
                     string X_TransType = "PURCHASE";
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     int N_decimalPlace = 2;
-                     string UserPattern = myFunctions.GetUserPattern(User);
+                    //  string UserPattern = myFunctions.GetUserPattern(User);
                     int nUserID = myFunctions.GetUserID(User);
-                     string Pattern = "";
+                    //  string Pattern = "";
                     N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Purchase", "Decimal_Place", "N_Value", nCompanyID, dLayer, connection));
                     N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
                     
-                    if (UserPattern != "")
-                    {
-                        Pattern = "and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
-                        Params.Add("@UserPattern",UserPattern);
-                    }
-                    else{
-                     object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
+                //     if (UserPattern != "")
+                //     {
+                //         Pattern = "and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
+                //         Params.Add("@UserPattern",UserPattern);
+                //     }
+                //     else{
+                //      object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
 
-                   if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
-                    Pattern = " and N_UserID=" + nUserID;
-                    }
+                //    if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                //     Pattern = " and N_CreatedUser=" + nUserID;
+                //     }
 
 
 
@@ -137,9 +137,9 @@ namespace SmartxAPI.Controllers
                     }
                     int Count = (nPage - 1) * nSizeperpage;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 "+  Pattern + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 "+ Pattern + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
@@ -437,7 +437,6 @@ namespace SmartxAPI.Controllers
             double InvoicePaidAmt = 0, BalanceAmt = 0;
             string PurchaseID = "";
 
-
             string PurchaseSql = "Select N_PurchaseID from vw_Inv_PurchaseDisp Where N_CompanyID=" + nCompanyID + " and X_InvoiceNo='" + x_InvoiceNo + "' and N_FnYearID=" + nFnYearID + " and X_TransType='PURCHASE'";
             DataTable PurchaseTable = dLayer.ExecuteDataTable(PurchaseSql, connection);
             foreach (DataRow kvar in PurchaseTable.Rows)
@@ -445,9 +444,6 @@ namespace SmartxAPI.Controllers
                 PurchaseID += PurchaseID == "" ? kvar["N_PurchaseID"].ToString() : " , " + kvar["N_PurchaseID"].ToString();
 
             }
-
-
-
 
             if (N_PaymentMethod == 2)
             {
@@ -461,7 +457,6 @@ namespace SmartxAPI.Controllers
                 else
                     objPaid = dLayer.ExecuteScalar("Select N_CashPaid from vw_Inv_PurchaseDisp Where N_CompanyID=" + nCompanyID + " and X_InvoiceNo='" + x_InvoiceNo + "' and N_FnYearID=" + nFnYearID + " and N_BranchId=" + n_BranchId + " and N_LocationID =" + n_LocationID + "  and X_TransType='" + x_TransType + "'", connection);
             }
-
 
             if (objPaid == null && N_PaymentMethod == 2)
             {
@@ -527,6 +522,14 @@ namespace SmartxAPI.Controllers
                     TxnStatus["LabelColor"] = "Green";
                     TxnStatus["Alert"] = "";
                 }
+                DataTable dtpayReceipt = dLayer.ExecuteDataTable("SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and dbo.Inv_PayReceiptDetails.N_InventoryId in (" + nPurchaseID + ")", connection);
+                string InvoiceNos = "";
+                foreach (DataRow var in dtpayReceipt.Rows)
+                {
+                    InvoiceNos += var["X_VoucherNo"].ToString() + " , ";
+                }
+                char[] trim = { ',', ' ' };
+                TxnStatus["Label"] = TxnStatus["Label"].ToString() +" (Payment No: " + InvoiceNos.ToString().TrimEnd(trim)+")";
             }
 
 
@@ -667,7 +670,7 @@ namespace SmartxAPI.Controllers
                             }
                         }
 
-                        myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "PURCHASE", values, dLayer, connection, transaction, User);
+                       // myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "PURCHASE", values, dLayer, connection, transaction, User);
                         transaction.Commit();
                         return Ok(_api.Success("Purchase Approved " + "-" + values));
                     }
@@ -946,7 +949,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         }
                     }
-                    myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PurchaseID, "PURCHASE", InvoiceNo, dLayer, connection, transaction, User);
+                    //myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PurchaseID, "PURCHASE", InvoiceNo, dLayer, connection, transaction, User);
 
                     transaction.Commit();
                 }

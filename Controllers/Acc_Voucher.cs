@@ -60,9 +60,11 @@ namespace SmartxAPI.Controllers
                  object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
 
                 if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
-                    Pattern = " and N_UserID=" + nUserID;
+                    Pattern = " and N_CreatedUser=" + nUserID;
                
             }
+
+            Pattern="";
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and ([Voucher No] like '%" + xSearchkey + "%' or Account like '%" + xSearchkey + "%' or X_Remarks like '%" + xSearchkey + "%' or [Voucher Date] like '%" + xSearchkey + "%' or n_Amount like '%" + xSearchkey + "%' )";
 
@@ -299,7 +301,7 @@ namespace SmartxAPI.Controllers
                             object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
                         }
 
-                        myFunctions.SendApprovalMail(N_NextApproverID, nFormID, N_PkeyID, xTransType, xVoucherNo, dLayer, connection, transaction, User);
+                        //myFunctions.SendApprovalMail(N_NextApproverID, nFormID, N_PkeyID, xTransType, xVoucherNo, dLayer, connection, transaction, User);
                         transaction.Commit();
                         return Ok(api.Success("Voucher Approved " + "-" + xVoucherNo));
                     }

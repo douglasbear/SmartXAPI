@@ -1305,7 +1305,7 @@ namespace SmartxAPI.GeneralFunctions
                     }
                     else if ((nMaxLevel == nTransApprovalLevel || nSubmitter == nTransApprovalLevel) && nTransUserID != loggedInUserID)
                     {
-                        if (nTransStatus != 918 && nTransStatus != 919 && nTransStatus != 920 && nTransStatus != 929)
+                        if (nTransStatus != 918 && nTransStatus != 919 && nTransStatus != 920 )//&& nTransStatus != 929)
                         {
                             if (nTransStatus == 913 || nTransStatus == 7)
                             {
@@ -1493,7 +1493,7 @@ namespace SmartxAPI.GeneralFunctions
             return MasterTable;
         }
 
-        public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User)
+        public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User,string xSubject,string xBody)
         {
             try
             {
@@ -1536,20 +1536,16 @@ namespace SmartxAPI.GeneralFunctions
                         {
                             object body = null;
                             string MailBody;
-                            body = "Greetings," + "<br/><br/>" + EmployeeName + " has requested for your approval on " + TransType + ". To approve or reject this request, please click on the following link<br/>" + ApprovalLink + "/approvalDashboard";
-                            if (body != null)
+                            string Subject = xSubject;
+                            if (xBody != null)
                             {
-                                body = body.ToString();
+                                body = xBody.ToString();
                             }
                             else
-                                body = "";
-
+                                body = "Greetings," + "<br/><br/>" + EmployeeName + " has requested for your approval on " + TransType + ". To approve or reject this request, please click on the following link<br/>" + ApprovalLink + "/approvalDashboard".ToString();
 
                             string Sender = companyemail.ToString();
                             MailBody = body.ToString();
-                            string Subject = "Request for Approval";
-
-
 
                             SmtpClient client = new SmtpClient
                             {
@@ -1711,6 +1707,7 @@ namespace SmartxAPI.GeneralFunctions
             int N_ApprovalID = this.getIntVAL(ApprovalRow["approvalID"].ToString());
             int N_FormID = this.getIntVAL(ApprovalRow["formID"].ToString());
             string Comments = "";
+            string body="",Subject="",Type="";
             DataColumnCollection columns = Approvals.Columns;
             if (columns.Contains("comments"))
             {
@@ -1749,7 +1746,7 @@ namespace SmartxAPI.GeneralFunctions
                 object NxtUser = null;
                 NxtUser = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=0", LogParams, connection, transaction);
                 if (NxtUser != null)
-                    N_NxtUserID = this.getIntVAL(NxtUser.ToString());
+                    N_NxtUserID = this.getIntVAL(NxtUser.ToString());                    
 
                 LogParams.Add("@xTransType", X_TransType);
                 LogParams.Add("@nApprovalUserCatID", N_ApprovalUserCatID);
@@ -1759,6 +1756,19 @@ namespace SmartxAPI.GeneralFunctions
                 LogParams.Add("@xPartyName", PartyName);
                 LogParams.Add("@nNxtUserID", N_NxtUserID);
                 dLayer.ExecuteNonQuery("SP_Log_Approval_Status @nCompanyID,@nFnYearID,@xTransType,@nTransID,@nFormID,@nApprovalUserID,@nApprovalUserCatID,@xAction,@xSystemName,@xTransCode,@dTransDate,@nApprovalLevelID,@nApprovalUserID,@nProcStatusID,@xComments,@xPartyName,@nNxtUserID", LogParams, connection, transaction);
+
+                object ActionType = null;
+                int N_ActionType=0;
+                ActionType = dLayer.ExecuteScalar("select N_ActionTypeID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=0", LogParams, connection, transaction);
+                if (ActionType != null)
+                    N_ActionType = this.getIntVAL(ActionType.ToString());
+
+                if(N_ActionType==109||N_ActionType==111)
+                    Type="approve";
+                else if(N_ActionType==110)
+                    Type="review";
+                else if(N_ActionType==327)
+                    Type="commenter";
 
                 object Count = null;
                 SortedList NewParam = new SortedList();
@@ -1780,10 +1790,26 @@ namespace SmartxAPI.GeneralFunctions
                             UserObj = 0;
 
                         int EntrUsrID = this.getIntVAL(dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=108", NewParam, connection, transaction).ToString());
-                        SendApprovalMail(EntrUsrID, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User);
+
+                        body = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='approved to requester'", NewParam, connection, transaction).ToString();
+                        Subject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='approved to requester'", NewParam, connection, transaction).ToString();
+
+                        body=body.Replace("@PartyName",PartyName);
+                        body=body.Replace("@TransCode",X_TransCode);
+                        body=body.Replace("@TransType",X_TransType);
+
+                        SendApprovalMail(EntrUsrID, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User,Subject,body);
                     }
                 }
             }
+            body = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='"+Type+"'", LogParams, connection, transaction).ToString();
+            Subject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='"+Type+"'", LogParams, connection, transaction).ToString();
+
+            body=body.Replace("@PartyName",PartyName);
+            body=body.Replace("@TransCode",X_TransCode);
+            body=body.Replace("@TransType",X_TransType);
+
+            SendApprovalMail(N_NxtUserID, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User,Subject,body);
             return N_NxtUserID;
         }
 
@@ -2901,7 +2927,7 @@ namespace SmartxAPI.GeneralFunctions
 
         public bool ContainColumn(string columnName, DataTable table);
         public DataTable GetSettingsTable();
-        public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User);
+        public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User,string xSubject,string xBody);
         public bool SendMail(string ToMail, string Body, string Subjectval, IDataAccessLayer dLayer, int FormID, int ReferID, int CompanyID);
         public bool CheckClosedYear(int N_CompanyID, int nFnYearID, IDataAccessLayer dLayer, SqlConnection connection);
         public bool CheckActiveYearTransaction(int nCompanyID, int nFnYearID, DateTime dTransDate, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);

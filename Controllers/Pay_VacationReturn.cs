@@ -151,7 +151,7 @@ namespace SmartxAPI.Controllers
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_VacationReturn", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "VACATION RETURN", N_PkeyID, X_VacationReturnCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
                         transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_VacationReturnID, "VACATION RETURN", X_VacationReturnCode, dLayer, connection, transaction, User);
+                        //myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_VacationReturnID, "VACATION RETURN", X_VacationReturnCode, dLayer, connection, transaction, User);
                         return Ok(_api.Success("Request Approved " + "-" + X_VacationReturnCode));
                     }
 

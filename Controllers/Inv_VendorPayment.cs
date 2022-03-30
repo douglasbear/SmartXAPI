@@ -66,7 +66,7 @@ namespace SmartxAPI.Controllers
                     object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyID, Params, connection);
 
                     if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
-                    Pattern = " and N_UserID=" + nUserID;
+                    Pattern = " and N_CreatedUser=" + nUserID;
                     }
 
 
@@ -456,7 +456,7 @@ namespace SmartxAPI.Controllers
 
                         }
 
-                        myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "PURCHASE PAYMENT", x_VoucherNo, dLayer, connection, transaction, User);
+                        //myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "PURCHASE PAYMENT", x_VoucherNo, dLayer, connection, transaction, User);
                         transaction.Commit();
                         return Ok(api.Success("Vendor Payment Approved " + "-" + x_VoucherNo));
                     }
