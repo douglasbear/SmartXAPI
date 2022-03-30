@@ -113,7 +113,7 @@ namespace SmartxAPI.Controllers
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_WorkLocation", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearId, this.xTransType, N_PkeyID, values, 1,"", 0, "", User, dLayer, connection, transaction);
                         transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_PkeyID, this.xTransType, values, dLayer, connection, transaction, User);
+                        //myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_PkeyID, this.xTransType, values, dLayer, connection, transaction, User);
                         return Ok(api.Success("Work Location Approved " + "-" + values));
                     }
 
@@ -143,7 +143,7 @@ namespace SmartxAPI.Controllers
 
                         transaction.Commit();
 
-                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nLocationId, this.xTransType, LocationCode, dLayer, connection, transaction, User);
+                        //myFunctions.SendApprovalMail(N_NextApproverID, FormID, nLocationId, this.xTransType, LocationCode, dLayer, connection, transaction, User);
 
                         return Ok(api.Success("Location Created"));
                     }

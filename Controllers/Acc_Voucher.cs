@@ -299,7 +299,7 @@ namespace SmartxAPI.Controllers
                             object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
                         }
 
-                        myFunctions.SendApprovalMail(N_NextApproverID, nFormID, N_PkeyID, xTransType, xVoucherNo, dLayer, connection, transaction, User);
+                        //myFunctions.SendApprovalMail(N_NextApproverID, nFormID, N_PkeyID, xTransType, xVoucherNo, dLayer, connection, transaction, User);
                         transaction.Commit();
                         return Ok(api.Success("Voucher Approved " + "-" + xVoucherNo));
                     }
