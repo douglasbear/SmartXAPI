@@ -308,7 +308,7 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@companyid", companyid);
             QueryParams.Add("@nCustomerID", nCustomerID);
             QueryParams.Add("@xSKU", xSKU);
-            string Condition = "";
+          
             string _sqlQuery = "";
             try
             {
@@ -320,15 +320,17 @@ namespace SmartxAPI.Controllers
                    if(NCount>0)
                   {
                     _sqlQuery = "Select top 1 * from vw_Wh_AsnDetails_Disp Where N_CompanyID=@companyid and X_SKU=@xSKU and N_CustomerID=@nCustomerID";
+                  
+
                   }
                   else
                   {
-                    _sqlQuery = "Select CONCAT(X_SKU, ' - ', X_CustomerCode) AS X_SKU from vw_Wh_AsnDetails_Disp Where N_CompanyID=@companyid and X_SKU=@xSKU";   
+                       object code = dLayer.ExecuteScalar("select X_CustomerCode from vw_Wh_AsnDetails_Disp where N_CompanyID=@companyid and N_CustomerID=@nCustomerID", QueryParams, connection);
+                      
+              _sqlQuery = "Select top 1 CONCAT(X_SKU, '  - '," + code.ToString() + " ) AS X_SKU from vw_Wh_AsnDetails_Disp Where N_CompanyID=@companyid and X_SKU=@xSKU";   
                   }
-                    Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
-
-                    Detail = _api.Format(Detail, "detail");
-
+                  Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+                   Detail = _api.Format( Detail, "detail");  
                     if (Detail.Rows.Count == 0)
                     {
                         return Ok(_api.Notice("No Results Found"));
