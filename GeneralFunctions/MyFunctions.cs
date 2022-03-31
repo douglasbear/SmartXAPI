@@ -1759,8 +1759,13 @@ namespace SmartxAPI.GeneralFunctions
 
                 if(N_ProcStatusID==0||N_ProcStatusID==6)return 0;
                 int N_NxtAppLeveleID=0;
-                N_NxtAppLeveleID=this.getIntVAL(dLayer.ExecuteScalar("select N_LevelID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=1 and N_HierarchyID=(select MAX(N_HierarchyID) from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=1)", LogParams, connection, transaction).ToString());
-                N_NxtAppLeveleID++;
+
+                if(N_ProcStatusID==3)N_NxtAppLeveleID=1;
+                else
+                {
+                    N_NxtAppLeveleID=this.getIntVAL(dLayer.ExecuteScalar("select N_LevelID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=1 and N_HierarchyID=(select MAX(N_HierarchyID) from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=1)", LogParams, connection, transaction).ToString());
+                    N_NxtAppLeveleID++;
+                }
 
                 object Count = null;
                 SortedList NewParam = new SortedList();
