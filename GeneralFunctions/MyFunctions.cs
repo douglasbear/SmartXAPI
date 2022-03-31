@@ -1537,7 +1537,7 @@ namespace SmartxAPI.GeneralFunctions
                             object body = null;
                             string MailBody;
                             string Subject = xSubject;
-                            if (xBody != null)
+                            if (xBody != "")
                             {
                                 body = xBody.ToString();
                             }
@@ -1697,7 +1697,7 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
-        public int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
+        public  int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             DataRow ApprovalRow = Approvals.Rows[0];
             string X_Action = ApprovalRow["btnSaveText"].ToString();
@@ -1741,7 +1741,7 @@ namespace SmartxAPI.GeneralFunctions
 
             if (N_IsApprovalSystem == 1)
             {
-                dLayer.ExecuteNonQuery("SP_Gen_ApprovalCodesTrans @nCompanyID,@nFormID,@nApprovalUserID,@nTransID,@nApprovalLevelID,@nProcStatusID,@nApprovalID,@nGroupID,@nFnYearID,@xAction,@nEmpID,@xDepLevel,@dTransDate,0,0", LogParams, connection, transaction);
+                dLayer.ExecuteNonQuery("SP_Gen_ApprovalCodesTrans @nCompanyID,@nFormID,@nApprovalUserID,@nTransID,@nApprovalLevelID,@nProcStatusID,@nApprovalID,@nGroupID,@nFnYearID,@xAction,@nEmpID,@xDepLevel,@dTransDate,0,0", LogParams, connection, transaction);             
 
                 object NxtUser = null;
                 NxtUser = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=0", LogParams, connection, transaction);
@@ -1757,18 +1757,10 @@ namespace SmartxAPI.GeneralFunctions
                 LogParams.Add("@nNxtUserID", N_NxtUserID);
                 dLayer.ExecuteNonQuery("SP_Log_Approval_Status @nCompanyID,@nFnYearID,@xTransType,@nTransID,@nFormID,@nApprovalUserID,@nApprovalUserCatID,@xAction,@xSystemName,@xTransCode,@dTransDate,@nApprovalLevelID,@nApprovalUserID,@nProcStatusID,@xComments,@xPartyName,@nNxtUserID", LogParams, connection, transaction);
 
-                object ActionType = null;
-                int N_ActionType=0;
-                ActionType = dLayer.ExecuteScalar("select N_ActionTypeID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=0", LogParams, connection, transaction);
-                if (ActionType != null)
-                    N_ActionType = this.getIntVAL(ActionType.ToString());
-
-                if(N_ActionType==109||N_ActionType==111)
-                    Type="approve";
-                else if(N_ActionType==110)
-                    Type="review";
-                else if(N_ActionType==327)
-                    Type="commenter";
+                if(N_ProcStatusID==0||N_ProcStatusID==6)return 0;
+                int N_NxtAppLeveleID=0;
+                N_NxtAppLeveleID=this.getIntVAL(dLayer.ExecuteScalar("select N_LevelID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=1 and N_HierarchyID=(select MAX(N_HierarchyID) from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=1)", LogParams, connection, transaction).ToString());
+                N_NxtAppLeveleID++;
 
                 object Count = null;
                 SortedList NewParam = new SortedList();
@@ -1801,15 +1793,36 @@ namespace SmartxAPI.GeneralFunctions
                         SendApprovalMail(EntrUsrID, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User,Subject,body);
                     }
                 }
+
+                DataTable dtNext = dLayer.ExecuteDataTable("select N_UserID,N_ActionTypeID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_LevelID="+N_NxtAppLeveleID, LogParams, connection,transaction);
+                if(dtNext.Rows.Count>0)
+                {
+                    for(int i=0;i<=dtNext.Rows.Count;i++)
+                    {
+                        int N_ActionType=this.getIntVAL(dtNext.Rows[0]["N_ActionTypeID"].ToString());
+                        int N_NextUser=this.getIntVAL(dtNext.Rows[0]["N_UserID"].ToString());
+
+                        if(N_ActionType==109||N_ActionType==111)
+                            Type="approve";
+                        else if(N_ActionType==110)
+                            Type="review";
+                        else if(N_ActionType==327)
+                            Type="commenter";
+                    
+                        if(Type!="")
+                        {
+                            body = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='"+Type+"'", LogParams, connection, transaction).ToString();
+                            Subject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='"+Type+"'", LogParams, connection, transaction).ToString();
+                        }
+
+                        body=body.Replace("@PartyName",PartyName);
+                        body=body.Replace("@TransCode",X_TransCode);
+                        body=body.Replace("@TransType",X_TransType);
+
+                        SendApprovalMail(N_NextUser, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User,Subject,body);
+                    }
+                }
             }
-            body = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='"+Type+"'", LogParams, connection, transaction).ToString();
-            Subject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='"+Type+"'", LogParams, connection, transaction).ToString();
-
-            body=body.Replace("@PartyName",PartyName);
-            body=body.Replace("@TransCode",X_TransCode);
-            body=body.Replace("@TransType",X_TransType);
-
-            SendApprovalMail(N_NxtUserID, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User,Subject,body);
             return N_NxtUserID;
         }
 
