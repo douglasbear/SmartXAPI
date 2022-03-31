@@ -293,6 +293,64 @@ namespace SmartxAPI.Controllers
             }
         }
        
+
+       [HttpGet("SkuDetails")]
+        public ActionResult GetDetails(string xSKU, int nCustomerID )
+        {
+            DataTable Master = new DataTable();
+            DataTable Detail = new DataTable();
+            DataSet ds = new DataSet();
+            SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
+
+            int companyid = myFunctions.GetCompanyID(User);
+
+            QueryParams.Add("@companyid", companyid);
+            QueryParams.Add("@nCustomerID", nCustomerID);
+            QueryParams.Add("@xSKU", xSKU);
+            string Condition = "";
+            string _sqlQuery = "";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    object Count = dLayer.ExecuteScalar("select count(*)  from vw_Wh_AsnDetails_Disp where N_CompanyID=@companyid and X_SKU=@xSKU and N_CustomerID=@nCustomerID", QueryParams, connection);
+                   int NCount = myFunctions.getIntVAL(Count.ToString());
+                   if(NCount>0)
+                  {
+                    _sqlQuery = "Select top 1 * from vw_Wh_AsnDetails_Disp Where N_CompanyID=@companyid and X_SKU=@xSKU and N_CustomerID=@nCustomerID";
+                  }
+                  else
+                  {
+                    _sqlQuery = "Select CONCAT(X_SKU, ' - ', X_CustomerCode) AS X_SKU from vw_Wh_AsnDetails_Disp Where N_CompanyID=@companyid and X_SKU=@xSKU";   
+                  }
+                    Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                    Detail = _api.Format(Detail, "detail");
+
+                    if (Detail.Rows.Count == 0)
+                    {
+                        return Ok(_api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                        ds.Tables.Add(Detail);
+
+                        return Ok(_api.Success(ds));
+                    }
+
+
+                }
+
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
+       
        
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nAsnID)
