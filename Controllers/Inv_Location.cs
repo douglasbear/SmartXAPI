@@ -355,8 +355,8 @@ namespace SmartxAPI.Controllers
                         info.Create();
                     }
                     BarcodePath=BarcodePath+"/Barcode.jpg";
-                    // myBitmap.Save(@"c:\Barcode.jpg", jgpEncoder, myEncoderParameters);
-                    myBitmap.Save(@"C://OLIVOSERVER2020/Barcode/Barcode.jpg", jgpEncoder, myEncoderParameters);
+                    myBitmap.Save(@"c:\Barcode.jpg", jgpEncoder, myEncoderParameters);
+                    // myBitmap.Save(@"C://OLIVOSERVER2020/Barcode/Barcode.jpg", jgpEncoder, myEncoderParameters);
 
                     return Ok(_api.Success(new SortedList() { { "FileName", "Barcode.jpg" } }));
 
