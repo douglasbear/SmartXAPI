@@ -160,11 +160,16 @@ namespace SmartxAPI.Controllers
                     string LocationCode = "";
                     //Limit Validation
                     ValidateParams.Add("@N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
+                    string X_Pattern = "10";
+                    int N_LocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationID"].ToString());
+                    int N_MainLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MainLocationID"].ToString());
                     object LocationCount = dLayer.ExecuteScalar("select count(N_LocationID)  from Inv_Location where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
                     object limit = dLayer.ExecuteScalar("select N_LocationLimit from Acc_Company where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
                     bool b_TransferProducts = false;
                     int n_LocationFromID = 0;
                     string TransferSql = "";
+                    string patternNo = "";
+                     ValidateParams.Add("@N_MainLocationID",N_MainLocationID);
                     // if (LocationCount != null && limit != null)
                     // {
                     //     if (myFunctions.getIntVAL(LocationCount.ToString()) >= myFunctions.getIntVAL(limit.ToString()))
@@ -200,12 +205,67 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_LocationCode"] = LocationCode;
                     }
 
+                    if (N_LocationID == 0)
+                    {
+                        if (X_Pattern == "10" && N_MainLocationID == 0)
+                        {
+                            MasterTable.Rows[0]["X_Pattern"] = "10";
+                        }
+                        else
+                        {
+                            //  object xHierarchyID = dLayer.ExecuteScalar("Select N_LocationID from Inv_Location where N_CompanyID=" + myFunctions.GetCompanyID(User)  + " and N_MainLocationID=" + N_MainLocationID +  " ", connection, transaction);
+                            //  object xPattern = dLayer.ExecuteScalar("Select X_Pattern  From Inv_Location Where N_CompanyID=" + myFunctions.GetCompanyID(User)  + " and N_LocationID=" + myFunctions.getIntVAL(xHierarchyID.ToString()) + " ", connection, transaction);
+                            //    patternNo = xPattern.ToString();
+                            //    MasterTable.Rows[0]["X_Pattern"] =patternNo + "10"; 
+                            object xHierarchyID = dLayer.ExecuteScalar("Select max(N_LocationID) From Inv_Location Where N_CompanyID=" + myFunctions.GetCompanyID(User)  + " and N_MainLocationID=" + N_MainLocationID + " ", connection, transaction);
+                            if (myFunctions.getIntVAL(xHierarchyID.ToString()) >0 )
+                            {
+                                object xPattern = dLayer.ExecuteScalar("Select X_Pattern  From Inv_Location Where N_CompanyID=" + myFunctions.GetCompanyID(User)  + " and N_LocationID=" + myFunctions.getIntVAL(xHierarchyID.ToString()) + " ", connection, transaction);
+                                if (xPattern != null)
+                                {
+                                    patternNo = xPattern.ToString();
+                                    int length=X_Pattern.Length;
+                                    string removingPattern = patternNo.Substring(length);
+                                    //string pattern = myFunctions.getIntVAL(removingPattern);
+                                    string pattern =removingPattern;
+                                    pattern = pattern + X_Pattern;
+                                    patternNo = pattern;
+                                    //patternNo = pattern.ToString();
+                                    if (removingPattern.Length>(pattern.ToString().Length))
+                                    {
+                                        patternNo =X_Pattern +"0" + patternNo;
+                                    }
+                                    else {
+                                        patternNo=X_Pattern+patternNo;
 
+                                    }
+
+                                }
+                                MasterTable.Rows[0]["X_Pattern"] = patternNo;
+
+                            }
+                            else
+                            {
+                                
+                                    MasterTable.Rows[0]["X_Pattern"] =X_Pattern+ "10";
+   
+
+                            }
+
+
+
+
+                        }
+                    }
+                    else if(N_LocationID>0)
+                    {
+                          dLayer.DeleteData("Inv_Location", "N_LocationID", N_LocationID, "", connection, transaction);
+                    }
 
 
                     MasterTable.Columns.Remove("n_FnYearId");
                     MasterTable.Columns.Remove("b_isSubLocation");
-                    int N_LocationID = dLayer.SaveData("Inv_Location", "N_LocationID", MasterTable, connection, transaction);
+                     N_LocationID = dLayer.SaveData("Inv_Location", "N_LocationID", MasterTable, connection, transaction);
                     if (N_LocationID <= 0)
                     {
                         transaction.Rollback();
