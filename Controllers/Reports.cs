@@ -61,7 +61,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "Select vwUserMenus.*,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID in ( " + myFunctions.GetUserCategoryList(User) + " ) and vwUserMenus.B_Show=1 inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId Order By vwUserMenus.N_Order";
+            string sqlCommandText = "Select vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild, vwUserMenus.B_Visible, vwUserMenus.B_Edit, vwUserMenus.B_Delete, vwUserMenus.B_Save, vwUserMenus.B_View, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID in ( " + myFunctions.GetUserCategoryList(User) + " ) and vwUserMenus.B_Show=1 inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId group by vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild, vwUserMenus.B_Visible, vwUserMenus.B_Edit, vwUserMenus.B_Delete, vwUserMenus.B_Save, vwUserMenus.B_View, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text Order By vwUserMenus.N_Order";
             Params.Add("@nMenuId", nMenuId == 0 ? 318 : nMenuId);
             Params.Add("@nLangId", nLangId);
             Params.Add("@nUserCatID", myFunctions.GetUserCategoryList(User));
@@ -411,22 +411,22 @@ namespace SmartxAPI.Controllers
                             critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
                         }
                         ReportName = ReportName.Replace("&", "");
-                        
-                        if (partyName == "" || partyName==null)
+
+                        if (partyName == "" || partyName == null)
                             partyName = "customer";
-                        if (docNumber == "" || docNumber==null)
+                        if (docNumber == "" || docNumber == null)
                             docNumber = "DocNo";
                         partyName = partyName.Replace("&", "");
                         partyName = partyName.ToString().Substring(0, Math.Min(12, partyName.ToString().Length));
-                        if(docNumber==null)
-                            docNumber="";
+                        if (docNumber == null)
+                            docNumber = "";
                         docNumber = Regex.Replace(docNumber, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
-                        if(!Regex.IsMatch(partyName, @"\p{IsArabic}"))
-                        partyName = Regex.Replace(partyName, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
-                        
+                        if (!Regex.IsMatch(partyName, @"\p{IsArabic}"))
+                            partyName = Regex.Replace(partyName, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
+
                         if (docNumber.Contains("/"))
                             docNumber = docNumber.ToString().Substring(0, Math.Min(3, docNumber.ToString().Length));
-                        
+
                         string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
                         var path = client.GetAsync(URL);
                         if (nFormID == 80)
@@ -454,7 +454,7 @@ namespace SmartxAPI.Controllers
 
                         }
                         // ReportName = FormName + "_" + docNumber + "_" + partyName.Trim()+".pdf";
-                        ReportName = FormName + "_" + docNumber + "_" + partyName.Trim()+"_"+ random + ".pdf";
+                        ReportName = FormName + "_" + docNumber + "_" + partyName.Trim() + "_" + random + ".pdf";
                         path.Wait();
                         if (env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName))
                             return Ok(_api.Error(User, "Report Generation Failed"));
@@ -638,7 +638,7 @@ namespace SmartxAPI.Controllers
 
 
 
-[HttpPost("getModuleReport")]
+        [HttpPost("getModuleReport")]
         public IActionResult GetModuleReports([FromBody] DataSet ds)
         {
             DataTable MasterTable;
@@ -672,6 +672,9 @@ namespace SmartxAPI.Controllers
                     int ReportID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportID"].ToString());
                     int FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["nFnYearID"].ToString());
                     int BranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["nBranchID"].ToString());
+                    int SalesmanID = 0;
+                    string procParam = "";
+                    string xProCode = "";
                     Extention = MasterTable.Rows[0]["extention"].ToString();
 
                     SortedList Params1 = new SortedList();
@@ -705,7 +708,7 @@ namespace SmartxAPI.Controllers
                         string xFeild = dLayer.ExecuteScalar("select X_DataField from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
                         bool bRange = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isNull(B_Range,0) from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString());
                         string xOperator = dLayer.ExecuteScalar("select isNull(X_Operator,'') from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
-                        string xProCode = dLayer.ExecuteScalar("select X_ProcCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+                        xProCode = dLayer.ExecuteScalar("select X_ProcCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         string xInstanceCode = dLayer.ExecuteScalar("select isNull(X_DataField,'') from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         FieldName = dLayer.ExecuteScalar("select X_Text from vw_WebReportMenus where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and N_LanguageId=1", Params, connection).ToString();
                         UserData = dLayer.ExecuteScalar("select X_DataFieldUserID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
@@ -721,7 +724,7 @@ namespace SmartxAPI.Controllers
                         {
                             DateTime dateFrom = Convert.ToDateTime(value);
                             DateTime dateTo = Convert.ToDateTime(valueTo);
-                            string procParam = "";
+
                             if (dateFrom != null && (bRange && dateTo != null))
                             {
                                 x_Reporttitle = x_Reporttitle + FieldName + dateFrom.ToString("dd-MMM-yyyy") + " - " + dateTo.ToString("dd-MMM-yyyy");
@@ -741,26 +744,6 @@ namespace SmartxAPI.Controllers
                                 procParam = dateTo.ToString("dd-MMM-yyyy") + "|";
                             }
 
-                            if (xProCode != "")
-                            {
-
-                                SortedList mParamsList = new SortedList()
-                            {
-                            {"N_CompanyID",nCompanyID},
-                            {"N_FnYearID",FnYearID},
-                            {"N_PeriodID",0},
-                            {"X_Code",xProCode},
-                            {"X_Parameter", procParam },
-                            {"N_UserID",myFunctions.GetUserID(User)},
-                            {"N_BranchID",BranchID},
-                            // {"X_InstanceCode",random},
-                            };
-                                dLayer.ExecuteDataTablePro("SP_OpeningBalanceGenerate", mParamsList, connection);
-
-                                // if(xInstanceCode!="")
-                                // Criteria = Criteria == "" ? xInstanceCode + "='"+random+"' " : Criteria + " and "+xInstanceCode+"='"+random+"' ";
-
-                            }
                             string DateCrt = "";
                             if (xFeild != "")
                             {
@@ -782,10 +765,21 @@ namespace SmartxAPI.Controllers
                                 if (xFeild.Contains("#"))
                                     Criteria = Criteria == "" ? xFeild.Replace("#", value) : Criteria + " and " + xFeild.Replace("#", value);
                                 else
-                                    Criteria = Criteria == "" ? xFeild + " " + xOperator + " '" + value + "' " : Criteria + " and " + xFeild + " " + xOperator + " '" + value + "' ";
+                                {
+                                    if (xFeild == "{Inv_Salesman.N_SalesmanID}")
+                                    {
+                                        Criteria = Criteria == "" ? xFeild + " " + xOperator + " " + value + " " : Criteria + " and " + xFeild + " " + xOperator + " " + value + " ";
+                                        SalesmanID = myFunctions.getIntVAL(value.ToString());
+                                    }
+                                    else
+
+                                        Criteria = Criteria == "" ? xFeild + " " + xOperator + " '" + value + "' " : Criteria + " and " + xFeild + " " + xOperator + " '" + value + "' ";
+
+                                }
                             }
                             x_Reporttitle = x_Reporttitle + FieldName + value;
                         }
+
 
 
                         //{table.fieldname} in {?Start date} to {?End date}
@@ -806,10 +800,33 @@ namespace SmartxAPI.Controllers
                     {
                         Criteria = Criteria + " and " + UserData + "=" + nUserID;
                     }
+                    if (xProCode != "")
+                    {
+
+                        SortedList mParamsList = new SortedList()
+                            {
+                            {"N_CompanyID",nCompanyID},
+                            {"N_FnYearID",FnYearID},
+                            {"N_PeriodID",0},
+                            {"X_Code",xProCode},
+                            {"X_Parameter", procParam },
+                            {"N_UserID",myFunctions.GetUserID(User)},
+                            {"N_BranchID",BranchID},
+                            {"N_SalesmanID",SalesmanID},
+
+                            // {"X_InstanceCode",random},
+                            };
+                        dLayer.ExecuteDataTablePro("SP_OpeningBalanceGenerate", mParamsList, connection);
+
+                        // if(xInstanceCode!="")
+                        // Criteria = Criteria == "" ? xInstanceCode + "='"+random+"' " : Criteria + " and "+xInstanceCode+"='"+random+"' ";
+
+                    }
 
 
 
-                    
+
+
 
                     dbName = connection.Database;
                 }
@@ -820,7 +837,7 @@ namespace SmartxAPI.Controllers
                     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                 };
                 var client = new HttpClient(handler);
-                
+
                 //HttpClient client = new HttpClient(clientHandler);
 
                 var rptArray = reportName.Split(@"\");
