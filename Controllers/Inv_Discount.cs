@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("pricelist")]
-        public ActionResult GetPriceListDetails(int nCustomerID, int nFnYearID, int nItemID, int nCategoryID, int nItemUnitID, double nQty)
+        public ActionResult GetPriceListDetails(int nCustomerID,int nBranchID, int nFnYearID, int nItemID, int nCategoryID, int nItemUnitID, double nQty)
         {
             DataTable dtPriceList = new DataTable();
 
@@ -118,6 +118,7 @@ namespace SmartxAPI.Controllers
             SortedList dParamList = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             string pricelist = "";
+            string Condition ="";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -128,8 +129,16 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nItemID", nItemID);
                     Params.Add("@nItemUnitID", nItemUnitID);
                     Params.Add("@nCategoryID", nCategoryID);
+                     Params.Add("@nBranchID", nBranchID);
                     object N_PriceTypeID = null;
-
+                     if(nBranchID>0)
+                     {
+                         Condition= " and N_BranchID=@nBranchID";
+                     }
+                     else
+                     {
+                      Condition= "";
+                     }
                     
                     N_PriceTypeID = dLayer.ExecuteScalar("select N_Value from Gen_Settings where X_Group=64 and N_CompanyID=" + nCompanyId + " and X_Description='DefaultPriceList'", Params, connection);
 
@@ -140,11 +149,11 @@ namespace SmartxAPI.Controllers
                     if (N_PriceTypeID != null)
                     {
                         Params.Add("@nPriceTypeID", N_PriceTypeID.ToString());
-                        string pricelistAll = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID =@nPriceTypeID and N_ItemID=@nItemID and N_ItemUnitID=@nItemUnitID";
+                        string pricelistAll = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID =@nPriceTypeID and N_ItemID=@nItemID and N_ItemUnitID=@nItemUnitID " + Condition + "";
                         
-                        string pricelistItem = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemID=@nItemID";
-                        string pricelistCategory = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_CategoryID=@nCategoryID";
-                        string pricelistUnit = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemUnitID=@nItemUnitID";
+                        string pricelistItem = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemID=@nItemID " + Condition + " ";
+                        string pricelistCategory = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_CategoryID=@nCategoryID " + Condition + "";
+                        string pricelistUnit = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemUnitID=@nItemUnitID " + Condition + "";
 
                         dtPriceList = dLayer.ExecuteDataTable(pricelistAll, Params, connection);
                         if (dtPriceList.Rows.Count == 0)
@@ -162,7 +171,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        string pricelistAll = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_ItemID=0 and N_ItemUnitID=0";
+                        string pricelistAll = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_ItemID=0 and N_ItemUnitID=0 " + Condition + "";
                         dtPriceList = dLayer.ExecuteDataTable(pricelistAll, Params, connection);
                     }
 
