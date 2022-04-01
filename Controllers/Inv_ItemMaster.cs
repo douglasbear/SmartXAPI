@@ -39,7 +39,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isServiceItem,int nItemUsedFor)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, int nItemUsedFor, bool isServiceItem,bool b_whGrn,int n_CustomerID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -49,13 +49,18 @@ namespace SmartxAPI.Controllers
             string Category = "";
             string Condition = "";
             string xCriteria = "";
+            string warehouseSql="";
             //nItemUsedFor -> 1-Purchase, 2-Sales, 3-Both, 4-Raw Material
 
 
             // if (b_AllBranchData)
             //     xCriteria = " N_FnYearID=@p2 and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyID=@p1 ";
             // else
-            //     xCriteria = " N_FnYearID=@p2 and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchID=@p3 and N_CompanyID=@p1 ";
+            //     xCriteria = " N_FnY.0earID=@p2 and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchID=@p3 and N_CompanyID=@p1 ";
+            if(b_whGrn==true && n_CustomerID>0)
+            {
+                warehouseSql=  "and N_ItemID in (select N_ItemID in Vw_wh_AsnDetails_disp where N_CompanyID=@p1 and N_CustomerID="+n_CustomerID+")";
+            }
 
             if (query != "" && query != null)
             {
@@ -107,7 +112,7 @@ namespace SmartxAPI.Controllers
             // string sqlComandText = " * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
 
             string sqlComandText = "  vw_InvItem_Search_cloud.*,dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID,vw_InvItem_Search_cloud.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_SellingPrice2 FROM vw_InvItem_Search_cloud LEFT OUTER JOIN " +
-             " Inv_ItemUnit ON vw_InvItem_Search_cloud.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search_cloud.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search_cloud.N_CompanyID=@p1 and vw_InvItem_Search_cloud.B_Inactive=@p2 and vw_InvItem_Search_cloud.[Item Code]<> @p3 and vw_InvItem_Search_cloud.N_ItemTypeID<>@p4  and vw_InvItem_Search_cloud.N_ItemID=Inv_ItemUnit.N_ItemID " + qry + Category + Condition;
+             " Inv_ItemUnit ON vw_InvItem_Search_cloud.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search_cloud.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search_cloud.N_CompanyID=@p1 and vw_InvItem_Search_cloud.B_Inactive=@p2 and vw_InvItem_Search_cloud.[Item Code]<> @p3 and vw_InvItem_Search_cloud.N_ItemTypeID<>@p4  and vw_InvItem_Search_cloud.N_ItemID=Inv_ItemUnit.N_ItemID " + qry + Category + Condition+ warehouseSql;
 
 
 
