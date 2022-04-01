@@ -11,6 +11,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using iTextSharp.text.pdf;
 using iTextSharp.text;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -22,12 +25,14 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly string TempFilesPath;
         public Inv_Location(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            TempFilesPath = conf.GetConnectionString("TempFilesPath");
         }
         [HttpGet("list")]
         public ActionResult GetLocationDetails(int? nCompanyId, string prs, bool bLocationRequired, bool bAllBranchData, int nBranchID)
@@ -263,28 +268,84 @@ namespace SmartxAPI.Controllers
 
 
         }
-        [HttpGet("getscreenprint")]
+        [HttpGet("printbarcode")]
         public IActionResult GetModulePrint(string xBarcode)
         {
-            SortedList QueryParams = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             try
             {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SqlTransaction transaction;
-                    transaction = connection.BeginTransaction();
-                    
+                    var myBitmap = new Bitmap(500, 50);
+                    var g = Graphics.FromImage(myBitmap);
+                    var jgpEncoder = GetEncoder(ImageFormat.Jpeg);
 
-                    return Ok();
-                }
+                    g.Clear(Color.White);
+
+                    var strFormat = new StringFormat { Alignment = StringAlignment.Center };
+                    g.DrawString(xBarcode, new System.Drawing.Font("Free 3 of 9", 50), Brushes.Black, new RectangleF(0, 0, 500, 50), strFormat);
+
+                    var myEncoder = Encoder.Quality;
+                    var myEncoderParameters = new EncoderParameters(1);
+
+                    var myEncoderParameter = new EncoderParameter(myEncoder, 100L);
+                    myEncoderParameters.Param[0] = myEncoderParameter;
+                    string BarcodePath = this.TempFilesPath;
+                    DirectoryInfo info = new DirectoryInfo(BarcodePath);
+                    if (!info.Exists)
+                    {
+                        info.Create();
+                    }
+                    BarcodePath=BarcodePath+"/Barcode.jpg";
+                    // myBitmap.Save(@"c:\Barcode.jpg", jgpEncoder, myEncoderParameters);
+                    myBitmap.Save(@"C://OLIVOSERVER2020/Barcode/Barcode.jpg", jgpEncoder, myEncoderParameters);
+
+                    return Ok(_api.Success(new SortedList() { { "FileName", "Barcode.jpg" } }));
+
             }
             catch (Exception e)
             {
                 return Ok(_api.Error(User, e));
             }
 
+        }
+        // private static void CreateBarcode(string code)
+        // {
+        //     var myBitmap = new Bitmap(500, 50);
+        //     var g = Graphics.FromImage(myBitmap);
+        //     var jgpEncoder = GetEncoder(ImageFormat.Jpeg);
+
+        //     g.Clear(Color.White);
+
+        //     var strFormat = new StringFormat { Alignment = StringAlignment.Center };
+        //     g.DrawString(code, new System.Drawing.Font("Free 3 of 9", 50), Brushes.Black, new RectangleF(0, 0, 500, 50), strFormat);
+
+        //     var myEncoder = Encoder.Quality;
+        //     var myEncoderParameters = new EncoderParameters(1);
+
+        //     var myEncoderParameter = new EncoderParameter(myEncoder, 100L);
+        //     myEncoderParameters.Param[0] = myEncoderParameter;
+        //     string BarcodePath = TempFilesPath;
+        //     DirectoryInfo info = new DirectoryInfo(BarcodePath);
+        //     if (!info.Exists)
+        //     {
+        //         info.Create();
+        //     }
+        //     // myBitmap.Save(@"c:\Barcode.jpg", jgpEncoder, myEncoderParameters);
+        //     myBitmap.Save(@"C://OLIVOSERVER2020/Barcode/Barcode.jpg", jgpEncoder, myEncoderParameters);
+        // }
+
+        private static ImageCodecInfo GetEncoder(ImageFormat format)
+        {
+
+            var codecs = ImageCodecInfo.GetImageDecoders();
+
+            foreach (var codec in codecs)
+            {
+                if (codec.FormatID == format.Guid)
+                {
+                    return codec;
+                }
+            }
+            return null;
         }
     }
 }
