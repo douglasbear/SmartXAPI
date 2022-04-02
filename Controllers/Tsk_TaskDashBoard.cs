@@ -119,8 +119,9 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             DataTable ActiveTasks = new DataTable();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlActiveTasks = "SELECT *  FROM vw_Tsk_TaskCurrentStatus WHERE N_CompanyID=" + nCompanyID + " and N_Status=2";//Active Tasks
-            try
+           // string sqlActiveTasks = "SELECT *  FROM vw_Tsk_TaskCurrentStatus WHERE N_CompanyID=" + nCompanyID + " and N_Status=2";//Active Tasks
+           string sqlActiveTasks = "SELECT *  FROM vw_Tsk_TaskCurrentStatus WHERE N_CompanyID=" + nCompanyID + " and isnull(B_Closed,0) =0 and D_TaskDate>0 and x_tasksummery<>'Project Created' and x_tasksummery<>'Project Closed'";//Active Tasks
+           try
             {
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
