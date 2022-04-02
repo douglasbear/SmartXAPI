@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
                     DataTable dt = new DataTable();
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
-                    string sqlCommandCount = "", xCriteria = "";
+                    string sqlCommandCount = "", xCriteria = " N_FnYearID=@p2 and N_CompanyID=@p1 ";
                     int Count = (nPage - 1) * nSizeperpage;
                     string sqlCommandText = "";
                     string Searchkey = "";
