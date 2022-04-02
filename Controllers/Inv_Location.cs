@@ -163,18 +163,22 @@ namespace SmartxAPI.Controllers
                     SortedList ValidateParams = new SortedList();
                     // Auto Gen
                     string LocationCode = "";
+                    char x_LocationCodePattern;
+                    char initialCode;
                     //Limit Validation
                     ValidateParams.Add("@N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
                     string X_Pattern = "10";
                     int N_LocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationID"].ToString());
                     int N_MainLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MainLocationID"].ToString());
+                    int N_TypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TypeID"].ToString());
                     object LocationCount = dLayer.ExecuteScalar("select count(N_LocationID)  from Inv_Location where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
                     object limit = dLayer.ExecuteScalar("select N_LocationLimit from Acc_Company where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
                     bool b_TransferProducts = false;
                     int n_LocationFromID = 0;
                     string TransferSql = "";
                     string patternNo = "";
-                     ValidateParams.Add("@N_MainLocationID",N_MainLocationID);
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    ValidateParams.Add("@N_MainLocationID", N_MainLocationID);
                     // if (LocationCount != null && limit != null)
                     // {
                     //     if (myFunctions.getIntVAL(LocationCount.ToString()) >= myFunctions.getIntVAL(limit.ToString()))
@@ -222,26 +226,27 @@ namespace SmartxAPI.Controllers
                             //  object xPattern = dLayer.ExecuteScalar("Select X_Pattern  From Inv_Location Where N_CompanyID=" + myFunctions.GetCompanyID(User)  + " and N_LocationID=" + myFunctions.getIntVAL(xHierarchyID.ToString()) + " ", connection, transaction);
                             //    patternNo = xPattern.ToString();
                             //    MasterTable.Rows[0]["X_Pattern"] =patternNo + "10"; 
-                            object xHierarchyID = dLayer.ExecuteScalar("Select max(N_LocationID) From Inv_Location Where N_CompanyID=" + myFunctions.GetCompanyID(User)  + " and N_MainLocationID=" + N_MainLocationID + " ", connection, transaction);
-                            if (myFunctions.getIntVAL(xHierarchyID.ToString()) >0 )
+                            object xHierarchyID = dLayer.ExecuteScalar("Select max(N_LocationID) From Inv_Location Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_MainLocationID=" + N_MainLocationID + " ", connection, transaction);
+                            if (myFunctions.getIntVAL(xHierarchyID.ToString()) > 0)
                             {
-                                object xPattern = dLayer.ExecuteScalar("Select X_Pattern  From Inv_Location Where N_CompanyID=" + myFunctions.GetCompanyID(User)  + " and N_LocationID=" + myFunctions.getIntVAL(xHierarchyID.ToString()) + " ", connection, transaction);
+                                object xPattern = dLayer.ExecuteScalar("Select X_Pattern  From Inv_Location Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_LocationID=" + myFunctions.getIntVAL(xHierarchyID.ToString()) + " ", connection, transaction);
                                 if (xPattern != null)
                                 {
                                     patternNo = xPattern.ToString();
-                                    int length=X_Pattern.Length;
+                                    int length = X_Pattern.Length;
                                     string removingPattern = patternNo.Substring(length);
                                     //string pattern = myFunctions.getIntVAL(removingPattern);
-                                    string pattern =removingPattern;
+                                    string pattern = removingPattern;
                                     pattern = pattern + X_Pattern;
                                     patternNo = pattern;
                                     //patternNo = pattern.ToString();
-                                    if (removingPattern.Length>(pattern.ToString().Length))
+                                    if (removingPattern.Length > (pattern.ToString().Length))
                                     {
-                                        patternNo =X_Pattern +"0" + patternNo;
+                                        patternNo = X_Pattern + "0" + patternNo;
                                     }
-                                    else {
-                                        patternNo=X_Pattern+patternNo;
+                                    else
+                                    {
+                                        patternNo = X_Pattern + patternNo;
 
                                     }
 
@@ -251,9 +256,9 @@ namespace SmartxAPI.Controllers
                             }
                             else
                             {
-                                
-                                    MasterTable.Rows[0]["X_Pattern"] =X_Pattern+ "10";
-   
+
+                                MasterTable.Rows[0]["X_Pattern"] = X_Pattern + "10";
+
 
                             }
 
@@ -261,16 +266,75 @@ namespace SmartxAPI.Controllers
 
 
                         }
+                        if (N_TypeID == 1)
+                        {
+
+                            object roomPattern = dLayer.ExecuteScalar("Select isnull(max(X_LocationCode),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_TypeID=1 ", connection, transaction);
+
+                            if (roomPattern == null || roomPattern.ToString() == "")
+                            {
+                                x_LocationCodePattern = 'A';
+                                MasterTable.Rows[0]["X_LocationCode"] = x_LocationCodePattern.ToString();
+
+                            }
+                            else
+                            {
+                                x_LocationCodePattern = Convert.ToChar(roomPattern);
+                                x_LocationCodePattern++;
+                                MasterTable.Rows[0]["X_LocationCode"] = x_LocationCodePattern.ToString();
+
+
+                            }
+
+                        }
+                        else
+                        {
+                            object rowPattern = dLayer.ExecuteScalar("Select isnull(max(X_LocationCode),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_TypeID=" + N_TypeID + " and N_MainLocationID=" + N_MainLocationID + " ", connection, transaction);
+                            object parentRomPattern = dLayer.ExecuteScalar("select TOP 1  X_LocationCode from Inv_Location where N_LocationID=" + N_MainLocationID + " and N_CompanyID=" + nCompanyID + " ", connection, transaction);
+                            if (rowPattern == null || rowPattern.ToString() == "")
+                            {
+                                MasterTable.Rows[0]["X_LocationCode"] = parentRomPattern.ToString() + "-" + "01";
+
+                            }
+                            else
+                            {
+                                int hiphenLength = rowPattern.ToString().LastIndexOf("-");
+                                string addingCode = rowPattern.ToString().Substring((hiphenLength), (rowPattern.ToString().Length) - hiphenLength);
+                                addingCode = addingCode.Remove(0, 1);
+                                if (myFunctions.getIntVAL(addingCode) <= 9) { addingCode = "0" + (myFunctions.getIntVAL(addingCode) + 1).ToString(); }
+                                else { addingCode = (myFunctions.getIntVAL(addingCode) + 1).ToString(); }
+                                MasterTable.Rows[0]["X_LocationCode"] = parentRomPattern.ToString() + "-" + addingCode;
+
+
+                            }
+
+
+
+                        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                     }
-                    else if(N_LocationID>0)
+                    else if (N_LocationID > 0)
                     {
-                          dLayer.DeleteData("Inv_Location", "N_LocationID", N_LocationID, "", connection, transaction);
+                        dLayer.DeleteData("Inv_Location", "N_LocationID", N_LocationID, "", connection, transaction);
                     }
 
 
                     MasterTable.Columns.Remove("n_FnYearId");
                     MasterTable.Columns.Remove("b_isSubLocation");
-                     N_LocationID = dLayer.SaveData("Inv_Location", "N_LocationID", MasterTable, connection, transaction);
+                    N_LocationID = dLayer.SaveData("Inv_Location", "N_LocationID", MasterTable, connection, transaction);
                     if (N_LocationID <= 0)
                     {
                         transaction.Rollback();
@@ -334,31 +398,31 @@ namespace SmartxAPI.Controllers
             int nCompanyId = myFunctions.GetCompanyID(User);
             try
             {
-                    var myBitmap = new Bitmap(500, 50);
-                    var g = Graphics.FromImage(myBitmap);
-                    var jgpEncoder = GetEncoder(ImageFormat.Jpeg);
+                var myBitmap = new Bitmap(500, 50);
+                var g = Graphics.FromImage(myBitmap);
+                var jgpEncoder = GetEncoder(ImageFormat.Jpeg);
 
-                    g.Clear(Color.White);
+                g.Clear(Color.White);
 
-                    var strFormat = new StringFormat { Alignment = StringAlignment.Center };
-                    g.DrawString(xBarcode, new System.Drawing.Font("Free 3 of 9", 50), Brushes.Black, new RectangleF(0, 0, 500, 50), strFormat);
+                var strFormat = new StringFormat { Alignment = StringAlignment.Center };
+                g.DrawString(xBarcode, new System.Drawing.Font("Free 3 of 9", 50), Brushes.Black, new RectangleF(0, 0, 500, 50), strFormat);
 
-                    var myEncoder = Encoder.Quality;
-                    var myEncoderParameters = new EncoderParameters(1);
+                var myEncoder = Encoder.Quality;
+                var myEncoderParameters = new EncoderParameters(1);
 
-                    var myEncoderParameter = new EncoderParameter(myEncoder, 100L);
-                    myEncoderParameters.Param[0] = myEncoderParameter;
-                    string BarcodePath = this.TempFilesPath;
-                    DirectoryInfo info = new DirectoryInfo(BarcodePath);
-                    if (!info.Exists)
-                    {
-                        info.Create();
-                    }
-                    BarcodePath=BarcodePath+"/Barcode.jpg";
-                    myBitmap.Save(@"c:\Barcode.jpg", jgpEncoder, myEncoderParameters);
-                    // myBitmap.Save(@"C://OLIVOSERVER2020/Barcode/Barcode.jpg", jgpEncoder, myEncoderParameters);
+                var myEncoderParameter = new EncoderParameter(myEncoder, 100L);
+                myEncoderParameters.Param[0] = myEncoderParameter;
+                string BarcodePath = this.TempFilesPath;
+                DirectoryInfo info = new DirectoryInfo(BarcodePath);
+                if (!info.Exists)
+                {
+                    info.Create();
+                }
+                BarcodePath = BarcodePath + "/Barcode.jpg";
+                myBitmap.Save(@"c:\Barcode.jpg", jgpEncoder, myEncoderParameters);
+                // myBitmap.Save(@"C://OLIVOSERVER2020/Barcode/Barcode.jpg", jgpEncoder, myEncoderParameters);
 
-                    return Ok(_api.Success(new SortedList() { { "FileName", "Barcode.jpg" } }));
+                return Ok(_api.Success(new SortedList() { { "FileName", "Barcode.jpg" } }));
 
             }
             catch (Exception e)
