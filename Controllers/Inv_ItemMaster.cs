@@ -59,7 +59,7 @@ namespace SmartxAPI.Controllers
             //     xCriteria = " N_FnY.0earID=@p2 and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchID=@p3 and N_CompanyID=@p1 ";
             if(b_whGrn==true && n_CustomerID>0)
             {
-                warehouseSql=  "and N_ItemID in (select N_ItemID in Vw_wh_AsnDetails_disp where N_CompanyID=@p1 and N_CustomerID="+n_CustomerID+")";
+                warehouseSql=  "and vw_InvItem_Search_cloud.N_ItemID in (select N_ItemID from  Vw_wh_AsnDetails_disp where N_CompanyID=@p1 and N_CustomerID="+n_CustomerID+")";
             }
 
             if (query != "" && query != null)
