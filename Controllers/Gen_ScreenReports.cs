@@ -87,10 +87,19 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult TaskList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nTableViewID, int nMenuID)
+        public ActionResult TaskList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nTableViewID, int nMenuID,int n_UserID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
-            int nUserID = myFunctions.GetUserID(User);
+            int nUserID;
+            if(n_UserID>0)
+            {
+               nUserID=n_UserID; 
+            }
+            else
+            {
+              nUserID = myFunctions.GetUserID(User);
+            }
+            
             DataTable dt = new DataTable();
             SortedList OutPut = new SortedList();
 
