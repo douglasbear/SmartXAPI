@@ -644,7 +644,7 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, e));
             }
         }
-       [HttpGet("totalInvoiceAmount")]
+        [HttpGet("totalInvoiceAmount")]
         public ActionResult GetCustomerDetail(int nCustomerID, int nFnYearID)
         {
             DataTable dt = new DataTable();
@@ -664,7 +664,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommmand, Params, connection);
                     object invoiceamt = dLayer.ExecuteScalar("select sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalInvoiceAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", Params, connection);
                     object returnamt = dLayer.ExecuteScalar("select sum(Cast(REPLACE(N_TotalPaidAmount,',','') as Numeric(10,2)) ) as TotalReturnAmount from vw_InvDebitNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", Params, connection);
-                    if (returnamt.ToString() == "")
+                    double  currentBalance=  myFunctions.getVAL(dLayer.ExecuteScalar("SELECT  Sum(n_Amount)  as N_BalanceAmount from  vw_InvCustomerStatement Where N_AccType=2 and N_AccID=" + nCustomerID + " and N_CompanyID=" + nCompanyID,Params,connection).ToString());
                     {
                         returnamt = "0";
                     }
@@ -674,6 +674,8 @@ namespace SmartxAPI.Controllers
                     }
                     double amount = myFunctions.getVAL(invoiceamt.ToString()) - myFunctions.getVAL(returnamt.ToString());
                     dt.Rows[0]["TotalInvoiceAmount"] = amount.ToString();
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "currentBalance", typeof(double), currentBalance);
+             
                     dt.AcceptChanges();
                     
 
