@@ -72,7 +72,7 @@ namespace SmartxAPI.Controllers
             SortedList dParamList = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
-            string MasterDiscount = "Select * from Inv_DiscountMaster Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_DiscID = @p3";
+            string MasterDiscount = "Select * from vw_inv_DiscountMaster Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_DiscID = @p3";
             string DetailsDiscount = "Select * from vw_Discount Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_DiscID = @p3";
 
             Params.Add("@p1", nCompanyId);
@@ -221,7 +221,7 @@ namespace SmartxAPI.Controllers
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     string x_DiscountNo = MasterRow["X_DiscCode"].ToString();
 
-                    Master.Columns.Remove("n_BranchID");
+                    
 
                     if (x_DiscountNo == "@Auto")
                     {
