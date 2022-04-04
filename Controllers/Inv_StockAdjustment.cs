@@ -76,7 +76,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ( N_ItemID like '%" + xSearchkey + "%') ";
+                        Searchkey = " and ( N_ItemID like '%" + xSearchkey + "%'  or  X_RefNo like '%" + xSearchkey + "%' or  X_LocationName like '%" + xSearchkey + "%' or cast([AdjustDate] as VarChar) like '%" + xSearchkey + "%') ";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by X_RefNo desc";
