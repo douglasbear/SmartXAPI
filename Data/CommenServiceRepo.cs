@@ -435,8 +435,8 @@ namespace SmartxAPI.Data
                             string days = DaysToExpire == 1 ? " day" : " days";
                             string xExpiryInfo = DaysToExpire > 0 ? "expiring in " + DaysToExpire + days : "expired";
                             string xProductName = dLayer.ExecuteScalar("SELECT X_AppDescription FROM AppMaster INNER JOIN ClientMaster ON ClientMaster.N_DefaultAppID = AppMaster.N_AppID where N_ClientID=" + nClientID, cnn).ToString();
-                            // Message = "Your subscription for " + xProductName +" is "+ xExpiryInfo+", please contact your salesperson immediately";
-                            Message = "Your subscription is "+ xExpiryInfo;
+                            Message = "Your subscription for " + xProductName +" is "+ xExpiryInfo+", please contact your salesperson immediately";
+                            // Message = "Your subscription is "+ xExpiryInfo;
                     }
                
                 return Message;
