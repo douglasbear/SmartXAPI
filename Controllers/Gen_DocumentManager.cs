@@ -12,6 +12,8 @@ using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
+using System.IO;
 
 namespace SmartxAPI.Controllers
 {
@@ -24,6 +26,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly string reportLocation;
         private readonly int FormID;
         private readonly IMyAttachments myAttachments;
         public Gen_DocumentManager(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
@@ -33,6 +36,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            reportLocation = conf.GetConnectionString("ReportLocation");
             FormID = 0;
         }
 
@@ -71,12 +75,12 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
         [HttpGet("getFile")]
-        public async Task<IActionResult> Download(int fileID,string filename)
+        public async Task<IActionResult> Download(int fileID, string filename)
         {
             if (filename == null)
                 return Content("filename not present");
@@ -96,7 +100,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
             path = path + filename;
 
@@ -125,8 +129,17 @@ namespace SmartxAPI.Controllers
                     int payId = myFunctions.getIntVAL(Attachment.Rows[0]["n_TransID"].ToString());
                     string partyCode = Attachment.Rows[0]["x_PartyCode"].ToString();
                     int partyID = myFunctions.getIntVAL(Attachment.Rows[0]["n_PartyID"].ToString());
-                    string folderName= Attachment.Rows[0]["x_FolderName"].ToString();
-                    string partyName= Attachment.Rows[0]["x_PartyName"].ToString();
+                    string folderName = Attachment.Rows[0]["x_FolderName"].ToString();
+                    string partyName = Attachment.Rows[0]["x_PartyName"].ToString();
+
+                    if (Attachment.Rows[0]["x_FolderName"].ToString() == "reports")
+                    {
+                        var base64Data = Regex.Match(Attachment.Rows[0]["FileData"].ToString(), @"data:(?<type>.+?);base64,(?<data>.+)").Groups["data"].Value;
+                        byte[] FileBytes = Convert.FromBase64String(base64Data);
+                        System.IO.File.WriteAllBytes(reportLocation + Attachment.Rows[0]["x_File"].ToString(),
+                                           FileBytes);
+                    return Ok(api.Success("Report Updated"));
+                    }
 
                     Attachment.Columns.Remove("x_FolderName");
                     Attachment.Columns.Remove("x_PartyName");
@@ -134,9 +147,8 @@ namespace SmartxAPI.Controllers
                     Attachment.Columns.Remove("x_TransCode");
                     Attachment.AcceptChanges();
 
-
                     SqlTransaction transaction = connection.BeginTransaction();
-                    myAttachments.SaveAttachment(dLayer, Attachment, payCode, payId , partyName, partyCode, partyID, folderName, User, connection, transaction);
+                    myAttachments.SaveAttachment(dLayer, Attachment, payCode, payId, partyName, partyCode, partyID, folderName, User, connection, transaction);
                     transaction.Commit();
 
                 }
@@ -144,13 +156,13 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
         }
 
-        
 
-          [HttpGet("getAttachments")]
+
+        [HttpGet("getAttachments")]
         public ActionResult GetSalesInvoiceDetails(int nTransID, int nPartyID, int nFormID, int nFnYearID)
         {
 
@@ -159,14 +171,14 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection Con = new SqlConnection(connectionString))
                 {
                     Con.Open();
-                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, nPartyID,nTransID,nFormID,nFnYearID, User, Con);
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, nPartyID, nTransID, nFormID, nFnYearID, User, Con);
                     Attachments = api.Format(Attachments, "attachments");
                     return Ok(api.Success(Attachments));
                 }
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
