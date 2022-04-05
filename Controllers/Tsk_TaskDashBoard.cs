@@ -39,11 +39,11 @@ namespace SmartxAPI.Controllers
             string UserPattern = myFunctions.GetUserPattern(User);
             string Pattern = "";
             string AssigneePattern = "";
-            string sqlActiveEmployees = "SELECT COUNT(*) as N_ActiveEmloyees FROM pay_employee WHERE N_CompanyID=" + nCompanyID + " and N_Status not in (2,3)";//Active employees
+            string sqlActiveEmployees = "SELECT COUNT(*) as N_ActiveEmloyees FROM pay_employee WHERE N_CompanyID=" + nCompanyID + " and N_FnYearID="+nFnYearId+" and  N_Status not in (2,3)";//Active employees
             string sqlScheduledList = "select  COUNT(*) as N_ToDoList from  vw_Tsk_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and isnull(B_Closed,0) =0";
             string sqlActiveList = "select Count(*) as N_ActiveList from vw_Tsk_TaskCurrentStatus where N_Status=7 and N_CompanyID=" + nCompanyID + " and  N_CreaterID=" + nUserID + "";
             string sqlCompletedList = "select Count(*) as N_CompletedList from vw_Tsk_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + " and N_Status=4";
-            string sqlClosedList = "select Count(*) as N_CompletedList from vw_Tsk_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_ClosedUserID=" + nUserID + " and N_Status=10";
+            string sqlClosedList = "select Count(*) as N_CompletedList from vw_Tsk_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_ClosedUserID=" + nUserID + " and B_Closed =1";
             string sqlTaskStatus = "";
             SortedList Data = new SortedList();
             DataTable ActiveEmployees = new DataTable();
