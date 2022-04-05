@@ -46,7 +46,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetPurchaseInvoiceList(int? nCompanyId, int nFnYearId, bool bAllBranchData, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,string screen)
+        public ActionResult GetPurchaseInvoiceList(int? nCompanyId, int nFnYearId, bool bAllBranchData, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string screen)
         {
             try
             {
@@ -69,18 +69,18 @@ namespace SmartxAPI.Controllers
                     //  string Pattern = "";
                     N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Purchase", "Decimal_Place", "N_Value", nCompanyID, dLayer, connection));
                     N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
-                    
-                //     if (UserPattern != "")
-                //     {
-                //         Pattern = "and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
-                //         Params.Add("@UserPattern",UserPattern);
-                //     }
-                //     else{
-                //      object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
 
-                //    if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
-                //     Pattern = " and N_CreatedUser=" + nUserID;
-                //     }
+                    //     if (UserPattern != "")
+                    //     {
+                    //         Pattern = "and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
+                    //         Params.Add("@UserPattern",UserPattern);
+                    //     }
+                    //     else{
+                    //      object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
+
+                    //    if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    //     Pattern = " and N_CreatedUser=" + nUserID;
+                    //     }
 
 
 
@@ -152,7 +152,7 @@ namespace SmartxAPI.Controllers
                     foreach (DataRow var in dt.Rows)
                     {
                         double BalanceAmt = 0;
-                       // object objBal = dLayer.ExecuteScalar("SELECT  Sum(PurchaseBalanceAmt) from  vw_InvPayables Where  N_VendorID=" + var["N_VendorID"] + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PurchaseID = " + var["N_PurchaseID"], Params, connection);
+                        // object objBal = dLayer.ExecuteScalar("SELECT  Sum(PurchaseBalanceAmt) from  vw_InvPayables Where  N_VendorID=" + var["N_VendorID"] + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PurchaseID = " + var["N_PurchaseID"], Params, connection);
 
 
                         BalanceAmt = myFunctions.getVAL(var["N_BalanceAmt"].ToString());
@@ -330,8 +330,8 @@ namespace SmartxAPI.Controllers
                     }
 
                     //PURCHASE INVOICE DETAILS
-                    object mrnCount = dLayer.ExecuteScalar("SELECT count(Sec_UserPrevileges.N_MenuID) as Count FROM Sec_UserPrevileges INNER JOIN Sec_UserCategory ON Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID and Sec_UserPrevileges.N_MenuID=555 and Sec_UserCategory.N_CompanyID="+nCompanyID+" and Sec_UserPrevileges.B_Visible=1", connection);
-                    bool B_MRNVisible =myFunctions.getIntVAL(mrnCount.ToString())>0?true:false;
+                    object mrnCount = dLayer.ExecuteScalar("SELECT count(Sec_UserPrevileges.N_MenuID) as Count FROM Sec_UserPrevileges INNER JOIN Sec_UserCategory ON Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID and Sec_UserPrevileges.N_MenuID=555 and Sec_UserCategory.N_CompanyID=" + nCompanyID + " and Sec_UserPrevileges.B_Visible=1", connection);
+                    bool B_MRNVisible = myFunctions.getIntVAL(mrnCount.ToString()) > 0 ? true : false;
                     if (nPurchaseNO != null)
                     {
                         if (B_MRNVisible)
@@ -487,7 +487,7 @@ namespace SmartxAPI.Controllers
                 {
                     if (BalanceAmt == 0)
                     {
-                        TxnStatus["Label"] = "Paid";
+                        TxnStatus["Label"] = "Paid(Return)";
                         TxnStatus["LabelColor"] = "Green";
                         TxnStatus["Alert"] = "";
                     }
@@ -495,7 +495,7 @@ namespace SmartxAPI.Controllers
                     {
 
 
-                        TxnStatus["Label"] = "NotPaid";
+                        TxnStatus["Label"] = "NotPaid(Return)";
                         TxnStatus["LabelColor"] = "Red";
                         TxnStatus["Alert"] = "";
                     }
@@ -510,17 +510,36 @@ namespace SmartxAPI.Controllers
             }
             else
             {
-                if (BalanceAmt == 0)
+                if (myFunctions.getIntVAL(RetQty.ToString()) > 0)
                 {
-                    TxnStatus["Label"] = "Paid";
-                    TxnStatus["LabelColor"] = "Green";
-                    TxnStatus["Alert"] = "";
+                    if (BalanceAmt == 0)
+                    {
+                        TxnStatus["Label"] = "Paid(Return)";
+                        TxnStatus["LabelColor"] = "Green";
+                        TxnStatus["Alert"] = "";
+                    }
+                    else
+                    {
+                        TxnStatus["Label"] = "Partially Paid(Return)";
+                        TxnStatus["LabelColor"] = "Green";
+                        TxnStatus["Alert"] = "";
+                    }
                 }
                 else
                 {
-                    TxnStatus["Label"] = "Partially Paid";
-                    TxnStatus["LabelColor"] = "Green";
-                    TxnStatus["Alert"] = "";
+                    if (BalanceAmt == 0)
+                    {
+                        TxnStatus["Label"] = "Paid";
+                        TxnStatus["LabelColor"] = "Green";
+                        TxnStatus["Alert"] = "";
+                    }
+                    else
+                    {
+                        TxnStatus["Label"] = "Partially Paid";
+                        TxnStatus["LabelColor"] = "Green";
+                        TxnStatus["Alert"] = "";
+                    }
+
                 }
                 DataTable dtpayReceipt = dLayer.ExecuteDataTable("SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and dbo.Inv_PayReceiptDetails.N_InventoryId in (" + nPurchaseID + ")", connection);
                 string InvoiceNos = "";
@@ -529,7 +548,7 @@ namespace SmartxAPI.Controllers
                     InvoiceNos += var["X_VoucherNo"].ToString() + " , ";
                 }
                 char[] trim = { ',', ' ' };
-                TxnStatus["Label"] = TxnStatus["Label"].ToString() +" (Payment No: " + InvoiceNos.ToString().TrimEnd(trim)+")";
+                TxnStatus["Label"] = TxnStatus["Label"].ToString() + " (Payment No: " + InvoiceNos.ToString().TrimEnd(trim) + ")";
             }
 
 
@@ -599,8 +618,8 @@ namespace SmartxAPI.Controllers
                     }
                     MasterTable.AcceptChanges();
 
-                    object mrnCount = dLayer.ExecuteScalar("SELECT count(Sec_UserPrevileges.N_MenuID) as Count FROM Sec_UserPrevileges INNER JOIN Sec_UserCategory ON Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID and Sec_UserPrevileges.N_MenuID=555 and Sec_UserCategory.N_CompanyID="+nCompanyID+" and Sec_UserPrevileges.B_Visible=1", connection, transaction);
-                    bool B_MRNVisible =myFunctions.getIntVAL(mrnCount.ToString())>0?true:false;
+                    object mrnCount = dLayer.ExecuteScalar("SELECT count(Sec_UserPrevileges.N_MenuID) as Count FROM Sec_UserPrevileges INNER JOIN Sec_UserCategory ON Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID and Sec_UserPrevileges.N_MenuID=555 and Sec_UserCategory.N_CompanyID=" + nCompanyID + " and Sec_UserPrevileges.B_Visible=1", connection, transaction);
+                    bool B_MRNVisible = myFunctions.getIntVAL(mrnCount.ToString()) > 0 ? true : false;
 
                     if (B_MRNVisible && n_MRNID != 0) Dir_Purchase = 0;
 
@@ -670,7 +689,7 @@ namespace SmartxAPI.Controllers
                             }
                         }
 
-                       // myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "PURCHASE", values, dLayer, connection, transaction, User);
+                        // myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "PURCHASE", values, dLayer, connection, transaction, User);
                         transaction.Commit();
                         return Ok(_api.Success("Purchase Approved " + "-" + values));
                     }
@@ -693,38 +712,38 @@ namespace SmartxAPI.Controllers
                     //     MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
                     // }
                     if (N_PurchaseID == 0 && values != "@Auto")
+                    {
+                        object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_Purchase Where X_InvoiceNo ='" + values + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                        if (N_DocNumber == null)
                         {
-                            object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_Purchase Where X_InvoiceNo ='" + values + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
-                            if (N_DocNumber == null)
-                            {
-                                N_DocNumber = 0;
-                            }
-                            if (myFunctions.getVAL(N_DocNumber.ToString()) >= 1)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, "Invoice number already in use"));
-                            }
+                            N_DocNumber = 0;
                         }
-                        if (values == "@Auto")
+                        if (myFunctions.getVAL(N_DocNumber.ToString()) >= 1)
                         {
-                            Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
-                            Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
-                            Params.Add("N_FormID", this.N_FormID);
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Invoice number already in use"));
+                        }
+                    }
+                    if (values == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
+                        Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
+                        Params.Add("N_FormID", this.N_FormID);
 
-                            while (true)
-                            {
-                                InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
-                                object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Purchase Where X_InvoiceNo ='" + values + "' and N_CompanyID= " + nCompanyID, connection, transaction);
-                                if (N_Result == null)
-                                    break;
-                            }
-                            if (InvoiceNo == "")
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, "Unable to generate Invoice Number"));
-                            }
-                            MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
+                        while (true)
+                        {
+                            InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Purchase Where X_InvoiceNo ='" + values + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                            if (N_Result == null)
+                                break;
                         }
+                        if (InvoiceNo == "")
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to generate Invoice Number"));
+                        }
+                        MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
+                    }
 
                     if (N_PurchaseID > 0)
                     {
@@ -912,14 +931,14 @@ namespace SmartxAPI.Controllers
                             PostingParam.Add("N_InternalID", N_PurchaseID);
                             PostingParam.Add("N_UserID", nUserID);
                             PostingParam.Add("X_SystemName", "ERP Cloud");
-                            PostingParam.Add("MRN_Flag", (n_MRNID>0 && B_MRNVisible) ?"1":"0");
+                            PostingParam.Add("MRN_Flag", (n_MRNID > 0 && B_MRNVisible) ? "1" : "0");
 
                             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
                         }
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                                if (ex.Message.Contains("50"))
+                            if (ex.Message.Contains("50"))
                                 return Ok(_api.Error(User, "Day Closed"));
                             else if (ex.Message.Contains("51"))
                                 return Ok(_api.Error(User, "Year Closed"));
@@ -1035,9 +1054,9 @@ namespace SmartxAPI.Controllers
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
 
-                    object mrnCount = dLayer.ExecuteScalar("SELECT count(Sec_UserPrevileges.N_MenuID) as Count FROM Sec_UserPrevileges INNER JOIN Sec_UserCategory ON Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID and Sec_UserPrevileges.N_MenuID=555 and Sec_UserCategory.N_CompanyID="+nCompanyID+" and Sec_UserPrevileges.B_Visible=1", connection, transaction);
-                    bool B_MRNVisible =myFunctions.getIntVAL(mrnCount.ToString())>0?true:false;
-                     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "PURCHASE", nPurchaseID, TransRow["X_InvoiceNo"].ToString(), ProcStatus, "Inv_Purchase", X_Criteria, objVendorName.ToString(), User, dLayer, connection, transaction);
+                    object mrnCount = dLayer.ExecuteScalar("SELECT count(Sec_UserPrevileges.N_MenuID) as Count FROM Sec_UserPrevileges INNER JOIN Sec_UserCategory ON Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID and Sec_UserPrevileges.N_MenuID=555 and Sec_UserCategory.N_CompanyID=" + nCompanyID + " and Sec_UserPrevileges.B_Visible=1", connection, transaction);
+                    bool B_MRNVisible = myFunctions.getIntVAL(mrnCount.ToString()) > 0 ? true : false;
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "PURCHASE", nPurchaseID, TransRow["X_InvoiceNo"].ToString(), ProcStatus, "Inv_Purchase", X_Criteria, objVendorName.ToString(), User, dLayer, connection, transaction);
                     if (status != "Error")
                     {
                         if (ButtonTag == "6" || ButtonTag == "0")
@@ -1055,7 +1074,7 @@ namespace SmartxAPI.Controllers
                             if (Results <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User, "Unable to Delete PurchaseInvoice")); 
+                                return Ok(_api.Error(User, "Unable to Delete PurchaseInvoice"));
                             }
 
                             myAttachments.DeleteAttachment(dLayer, 1, nPurchaseID, VendorID, nFnYearID, N_FormID, User, transaction, connection);
