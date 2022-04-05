@@ -29,6 +29,7 @@ namespace SmartxAPI.Controllers
         private readonly string reportLocation;
         private readonly int FormID;
         private readonly IMyAttachments myAttachments;
+        public string RPTLocation = "";
         public Gen_DocumentManager(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             api = apifun;
@@ -112,6 +113,51 @@ namespace SmartxAPI.Controllers
             memory.Position = 0;
             return File(memory, api.GetContentType(path), Path.GetFileName(path));
         }
+        private bool LoadReportDetails(int nFnYearID, int nFormID)
+        {
+            SortedList QueryParams = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            QueryParams.Add("@nCompanyId", nCompanyId);
+            QueryParams.Add("@nFnYearID", nFnYearID);
+            QueryParams.Add("@nFormID", nFormID);
+            RPTLocation = "";
+            string xUserCategoryList = myFunctions.GetUserCategoryList(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction;
+                    transaction = connection.BeginTransaction();
+                    object ObjTaxType = dLayer.ExecuteScalar("SELECT Acc_TaxType.X_RepPathCaption FROM Acc_TaxType LEFT OUTER JOIN Acc_FnYear ON Acc_TaxType.N_TypeID = Acc_FnYear.N_TaxType where Acc_FnYear.N_CompanyID=@nCompanyId and Acc_FnYear.N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
+                    if (ObjTaxType == null)
+                        ObjTaxType = "";
+                    if (ObjTaxType.ToString() == "")
+                        ObjTaxType = "none";
+                    string TaxType = ObjTaxType.ToString();
+
+                    object ObjPath = dLayer.ExecuteScalar("SELECT X_RptFolder FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    if (ObjPath != null)
+                    {
+                        if (ObjPath.ToString() != "")
+                            RPTLocation = reportLocation + "printing/" + ObjPath + "/" + TaxType + "/";
+                        else
+                            RPTLocation = reportLocation + "printing/";
+                    }
+                    object Custom = dLayer.ExecuteScalar("SELECT isnull(b_Custom,0) FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
+                    int N_Custom = myFunctions.getIntVAL(Custom.ToString());
+                    if (N_Custom == 1)
+                        RPTLocation = RPTLocation + "custom/";
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                return false;
+
+            }
+
+        }
 
 
 
@@ -138,7 +184,19 @@ namespace SmartxAPI.Controllers
                         byte[] FileBytes = Convert.FromBase64String(base64Data);
                         System.IO.File.WriteAllBytes(reportLocation + Attachment.Rows[0]["x_File"].ToString(),
                                            FileBytes);
-                    return Ok(api.Success("Report Updated"));
+                        return Ok(api.Success("Report Updated"));
+                    }
+                    if (Attachment.Rows[0]["x_FolderName"].ToString() == "print")
+                    {
+                        int nFormID = myFunctions.getIntVAL(Attachment.Rows[0]["nFormID"].ToString());
+                        // if (LoadReportDetails(nFnYearID, nFormID))
+                        // {
+                            var base64Data = Regex.Match(Attachment.Rows[0]["FileData"].ToString(), @"data:(?<type>.+?);base64,(?<data>.+)").Groups["data"].Value;
+                            byte[] FileBytes = Convert.FromBase64String(base64Data);
+                            System.IO.File.WriteAllBytes(reportLocation + Attachment.Rows[0]["x_File"].ToString(),
+                                               FileBytes);
+                            return Ok(api.Success("Report Updated"));
+                        // }
                     }
 
                     Attachment.Columns.Remove("x_FolderName");
