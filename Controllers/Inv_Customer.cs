@@ -643,8 +643,9 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(User, e));
             }
-        }
-        [HttpGet("totalInvoiceAmount")]
+        } 
+
+   [HttpGet("totalInvoiceAmount")]
         public ActionResult GetCustomerDetail(int nCustomerID, int nFnYearID)
         {
             DataTable dt = new DataTable();
@@ -688,5 +689,6 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, e));
             }
         }
-    }
+
+}
 }
