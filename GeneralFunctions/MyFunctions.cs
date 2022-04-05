@@ -1773,6 +1773,13 @@ namespace SmartxAPI.GeneralFunctions
                 NewParam.Add("@nFormID", N_FormID);
                 NewParam.Add("@nTransID", N_TransID);
 
+                int EntrUsrID = this.getIntVAL(dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=108", NewParam, connection, transaction).ToString());
+                NewParam.Add("@EntrUsrID", EntrUsrID);
+                string ReqUser = dLayer.ExecuteScalar("select X_UserName from Sec_User where N_CompanyID=@nCompanyID and N_UserID=@EntrUsrID", NewParam, connection, transaction).ToString();
+                string ReqDate = dLayer.ExecuteScalar("select CONVERT(VARCHAR(20),D_ActionDate,20) AS X_RequestedUser from Log_ApprovalProcess where N_ProcStatusID=1 and N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID", NewParam, connection, transaction).ToString();
+                string Status = dLayer.ExecuteScalar("select X_StatusName from Gen_ActionStatus where N_CompanyId=@nCompanyID and N_StatusId="+N_ProcStatusID+" and N_GroupID="+N_GroupID, NewParam, connection, transaction).ToString();
+                string Route = dLayer.ExecuteScalar("select X_RouteName from Sec_Menus where N_MenuID=@nFormID", NewParam, connection, transaction).ToString();
+
                 Count = dLayer.ExecuteScalar("select COUNT(N_HierarchyID) from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and (N_Status=0 or N_Status=-1)", NewParam, connection, transaction);
                 if (Count != null)
                 {
@@ -1786,14 +1793,16 @@ namespace SmartxAPI.GeneralFunctions
                         if (UserObj == null)
                             UserObj = 0;
 
-                        int EntrUsrID = this.getIntVAL(dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=108", NewParam, connection, transaction).ToString());
-
                         body = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='approved to requester'", NewParam, connection, transaction).ToString();
                         Subject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='approved to requester'", NewParam, connection, transaction).ToString();
 
                         body=body.Replace("@PartyName",PartyName);
                         body=body.Replace("@TransCode",X_TransCode);
                         body=body.Replace("@TransType",X_TransType);
+                        body=body.Replace("@RequestedBy",ReqUser);
+                        body=body.Replace("@RequestedDate",ReqDate);
+                        body=body.Replace("@Status",Status);
+                        body=body.Replace("@Status",ApprovalLink+"/"+Route+"/"+X_TransCode+"");
 
                         SendApprovalMail(EntrUsrID, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User,Subject,body);
                     }
@@ -1823,6 +1832,10 @@ namespace SmartxAPI.GeneralFunctions
                         body=body.Replace("@PartyName",PartyName);
                         body=body.Replace("@TransCode",X_TransCode);
                         body=body.Replace("@TransType",X_TransType);
+                        body=body.Replace("@RequestedBy",ReqUser);
+                        body=body.Replace("@RequestedDate",ReqDate);
+                        body=body.Replace("@Status",Status);
+                        body=body.Replace("@Status",ApprovalLink+"/"+Route+"/"+X_TransCode+"");
 
                         SendApprovalMail(N_NextUser, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User,Subject,body);
                     }
