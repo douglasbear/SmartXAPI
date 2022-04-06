@@ -473,6 +473,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     // dLayer.setTransaction();
+                    MasterTable.Columns.Remove("n_ProjectID");
                     N_InvoiceId = dLayer.SaveData("Inv_SalesReturnMaster", "N_DebitNoteId", MasterTable, connection, transaction);
                     if (N_InvoiceId <= 0)
                     {
