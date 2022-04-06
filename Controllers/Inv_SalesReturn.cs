@@ -290,6 +290,12 @@ namespace SmartxAPI.Controllers
                     if (myFunctions.getBoolVAL(Res.ToString()) == false)
                     {
                         sqlCommandText2 = "SELECT   * from vw_SalesReturnWithoutSale_Display Where N_DebitNoteId=@DebitNoteID and N_CompanyID=@CompanyID and N_FnYearID=@FnYearID";
+
+                        SalesReturnDetails = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
+                        SalesReturnDetails.AcceptChanges();
+                        SalesReturn.AcceptChanges();
+                        SalesReturnDetails = _api.Format(SalesReturnDetails, "Details");
+                        dt.Tables.Add(SalesReturnDetails);
                     }
                     else
                     if (xReceiptNo != "" && xReceiptNo != null)
