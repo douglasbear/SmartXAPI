@@ -1802,7 +1802,9 @@ namespace SmartxAPI.GeneralFunctions
                         body=body.Replace("@RequestedBy",ReqUser);
                         body=body.Replace("@RequestedDate",ReqDate);
                         body=body.Replace("@Status",Status);
-                        body=body.Replace("@Status",ApprovalLink+"/"+Route+"/"+X_TransCode+"");
+                        // body=body.Replace("@URL",ApprovalLink+"/"+Route+"/"+X_TransCode+"");
+                        body=body.Replace("@URL",ApprovalLink+"/approvalDashboard");
+                        
 
                         SendApprovalMail(EntrUsrID, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User,Subject,body);
                     }
@@ -1811,7 +1813,7 @@ namespace SmartxAPI.GeneralFunctions
                 DataTable dtNext = dLayer.ExecuteDataTable("select N_UserID,N_ActionTypeID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_LevelID="+N_NxtAppLeveleID, LogParams, connection,transaction);
                 if(dtNext.Rows.Count>0)
                 {
-                    for(int i=0;i<=dtNext.Rows.Count;i++)
+                    for(int i=0;i<dtNext.Rows.Count;i++)
                     {
                         int N_ActionType=this.getIntVAL(dtNext.Rows[0]["N_ActionTypeID"].ToString());
                         int N_NextUser=this.getIntVAL(dtNext.Rows[0]["N_UserID"].ToString());
@@ -1835,7 +1837,8 @@ namespace SmartxAPI.GeneralFunctions
                         body=body.Replace("@RequestedBy",ReqUser);
                         body=body.Replace("@RequestedDate",ReqDate);
                         body=body.Replace("@Status",Status);
-                        body=body.Replace("@Status",ApprovalLink+"/"+Route+"/"+X_TransCode+"");
+                        // body=body.Replace("@URL",ApprovalLink+"/"+Route+"/"+X_TransCode+"");
+                        body=body.Replace("@URL",ApprovalLink+"/approvalDashboard");
 
                         SendApprovalMail(N_NextUser, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User,Subject,body);
                     }
