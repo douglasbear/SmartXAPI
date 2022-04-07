@@ -44,12 +44,18 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable DetailTable;
                     DetailTable = ds.Tables["Details"];
+                     DataRow MasterRow = DetailTable.Rows[0];
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
-                   // int nCompanyID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_CompanyID"].ToString());
-                    // int nDefaultID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_DefaultID"].ToString());
+                  
+                    int n_FormID = myFunctions.getIntVAL(MasterRow["N_FormID"].ToString());
                     int nDefaultID=0;
-              
+                      if (n_FormID>0)
+                    {
+                        
+                         dLayer.DeleteData("Dms_ScreenDefaults", "N_FormID", n_FormID, "", connection,transaction);
+
+                    }
 
                     nDefaultID = dLayer.SaveData("Dms_ScreenDefaults", "N_DefaultID", DetailTable, connection, transaction);
                     if (nDefaultID <= 0)
@@ -105,7 +111,7 @@ namespace SmartxAPI.Controllers
 
 
           [HttpGet("details")]
-        public ActionResult GenApprovalCode(int nModuleID)
+        public ActionResult docSubject(int nFormID)
         {
 
 
@@ -119,24 +125,17 @@ namespace SmartxAPI.Controllers
                     DataTable MasterTable = new DataTable();
                     DataTable DetailTable = new DataTable();
                     DataTable DataTable = new DataTable();
-                    //int n_SecApprovalID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SecApprovalID"].ToString());
-                   
-
-                    //string Mastersql = "";
+                
                     string DetailSql = "";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    Params.Add("@nModuleID", nModuleID);
-                    // Mastersql = "select * from Gen_ApprovalCodes where N_CompanyId=@nCompanyID and N_SecApprovalID=@nSecApprovalID  ";
-
-                    // MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
-                    // if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                    Params.Add("@nFormID",nFormID);
+                   
                   
                     // MasterTable = _api.Format(MasterTable, "Master");
-                    DetailSql = "select * from vw_DocDefault_Disp where N_CompanyId=@nCompanyID and N_ModuleID=@nModuleID ";
+                    DetailSql = "select * from vw_DocDefault_Disp where N_CompanyId=@nCompanyID and N_FormID=@nFormID ";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
-                    dt.Tables.Add(MasterTable);
                     dt.Tables.Add(DetailTable);
                     return Ok(_api.Success(dt));
 
