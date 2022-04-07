@@ -873,7 +873,7 @@ namespace SmartxAPI.Controllers
                             {"X_Parameter", procParam },
                             {"N_UserID",myFunctions.GetUserID(User)},
                             {"N_BranchID",BranchID},
-                            {"N_SalesmanID",SalesmanID},
+                            // {"N_SalesmanID",SalesmanID},
 
                             // {"X_InstanceCode",random},
                             };
