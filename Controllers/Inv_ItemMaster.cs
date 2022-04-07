@@ -566,8 +566,10 @@ namespace SmartxAPI.Controllers
                     {
 
                         int j = 1;
+                         int flag =1;
                         for (int i = 0; i < VariantList.Rows.Count; i++)
                         {
+                           
                             var newRow = MasterTable.NewRow();
                             if (myFunctions.getIntVAL(VariantList.Rows[i]["N_ItemID"].ToString()) == 0)
                             {
@@ -579,6 +581,9 @@ namespace SmartxAPI.Controllers
                                 if (VariantList.Rows[i]["N_Rate"].ToString() != "")
                                     MasterTable.Rows[j]["N_Rate"] = myFunctions.getVAL(VariantList.Rows[i]["N_Rate"].ToString());
                                 MasterTable.Rows[j]["N_CLassID"] = "2";
+                            
+                                MasterTable.Rows[j]["X_ItemCode"] = ItemCode +"-"+flag;
+                                flag++;
                             }
                             else
                             {
