@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
                     DataTable dt = new DataTable();
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
-                    string sqlCommandCount = "", xCriteria = "";
+                    string sqlCommandCount = "", xCriteria = " N_FnYearID=@p2 and N_CompanyID=@p1 ";
                     int Count = (nPage - 1) * nSizeperpage;
                     string sqlCommandText = "";
                     string Searchkey = "";
@@ -76,7 +76,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ( N_ItemID like '%" + xSearchkey + "%') ";
+                        Searchkey = " and ( N_ItemID like '%" + xSearchkey + "%'  or  X_RefNo like '%" + xSearchkey + "%' or  X_LocationName like '%" + xSearchkey + "%' or cast([AdjustDate] as VarChar) like '%" + xSearchkey + "%') ";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by X_RefNo desc";
@@ -89,7 +89,7 @@ namespace SmartxAPI.Controllers
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey;
+                    sqlCommandCount = "select count(*) as N_Count   from (select N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName   from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " Group By N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName ) as AdjustmentCountTable";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
