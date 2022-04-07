@@ -20,6 +20,7 @@ using System.Text;
 using zatca.einvoicing;
 using Microsoft.AspNetCore.Hosting;
 using System.Text.RegularExpressions;
+using System.IO.Compression;
 namespace SmartxAPI.Controllers
 {
     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -403,6 +404,7 @@ namespace SmartxAPI.Controllers
 
                     if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, nPreview, xrptname))
                     {
+                        
                         var client = new HttpClient(handler);
                         var dbName = connection.Database;
                         var random = RandomString();
@@ -411,6 +413,16 @@ namespace SmartxAPI.Controllers
                             critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
                         }
                         ReportName = ReportName.Replace("&", "");
+
+                        if (nPreview == 2)
+                        {
+                            string fileToCopy = RPTLocation + ReportName+".rpt";
+                            string destinationFile = this.TempFilesPath + ReportName+".rpt";
+                            string ZipLocation = this.TempFilesPath + ReportName + ".rpt.zip";
+                            if (CopyFiles(fileToCopy, destinationFile, ReportName+".rpt"))
+                                return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + ".rpt.zip" } }));
+
+                        }
 
                         if (partyName == "" || partyName == null)
                             partyName = "customer";
@@ -627,16 +639,37 @@ namespace SmartxAPI.Controllers
 
 
         }
+        public bool CopyFiles(string fileToCopy, string destinationFile, string reportName)
+        {
+            try
+            {
+                string ZipLocation = destinationFile + ".zip";
+                if (System.IO.File.Exists(destinationFile))
+                {
+                    System.IO.File.Delete(destinationFile);
+                }
+                if (System.IO.File.Exists(ZipLocation))
+                {
+                    System.IO.File.Delete(ZipLocation);
+                }
+                System.IO.File.Copy(fileToCopy, destinationFile);
+                using (FileStream fs = new FileStream(ZipLocation, FileMode.Create))
+                using (ZipArchive arch = new ZipArchive(fs, ZipArchiveMode.Create))
+                {
+                    arch.CreateEntryFromFile(destinationFile, reportName);
+                }
+                if (System.IO.File.Exists(destinationFile))
+                {
+                    System.IO.File.Delete(destinationFile);
+                }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
 
-
-
-
-
-
-
-
-
-
+        }
 
         [HttpPost("getModuleReport")]
         public IActionResult GetModuleReports([FromBody] DataSet ds)
@@ -672,6 +705,7 @@ namespace SmartxAPI.Controllers
                     int ReportID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportID"].ToString());
                     int FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["nFnYearID"].ToString());
                     int BranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["nBranchID"].ToString());
+                    int ActionID = myFunctions.getIntVAL(MasterTable.Rows[0]["action"].ToString());
                     int SalesmanID = 0;
                     string procParam = "";
                     string xProCode = "";
@@ -685,6 +719,33 @@ namespace SmartxAPI.Controllers
 
                     reportName = dLayer.ExecuteScalar("select X_rptFile from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and B_Active=1", Params1, connection).ToString();
 
+                    if (ActionID == 2)
+                    {
+                        string fileToCopy = reportLocation + reportName;
+                        string destinationFile = this.TempFilesPath + reportName;
+                        string ZipLocation = this.TempFilesPath + reportName + ".zip";
+                        if (CopyFiles(fileToCopy, destinationFile, reportName))
+                            return Ok(_api.Success(new SortedList() { { "FileName", reportName.Trim() + ".zip" } }));
+                        // if (System.IO.File.Exists(destinationFile))
+                        // {
+                        //     System.IO.File.Delete(destinationFile);
+                        // }
+                        // if (System.IO.File.Exists(ZipLocation))
+                        // {
+                        //     System.IO.File.Delete(ZipLocation);
+                        // }
+                        // System.IO.File.Copy(fileToCopy, destinationFile);
+                        // using (FileStream fs = new FileStream(ZipLocation, FileMode.Create))
+                        // using (ZipArchive arch = new ZipArchive(fs, ZipArchiveMode.Create))
+                        // {
+                        //     arch.CreateEntryFromFile(destinationFile, reportName);
+                        // }
+                        // if (System.IO.File.Exists(destinationFile))
+                        // {
+                        //     System.IO.File.Delete(destinationFile);
+                        // }
+
+                    }
                     reportName = reportName.Substring(0, reportName.Length - 4);
                     SortedList Params = new SortedList();
                     Params.Add("@xMain", "MainForm");
