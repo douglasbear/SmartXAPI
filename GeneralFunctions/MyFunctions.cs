@@ -1802,13 +1802,9 @@ namespace SmartxAPI.GeneralFunctions
                         body=body.Replace("@RequestedBy",ReqUser);
                         body=body.Replace("@RequestedDate",ReqDate);
                         body=body.Replace("@Status",Status);
-<<<<<<< HEAD
                         // body=body.Replace("@URL",ApprovalLink+"/"+Route+"/"+X_TransCode+"");
                         body=body.Replace("@URL",ApprovalLink+"/approvalDashboard");
                         
-=======
-                        body=body.Replace("@URL",ApprovalLink+"/"+Route+"/"+X_TransCode+"");
->>>>>>> ac765272da3af53b2d18c6f922226478c46879aa
 
                         SendApprovalMail(EntrUsrID, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User,Subject,body);
                     }
@@ -1841,12 +1837,8 @@ namespace SmartxAPI.GeneralFunctions
                         body=body.Replace("@RequestedBy",ReqUser);
                         body=body.Replace("@RequestedDate",ReqDate);
                         body=body.Replace("@Status",Status);
-<<<<<<< HEAD
                         // body=body.Replace("@URL",ApprovalLink+"/"+Route+"/"+X_TransCode+"");
                         body=body.Replace("@URL",ApprovalLink+"/approvalDashboard");
-=======
-                        body=body.Replace("@URL",ApprovalLink+"/"+Route+"/"+X_TransCode+"");
->>>>>>> ac765272da3af53b2d18c6f922226478c46879aa
 
                         SendApprovalMail(N_NextUser, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User,Subject,body);
                     }
