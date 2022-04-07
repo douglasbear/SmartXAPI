@@ -76,7 +76,7 @@ namespace SmartxAPI.Controllers
                     MailLogList = dLayer.ExecuteDataTable(sqlCommandMailLogList, Params, connection);
                     OrderList = dLayer.ExecuteDataTable(sqlCommandOrderList, Params, connection);
                     InvoiceList = dLayer.ExecuteDataTable(sqlCommandinvoiceList, Params, connection);
-                    TasksList = myFunctions.AddNewColumnToDataTable(TasksList, "N_AssigneeID", typeof(int), 0);
+                    // TasksList = myFunctions.AddNewColumnToDataTable(TasksList, "N_AssigneeID", typeof(int), 0);
                     object N_AssigneeID = null;
 
                     for (int i = 0; i < TasksList.Rows.Count; i++)
