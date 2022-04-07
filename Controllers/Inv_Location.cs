@@ -170,7 +170,9 @@ namespace SmartxAPI.Controllers
                     string X_Pattern = "10";
                     int N_LocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationID"].ToString());
                     int N_MainLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MainLocationID"].ToString());
-                    int N_TypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TypeID"].ToString());
+                    int N_TypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TypeID"].ToString());
+                    if (MasterTable.Columns.Contains("n_TypeID"))
+                    MasterTable.Columns.Remove("n_TypeID");
                     object LocationCount = dLayer.ExecuteScalar("select count(N_LocationID)  from Inv_Location where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
                     object limit = dLayer.ExecuteScalar("select N_LocationLimit from Acc_Company where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
                     bool b_TransferProducts = false;
