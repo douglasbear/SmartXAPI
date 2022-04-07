@@ -1,37 +1,8 @@
 {
   "runtimeOptions": {
     "additionalProbingPaths": [
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\rathe\\.nuget\\packages"
-=======
-      "C:\\Users\\sreej\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\sreej\\.nuget\\packages"
->>>>>>> eff74288920abcf34dc273b24bb577febb2ed0d7
-=======
-      "C:\\Users\\Administrator\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Administrator\\.nuget\\packages"
->>>>>>> cc6e6177b2c842dd83be44c86106b0a96b43229b
-=======
-      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\rathe\\.nuget\\packages"
-=======
-      "C:\\Users\\Sibin Babu\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Sibin Babu\\.nuget\\packages"
->>>>>>> a594d5dd525053bbb9c06a2c525c0af8978cb328
->>>>>>> 2198422d0ec013c1aa88c33923d8f3c8d81ce02a
-=======
-      "C:\\Users\\SANJAY\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\SANJAY\\.nuget\\packages"
->>>>>>> a65c5c875f3a9a8b8532027cf6477052bf7f7e4b
-=======
       "C:\\Users\\Aky77\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Aky77\\.nuget\\packages"
->>>>>>> b1a011893692420d3d32f721c8d26043e29d1bcb
     ]
   }
 }
