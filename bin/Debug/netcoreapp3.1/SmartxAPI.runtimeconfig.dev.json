@@ -6,6 +6,11 @@
 <<<<<<< HEAD
 =======
 <<<<<<< HEAD
+      "C:\\Users\\user\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\user\\.nuget\\packages",
+      "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+=======
+<<<<<<< HEAD
 <<<<<<< HEAD
       "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\rathe\\.nuget\\packages"
@@ -18,6 +23,7 @@
       "C:\\Users\\sreej\\.nuget\\packages"
 <<<<<<< HEAD
 >>>>>>> b07df53a8b1cb1e3352ae645d63a4250522b8668
+<<<<<<< HEAD
 =======
 >>>>>>> eff74288920abcf34dc273b24bb577febb2ed0d7
 =======
@@ -44,6 +50,9 @@
 >>>>>>> e9cff947e459964dbc6f8e113f6c7f9e1df34cbe
 =======
 >>>>>>> 9b12220354a69f17acd0df233eda6bbf66b1c8e6
+=======
+>>>>>>> 2b788166617eea359e725e5a1d1bfbd3bd9784c0
+>>>>>>> 048a38cec1dc99c453a926b48dd9bd4d49f6e8a8
     ]
   }
 }
