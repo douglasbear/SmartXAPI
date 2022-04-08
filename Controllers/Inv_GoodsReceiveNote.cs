@@ -68,13 +68,13 @@ namespace SmartxAPI.Controllers
                     Params.Add("@UserPattern",UserPattern);
 
                 }
-                else
-                {
-                    object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId,Params,connection);
+                // else
+                // {
+                //     object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId,Params,connection);
 
-                    if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
-                    Pattern = " and N_UserID=" + nUserID;
-                }
+                //     if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                //     Pattern = " and N_UserID=" + nUserID;
+                // }
 
 
 
