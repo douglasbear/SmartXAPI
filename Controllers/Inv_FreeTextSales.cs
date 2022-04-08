@@ -285,7 +285,8 @@ namespace SmartxAPI.Controllers
                         row["N_FnYearID"] = dRow["N_FnYearID"];
                         row["N_InventoryType"] = 0;
                         row["N_InventoryID"] = dRow["N_VoucherID"];
-                        row["N_CostCentreID"] = dRow["N_VoucherDetailsID"];
+                       row["N_InventoryDetailsID"] = dRow["N_VoucherDetailsID"];
+                        row["N_CostCentreID"] = dRow["n_Segment_2"];
                         row["N_Amount"] = dRow["N_Amount"];
                         row["N_LedgerID"] = dRow["N_LedgerID"];
                         row["N_BranchID"] = dRow["N_BranchID"];
