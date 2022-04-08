@@ -574,8 +574,10 @@ namespace SmartxAPI.Controllers
                     {
 
                         int j = 1;
+                        string VariantCode ="";
                         for (int i = 0; i < VariantList.Rows.Count; i++)
                         {
+                           
                             var newRow = MasterTable.NewRow();
                             if (myFunctions.getIntVAL(VariantList.Rows[i]["N_ItemID"].ToString()) == 0)
                             {
@@ -587,6 +589,13 @@ namespace SmartxAPI.Controllers
                                 if (VariantList.Rows[i]["N_Rate"].ToString() != "")
                                     MasterTable.Rows[j]["N_Rate"] = myFunctions.getVAL(VariantList.Rows[i]["N_Rate"].ToString());
                                 MasterTable.Rows[j]["N_CLassID"] = "2";
+                                 
+                               
+
+                               VariantCode = dLayer.GetAutoNumber("Inv_ItemMaster", "X_ItemCode", Params, connection, transaction);
+                               if (VariantCode == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate product Code")); }
+                               MasterTable.Rows[j]["X_ItemCode"] = VariantCode;
+                               VariantCode="";
                             }
                             else
                             {
