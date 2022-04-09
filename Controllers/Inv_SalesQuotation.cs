@@ -63,14 +63,16 @@ namespace SmartxAPI.Controllers
                 Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
                 Params.Add("@UserPattern", UserPattern);
             }
-            else
-            {
-                                object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
-
-                if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
-                    Pattern = " and N_CreatedUser=" + nUserID;
-               
-            }
+            // else
+            // {
+            //                     object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
+                // if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                //     Pattern = " and N_CreatedUser=" + nUserID;
+            //     if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+            //         Pattern = " and N_UserID=" + nUserID;
+            //     if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+            //         Pattern = " and N_CreatedUser=" + nUserID;     
+            // }
 
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
@@ -129,9 +131,9 @@ namespace SmartxAPI.Controllers
                     }
 
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo,D_RfqRefDate,N_Amount,N_FreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer,X_ClosingRsn,X_ClosingStatus from vw_InvSalesQuotationNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo,D_RfqRefDate,N_Amount,N_FreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer,X_ClosingRsn,X_ClosingStatus from vw_InvSalesQuotationNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + Searchkey + " " +  " Group By  N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo,D_RfqRefDate,N_Amount,N_FreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer,X_ClosingRsn,X_ClosingStatus" +xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo as XRfqRefNo,D_RfqRefDate as DRfqRefDate,N_Amount as NAmount,N_FreightAmt as NFreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer,X_ClosingRsn,X_ClosingStatus from vw_InvSalesQuotationNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + Searchkey + " and N_QuotationId not in (select top(" + Count + ") N_QuotationId from vw_InvSalesQuotationNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo as XRfqRefNo,D_RfqRefDate as DRfqRefDate,N_Amount as NAmount,N_FreightAmt as NFreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer,X_ClosingRsn,X_ClosingStatus from vw_InvSalesQuotationNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + Searchkey + " and N_QuotationId not in (select top(" + Count + ") N_QuotationId from vw_InvSalesQuotationNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + xSortBy + " ) " + "Group By  N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo,D_RfqRefDate,N_Amount,N_FreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer,X_ClosingRsn,X_ClosingStatus " + xSortBy;
 
 
 
