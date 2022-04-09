@@ -64,15 +64,18 @@ namespace SmartxAPI.Controllers
                     //        {
                     // object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+ nCompanyId, Params, connection);
 
-<<<<<<< HEAD
-                    if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
-                    Pattern = " and N_CreatedUser=" + nUserID;
-                    }
-=======
+
+                    // if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    // Pattern = " and N_CreatedUser=" + nUserID;
+                    // }
+
                     // if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
                     // Pattern = " and N_UserID=" + nUserID;
                     // }
->>>>>>> de1c2e8ef5d6a75545c96111fe654ca90b38e511
+                    // if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    // Pattern = " and N_CreatedUser=" + nUserID;
+                    // }
+
 
 
                     int N_decimalPlace = 2;
@@ -80,7 +83,7 @@ namespace SmartxAPI.Controllers
                     N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and (Memo like '%" + xSearchkey + "%' or [Customer Name] like '%" + xSearchkey + "%' or cast(DATE as VarChar) like '%" + xSearchkey + "%')";
+                        Searchkey = " and (Memo like '%" + xSearchkey + "%' or [Customer Name] like '%" + xSearchkey + "%' or cast(DATE as VarChar) like '%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_PayReceiptId desc";

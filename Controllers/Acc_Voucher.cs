@@ -59,13 +59,15 @@ namespace SmartxAPI.Controllers
             // {
             //      object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
 
-<<<<<<< HEAD
-                if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
-                    Pattern = " and N_CreatedUser=" + nUserID;
-=======
+
+                // if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                //     Pattern = " and N_CreatedUser=" + nUserID;
+
             //     if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
             //         Pattern = " and N_UserID=" + nUserID;
->>>>>>> de1c2e8ef5d6a75545c96111fe654ca90b38e511
+            //     if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+            //         Pattern = " and N_CreatedUser=" + nUserID;
+
                
             // }
 
@@ -107,7 +109,7 @@ namespace SmartxAPI.Controllers
 
            
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,2)) ) as TotalAmount from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + Pattern + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(16,2)) ) as TotalAmount from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + Pattern + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";

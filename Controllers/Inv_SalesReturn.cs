@@ -63,15 +63,17 @@ namespace SmartxAPI.Controllers
                     //      {
                     // object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId,Params,connection);
 
-<<<<<<< HEAD
-                    if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
-                    Pattern = " and N_CreatedUser=" + nUserID;
-                         }
-=======
+                    // if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    // Pattern = " and N_CreatedUser=" + nUserID;
+                    //      }
+
                     // if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
                     // Pattern = " and N_UserID=" + nUserID;
                     //      }
->>>>>>> de1c2e8ef5d6a75545c96111fe654ca90b38e511
+                    // if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    // Pattern = " and N_CreatedUser=" + nUserID;
+                    //      }
+
 
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     int N_decimalPlace = 2;
@@ -119,9 +121,9 @@ namespace SmartxAPI.Controllers
                         }
                     }
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") x_DebitNoteNo,x_CustomerName,x_BranchName,d_ReturnDate,n_TotalPaidAmountF,x_Notes from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + Searchkey + " " + " Group By x_DebitNoteNo,x_CustomerName,x_BranchName,d_ReturnDate,n_TotalPaidAmountF,x_Notes "+ xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + Searchkey + " and N_DebitNoteId not in(select top(" + Count + ")  N_DebitNoteId from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") x_DebitNoteNo,x_CustomerName,x_BranchName,d_ReturnDate,n_TotalPaidAmountF,x_Notes from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + Searchkey + " and N_DebitNoteId not in(select top(" + Count + ")  N_DebitNoteId from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + " Group By x_DebitNoteNo,x_CustomerName,x_BranchName,d_ReturnDate,n_TotalPaidAmountF,x_Notes" +xSortBy;
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);

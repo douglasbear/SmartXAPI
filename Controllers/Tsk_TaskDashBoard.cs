@@ -42,7 +42,7 @@ namespace SmartxAPI.Controllers
             string sqlActiveEmployees = "SELECT COUNT(*) as N_ActiveEmloyees FROM pay_employee WHERE N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and  N_Status not in (2,3)";//Active employees
             string sqlScheduledList = "select  COUNT(*) as N_ToDoList from  vw_Tsk_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and isnull(B_Closed,0) =0";
             string sqlTodaysTaskList = "select Count(*) as N_TodaysTaskList from vw_Tsk_TaskCurrentStatus  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and  D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and D_DueDate='" + d_Date + "'";
-            string sqlCompletedList = "select Count(*) as N_CompletedList from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + " and N_Status=4";
+            string sqlCompletedList = "select Count(*) as N_CompletedList from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "and MONTH(Cast(vw_Tsk_TaskCompletedStatus.D_Entrydate as Datetime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(vw_Tsk_TaskCompletedStatus.D_Entrydate)= YEAR(CURRENT_TIMESTAMP)";
             string sqlOverDueList = "select Count(*) as N_OverDueTaskList from vw_Tsk_TaskCurrentStatus  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and  D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and D_DueDate < '" + d_Date + "'";
             string sqlTaskStatus = "";
             SortedList Data = new SortedList();
@@ -178,9 +178,9 @@ namespace SmartxAPI.Controllers
 
                     if (Count == 0)
                     {
-                        sqlTodaysTaskList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and  D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and D_DueDate='" + d_Date + "' order by N_PriorityID asc";
-                        sqlOverDueList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and  D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and D_DueDate < '" + d_Date + "' order by N_PriorityID asc";
-                        sqlUpcomingList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and   D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and D_DueDate >  '" + d_Date + "' order by N_PriorityID asc";
+                        sqlTodaysTaskList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and  D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE)='" + d_Date + "' order by N_PriorityID asc";
+                        sqlOverDueList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and  D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) < '" + d_Date + "' order by N_PriorityID asc";
+                        sqlUpcomingList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and   D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) >  '" + d_Date + "' order by N_PriorityID asc";
                         sqlFollowUp = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskStatus where N_Status <= 3 and  N_Status <> 1 and N_CreaterID=" + nUserID + " and ISNULL(B_Closed,0)=0 ";
                     }
                     else

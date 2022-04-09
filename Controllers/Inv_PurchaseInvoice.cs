@@ -69,7 +69,6 @@ namespace SmartxAPI.Controllers
                     //  string Pattern = "";
                     N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Purchase", "Decimal_Place", "N_Value", nCompanyID, dLayer, connection));
                     N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
-<<<<<<< HEAD
 
                     //     if (UserPattern != "")
                     //     {
@@ -82,21 +81,6 @@ namespace SmartxAPI.Controllers
                     //    if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
                     //     Pattern = " and N_CreatedUser=" + nUserID;
                     //     }
-=======
-                    
-                    if (UserPattern != "")
-                    {
-                        Pattern = "and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
-                        Params.Add("@UserPattern",UserPattern);
-                    }
-                //     else{
-                //      object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
-
-                //    if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
-                //     Pattern = " and N_UserID=" + nUserID;
-                //     }
-                    Pattern = "";//Removed pattern from PI
->>>>>>> de1c2e8ef5d6a75545c96111fe654ca90b38e511
 
 
 
