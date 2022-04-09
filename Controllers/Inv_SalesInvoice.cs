@@ -70,7 +70,7 @@ namespace SmartxAPI.Controllers
                     // object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
 
                     // if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
-                    // Pattern = " and N_CreatedUser=" + nUserID+" ";
+                    // Pattern = " and N_UserID=" + nUserID+" ";
                     // }
 
                     int N_decimalPlace = 2;
