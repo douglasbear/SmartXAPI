@@ -54,19 +54,34 @@ namespace SmartxAPI.Controllers
                     // string UserPattern = myFunctions.GetUserPattern(User);
                     // string Pattern = "";
                     
+<<<<<<< HEAD
                     //  if (UserPattern != "")
                     //  {
                     // Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
                     // Params.Add("@UserPattern",UserPattern);
 
                     //    }
+=======
+                     if (UserPattern != "")
+                     {
+                    Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
+                    Params.Add("@UserPattern",UserPattern);
+
+                       }
+>>>>>>> de1c2e8ef5d6a75545c96111fe654ca90b38e511
                     //  else
                     //    {
                     // object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId,Params,connection);
 
                     // if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+<<<<<<< HEAD
                     // Pattern = " and N_CreatedUser=" + nUserID;
                     //     }
+=======
+                    // Pattern = " and N_UserID=" + nUserID;
+                    //     }
+                        Pattern = "";//Removed pattern from PI
+>>>>>>> de1c2e8ef5d6a75545c96111fe654ca90b38e511
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     if (xSearchkey != null && xSearchkey.Trim() != "")

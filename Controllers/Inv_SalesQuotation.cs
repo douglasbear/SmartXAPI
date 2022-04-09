@@ -63,14 +63,19 @@ namespace SmartxAPI.Controllers
                 Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
                 Params.Add("@UserPattern", UserPattern);
             }
-            else
-            {
-                                object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
+            // else
+            // {
+            //                     object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
 
+<<<<<<< HEAD
                 if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
                     Pattern = " and N_CreatedUser=" + nUserID;
+=======
+            //     if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+            //         Pattern = " and N_UserID=" + nUserID;
+>>>>>>> de1c2e8ef5d6a75545c96111fe654ca90b38e511
                
-            }
+            // }
 
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));

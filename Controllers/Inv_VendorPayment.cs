@@ -61,13 +61,19 @@ namespace SmartxAPI.Controllers
                     Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern";
                     Params.Add("@UserPattern", UserPattern);
                      }  
-                     else
-                           {
-                    object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyID, Params, connection);
+                    //  else
+                    //        {
+                    // object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyID, Params, connection);
 
+<<<<<<< HEAD
                     if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
                     Pattern = " and N_CreatedUser=" + nUserID;
                     }
+=======
+                    // if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    // Pattern = " and N_UserID=" + nUserID;
+                    // }
+>>>>>>> de1c2e8ef5d6a75545c96111fe654ca90b38e511
 
 
 
