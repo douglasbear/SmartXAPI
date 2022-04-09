@@ -141,15 +141,15 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult ContactListDetails(int xContactCode)
+        public ActionResult ContactListDetails(int nCustomerID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from vw_Inv_CustomerContact where N_CompanyID=@p1 and x_ContactCode=@p2";
+            string sqlCommandText = "select * from vw_Inv_CustomerContact where N_CompanyID=@p1 and N_CustomerID=@p2";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", xContactCode);
+            Params.Add("@p2", nCustomerID);
 
 
             try
