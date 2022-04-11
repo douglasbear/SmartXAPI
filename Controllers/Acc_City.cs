@@ -7,7 +7,6 @@ using System.Data;
 using System.Collections;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-
 namespace SmartxAPI.Controllers
 
 {
@@ -61,8 +60,8 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("Details") ]
-        public ActionResult GetCityDetails (int nCityID,int nCompanyID)
+        [HttpGet("details") ]
+        public ActionResult GetCityDetails (int nCityID)
         {   
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt=new DataTable();
@@ -123,9 +122,6 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_CityCode"] = CityCode;
                     }
                     MasterTable.Columns.Remove("n_FnYearID");
-
-                    // string X_CountryName= MasterTable.Rows[0]["X_CountryName"].ToString();
-                    string DupCriteria = "";
 
                     nCityID = dLayer.SaveData("Acc_City", "N_CityID", MasterTable, connection, transaction);
                     if (nCityID <= 0)
