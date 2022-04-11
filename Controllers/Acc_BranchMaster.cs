@@ -41,7 +41,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "SELECT Acc_BranchMaster.N_BranchID, Acc_BranchMaster.N_CompanyId, Acc_BranchMaster.X_BranchName, Acc_BranchMaster.X_BranchCode, Acc_BranchMaster.Active, Inv_Location.N_LocationID, Inv_Location.X_LocationCode,Inv_Location.X_LocationName FROM Acc_BranchMaster LEFT OUTER JOIN Inv_Location ON Acc_BranchMaster.N_CompanyID = Inv_Location.N_CompanyID AND Acc_BranchMaster.N_BranchID = Inv_Location.N_BranchID where Acc_BranchMaster.N_CompanyId=@p1 and Inv_Location.B_IsDefault=1 order by Acc_BranchMaster.N_BranchID DESC";
+            string sqlCommandText = "SELECT Acc_BranchMaster.N_BranchID, Acc_BranchMaster.N_CompanyId, Acc_BranchMaster.X_BranchName, Acc_BranchMaster.X_BranchCode, Acc_BranchMaster.Active, Inv_Location.N_LocationID, Inv_Location.X_LocationCode,Inv_Location.X_LocationName FROM Acc_BranchMaster LEFT OUTER JOIN Inv_Location ON Acc_BranchMaster.N_CompanyID = Inv_Location.N_CompanyID AND Acc_BranchMaster.N_BranchID = Inv_Location.N_BranchID where Acc_BranchMaster.N_CompanyId=@p1 and Inv_Location.B_IsDefault=1 order by Acc_BranchMaster.X_BranchName DESC";
             Params.Add("@p1", nCompanyId);
             try
             {
