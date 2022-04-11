@@ -35,8 +35,12 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
 
             string sqlCommandText = "";
-            if (prs == null || prs == "")
-                sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 order by N_LocationID DESC";
+            if (prs == null || prs == ""){
+                if(nBranchID>0)
+                sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 and N_BranchID="+nBranchID+" order by [Location Name]";
+                else
+                sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 order by [Location Name]";
+                }
             else
             {
                 if (!bLocationRequired)
