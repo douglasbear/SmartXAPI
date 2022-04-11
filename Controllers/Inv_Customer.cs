@@ -426,7 +426,7 @@ namespace SmartxAPI.Controllers
 
             int nCompanyID = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select N_CompanyID,N_FnYearID,N_BranchID,[Customer Name] as X_CustomerName,[Customer Code] as X_CustomerCode,N_CustomerID,N_ServiceCharge,N_ServiceChargeLimit,N_LedgerID,X_LedgerCode,X_LedgerName,N_TaxCategoryID,X_CategoryName,0 as N_Amount,X_TypeName,N_PaymentMethodID as N_TypeID,I_Image from vw_PaymentType_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and (N_BranchID=@p3 or N_BranchID = @p4)  and N_EnablePopup=1";
+            string sqlCommandText = "select N_CompanyID,N_FnYearID,N_BranchID,[Customer Name] as X_CustomerName,[Customer Code] as X_CustomerCode,N_CustomerID,N_ServiceCharge,N_ServiceChargeLimit,N_LedgerID,X_LedgerCode,X_LedgerName,N_TaxCategoryID,X_CategoryName,0 as N_Amount,X_TypeName,N_PaymentMethodID as N_TypeID,I_Image,B_Inactive from vw_PaymentType_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and (N_BranchID=@p3 or N_BranchID = @p4)  and N_EnablePopup=1 and ISNULL(B_Inactive,0)=0 ";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnyearID);
             Params.Add("@p3", nBranchID);
