@@ -87,19 +87,19 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult TaskList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nTableViewID, int nMenuID,int n_UserID)
+        public ActionResult TaskList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nTableViewID, int nMenuID, int n_UserID,DateTime d_Date)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID;
-            if(n_UserID>0)
+            if (n_UserID > 0)
             {
-               nUserID=n_UserID; 
+                nUserID = n_UserID;
             }
             else
             {
-              nUserID = myFunctions.GetUserID(User);
+                nUserID = myFunctions.GetUserID(User);
             }
-            
+
             DataTable dt = new DataTable();
             SortedList OutPut = new SortedList();
 
@@ -153,9 +153,18 @@ namespace SmartxAPI.Controllers
                         {
                             if (nTableViewID == 1)
                                 Pattern = " and ( Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern + " or N_CreatorID=" + myFunctions.GetUserID(User) + ")";
-                            else 
+                            else if (nTableViewID == 6)
+                            {
+                                Pattern = " and ( Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern + " or N_CreaterID=" + myFunctions.GetUserID(User) + ")";
+
+                            }
+                            else
                                 Pattern = " and ( Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern + ")";
 
+                        }
+                        if(nTableViewID ==7 || nTableViewID == 8)
+                        {
+                            Pattern="";
                         }
 
                         if (Count == 0)
@@ -168,6 +177,8 @@ namespace SmartxAPI.Controllers
                             Params.Add("@cVal", nCompanyId);
                         if (DefaultCriteria.Contains("@uVal"))
                             Params.Add("@uVal", nUserID);
+                        if (DefaultCriteria.Contains("@dVal"))
+                            Params.Add("@dVal", d_Date);
 
 
                         connection.Open();
