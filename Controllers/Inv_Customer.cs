@@ -121,7 +121,7 @@ namespace SmartxAPI.Controllers
             }
 
             if(nBranchID>0)
-            Searchkey=" and N_BranchID="+nBranchID+" ";
+            Searchkey= Searchkey + " and N_BranchID= "+nBranchID+" ";
 
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") N_CustomerID,X_CustomerCode,X_CustomerName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_BranchID,X_BranchName,X_ContactName,X_Address,X_PhoneNo1 from vw_InvCustomer where N_CompanyID=@p1 and B_Inactive=@p2 and N_FnYearId=@p3 " + Searchkey + " " + xSortBy;
