@@ -2,6 +2,7 @@
   "runtimeOptions": {
     "additionalProbingPaths": [
 <<<<<<< HEAD
+<<<<<<< HEAD
       "C:\\Users\\Sibin Babu\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Sibin Babu\\.nuget\\packages"
 =======
@@ -83,6 +84,10 @@
 >>>>>>> d48222948726609f7ab848caadbbfd1ef9ecc331
 >>>>>>> 5e5d128d2bbe09629cd1e635ea38eb57637a9ae6
 >>>>>>> cb3d3acfaca524bc021911aa9006d2b009b02842
+=======
+      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\rathe\\.nuget\\packages"
+>>>>>>> e7226fa63819c83b7921357511d497c14b8cbead
     ]
   }
 }
