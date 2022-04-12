@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("details")]
-        public ActionResult GetDashboardDetails(int nFnYearID)
+        public ActionResult GetDashboardDetails(int nFnYearID,int nBranchID)
         {
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
