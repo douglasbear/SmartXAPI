@@ -31,80 +31,9 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 1425;
+            FormID = 1431;
         }
 
-        [HttpGet("list")]
-        public ActionResult List(int nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            string sqlCommandCount = "";
-             nCompanyId = myFunctions.GetCompanyID(User);
-            //string UserPattern = myFunctions.GetUserPattern(User);
-             //int nUserID = myFunctions.GetUserID(User);
-            
-            int Count = (nPage - 1) * nSizeperpage;
-            string sqlCommandText = "";
-            string Searchkey = "";
-            if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = " and (X_Contact like '%" + xSearchkey + "%'or x_Customer like'%" + xSearchkey + "%'or x_Phone like'%" + xSearchkey + "%'or x_Email like'%" + xSearchkey + "%'or x_SalesmanName like'%" + xSearchkey + "%')";
-
-            if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by n_contactID desc";
-            else
-            {
-                switch (xSortBy.Split(" ")[0])
-                {
-                    case "x_ContactCode":
-                        xSortBy = "N_contactID " + xSortBy.Split(" ")[1];
-                        break;
-
-                    default: break;
-                }
-                xSortBy = " order by " + xSortBy;
-            }
-
-
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerContact where N_CompanyID=@p1  "  + Searchkey + " " + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerContact where N_CompanyID=@p1  "  + Searchkey + " and N_ContactID not in (select top(" + Count + ") N_ContactID from vw_Inv_CustomerContact where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
-            Params.Add("@p1", nCompanyId);
-            //Params.Add("@p3", nFnYearId);
-
-
-            SortedList OutPut = new SortedList();
-
-
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-
-                    sqlCommandCount = "select count(*) as N_Count  from vw_Inv_CustomerContact where N_CompanyID=@p1 " ;
-                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                    OutPut.Add("Details", api.Format(dt));
-                    OutPut.Add("TotalCount", TotalCount);
-                    if (dt.Rows.Count == 0)
-                    {
-                        return Ok(api.Warning("No Results Found"));
-                    }
-                    else
-                    {
-                        return Ok(api.Success(OutPut));
-                    }
-
-                }
-
-            }
-            catch (Exception e)
-            {
-                return Ok(api.Error(User, e));
-            }
-        }
 
         [HttpGet("listDetails")]
         public ActionResult ContactListInner()
@@ -269,7 +198,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("CRM_Contact", "N_ContactID", nContactID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Inv_Customer_Contacts", "N_ContactID", nContactID, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)

@@ -173,8 +173,13 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User,"Unable to save"));
                     }
+                    // else{
+                    // transaction.Commit();
+                    // return Ok(_api.Success("Terminal Saved"));
+                    // }
+                    
                     else
-                    {
+                    {   DetailTable.Rows[0]["N_TerminalID"] = N_TerminalID;
                         dLayer.SaveData("Inv_Terminaldetails", "N_SettingsID", DetailTable, connection, transaction);
                         transaction.Commit();
                         return Ok(_api.Success("Terminal Saved"));

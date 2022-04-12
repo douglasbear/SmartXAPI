@@ -692,6 +692,7 @@ namespace SmartxAPI.Controllers
                 String reportName = "";
                 String CompanyData = "";
                 String YearData = "";
+                String BranchData = "";
                 String FieldName = "";
                 String UserData = "";
 
@@ -752,6 +753,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nMenuID", MenuID);
                     CompanyData = dLayer.ExecuteScalar("select X_DataFieldCompanyID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                     YearData = dLayer.ExecuteScalar("select X_DataFieldYearID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+                    BranchData = dLayer.ExecuteScalar("select X_DataFieldBranchID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
 
                     Params.Add("@xType", "");
                     Params.Add("@nCompID", 0);
@@ -850,12 +852,23 @@ namespace SmartxAPI.Controllers
                         Criteria = Criteria + CompanyData + "=" + nCompanyID;
                         if (YearData != "")
                             Criteria = Criteria + " and " + YearData + "=" + FnYearID;
+                        if(BranchData !=""){
+                            bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID="+nCompanyID+" and N_BranchID="+BranchID, Params, connection).ToString());
+                            if(mainBranch==false)
+                            Criteria = Criteria + " and " + BranchData + "=" + BranchID;
+
+                        }
                     }
                     else if (CompanyData != "")
                     {
                         Criteria = Criteria + " and " + CompanyData + "=" + nCompanyID;
                         if (YearData != "")
                             Criteria = Criteria + " and " + YearData + "=" + FnYearID;
+                        if(BranchData !=""){
+                            bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID="+nCompanyID+" and N_BranchID="+BranchID, Params, connection).ToString());
+                            if(mainBranch==false)
+                            Criteria = Criteria + " and " + BranchData + "=" + BranchID;
+                            }
                     }
                     if (UserData != "")
                     {
