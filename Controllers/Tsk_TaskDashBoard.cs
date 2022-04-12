@@ -327,7 +327,7 @@ namespace SmartxAPI.Controllers
                     TaskManager.Tables.Add(TodaysTasks);
                     TaskManager.Tables.Add(CountTable);
                     return Ok(api.Success(TaskManager));
-                    return Ok(api.Success(TaskManager));
+                  
 
 
 
