@@ -116,15 +116,18 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("asnlist")]
-        public ActionResult GetAsnList(int nFnYearID)
+        public ActionResult GetAsnList(int nFnYearID, string xBarcode)
 
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
+            string QRY = "";
+            if (xBarcode != null && xBarcode != "")
+                QRY = " and x_asndocno=" + xBarcode;
 
-            string sqlCommandText = "Select *  from vw_Wh_AsnMaster_Disp Where N_CompanyID= " + nCompanyID + " and N_FnYearID="+nFnYearID;
+            string sqlCommandText = "Select *  from vw_Wh_AsnMaster_Disp Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + QRY;
 
 
             try
