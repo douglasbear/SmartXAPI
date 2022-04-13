@@ -103,9 +103,11 @@ namespace SmartxAPI.Controllers
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
                     DataRow MasterRow = MasterTable.Rows[0];
+                     DataRow DetailRow = DetailTable.Rows[0];
                     SortedList Params = new SortedList();
 
                     int nBinTransID = myFunctions.getIntVAL(MasterRow["N_BinTransID"].ToString());
+                    int nBinTransDetailsID = myFunctions.getIntVAL(DetailRow["N_BinTransDetailsID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     string xBinTransferHistoryCode = MasterRow["x_BinTransHistoryCode"].ToString();
@@ -124,6 +126,11 @@ namespace SmartxAPI.Controllers
                             return Ok("Unable to generate bin transfer Code");
                         }
                         MasterTable.Rows[0]["x_BinTransHistoryCode"] = x_BinTransHistoryCode;
+                    }
+                    else
+                    {
+                         dLayer.DeleteData("Wh_BinTranHistory", "N_BinTransID", nBinTransID, "", connection,transaction);
+                          dLayer.DeleteData("Wh_BinTranHistoryDetails", "N_BinTransID", nBinTransID, "", connection,transaction);
                     }
                     MasterTable.Columns.Remove("n_FnYearID");
 
@@ -160,10 +167,8 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        
-
-          [HttpGet("details")]
-        public ActionResult binTransfer(int nLocationID)
+         [HttpGet("details")]
+        public ActionResult EmployeeEvaluation(string xBinTransHistoryCode)
         {
             try
             {
@@ -175,19 +180,20 @@ namespace SmartxAPI.Controllers
                     DataTable MasterTable = new DataTable();
                     DataTable DetailTable = new DataTable();
                     DataTable DataTable = new DataTable();
-                  //  string Mastersql = "";
+                    string Mastersql = "";
                     string DetailSql = "";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    //Params.Add("@nLocationID", nLocationID);
+                    Params.Add("@xBinTransHistoryCode", xBinTransHistoryCode);
+                    Mastersql = "select * from vw_wh_BinTransHistoryDetails where N_CompanyID=@nCompanyID and X_BinTransHistoryCode=@xBinTransHistoryCode ";
                    
-                    // MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
-                    // if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                    // int nBinTransID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BinTransID"].ToString());
-                    // Params.Add("@nBinTransID", nBinTransID);
+                    MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                    if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                    int nBinTransID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BinTransID"].ToString());
+                    Params.Add("@nBinTransID", nBinTransID);
 
-                    // MasterTable = _api.Format(MasterTable, "Master");
-                    DetailSql = "select * from vw_wh_BinTransHistoryDetails where N_CompanyID=@nCompanyID";
+                    MasterTable = _api.Format(MasterTable, "Master");
+                    DetailSql = "select * from vw_wh_BinTransHistoryDetails where N_CompanyID=@nCompanyID and N_BinTransID=@nBinTransID ";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(MasterTable);
@@ -201,6 +207,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
+       
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nBinTransID, int nCompanyID, int nFnYearID)
         {
