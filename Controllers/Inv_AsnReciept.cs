@@ -325,9 +325,9 @@ namespace SmartxAPI.Controllers
                         {
                             foreach (DataRow detVar in Detail.Rows)
                             {
-                                detVar["X_SKU"]=detVar["X_SKU"].ToString() + " - " + detVar["X_AsnDocNo"].ToString();
-                                detVar["x_Barcode"]="";
-                                detVar["x_BatchCode"]="";
+                                //detVar["X_SKU"]=detVar["X_SKU"].ToString() + " - " + detVar["X_AsnDocNo"].ToString();
+                                detVar["x_Barcode"]=detVar["X_SKU"].ToString() + " - " + detVar["X_AsnDocNo"].ToString();
+                                detVar["x_BatchCode"]=detVar["X_SKU"].ToString() + " - " + detVar["X_AsnDocNo"].ToString();
                                 
                             }
                         }
