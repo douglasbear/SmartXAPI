@@ -42,7 +42,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from vw_InvTerminal where N_CompanyID=@p1";
+            string sqlCommandText = "select * from vw_InvTerminal_Disp where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
 
             try
@@ -54,7 +54,40 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(_api.Warning("No Results Found"));
+                    return Ok(_api.Warning("No POS Terminals Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
+
+        
+        [HttpGet("setTerminal")]
+        public ActionResult SetTerminal()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+
+            string sqlCommandText = "select * from vw_InvTerminal_Disp where N_CompanyID=@p1";
+            Params.Add("@p1", nCompanyId);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No POS Terminals Found"));
                 }
                 else
                 {
