@@ -22,7 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
 
-         private readonly int FormID;
+        private readonly int FormID;
         private readonly string connectionString;
 
         public Customer_Contact(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
@@ -70,13 +70,18 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult ContactListDetails(int nCustomerID)
+        public ActionResult ContactListDetails(int nCustomerID, int nContactID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from vw_Inv_CustomerContact where N_CompanyID=@p1 and N_CustomerID=@p2";
+            string sqlCommandText = "";
+            sqlCommandText = "select * from vw_Inv_CustomerContact where N_CompanyID=@p1 and N_CustomerID=@p2";
+            if (nContactID > 0)
+                sqlCommandText = "select * from vw_Inv_CustomerContact where N_CompanyID=@p1 and N_ContactID="+nContactID+"";
+
+
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nCustomerID);
 
@@ -107,7 +112,7 @@ namespace SmartxAPI.Controllers
 
 
         //Save....
-           [HttpPost("save")]
+        [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
@@ -121,18 +126,18 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
                     int ncontactID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ContactID"].ToString());
-                     int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                    int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                     string xContactNo = MasterTable.Rows[0]["x_ContactNo"].ToString();
-      
+
 
                     if (xContactNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_FormID", this.FormID);
-                           Params.Add("N_YearID", nFnYearId);
+                        Params.Add("N_YearID", nFnYearId);
 
-                        
-                        
+
+
                         xContactNo = dLayer.GetAutoNumber("Inv_Customer_Contacts", "x_ContactNo", Params, connection, transaction);
                         if (xContactNo == "")
                         {
@@ -142,14 +147,14 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_ContactNo"] = xContactNo;
                     }
 
-                       if (MasterTable.Columns.Contains("n_FnYearID"))
+                    if (MasterTable.Columns.Contains("n_FnYearID"))
                     {
 
                         MasterTable.Columns.Remove("n_FnYearID");
 
                     }
 
-                       if (MasterTable.Columns.Contains("X_SalesmanName"))
+                    if (MasterTable.Columns.Contains("X_SalesmanName"))
                     {
 
                         MasterTable.Columns.Remove("X_SalesmanName");
@@ -191,7 +196,7 @@ namespace SmartxAPI.Controllers
             {
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
-                QueryParams.Add("@nFormID",this.FormID);
+                QueryParams.Add("@nFormID", this.FormID);
                 QueryParams.Add("@nContactID", nContactID);
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
