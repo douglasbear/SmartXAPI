@@ -178,11 +178,13 @@ namespace SmartxAPI.Controllers
                     //Limit Validation
                     ValidateParams.Add("@N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
                     string X_Pattern = "10";
+                    int N_TypeID =0;
                     int N_LocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationID"].ToString());
                     int N_MainLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MainLocationID"].ToString());
-                    int N_TypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TypeID"].ToString());
                     if (MasterTable.Columns.Contains("n_TypeID"))
-                    MasterTable.Columns.Remove("n_TypeID");
+                         N_TypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TypeID"].ToString());
+
+
                     object LocationCount = dLayer.ExecuteScalar("select count(N_LocationID)  from Inv_Location where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
                     object limit = dLayer.ExecuteScalar("select N_LocationLimit from Acc_Company where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
                     bool b_TransferProducts = false;
@@ -299,7 +301,7 @@ namespace SmartxAPI.Controllers
                             }
 
                         }
-                        else
+                        else if (N_TypeID !=0)
                         {
                             object rowPattern = dLayer.ExecuteScalar("Select isnull(max(X_LocationCode),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_TypeID=" + N_TypeID + " and N_MainLocationID=" + N_MainLocationID + " ", connection, transaction);
                             object parentRomPattern = dLayer.ExecuteScalar("select TOP 1  X_LocationCode from Inv_Location where N_LocationID=" + N_MainLocationID + " and N_CompanyID=" + nCompanyID + " ", connection, transaction);
