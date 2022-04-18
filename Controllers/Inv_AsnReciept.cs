@@ -116,15 +116,18 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("asnlist")]
-        public ActionResult GetAsnList(int nFnYearID)
+        public ActionResult GetAsnList(int nFnYearID, string xBarcode)
 
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
+            string QRY = "";
+            if (xBarcode != null && xBarcode != "")
+                QRY = " and x_asndocno=" + xBarcode;
 
-            string sqlCommandText = "Select *  from vw_Wh_AsnMaster_Disp Where N_CompanyID= " + nCompanyID + " and N_FnYearID="+nFnYearID;
+            string sqlCommandText = "Select *  from vw_Wh_AsnMaster_Disp Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + QRY;
 
 
             try
@@ -354,16 +357,28 @@ namespace SmartxAPI.Controllers
                     if (NCount > 0)
                     {
                         _sqlQuery = "Select top 1 * from vw_Wh_AsnDetails_Disp Where N_CompanyID=@companyid and X_SKU=@xSKU and N_CustomerID=@nCustomerID";
+                        Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+                        if (Detail.Rows.Count > 0)
+                        {
+                            foreach (DataRow detVar in Detail.Rows)
+                            {
+                                detVar["X_SKU"]=detVar["X_SKU"].ToString() + " - " + detVar["X_AsnDocNo"].ToString();
+                                detVar["x_Barcode"]="";
+                                detVar["x_BatchCode"]="";
+                                
+                            }
+                        }
 
 
                     }
                     else
                     {
-                        object code = dLayer.ExecuteScalar("select X_CustomerCode from vw_Wh_AsnDetails_Disp where N_CompanyID=@companyid and N_CustomerID=@nCustomerID", QueryParams, connection);
+                        object code = dLayer.ExecuteScalar("select X_CustomerCode from vw_Wh_AsnDetails_Disp where N_CompanyID=@companyid and  X_SKU=@xSKU and  N_CustomerID not in (@nCustomerID)", QueryParams, connection);
 
                         _sqlQuery = "Select top 1 CONCAT(X_SKU, '  - '," + code.ToString() + " ) AS X_SKU from vw_Wh_AsnDetails_Disp Where N_CompanyID=@companyid and X_SKU=@xSKU";
+                        Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
                     }
-                    Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
                     Detail = _api.Format(Detail, "detail");
                     if (Detail.Rows.Count == 0)
                     {

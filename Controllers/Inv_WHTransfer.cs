@@ -101,7 +101,7 @@ namespace SmartxAPI.Controllers
                 qry = " and (Description like @query or [Item Code] like @query ) ";
                 Params.Add("@query", "%" + query + "%");
             }
-            if(xBarcode!="" || xBarcode!=null)
+            if(xBarcode!="" && xBarcode!=null)
             {
                 qry = qry + " and X_barcode='"+ xBarcode +"'";
 

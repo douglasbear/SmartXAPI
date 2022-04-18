@@ -15,7 +15,7 @@ namespace SmartxAPI.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("PosSession")]
     [ApiController]
-    public class Pos_Session : ControllerBase
+    public class Acc_PosSession : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
@@ -23,13 +23,16 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
 
 
-        public Pos_Session(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Acc_PosSession(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
+
+
+
 
         [HttpGet("list")]
         public ActionResult GetPosSessionMaster()
@@ -77,7 +80,7 @@ namespace SmartxAPI.Controllers
                   int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                   int nVillaId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_VillaId"].ToString());
                 
-                    nVillaId = dLayer.SaveData("Pay_VillaMaster", "n_VillaId", MasterTable, connection, transaction);
+                    nVillaId = dLayer.SaveData("Acc_PosSession", "n_VillaId", MasterTable, connection, transaction);
                     
                     transaction.Commit();
                     return Ok(_api.Success(" Information Saved")) ;
