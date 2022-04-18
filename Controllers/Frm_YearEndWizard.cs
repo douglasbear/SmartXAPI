@@ -185,22 +185,35 @@ namespace SmartxAPI.Controllers
                     var d_DateTo = "";
                     if (MasterTable.Columns.Contains("d_DateTo"))
                         d_DateTo = (MasterTable.Rows[0]["d_DateTo"].ToString());
-
-object accCode=null;
+                    bool B_CurTransferProcess = myFunctions.getBoolVAL(dLayer.ExecuteScalar("Select ISNULL(B_TransferProcess,'') as B_TransferProcess FRom Acc_FnYear Where N_FnYearID =" + n_FnYearId + " and N_CompanyID =" + nCompanyID + "", Params, connection, transaction).ToString());
+                    object accCode = null;
                     if (MasterTable.Columns.Contains("N_LedgerID"))
-                        accCode = dLayer.ExecuteScalar("select [Account Code] from vw_AccMastLedger where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + n_FnYearId + " and N_LedgerID=" +myFunctions.getIntVAL( MasterTable.Rows[0]["N_LedgerID"].ToString()) + " ", Params, connection, transaction);
-                    if(accCode == null){
-                     transaction.Rollback();
-                      return Ok(_api.Error(User, "Please select retained income account"));
-                      }
-                      
-                      accountCode =accCode.ToString();
+                    {
+
+                        accCode = dLayer.ExecuteScalar("select [Account Code] from vw_AccMastLedger where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + n_FnYearId + " and N_LedgerID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_LedgerID"].ToString()) + " ", Params, connection, transaction);
+                        accountCode = accCode.ToString();
+                    }
+                    if (accCode == null && b_NewYear == true)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Please select retained income account"));
+                    }
+
+
 
                     //var dEndDate = (MasterTable.Rows[0]["d_EndDate"].ToString());
-                    string X_CustomerVal = (MasterTable.Rows[0]["x_CustomerVal"].ToString());
-                    string X_AccountVal = (MasterTable.Rows[0]["x_AccountVal"].ToString());
-                    string X_VendorVal = (MasterTable.Rows[0]["x_VendorVal"].ToString());
-                    int n_TaxTypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TaxTypeID"].ToString());
+                    string X_CustomerVal = "";
+                    string X_AccountVal = "";
+                    string X_VendorVal = "";
+                    int n_TaxTypeID = 0;
+                    if (MasterTable.Columns.Contains("x_CustomerVal"))
+                        X_CustomerVal = (MasterTable.Rows[0]["x_CustomerVal"].ToString());
+                    if (MasterTable.Columns.Contains("x_AccountVal"))
+                        X_AccountVal = (MasterTable.Rows[0]["x_AccountVal"].ToString());
+                    if (MasterTable.Columns.Contains("x_VendorVal"))
+                        X_VendorVal = (MasterTable.Rows[0]["x_VendorVal"].ToString());
+                    if (MasterTable.Columns.Contains("n_TaxTypeID"))
+                        n_TaxTypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TaxTypeID"].ToString());
                     string Condn = "";
                     bool B_Depreciation = false;
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
@@ -227,7 +240,7 @@ object accCode=null;
                             {"N_CompanyID", nCompanyID},
                             {"N_FnYearID_Close", n_FnYearId},
                             {"N_FnYearID_New", nFnYearID},
-                            {"X_RtainedIncomeLedgerCode", accCode},
+                            {"X_RtainedIncomeLedgerCode", ""},
                             {"N_UserID", nUserID},
                             {"X_Operation", "Close"}
                         };
@@ -279,7 +292,7 @@ object accCode=null;
                     if (b_TransferBalance)
                     {
                         nFnYearID = myFunctions.getIntVAL((dLayer.ExecuteScalar("Select top 1 ISNULL(N_FnYearID,0) from Acc_FnYear Where N_CompanyID = " + nCompanyID + "   and D_Start > ( Select D_Start FRom Acc_FnYear Where N_FnYearID =" + n_FnYearId + " and N_CompanyID =" + nCompanyID + ") order by D_Start", Params, connection, transaction)).ToString());
-                        
+
                         SortedList PostingParam1 = new SortedList();
                         PostingParam1.Add("@N_CompanyID", nCompanyID);
                         PostingParam1.Add("@N_FnYearID_Close", n_FnYearId);

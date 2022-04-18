@@ -347,7 +347,7 @@ namespace SmartxAPI.Controllers
             DataSet TaskManager = new DataSet();
             DataTable OverDueTasks = new DataTable();
             DataTable CountTable = new DataTable();
-            int nCompanyID = myFunctions.GetCompanyID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User); 
             int Count = (nPage - 1) * nSizeperpage;
 
             string sqlOverDueList = "";
@@ -506,6 +506,10 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, e));
             }
         }
+
+
+
+        
     }
 }
 
