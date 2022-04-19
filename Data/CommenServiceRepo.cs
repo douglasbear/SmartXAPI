@@ -189,7 +189,7 @@ namespace SmartxAPI.Data
                                 int daysToExpire = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_ExpiryDate)),0) as expiry from ClientApps where N_ClientID=" + clientID, cnn2).ToString());
                                 if (daysToExpire <= 0)
                                     throw new Exception("Your Subscription Expired");
-                                if (AppID != 6 && AppID != 8)
+                                if (AppID != 6 && AppID != 8 && AppID != 15 && AppID != 16)
                                 {
                                     string appUpdate = "Update Users set N_ActiveAppID=" + AppID + " WHERE (X_EmailID ='" + username + "' and N_UserID=" + globalUserID + ")";
                                     dLayer.ExecuteScalar(appUpdate, cnn2);

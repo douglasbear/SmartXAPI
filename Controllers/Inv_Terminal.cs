@@ -69,21 +69,40 @@ namespace SmartxAPI.Controllers
 
         
         [HttpGet("setTerminal")]
-        public ActionResult SetTerminal()
+        public ActionResult SetTerminal(int n_TerminalID,int n_SessionID,int n_BranchID,int n_LocationID,int n_FnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
 
-            string sqlCommandText = "select * from vw_InvTerminal_Disp where N_CompanyID=@p1";
-            Params.Add("@p1", nCompanyId);
+            
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
+                    string sqlCommandText ="";
+                    if(n_SessionID==0){
+                    sqlCommandText = "select N_CompanyID,"+n_FnYearID+" as N_FnYearID,"+n_BranchID+" as N_BranchID,getDate() as D_SessionDate,0 as N_SessionID,N_TerminalID,getDate() as N_EntryDate,"+nUserID+" as N_UserID,0 as B_Closed from vw_InvTerminal_Disp where N_CompanyID=@p1 and N_TerminalID="+n_TerminalID;
+                    Params.Add("@p1", nCompanyId);
                     connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    int N_SessionID = dLayer.SaveData("Acc_PosSession", "N_SessionID", dt, connection,transaction);
+                    if (N_SessionID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User,"Unable to create session"));
+                    }
+                    }else{
+                    sqlCommandText = "select isnull(B_Closed,0) as B_Closed from vw_InvTerminal_Disp where N_CompanyID=@p1 and N_SessionID="+n_SessionID;
+                    int closed =myFunctions.getIntVAL(dLayer.ExecuteScalar(sqlCommandText,connection).ToString());
+                    if(closed==1){
+
+                    }
+                    }
                 }
                 if (dt.Rows.Count == 0)
                 {
