@@ -63,59 +63,73 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
-        
+
         [HttpGet("setTerminal")]
-        public ActionResult SetTerminal(int n_TerminalID,int n_SessionID,int n_BranchID,int n_LocationID,int n_FnYearID)
+        public ActionResult SetTerminal(int n_TerminalID, int n_SessionID, int n_BranchID, int n_LocationID, int n_FnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
 
-            
+
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    string sqlCommandText ="";
-                    if(n_SessionID==0){
-                    sqlCommandText = "select N_CompanyID,"+n_FnYearID+" as N_FnYearID,"+n_BranchID+" as N_BranchID,getDate() as D_SessionDate,0 as N_SessionID,N_TerminalID,getDate() as N_EntryDate,"+nUserID+" as N_UserID,0 as B_Closed from vw_InvTerminal_Disp where N_CompanyID=@p1 and N_TerminalID="+n_TerminalID;
-                    Params.Add("@p1", nCompanyId);
+                    string sqlCommandText = "";
                     connection.Open();
+                    DataTable OutPut;
                     SqlTransaction transaction = connection.BeginTransaction();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-
-                    int N_SessionID = dLayer.SaveData("Acc_PosSession", "N_SessionID", dt, connection,transaction);
-                    if (N_SessionID <= 0)
+                    if (n_SessionID == 0)
                     {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to create session"));
-                    }
-                    }else{
-                    sqlCommandText = "select isnull(B_Closed,0) as B_Closed from vw_InvTerminal_Disp where N_CompanyID=@p1 and N_SessionID="+n_SessionID;
-                    int closed =myFunctions.getIntVAL(dLayer.ExecuteScalar(sqlCommandText,connection).ToString());
-                    if(closed==1){
+                        sqlCommandText = "select N_CompanyID," + n_FnYearID + " as N_FnYearID," + n_BranchID + " as N_BranchID,getDate() as D_SessionDate,0 as N_SessionID,N_TerminalID,getDate() as D_EntryDate," + nUserID + " as N_UserID,0 as B_Closed from vw_InvTerminal_Disp where N_CompanyID=@p1 and N_TerminalID=" + n_TerminalID;
+                        Params.Add("@p1", nCompanyId);
 
+                        dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection,transaction);
+
+                        int N_SessionID = dLayer.SaveData("Acc_PosSession", "N_SessionID", dt, connection, transaction);
+                        if (N_SessionID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to create session"));
+                        }
+                        sqlCommandText = "select * from Acc_PosSession where N_CompanyID=@p1 and N_SessionID=" + N_SessionID;
+                        OutPut = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
+                        transaction.Commit();
+                        return Ok(_api.Success(OutPut));
                     }
+                    else
+                    {
+                        sqlCommandText = "select isnull(B_Closed,0) as B_Closed from vw_InvTerminal_Disp where N_CompanyID=@p1 and N_SessionID=" + n_SessionID;
+                        int closed = myFunctions.getIntVAL(dLayer.ExecuteScalar(sqlCommandText, Params, connection, transaction).ToString());
+                        if (closed == 1)
+                        {
+                            sqlCommandText = "select * from vw_InvTerminal_Disp where N_CompanyID=@p1";
+                            OutPut = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
+                            transaction.Commit();
+                            return Ok(_api.Success(OutPut));
+
+                        }
+                        else
+                        {
+                            sqlCommandText = "select * from Acc_PosSession where N_CompanyID=@p1 and N_SessionID=" + n_SessionID;
+                            OutPut = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
+                            transaction.Commit();
+                            return Ok(_api.Success(OutPut));
+                        }
                     }
                 }
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Warning("No POS Terminals Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(dt));
-                }
+
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
         [HttpGet("printlist")]
@@ -124,7 +138,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            dt = myFunctions.AddNewColumnToDataTable(dt,"x_PrintTemplate",typeof(string),"");
+            dt = myFunctions.AddNewColumnToDataTable(dt, "x_PrintTemplate", typeof(string), "");
             Params.Add("@p1", nCompanyId);
             string Path = ReportLocation + "printing/Salesinvoice/VAT/";
 
@@ -150,7 +164,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -184,7 +198,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -215,7 +229,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", N_FnYearId);
                         Params.Add("N_FormID", 895);
                         TerminalCode = dLayer.GetAutoNumber("Inv_Terminal", "X_TerminalCode", Params, connection, transaction);
-                        if (TerminalCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Terminal Code")); }
+                        if (TerminalCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Terminal Code")); }
                         MasterTable.Rows[0]["X_TerminalCode"] = TerminalCode;
                     }
                     MasterTable.Columns.Remove("N_FnYearId");
@@ -223,15 +237,16 @@ namespace SmartxAPI.Controllers
                     if (N_TerminalID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User, "Unable to save"));
                     }
                     // else{
                     // transaction.Commit();
                     // return Ok(_api.Success("Terminal Saved"));
                     // }
-                    
+
                     else
-                    {   DetailTable.Rows[0]["N_TerminalID"] = N_TerminalID;
+                    {
+                        DetailTable.Rows[0]["N_TerminalID"] = N_TerminalID;
                         dLayer.SaveData("Inv_Terminaldetails", "N_SettingsID", DetailTable, connection, transaction);
                         transaction.Commit();
                         return Ok(_api.Success("Terminal Saved"));
@@ -240,7 +255,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
@@ -261,13 +276,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error(User,"Unable to delete Terminal"));
+                        return Ok(_api.Error(User, "Unable to delete Terminal"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
 
 
