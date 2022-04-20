@@ -91,7 +91,7 @@ namespace SmartxAPI.Controllers
                         sqlCommandText = "select N_CompanyID," + n_FnYearID + " as N_FnYearID," + n_BranchID + " as N_BranchID,getDate() as D_SessionDate,0 as N_SessionID,N_TerminalID,getDate() as D_EntryDate," + nUserID + " as N_UserID,0 as B_Closed from vw_InvTerminal_Disp where N_CompanyID=@p1 and N_TerminalID=" + n_TerminalID;
                         Params.Add("@p1", nCompanyId);
 
-                        dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection,transaction);
+                        dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
 
                         int N_SessionID = dLayer.SaveData("Acc_PosSession", "N_SessionID", dt, connection, transaction);
                         if (N_SessionID <= 0)
@@ -199,6 +199,42 @@ namespace SmartxAPI.Controllers
             catch (Exception e)
             {
                 return Ok(_api.Error(User, e));
+            }
+        }
+
+
+
+        [HttpPost("closeSession")]
+        public ActionResult CloseSession([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable MasterTable;
+                MasterTable = ds.Tables["master"];
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataRow dRow = MasterTable.Rows[0];
+                    int nUserId = myFunctions.GetUserID(User);
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    int nTerminalID = myFunctions.getIntVAL(dRow["n_TerminalID"].ToString());
+                    int nSessionID = myFunctions.getIntVAL(dRow["n_SessionID"].ToString());
+                    string updateSql = "Update Acc_PosSession set B_closed=1 ,D_SessionEndTime=getDate() where N_CompanyID="+nCompanyID+" and N_TerminalID="+nTerminalID+" and N_SessionID="+nSessionID;
+                    object result = dLayer.ExecuteScalar(updateSql,connection,transaction);
+                    if(result==null)
+                    result=0;
+                    if(myFunctions.getIntVAL(result.ToString())>0)
+                    return Ok(_api.Success("Session closed"));
+                    else
+                    return Ok(_api.Error(User,"Unable to end Session"));
+
+
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
             }
         }
 
