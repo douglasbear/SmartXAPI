@@ -37,7 +37,7 @@ namespace SmartxAPI.Controllers
 
         //List
         [HttpGet("list")]
-        public ActionResult GetBalanceDetails(int nFnyearID, int nPartyType, int nPartyID, int N_TransType, int nPage, int nSizeperpage,string xSearchkey, string xSortBy)
+        public ActionResult GetBalanceDetails(int nFnyearID, int nPartyType, int nPartyID, int N_TransType, int nPage, int nSizeperpage,string xSearchkey, string xSortBy,bool bAllBranchData,int nBranchID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -52,7 +52,14 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or X_VendorName like '%"+ xSearchkey + "%' or cast([Adjustment Date] as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%"+ xSearchkey + "%' or Netamt like '%"+ xSearchkey + "%')";
             }
             
-
+             if (bAllBranchData == true)
+                        {
+                            Searchkey = Searchkey + " ";
+                        }
+                        else
+                        {
+                            Searchkey = Searchkey + " and N_BranchID=" + nBranchID + " ";
+                        }
             if (xSortBy == null || xSortBy.Trim() == ""){
                 xSortBy = " order by [Invoice No] desc";
             }
