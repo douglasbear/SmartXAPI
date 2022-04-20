@@ -336,6 +336,38 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("defaultAc") ]
+        public ActionResult GetDefaultAcDetails (int nFnYearID)
+        {   
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt=new DataTable();
+            SortedList Params = new SortedList();
+            
+            string sqlCommandText="select Account as X_LedgerName,[Account Code] as X_LedgerCode,* from vw_DefaultAccount_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 ";
+            Params.Add("@p1",nCompanyID);
+            Params.Add("@p2",nFnYearID);
+            
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                }
+
+                if(dt.Rows.Count==0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                } else {
+                    return Ok(_api.Success(dt));
+                }
+            } 
+            catch(Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }   
+        }
+
 
 
 
