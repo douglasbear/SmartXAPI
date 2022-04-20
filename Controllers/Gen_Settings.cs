@@ -320,11 +320,18 @@ namespace SmartxAPI.Controllers
 
                     foreach (DataRow var in AccountMaps.Rows)
                     {
+                        int b_IsDefault = myFunctions.getIntVAL(AccountMaps.Rows[0]["b_IsDefault"].ToString());
+
                         string defaultsSql = "SP_AccountDefaults_ins " + nCompanyID + ",'" + var["x_Group"].ToString() + "','" + var["x_Value"].ToString() + "'," + nFnYearID + "";
                         dLayer.ExecuteNonQuery(defaultsSql, connection, transaction);
+
+                        if (b_IsDefault==1)
+                        {
+                            dLayer.ExecuteNonQuery("update Acc_PaymentMethodMaster set B_IsDefault=0 where N_CompanyID=" + nCompanyID + "",connection, transaction);
+                            dLayer.ExecuteNonQuery("update Acc_PaymentMethodMaster set B_IsDefault=1 where N_CompanyID=" + nCompanyID + " and N_TypeID= " + var["n_TypeID"].ToString() +"and N_PaymentMethodID="+ var["n_PaymentMethodID"].ToString() + "",connection, transaction);
+                        }
                     }
                     transaction.Commit();
-
 
                     return Ok(_api.Success("Settings Saved"));
                 }
@@ -366,6 +373,46 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(_api.Error(User,e));
             }   
+        }
+
+        [HttpPost("saveDefaultAccounts")]
+        public ActionResult SaveDefaultAccounts([FromBody] DataSet ds)
+        {
+
+            DataTable AccountMaps = ds.Tables["accountMaps"];
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+
+                    int nFnYearID = myFunctions.getIntVAL(AccountMaps.Rows[0]["n_FnYearID"].ToString());
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+
+                    foreach (DataRow var in AccountMaps.Rows)
+                    {
+                        bool bIsDefault = myFunctions.getBoolVAL(var["b_IsDefault"].ToString());
+
+                        string defaultsSql = "SP_AccountDefaults_ins " + nCompanyID + ",'" + var["x_Group"].ToString() + "','" + var["x_Value"].ToString() + "'," + nFnYearID + "";
+                        dLayer.ExecuteNonQuery(defaultsSql, connection, transaction);
+
+                        if (bIsDefault==true)
+                        {
+                            dLayer.ExecuteNonQuery("update Acc_PaymentMethodMaster set B_IsDefault=0 where N_CompanyID=" + nCompanyID + "",connection, transaction);
+                            dLayer.ExecuteNonQuery("update Acc_PaymentMethodMaster set B_IsDefault=1 where N_CompanyID=" + nCompanyID + " and N_TypeID= " + var["n_TypeID"].ToString() +"and N_PaymentMethodID="+ var["n_PaymentMethodID"].ToString() + "",connection, transaction);
+                        }
+                    }
+                    transaction.Commit();
+
+                    return Ok(_api.Success("Default Accounts Saved"));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
         }
 
 
