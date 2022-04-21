@@ -395,7 +395,7 @@ namespace SmartxAPI.Controllers
                     {
                         bool bIsDefault = myFunctions.getBoolVAL(var["b_IsDefault"].ToString());
 
-                        string defaultsSql = "SP_AccountDefaults_ins " + nCompanyID + ",'" + var["x_Group"].ToString() + "','" + var["x_Value"].ToString() + "'," + nFnYearID + "";
+                        string defaultsSql = "SP_AccountDefaults_ins " + nCompanyID + ",'" + var["x_Group"].ToString() + "','" + var["x_Value"].ToString() + "'," + nFnYearID + "," + var["n_PaymentMethodID"].ToString() + "";
                         dLayer.ExecuteNonQuery(defaultsSql, connection, transaction);
 
                         if (bIsDefault==true)
