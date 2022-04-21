@@ -58,6 +58,10 @@ namespace SmartxAPI.Controllers
                     crieteria = crieteria + " and B_SalaryPayment='True'";
                     feild = feild + ",B_ReceiptVoucher";
                     break;
+                case "financialsettings":
+                    crieteria = crieteria;
+                    feild = feild;
+                    break;
                 default: break;
             }
 

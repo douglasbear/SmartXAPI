@@ -27,7 +27,7 @@ namespace SmartxAPI.Controllers
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions api;
-        private readonly IMyReminders myReminders;
+        private readonly IMyReminders myReminders; 
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int FormID;

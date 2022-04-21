@@ -43,7 +43,7 @@ namespace SmartxAPI.Controllers
             N_FormID = 555;
         }
         [HttpGet("list")]
-        public ActionResult GetGoodsReceiveList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetGoodsReceiveList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,bool bAllBranchData,int nBranchID)
         {
               try
             {
@@ -88,6 +88,14 @@ namespace SmartxAPI.Controllers
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and ([MRN No] like '%" + xSearchkey + "%' or X_VendorName like '%" + xSearchkey + "%')";
 
+                        if (bAllBranchData == true)
+                        {
+                            Searchkey = Searchkey + " ";
+                        }
+                        else
+                        {
+                            Searchkey = Searchkey + " and N_BranchID=" + nBranchID + " ";
+                        }
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_MRNID desc";
             else

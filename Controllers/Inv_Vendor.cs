@@ -37,7 +37,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/customer/list?....
         [HttpGet("list")]
-        public ActionResult GetVendorList(int? nCompanyId, int nFnYearId, bool bAllBranchesData, string vendorId, string qry, string msg, int nQuotationID)
+        public ActionResult GetVendorList(int? nCompanyId, int nFnYearId, bool bAllBranchesData, string vendorId, string qry, string msg, int nQuotationID,int nBranchID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -167,6 +167,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (X_VendorName like '%" + xSearchkey + "%' or X_VendorCode like '%" + xSearchkey + "%' or X_ContactName like '%" + xSearchkey + "%' or X_Address like '%" + xSearchkey + "%' or X_VendorType like '%" + xSearchkey + "%'or X_Country like '%" + xSearchkey + "%'or X_CurrencyName like '%" + xSearchkey + "%' or x_PhoneNo1 like '%" + xSearchkey + "%')";
+
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_VendorID desc";
