@@ -97,7 +97,8 @@ namespace SmartxAPI.Controllers
                         }
                         EmployeeDetails.AcceptChanges();
                     }
-                    object EnableLeaveData = dLayer.ExecuteScalar(EnableLeave, Params, connection);
+                    //object EnableLeaveData = dLayer.ExecuteScalar(EnableLeave, Params, connection);
+                    object EnableLeaveData = "";
                     object Loan = dLayer.ExecuteScalar(sqlCommandLoan, Params, connection);
                     object TotalVacation = null;
                     if (EnableLeaveData.ToString() == "1")
