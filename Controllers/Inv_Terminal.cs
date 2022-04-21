@@ -221,7 +221,7 @@ namespace SmartxAPI.Controllers
                     int nTerminalID = myFunctions.getIntVAL(dRow["n_TerminalID"].ToString());
                     int nSessionID = myFunctions.getIntVAL(dRow["n_SessionID"].ToString());
                     string updateSql = "Update Acc_PosSession set B_closed=1 ,D_SessionEndTime=getDate() where N_CompanyID="+nCompanyID+" and N_TerminalID="+nTerminalID+" and N_SessionID="+nSessionID;
-                    object result = dLayer.ExecuteScalar(updateSql,connection,transaction);
+                    object result = dLayer.ExecuteNonQuery(updateSql,connection,transaction);
                     if(result==null)
                     result=0;
                     if(myFunctions.getIntVAL(result.ToString())>0)

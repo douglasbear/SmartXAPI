@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("pricelist")]
-        public ActionResult GetPriceListDetails(int nCustomerID,int nBranchID, int nFnYearID, int nItemID, int nCategoryID, int nItemUnitID, double nQty)
+        public ActionResult GetPriceListDetails(int nCustomerID, int nBranchID, int nFnYearID, int nItemID, int nCategoryID, int nItemUnitID, double nQty, int nBrandID)
         {
             DataTable dtPriceList = new DataTable();
 
@@ -118,7 +118,8 @@ namespace SmartxAPI.Controllers
             SortedList dParamList = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             string pricelist = "";
-            string Condition ="";
+            string Condition = "";
+            string ConditionBrand = "";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -129,31 +130,42 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nItemID", nItemID);
                     Params.Add("@nItemUnitID", nItemUnitID);
                     Params.Add("@nCategoryID", nCategoryID);
-                     Params.Add("@nBranchID", nBranchID);
+                    Params.Add("@nBranchID", nBranchID);
+                    Params.Add("@nBrandID", nBrandID);
                     object N_PriceTypeID = null;
-                     if(nBranchID>0)
-                     {
-                         Condition= " and N_BranchID=@nBranchID";
-                     }
-                     else
-                     {
-                      Condition= "";
-                     }
-                    
-                    N_PriceTypeID = dLayer.ExecuteScalar("select N_Value from Gen_Settings where X_Group=64 and N_CompanyID=" + nCompanyId + " and X_Description='DefaultPriceList'", Params, connection);
+                    if (nBranchID > 0)
+                    {
+                        Condition = " and N_BranchID=@nBranchID";
+                    }
+                    else
+                    {
+                        Condition = "";
+                    }
+                    if (nBranchID > 0)
+                    {
+                        ConditionBrand = " and N_BrandID=@nBrandID";
+                    }
+                    else
+                    {
+                        ConditionBrand = "";
+                    }
 
-                    if(nCustomerID>0)
-                    N_PriceTypeID = dLayer.ExecuteScalar("select N_DiscsettingsID from inv_customer where N_CustomerID=" + nCustomerID + " and N_CompanyID=" + nCompanyId + " and N_FnyearID=" + nFnYearID, Params, connection);
+
+                    N_PriceTypeID = dLayer.ExecuteScalar("select isnull(N_Value,'') as N_Value from Gen_Settings where X_Group=64 and N_CompanyID=" + nCompanyId + " and X_Description='DefaultPriceList'", Params, connection);
+
+                    if (nCustomerID > 0)
+                        N_PriceTypeID = dLayer.ExecuteScalar("select isnull(N_DiscsettingsID,'') as N_DiscsettingsID from inv_customer where N_CustomerID=" + nCustomerID + " and N_CompanyID=" + nCompanyId + " and N_FnyearID=" + nFnYearID, Params, connection);
 
 
-                    if (N_PriceTypeID != null)
+                    if (N_PriceTypeID != null && myFunctions.getIntVAL(N_PriceTypeID.ToString()) != 0)
                     {
                         Params.Add("@nPriceTypeID", N_PriceTypeID.ToString());
                         string pricelistAll = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID =@nPriceTypeID and N_ItemID=@nItemID and N_ItemUnitID=@nItemUnitID " + Condition + "";
-                        
+
                         string pricelistItem = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemID=@nItemID " + Condition + " ";
                         string pricelistCategory = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_CategoryID=@nCategoryID " + Condition + "";
                         string pricelistUnit = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemUnitID=@nItemUnitID " + Condition + "";
+                        string pricelistBrand = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_BrandID=@nBrandID " + Condition + "";
 
                         dtPriceList = dLayer.ExecuteDataTable(pricelistAll, Params, connection);
                         if (dtPriceList.Rows.Count == 0)
@@ -165,6 +177,11 @@ namespace SmartxAPI.Controllers
                                 if (dtPriceList.Rows.Count == 0)
                                 {
                                     dtPriceList = dLayer.ExecuteDataTable(pricelistUnit, Params, connection);
+                                    if (dtPriceList.Rows.Count == 0)
+                                    {
+                                        dtPriceList = dLayer.ExecuteDataTable(pricelistBrand, Params, connection);
+                                    }
+
                                 }
                             }
                         }
@@ -222,13 +239,13 @@ namespace SmartxAPI.Controllers
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     string x_DiscountNo = MasterRow["X_DiscCode"].ToString();
 
-                    
+
 
                     if (x_DiscountNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_YearID", N_FnYearID);
-                        Params.Add("N_FormID", 858);                        
+                        Params.Add("N_FormID", 858);
                         Params.Add("N_BranchID", N_BranchID);
                         x_DiscountNo = dLayer.GetAutoNumber("Inv_DiscountMaster", "X_DiscCode", Params, connection, transaction);
                         if (x_DiscountNo == "")
