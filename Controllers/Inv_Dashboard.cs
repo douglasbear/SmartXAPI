@@ -290,7 +290,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count fromo   vw_InvItem_Search_cloud where N_CompanyID=2 and N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=2 and N_WarehouseID=2 ) and N_ItemID in (Select N_ItemID from Inv_StockMaster where N_CompanyID=2 and N_LocationID=2 and  D_ExpiryDate>='2025-04-30 '  ) ";
+                    sqlCommandCount = "select count(*) as N_Count from vw_InvItem_Search_cloud where N_CompanyID=2 and N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=2 and N_WarehouseID=2 ) and N_ItemID in (Select N_ItemID from Inv_StockMaster where N_CompanyID=2 and N_LocationID=2 and  D_ExpiryDate>='2025-04-30 '  ) ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
