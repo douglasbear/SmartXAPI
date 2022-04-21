@@ -53,7 +53,7 @@ namespace SmartxAPI.Controllers
             {
                 switch (xSortBy.Split(" ")[0])
                 {
-                    case "x_ContactCode":
+                    case "x_ContactNo":
                         xSortBy = "N_contactID " + xSortBy.Split(" ")[1];
                         break;
 
@@ -103,50 +103,18 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("listDetails")]
-        public ActionResult ContactListInner()
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyId = myFunctions.GetCompanyID(User);
-
-            string sqlCommandText = "select  * from vw_Inv_CustomerContact where N_CompanyID=@p1";
-            Params.Add("@p1", nCompanyId);
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    dt = api.Format(dt);
-                    if (dt.Rows.Count == 0)
-                    {
-                        return Ok(api.Warning("No Results Found"));
-                    }
-                    else
-                    {
-                        return Ok(api.Success(dt));
-                    }
-
-                }
-
-            }
-            catch (Exception e)
-            {
-                return Ok(api.Error(User, e));
-            }
-        }
+     
 
         [HttpGet("details")]
-        public ActionResult ContactListDetails(int xContactCode)
+        public ActionResult ContactListDetails(int xContactNo)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from vw_Inv_CustomerContact where N_CompanyID=@p1 and x_ContactCode=@p2";
+            string sqlCommandText = "select * from vw_Inv_CustomerContact where N_CompanyID=@p1 and x_ContactNo=@p2";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", xContactCode);
+            Params.Add("@p2", xContactNo);
 
 
             try
@@ -183,7 +151,7 @@ namespace SmartxAPI.Controllers
                 DataTable MasterTable;
                 MasterTable = ds.Tables["master"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
-                int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
+                //int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nContactID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ContactID"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -192,26 +160,20 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
                     // Auto Gen
-                    string ContactCode = "";
-                    var values = MasterTable.Rows[0]["x_ContactCode"].ToString();
+                    string ContactNo = "";
+                    var values = MasterTable.Rows[0]["x_ContactNo"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
-                        Params.Add("N_YearID", nFnYearId);
-                        Params.Add("N_FormID", 1308);
-                        ContactCode = dLayer.GetAutoNumber("CRM_Contact", "x_ContactCode", Params, connection, transaction);
-                        if (ContactCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Contact Code")); }
-                        MasterTable.Rows[0]["x_ContactCode"] = ContactCode;
+                        //Params.Add("N_YearID", nFnYearId);
+                        Params.Add("N_FormID", 1425);
+                        ContactNo = dLayer.GetAutoNumber("Inv_Customer_Contacts", "x_ContactNo", Params, connection, transaction);
+                        if (ContactNo == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Contact Code")); }
+                        MasterTable.Rows[0]["x_ContactNo"] = ContactNo;
                     }
-                    if (MasterTable.Columns.Contains("X_SalesmanName"))
-                    {
+                    
 
-                        MasterTable.Columns.Remove("X_SalesmanName");
-
-                    }
-
-
-                    nContactID = dLayer.SaveData("CRM_Contact", "n_ContactID", MasterTable, connection, transaction);
+                    nContactID = dLayer.SaveData("Inv_Customer_Contacts", "n_ContactID", MasterTable, connection, transaction);
                     if (nContactID <= 0)
                     {
                         transaction.Rollback();
@@ -240,14 +202,14 @@ namespace SmartxAPI.Controllers
             {
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
-                QueryParams.Add("@nFormID", 1308);
+                QueryParams.Add("@nFormID", 1425);
                 QueryParams.Add("@nContactID", nContactID);
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("CRM_Contact", "N_ContactID", nContactID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Inv_Customer_Contacts", "N_ContactID", nContactID, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)
