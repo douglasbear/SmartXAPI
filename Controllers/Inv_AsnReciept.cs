@@ -363,9 +363,9 @@ namespace SmartxAPI.Controllers
                             foreach (DataRow detVar in Detail.Rows)
                             {
                                 //detVar["X_SKU"]=detVar["X_SKU"].ToString() + " - " + detVar["X_AsnDocNo"].ToString();
-                                detVar["x_Barcode"]=detVar["X_SKU"].ToString() + " - " + detVar["X_AsnDocNo"].ToString();
-                                detVar["x_BatchCode"]=detVar["X_SKU"].ToString() + " - " + detVar["X_AsnDocNo"].ToString();
-                                
+                                detVar["x_Barcode"] = detVar["X_SKU"].ToString() + " - " + detVar["X_AsnDocNo"].ToString();
+                                detVar["x_BatchCode"] = detVar["X_SKU"].ToString() + " - " + detVar["X_AsnDocNo"].ToString();
+
                             }
                         }
 
@@ -408,12 +408,21 @@ namespace SmartxAPI.Controllers
         {
             int Results = 0;
             int nCompanyID = myFunctions.GetCompanyID(User);
+            SortedList Params = new SortedList();
+            Params.Add("@companyid", nCompanyID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                    string sqlCommandCount3 = "select count(*) as N_Count from Wh_Grn where   N_CompanyID= " + nCompanyID + "  and N_AsnID=" + nAsnID + " ";
+                    object count = dLayer.ExecuteScalar(sqlCommandCount3, Params, connection,transaction);
+                    if(myFunctions.getIntVAL(count.ToString())>0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Warning("GRN Already Processed"));
+                    }
                     dLayer.DeleteData("Wh_AsnDetails", "N_AsnID", nAsnID, "N_CompanyID=" + nCompanyID + " and N_AsnID=" + nAsnID, connection, transaction);
                     Results = dLayer.DeleteData("Wh_AsnMaster", "N_AsnID", nAsnID, "N_CompanyID=" + nCompanyID + " and N_AsnID=" + nAsnID, connection, transaction);
 
