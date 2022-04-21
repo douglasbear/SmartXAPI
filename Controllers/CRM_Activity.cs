@@ -25,7 +25,7 @@ namespace SmartxAPI.Controllers
         private readonly int FormID;
         private readonly IMyReminders myReminders;
 
-        public CRM_Activity(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyReminders myRem)
+        public CRM_Activity(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, MyReminders myRem)
         {
             api = apifun;
             dLayer = dl;

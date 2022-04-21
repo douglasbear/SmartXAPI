@@ -24,6 +24,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Net.Http;
 using Microsoft.AspNetCore.Hosting;
+using SmartxAPI.GeneralFunctions;
 
 namespace SmartxAPI.GeneralFunctions
 {
@@ -38,6 +39,8 @@ namespace SmartxAPI.GeneralFunctions
         private readonly string reportLocation;
         private readonly string reportApi;
         private readonly IWebHostEnvironment env;
+       // private readonly IMyReminders myReminders;
+
         string RPTLocation = "";
         string ReportName = "";
         string FileName = "";
@@ -45,7 +48,7 @@ namespace SmartxAPI.GeneralFunctions
         string TableName = "";
         string FormName = "";
 
-        public MyFunctions(IConfiguration conf, IWebHostEnvironment envn)
+        public MyFunctions(IConfiguration conf, IWebHostEnvironment envn)//, IMyReminders myRem)
         {
             ApprovalLink = conf.GetConnectionString("AppURL");
             masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
@@ -56,7 +59,7 @@ namespace SmartxAPI.GeneralFunctions
             reportLocation = conf.GetConnectionString("ReportLocation");
             reportApi = conf.GetConnectionString("ReportAPI");
             env = envn;
-
+           // myReminders = myRem;
         }
 
         public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, string FieldName, IDataAccessLayer dLayer, SqlConnection connection)
@@ -1841,6 +1844,8 @@ namespace SmartxAPI.GeneralFunctions
                         body=body.Replace("@URL",ApprovalLink+"/approvalDashboard");
 
                         SendApprovalMail(N_NextUser, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User,Subject,body);
+
+                        // myReminders.ReminderSet(dLayer, 24, N_TransID, ReqDate.ToString(), N_FormID,N_NextUser,User, connection, transaction);
                     }
                 }
             }

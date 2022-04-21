@@ -110,11 +110,6 @@ namespace SmartxAPI
         public static int _UserLevel = 0;
         public static bool _OnlinePosting = true;
 
-
-
-        
-
-
         public static int DecimalPlaces = 2;
         public static string DecimalPlaceString = "#,##0.00";
         public static string ThousandSeparatorString = "#,##0";
