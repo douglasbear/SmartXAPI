@@ -58,7 +58,7 @@ namespace SmartxAPI.Controllers
 
                     if (UserPattern != "")
                      {
-                    Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern";
+                    Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
                     Params.Add("@UserPattern", UserPattern);
                      }  
                     //  else
@@ -86,7 +86,7 @@ namespace SmartxAPI.Controllers
                     N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and (Memo like '%" + xSearchkey + "%' or [Vendor Name] like '%" + xSearchkey + "%' or Cast(Date as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%" + xSearchkey + "%' or amount like '%" + xSearchkey + "%')";
+                        Searchkey = " and (Memo like '%" + xSearchkey + "%' or [Vendor Name] like '%" + xSearchkey + "%' or Cast(Date as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%" + xSearchkey + "%' or Amount like '%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_PayReceiptId desc";
