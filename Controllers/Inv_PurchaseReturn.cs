@@ -265,11 +265,11 @@ namespace SmartxAPI.Controllers
                     {
                         if (bAllBranchData == true)
                         {
-                            DetailSql = "Select vw_InvPurchaseReturnEdit_Disp.*,dbo.SP_Stock(vw_InvPurchaseReturnEdit_Disp.N_ItemID) As N_Stock from vw_InvPurchaseReturnEdit_Disp Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0";
+                            DetailSql = "Select vw_InvPurchaseReturnEdit_Disp.*,dbo.SP_LocationStock(vw_InvPurchaseReturnEdit_Disp.N_ItemID,vw_InvPurchaseReturnEdit_Disp.N_LocationID) As N_Stock from vw_InvPurchaseReturnEdit_Disp Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0";
                         }
                         else
                         {
-                            DetailSql = "Select vw_InvPurchaseReturnEdit_Disp.*,dbo.SP_Stock(vw_InvPurchaseReturnEdit_Disp.N_ItemID) As N_Stock from vw_InvPurchaseReturnEdit_Disp Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0 and N_BranchId=@p5";
+                            DetailSql = "Select vw_InvPurchaseReturnEdit_Disp.*,dbo.SP_LocationStock(vw_InvPurchaseReturnEdit_Disp.N_ItemID,vw_InvPurchaseReturnEdit_Disp.N_LocationID) As N_Stock from vw_InvPurchaseReturnEdit_Disp Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0 and N_BranchId=@p5";
                         }
 
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
@@ -279,9 +279,9 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         if (bAllBranchData == true)
-                            DetailSql = "Select vw_InvPurchaseDetails_Display.*,dbo.SP_Stock(vw_InvPurchaseDetails_Display.N_ItemID) As N_Stock  from vw_InvPurchaseDetails_Display Where N_CompanyID=@p1 and X_InvoiceNo=@p4";
+                            DetailSql = "Select vw_InvPurchaseDetails_Display.*,dbo.SP_LocationStock(vw_InvPurchaseDetails_Display.N_ItemID,vw_InvPurchaseDetails_Display.N_LocationID) As N_Stock  from vw_InvPurchaseDetails_Display Where N_CompanyID=@p1 and X_InvoiceNo=@p4";
                         else
-                            DetailSql = "Select vw_InvPurchaseDetails_Display.*,dbo.SP_Stock(vw_InvPurchaseDetails_Display.N_ItemID) As N_Stock  from vw_InvPurchaseDetails_Display Where N_CompanyID=@p1 and X_InvoiceNo=@p4 and N_BranchID=@p5";
+                            DetailSql = "Select vw_InvPurchaseDetails_Display.*,dbo.SP_LocationStock(vw_InvPurchaseDetails_Display.N_ItemID,vw_InvPurchaseDetails_Display.N_LocationID) As N_Stock  from vw_InvPurchaseDetails_Display Where N_CompanyID=@p1 and X_InvoiceNo=@p4 and N_BranchID=@p5";
 
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                         if (DetailTable.Columns.Contains("RetQty"))
