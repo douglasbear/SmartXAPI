@@ -257,7 +257,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-        [HttpGet("details")]
+       [HttpGet("details")]
         public ActionResult GetDetails(string xAsnDocNo, int nFnYearID, int nBranchID, bool bShowAllBranchData)
         {
             DataTable Master = new DataTable();
