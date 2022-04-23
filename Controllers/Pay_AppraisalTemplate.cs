@@ -60,111 +60,191 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        // [HttpGet("details") ]
-        // public ActionResult GetCityDetails (int nCityID)
-        // {   
-        //     int nCompanyID = myFunctions.GetCompanyID(User);
-        //     DataTable dt=new DataTable();
-        //     SortedList Params = new SortedList();
+        [HttpGet("details")]
+        public ActionResult GetAppraisalTemplateDetails(int nTemplateID)
+        {
+            DataSet dt=new DataSet();
+            SortedList Params=new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable MasterTable = new DataTable();
+            DataTable DetailTable = new DataTable();
+            DataTable CompetencyTable = new DataTable();
+            DataTable TrainingneedsTable = new DataTable();
+
+            string Mastersql="Select * from vw_PayAppraisalTemplate Where N_CompanyID=@p1 and N_TemplateID=@p3 ";
+            Params.Add("@p1",nCompanyID);
+            Params.Add("@p2",nTemplateID);
             
-        //     string sqlCommandText="select * from vw_Acc_City where N_CompanyID=@p1 and N_CityID=@p2 ";
-        //     Params.Add("@p1",nCompanyID);
-        //     Params.Add("@p2",nCityID);
-            
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
-        //         }
-        //             if(dt.Rows.Count==0)
-        //                 {
-        //                     return Ok(_api.Notice("No Results Found"));
-        //                 } else {
-        //                     return Ok(_api.Success(dt));
-        //                 }
-        //     } 
-        //     catch(Exception e)
-        //     {
-        //         return Ok(_api.Error(User,e));
-        //     }   
-        // }
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    MasterTable=dLayer.ExecuteDataTable(Mastersql,Params,connection); 
 
-        // [HttpPost("save")]
-        // public ActionResult SaveData([FromBody] DataSet ds)
-        // {
-        //     try
-        //     {
-        //         DataTable MasterTable;
-        //         MasterTable = ds.Tables["master"];
-        //         int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
-        //         int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-        //         int nCityID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CityID"].ToString());
+                    if (MasterTable.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Data Found !!"));
+                    }
 
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             SqlTransaction transaction = connection.BeginTransaction();
-        //             SortedList Params = new SortedList();
-        //             // Auto Gen
-        //             string CityCode = "";
-        //             var values = MasterTable.Rows[0]["x_CityCode"].ToString();
-        //             if (values == "@Auto")
-        //             {
-        //                 Params.Add("N_CompanyID", nCompanyID);
-        //                 Params.Add("N_YearID", nFnYearID);
-        //                 Params.Add("N_FormID", this.N_FormID);
-                      
-        //                 CityCode = dLayer.GetAutoNumber("Acc_City", "X_CityCode", Params, connection, transaction);
-        //                 if (CityCode == "") { transaction.Rollback();
-        //                 return Ok(_api.Error(User,"Unable to generate City Code")); }
-        //                 MasterTable.Rows[0]["x_CityCode"] = CityCode;
-        //             }
-        //             MasterTable.Columns.Remove("n_FnYearID");
+                    MasterTable = _api.Format(MasterTable, "Master");
+                    dt.Tables.Add(MasterTable);
 
-        //             nCityID = dLayer.SaveData("Acc_City", "N_CityID", MasterTable, connection, transaction);
-        //             if (nCityID <= 0)
-        //             {
-        //                 transaction.Rollback();
-        //                 return Ok(_api.Error(User,"Unable to save"));
-        //             }
-        //             else
-        //             {
-        //                 transaction.Commit();
-        //                 return Ok(_api.Success("City Created"));
-        //             }
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return BadRequest(_api.Error(User,ex));
-        //     }
-        // }
+                    int N_TemplateID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TemplateID"].ToString());
 
-        // [HttpDelete("delete")]
-        // public ActionResult DeleteData(int nCityID)
-        // {
-        //     int Results=0;
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //         connection.Open();
-        //         Results=dLayer.DeleteData("Acc_City","N_CityID",nCityID,"",connection);
+                    string DetailSql = "select * from vw_PayCompetencyCategory where N_CompanyID=" + nCompanyID + " and N_TemplateID=" + N_TemplateID ;
 
-        //             if(Results>0){
-        //                 return Ok(_api.Success("City deleted" ));
-        //             } else {
-        //                 return Ok(_api.Warning("Unable to delete City" ));
-        //             }
-        //         }
-                
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return Ok(_api.Error(User,ex));
-        //     }
-        // }
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    DetailTable = _api.Format(DetailTable, "Details");
+                    dt.Tables.Add(DetailTable);
+
+                    string CompetencySql = "select * from Pay_Competency where N_CompanyID=" + nCompanyID + " and N_TemplateID=" + N_TemplateID ;
+
+                    CompetencyTable = dLayer.ExecuteDataTable(CompetencySql, Params, connection);
+                    CompetencyTable = _api.Format(CompetencyTable, "Competency");
+                    dt.Tables.Add(CompetencyTable);
+
+                    string TrainingneedsSql = "select * from Pay_TrainingNeeds where N_CompanyID=" + nCompanyID + " and N_TemplateID=" + N_TemplateID ;
+
+                    TrainingneedsTable = dLayer.ExecuteDataTable(TrainingneedsSql, Params, connection);
+                    TrainingneedsTable = _api.Format(TrainingneedsTable, "Trainingneeds");
+                    dt.Tables.Add(TrainingneedsTable);
+                }
+                return Ok(_api.Success(dt));
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
+
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable MasterTable;
+                DataTable DetailTable;
+                DataTable CompetencyTable;
+                DataTable TrainingneedsTable;
+                MasterTable = ds.Tables["master"];
+                DetailTable = ds.Tables["details"];
+                CompetencyTable = ds.Tables["competency"];
+                TrainingneedsTable = ds.Tables["trainingneeds"];
+                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                int nTemplateID = myFunctions.getIntVAL(MasterTable.Rows[0]["nTemplateID"].ToString());
+                int nCategoryID = 0;
+                int nCompetencyID = 0;
+                int nTrainingID = 0;
+
+                if (MasterTable.Columns.Contains("n_FnYearID"))
+                    MasterTable.Columns.Remove("n_FnYearID");
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList Params = new SortedList();
+                    // Auto Gen
+                    string Code = "";
+                    var values = MasterTable.Rows[0]["x_Code"].ToString();
+                    if (values == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", nCompanyID);
+                        Params.Add("N_YearID", nFnYearID);
+                        Params.Add("N_FormID", this.N_FormID);
+                        Params.Add("N_TemplateID", nTemplateID);
+                        Code = dLayer.GetAutoNumber("Pay_AppraisalTemplate", "X_Code", Params, connection, transaction);
+                        if (Code == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Grade Code")); }
+                        MasterTable.Rows[0]["X_Code"] = Code;
+                    }
+                    nTemplateID = dLayer.SaveData("Pay_AppraisalTemplate", "N_TemplateID", MasterTable, connection, transaction);
+                    if (nTemplateID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User,"Unable to save"));
+                    }
+                    
+                    dLayer.DeleteData("Pay_CompetencyCategory", "N_TemplateID", nTemplateID, "", connection, transaction);
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        DetailTable.Rows[j]["N_TemplateID"] = nTemplateID;  
+                    }
+                    nCategoryID = dLayer.SaveData("Pay_CompetencyCategory", "N_CategoryID", DetailTable, connection, transaction);
+                    if (nCategoryID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User,"Unable to save"));
+                    }
+
+                    dLayer.DeleteData("Pay_Competency", "N_TemplateID", nTemplateID, "", connection, transaction);
+                    for (int j = 0; j < CompetencyTable.Rows.Count; j++)
+                    {
+                        CompetencyTable.Rows[j]["N_TemplateID"] = nTemplateID;  
+                    }
+                    nCompetencyID = dLayer.SaveData("Pay_Competency", "N_CompetencyID", CompetencyTable, connection, transaction);
+                    if (nCompetencyID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User,"Unable to save"));
+                    }
+
+                    dLayer.DeleteData("Pay_TrainingNeeds", "N_TemplateID", nTemplateID, "", connection, transaction);
+                    for (int j = 0; j < TrainingneedsTable.Rows.Count; j++)
+                    {
+                        TrainingneedsTable.Rows[j]["N_TemplateID"] = nTemplateID;  
+                    }
+                    nTrainingID = dLayer.SaveData("Pay_TrainingNeeds", "N_TrainingID", TrainingneedsTable, connection, transaction);
+                    if (nTrainingID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User,"Unable to save"));
+                    }
+
+                    transaction.Commit();
+                    return Ok(_api.Success("Appraisal Template Saved"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User,ex));
+            }
+        }
+
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nTemplateID, int nCompanyID, int nFnYearID)
+        {
+            int Results = 0;
+            try
+            {
+                SortedList QueryParams = new SortedList();
+                QueryParams.Add("@nCompanyID", nCompanyID);
+                QueryParams.Add("@nFnYearID", nFnYearID);
+                QueryParams.Add("@nTemplateID", nTemplateID);
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    Results = dLayer.DeleteData("Pay_AppraisalTemplate", "N_TemplateID", nTemplateID, "", connection);
+
+                    if (Results > 0)
+                    {
+                        dLayer.DeleteData("Pay_CompetencyCategory", "N_TemplateID", nTemplateID, "", connection);
+                        dLayer.DeleteData("Pay_Competency", "N_TemplateID", nTemplateID, "", connection);
+                        dLayer.DeleteData("Pay_TrainingNeeds", "N_TemplateID", nTemplateID, "", connection);
+                        return Ok(_api.Success("Appraisal Template deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error(User,"Unable to delete"));
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User,ex));
+            }
+        }
     }
 }
