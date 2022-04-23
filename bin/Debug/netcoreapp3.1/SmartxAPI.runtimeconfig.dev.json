@@ -2,6 +2,10 @@
   "runtimeOptions": {
     "additionalProbingPaths": [
 <<<<<<< HEAD
+      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\aswin\\.nuget\\packages"
+=======
+<<<<<<< HEAD
 <<<<<<< HEAD
       "C:\\Users\\sreej\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\sreej\\.nuget\\packages"
@@ -43,6 +47,7 @@
       "C:\\Users\\Dell\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Dell\\.nuget\\packages"
 >>>>>>> 13c57a7a8e4b4c9223d827ed253c14fa33e6bfb0
+>>>>>>> dc05481f984941ba6f1b12d076e536cfe447174a
     ]
   }
 }

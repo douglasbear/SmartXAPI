@@ -97,10 +97,10 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetMaterialDispatchDetails(int nFnYearId,string xDispatchNo,int nLocationID, int nBranchId,bool B_AllBranchData)
+        public ActionResult GetMaterialDispatchDetails(int nFnYearId, string xDispatchNo, int nLocationID, int nBranchId, bool B_AllBranchData, string x_PrsNo)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
-            bool B_ProjectExists=true;
+            bool B_ProjectExists = true;
             try
             {
                 using (SqlConnection Con = new SqlConnection(connectionString))
@@ -119,30 +119,44 @@ namespace SmartxAPI.Controllers
                     string Mastersql = "";
 
                     if (B_AllBranchData)
-                        Mastersql= "Select * From vw_MaterialDispatchDisp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_DispatchNo=@xDispatchNo";
+                        Mastersql = "Select * From vw_MaterialDispatchDisp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_DispatchNo=@xDispatchNo";
                     else
-                        Mastersql= "Select * From vw_MaterialDispatchDisp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_DispatchNo=@xDispatchNo and N_BranchId=@nBranchId";
+                        Mastersql = "Select * From vw_MaterialDispatchDisp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_DispatchNo=@xDispatchNo and N_BranchId=@nBranchId";
+                    if (x_PrsNo != "" && x_PrsNo != null)
+                    {
+                        Mastersql = "Select * From vw_Inv_PrsToDispatch Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_PrsNo=" + x_PrsNo + " ";
 
+                    }
                     DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     MasterTable = _api.Format(MasterTable, "Master");
                     int N_DispatchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_DispatchId"].ToString());
+                    int N_PRSId = 0;
+                    if (x_PrsNo != "" && x_PrsNo != null)
+                    {
+                        N_PRSId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PRSID"].ToString());
+                    }
                     QueryParamsList.Add("@N_DispatchID", N_DispatchID);
 
                     string DetailSql = "";
-                  
+
                     if (B_ProjectExists)
                         DetailSql = "Select *,dbo.SP_BatchStock(vw_MaterialDispatchDetailDisp.N_ItemID,vw_MaterialDispatchDetailDisp.N_LocationID,'',vw_MaterialDispatchDetailDisp.N_ProjectID) as N_stock  from vw_MaterialDispatchDetailDisp  where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_DispatchId=@N_DispatchID";
                     else
                         DetailSql = "Select *,dbo.SP_BatchStock(vw_MaterialDispatchDetailDisp.N_ItemID,@nLocationID,'') as N_stock  from vw_MaterialDispatchDetailDisp  where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_DispatchId=@N_DispatchID";
 
+
+                    if (x_PrsNo != "" && x_PrsNo != null)
+                    {
+                        DetailSql="select * from vw_InvPRSDetailsToDispatch where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_RSID="+N_PRSId+"";
+                    }
                     DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
 
                     DetailTable = _api.Format(DetailTable, "Details");
                     dsMaterailDispatch.Tables.Add(MasterTable);
                     dsMaterailDispatch.Tables.Add(DetailTable);
                     return Ok(_api.Success(dsMaterailDispatch));
-                  
+
                 }
             }
             catch (Exception e)
@@ -170,7 +184,7 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
-                    bool bDeptEnabled=false;
+                    bool bDeptEnabled = false;
                     int nDispatchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_DispatchID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
                     int N_RSID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RSID"].ToString());
@@ -217,10 +231,10 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable To Save"));
                     }
-                    if(nSaveDraft==0)
-                        dLayer.ExecuteScalar("update Inv_PRS set N_Processed=1 where N_PRSID=" + N_RSID + " and N_CompanyID=" + nCompanyID+ " and N_FnYearID=" + nFnYearID + " and N_TransTypeID=8", connection, transaction);
+                    if (nSaveDraft == 0)
+                        dLayer.ExecuteScalar("update Inv_PRS set N_Processed=1 where N_PRSID=" + N_RSID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_TransTypeID=8", connection, transaction);
 
-                   
+
                     SortedList UpdateStockParam = new SortedList();
                     UpdateStockParam.Add("N_CompanyID", nCompanyID);
                     UpdateStockParam.Add("N_DispatchId", nDispatchID);
@@ -277,8 +291,8 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        if(N_RSID>0)
-                            dLayer.ExecuteScalar("update Inv_PRS set N_Processed=0 where N_PRSID=" + N_RSID + " and N_CompanyID=" + nCompanyID+ " and N_FnYearID=" + nFnYearID, connection, transaction);
+                        if (N_RSID > 0)
+                            dLayer.ExecuteScalar("update Inv_PRS set N_Processed=0 where N_PRSID=" + N_RSID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction);
                     }
                     transaction.Commit();
                     return Ok(_api.Success("Material Dispatch deleted"));

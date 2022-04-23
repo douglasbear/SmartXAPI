@@ -54,7 +54,11 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
+<<<<<<< HEAD
                     //return Ok(_api.Warning("No POS Terminals Found"));
+=======
+                    // return Ok(_api.Warning("No POS Terminals Found"));
+>>>>>>> 7c43e7c6d954e09c5545976706bf8152565514f6
                 }
                 else
                 {
