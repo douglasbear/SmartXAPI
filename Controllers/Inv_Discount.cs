@@ -233,14 +233,17 @@ namespace SmartxAPI.Controllers
                     DataTable Details = ds.Tables["details"];
                     SortedList Params = new SortedList();
                     DataRow MasterRow = Master.Rows[0];
-
+                    int N_DiscID = myFunctions.getIntVAL(MasterRow["N_DiscID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     string x_DiscountNo = MasterRow["X_DiscCode"].ToString();
 
-
-
+                    if(N_DiscID>0)
+                     {
+                      dLayer.DeleteData("Inv_DiscountDetails", "N_DiscID", N_DiscID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection,transaction);
+                     }
+               
                     if (x_DiscountNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
