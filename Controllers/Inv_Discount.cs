@@ -141,7 +141,7 @@ namespace SmartxAPI.Controllers
                     {
                         Condition = "";
                     }
-                    if (nBranchID > 0)
+                    if (nBrandID > 0)
                     {
                         ConditionBrand = " and N_BrandID=@nBrandID";
                     }
@@ -160,12 +160,12 @@ namespace SmartxAPI.Controllers
                     if (n_PriceTypeID.ToString() != "" && n_PriceTypeID!=0)
                     {
                         Params.Add("@nPriceTypeID", n_PriceTypeID);
-                        string pricelistAll = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID =@nPriceTypeID and N_ItemID=@nItemID and N_ItemUnitID=@nItemUnitID " + Condition + "";
+                        string pricelistAll = "Select  CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID =@nPriceTypeID and N_ItemID=@nItemID and N_ItemUnitID=@nItemUnitID " + Condition + "";
 
-                        string pricelistItem = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemID=@nItemID " + Condition + " ";
-                        string pricelistCategory = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_CategoryID=@nCategoryID " + Condition + "";
-                        string pricelistUnit = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemUnitID=@nItemUnitID " + Condition + "";
-                        string pricelistBrand = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_BrandID=@nBrandID and N_BrandID<>0 " + Condition + "";
+                        string pricelistItem = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemID=@nItemID " + Condition + " ";
+                        string pricelistCategory = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_CategoryID=@nCategoryID " + Condition + "";
+                        string pricelistUnit = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemUnitID=@nItemUnitID " + Condition + "";
+                        string pricelistBrand = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_BrandID=@nBrandID and N_BrandID<>0 " + Condition + "";
 
                         dtPriceList = dLayer.ExecuteDataTable(pricelistAll, Params, connection);
                         if (dtPriceList.Rows.Count == 0)
