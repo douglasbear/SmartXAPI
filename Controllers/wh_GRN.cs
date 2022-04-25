@@ -51,26 +51,30 @@ namespace SmartxAPI.Controllers
 
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([X_GRNNo] like '%" + xSearchkey + "%' or X_CustomerName like '%" + xSearchkey + "%')";
+                        Searchkey = "and ([X_GRNNo] like '%" + xSearchkey + "%' or N_GRNID like '%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_GRNID desc";
-                    else
-                    {
-                        switch (xSortBy.Split(" ")[0])
-                        {
-                            case "[X_GRNNo]":
-                                xSortBy = "N_GRNID " + xSortBy.Split(" ")[1];
-                                break;
-                            default: break;
-                        }
-                        xSortBy = " order by " + xSortBy;
-                    }
+                      else
+            {
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "X_GRNNo":
+                        xSortBy = "X_GRNNo " + xSortBy.Split(" ")[1];
+                        break;
+                    case "N_GRNID":
+                        xSortBy = "N_GRNID " + xSortBy.Split(" ")[1];
+                        break;
+                    default: break;
+                }
+                xSortBy = " order by " + xSortBy;
+            }
+
                     int Count = (nPage - 1) * nSizeperpage;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") [X_GRNNo] AS X_GRNNo,* from vw_Wh_GRN_Disp where N_CompanyID=@p1 and N_FnYearID=@p2" + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [X_GRNNo] AS X_GRNNo,* from vw_Wh_GRN_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") [X_GRNNo] AS X_GRNNo,* from vw_Wh_GRN_Disp where N_CompanyID=@p1 and N_FnYearID=@p2" + Searchkey + " and N_GRNID not in (select top(" + Count + ") N_GRNID from vw_Wh_GRN_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [X_GRNNo] AS X_GRNNo,* from vw_Wh_GRN_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_GRNID not in (select top(" + Count + ") N_GRNID from vw_Wh_GRN_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
 
                     // sqlCommandText = "select * from Inv_MRNDetails where N_CompanyID=@p1";
                     Params.Add("@p1", nCompanyId);
