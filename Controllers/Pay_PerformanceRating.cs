@@ -50,23 +50,23 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nPerformanceID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PerformanceID"].ToString());
-                    string x_Code = MasterTable.Rows[0]["x_Code"].ToString();
+                    string X_Code = MasterTable.Rows[0]["X_Code"].ToString();
       
 
-                    if (x_Code == "@Auto")
+                    if (X_Code == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_FormID", this.FormID);
 
                         
                         
-                        x_Code = dLayer.GetAutoNumber("Pay_Performance", "x_Code", Params, connection, transaction);
-                        if (x_Code == "")
+                        X_Code = dLayer.GetAutoNumber("Pay_Performance", "X_Code", Params, connection, transaction);
+                        if (X_Code == "")
                         {
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Unable to generate  Code"));
                         }
-                        MasterTable.Rows[0]["x_Code"] = x_Code;
+                        MasterTable.Rows[0]["X_Code"] = X_Code;
                     }
 
                     if (nPerformanceID > 0)
@@ -99,7 +99,7 @@ namespace SmartxAPI.Controllers
                     transaction.Commit();
                     SortedList Result = new SortedList();
                     Result.Add("N_PerformanceDetailsID", nPerformanceID);
-                    Result.Add("x_Code", x_Code);
+                    Result.Add("x_Code", X_Code);
                     return Ok(_api.Success(Result, "Saved successfully"));
 
                 }
