@@ -586,6 +586,8 @@ namespace SmartxAPI.Controllers
                                 MasterTable.Rows[j]["X_ItemName"] = VariantList.Rows[i]["X_ItemName"].ToString();
                                 if (VariantList.Rows[i]["X_Barcode"].ToString() != "")
                                     MasterTable.Rows[j]["X_Barcode"] = VariantList.Rows[i]["X_Barcode"].ToString();
+
+                                if(MasterTable.Columns.Contains("N_Rate") && VariantList.Columns.Contains("N_Rate"))
                                 if (VariantList.Rows[i]["N_Rate"].ToString() != "")
                                     MasterTable.Rows[j]["N_Rate"] = myFunctions.getVAL(VariantList.Rows[i]["N_Rate"].ToString());
                                 MasterTable.Rows[j]["N_CLassID"] = "2";
@@ -655,7 +657,7 @@ namespace SmartxAPI.Controllers
                         if (k == 0 && ItemType == 6)
                         {
                             N_VariantGrpType = N_ItemID;
-                            dLayer.ExecuteNonQuery("update  Inv_ItemMaster set B_Show = 0  where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
+                            dLayer.ExecuteNonQuery("update  Inv_ItemMaster set B_Show = 0 ,b_CanbeSold=0,b_CanbePurchased=0 where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
                         }
                         else
                         {
@@ -676,7 +678,7 @@ namespace SmartxAPI.Controllers
 
                         foreach (DataRow var in ItemUnits.Rows) var["n_ItemID"] = N_ItemID;
 
-                        if (k > 0)
+                        if (k > 0 && MasterTable.Columns.Contains("N_Rate"))
                             foreach (DataRow var in StockUnit.Rows) var["N_SellingPrice"] = MasterTable.Rows[k]["N_Rate"].ToString();
 
 

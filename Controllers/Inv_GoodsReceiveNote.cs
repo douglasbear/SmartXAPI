@@ -199,7 +199,7 @@ namespace SmartxAPI.Controllers
                     }
                     if (N_POrderID != 0)
                     {
-                        X_DetailsSql = "Select *,dbo.SP_Cost(vw_POMrn_PendingDetail.N_ItemID,vw_POMrn_PendingDetail.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_POMrn_PendingDetail.N_ItemID,vw_POMrn_PendingDetail.N_CompanyID) As N_UnitSPrice  from vw_POMrn_PendingDetail Where N_CompanyID=" + nCompanyId + " and N_POrderID=" + N_POrderID + "";
+                        X_DetailsSql = "Select *,dbo.SP_Cost(vw_POMrn_PendingDetail.N_ItemID,vw_POMrn_PendingDetail.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_POMrn_PendingDetail.N_ItemID,vw_POMrn_PendingDetail.N_CompanyID) As N_UnitSPrice from vw_POMrn_PendingDetail Where N_CompanyID=" + nCompanyId + " and N_POrderID=" + N_POrderID + "";
 
                     }
 
@@ -264,147 +264,6 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        // private SortedList StatusSetup(int nSalesID, int nFnYearID, SqlConnection connection)
-        // {
-
-        //     object objInvoiceRecievable = null, objBal = null;
-        //     double InvoiceRecievable = 0, BalanceAmt = 0;
-        //     SortedList TxnStatus = new SortedList();
-        //     TxnStatus.Add("Label", "");
-        //     TxnStatus.Add("LabelColor", "");
-        //     TxnStatus.Add("Alert", "");
-        //     TxnStatus.Add("DeleteEnabled", true);
-        //     TxnStatus.Add("SaveEnabled", true);
-        //     TxnStatus.Add("ReceiptNumbers", "");
-        //     int nCompanyID = myFunctions.GetCompanyID(User);
-
-        //     objInvoiceRecievable = dLayer.ExecuteScalar("SELECT isnull((Inv_Sales.N_BillAmt-Inv_Sales.N_DiscountAmt + Inv_Sales.N_FreightAmt +isnull(Inv_Sales.N_OthTaxAmt,0)+ Inv_Sales.N_TaxAmt),0) as N_InvoiceAmount FROM Inv_Sales where Inv_Sales.N_SalesId=" + nSalesID + " and Inv_Sales.N_CompanyID=" + nCompanyID, connection);
-        //     objBal = dLayer.ExecuteScalar("SELECT SUM(N_BalanceAmount) from  vw_InvReceivables where N_SalesId=" + nSalesID + " and X_Type='SALES' and N_CompanyID=" + nCompanyID, connection);
-
-
-        //     object RetQty = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =" + nSalesID + " and Isnull(B_IsSaveDraft,0) =0 and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection);
-        //     object RetQtyDrft = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =" + nSalesID + " and Isnull(B_IsSaveDraft,0)=1 and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection);
-
-
-        //     if (objInvoiceRecievable != null)
-        //         InvoiceRecievable = myFunctions.getVAL(objInvoiceRecievable.ToString());
-        //     if (objBal != null)
-        //         BalanceAmt = myFunctions.getVAL(objBal.ToString());
-
-        //     if ((InvoiceRecievable == BalanceAmt) && (InvoiceRecievable > 0 && BalanceAmt > 0))
-        //     {
-        //         TxnStatus["Label"] = "NotPaid";
-        //         TxnStatus["LabelColor"] = "Red";
-        //         TxnStatus["Alert"] = "";
-        //     }
-        //     else
-        //     {
-        //         if (BalanceAmt == 0)
-        //         {
-        //             //IF PAYMENT DONE
-        //             TxnStatus["Label"] = "Paid";
-        //             TxnStatus["LabelColor"] = "Green";
-        //             TxnStatus["Alert"] = "Customer Receipt is Processed for this Invoice.";
-
-
-        //             //IF PAYMENT DONE AND HAVING RETURN
-        //             if (RetQty != null && myFunctions.getIntVAL(RetQty.ToString()) > 0)
-        //             {
-        //                 TxnStatus["SaveEnabled"] = false;
-        //                 TxnStatus["DeleteEnabled"] = false;
-        //                 TxnStatus["Alert"] = "Sales Return Processed for this invoice.";
-        //                 TxnStatus["Label"] = "Paid(Return)";
-        //                 TxnStatus["LabelColor"] = "Green";
-        //             }
-        //             else if (RetQtyDrft != null && myFunctions.getIntVAL(RetQtyDrft.ToString()) > 0)
-        //             {
-        //                 TxnStatus["SaveEnabled"] = true;
-        //                 TxnStatus["DeleteEnabled"] = false;
-        //                 TxnStatus["Alert"] = "Sales Return Processed for this invoice.";
-        //                 TxnStatus["Label"] = "Paid(Return)";
-        //                 TxnStatus["LabelColor"] = "Green";
-        //             }
-        //         }
-        //         else
-        //         {
-        //             //IF HAVING BALANCE AMOUNT
-        //             TxnStatus["Alert"] = "Customer Receipt is Processed for this Invoice.";
-        //             TxnStatus["Label"] = "ParPaid";
-        //             TxnStatus["LabelColor"] = "Green";
-
-        //             //IF HAVING BALANCE AMOUNT AND HAVING RETURN
-        //             if (RetQty != null && myFunctions.getIntVAL(RetQty.ToString()) > 0)
-        //             {
-        //                 TxnStatus["SaveEnabled"] = false;
-        //                 TxnStatus["DeleteEnabled"] = false;
-        //                 TxnStatus["Alert"] = "Sales Return Processed for this invoice.";
-        //                 TxnStatus["Label"] = "Partially Paid(Return)";
-        //                 TxnStatus["LabelColor"] = "Green";
-        //             }
-        //             else if (RetQtyDrft != null && myFunctions.getIntVAL(RetQtyDrft.ToString()) > 0)
-        //             {
-        //                 TxnStatus["SaveEnabled"] = true;
-        //                 TxnStatus["DeleteEnabled"] = false;
-        //                 TxnStatus["Alert"] = "Sales Return Processed for this invoice.";
-        //                 TxnStatus["Label"] = "Partially Paid(Return)";
-        //                 TxnStatus["LabelColor"] = "Green";
-        //             }
-        //         }
-
-
-        //         //PAYMENT NO DISPLAY IN TOP LABEL ON MOUSE HOVER
-        //         DataTable Receipts = dLayer.ExecuteDataTable("SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId =" + nSalesID, connection);
-        //         string InvoiceNos = "";
-        //         foreach (DataRow var in Receipts.Rows)
-        //         {
-        //             InvoiceNos += var["X_VoucherNo"].ToString() + " , ";
-        //         }
-        //         char[] trim = { ',', ' ' };
-        //         if (InvoiceNos != "")
-        //             TxnStatus["ReceiptNumbers"] = InvoiceNos.ToString().TrimEnd(trim);
-
-        //     }
-
-        //     return TxnStatus;
-        // }
-
-        // //Unprocessed Purchase Order Listing 
-        // [HttpGet("listPO")]
-        // public ActionResult GetPurchaseOrder(int? nCompanyId,int? nVendorID)
-        // {
-        //     DataTable dt = new DataTable();
-        //     SortedList Params = new SortedList();
-        //     string sqlCommandText ="";
-        //     if(nVendorID > 0){
-        //         sqlCommandText = "select * from vw_purchaseOrder_Disp where N_CompanyID = @p1 and N_VendorID = @p2 and ISNULL(B_IsSaveDraft,0) = 0 order by OrderDate desc";
-        //         Params.Add("@p1", nCompanyId);
-        //         Params.Add("@p2",nVendorID);
-        //     }
-        //     else{
-        //         sqlCommandText = "select * from vw_purchaseOrder_Disp where N_CompanyID = @p1 and ISNULL(B_IsSaveDraft,0) = 0 order by OrderDate desc";
-        //         Params.Add("@p1", nCompanyId);
-        //     }
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-        //         }
-        //         if (dt.Rows.Count == 0)
-        //         {
-        //             return Ok(_api.Warning("No Results Found" ));
-        //         }
-        //         else
-        //         {
-        //             return Ok(_api.Success(_api.Format(dt)));
-        //         }
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return Ok( _api.Error(User,e));
-        //     }
-        // }
 
         //Save....
         [HttpPost("save")]
@@ -423,7 +282,6 @@ namespace SmartxAPI.Controllers
             DataRow masterRow = MasterTable.Rows[0];
             var values = masterRow["X_MRNNo"].ToString();
             int N_GRNID = 0;
-            int N_GRNFreightID = 0;
             int N_SaveDraft = 0;
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -512,6 +370,7 @@ namespace SmartxAPI.Controllers
                     if (N_GRNID <= 0)
                     {
                         transaction.Rollback();
+                        return Ok(_api.Error(User,"Unable to save Goods Receive Note!!"));
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
