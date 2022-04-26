@@ -233,7 +233,7 @@ namespace SmartxAPI.Controllers
                     }
                     if (nSaveDraft == 0)
                         dLayer.ExecuteScalar("update Inv_PRS set N_Processed=1 where N_PRSID=" + N_RSID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_TransTypeID=8", connection, transaction);
-
+                        dLayer.ExecuteScalar("update Inv_PRS set N_Processed=1 where N_PRSID=" + N_RSID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_FormID=1309", connection, transaction);
 
                     SortedList UpdateStockParam = new SortedList();
                     UpdateStockParam.Add("N_CompanyID", nCompanyID);
