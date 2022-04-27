@@ -47,13 +47,12 @@ namespace SmartxAPI.Controllers
             }
 
             string sqlCommandText = "";
-            if (prs == null || prs == "")
-            {
-                if (nBranchID > 0)
-                    sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 and N_BranchID=" + nBranchID + " order by [Location Name]";
+            if (prs == null || prs == ""){
+                if(nBranchID>0)
+                sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 and N_BranchID="+nBranchID+ xCondition +" order by [Location Name]";
                 else
-                    sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 order by [Location Name]";
-            }
+                sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1" +xCondition +" order by [Location Name]";
+                }
             else
             {
                 if (!bLocationRequired)

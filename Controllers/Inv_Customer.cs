@@ -177,12 +177,15 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 DataTable Attachment = ds.Tables["attachments"];
                  bool b_AutoGenerate=false;
+             
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchId"].ToString());
                 int nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerId"].ToString());
+               
                 int flag=0;
 
+            
                 if(MasterTable.Columns.Contains("b_AutoGenerate"))
                 {
                        b_AutoGenerate = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_AutoGenerate"].ToString());
@@ -233,6 +236,8 @@ namespace SmartxAPI.Controllers
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_CustomerCode='" + CustomerCode + "'";
                     string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
                     nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
+              
+                  
                     if (nCustomerID <= 0)
                     {
                         transaction.Rollback();
@@ -380,7 +385,7 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(api.Error(User, ex));
                         }
-
+                    
                         transaction.Commit();
                         // return GetCustomerList(nCompanyID, nFnYearId, nBranchId, true, nCustomerID.ToString(), "");
                         return Ok(api.Success("Customer Saved"));
