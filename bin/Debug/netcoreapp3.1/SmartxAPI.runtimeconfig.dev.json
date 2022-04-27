@@ -9,10 +9,16 @@
       "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\rathe\\.nuget\\packages"
 =======
+<<<<<<< HEAD
       "C:\\Users\\Dell\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Dell\\.nuget\\packages"
 >>>>>>> 3923222651164f0213da588ff169c5b26715be23
 >>>>>>> ee0ed745bcc2c2ab3aeef3e4f92a159f7ec49dd2
+=======
+      "C:\\Users\\sreej\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\sreej\\.nuget\\packages"
+>>>>>>> a91541bf658fcddc3895ed72afb8eb65ff1f0347
+>>>>>>> 9dc82da834c4a6bddf316d6b99104da18e0918c2
     ]
   }
 }
