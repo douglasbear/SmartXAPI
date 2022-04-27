@@ -43,7 +43,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
 
             // string sqlCommandText = "select N_CompanyId as nCompanyId,X_CompanyName as xCompanyName,X_CompanyCode as xCompanyCode,I_Logo,X_Country from Acc_Company where B_Inactive =@inactive and N_ClientID=@nClientID order by X_CompanyName";
-            string sqlCommandText = "select Acc_Company.N_CompanyId as nCompanyId,Acc_Company.X_CompanyName as xCompanyName,Acc_Company.X_CompanyCode as xCompanyCode,Acc_Company.I_Logo,Acc_Company.X_Country "+
+            string sqlCommandText = "select Acc_Company.N_CompanyId as nCompanyId,Acc_Company.X_CompanyName as xCompanyName,Acc_Company.X_CompanyCode as xCompanyCode,Acc_Company.I_Logo,Acc_Company.X_Country " +
  " from Acc_Company LEFT OUTER JOIN Sec_User ON Acc_Company.N_CompanyID = Sec_User.N_CompanyID  where B_Inactive =@inactive and N_ClientID=@nClientID and Sec_User.X_UserID=@xUserID order by X_CompanyName";
             Params.Add("@inactive", 0);
             Params.Add("@nClientID", myFunctions.GetClientID(User));
@@ -87,26 +87,26 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
 
         }
 
 
 
-[HttpGet("TimeZonelist")]
+        [HttpGet("TimeZonelist")]
         public ActionResult GetTimeZonelist()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyID=myFunctions.GetCompanyID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
             string sqlCommandText = "select N_TimeZoneID,B_IsDST, (X_ZoneName+' '+'GMT'+X_UtcOffSet) as X_ZoneName from Gen_TimeZone";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -120,7 +120,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -132,7 +132,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             SortedList Output = new SortedList();
 
-            string sqlCommandText = "SELECT Acc_Company.*, Acc_TaxType.X_TypeName, Gen_TimeZone.X_ZoneName +' '+'GMT'+Gen_TimeZone.X_UtcOffSet as X_ZoneName FROM Acc_Company LEFT OUTER JOIN Gen_TimeZone ON Acc_Company.N_TimeZoneID = Gen_TimeZone.N_TimeZoneID LEFT OUTER JOIN Acc_FnYear ON Acc_Company.N_CompanyID = Acc_FnYear.N_CompanyID LEFT OUTER JOIN Acc_TaxType ON Acc_Company.N_CompanyID = Acc_TaxType.N_CompanyID AND Acc_FnYear.N_TaxType = Acc_TaxType.N_TypeID where Acc_Company.B_Inactive =@p1 and Acc_Company.N_CompanyID=@p2 and Acc_FnYear.N_FnYearID=(select max(N_FnYearID) from Acc_FnYear where N_CompanyID=@p2) and Acc_Company.N_ClientID=@nClientID";
+            string sqlCommandText = "SELECT Acc_Company.*, Acc_TaxType.X_TypeName, Gen_TimeZone.X_ZoneName +' '+'GMT'+Gen_TimeZone.X_UtcOffSet as X_ZoneName FROM Acc_Company LEFT OUTER JOIN Gen_TimeZone ON Acc_Company.N_TimeZoneID = Gen_TimeZone.N_TimeZoneID LEFT OUTER JOIN Acc_FnYear ON Acc_Company.N_CompanyID = Acc_FnYear.N_CompanyID LEFT OUTER JOIN Acc_TaxType ON Acc_Company.N_CompanyID = Acc_TaxType.N_CompanyID AND Acc_FnYear.N_TaxType = Acc_TaxType.N_TypeID where Acc_Company.B_Inactive =@p1 and Acc_Company.N_CompanyID=@p2 and Acc_FnYear.N_FnYearID=(select Top(1) N_FnYearID from Acc_FnYear where N_CompanyID=@p2 order by D_Start Desc) and Acc_Company.N_ClientID=@nClientID";
             Params.Add("@p1", 0);
             Params.Add("@p2", nCompanyID);
             Params.Add("@nClientID", myFunctions.GetClientID(User));
@@ -147,15 +147,24 @@ namespace SmartxAPI.Controllers
 
 
                     DataTable AdminInfo = dLayer.ExecuteDataTable("Select N_UserID,X_UserID as x_AdminName from Sec_User Inner Join Sec_UserCategory on Sec_User.N_UserCategoryID= Sec_UserCategory.N_UserCategoryID and X_UserCategory ='Administrator' and Sec_User.X_UserID='Admin' and Sec_User.N_CompanyID=Sec_UserCategory.N_CompanyID  and Sec_User.N_CompanyID=@p2", Params, connection);
+                    // DataTable TaxInfo = dLayer.ExecuteDataTable("Select N_Value as n_PkeyID,X_Value as x_DisplayName from Gen_Settings where N_CompanyID=@p2 and X_Group='Inventory' and X_Description='DefaultTaxCategory'" , Params, connection);
 
-                    DataTable FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID, (select top 1 N_FnYearID from vw_CheckTransaction Where N_FnYearID = Acc_FnYear.N_FnYearID and N_CompanyID = Acc_FnYear.N_CompanyID) As 'TransAction',N_TaxType from Acc_FnYear Where N_FnYearID=(select max(N_FnYearID) from Acc_FnYear where N_CompanyID=@p2)  and  N_CompanyID=@p2", Params, connection);
+
+
+                    DataTable FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID, (select top 1 N_FnYearID from vw_CheckTransaction Where N_FnYearID = Acc_FnYear.N_FnYearID and N_CompanyID = Acc_FnYear.N_CompanyID) As 'TransAction',N_TaxType from Acc_FnYear Where N_FnYearID=(select Top(1) N_FnYearID from Acc_FnYear where N_CompanyID=@p2 order by D_Start Desc)  and  N_CompanyID=@p2", Params, connection);
                     if (FnYearInfo.Rows.Count == 0)
                     {
-                        FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID,0 as 'TransAction',N_TaxType from Acc_FnYear Where N_FnYearID=(select max(N_FnYearID) from Acc_FnYear where N_CompanyID=@p2)  and  N_CompanyID=@p2", Params, connection);
+                        FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID,0 as 'TransAction',N_TaxType from Acc_FnYear Where N_FnYearID=(select Top(1) N_FnYearID from Acc_FnYear where N_CompanyID=@p2 order by D_Start Desc)  and  N_CompanyID=@p2", Params, connection);
                     }
+
+                    int N_FnYearID = myFunctions.getIntVAL(FnYearInfo.Rows[0]["N_FnYearID"].ToString());
+
+
+                    DataTable TaxInfo = dLayer.ExecuteDataTable("SELECT  Top(1) Gen_Settings.N_Value AS n_PkeyID, Acc_TaxCategory.X_CategoryName AS x_DisplayName FROM Acc_TaxCategory INNER JOIN Acc_FnYear ON Acc_TaxCategory.N_TaxTypeID = Acc_FnYear.N_TaxType AND Acc_TaxCategory.N_CompanyID = Acc_FnYear.N_CompanyID INNER JOIN Gen_Settings ON Acc_TaxCategory.X_PkeyCode = Gen_Settings.N_Value AND Acc_TaxCategory.N_CompanyID = Gen_Settings.N_CompanyID WHERE (Gen_Settings.N_CompanyID = @p2) AND (Gen_Settings.X_Group = 'Inventory') AND (Gen_Settings.X_Description = 'DefaultTaxCategory') and Acc_FnYear.N_FnYearID=" + N_FnYearID, Params, connection);
 
                     Output.Add("CompanyInfo", dt);
                     Output.Add("AdminInfo", AdminInfo);
+                    Output.Add("TaxInfo", TaxInfo);
                     Output.Add("FnYearInfo", FnYearInfo);
 
                 }
@@ -171,7 +180,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
 
         }
@@ -199,7 +208,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
         }
 
@@ -218,7 +227,10 @@ namespace SmartxAPI.Controllers
                 string xUserName = GeneralTable.Rows[0]["X_AdminName"].ToString();
                 string xPassword = myFunctions.EncryptString(GeneralTable.Rows[0]["X_AdminPwd"].ToString());
 
-
+                string x_DisplayName = myFunctions.ContainColumn("x_DisplayName", GeneralTable) ? GeneralTable.Rows[0]["x_DisplayName"].ToString() : "";
+                int n_PkeyID = 0;
+                if (GeneralTable.Columns.Contains("n_PkeyID"))
+                    n_PkeyID = Convert.ToInt32(GeneralTable.Rows[0]["n_PkeyID"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -235,9 +247,9 @@ namespace SmartxAPI.Controllers
                     }
                     Params.Add("@p1", xUserName);
                     Params.Add("@p2", xPassword);
-                    object CompanyCount=dLayer.ExecuteScalar("select count(*) from Acc_Company where B_IsDefault=1 and N_ClientID="+myFunctions.GetClientID(User), connection,transaction);
+                    object CompanyCount = dLayer.ExecuteScalar("select count(*) from Acc_Company where B_IsDefault=1 and N_ClientID=" + myFunctions.GetClientID(User), connection, transaction);
 
-                     int Count = myFunctions.getIntVAL(CompanyCount.ToString());
+                    int Count = myFunctions.getIntVAL(CompanyCount.ToString());
                     if (Count == 0)
                     {
                         MasterTable.Rows[0]["b_IsDefault"] = 1;
@@ -281,7 +293,7 @@ namespace SmartxAPI.Controllers
                             dLayer.SaveImage("Acc_Company", "i_Header", headerBitmap, "N_CompanyID", N_CompanyId, connection, transaction);
                         object N_FnYearId = myFunctions.getIntVAL(GeneralTable.Rows[0]["n_FnYearID"].ToString());
                         string pwd = "";
-                        string xUsrName="",xPhoneNo="";
+                        string xUsrName = "", xPhoneNo = "";
                         using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
                         {
                             cnn.Open();
@@ -290,14 +302,14 @@ namespace SmartxAPI.Controllers
                             pwd = dLayer.ExecuteScalar(sqlGUserInfo, cnn).ToString();
 
                             string sqlClientmaster = "SELECT TOP 1 * FROM clientmaster where x_EmailID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
-                            DataTable dtClientmaster = dLayer.ExecuteDataTable(sqlClientmaster,Param, cnn);
-                            xUsrName=dtClientmaster.Rows[0]["X_ClientName"].ToString();
-                            xPhoneNo=dtClientmaster.Rows[0]["X_ContactNumber"].ToString();
+                            DataTable dtClientmaster = dLayer.ExecuteDataTable(sqlClientmaster, Param, cnn);
+                            xUsrName = dtClientmaster.Rows[0]["X_ClientName"].ToString();
+                            xPhoneNo = dtClientmaster.Rows[0]["X_ContactNumber"].ToString();
                         }
 
 
-                        if (values == "@Auto")  
-                        {               
+                        if (values == "@Auto")
+                        {
                             SortedList proParams1 = new SortedList(){
                                         {"N_CompanyID",N_CompanyId},
                                         {"X_ModuleCode","500"},
@@ -330,14 +342,30 @@ namespace SmartxAPI.Controllers
                                         {"@nTaxType",myFunctions.getIntVAL(GeneralTable.Rows[0]["n_TaxType"].ToString())}};
                         dLayer.ExecuteNonQuery("UPDATE Acc_FnYear set N_TaxType=@nTaxType where N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID", taxParams, connection, transaction);
 
-                        int SalesManrows = dLayer.ExecuteNonQuery("INSERT INTO Inv_Salesman(N_CompanyID, N_SalesmanID, X_SalesmanCode, X_SalesmanName, X_PhoneNo1, X_Email, B_Inactive, N_FnYearID, D_Entrydate, N_BranchID)"+
-                                                                    "select "+N_CompanyId+",MAX(ISNULL(N_SalesmanID,0))+1,MAX(ISNULL(X_SalesmanCode,100))+1,'"+xUsrName+"','"+xPhoneNo+"','"+GeneralTable.Rows[0]["x_AdminName"].ToString()+"',0,"+N_FnYearId+",GETDATE(),0 from Inv_Salesman", Params, connection,transaction);
-                        if (SalesManrows <= 0)
-                        {
-                            return Ok(api.Warning("Salesman Creation failed"));
-                        } 
+                        // int SalesManrows = dLayer.ExecuteNonQuery("INSERT INTO Inv_Salesman(N_CompanyID, N_SalesmanID, X_SalesmanCode, X_SalesmanName, X_PhoneNo1, X_Email, B_Inactive, N_FnYearID, D_Entrydate, N_BranchID)"+
+                        //                                             "select "+N_CompanyId+",MAX(ISNULL(N_SalesmanID,0))+1,MAX(ISNULL(X_SalesmanCode,100))+1,'"+xUsrName+"','"+xPhoneNo+"','"+GeneralTable.Rows[0]["x_AdminName"].ToString()+"',0,"+N_FnYearId+",GETDATE(),0 from Inv_Salesman", Params, connection,transaction);
+                        // if (SalesManrows <= 0)
+                        // {
+                        //     return Ok(api.Warning("Salesman Creation failed"));
+                        // } 
 
+                        SortedList proParams4 = new SortedList(){
+                                        {"N_CompanyID",N_CompanyId},
+                                        {"X_Group","Inventory"},
+                                        {"X_Description","DefaultTaxCategory"},
+                                        {"N_Value",n_PkeyID},
+                                        {"X_Value",x_DisplayName},};
+                        dLayer.ExecuteNonQueryPro("SP_GeneralDefaults_ins", proParams4, connection, transaction);
+
+
+
+                        SortedList proParams5 = new SortedList(){
+                                  {"N_CompanyID",N_CompanyId}};
+
+                         dLayer.ExecuteNonQueryPro("UTL_UpdateGenSettings", proParams5, connection, transaction);
                         transaction.Commit();
+
+
 
                         return Ok(api.Success("Company successfully saved"));
                     }
@@ -346,7 +374,7 @@ namespace SmartxAPI.Controllers
             catch (Exception ex)
             {
 
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
         }
 

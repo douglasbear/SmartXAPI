@@ -16,7 +16,11 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Net.Mail;
-
+using System.Text;
+using zatca.einvoicing;
+using Microsoft.AspNetCore.Hosting;
+using System.Text.RegularExpressions;
+using System.IO.Compression;
 namespace SmartxAPI.Controllers
 {
     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -32,12 +36,16 @@ namespace SmartxAPI.Controllers
         private readonly string reportApi;
         private readonly string TempFilesPath;
         private readonly string reportLocation;
+        private readonly IWebHostEnvironment env;
         string RPTLocation = "";
         string ReportName = "";
+        string FileName = "";
         string critiria = "";
         string TableName = "";
+        string QRurl = "";
+        string FormName = "";
         // private string X_CompanyField = "", X_YearField = "", X_BranchField="", X_UserField="",X_DefReportFile = "", X_GridPrevVal = "", X_SelectionFormula = "", X_ProcName = "", X_ProcParameter = "", X_ReprtTitle = "",X_Operator="";
-        public Reports(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Reports(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IWebHostEnvironment envn, IConfiguration conf)
         {
             _api = api;
             dLayer = dl;
@@ -46,6 +54,7 @@ namespace SmartxAPI.Controllers
             reportApi = conf.GetConnectionString("ReportAPI");
             TempFilesPath = conf.GetConnectionString("TempFilesPath");
             reportLocation = conf.GetConnectionString("ReportLocation");
+            env = envn;
         }
         [HttpGet("list")]
         public ActionResult GetReportList(int? nMenuId, int? nLangId)
@@ -53,7 +62,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "Select vwUserMenus.*,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID in ( "+myFunctions.GetUserCategoryList(User)+" ) and vwUserMenus.B_Show=1 inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId Order By vwUserMenus.N_Order";
+            string sqlCommandText = "Select vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild, vwUserMenus.B_Visible, vwUserMenus.B_Edit, vwUserMenus.B_Delete, vwUserMenus.B_Save, vwUserMenus.B_View, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID in ( " + myFunctions.GetUserCategoryList(User) + " ) and vwUserMenus.B_Show=1 inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId group by vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild, vwUserMenus.B_Visible, vwUserMenus.B_Edit, vwUserMenus.B_Delete, vwUserMenus.B_Save, vwUserMenus.B_View, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text Order By vwUserMenus.N_Order";
             Params.Add("@nMenuId", nMenuId == 0 ? 318 : nMenuId);
             Params.Add("@nLangId", nLangId);
             Params.Add("@nUserCatID", myFunctions.GetUserCategoryList(User));
@@ -209,7 +218,8 @@ namespace SmartxAPI.Controllers
                     var client = new HttpClient(handler);
                     var random = RandomString();
                     var dbName = connection.Database;
-                    string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf"; ;
+                    //string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
+                    string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=0&QRUrl=&N_PkeyID=0&partyName=&docNumber=&formName=";
                     var path = client.GetAsync(URL);
                     path.Wait();
                     return Ok(_api.Success(new SortedList() { { "FileName", reportName.Trim() + random + ".pdf" } }));
@@ -220,7 +230,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-        private bool LoadReportDetails(int nFnYearID, int nFormID, int nPkeyID)
+        private bool LoadReportDetails(int nFnYearID, int nFormID, int nPkeyID, int nPreview, string xRptname)
         {
             SortedList QueryParams = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -231,6 +241,9 @@ namespace SmartxAPI.Controllers
             critiria = "";
             TableName = "";
             ReportName = "";
+            //int N_UserCategoryID=myFunctions.GetUserCategory(User);
+            bool b_Custom = false;
+            string xUserCategoryList = myFunctions.GetUserCategoryList(User);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -253,55 +266,84 @@ namespace SmartxAPI.Controllers
                         else
                             RPTLocation = reportLocation + "printing/";
                     }
-                    object Templatecritiria = dLayer.ExecuteScalar("SELECT X_PkeyField FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
-                    critiria = "{" + Templatecritiria + "}=" + nPkeyID;
 
+                    object Templatecritiria = dLayer.ExecuteScalar("SELECT X_PkeyField FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    TableName = Templatecritiria.ToString().Substring(0, Templatecritiria.ToString().IndexOf(".")).Trim();
+                    object Custom = dLayer.ExecuteScalar("SELECT isnull(b_Custom,0) FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
+                    int N_Custom = myFunctions.getIntVAL(Custom.ToString());
+                    object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
+                    object objFormName = dLayer.ExecuteScalar("SELECT X_FormName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
+                    FormName = objFormName.ToString();
+                    // object ObjFileName = dLayer.ExecuteScalar("SELECT X_FileName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
+                    // FileName=ObjFileName.ToString();
+                    if (N_Custom == 1)
+                    {
+
+                        RPTLocation = RPTLocation + "custom/";
+                        ObjReportName = (ObjReportName.ToString().Remove(ObjReportName.ToString().Length - 4)).Trim();
+                        ObjReportName = ObjReportName + "_" + myFunctions.GetClientID(User) + "_" + myFunctions.GetCompanyID(User) + "_" + myFunctions.GetCompanyName(User) + ".rpt";
+                    }
+                    ReportName = ObjReportName.ToString();
+                    ReportName = ReportName.Remove(ReportName.Length - 4);
+
+                    if (nPreview == 1)
+                    {
+                        ReportName = xRptname;
+                        if (ReportName.Contains(".rpt"))
+                        {
+                            ReportName = ReportName.Remove(ReportName.Length - 4);
+                        }
+                        object pkeyID = dLayer.ExecuteScalar("SELECT max(" + Templatecritiria + ") FROM " + TableName + " WHERE N_CompanyID =@nCompanyId", QueryParams, connection, transaction);
+                        if (pkeyID != null)
+                            nPkeyID = myFunctions.getIntVAL(pkeyID.ToString());
+                    }
+
+                    critiria = "{" + Templatecritiria + "}=" + nPkeyID;
                     object Othercritiria = dLayer.ExecuteScalar("SELECT X_Criteria FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+
                     if (Othercritiria != null)
                     {
                         if (Othercritiria.ToString() != "")
-                            critiria = critiria + "and " + Othercritiria.ToString();
+                            critiria = critiria + " and " + Othercritiria.ToString();
 
                     }
-                    TableName = Templatecritiria.ToString().Substring(0, Templatecritiria.ToString().IndexOf(".")).Trim();
-                    object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
-                    ReportName = ObjReportName.ToString();
-                    ReportName = ReportName.Remove(ReportName.Length - 4);
-                    if (nFormID == 64 || nFormID == 894)
-                    {
 
+
+                    if (nFormID == 64 || nFormID == 894 || nFormID == 372)
+                    {
                         //QR Code Generate For Invoice
 
-                        object Total = dLayer.ExecuteScalar("select n_BillAmt+N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID="+nPkeyID, QueryParams, connection, transaction);
-                        object TaxAmount = dLayer.ExecuteScalar("select N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID="+nPkeyID, QueryParams, connection, transaction);
+                        object Total = dLayer.ExecuteScalar("select n_BillAmt+N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
+                        object TaxAmount = dLayer.ExecuteScalar("select N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
                         object VatNumber = dLayer.ExecuteScalar("select x_taxregistrationNo from acc_company where N_CompanyID=@nCompanyId", QueryParams, connection, transaction);
-                        object SalesDate = dLayer.ExecuteScalar("select D_SalesDate from inv_sales where N_CompanyID=@nCompanyId and N_SalesID="+nPkeyID, QueryParams, connection, transaction);
-
+                        object SalesDate = dLayer.ExecuteScalar("select D_SalesDate from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
                         DateTime dt = DateTime.Parse(SalesDate.ToString());
-                        var Date = dt.ToString("dd/MM/yyyy");
                         string Amount = Convert.ToDecimal(Total).ToString("0.00");
                         string VatAmount = Convert.ToDecimal(TaxAmount.ToString()).ToString("0.00");
+                        string Company = myFunctions.GetCompanyName(User);
+                        TLVCls tlv = new TLVCls(Company, VatNumber.ToString(), dt, Convert.ToDouble(Amount), Convert.ToDouble(VatAmount));
+                        var plainTextBytes = tlv.ToBase64();
 
-                        String QrData = "Seller’s name : " + myFunctions.GetCompanyName(User) + "%0A%0AVAT Number : " + VatNumber + "%0A%0ADate : " + Date + "%0A%0AInvoice Total (with VAT) : " + Amount + "%0A%0AVAT total : " + VatAmount;
-                        var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", QrData, "500", "500");
-                        WebResponse response = default(WebResponse);
-                        Stream remoteStream = default(Stream);
-                        StreamReader readStream = default(StreamReader);
-                        WebRequest request = WebRequest.Create(url);
-                        response = request.GetResponse();
-                        remoteStream = response.GetResponseStream();
-                        readStream = new StreamReader(remoteStream);
-                        string path = "C://OLIVOSERVER2020/olivoreports/QR/";
-                        DirectoryInfo info = new DirectoryInfo(path);
-                        if (!info.Exists)
-                        {
-                            info.Create();
-                        }
-                        string pathfile = Path.Combine(path, "QR.png");
-                        using (FileStream outputFileStream = new FileStream(pathfile, FileMode.Create))
-                        {
-                            remoteStream.CopyTo(outputFileStream);
-                        }
+                        QRurl = string.Format(plainTextBytes);
+                        // var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", plainTextBytes.Replace("&", "%26"), "500", "500");
+                        // WebResponse response = default(WebResponse);
+                        // Stream remoteStream = default(Stream);
+                        // StreamReader readStream = default(StreamReader);
+                        // WebRequest request = WebRequest.Create(url);
+                        // response = request.GetResponse();
+                        // remoteStream = response.GetResponseStream();
+                        // readStream = new StreamReader(remoteStream);
+                        // string path = "C://OLIVOSERVER2020/QR/";
+                        // DirectoryInfo info = new DirectoryInfo(path);
+                        // if (!info.Exists)
+                        // {
+                        //     info.Create();
+                        // }
+                        // string pathfile = Path.Combine(path, "QR.png");
+                        // using (FileStream outputFileStream = new FileStream(pathfile, FileMode.Create))
+                        // {
+                        //     remoteStream.CopyTo(outputFileStream);
+                        // }
                         //QR End Here
 
                         // bool SaveDraft = false;
@@ -329,9 +371,19 @@ namespace SmartxAPI.Controllers
             }
 
         }
+        private string StringToHex(string hexstring)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (char t in hexstring)
+            {
+                //Note: X for upper, x for lower case letters
+                sb.Append(Convert.ToInt32(t).ToString("x"));
+            }
+            return sb.ToString();
+        }
 
         [HttpGet("getscreenprint")]
-        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID)
+        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, int nPreview, string xrptname, string docNumber, string partyName)
         {
             SortedList QueryParams = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -350,8 +402,9 @@ namespace SmartxAPI.Controllers
                         ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                     };
 
-                    if (LoadReportDetails(nFnYearID, nFormID, nPkeyID))
+                    if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, nPreview, xrptname))
                     {
+                        
                         var client = new HttpClient(handler);
                         var dbName = connection.Database;
                         var random = RandomString();
@@ -359,7 +412,34 @@ namespace SmartxAPI.Controllers
                         {
                             critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
                         }
-                        string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
+                        ReportName = ReportName.Replace("&", "");
+
+                        if (nPreview == 2)
+                        {
+                            string fileToCopy = RPTLocation + ReportName+".rpt";
+                            string destinationFile = this.TempFilesPath + ReportName+".rpt";
+                            string ZipLocation = this.TempFilesPath + ReportName + ".rpt.zip";
+                            if (CopyFiles(fileToCopy, destinationFile, ReportName+".rpt"))
+                                return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + ".rpt.zip" } }));
+
+                        }
+
+                        if (partyName == "" || partyName == null)
+                            partyName = "customer";
+                        if (docNumber == "" || docNumber == null)
+                            docNumber = "DocNo";
+                        partyName = partyName.Replace("&", "");
+                        partyName = partyName.ToString().Substring(0, Math.Min(12, partyName.ToString().Length));
+                        if (docNumber == null)
+                            docNumber = "";
+                        docNumber = Regex.Replace(docNumber, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
+                        if (!Regex.IsMatch(partyName, @"\p{IsArabic}"))
+                            partyName = Regex.Replace(partyName, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
+
+                        if (docNumber.Contains("/"))
+                            docNumber = docNumber.ToString().Substring(0, Math.Min(3, docNumber.ToString().Length));
+
+                        string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
                         var path = client.GetAsync(URL);
                         if (nFormID == 80)
                         {
@@ -385,8 +465,13 @@ namespace SmartxAPI.Controllers
                             }
 
                         }
+                        // ReportName = FormName + "_" + docNumber + "_" + partyName.Trim()+".pdf";
+                        ReportName = FormName + "_" + docNumber + "_" + partyName.Trim() + "_" + random + ".pdf";
                         path.Wait();
-                        return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + random + ".pdf" } }));
+                        if (env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName))
+                            return Ok(_api.Error(User, "Report Generation Failed"));
+                        else
+                            return Ok(_api.Success(new SortedList() { { "FileName", ReportName } }));
                     }
                     else
                     {
@@ -400,6 +485,7 @@ namespace SmartxAPI.Controllers
             }
 
         }
+
         public bool sendmail(string url, string mail)
         {
 
@@ -414,7 +500,7 @@ namespace SmartxAPI.Controllers
                     string Toemail = "";
 
                     Toemail = mail;
-                    object companyemail = ""; 
+                    object companyemail = "";
                     object companypassword = "";
 
                     companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, Params, connection, transaction);
@@ -537,7 +623,8 @@ namespace SmartxAPI.Controllers
                         {
                             critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
                         }
-                        string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
+                        //string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
+                        string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=0&QRUrl=&N_PkeyID=0&partyName=&docNumber=&formName=";
                         var path = client.GetAsync(URL);
                         path.Wait();
 
@@ -552,18 +639,37 @@ namespace SmartxAPI.Controllers
 
 
         }
+        public bool CopyFiles(string fileToCopy, string destinationFile, string reportName)
+        {
+            try
+            {
+                string ZipLocation = destinationFile + ".zip";
+                if (System.IO.File.Exists(destinationFile))
+                {
+                    System.IO.File.Delete(destinationFile);
+                }
+                if (System.IO.File.Exists(ZipLocation))
+                {
+                    System.IO.File.Delete(ZipLocation);
+                }
+                System.IO.File.Copy(fileToCopy, destinationFile);
+                using (FileStream fs = new FileStream(ZipLocation, FileMode.Create))
+                using (ZipArchive arch = new ZipArchive(fs, ZipArchiveMode.Create))
+                {
+                    arch.CreateEntryFromFile(destinationFile, reportName);
+                }
+                if (System.IO.File.Exists(destinationFile))
+                {
+                    System.IO.File.Delete(destinationFile);
+                }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
 
-
-
-
-
-
-
-
-
-
-
-
+        }
 
         [HttpPost("getModuleReport")]
         public IActionResult GetModuleReports([FromBody] DataSet ds)
@@ -578,6 +684,7 @@ namespace SmartxAPI.Controllers
             string x_Reporttitle = "";
             string X_TextforAll = "=all";
             int nUserID = myFunctions.GetUserID(User);
+            var random = RandomString();
 
             try
             {
@@ -597,6 +704,11 @@ namespace SmartxAPI.Controllers
                     int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportCategoryID"].ToString());
                     int ReportID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportID"].ToString());
                     int FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["nFnYearID"].ToString());
+                    int BranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["nBranchID"].ToString());
+                    int ActionID = myFunctions.getIntVAL(MasterTable.Rows[0]["action"].ToString());
+                    int SalesmanID = 0;
+                    string procParam = "";
+                    string xProCode = "";
                     Extention = MasterTable.Rows[0]["extention"].ToString();
 
                     SortedList Params1 = new SortedList();
@@ -607,9 +719,42 @@ namespace SmartxAPI.Controllers
 
                     reportName = dLayer.ExecuteScalar("select X_rptFile from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and B_Active=1", Params1, connection).ToString();
 
+                    if (ActionID == 2)
+                    {
+                        string fileToCopy = reportLocation + reportName;
+                        string destinationFile = this.TempFilesPath + reportName;
+                        string ZipLocation = this.TempFilesPath + reportName + ".zip";
+                        if (CopyFiles(fileToCopy, destinationFile, reportName))
+                            return Ok(_api.Success(new SortedList() { { "FileName", reportName.Trim() + ".zip" } }));
+                        // if (System.IO.File.Exists(destinationFile))
+                        // {
+                        //     System.IO.File.Delete(destinationFile);
+                        // }
+                        // if (System.IO.File.Exists(ZipLocation))
+                        // {
+                        //     System.IO.File.Delete(ZipLocation);
+                        // }
+                        // System.IO.File.Copy(fileToCopy, destinationFile);
+                        // using (FileStream fs = new FileStream(ZipLocation, FileMode.Create))
+                        // using (ZipArchive arch = new ZipArchive(fs, ZipArchiveMode.Create))
+                        // {
+                        //     arch.CreateEntryFromFile(destinationFile, reportName);
+                        // }
+                        // if (System.IO.File.Exists(destinationFile))
+                        // {
+                        //     System.IO.File.Delete(destinationFile);
+                        // }
+
+                    }
                     reportName = reportName.Substring(0, reportName.Length - 4);
+                    SortedList Params = new SortedList();
+                    Params.Add("@xMain", "MainForm");
+                    Params.Add("@nMenuID", MenuID);
+                    CompanyData = dLayer.ExecuteScalar("select X_DataFieldCompanyID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+                    YearData = dLayer.ExecuteScalar("select X_DataFieldYearID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
 
-
+                    Params.Add("@xType", "");
+                    Params.Add("@nCompID", 0);
                     foreach (DataRow var in DetailTable.Rows)
                     {
                         int compID = myFunctions.getIntVAL(var["compId"].ToString());
@@ -617,17 +762,15 @@ namespace SmartxAPI.Controllers
                         string value = var["value"].ToString();
                         string valueTo = var["valueTo"].ToString();
 
-                        SortedList Params = new SortedList();
-                        Params.Add("@nMenuID", MenuID);
-                        Params.Add("@xType", type.ToLower());
-                        Params.Add("@nCompID", compID);
-                        Params.Add("@xMain", "MainForm");
+                        Params["@xType"] = type.ToLower();
+                        Params["@nCompID"] = compID;
+
+
                         string xFeild = dLayer.ExecuteScalar("select X_DataField from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
                         bool bRange = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isNull(B_Range,0) from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString());
                         string xOperator = dLayer.ExecuteScalar("select isNull(X_Operator,'') from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
-                        string xProCode = dLayer.ExecuteScalar("select X_ProcCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
-                        CompanyData = dLayer.ExecuteScalar("select X_DataFieldCompanyID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
-                        YearData = dLayer.ExecuteScalar("select X_DataFieldYearID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+                        xProCode = dLayer.ExecuteScalar("select X_ProcCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+                        string xInstanceCode = dLayer.ExecuteScalar("select isNull(X_DataField,'') from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         FieldName = dLayer.ExecuteScalar("select X_Text from vw_WebReportMenus where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and N_LanguageId=1", Params, connection).ToString();
                         UserData = dLayer.ExecuteScalar("select X_DataFieldUserID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         FieldName = FieldName + "=";
@@ -642,7 +785,7 @@ namespace SmartxAPI.Controllers
                         {
                             DateTime dateFrom = Convert.ToDateTime(value);
                             DateTime dateTo = Convert.ToDateTime(valueTo);
-                            string procParam = "";
+
                             if (dateFrom != null && (bRange && dateTo != null))
                             {
                                 x_Reporttitle = x_Reporttitle + FieldName + dateFrom.ToString("dd-MMM-yyyy") + " - " + dateTo.ToString("dd-MMM-yyyy");
@@ -662,22 +805,6 @@ namespace SmartxAPI.Controllers
                                 procParam = dateTo.ToString("dd-MMM-yyyy") + "|";
                             }
 
-                            if (xProCode != "")
-                            {
-
-                                SortedList mParamsList = new SortedList()
-                            {
-                            {"N_CompanyID",nCompanyID},
-                            {"N_FnYearID",FnYearID},
-                            {"N_PeriodID",0},
-                            {"X_Code",xProCode},
-                            {"X_Parameter", procParam },
-                            {"N_UserID",myFunctions.GetUserID(User)},
-                            {"N_BranchID",0}
-                            };
-                                dLayer.ExecuteDataTablePro("SP_OpeningBalanceGenerate", mParamsList, connection);
-
-                            }
                             string DateCrt = "";
                             if (xFeild != "")
                             {
@@ -699,10 +826,21 @@ namespace SmartxAPI.Controllers
                                 if (xFeild.Contains("#"))
                                     Criteria = Criteria == "" ? xFeild.Replace("#", value) : Criteria + " and " + xFeild.Replace("#", value);
                                 else
-                                    Criteria = Criteria == "" ? xFeild + " " + xOperator + " '" + value + "' " : Criteria + " and " + xFeild + " " + xOperator + " '" + value + "' ";
+                                {
+                                    if (xFeild == "{Inv_Salesman.N_SalesmanID}")
+                                    {
+                                        Criteria = Criteria == "" ? xFeild + " " + xOperator + " " + value + " " : Criteria + " and " + xFeild + " " + xOperator + " " + value + " ";
+                                        SalesmanID = myFunctions.getIntVAL(value.ToString());
+                                    }
+                                    else
+
+                                        Criteria = Criteria == "" ? xFeild + " " + xOperator + " '" + value + "' " : Criteria + " and " + xFeild + " " + xOperator + " '" + value + "' ";
+
+                                }
                             }
                             x_Reporttitle = x_Reporttitle + FieldName + value;
                         }
+
 
 
                         //{table.fieldname} in {?Start date} to {?End date}
@@ -723,6 +861,34 @@ namespace SmartxAPI.Controllers
                     {
                         Criteria = Criteria + " and " + UserData + "=" + nUserID;
                     }
+                    if (xProCode != "")
+                    {
+
+                        SortedList mParamsList = new SortedList()
+                            {
+                            {"N_CompanyID",nCompanyID},
+                            {"N_FnYearID",FnYearID},
+                            {"N_PeriodID",0},
+                            {"X_Code",xProCode},
+                            {"X_Parameter", procParam },
+                            {"N_UserID",myFunctions.GetUserID(User)},
+                            {"N_BranchID",BranchID},
+                            // {"N_SalesmanID",SalesmanID},
+
+                            // {"X_InstanceCode",random},
+                            };
+                        dLayer.ExecuteDataTablePro("SP_OpeningBalanceGenerate", mParamsList, connection);
+
+                        // if(xInstanceCode!="")
+                        // Criteria = Criteria == "" ? xInstanceCode + "='"+random+"' " : Criteria + " and "+xInstanceCode+"='"+random+"' ";
+
+                    }
+
+
+
+
+
+
                     dbName = connection.Database;
                 }
 
@@ -732,7 +898,7 @@ namespace SmartxAPI.Controllers
                     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                 };
                 var client = new HttpClient(handler);
-                var random = RandomString();
+
                 //HttpClient client = new HttpClient(clientHandler);
 
                 var rptArray = reportName.Split(@"\");
@@ -744,7 +910,8 @@ namespace SmartxAPI.Controllers
                 }
 
 
-                string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;//+ connectionString;
+                //string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;
+                string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention + "&N_FormID=0&QRUrl=&N_PkeyID=0&partyName=&docNumber=&formName=";
                 var path = client.GetAsync(URL);
 
                 path.Wait();
@@ -764,6 +931,207 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+
+
+        // [HttpPost("getModuleReport")]
+        // public IActionResult GetModuleReports([FromBody] DataSet ds)
+        // {
+        //     DataTable MasterTable;
+        //     DataTable DetailTable;
+
+        //     MasterTable = ds.Tables["master"];
+        //     DetailTable = ds.Tables["details"];
+        //     int nCompanyID = myFunctions.GetCompanyID(User);
+        //     string x_comments = "";
+        //     string x_Reporttitle = "";
+        //     string X_TextforAll = "=all";
+        //     int nUserID = myFunctions.GetUserID(User);
+
+        //     try
+        //     {
+        //         String Criteria = "";
+        //         String reportName = "";
+        //         String CompanyData = "";
+        //         String YearData = "";
+        //         String FieldName = "";
+        //         String UserData = "";
+
+        //         var dbName = "";
+        //         string Extention = "";
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             //int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["moduleID"].ToString());
+        //             int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportCategoryID"].ToString());
+        //             int ReportID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportID"].ToString());
+        //             int FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["nFnYearID"].ToString());
+        //             Extention = MasterTable.Rows[0]["extention"].ToString();
+
+        //             SortedList Params1 = new SortedList();
+        //             Params1.Add("@nMenuID", MenuID);
+        //             Params1.Add("@xType", "RadioButton");
+        //             Params1.Add("@nCompID", ReportID);
+
+
+        //             reportName = dLayer.ExecuteScalar("select X_rptFile from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and B_Active=1", Params1, connection).ToString();
+
+        //             reportName = reportName.Substring(0, reportName.Length - 4);
+
+
+        //             foreach (DataRow var in DetailTable.Rows)
+        //             {
+        //                 int compID = myFunctions.getIntVAL(var["compId"].ToString());
+        //                 string type = var["type"].ToString();
+        //                 string value = var["value"].ToString();
+        //                 string valueTo = var["valueTo"].ToString();
+
+        //                 SortedList Params = new SortedList();
+        //                 Params.Add("@nMenuID", MenuID);
+        //                 Params.Add("@xType", type.ToLower());
+        //                 Params.Add("@nCompID", compID);
+        //                 Params.Add("@xMain", "MainForm");
+        //                 string xFeild = dLayer.ExecuteScalar("select X_DataField from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
+        //                 bool bRange = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isNull(B_Range,0) from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString());
+        //                 string xOperator = dLayer.ExecuteScalar("select isNull(X_Operator,'') from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
+        //                 string xProCode = dLayer.ExecuteScalar("select X_ProcCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+        //                 CompanyData = dLayer.ExecuteScalar("select X_DataFieldCompanyID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+        //                 YearData = dLayer.ExecuteScalar("select X_DataFieldYearID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+        //                 FieldName = dLayer.ExecuteScalar("select X_Text from vw_WebReportMenus where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and N_LanguageId=1", Params, connection).ToString();
+        //                 UserData = dLayer.ExecuteScalar("select X_DataFieldUserID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+        //                 FieldName = FieldName + "=";
+
+        //                 if (xOperator == null || xOperator == "")
+        //                     xOperator = "=";
+
+        //                 if (x_Reporttitle != "")
+        //                     x_Reporttitle += ", ";
+
+        //                 if (type.ToLower() == "datepicker")
+        //                 {
+        //                     DateTime dateFrom = Convert.ToDateTime(value);
+        //                     DateTime dateTo = Convert.ToDateTime(valueTo);
+        //                     string procParam = "";
+        //                     if (dateFrom != null && (bRange && dateTo != null))
+        //                     {
+        //                         x_Reporttitle = x_Reporttitle + FieldName + dateFrom.ToString("dd-MMM-yyyy") + " - " + dateTo.ToString("dd-MMM-yyyy");
+        //                         x_comments = dateFrom.ToString("dd-MMM-yyyy") + " to " + dateTo.ToString("dd-MMM-yyyy");
+        //                         procParam = dateFrom.ToString("dd-MMM-yyyy") + "|" + dateTo.ToString("dd-MMM-yyyy") + "|";
+        //                     }
+        //                     else if (dateFrom != null && !bRange)
+        //                     {
+        //                         x_Reporttitle = x_Reporttitle + FieldName + dateFrom.ToString("dd-MMM-yyyy");
+        //                         x_comments = dateFrom.ToString("dd-MMM-yyyy");
+        //                         procParam = dateFrom.ToString("dd-MMM-yyyy");
+        //                     }
+        //                     else if (bRange && dateTo != null)
+        //                     {
+        //                         x_Reporttitle = x_Reporttitle + FieldName + dateTo.ToString("dd-MMM-yyyy");
+        //                         x_comments = dateTo.ToString("dd-MMM-yyyy");
+        //                         procParam = dateTo.ToString("dd-MMM-yyyy") + "|";
+        //                     }
+
+        //                     if (xProCode != "")
+        //                     {
+
+        //                         SortedList mParamsList = new SortedList()
+        //                     {
+        //                     {"N_CompanyID",nCompanyID},
+        //                     {"N_FnYearID",FnYearID},
+        //                     {"N_PeriodID",0},
+        //                     {"X_Code",xProCode},
+        //                     {"X_Parameter", procParam },
+        //                     {"N_UserID",myFunctions.GetUserID(User)},
+        //                     {"N_BranchID",0}
+        //                     };
+        //                         dLayer.ExecuteDataTablePro("SP_OpeningBalanceGenerate", mParamsList, connection);
+
+        //                     }
+        //                     string DateCrt = "";
+        //                     if (xFeild != "")
+        //                     {
+        //                         if (bRange)
+        //                         {
+        //                             DateCrt = xFeild + " >= Date('" + dateFrom.Year + "," + dateFrom.Month + "," + dateFrom.Day + "') And " + xFeild + " <= Date('" + dateTo.Year + "," + dateTo.Month + "," + dateTo.Day + "') ";
+        //                         }
+        //                         else
+        //                         {
+        //                             DateCrt = xFeild + " " + xOperator + " Date('" + dateFrom.Year + "," + dateFrom.Month + "," + dateFrom.Day + "') ";
+        //                         }
+        //                         Criteria = Criteria == "" ? DateCrt : Criteria + " and " + DateCrt;
+        //                     }
+        //                 }
+        //                 else
+        //                 {
+        //                     if (xFeild != "")
+        //                     {
+        //                         if (xFeild.Contains("#"))
+        //                             Criteria = Criteria == "" ? xFeild.Replace("#", value) : Criteria + " and " + xFeild.Replace("#", value);
+        //                         else
+        //                             Criteria = Criteria == "" ? xFeild + " " + xOperator + " '" + value + "' " : Criteria + " and " + xFeild + " " + xOperator + " '" + value + "' ";
+        //                     }
+        //                     x_Reporttitle = x_Reporttitle + FieldName + value;
+        //                 }
+
+
+        //                 //{table.fieldname} in {?Start date} to {?End date}
+        //             }
+        //             if (Criteria == "" && CompanyData != "")
+        //             {
+        //                 Criteria = Criteria + CompanyData + "=" + nCompanyID;
+        //                 if (YearData != "")
+        //                     Criteria = Criteria + " and " + YearData + "=" + FnYearID;
+        //             }
+        //             else if (CompanyData != "")
+        //             {
+        //                 Criteria = Criteria + " and " + CompanyData + "=" + nCompanyID;
+        //                 if (YearData != "")
+        //                     Criteria = Criteria + " and " + YearData + "=" + FnYearID;
+        //             }
+        //             if (UserData != "")
+        //             {
+        //                 Criteria = Criteria + " and " + UserData + "=" + nUserID;
+        //             }
+        //             dbName = connection.Database;
+        //         }
+
+
+        //         var handler = new HttpClientHandler
+        //         {
+        //             ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
+        //         };
+        //         var client = new HttpClient(handler);
+        //         var random = RandomString();
+        //         //HttpClient client = new HttpClient(clientHandler);
+
+        //         var rptArray = reportName.Split(@"\");
+        //         string actReportLocation = reportLocation;
+        //         if (rptArray.Length > 1)
+        //         {
+        //             reportName = rptArray[1].ToString();
+        //             actReportLocation = actReportLocation + rptArray[0].ToString() + "/";
+        //         }
+
+
+        //         string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;//+ connectionString;
+        //         var path = client.GetAsync(URL);
+
+        //         path.Wait();
+        //         return Ok(_api.Success(new SortedList() { { "FileName", reportName.Trim() + random + "." + Extention } }));
+        //         //string RptPath = reportPath + reportName.Trim() + ".pdf";
+        //         // var memory = new MemoryStream();
+
+        //         // using (var stream = new FileStream(RptPath, FileMode.Open))
+        //         // {
+        //         //     await stream.CopyToAsync(memory);
+        //         // }
+        //         // memory.Position = 0;
+        //         // return File(memory, _api.GetContentType(RptPath), Path.GetFileName(RptPath));
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(User, e));
+        //     }
+        // }
 
 
         // private void LoadSelectionFormulae(int nFnYearID,int nBranchID,bool bAllBranchData)

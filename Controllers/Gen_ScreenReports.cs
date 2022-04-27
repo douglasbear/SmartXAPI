@@ -87,10 +87,19 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult TaskList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nTableViewID, int nMenuID)
+        public ActionResult TaskList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nTableViewID, int nMenuID,int n_UserID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
-            int nUserID = myFunctions.GetUserID(User);
+            int nUserID;
+            if(n_UserID>0)
+            {
+               nUserID=n_UserID; 
+            }
+            else
+            {
+              nUserID = myFunctions.GetUserID(User);
+            }
+            
             DataTable dt = new DataTable();
             SortedList OutPut = new SortedList();
 
@@ -139,9 +148,14 @@ namespace SmartxAPI.Controllers
                         string PKey = dRow["X_PKey"].ToString();
                         string UserPattern = myFunctions.GetUserPattern(User);
                         string Pattern = "";
+
                         if (UserPattern != "")
                         {
-                            Pattern = " and Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern;
+                            if (nTableViewID == 1)
+                                Pattern = " and ( Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern + " or N_CreatorID=" + myFunctions.GetUserID(User) + ")";
+                            else 
+                                Pattern = " and ( Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern + ")";
+
                         }
 
                         if (Count == 0)

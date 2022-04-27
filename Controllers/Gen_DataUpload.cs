@@ -35,20 +35,26 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable Mastertable = new DataTable();
+                DataTable Generaltable = new DataTable();
+                Generaltable = ds.Tables["general"];
                 int nCompanyID = myFunctions.GetCompanyID(User);
-                int nFnYearId = 1;
                 int nMasterID = 0;
                 string xTableName = "";
                 SortedList Params = new SortedList();
                 Params.Add("N_CompanyID", nCompanyID);
-                Params.Add("N_FnYearID", nFnYearId);
-                int N_UserID= myFunctions.GetUserID(User);
+                Params.Add("N_FnYearID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_FnYearID"].ToString()));
+                Params.Add("N_BranchID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_BranchID"].ToString()));
+                Params.Add("N_LocationID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_LocationID"].ToString()));
+                int N_UserID = myFunctions.GetUserID(User);
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     foreach (DataTable dt in ds.Tables)
                     {
+                        if (dt.Columns.Contains("notes"))
+                            dt.Columns.Remove("notes");
                         Params.Add("X_Type", dt.TableName);
                         Mastertable = ds.Tables[dt.TableName];
                         foreach (DataColumn col in Mastertable.Columns)
@@ -59,11 +65,11 @@ namespace SmartxAPI.Controllers
                         }
                         Mastertable.Columns.Add("Pkey_Code");
 
-                        if (dt.TableName == "Customer List")
+                        if (dt.TableName.ToString().ToLower() == "customer list" || dt.TableName.ToString().ToLower() == "customers" || dt.TableName.ToString().ToLower() == "customer")
                             xTableName = "Mig_Customers";
-                        if (dt.TableName == "Vendor List")
+                        if (dt.TableName.ToString().ToLower() == "vendor list" || dt.TableName.ToString().ToLower() == "vendors" || dt.TableName.ToString().ToLower() == "vendor")
                             xTableName = "Mig_Vendors";
-                        if (dt.TableName == "Lead List")
+                        if (dt.TableName.ToString().ToLower() == "lead list")
                         {
                             xTableName = "Mig_Leads";
                             Mastertable.Columns.Add("N_UserID");
@@ -72,27 +78,28 @@ namespace SmartxAPI.Controllers
                                 dtRow["N_UserID"] = N_UserID;
                             }
                         }
-                        if (dt.TableName == "Chart of Accounts")
+                        if (dt.TableName.ToString().ToLower() == "chart of accounts")
                             xTableName = "Mig_Accounts";
-                        if (dt.TableName == "Products Stock")
+                        if (dt.TableName.ToString().ToLower() == "products stock")
                             xTableName = "Mig_Stock";
-                        if (dt.TableName == "Employee List")
+                        if (dt.TableName.ToString().ToLower() == "employee list" || dt.TableName.ToString().ToLower() == "employees")
                             xTableName = "Mig_Employee";
-                        if (dt.TableName == "products stock")
+                        if (dt.TableName.ToString().ToLower() == "products stock")
                             xTableName = "Mig_Stock";
-                        if (dt.TableName == "FixedAssets List")
+                        if (dt.TableName.ToString().ToLower() == "fixedassets list")
                             xTableName = "_Mig_AssetList";
-                        if (dt.TableName == "Salary History")
+                        if (dt.TableName.ToString().ToLower() == "salary history")
                             xTableName = "Mig_EmployeeSalaryHistory";
-                        if (dt.TableName == "Employee Salary")
+                        if (dt.TableName.ToString().ToLower() == "employee salary")
                             xTableName = "Mig_EmployeeSalary";
-                        if (dt.TableName == "Leave History")
+                        if (dt.TableName.ToString().ToLower() == "leave history")
                             xTableName = "Mig_EmployeeLeaveHistory";
+                        if (dt.TableName.ToString().ToLower() == "customer balances")
+                            xTableName = "Mig_CustomerOpening";
+                        if (dt.TableName.ToString().ToLower() == "vendor balances")
+                            xTableName = "Mig_VendorOpening";
 
-
-
-
-                        if (dt.TableName == "Product List" || dt.TableName == "Products")
+                        if (dt.TableName.ToString().ToLower() == "product list" || dt.TableName.ToString().ToLower() == "products")
                         {
                             xTableName = "Mig_Items";
                             Mastertable.Columns.Add("N_CompanyID");
@@ -103,7 +110,7 @@ namespace SmartxAPI.Controllers
                         }
 
 
-                        if (dt.TableName == "Category")
+                        if (dt.TableName.ToString().ToLower() == "category")
                         {
                             xTableName = "Mig_POSCategory";
                             Mastertable.Columns.Add("N_CompanyID");
@@ -113,7 +120,7 @@ namespace SmartxAPI.Controllers
                             }
                         }
 
-                        if (dt.TableName == "Package Items")
+                        if (dt.TableName.ToString().ToLower() == "package items")
                         {
                             xTableName = "Mig_PackageItem";
                             Mastertable.Columns.Add("N_CompanyID");
@@ -124,7 +131,7 @@ namespace SmartxAPI.Controllers
                         }
 
 
-                        if (dt.TableName == "Warranty Items")
+                        if (dt.TableName.ToString().ToLower() == "warranty items")
                         {
                             xTableName = "Mig_WarrantyItem";
                             Mastertable.Columns.Add("N_CompanyID");
@@ -134,16 +141,92 @@ namespace SmartxAPI.Controllers
                             }
                         }
 
-
-
-
-
                         if (Mastertable.Rows.Count > 0)
                         {
 
+                            if (Mastertable.Columns.Contains("Notes"))
+                                Mastertable.Columns.Remove("Notes");
+
                             dLayer.ExecuteNonQuery("delete from " + xTableName, Params, connection, transaction);
-                            nMasterID = dLayer.SaveData(xTableName, "PKey_Code", Mastertable, connection, transaction);
-                            dLayer.ExecuteNonQueryPro("SP_SetupData", Params, connection, transaction);
+
+
+                            string FieldList = "";
+                            string FieldValuesArray = "";
+                            string IDFieldName = "PKey_Code";
+                            int rowCount = 0;
+                            int totalCount = 0;
+                            for (int j = 0; j < Mastertable.Rows.Count; j++)
+                            {
+                                rowCount = rowCount + 1;
+                                string FieldValues = "";
+                                for (int k = 0; k < Mastertable.Columns.Count; k++)
+                                {
+                                    var values = "";
+                                    if (Mastertable.Columns[k].ColumnName.ToString().ToLower() == IDFieldName.ToLower())
+                                    {
+                                        values = (j + 1).ToString();
+                                    }
+                                    else
+                                    {
+                                         if (Mastertable.Rows[j][k] == DBNull.Value) 
+                                         {
+                                        values = "";
+
+                                         }else{
+                                        values = Mastertable.Rows[j][k].ToString();
+                                         }
+                                        values = values.Replace("|", " ");
+                                    }
+
+                                    FieldValues = FieldValues + "|" + values;
+                                    if (j == 0)
+                                        FieldList = FieldList + "," + Mastertable.Columns[k].ColumnName.ToString();
+
+
+                                }
+
+                                if (j == 0)
+                                {
+                                    FieldList = FieldList.Substring(1);
+                                }
+
+                                FieldValues = ValidateString(FieldValues.Substring(1));
+
+                                FieldValuesArray = FieldValuesArray + ",(" + FieldValues + ")";
+                                if (rowCount == 1000 || Mastertable.Rows.Count == (totalCount + rowCount))
+                                {
+                                    totalCount = totalCount + rowCount;
+                                    FieldValuesArray = FieldValuesArray.Substring(1);
+                                    string inserStript = "insert into " + xTableName + " (" + FieldList + ") values" + FieldValuesArray;
+                                    dLayer.ExecuteNonQuery(inserStript, connection, transaction); 
+                                    FieldValuesArray = "";
+                                    rowCount = 0;
+                                }
+
+                            }
+
+
+ 
+                            //  nMasterID = dLayer.SaveData(xTableName, "PKey_Code", Mastertable, connection, transaction);
+                            nMasterID= myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Count(1) from "+xTableName, connection, transaction).ToString());
+
+                            object ValFlag;
+                            SortedList ValidationParam = new SortedList();
+                            ValidationParam.Add("N_CompanyID", nCompanyID);
+                            ValidationParam.Add("N_FnYearID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_FnYearID"].ToString()));
+                            ValidationParam.Add("X_Type", dt.TableName);
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
+                            // if(ValFlag==null)return Ok(_api.Error(User, "Uploaded Error"));
+                            // if(myFunctions.getIntVAL(ValFlag.ToString())==0)return Ok(_api.Error(User, "Uploaded Error"));
+                            dLayer.ExecuteNonQueryPro("SP_SetupData_cloud", Params, connection, transaction);
                             if (nMasterID <= 0)
                             {
                                 transaction.Rollback();
@@ -172,6 +255,15 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
         }
+
+        public string ValidateString(string InputString)
+        {
+            string OutputString = InputString.Replace("'", "''");
+            OutputString = OutputString.Replace("|", "','");
+            OutputString = "'" + OutputString + "'";
+            return OutputString;
+        }
+
 
         [HttpGet("dataList")]
         public ActionResult GetDepartmentList(string parent)

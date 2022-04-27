@@ -74,7 +74,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nCountryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CountryID"].ToString());
-               
+                int N_CountryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CountryID"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -95,11 +95,16 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User,"Unable to generate Country Master")); }
                         MasterTable.Rows[0]["X_CountryCode"] = CountryCode;
                     }
+                    //  else
+                    // {
+                    //     dLayer.DeleteData("Acc_Country", "N_CountryID", N_CountryID, "", connection, transaction);
+                    // }
+
                      MasterTable.Columns.Remove("n_FnYearId");
                      
 
                     string X_CountryName= MasterTable.Rows[0]["X_CountryName"].ToString();
-                    string DupCriteria = "X_CountryName='" + X_CountryName + "'";
+                    string DupCriteria = "";
 
                     nCountryID = dLayer.SaveData("Acc_Country", "N_CountryID",DupCriteria,"", MasterTable, connection, transaction);
                     if (nCountryID <= 0)

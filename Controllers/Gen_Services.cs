@@ -55,15 +55,21 @@ namespace SmartxAPI.Controllers
                     {
                         masterTable = "Pay_Employee";
                         column = "x_EmpCode";
-
-
                     }
-                    if (formID == 64)
+                    if (formID == 64 || formID == 1346)
                     {
                         masterTable = "Inv_Sales";
                         column = "X_ReceiptNo";
-
-
+                    }
+                    if (formID == 53)
+                    {
+                        masterTable = "Inv_ItemMaster";
+                        column = "X_ItemCode";
+                    }
+                    if (formID == 65)
+                    {
+                        masterTable = "Inv_Purchase";
+                        column = "X_InvoiceNo";
                     }
 
 
@@ -96,16 +102,17 @@ namespace SmartxAPI.Controllers
                                     break;
                             }
                         }
-                        else if (formID == 64)
+                        else
                         {
                             Params.Add("N_CompanyID", nCompanyID);
                             Params.Add("N_YearID", nFnYearID);
-                            Params.Add("N_FormID", 64);
-            
-                            newCode = dLayer.GetAutoNumber("Inv_Sales", "X_ReceiptNo", Params, connection, transaction);
+                            Params.Add("N_FormID", formID);
+
+                            newCode = dLayer.GetAutoNumber(masterTable, column, Params, connection, transaction);
                             if (newCode == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate ")); }
-                            
+
                         }
+
                     }
 
 
@@ -120,8 +127,40 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
+
+        [HttpGet("checkTransaction")]
+        public ActionResult GetTransaction(int nCustomerID, int nCompanyID, int nFnYearID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    int Count = 0;
+                    connection.Open();
+                    SortedList Params = new SortedList();
+                    Params.Add("N_CompanyID", nCompanyID);
+                    string sqlCommand = "";
+                    if (nCustomerID > 0)
+                    {
+                        sqlCommand = "Select Count(*) from vw_Inv_CheckCustomer Where N_CompanyID=" + nCompanyID + " and N_CustomerID=" + nCustomerID + "";
+                    }
+                    Count = myFunctions.getIntVAL(dLayer.ExecuteScalar(sqlCommand, Params, connection).ToString());
+                    SortedList output = new SortedList();
+                    output.Add("Count", Count);
+                    return Ok(_api.Success(output));
+
+                }
+            }
+
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+        
     }
 }
+

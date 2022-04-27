@@ -50,6 +50,27 @@ namespace SmartxAPI.Controllers
                     string sqlCommandText = "";
                     string sqlCommandCount = "";
                     string Searchkey = "";
+                     int nUserID = myFunctions.GetUserID(User);
+                     string UserPattern = myFunctions.GetUserPattern(User);
+                     string Pattern = "";
+
+                    if (UserPattern != "")
+                          {
+                    Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
+                    Params.Add("@UserPattern",UserPattern);
+                          }
+                       else
+                         {
+                    object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId,Params,connection);
+
+                    if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    Pattern = " and N_CreatedUser=" + nUserID;
+                         }
+
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    int N_decimalPlace = 2;
+                    N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Sales", "Decimal_Place", "N_Value", nCompanyID, dLayer, connection));
+                    N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     if (xSearchkey != null && xSearchkey.Trim() != "")
                         Searchkey = "and (X_DebitNoteNo like '%" + xSearchkey + "%' or X_CustomerName like '%" + xSearchkey + "%')";
@@ -67,7 +88,7 @@ namespace SmartxAPI.Controllers
                                 xSortBy = "Cast(D_ReturnDate as DateTime )" + xSortBy.Split(" ")[1];
                                 break;
                             case "n_TotalPaidAmountF":
-                                xSortBy = "Cast(REPLACE(n_TotalPaidAmountF,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
+                                xSortBy = "Cast(REPLACE(n_TotalPaidAmountF,',','') as Numeric(10,"+N_decimalPlace+")) " + xSortBy.Split(" ")[1];
                                 break;
                             default: break;
                         }
@@ -92,9 +113,9 @@ namespace SmartxAPI.Controllers
                         }
                     }
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_DebitNoteId not in(select top(" + Count + ")  N_DebitNoteId from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + Searchkey + " and N_DebitNoteId not in(select top(" + Count + ")  N_DebitNoteId from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
@@ -102,7 +123,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_TotalPaidAmount,',','') as Numeric(10,2)) ) as TotalAmount  from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_TotalPaidAmount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount  from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -269,6 +290,12 @@ namespace SmartxAPI.Controllers
                     if (myFunctions.getBoolVAL(Res.ToString()) == false)
                     {
                         sqlCommandText2 = "SELECT   * from vw_SalesReturnWithoutSale_Display Where N_DebitNoteId=@DebitNoteID and N_CompanyID=@CompanyID and N_FnYearID=@FnYearID";
+
+                        SalesReturnDetails = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
+                        SalesReturnDetails.AcceptChanges();
+                        SalesReturn.AcceptChanges();
+                        SalesReturnDetails = _api.Format(SalesReturnDetails, "Details");
+                        dt.Tables.Add(SalesReturnDetails);
                     }
                     else
                     if (xReceiptNo != "" && xReceiptNo != null)
@@ -287,14 +314,14 @@ namespace SmartxAPI.Controllers
                             {
                                 if (var1["N_RetQty"] != null && var1["N_RetQty"].ToString() != "")
                                 {
-                                    if(var1["N_Qty"].ToString() != var1["N_RetQty"].ToString())
+                                    if (var1["N_Qty"].ToString() != var1["N_RetQty"].ToString())
                                     {
-                                    var1["n_Qty"] = (myFunctions.getIntVAL(var1["N_Qty"].ToString()) - myFunctions.getIntVAL(var1["N_RetQty"].ToString())).ToString();
-                                    var1["n_RetQty"] = 0.00;
-                                    SalesReturn.Rows[0]["N_DebitNoteId"] = 0;
-                                    SalesReturn.Rows[0]["X_DebitNoteNo"] = "@Auto";
-                                    SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "B_Invoice", typeof(int), 1);
-                                    SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "N_UserID", typeof(int), myFunctions.GetUserID(User));
+                                        var1["n_Qty"] = (myFunctions.getIntVAL(var1["N_Qty"].ToString()) - myFunctions.getIntVAL(var1["N_RetQty"].ToString())).ToString();
+                                        var1["n_RetQty"] = 0.00;
+                                        SalesReturn.Rows[0]["N_DebitNoteId"] = 0;
+                                        SalesReturn.Rows[0]["X_DebitNoteNo"] = "@Auto";
+                                        SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "B_Invoice", typeof(int), 1);
+                                        SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "N_UserID", typeof(int), myFunctions.GetUserID(User));
                                     }
 
                                 }
@@ -303,6 +330,8 @@ namespace SmartxAPI.Controllers
                         }
                         SalesReturnDetails.AcceptChanges();
                         SalesReturn.AcceptChanges();
+                         SalesReturnDetails = _api.Format(SalesReturnDetails, "Details");
+                           dt.Tables.Add(SalesReturnDetails);
                     }
                     else
                     {
@@ -313,20 +342,37 @@ namespace SmartxAPI.Controllers
 
                         SalesReturnDetails = new DataTable();
                         SalesReturnDetails = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
+                         SalesReturnDetails = myFunctions.AddNewColumnToDataTable(SalesReturnDetails, "n_UnitQty", typeof(int), 1);
+                       
+                        foreach (DataRow var1 in SalesReturnDetails.Rows)
+                        {
 
+                            object SalesUnit = dLayer.ExecuteScalar("SELECT X_ItemUnit from Inv_ItemUnit where N_ItemID=" + myFunctions.getIntVAL(var1["N_ItemID"].ToString()) + " and N_ItemUnitID=" + myFunctions.getIntVAL(var1["N_UnitID"].ToString()) + "", Params, connection);
+                            if (SalesUnit != null)
+                                var1["X_ItemUnit"] = SalesUnit.ToString();
+                            object unitQty = dLayer.ExecuteScalar("SELECT N_Qty from Inv_ItemUnit where N_ItemID=" + myFunctions.getIntVAL(var1["N_ItemID"].ToString()) + " and N_ItemUnitID=" + myFunctions.getIntVAL(var1["N_UnitID"].ToString()) + "", Params, connection);
+                            if (unitQty != null)
+                                var1["n_UnitQty"] = unitQty.ToString();
+                            else
+                                var1["n_UnitQty"] = 1;
+
+
+                        }
+                        SalesReturnDetails.AcceptChanges();
+
+
+                        SalesReturnDetails = _api.Format(SalesReturnDetails, "Details");
+                        DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(SalesReturn.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(SalesReturn.Rows[0]["N_DebitNoteId"].ToString()), this.FormID, myFunctions.getIntVAL(SalesReturn.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                        Attachments = _api.Format(Attachments, "attachments");
+
+                        dt.Tables.Add(SalesReturnDetails);
+                        dt.Tables.Add(Attachments);
 
                     }
-
-
-                    SalesReturnDetails = _api.Format(SalesReturnDetails, "Details");
-                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(SalesReturn.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(SalesReturn.Rows[0]["N_DebitNoteId"].ToString()), this.FormID, myFunctions.getIntVAL(SalesReturn.Rows[0]["N_FnYearID"].ToString()), User, connection);
-                    Attachments = _api.Format(Attachments, "attachments");
-
-                    dt.Tables.Add(SalesReturnDetails);
-                    dt.Tables.Add(Attachments);
+                    return Ok(_api.Success(dt));
 
                 }
-                return Ok(_api.Success(dt));
+
             }
             catch (Exception e)
             {
@@ -357,6 +403,7 @@ namespace SmartxAPI.Controllers
                 int UserID = myFunctions.GetUserID(User);
                 int N_CompanyID = myFunctions.GetCompanyID(User);
                 int N_InvoiceId = 0;
+                int nFnYearID = 0;
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -372,10 +419,26 @@ namespace SmartxAPI.Controllers
                     double N_TotalPaidF = myFunctions.getVAL(MasterTable.Rows[0]["n_TotalPaidAmountF"].ToString());
                     MasterTable.Rows[0]["n_TotalPaidAmountF"] = N_TotalPaidF;
 
+                     if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_ReturnDate"].ToString(), "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                    {
+                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_ReturnDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                        if (DiffFnYearID != null)
+                        {
+                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                            nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                            //QueryParams["@nFnYearID"] = nFnYearID;
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                        }
+                    }
+
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
-                        Params.Add("N_YearID", masterRow["n_FnYearId"].ToString());
+                        Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
                         InvoiceNo = dLayer.GetAutoNumber("Inv_SalesReturnMaster", "X_DebitNoteNo", Params, connection, transaction);
@@ -416,6 +479,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     // dLayer.setTransaction();
+                    MasterTable.Columns.Remove("n_ProjectID");
                     N_InvoiceId = dLayer.SaveData("Inv_SalesReturnMaster", "N_DebitNoteId", MasterTable, connection, transaction);
                     if (N_InvoiceId <= 0)
                     {

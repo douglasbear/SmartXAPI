@@ -45,6 +45,11 @@ namespace SmartxAPI.Controllers
         [HttpGet("list")]
         public ActionResult GetGoodsReceiveList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
+              try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
             DataTable dt = new DataTable();
             DataTable CountTable = new DataTable();
             SortedList Params = new SortedList();
@@ -52,6 +57,26 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string sqlCommandCount = "";
             string Searchkey = "";
+
+            int nUserID = myFunctions.GetUserID(User);
+            string UserPattern = myFunctions.GetUserPattern(User);
+               string Pattern = "";
+               
+              if (UserPattern != "")
+                {
+                    Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
+                    Params.Add("@UserPattern",UserPattern);
+
+                }
+                else
+                {
+                    object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId,Params,connection);
+
+                    if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    Pattern = " and N_CreatedUser=" + nUserID;
+                }
+
+
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and ([MRN No] like '%" + xSearchkey + "%' or X_VendorName like '%" + xSearchkey + "%')";
@@ -71,22 +96,18 @@ namespace SmartxAPI.Controllers
             }
             int Count = (nPage - 1) * nSizeperpage;
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_IsDirectMRN=1 " + Pattern + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_MRNID not in (select top(" + Count + ") N_MRNID from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_IsDirectMRN=1 "+ Pattern + Searchkey + " and N_MRNID not in (select top(" + Count + ") N_MRNID from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
 
             // sqlCommandText = "select * from Inv_MRNDetails where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             SortedList OutPut = new SortedList();
 
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
+          
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_IsDirectMRN=1 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     if (Summary.Rows.Count > 0)
@@ -96,7 +117,7 @@ namespace SmartxAPI.Controllers
                     }
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
-                }
+                
                 if (dt.Rows.Count == 0)
                 {
                     return Ok(_api.Warning("No Results Found"));
@@ -104,6 +125,7 @@ namespace SmartxAPI.Controllers
                 else
                 {
                     return Ok(_api.Success(OutPut));
+                }
                 }
             }
             catch (Exception e)
@@ -118,6 +140,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             DataTable dtGoodReceive = new DataTable();
             DataTable dtGoodReceiveDetails = new DataTable();
+            DataTable dtFreightCharges = new DataTable();
             int N_GRNID = 0;
             int N_POrderID = 0;
 
@@ -127,11 +150,12 @@ namespace SmartxAPI.Controllers
             Params.Add("@BranchID", nBranchId);
             string X_MasterSql = "";
             string X_DetailsSql = "";
+            string X_FreightSql = "";
 
             if (nMRNNo != null)
             {
                 Params.Add("@GRNNo", nMRNNo);
-                X_MasterSql = "select N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS x_MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description from vw_InvMRNNo_Search where N_CompanyID=@CompanyID and [MRN No]=@GRNNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                X_MasterSql = "select N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS x_MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,N_FreightAmt,N_CreatedUser,D_CreatedDate from vw_InvMRNNo_Search where N_CompanyID=@CompanyID and [MRN No]=@GRNNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
             }
             if (poNo != null)
             {
@@ -168,6 +192,10 @@ namespace SmartxAPI.Controllers
 
                     dtGoodReceiveDetails = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
                     dtGoodReceiveDetails = _api.Format(dtGoodReceiveDetails, "Details");
+
+                    X_FreightSql = "Select *,X_ShortName as X_CurrencyName FROM vw_InvPurchaseFreights WHERE N_PurchaseID=" + N_GRNID;
+                    dtFreightCharges = dLayer.ExecuteDataTable(X_FreightSql, Params, connection);
+                    dtFreightCharges = _api.Format(dtFreightCharges, "freightCharges");
                     if (N_POrderID != 0)
                     {
                     }
@@ -180,6 +208,7 @@ namespace SmartxAPI.Controllers
                     }
                     dt.Tables.Add(dtGoodReceive);
                      dt.Tables.Add(dtGoodReceiveDetails);
+                     dt.Tables.Add(dtFreightCharges);
                   
 
                 }
@@ -369,10 +398,10 @@ namespace SmartxAPI.Controllers
         {
             DataTable MasterTable;
             DataTable DetailTable;
-            DataTable dtFreightChargeDist;
+            DataTable GRNFreight;
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
-            dtFreightChargeDist = ds.Tables["freightchargedist"];
+            GRNFreight = ds.Tables["freightCharges"];
             DataTable Attachment = ds.Tables["attachments"];
             SortedList Params = new SortedList();
             // Auto Gen
@@ -386,6 +415,11 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nFnYearID = myFunctions.getIntVAL(masterRow["n_FnYearId"].ToString());
             int n_POrderID = myFunctions.getIntVAL(masterRow["n_POrderID"].ToString());
+
+            
+            
+
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -396,6 +430,21 @@ namespace SmartxAPI.Controllers
                     N_GRNID = myFunctions.getIntVAL(masterRow["N_MRNID"].ToString());
                     int N_VendorID = myFunctions.getIntVAL(masterRow["n_VendorID"].ToString());
 
+                    if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_MRNDate"].ToString(), "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                    {
+                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_MRNDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                        if (DiffFnYearID != null)
+                        {
+                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                            nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                            //QueryParams["@nFnYearID"] = nFnYearID;
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                        }
+                    }
                     if (N_GRNID > 0)
                     {
                         if (CheckProcessed(N_GRNID))
@@ -461,14 +510,6 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User,"Unable to save Goods Receive Note!"));
                     }
-                    // if (dtFreightChargeDist.Rows.Count > 0)
-                    // {
-                    //     N_GRNFreightID = dLayer.SaveData("Inv_MRNFreights", "N_MRNFreightID", dtFreightChargeDist, connection, transaction); 
-                    // }
-                    // if(N_GRNFreightID > 0) {
-                    //     SortedList FreightToPurchaseParam = new SortedList();
-                    //     FreightToPurchaseParam.Add("N_FPurchaseID",);
-                    //}
                     if (N_SaveDraft == 0)
                     {
                         try
@@ -514,6 +555,19 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(_api.Error(User,ex));
                         }
+                    }
+
+                    if (GRNFreight.Rows.Count > 0)
+                    {
+                        if (!GRNFreight.Columns.Contains("N_PurchaseID"))
+                        {
+                            GRNFreight.Columns.Add("N_PurchaseID");
+                        }
+                        foreach (DataRow var in GRNFreight.Rows)
+                        {
+                            var["N_PurchaseID"] = N_GRNID;
+                        }
+                        dLayer.SaveData("Inv_PurchaseFreights", "N_PurchaseFreightID", GRNFreight, connection, transaction);
                     }
                     transaction.Commit();
                 }

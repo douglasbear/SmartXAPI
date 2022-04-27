@@ -162,7 +162,7 @@ namespace SmartxAPI.GeneralFunctions
                             else
                             {
                                 object obj1 = dLayer.ExecuteScalar("select N_ReminderID from DMS_MasterFiles Where X_refName = '" + Path.GetFileName(dsAttachment.Rows[i]["X_refName"].ToString()) + "' and N_CompanyID = " + nCompanyID, connection, transaction);
-                                if (obj1.ToString() != "")
+                                if (obj1.ToString() != "" && ExpiryDate != "")
                                 {
                                     dLayer.ExecuteNonQuery("update Gen_Reminder set D_ExpiryDate = '" + Convert.ToDateTime(ExpiryDate).ToString("dd/MMM/yyyy") + "' ,N_RemCategoryID=" + N_remCategory + " where N_ReminderID=" + myFunctions.getIntVAL(obj1.ToString()) + " and N_CompanyID=" + nCompanyID, connection, transaction);
                                 }

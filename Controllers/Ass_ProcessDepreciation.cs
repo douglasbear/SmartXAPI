@@ -248,29 +248,45 @@ namespace SmartxAPI.Controllers
                     int N_ItemID=0,N_DeprCalcID=0;
                     DateTime EndDate;
                     bool B_completed=true;
-                    foreach (DataRow drow in DepTable.Rows)
-                    {
-                        N_ItemID = myFunctions.getIntVAL(drow["N_ItemID"].ToString());
-                        N_DeprCalcID = myFunctions.getIntVAL(drow["N_DeprCalcID"].ToString());
-                        EndDate = D_RunDate;
-                        EndDate = EndDate.AddMonths(1);
-                        EndDate = EndDate.AddDays(-(EndDate.Day));
-                        SortedList ProcParams = new SortedList(){
-                            {"N_CompanyID",N_CompanyID.ToString()},
-                            {"N_FnYearID",N_FnYearID.ToString()},
-                            {"N_ItemID",myFunctions.getIntVAL(drow["N_ItemID"].ToString())},
-                            {"D_EndDate",Convert.ToDateTime(EndDate.ToString())},
-                            {"N_UserID",myFunctions.GetUserID(User).ToString()},
-                            {"X_DeprNo",myFunctions.getIntVAL(DepreciationNo.ToString())}
-                        };
-                        if (N_DeprCalcID == 195 || N_DeprCalcID == 242)
-                        {
-                            B_completed = Convert.ToBoolean(dLayer.ExecuteScalarPro("SP_Ass_Depreciation_WDV" ,ProcParams, connection, transaction).ToString());
-                        }
-                        else
-                            B_completed = myFunctions.Depreciation(dLayer,N_CompanyID,N_FnYearID,N_UserID,N_ItemID, EndDate, DepreciationNo.Trim(),connection, transaction);
+                    // foreach (DataRow drow in DepTable.Rows)
+                    // {
+                    //     N_ItemID = myFunctions.getIntVAL(drow["N_ItemID"].ToString());
+                    //     N_DeprCalcID = myFunctions.getIntVAL(drow["N_DeprCalcID"].ToString());
+                    //     EndDate = D_RunDate;
+                    //     EndDate = EndDate.AddMonths(1);
+                    //     EndDate = EndDate.AddDays(-(EndDate.Day));
+                    //     SortedList ProcParams = new SortedList(){
+                    //         {"N_CompanyID",N_CompanyID.ToString()},
+                    //         {"N_FnYearID",N_FnYearID.ToString()},
+                    //         {"N_ItemID",myFunctions.getIntVAL(drow["N_ItemID"].ToString())},
+                    //         {"D_EndDate",Convert.ToDateTime(EndDate.ToString())},
+                    //         {"N_UserID",myFunctions.GetUserID(User).ToString()},
+                    //         {"X_DeprNo",myFunctions.getIntVAL(DepreciationNo.ToString())}
+                    //     };
+                    //     if (N_DeprCalcID == 195 || N_DeprCalcID == 242)
+                    //     {
+                    //         B_completed = Convert.ToBoolean(dLayer.ExecuteScalarPro("SP_Ass_Depreciation_WDV" ,ProcParams, connection, transaction).ToString());
+                    //     }
+                    //     else
+                    //         B_completed = myFunctions.Depreciation(dLayer,N_CompanyID,N_FnYearID,N_UserID,N_ItemID, EndDate, DepreciationNo.Trim(),connection, transaction);
                             
-                    }
+                    // }
+                    EndDate = D_RunDate;
+                    EndDate = EndDate.AddMonths(1);
+                    EndDate = EndDate.AddDays(-(EndDate.Day));
+
+                    SortedList ProcParams = new SortedList(){
+                        {"N_CompanyID",N_CompanyID.ToString()},
+                        {"N_FnYearID",N_FnYearID.ToString()},
+                        {"N_UserID",myFunctions.GetUserID(User).ToString()},
+                        {"D_EndDate",Convert.ToDateTime(EndDate.ToString())},
+                        {"B_AllBranchData",N_AllBranchData},
+                        {"N_BranchID",N_BranchID},
+                        {"X_DeprNo",myFunctions.getIntVAL(DepreciationNo.ToString())}
+                    };
+
+                    dLayer.ExecuteScalarPro("SP_Ass_DepreciationMaster" ,ProcParams, connection, transaction);
+                    B_completed=true;
 
                     if(B_completed)
                     {
@@ -307,12 +323,12 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
                     SortedList DeleteParams = new SortedList(){
-                                {"N_CompanyID",nCompanyId.ToString()},
+                                {"N_CompanyID",nCompanyId},
                                 {"X_TransType","Depreciation"},
                                 {"N_VoucherID",myFunctions.getIntVAL(DepreciationNo.ToString())},
-                                {"N_UserID",nFnYearID.ToString()},
+                                {"N_UserID",nFnYearID},
                                 {"X_SystemName",""},
-                                {"N_BranchID",nBranchID.ToString()}};
+                                {"N_BranchID",nBranchID}};
                     try
                     {
                         dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
@@ -322,10 +338,9 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User,ex));
                     }
-                }
-
-                return Ok(_api.Success("Depreciation Deleted"));
-
+                    transaction.Commit();
+                    return Ok(_api.Success("Depreciation Deleted"));
+                }             
             }
             catch (Exception ex)
             {

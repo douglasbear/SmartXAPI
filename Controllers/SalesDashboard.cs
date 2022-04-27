@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("details")]
-        public ActionResult GetDashboardDetails()
+        public ActionResult GetDashboardDetails(int nFnYearID)
         {
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -39,12 +39,14 @@ namespace SmartxAPI.Controllers
            
             
                      
-            string sqlCurrentOrder = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesOrderNo_Search WHERE MONTH(Cast(D_OrderDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_OrderDate)= YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID + "";
-            string sqlCurrentInvoice = "SELECT COUNT(*) as N_ThisMonth,CAST(CONVERT(varchar, CAST(sum(Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)) ) AS Money), 1) AS   varchar) AS  TotalAmount  FROM vw_InvSalesInvoiceNo_Search WHERE MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID + "";
-            string sqlCurrentQuotation = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesQuotationNo_Search WHERE MONTH(Cast(D_QuotationDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID + "";
+            string sqlCurrentOrder = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesOrderNo_Search WHERE MONTH(Cast(D_OrderDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_OrderDate)= YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID + " and N_FnyearID="+nFnYearID;
+            string sqlCurrentInvoice = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)) ) AS  TotalAmount  FROM vw_InvSalesInvoiceNo_Search WHERE MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID;
+            //string sqlCurrentInvoice = "SELECT COUNT(*) as N_ThisMonth,CAST(CONVERT(varchar, CAST(sum(Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)) ) AS Money), 1) AS   varchar) AS  TotalAmount  FROM vw_InvSalesInvoiceNo_Search WHERE MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID;
+            string sqlCurrentQuotation = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesQuotationNo_Search WHERE MONTH(Cast(D_QuotationDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID;
 
-             string sqlCustomerbySource = "select top(5) Customer as X_LeadSource,CAST(COUNT(*) as varchar(50)) as N_Percentage from vw_InvSalesInvoiceNo_Search where N_CompanyID = " + nCompanyID + " group by Customer order by COUNT(*) Desc";
-             string sqlPipelineoppotunity = "select count(*) as N_Count from CRM_Opportunity where (N_ClosingStatusID=0 or N_ClosingStatusID is null) and N_CompanyID = " + nCompanyID + "";
+             string sqlCustomerbySource = "select top(5) Customer as X_LeadSource,CAST(COUNT(*) as varchar(50)) as N_Percentage from vw_InvSalesInvoiceNo_Search where N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID + " group by Customer order by COUNT(*) Desc";
+             string sqlPipelineoppotunity = "select count(*) as N_Count from CRM_Opportunity where (N_ClosingStatusID=0 or N_ClosingStatusID is null) and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID;
+             string sqlReceivedRevenue = "SELECT SUM(Inv_PayReceiptDetails.N_AmountF-Inv_PayReceiptDetails.N_DiscountAmtF)as N_ReceivedAmount FROM Inv_PayReceiptDetails INNER JOIN Inv_PayReceipt ON Inv_PayReceiptDetails.N_PayReceiptId = Inv_PayReceipt.N_PayReceiptId AND Inv_PayReceiptDetails.N_CompanyID = Inv_PayReceipt.N_CompanyID where Inv_PayReceipt.X_Type in ('SR','SA') and MONTH(Cast(Inv_PayReceiptDetails.D_Entrydate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(Inv_PayReceiptDetails.D_Entrydate)= YEAR(CURRENT_TIMESTAMP) and Inv_PayReceiptDetails.N_CompanyID = " + nCompanyID  + " and Inv_PayReceipt.N_FnyearID="+nFnYearID;
             // string sqlOpenQuotation = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesQuotationNo_Search WHERE MONTH(D_QuotationDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)";
             // "select X_LeadSource,CAST(COUNT(*) as varchar(50)) as N_Percentage from vw_CRMLeads group by X_LeadSource";
             // string sqlPipelineoppotunity = "select count(*) as N_Count from CRM_Opportunity where N_ClosingStatusID=0 or N_ClosingStatusID is null";
@@ -56,6 +58,7 @@ namespace SmartxAPI.Controllers
             DataTable CurrentQuotation = new DataTable();
             DataTable CurrentCustomer = new DataTable();
             DataTable OpenOpportunities = new DataTable();
+            DataTable ReceivedRevenue = new DataTable();
 
             try
             {
@@ -68,6 +71,7 @@ namespace SmartxAPI.Controllers
                     CurrentQuotation = dLayer.ExecuteDataTable(sqlCurrentQuotation, Params, connection);
                     CurrentCustomer = dLayer.ExecuteDataTable(sqlCustomerbySource, Params, connection);
                     OpenOpportunities = dLayer.ExecuteDataTable(sqlPipelineoppotunity, Params, connection);
+                    ReceivedRevenue = dLayer.ExecuteDataTable(sqlReceivedRevenue, Params, connection);
                      if(B_customer) 
                      { 
                      Data.Add("permision",true);
@@ -81,6 +85,7 @@ namespace SmartxAPI.Controllers
                 CurrentQuotation.AcceptChanges();
                 CurrentCustomer.AcceptChanges();
                 OpenOpportunities.AcceptChanges();
+                ReceivedRevenue.AcceptChanges();
                
 
                 if (CurrentOrder.Rows.Count > 0) Data.Add("orderData", CurrentOrder);
@@ -88,6 +93,7 @@ namespace SmartxAPI.Controllers
                 if (CurrentQuotation.Rows.Count > 0) Data.Add("quotationData", CurrentQuotation);
                 if (CurrentCustomer.Rows.Count > 0) Data.Add("customerbySource", CurrentCustomer);
                 if (OpenOpportunities.Rows.Count > 0) Data.Add("opportunityData", OpenOpportunities);
+                if (ReceivedRevenue.Rows.Count > 0) Data.Add("receivedRevenue", ReceivedRevenue);
                
 
                 return Ok(api.Success(Data));
@@ -110,7 +116,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
                 int nCompanyId = myFunctions.GetCompanyID(User);
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_OrderNo like '%" + xSearchkey + "%')";
+                Searchkey = " and (X_OrderNo like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by M_NetAmt desc";
@@ -118,9 +124,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
  
             if (Count == 0)
-                sqlCommandText = "select top(10) * from vw_SalesOrder_Dashboard where  YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + "  " + Searchkey + " " + xSortBy ;
+                sqlCommandText = "select top(10) * from vw_SalesOrder_Dashboard where  YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_FnyearID="+nFnYearId + Searchkey + " " + xSortBy ;
             else
-                sqlCommandText = "select top(10) * from vw_SalesOrder_Dashboard where YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + "  " + Searchkey + " and N_SalesOrderID not in (select top(" + Count + ") N_SalesOrderID from vw_SalesOrder_Dashboard where N_CompanyID=@p1 " + xSortBy + " )" + xSortBy;
+                sqlCommandText = "select top(10) * from vw_SalesOrder_Dashboard where YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_FnyearID="+nFnYearId + "  " + Searchkey + " and N_SalesOrderID not in (select top(" + Count + ") N_SalesOrderID from vw_SalesOrder_Dashboard where N_CompanyID=@p1 " + xSortBy + " )" + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -133,7 +139,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "Select * from vw_SalesOrder_Dashboard Where MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " ";
+                    sqlCommandCount = "Select * from vw_SalesOrder_Dashboard Where MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_FnyearID="+nFnYearId ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -166,7 +172,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([Quotation No] like '%" + xSearchkey + "%')";
+                Searchkey = " and ([Quotation No] like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_BillAmtF desc";
@@ -174,9 +180,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(10) * from vw_InvSalesQuotationNo_Search where  YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)  and N_CompanyID = " + nCompanyId + " " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(10) * from vw_InvSalesQuotationNo_Search where  YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)  and N_CompanyID = " + nCompanyId + " and N_FnyearID="+nFnYearId + " " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(10) * from vw_InvSalesQuotationNo_Search where YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)  and N_CompanyID = " + nCompanyId + " " + Searchkey + " and N_QuotationID not in (select top(" + Count + ") N_QuotationID from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(10) * from vw_InvSalesQuotationNo_Search where YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)  and N_CompanyID = " + nCompanyId + " and N_FnyearID="+nFnYearId + " " + Searchkey + " and N_QuotationID not in (select top(" + Count + ") N_QuotationID from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1  and N_FnyearID="+nFnYearId + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -189,7 +195,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = api.Format(dt);
-                    sqlCommandCount = "Select * from vw_InvSalesQuotationNo_Search Where  YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + "  ";
+                    sqlCommandCount = "Select * from vw_InvSalesQuotationNo_Search Where  YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_FnyearID="+nFnYearId + "  ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -222,7 +228,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%')";
+                Searchkey = " and ([Invoice No] like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_BillAmt desc";
@@ -230,9 +236,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(10) N_BillAmt=Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)),* from vw_InvSalesInvoiceNo_Search where  YEAR(D_SalesDate) = YEAR(CURRENT_TIMESTAMP)  and N_CompanyId = " + nCompanyID + " " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(10) N_BillAmt=Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)),* from vw_InvSalesInvoiceNo_Search where  YEAR(D_SalesDate) = YEAR(CURRENT_TIMESTAMP)  and N_CompanyId = " + nCompanyID + " and N_FnyearID="+nFnYearID + " " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(10) N_BillAmt=Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)),* from vw_InvSalesInvoiceNo_Search where YEAR(D_SalesDate) = YEAR(CURRENT_TIMESTAMP)  and N_CompanyId = " + nCompanyID + " " + Searchkey + " and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search where N_CompanyId=@p1 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(10) N_BillAmt=Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)),* from vw_InvSalesInvoiceNo_Search where YEAR(D_SalesDate) = YEAR(CURRENT_TIMESTAMP)  and N_CompanyId = " + nCompanyID + " and N_FnyearID="+nFnYearID+ " " + Searchkey + " and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search where N_CompanyId=@p1 and N_FnyearID="+nFnYearID + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyID);
 
             SortedList OutPut = new SortedList();
@@ -245,7 +251,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = api.Format(dt);
-                    sqlCommandCount = "Select * from vw_InvSalesInvoiceNo_Search Where  YEAR(D_SalesDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyId = " + nCompanyID + "  ";
+                    sqlCommandCount = "Select * from vw_InvSalesInvoiceNo_Search Where  YEAR(D_SalesDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyId = " + nCompanyID + " and N_FnyearID="+nFnYearID ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
