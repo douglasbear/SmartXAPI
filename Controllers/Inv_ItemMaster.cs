@@ -39,7 +39,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, int nItemUsedFor, bool isServiceItem, bool b_whGrn, int n_CustomerID)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -60,6 +60,10 @@ namespace SmartxAPI.Controllers
             if (b_whGrn == true && n_CustomerID > 0)
             {
                 warehouseSql = "and vw_InvItem_Search_cloud.N_ItemID in (select N_ItemID from  Vw_wh_AsnDetails_disp where N_CompanyID=@p1 and N_CustomerID=" + n_CustomerID + ")";
+            }
+            if (b_PickList == true && n_CustomerID > 0)
+            {
+                warehouseSql = "and vw_InvItem_Search_cloud.N_ItemID in (select N_ItemID from  vw_Wh_GRNDetails where N_CompanyID=@p1 and N_CustomerID=" + n_CustomerID + ")";
             }
 
             if (query != "" && query != null)
