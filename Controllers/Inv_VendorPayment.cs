@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetVendorPayment(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetVendorPayment(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,bool bAllBranchData,int nBranchID)
         {
 
             try
@@ -58,16 +58,25 @@ namespace SmartxAPI.Controllers
 
                     if (UserPattern != "")
                      {
-                    Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern";
+                    Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
                     Params.Add("@UserPattern", UserPattern);
                      }  
-                     else
-                           {
-                    object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyID, Params, connection);
+                    //  else
+                    //        {
+                    // object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyID, Params, connection);
 
-                    if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
-                    Pattern = " and N_CreatedUser=" + nUserID;
-                    }
+
+                    // if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    // Pattern = " and N_CreatedUser=" + nUserID;
+                    // }
+
+                    // if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    // Pattern = " and N_UserID=" + nUserID;
+                    // }
+
+                    // if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    // Pattern = " and N_CreatedUser=" + nUserID;
+                    // }
 
 
 
@@ -77,8 +86,16 @@ namespace SmartxAPI.Controllers
                     N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and (Memo like '%" + xSearchkey + "%' or [Vendor Name] like '%" + xSearchkey + "%' or Cast(Date as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%" + xSearchkey + "%' or amount like '%" + xSearchkey + "%')";
+                        Searchkey = " and (Memo like '%" + xSearchkey + "%' or [Vendor Name] like '%" + xSearchkey + "%' or Cast(Date as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%" + xSearchkey + "%' or Amount like '%" + xSearchkey + "%')";
 
+                   if (bAllBranchData == true)
+                        {
+                            Searchkey = Searchkey + " ";
+                        }
+                        else
+                        {
+                            Searchkey = Searchkey + " and N_BranchID=" + nBranchID + " ";
+                        }
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_PayReceiptId desc";
                     else

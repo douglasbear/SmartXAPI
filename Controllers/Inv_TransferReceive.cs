@@ -322,7 +322,7 @@ namespace SmartxAPI.Controllers
                     // else
                     //     xCondition="X_ReceiptNo=@xReceiptNo and N_CompanyId=@nCompanyID and N_BranchID=@nBranchID";
 
-                    Mastersql = "Select * from vw_Inv_ReceivableStock where N_CompanyID=" + nCompanyID + " and X_ReferenceNo='" + xRefNo + "' and N_FnYearId=" + nFnYearID + "";
+                    Mastersql = "Select * from vw_Inv_ReceivableStock where N_CompanyID=" + nCompanyID + " and MemoNo='" + xRefNo + "' and N_FnYearId=" + nFnYearID + "";
 
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     MasterTable = _api.Format(MasterTable, "Master");

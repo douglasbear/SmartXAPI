@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("pricelist")]
-        public ActionResult GetPriceListDetails(int nCustomerID,int nBranchID, int nFnYearID, int nItemID, int nCategoryID, int nItemUnitID, double nQty)
+        public ActionResult GetPriceListDetails(int nCustomerID, int nBranchID, int nFnYearID, int nItemID, int nCategoryID, int nItemUnitID, double nQty, int nBrandID,int n_PriceTypeID)
         {
             DataTable dtPriceList = new DataTable();
 
@@ -118,7 +118,8 @@ namespace SmartxAPI.Controllers
             SortedList dParamList = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             string pricelist = "";
-            string Condition ="";
+            string Condition = "";
+            string ConditionBrand = "";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -129,31 +130,42 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nItemID", nItemID);
                     Params.Add("@nItemUnitID", nItemUnitID);
                     Params.Add("@nCategoryID", nCategoryID);
-                     Params.Add("@nBranchID", nBranchID);
-                    object N_PriceTypeID = null;
-                     if(nBranchID>0)
-                     {
-                         Condition= " and N_BranchID=@nBranchID";
-                     }
-                     else
-                     {
-                      Condition= "";
-                     }
-                    
-                    N_PriceTypeID = dLayer.ExecuteScalar("select N_Value from Gen_Settings where X_Group=64 and N_CompanyID=" + nCompanyId + " and X_Description='DefaultPriceList'", Params, connection);
-
-                    if(nCustomerID>0)
-                    N_PriceTypeID = dLayer.ExecuteScalar("select N_DiscsettingsID from inv_customer where N_CustomerID=" + nCustomerID + " and N_CompanyID=" + nCompanyId + " and N_FnyearID=" + nFnYearID, Params, connection);
-
-
-                    if (N_PriceTypeID != null)
+                    Params.Add("@nBranchID", nBranchID);
+                    Params.Add("@nBrandID", nBrandID);
+                   // object N_PriceTypeID = null;
+                    if (nBranchID > 0)
                     {
-                        Params.Add("@nPriceTypeID", N_PriceTypeID.ToString());
-                        string pricelistAll = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID =@nPriceTypeID and N_ItemID=@nItemID and N_ItemUnitID=@nItemUnitID " + Condition + "";
-                        
-                        string pricelistItem = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemID=@nItemID " + Condition + " ";
-                        string pricelistCategory = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_CategoryID=@nCategoryID " + Condition + "";
-                        string pricelistUnit = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemUnitID=@nItemUnitID " + Condition + "";
+                        Condition = " and N_BranchID=@nBranchID";
+                    }
+                    else
+                    {
+                        Condition = "";
+                    }
+                    if (nBrandID > 0)
+                    {
+                        ConditionBrand = " and N_BrandID=@nBrandID";
+                    }
+                    else
+                    {
+                        ConditionBrand = "";
+                    }
+
+
+                    // N_PriceTypeID = dLayer.ExecuteScalar("select isnull(N_Value,'') as N_Value from Gen_Settings where X_Group=64 and N_CompanyID=" + nCompanyId + " and X_Description='DefaultPriceList'", Params, connection);
+
+                    // if (nCustomerID > 0)
+                    //      = dLayer.ExecuteScalar("select isnull(N_DiscsettingsID,'') as N_DiscsettingsID from inv_customer where N_CustomerID=" + nCustomerID + " and N_CompanyID=" + nCompanyId + " and N_FnyearID=" + nFnYearID, Params, connection);
+
+
+                    if (n_PriceTypeID.ToString() != "" && n_PriceTypeID!=0)
+                    {
+                        Params.Add("@nPriceTypeID", n_PriceTypeID);
+                        string pricelistAll = "Select  CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID =@nPriceTypeID and N_ItemID=@nItemID and N_ItemUnitID=@nItemUnitID " + Condition + "";
+
+                        string pricelistItem = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemID=@nItemID " + Condition + " ";
+                        string pricelistCategory = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_CategoryID=@nCategoryID " + Condition + "";
+                        string pricelistUnit = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemUnitID=@nItemUnitID " + Condition + "";
+                        string pricelistBrand = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_BrandID=@nBrandID and N_BrandID<>0 " + Condition + "";
 
                         dtPriceList = dLayer.ExecuteDataTable(pricelistAll, Params, connection);
                         if (dtPriceList.Rows.Count == 0)
@@ -164,7 +176,12 @@ namespace SmartxAPI.Controllers
                                 dtPriceList = dLayer.ExecuteDataTable(pricelistCategory, Params, connection);
                                 if (dtPriceList.Rows.Count == 0)
                                 {
-                                    dtPriceList = dLayer.ExecuteDataTable(pricelistUnit, Params, connection);
+                                   dtPriceList = dLayer.ExecuteDataTable(pricelistBrand, Params, connection);
+                                    if (dtPriceList.Rows.Count == 0)
+                                    {
+                                        dtPriceList = dLayer.ExecuteDataTable(pricelistUnit, Params, connection);  
+                                    }
+
                                 }
                             }
                         }
@@ -216,19 +233,22 @@ namespace SmartxAPI.Controllers
                     DataTable Details = ds.Tables["details"];
                     SortedList Params = new SortedList();
                     DataRow MasterRow = Master.Rows[0];
-
+                    int N_DiscID = myFunctions.getIntVAL(MasterRow["N_DiscID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     string x_DiscountNo = MasterRow["X_DiscCode"].ToString();
 
-                    
-
+                    if(N_DiscID>0)
+                     {
+                      dLayer.DeleteData("Inv_DiscountDetails", "N_DiscID", N_DiscID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection,transaction);
+                     }
+               
                     if (x_DiscountNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_YearID", N_FnYearID);
-                        Params.Add("N_FormID", 858);                        
+                        Params.Add("N_FormID", 858);
                         Params.Add("N_BranchID", N_BranchID);
                         x_DiscountNo = dLayer.GetAutoNumber("Inv_DiscountMaster", "X_DiscCode", Params, connection, transaction);
                         if (x_DiscountNo == "")

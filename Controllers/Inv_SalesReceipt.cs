@@ -60,13 +60,22 @@ namespace SmartxAPI.Controllers
                     Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern";
                     Params.Add("@UserPattern", UserPattern);
                      }  
-                     else
-                           {
-                    object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+ nCompanyId, Params, connection);
+                    //  else
+                    //        {
+                    // object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+ nCompanyId, Params, connection);
 
-                    if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
-                    Pattern = " and N_CreatedUser=" + nUserID;
-                    }
+
+                    // if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    // Pattern = " and N_CreatedUser=" + nUserID;
+                    // }
+
+                    // if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    // Pattern = " and N_UserID=" + nUserID;
+                    // }
+                    // if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    // Pattern = " and N_CreatedUser=" + nUserID;
+                    // }
+
 
 
                     int N_decimalPlace = 2;
@@ -74,7 +83,7 @@ namespace SmartxAPI.Controllers
                     N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and (Memo like '%" + xSearchkey + "%' or [Customer Name] like '%" + xSearchkey + "%' or cast(DATE as VarChar) like '%" + xSearchkey + "%')";
+                        Searchkey = " and (Memo like '%" + xSearchkey + "%' or [Customer Name] like '%" + xSearchkey + "%' or cast(DATE as VarChar) like '%" + xSearchkey + "%' or Amount like '%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_PayReceiptId desc";

@@ -189,14 +189,15 @@ namespace SmartxAPI.Controllers
                     if (Attachment.Rows[0]["x_FolderName"].ToString() == "print")
                     {
                         int nFormID = myFunctions.getIntVAL(Attachment.Rows[0]["nFormID"].ToString());
-                        // if (LoadReportDetails(nFnYearID, nFormID))
-                        // {
+                        int nFnYearID = myFunctions.getIntVAL(Attachment.Rows[0]["nFnYearID"].ToString());
+                        if (LoadReportDetails(nFnYearID, nFormID))
+                        {
                             var base64Data = Regex.Match(Attachment.Rows[0]["FileData"].ToString(), @"data:(?<type>.+?);base64,(?<data>.+)").Groups["data"].Value;
                             byte[] FileBytes = Convert.FromBase64String(base64Data);
-                            System.IO.File.WriteAllBytes(reportLocation + Attachment.Rows[0]["x_File"].ToString(),
+                            System.IO.File.WriteAllBytes(RPTLocation + Attachment.Rows[0]["x_File"].ToString(),
                                                FileBytes);
-                            return Ok(api.Success("Report Updated"));
-                        // }
+                            return Ok(api.Success("Print Updated"));
+                        }
                     }
 
                     Attachment.Columns.Remove("x_FolderName");

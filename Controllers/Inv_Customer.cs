@@ -93,7 +93,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetDashboardList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetDashboardList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nBranchID,bool bAllBranchData)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -119,6 +119,13 @@ namespace SmartxAPI.Controllers
                 }
                 xSortBy = " order by " + xSortBy;
             }
+              if (bAllBranchData == false)
+                   
+                    {
+                        Searchkey = Searchkey + " and N_BranchID= "+nBranchID+" or N_BranchID=0";
+                    }
+            // if(nBranchID>0)
+            // Searchkey= Searchkey + " and N_BranchID= "+nBranchID+" ";
 
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") N_CustomerID,X_CustomerCode,X_CustomerName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_BranchID,X_BranchName,X_ContactName,X_Address,X_PhoneNo1 from vw_InvCustomer where N_CompanyID=@p1 and B_Inactive=@p2 and N_FnYearId=@p3 " + Searchkey + " " + xSortBy;
@@ -170,12 +177,15 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 DataTable Attachment = ds.Tables["attachments"];
                  bool b_AutoGenerate=false;
+             
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchId"].ToString());
                 int nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerId"].ToString());
+               
                 int flag=0;
 
+            
                 if(MasterTable.Columns.Contains("b_AutoGenerate"))
                 {
                        b_AutoGenerate = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_AutoGenerate"].ToString());
@@ -226,6 +236,8 @@ namespace SmartxAPI.Controllers
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_CustomerCode='" + CustomerCode + "'";
                     string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
                     nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
+              
+                  
                     if (nCustomerID <= 0)
                     {
                         transaction.Rollback();
@@ -373,7 +385,7 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(api.Error(User, ex));
                         }
-
+                    
                         transaction.Commit();
                         // return GetCustomerList(nCompanyID, nFnYearId, nBranchId, true, nCustomerID.ToString(), "");
                         return Ok(api.Success("Customer Saved"));
@@ -419,15 +431,23 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("paymentType")]
-        public ActionResult getPaymentType(int nFnyearID, int nBranchID)
+        public ActionResult getPaymentType(int nFnyearID, int nBranchID , bool inactive)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-
+            string sqlCommandText="";
             int nCompanyID = myFunctions.GetCompanyID(User);
-
-            string sqlCommandText = "select N_CompanyID,N_FnYearID,N_BranchID,[Customer Name] as X_CustomerName,[Customer Code] as X_CustomerCode,N_CustomerID,N_ServiceCharge,N_ServiceChargeLimit,N_LedgerID,X_LedgerCode,X_LedgerName,N_TaxCategoryID,X_CategoryName,0 as N_Amount,X_TypeName,N_PaymentMethodID as N_TypeID,I_Image  from vw_PaymentType_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and (N_BranchID=@p3 or N_BranchID = @p4)  and N_EnablePopup=1 ";
-            Params.Add("@p1", nCompanyID);
+            if(inactive)
+            {
+            sqlCommandText = "select N_CompanyID,N_FnYearID,N_BranchID,[Customer Name] as X_CustomerName,[Customer Code] as X_CustomerCode,N_CustomerID,N_ServiceCharge,N_ServiceChargeLimit,N_LedgerID,X_LedgerCode,X_LedgerName,N_TaxCategoryID,X_CategoryName,0 as N_Amount,X_TypeName,N_PaymentMethodID as N_TypeID,I_Image,B_Inactive from vw_PaymentType_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and (N_BranchID=@p3 or N_BranchID = @p4)  and N_EnablePopup=1";
+           
+            }
+            else
+            {
+             sqlCommandText = "select N_CompanyID,N_FnYearID,N_BranchID,[Customer Name] as X_CustomerName,[Customer Code] as X_CustomerCode,N_CustomerID,N_ServiceCharge,N_ServiceChargeLimit,N_LedgerID,X_LedgerCode,X_LedgerName,N_TaxCategoryID,X_CategoryName,0 as N_Amount,X_TypeName,N_PaymentMethodID as N_TypeID,I_Image,B_Inactive from vw_PaymentType_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and (N_BranchID=@p3 or N_BranchID = @p4)  and N_EnablePopup=1 and ISNULL(B_Inactive,0)=0 ";
+             
+            }
+             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnyearID);
             Params.Add("@p3", nBranchID);
             Params.Add("@p4", 0);

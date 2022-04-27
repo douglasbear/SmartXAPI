@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetDeliveryNoteList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetDeliveryNoteList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,bool bAllBranchData,int nBranchID)
         {
 
              try
@@ -60,17 +60,35 @@ namespace SmartxAPI.Controllers
                     Params.Add("@UserPattern",UserPattern);
 
                 }
-                else
-                {
-                    object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId,Params,connection);
+                // else
+                // {
+                //     object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId,Params,connection);
 
-                    if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
-                    Pattern = " and N_CreatedUser=" + nUserID;
-                }
+                //     if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                //     Pattern = " and N_CreatedUser=" + nUserID;
+                // }
+
+                //     if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                //     Pattern = " and N_UserID=" + nUserID;
+                // }
+
+                //     if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                //     Pattern = " and N_CreatedUser=" + nUserID;
+                // }
+
 
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or X_OrderNo like '%" + xSearchkey + "%' or [Invoice Date] like '%" + xSearchkey + "%' or D_DeliveryDate like '%" + xSearchkey + "%')";
+
+                  if (bAllBranchData == true)
+                        {
+                            Searchkey = Searchkey + " ";
+                        }
+                        else
+                        {
+                            Searchkey = Searchkey + " and N_BranchID=" + nBranchID + " ";
+                        }
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by [Invoice No] desc";
@@ -92,9 +110,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
             }
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + Searchkey + " " + " group by [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo" + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + Searchkey + " and N_DeliveryNoteID not in (select top(" + Count + ") N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + Searchkey + " and N_DeliveryNoteID not in (select top(" + Count + ") N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + "Grouup By [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo" + xSortBy;
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             SortedList OutPut = new SortedList();
@@ -213,7 +231,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Success(dsSalesInvoice));
                     }else if(nPickListID>0){
                         QueryParamsList.Add("@nPickListID", nPickListID);
-                        string Mastersql = "select N_CompanyID,N_FnYearID,0 as N_DeliveryNoteId,'@Auto' as X_ReceiptNo,GETDATE() as D_DeliveryDate,GETDATE() as D_EntryDate,N_CustomerId,X_CustomerName,0 as B_BiginingBalEntry,0 as N_DeliveryType,N_LocationID,'DELIVERY' as X_TransType,0 as B_IsSaveDraft from vw_WhPickListMaster where N_CompanyId=@nCompanyID and N_PickListID=@nPickListID";
+                        string Mastersql = "select N_CompanyID,N_FnYearID,0 as N_DeliveryNoteId,'@Auto' as X_ReceiptNo,GETDATE() as D_DeliveryDate,GETDATE() as D_EntryDate,N_CustomerId,X_CustomerName,0 as B_BiginingBalEntry,0 as N_DeliveryType,N_LocationID,'DELIVERY' as X_TransType,0 as B_IsSaveDraft,X_LocationName from vw_WhPickListMaster where N_CompanyId=4 and N_PickListID=6";
                         DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable = _api.Format(MasterTable, "Master");

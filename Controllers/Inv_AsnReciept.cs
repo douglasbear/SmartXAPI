@@ -33,10 +33,10 @@ namespace SmartxAPI.Controllers
         }
 
 
-         [HttpGet("list")]
-        public ActionResult GetAsnReceipt(int nComapanyId, int nFnYearId,int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,bool bAllBranchData)
+        [HttpGet("list")]
+        public ActionResult GetAsnReceipt(int nComapanyId, int nFnYearId, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, bool bAllBranchData)
         {
-            
+
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -45,12 +45,12 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string sqlCommandCount = "";
             string sqlCondition = "";
-             string Searchkey = "";
+            string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (X_AsnDocNo like '%" + xSearchkey + "%' OR N_AsnID like '%" + xSearchkey + "%')";
 
-             if (xSortBy == null || xSortBy.Trim() == "")
+            if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_AsnID desc";
             else
             {
@@ -70,20 +70,20 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyId", nCompanyId);
             Params.Add("@nFnYearId", nFnYearId);
             Params.Add("@FormID", FormID);
-             Params.Add("@nBranchID", nBranchID);
-        
-            SortedList OutPut = new SortedList();
-    
+            Params.Add("@nBranchID", nBranchID);
 
-           
-         try
+            SortedList OutPut = new SortedList();
+
+
+
+            try
             {
-              using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
 
                     // if (bAllBranchData)
-                        sqlCondition = "N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId";
+                    sqlCondition = "N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId";
                     // else
                     //     sqlCondition = "N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and N_BranchID=@nBranchID";
 
@@ -115,17 +115,54 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+        [HttpGet("asnlist")]
+        public ActionResult GetAsnList(int nFnYearID, string xBarcode)
+
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            string QRY = "";
+            if (xBarcode != null && xBarcode != "")
+                QRY = " and x_asndocno=" + xBarcode;
+
+            string sqlCommandText = "Select *  from vw_Wh_AsnMaster_Disp Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + QRY;
 
 
-        [HttpPost("save")]
-       
-          public ActionResult SaveData([FromBody] DataSet ds)
-          {
-               try
+            try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                       connection.Open();
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+
+        [HttpPost("save")]
+
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
                     DataTable DetailTable;
@@ -141,7 +178,7 @@ namespace SmartxAPI.Controllers
                     string X_AsnDocNo = "";
                     var values = MasterTable.Rows[0]["X_AsnDocNo"].ToString();
 
-                       if (values == "@Auto")
+                    if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_FormID", 370);
@@ -157,32 +194,32 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_AsnDocNo"] = X_AsnDocNo;
                     }
 
-                       if (nAsnID > 0)
+                    if (nAsnID > 0)
                     {
                         dLayer.DeleteData("Wh_AsnDetails", "N_AsnID", nAsnID, "N_CompanyID=" + nCompanyID + " and N_AsnID=" + nAsnID, connection, transaction);
                         dLayer.DeleteData("Wh_AsnMaster", "N_AsnID", nAsnID, "N_CompanyID=" + nCompanyID + " and N_AsnID=" + nAsnID, connection, transaction);
                     }
 
-                     nAsnID = dLayer.SaveData("Wh_AsnMaster", "N_AsnID", MasterTable, connection, transaction);
+                    nAsnID = dLayer.SaveData("Wh_AsnMaster", "N_AsnID", MasterTable, connection, transaction);
 
-                      if (nAsnID <= 0)
+                    if (nAsnID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to save"));
                     }
 
-                    
+
 
                     //Inv_ItemMaster Creation
-                    
-                    
 
-                     for (int j = 0; j < DetailTable.Rows.Count; j++)
+
+
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["N_AsnID"] = nAsnID;
                     }
 
-                     int N_AsnDetailsID = dLayer.SaveData("Wh_AsnDetails", "N_AsnDetailsID", DetailTable, connection, transaction);
+                    int N_AsnDetailsID = dLayer.SaveData("Wh_AsnDetails", "N_AsnDetailsID", DetailTable, connection, transaction);
                     if (N_AsnDetailsID <= 0)
                     {
                         transaction.Rollback();
@@ -190,37 +227,37 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                     SortedList ProductParams = new SortedList();
-                            ProductParams.Add("N_CompanyID", nCompanyID);
-                            ProductParams.Add("N_ASNID", nAsnID);
-                            ProductParams.Add("N_FnYearID", N_FnYearID);
-                            ProductParams.Add("N_BranchID", N_BranchID);
-                            try
-                            {
-                                dLayer.ExecuteNonQueryPro("SP_ASNProductInsert", ProductParams, connection, transaction);
-                            }
-                            catch (Exception ex)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, ex));
-                            }
+                    SortedList ProductParams = new SortedList();
+                    ProductParams.Add("N_CompanyID", nCompanyID);
+                    ProductParams.Add("N_ASNID", nAsnID);
+                    ProductParams.Add("N_FnYearID", N_FnYearID);
+                    ProductParams.Add("N_BranchID", N_BranchID);
+                    try
+                    {
+                        dLayer.ExecuteNonQueryPro("SP_ASNProductInsert", ProductParams, connection, transaction);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, ex));
+                    }
 
 
-                     transaction.Commit();
+                    transaction.Commit();
                     SortedList Result = new SortedList();
                     Result.Add("N_AsnDetailsID", nAsnID);
                     Result.Add("X_AsnDocNo", X_AsnDocNo);
                     return Ok(_api.Success(Result, "Saved successfully"));
                 }
             }
-               catch (Exception ex)
+            catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
-          }
+        }
 
-       
-          [HttpGet("details")]
+
+        [HttpGet("details")]
         public ActionResult GetDetails(string xAsnDocNo, int nFnYearID, int nBranchID, bool bShowAllBranchData)
         {
             DataTable Master = new DataTable();
@@ -235,8 +272,11 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@xAsnDocNo", xAsnDocNo);
             QueryParams.Add("@nBranchID", nBranchID);
             QueryParams.Add("@nFnYearID", nFnYearID);
+
             string Condition = "";
             string _sqlQuery = "";
+            string sql = "";
+            bool InvoiceProcessed = false;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -253,6 +293,10 @@ namespace SmartxAPI.Controllers
 
                     Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
+
+
+
+
                     Master = _api.Format(Master, "master");
 
                     if (Master.Rows.Count == 0)
@@ -261,18 +305,32 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                         QueryParams.Add("@N_AsnID", Master.Rows[0]["N_AsnID"].ToString());
+                        QueryParams.Add("@N_AsnID", Master.Rows[0]["N_AsnID"].ToString());
 
                         // QueryParams.Add("@N_AsnDetailsID",N_AsnDetailsID);
 
 
                         ds.Tables.Add(Master);
-        
+
+                        // Master= myFunctions.AddNewColumnToDataTable(Master, "N_Processed", typeof(int), 0);
+                        
+                      object GroupCodeObj = dLayer.ExecuteScalar("select count(*) as N_Count from Wh_GRN Where N_CompanyID=@nCompanyID and N_AsnID=@N_AsnID", QueryParams, connection);
+                        if (myFunctions.getIntVAL(GroupCodeObj.ToString()) > 0)
+                        {
+                            Master.Rows[0]["N_Processed"] = 1;
+                           
+                        }
+                        else
+                        {
+                            Master.Rows[0]["N_Processed"] = 0;
+                           
+                        }
 
                         _sqlQuery = "Select * from vw_Wh_AsnDetails_Disp Where N_CompanyID=@nCompanyID and N_AsnID=@N_AsnID";
                         Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
                         Detail = _api.Format(Detail, "details");
+
                         if (Detail.Rows.Count == 0)
                         {
                             return Ok(_api.Notice("No Results Found"));
@@ -286,16 +344,19 @@ namespace SmartxAPI.Controllers
                 }
 
 
+
+
+
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
-       
 
-       [HttpGet("SkuDetails")]
-        public ActionResult GetDetails(string xSKU, int nCustomerID )
+
+        [HttpGet("SkuDetails")]
+        public ActionResult GetDetails(string xSKU, int nCustomerID)
         {
             DataTable Master = new DataTable();
             DataTable Detail = new DataTable();
@@ -308,7 +369,7 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@companyid", companyid);
             QueryParams.Add("@nCustomerID", nCustomerID);
             QueryParams.Add("@xSKU", xSKU);
-          
+
             string _sqlQuery = "";
             try
             {
@@ -316,21 +377,33 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     object Count = dLayer.ExecuteScalar("select count(*)  from vw_Wh_AsnDetails_Disp where N_CompanyID=@companyid and X_SKU=@xSKU and N_CustomerID=@nCustomerID", QueryParams, connection);
-                   int NCount = myFunctions.getIntVAL(Count.ToString());
-                   if(NCount>0)
-                  {
-                    _sqlQuery = "Select top 1 * from vw_Wh_AsnDetails_Disp Where N_CompanyID=@companyid and X_SKU=@xSKU and N_CustomerID=@nCustomerID";
-                  
+                    int NCount = myFunctions.getIntVAL(Count.ToString());
+                    if (NCount > 0)
+                    {
+                        _sqlQuery = "Select top 1 * from vw_Wh_AsnDetails_Disp Where N_CompanyID=@companyid and X_SKU=@xSKU and N_CustomerID=@nCustomerID";
+                        Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+                        if (Detail.Rows.Count > 0)
+                        {
+                            foreach (DataRow detVar in Detail.Rows)
+                            {
+                                //detVar["X_SKU"]=detVar["X_SKU"].ToString() + " - " + detVar["X_AsnDocNo"].ToString();
+                                detVar["x_Barcode"] = detVar["X_SKU"].ToString() + " - " + detVar["X_AsnDocNo"].ToString();
+                                detVar["x_BatchCode"] = detVar["X_SKU"].ToString() + " - " + detVar["X_AsnDocNo"].ToString();
 
-                  }
-                  else
-                  {
-                       object code = dLayer.ExecuteScalar("select X_CustomerCode from vw_Wh_AsnDetails_Disp where N_CompanyID=@companyid and N_CustomerID=@nCustomerID", QueryParams, connection);
-                      
-              _sqlQuery = "Select top 1 CONCAT(X_SKU, '  - '," + code.ToString() + " ) AS X_SKU from vw_Wh_AsnDetails_Disp Where N_CompanyID=@companyid and X_SKU=@xSKU";   
-                  }
-                  Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
-                   Detail = _api.Format( Detail, "detail");  
+                            }
+                        }
+
+
+                    }
+                    else
+                    {
+                        object code = dLayer.ExecuteScalar("select X_CustomerCode from vw_Wh_AsnDetails_Disp where N_CompanyID=@companyid and  X_SKU=@xSKU and  N_CustomerID not in (@nCustomerID)", QueryParams, connection);
+
+                        _sqlQuery = "Select top 1 CONCAT(X_SKU, '  - '," + code.ToString() + " ) AS X_SKU from vw_Wh_AsnDetails_Disp Where N_CompanyID=@companyid and X_SKU=@xSKU";
+                        Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+                    }
+
+                    Detail = _api.Format(Detail, "detail");
                     if (Detail.Rows.Count == 0)
                     {
                         return Ok(_api.Notice("No Results Found"));
@@ -349,22 +422,31 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
-       
-       
+
+
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nAsnID)
         {
             int Results = 0;
             int nCompanyID = myFunctions.GetCompanyID(User);
+            SortedList Params = new SortedList();
+            Params.Add("@companyid", nCompanyID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                    string sqlCommandCount3 = "select count(*) as N_Count from Wh_GRN where N_CompanyID= " + nCompanyID + "and N_AsnID=" + nAsnID + " ";
+                    object count = dLayer.ExecuteScalar(sqlCommandCount3, Params, connection, transaction);
+                    if (myFunctions.getIntVAL(count.ToString()) > 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Warning("GRN Already Processed"));
+                    }
                     dLayer.DeleteData("Wh_AsnDetails", "N_AsnID", nAsnID, "N_CompanyID=" + nCompanyID + " and N_AsnID=" + nAsnID, connection, transaction);
                     Results = dLayer.DeleteData("Wh_AsnMaster", "N_AsnID", nAsnID, "N_CompanyID=" + nCompanyID + " and N_AsnID=" + nAsnID, connection, transaction);
 
@@ -382,7 +464,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
 
 

@@ -21,6 +21,7 @@ using zatca.einvoicing;
 using Microsoft.AspNetCore.Hosting;
 using System.Text.RegularExpressions;
 using System.IO.Compression;
+using System.Net.Cache;
 namespace SmartxAPI.Controllers
 {
     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -62,7 +63,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "Select vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild, vwUserMenus.B_Visible, vwUserMenus.B_Edit, vwUserMenus.B_Delete, vwUserMenus.B_Save, vwUserMenus.B_View, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID in ( " + myFunctions.GetUserCategoryList(User) + " ) and vwUserMenus.B_Show=1 inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId group by vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild, vwUserMenus.B_Visible, vwUserMenus.B_Edit, vwUserMenus.B_Delete, vwUserMenus.B_Save, vwUserMenus.B_View, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text Order By vwUserMenus.N_Order";
+            string sqlCommandText = "Select vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild ,CAST(MAX(1 * vwUserMenus.B_Visible) AS BIT) as B_Visible, CAST(MAX(1 * vwUserMenus.B_Edit) AS BIT) as B_Edit, CAST(MAX(1 * vwUserMenus.B_Delete) AS BIT) as B_Delete,CAST(MAX(1 * vwUserMenus.B_Save) AS BIT) as B_Save, CAST(MAX(1 * vwUserMenus.B_View) AS BIT) as B_View, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID in ( " + myFunctions.GetUserCategoryList(User) + " ) and vwUserMenus.B_Show=1 inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId group by vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text Order By vwUserMenus.N_Order";
             Params.Add("@nMenuId", nMenuId == 0 ? 318 : nMenuId);
             Params.Add("@nLangId", nLangId);
             Params.Add("@nUserCatID", myFunctions.GetUserCategoryList(User));
@@ -404,7 +405,7 @@ namespace SmartxAPI.Controllers
 
                     if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, nPreview, xrptname))
                     {
-                        
+
                         var client = new HttpClient(handler);
                         var dbName = connection.Database;
                         var random = RandomString();
@@ -416,10 +417,10 @@ namespace SmartxAPI.Controllers
 
                         if (nPreview == 2)
                         {
-                            string fileToCopy = RPTLocation + ReportName+".rpt";
-                            string destinationFile = this.TempFilesPath + ReportName+".rpt";
+                            string fileToCopy = RPTLocation + ReportName + ".rpt";
+                            string destinationFile = this.TempFilesPath + ReportName + ".rpt";
                             string ZipLocation = this.TempFilesPath + ReportName + ".rpt.zip";
-                            if (CopyFiles(fileToCopy, destinationFile, ReportName+".rpt"))
+                            if (CopyFiles(fileToCopy, destinationFile, ReportName + ".rpt"))
                                 return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + ".rpt.zip" } }));
 
                         }
@@ -439,7 +440,18 @@ namespace SmartxAPI.Controllers
                         if (docNumber.Contains("/"))
                             docNumber = docNumber.ToString().Substring(0, Math.Min(3, docNumber.ToString().Length));
 
-                        string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
+DateTime currentTime;
+string x_comments="";
+ //Local Time Checking
+                    object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyId, connection,transaction);
+                    object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection,transaction);
+                    if (Timezone != null && Timezone.ToString() != "")
+                    {
+                        currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
+                        x_comments = currentTime.ToString();
+                    }
+
+                        string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments="+x_comments+"&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
                         var path = client.GetAsync(URL);
                         if (nFormID == 80)
                         {
@@ -670,6 +682,80 @@ namespace SmartxAPI.Controllers
             }
 
         }
+        public static DateTime GetFastestNISTDate()
+        {
+            var result = DateTime.MinValue;
+            // Initialize the list of NIST time servers
+            // http://tf.nist.gov/tf-cgi/servers.cgi
+            string[] servers = new string[] {
+"nist1-ny.ustiming.org",
+"nist1-nj.ustiming.org",
+"nist1-pa.ustiming.org",
+"time-a.nist.gov",
+"time-b.nist.gov",
+"nist1.aol-va.symmetricom.com",
+"nist1.columbiacountyga.gov",
+"nist1-chi.ustiming.org",
+"nist.expertsmi.com",
+"nist.netservicesgroup.com"
+};
+
+            // Try 5 servers in random order to spread the load
+            Random rnd = new Random();
+            foreach (string server in servers.OrderBy(s => rnd.NextDouble()).Take(5))
+            {
+                try
+                {
+                    // Connect to the server (at port 13) and get the response
+                    string serverResponse = string.Empty;
+                    using (var reader = new StreamReader(new System.Net.Sockets.TcpClient(server, 13).GetStream()))
+                    {
+                        serverResponse = reader.ReadToEnd();
+                    }
+
+                    // If a response was received
+                    if (!string.IsNullOrEmpty(serverResponse))
+                    {
+                        // Split the response string ("55596 11-02-14 13:54:11 00 0 0 478.1 UTC(NIST) *")
+                        string[] tokens = serverResponse.Split(' ');
+
+                        // Check the number of tokens
+                        if (tokens.Length >= 6)
+                        {
+                            // Check the health status
+                            string health = tokens[5];
+                            if (health == "0")
+                            {
+                                // Get date and time parts from the server response
+                                string[] dateParts = tokens[1].Split('-');
+                                string[] timeParts = tokens[2].Split(':');
+
+                                // Create a DateTime instance
+                                DateTime utcDateTime = new DateTime(
+                                    Convert.ToInt32(dateParts[0]) + 2000,
+                                    Convert.ToInt32(dateParts[1]), Convert.ToInt32(dateParts[2]),
+                                    Convert.ToInt32(timeParts[0]), Convert.ToInt32(timeParts[1]),
+                                    Convert.ToInt32(timeParts[2]));
+
+                                // Convert received (UTC) DateTime value to the local timezone
+                                result = utcDateTime.ToLocalTime();
+
+                                return result;
+                                // Response successfully received; exit the loop
+
+                            }
+                        }
+
+                    }
+
+                }
+                catch
+                {
+                    // Ignore exception and try the next server
+                }
+            }
+            return result;
+        }
 
         [HttpPost("getModuleReport")]
         public IActionResult GetModuleReports([FromBody] DataSet ds)
@@ -685,6 +771,7 @@ namespace SmartxAPI.Controllers
             string X_TextforAll = "=all";
             int nUserID = myFunctions.GetUserID(User);
             var random = RandomString();
+            DateTime currentTime;
 
             try
             {
@@ -692,6 +779,7 @@ namespace SmartxAPI.Controllers
                 String reportName = "";
                 String CompanyData = "";
                 String YearData = "";
+                String BranchData = "";
                 String FieldName = "";
                 String UserData = "";
 
@@ -701,6 +789,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     //int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["moduleID"].ToString());
+
                     int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportCategoryID"].ToString());
                     int ReportID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportID"].ToString());
                     int FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["nFnYearID"].ToString());
@@ -752,6 +841,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nMenuID", MenuID);
                     CompanyData = dLayer.ExecuteScalar("select X_DataFieldCompanyID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                     YearData = dLayer.ExecuteScalar("select X_DataFieldYearID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+                    BranchData = dLayer.ExecuteScalar("select X_DataFieldBranchID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
 
                     Params.Add("@xType", "");
                     Params.Add("@nCompID", 0);
@@ -850,12 +940,23 @@ namespace SmartxAPI.Controllers
                         Criteria = Criteria + CompanyData + "=" + nCompanyID;
                         if (YearData != "")
                             Criteria = Criteria + " and " + YearData + "=" + FnYearID;
+                        if(BranchData !=""){
+                            bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID="+nCompanyID+" and N_BranchID="+BranchID, Params, connection).ToString());
+                            if(mainBranch==false)
+                            Criteria = Criteria + " and " + BranchData + "=" + BranchID;
+
+                        }
                     }
                     else if (CompanyData != "")
                     {
                         Criteria = Criteria + " and " + CompanyData + "=" + nCompanyID;
                         if (YearData != "")
                             Criteria = Criteria + " and " + YearData + "=" + FnYearID;
+                        if(BranchData !=""){
+                            bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID="+nCompanyID+" and N_BranchID="+BranchID, Params, connection).ToString());
+                            if(mainBranch==false)
+                            Criteria = Criteria + " and " + BranchData + "=" + BranchID;
+                            }
                     }
                     if (UserData != "")
                     {
@@ -884,12 +985,15 @@ namespace SmartxAPI.Controllers
 
                     }
 
-
-
-
-
-
                     dbName = connection.Database;
+                    //Local Time Checking
+                    object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
+                    object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection);
+                    if (Timezone != null && Timezone.ToString() != "")
+                    {
+                        currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
+                        x_comments = currentTime.ToString();
+                    }
                 }
 
 
@@ -908,6 +1012,8 @@ namespace SmartxAPI.Controllers
                     reportName = rptArray[1].ToString();
                     actReportLocation = actReportLocation + rptArray[0].ToString() + "/";
                 }
+
+
 
 
                 //string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;

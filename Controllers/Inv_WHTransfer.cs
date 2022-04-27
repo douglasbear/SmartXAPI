@@ -85,7 +85,7 @@ namespace SmartxAPI.Controllers
 
         [HttpGet("productInformation")]
 
-        public ActionResult GetAllItems(string query, int nCompanyID, int nLocationIDFrom, int nLocationIDTo, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, DateTime dtpInvDate)
+        public ActionResult GetAllItems(string query, int nCompanyID, int nLocationIDFrom, int nLocationIDTo, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, DateTime dtpInvDate,string xBarcode)
         {
 
             DataTable dt = new DataTable();
@@ -100,6 +100,11 @@ namespace SmartxAPI.Controllers
             {
                 qry = " and (Description like @query or [Item Code] like @query ) ";
                 Params.Add("@query", "%" + query + "%");
+            }
+            if(xBarcode!="" && xBarcode!=null)
+            {
+                qry = qry + " and X_barcode='"+ xBarcode +"'";
+
             }
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search.N_ItemID) RowNo,";
             string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) ";

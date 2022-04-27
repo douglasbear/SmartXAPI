@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([PRS No] like '%" + xSearchkey + "%')";
+                Searchkey = "and ([PRS No] like '%" + xSearchkey + "%' or X_ProjectName like '%" + xSearchkey + "%' or location like '%" + xSearchkey + "%' or X_DeliveryPlace like '%" + xSearchkey + "%' or  X_Purpose like '%" + xSearchkey + "%' or  [PRS No] like '%" + xSearchkey + "%' or  D_PRSDate like '%" + xSearchkey + "%' )";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_PRSID desc";
@@ -241,7 +241,9 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     dLayer.DeleteData("Inv_PRSDetails", "N_PRSID", nPRSID, "N_CompanyID=" + nCompanyID + " and N_PRSID=" + nPRSID, connection, transaction);
                     Results = dLayer.DeleteData("Inv_PRS", "N_PRSID", nPRSID, "N_CompanyID=" + nCompanyID + " and N_PRSID=" + nPRSID, connection, transaction);
-
+                  object objMDProcessed = dLayer.ExecuteScalar("Select Isnull(N_RSID,0) from Inv_MaterialDispatch where N_CompanyId=" + nCompanyID + " and N_RSID=" +nPRSID  + " ", connection, transaction);
+                    if (objMDProcessed == null)
+                        objMDProcessed = 0;
                     if (nSalesOrderID > 0)
                     {
                         SortedList DeleteParams = new SortedList(){
@@ -251,6 +253,12 @@ namespace SmartxAPI.Controllers
 
                         dLayer.ExecuteNonQueryPro("SP_SalesOrderProcessUpdate", DeleteParams, connection, transaction);
                     }
+
+                       if (myFunctions.getIntVAL(objMDProcessed.ToString()) > 0)
+                       {
+                       return Ok(api.Error(User, "Unable to delete"));
+                       }
+                            
 
                     if (Results > 0)
                     {
