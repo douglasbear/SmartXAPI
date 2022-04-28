@@ -33,16 +33,18 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
-                [HttpGet("list")]
-        public ActionResult Gradetype(int ngradeId,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        [HttpGet("list")]
+        public ActionResult Gradetype(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string sqlCommandCount = "";
-            int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText ="";
 
+            int Count = (nPage - 1) * nSizeperpage;
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
             string Searchkey = "";
+
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = " and (X_GradeCode like '%" + xSearchkey + "%'or X_GradeCode like '%" + xSearchkey + "%' )";
 
@@ -50,9 +52,12 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by N_GradeID desc";
             else
                 xSortBy = " order by " + xSortBy;
-            
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_GradeType where N_CompanyID=@p1" + Searchkey + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_GradeType where N_CompanyID=@p1" + Searchkey +" and  N_GradeID not in (select top(" + Count + ") N_GradeID from Pay_GradeType where N_CompanyID=@p1 )" + Searchkey + xSortBy;
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p3", ngradeId);
             SortedList OutPut = new SortedList();
 
             try
@@ -62,7 +67,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    //sqlCommandCount = "select count(*) as N_Count  from vw_CRMCustomer where N_CompanyID=@p1  " + Pattern;
+                    sqlCommandCount = "select count(*) as N_Count from Pay_GradeType where N_CompanyID=@p1  " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
