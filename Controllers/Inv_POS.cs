@@ -184,7 +184,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listcategory")]
-        public ActionResult GetDepartmentList(int nLocationID,int nBranchID)
+        public ActionResult GetDepartmentList(int nLocationID, int nBranchID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -198,7 +198,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "SELECT        Inv_ItemCategory.N_CategoryID, Inv_ItemCategory.X_Category " +
 " FROM            Inv_ItemCategory LEFT OUTER JOIN " +
   "                       vw_UC_Item ON Inv_ItemCategory.N_CompanyID = vw_UC_Item.N_CompanyID AND Inv_ItemCategory.X_Category = vw_UC_Item.Category " +
-" Where  Inv_ItemCategory.N_CompanyID= @nCompanyID and Inv_ItemCategory.N_CompanyID=@nCompanyID and vw_UC_Item.N_CompanyID=@nCompanyID and vw_UC_Item.N_LocationID=@nLocationID and  vw_UC_Item.N_BranchID=@nBranchID  group by Inv_ItemCategory.N_CategoryID, Inv_ItemCategory.X_Category" ;
+" Where  Inv_ItemCategory.N_CompanyID= @nCompanyID and Inv_ItemCategory.N_CompanyID=@nCompanyID and vw_UC_Item.N_CompanyID=@nCompanyID and vw_UC_Item.N_LocationID=@nLocationID and  vw_UC_Item.N_BranchID=@nBranchID  group by Inv_ItemCategory.N_CategoryID, Inv_ItemCategory.X_Category";
 
             try
             {
@@ -209,7 +209,7 @@ namespace SmartxAPI.Controllers
                 }
                 dt = _api.Format(dt);
 
-                    return Ok(_api.Success(dt));
+                return Ok(_api.Success(dt));
             }
             catch (Exception e)
             {
@@ -217,7 +217,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("items")]
-        public ActionResult GetItems(int nCategoryID, string xSearchkey, int PageSize, int Page, int nCustomerID, int dispCatID, int mainItemID,int nLocationID,int nBranchID)
+        public ActionResult GetItems(int nCategoryID, string xSearchkey, int PageSize, int Page, int nCustomerID, int dispCatID, int mainItemID, int nLocationID, int nBranchID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -250,17 +250,27 @@ namespace SmartxAPI.Controllers
                 Searchkey = Searchkey + " and vw_InvItem_Search.N_ItemID in (select N_ItemID from Inv_ItemCategoryDisplayMaster where N_CategoryDisplayID=" + dispCatID + ")";
 
 
-                BranchandLocation = " and vw_UC_Item.N_BranchID=@nBranchID and vw_UC_Item.N_LocationID=@nLocationID ";
+            BranchandLocation = " and vw_UC_Item.N_BranchID=@nBranchID and vw_UC_Item.N_LocationID=@nLocationID ";
 
 
             sqlCommandText = "  vw_InvItem_Search.*, " +
                          " dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID, vw_InvItem_Search.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, '' AS i_Image, Inv_DisplayImages.X_ImageName,vw_UC_Item.N_LocationID, vw_UC_Item.N_BranchID" +
 " FROM            vw_InvItem_Search LEFT OUTER JOIN" +
                         " Inv_DisplayImages ON vw_InvItem_Search.N_CompanyID = Inv_DisplayImages.N_CompanyID AND vw_InvItem_Search.N_ItemID = Inv_DisplayImages.N_ItemID LEFT OUTER JOIN" +
-                        " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID FULL OUTER JOIN"+ 
-                        " vw_UC_Item ON vw_InvItem_Search.N_CompanyID = vw_UC_Item.N_CompanyID AND vw_InvItem_Search.N_ItemID = vw_UC_Item.N_ItemID "+
+                        " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID FULL OUTER JOIN" +
+                        " vw_UC_Item ON vw_InvItem_Search.N_CompanyID = vw_UC_Item.N_CompanyID AND vw_InvItem_Search.N_ItemID = vw_UC_Item.N_ItemID " +
                         " where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4  and vw_InvItem_Search.N_ItemID=Inv_ItemUnit.N_ItemID " + BranchandLocation + categorySql + parentItemFilterSql + Searchkey;
-
+            
+            if (mainItemID > 0)
+            sqlCommandText = " vw_InvItem_Search.*, " +
+                                    " dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID, vw_InvItem_Search.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, '' AS i_Image, Inv_DisplayImages.X_ImageName, " +
+                                    " vw_UC_Item.N_LocationID, vw_UC_Item.N_BranchID, vw_InvItemDetails.X_ItemUnit AS X_SubItemUnit, vw_InvItemDetails.N_ItemUnitID AS N_SubItemUnitID, vw_InvItemDetails.N_Qty AS N_SubItemQty " +
+            " FROM            vw_InvItem_Search LEFT OUTER JOIN " +
+                                    " vw_InvItemDetails ON vw_InvItem_Search.N_ItemID = vw_InvItemDetails.N_ItemID AND vw_InvItem_Search.N_CompanyID = vw_InvItemDetails.N_CompanyID LEFT OUTER JOIN " +
+                                    " Inv_DisplayImages ON vw_InvItem_Search.N_CompanyID = Inv_DisplayImages.N_CompanyID AND vw_InvItem_Search.N_ItemID = Inv_DisplayImages.N_ItemID LEFT OUTER JOIN " +
+                                    " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID FULL OUTER JOIN " +
+                                    " vw_UC_Item ON vw_InvItem_Search.N_CompanyID = vw_UC_Item.N_CompanyID AND vw_InvItem_Search.N_ItemID = vw_UC_Item.N_ItemID " +
+                                    " where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4  and vw_InvItem_Search.N_ItemID=Inv_ItemUnit.N_ItemID " + BranchandLocation + categorySql + parentItemFilterSql + Searchkey;
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nCategoryID);
@@ -522,8 +532,8 @@ namespace SmartxAPI.Controllers
                 SortedList QueryParams = new SortedList();
                 // Auto Gen 
                 string InvoiceNo = "";
-                string X_ServiceCode ="";
-                int WarrantyID=0;
+                string X_ServiceCode = "";
+                int WarrantyID = 0;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -696,7 +706,7 @@ namespace SmartxAPI.Controllers
                                     string WarrantyCode = dLayer.GetAutoNumber("Inv_WarrantyContract", "X_WarrantyCode", Params, connection, transaction);
                                     if (WarrantyCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Warranty Code")); }
                                     WarrantyMaster.Rows[0]["X_WarrantyCode"] = WarrantyCode;
-                                     WarrantyID = dLayer.SaveData("Inv_WarrantyContract", "N_WarrantyID", WarrantyMaster, connection, transaction);
+                                    WarrantyID = dLayer.SaveData("Inv_WarrantyContract", "N_WarrantyID", WarrantyMaster, connection, transaction);
 
                                     if (WarrantyID <= 0) { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Warranty")); }
 
@@ -714,33 +724,34 @@ namespace SmartxAPI.Controllers
                             }
 
 
-// GENERATE Maintanance Entry
+                            // GENERATE Maintanance Entry
 
-                            DataTable MaintananceMaster = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,'@Auto' as X_ServiceCode,"+WarrantyID+" as N_WarrantyID,N_FnYearID,N_BranchId,N_LocationID,N_CustomerID,D_EntryDate,0 as N_BillAmountF,0 as N_BillAmount,x_Notes as X_Remarks,0 as N_Status,"+N_UserID+" as N_UserID,'' as X_ClosedRemarks,X_Barcode,N_SalesID  from Inv_Sales where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID and X_Barcode is not null ",warrantyParams,connection,transaction);
+                            DataTable MaintananceMaster = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,'@Auto' as X_ServiceCode," + WarrantyID + " as N_WarrantyID,N_FnYearID,N_BranchId,N_LocationID,N_CustomerID,D_EntryDate,0 as N_BillAmountF,0 as N_BillAmount,x_Notes as X_Remarks,0 as N_Status," + N_UserID + " as N_UserID,'' as X_ClosedRemarks,X_Barcode,N_SalesID  from Inv_Sales where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID and X_Barcode is not null ", warrantyParams, connection, transaction);
 
-                            DataTable MaintananceDetails = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,0 as N_ServiceDetailsID,N_BranchId,N_LocationID,N_ItemID,N_Qty,N_ItemUnitID,N_Cost,N_Sprice,N_SpriceF,X_ItemRemarks,D_Entrydate from Inv_SalesDetails  where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID",warrantyParams,connection,transaction);
+                            DataTable MaintananceDetails = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,0 as N_ServiceDetailsID,N_BranchId,N_LocationID,N_ItemID,N_Qty,N_ItemUnitID,N_Cost,N_Sprice,N_SpriceF,X_ItemRemarks,D_Entrydate from Inv_SalesDetails  where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID", warrantyParams, connection, transaction);
 
-                            if(MaintananceMaster.Rows.Count>0 && MaintananceDetails.Rows.Count>0){
-                                
-
-                         
-                                    Params["N_FormID"] =  1394;
-
-                                    while (true)
-                                    {
-
-                                        X_ServiceCode = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
-                                        break;
-                                    }
-
-
-                                    if (X_ServiceCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate maintanance entry")); }
-                                    MaintananceMaster.Rows[0]["X_ServiceCode"] = X_ServiceCode;
+                            if (MaintananceMaster.Rows.Count > 0 && MaintananceDetails.Rows.Count > 0)
+                            {
 
 
 
+                                Params["N_FormID"] = 1394;
 
-                               int nServiceID = dLayer.SaveData("Inv_ServiceMaster", "N_ServiceID", MaintananceMaster, connection, transaction);
+                                while (true)
+                                {
+
+                                    X_ServiceCode = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                                    break;
+                                }
+
+
+                                if (X_ServiceCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate maintanance entry")); }
+                                MaintananceMaster.Rows[0]["X_ServiceCode"] = X_ServiceCode;
+
+
+
+
+                                int nServiceID = dLayer.SaveData("Inv_ServiceMaster", "N_ServiceID", MaintananceMaster, connection, transaction);
                                 if (nServiceID <= 0)
                                 {
                                     transaction.Rollback();
@@ -869,7 +880,7 @@ namespace SmartxAPI.Controllers
                             PostingParam.Add("N_UserID", N_UserID);
                             PostingParam.Add("X_SystemName", "ERP Cloud");
 
-                            
+
 
                             SortedList StockPostingParams = new SortedList();
                             StockPostingParams.Add("N_CompanyID", N_CompanyID);
@@ -884,31 +895,36 @@ namespace SmartxAPI.Controllers
                             }
                             catch (Exception ex)
                             {
-                               
-                                if (ex.Message == "50"){
-                                     transaction.Rollback();
+
+                                if (ex.Message == "50")
+                                {
+                                    transaction.Rollback();
                                     return Ok(_api.Error(User, "Day Closed"));
-                                    }
+                                }
                                 else if (ex.Message == "51")
-                                    {
-                                         transaction.Rollback();
-                                        return Ok(_api.Error(User, "Year Closed"));
-                                        }
-                                else if (ex.Message == "52"){
-                                     transaction.Rollback();
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, "Year Closed"));
+                                }
+                                else if (ex.Message == "52")
+                                {
+                                    transaction.Rollback();
                                     return Ok(_api.Error(User, "Year Exists"));
-                                    }
-                                else if (ex.Message == "53"){
-                                     transaction.Rollback();
+                                }
+                                else if (ex.Message == "53")
+                                {
+                                    transaction.Rollback();
                                     return Ok(_api.Error(User, "Period Closed"));
-                                    }
-                                else if (ex.Message == "54"){
-                                     transaction.Rollback();
+                                }
+                                else if (ex.Message == "54")
+                                {
+                                    transaction.Rollback();
                                     return Ok(_api.Error(User, "Txn Date"));
-                                    }
-                                else {
-                                // if (ex.Message == "55"){
-                                    dLayer.ExecuteNonQuery("update  Inv_Sales set B_IsSaveDraft=1 where N_SalesID="+N_SalesID+" and N_CompanyID=@nCompanyID and N_BranchID=@nBranchID", QueryParams, connection, transaction);
+                                }
+                                else
+                                {
+                                    // if (ex.Message == "55"){
+                                    dLayer.ExecuteNonQuery("update  Inv_Sales set B_IsSaveDraft=1 where N_SalesID=" + N_SalesID + " and N_CompanyID=@nCompanyID and N_BranchID=@nBranchID", QueryParams, connection, transaction);
                                     // return Ok(_api.Error(User, "Quantity exceeds!"));
                                 }
                                 // else{
