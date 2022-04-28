@@ -125,6 +125,13 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_PickListCode"] = x_PickListCode;
                     }
 
+                     if (nPickListID > 0)
+                    {
+                        dLayer.DeleteData("Wh_PickListDetails", "n_PickListID", nPickListID, "N_CompanyID=" + nCompanyID + " and n_PickListID=" + nPickListID, connection, transaction);
+                        dLayer.DeleteData("Wh_PickList", "n_PickListID", nPickListID, "N_CompanyID=" + nCompanyID + " and n_PickListID=" + nPickListID, connection, transaction);
+                    }
+
+
                     int n_PickListID = dLayer.SaveData("Wh_PickList", "N_PickListID", "", "", MasterTable, connection, transaction);
                     if (n_PickListID <= 0)
                     {
