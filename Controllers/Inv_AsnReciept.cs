@@ -313,17 +313,17 @@ namespace SmartxAPI.Controllers
                         ds.Tables.Add(Master);
 
                         // Master= myFunctions.AddNewColumnToDataTable(Master, "N_Processed", typeof(int), 0);
-                        
-                      object GroupCodeObj = dLayer.ExecuteScalar("select count(*) as N_Count from Wh_GRN Where N_CompanyID=@nCompanyID and N_AsnID=@N_AsnID", QueryParams, connection);
+
+                        object GroupCodeObj = dLayer.ExecuteScalar("select count(*) as N_Count from Wh_GRN Where N_CompanyID=@nCompanyID and N_AsnID=@N_AsnID", QueryParams, connection);
                         if (myFunctions.getIntVAL(GroupCodeObj.ToString()) > 0)
                         {
                             Master.Rows[0]["N_Processed"] = 1;
-                           
+
                         }
                         else
                         {
                             Master.Rows[0]["N_Processed"] = 0;
-                           
+
                         }
 
                         _sqlQuery = "Select * from vw_Wh_AsnDetails_Disp Where N_CompanyID=@nCompanyID and N_AsnID=@N_AsnID";
@@ -428,12 +428,13 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nAsnID)
+        public ActionResult DeleteData(int nAsnID, int nFnYearID)
         {
             int Results = 0;
             int nCompanyID = myFunctions.GetCompanyID(User);
             SortedList Params = new SortedList();
             Params.Add("@companyid", nCompanyID);
+            DataTable items = new DataTable();
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -447,6 +448,41 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Warning("GRN Already Processed"));
                     }
+                    items = dLayer.ExecuteDataTable("select N_ItemID from Wh_AsnDetails where N_AsnID = " + nAsnID + " and N_CompanyID = " + nCompanyID + " ", Params, connection, transaction);
+                    if (items.Rows.Count > 0)
+                    {
+                        foreach (DataRow detVar in items.Rows)
+                        {
+                            int _itemID = myFunctions.getIntVAL(detVar["N_ItemID"].ToString());
+                            object N_Result = dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID= " + nCompanyID + " and N_FnYearID= " + nFnYearID, connection, transaction);
+                            if (myFunctions.getIntVAL(myFunctions.getBoolVAL(N_Result.ToString())) == 1)
+                            {
+                                return Ok(_api.Error(User, "Year Closed , Unable to delete product."));
+                            }
+                            dLayer.DeleteData("Inv_ItemDetails", "N_MainItemID", _itemID, "", connection, transaction);
+                            Results = dLayer.DeleteData("Inv_ItemMaster", "N_ItemID", _itemID, "", connection, transaction);
+                            if (Results > 0)
+                            {
+
+                                dLayer.ExecuteScalar("delete from  Inv_ItemUnit  Where N_ItemID=" + _itemID + " and N_CompanyID=" + nCompanyID, Params,connection, transaction);
+                                dLayer.ExecuteScalar("delete from  Inv_BOMEmployee  Where N_MainItem=" + _itemID + " and N_CompanyID=" + nCompanyID, Params,connection, transaction);
+                                dLayer.ExecuteScalar("delete from  Inv_BOMAsset  Where N_MainItemID=" + _itemID + " and N_CompanyID=" + nCompanyID, Params,connection, transaction);
+                                // transaction.Commit();
+                                // return Ok(_api.Success("Product deleted"));
+                            }
+                            else
+                            {
+                                transaction.Rollback();
+
+                                return Ok(_api.Error(User, "Unable to delete product"));
+                            }
+
+
+
+                        }
+                    }
+
+                    
                     dLayer.DeleteData("Wh_AsnDetails", "N_AsnID", nAsnID, "N_CompanyID=" + nCompanyID + " and N_AsnID=" + nAsnID, connection, transaction);
                     Results = dLayer.DeleteData("Wh_AsnMaster", "N_AsnID", nAsnID, "N_CompanyID=" + nCompanyID + " and N_AsnID=" + nAsnID, connection, transaction);
 

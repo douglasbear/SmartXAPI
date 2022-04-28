@@ -39,7 +39,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, int nItemUsedFor, bool isServiceItem,bool b_whGrn,int n_CustomerID)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
             string Category = "";
             string Condition = "";
             string xCriteria = "";
-            string warehouseSql="";
+            string warehouseSql = "";
             //nItemUsedFor -> 1-Purchase, 2-Sales, 3-Both, 4-Raw Material
 
 
@@ -57,9 +57,13 @@ namespace SmartxAPI.Controllers
             //     xCriteria = " N_FnYearID=@p2 and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyID=@p1 ";
             // else
             //     xCriteria = " N_FnY.0earID=@p2 and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchID=@p3 and N_CompanyID=@p1 ";
-            if(b_whGrn==true && n_CustomerID>0)
+            if (b_whGrn == true && n_CustomerID > 0)
             {
-                warehouseSql=  "and vw_InvItem_Search_cloud.N_ItemID in (select N_ItemID from  Vw_wh_AsnDetails_disp where N_CompanyID=@p1 and N_CustomerID="+n_CustomerID+")";
+                warehouseSql = "and vw_InvItem_Search_cloud.N_ItemID in (select N_ItemID from  Vw_wh_AsnDetails_disp where N_CompanyID=@p1 and N_CustomerID=" + n_CustomerID + ")";
+            }
+            if (b_PickList == true && n_CustomerID > 0)
+            {
+                warehouseSql = "and vw_InvItem_Search_cloud.N_ItemID in (select N_ItemID from  vw_Wh_GRNDetails where N_CompanyID=@p1 and N_CustomerID=" + n_CustomerID + ")";
             }
 
             if (query != "" && query != null)
@@ -111,7 +115,7 @@ namespace SmartxAPI.Controllers
             // string sqlComandText = " * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
 
             string sqlComandText = "  vw_InvItem_Search_cloud.*,dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID,vw_InvItem_Search_cloud.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_SellingPrice2 FROM vw_InvItem_Search_cloud LEFT OUTER JOIN " +
-             " Inv_ItemUnit ON vw_InvItem_Search_cloud.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search_cloud.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search_cloud.N_CompanyID=@p1 and vw_InvItem_Search_cloud.B_Inactive=@p2 and vw_InvItem_Search_cloud.[Item Code]<> @p3 and vw_InvItem_Search_cloud.N_ItemTypeID<>@p4  and vw_InvItem_Search_cloud.N_ItemID=Inv_ItemUnit.N_ItemID " + qry + Category + Condition+ warehouseSql;
+             " Inv_ItemUnit ON vw_InvItem_Search_cloud.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search_cloud.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search_cloud.N_CompanyID=@p1 and vw_InvItem_Search_cloud.B_Inactive=@p2 and vw_InvItem_Search_cloud.[Item Code]<> @p3 and vw_InvItem_Search_cloud.N_ItemTypeID<>@p4  and vw_InvItem_Search_cloud.N_ItemID=Inv_ItemUnit.N_ItemID and  vw_InvItem_Search_cloud.N_ClassID!=6 " + qry + Category + Condition+ warehouseSql;
 
 
 
@@ -574,10 +578,10 @@ namespace SmartxAPI.Controllers
                     {
 
                         int j = 1;
-                        string VariantCode ="";
+                        string VariantCode = "";
                         for (int i = 0; i < VariantList.Rows.Count; i++)
                         {
-                           
+
                             var newRow = MasterTable.NewRow();
                             if (myFunctions.getIntVAL(VariantList.Rows[i]["N_ItemID"].ToString()) == 0)
                             {
@@ -586,16 +590,18 @@ namespace SmartxAPI.Controllers
                                 MasterTable.Rows[j]["X_ItemName"] = VariantList.Rows[i]["X_ItemName"].ToString();
                                 if (VariantList.Rows[i]["X_Barcode"].ToString() != "")
                                     MasterTable.Rows[j]["X_Barcode"] = VariantList.Rows[i]["X_Barcode"].ToString();
+
+                                if(MasterTable.Columns.Contains("N_Rate") && VariantList.Columns.Contains("N_Rate"))
                                 if (VariantList.Rows[i]["N_Rate"].ToString() != "")
                                     MasterTable.Rows[j]["N_Rate"] = myFunctions.getVAL(VariantList.Rows[i]["N_Rate"].ToString());
                                 MasterTable.Rows[j]["N_CLassID"] = "2";
-                                 
-                               
 
-                               VariantCode = dLayer.GetAutoNumber("Inv_ItemMaster", "X_ItemCode", Params, connection, transaction);
-                               if (VariantCode == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate product Code")); }
-                               MasterTable.Rows[j]["X_ItemCode"] = VariantCode;
-                               VariantCode="";
+
+
+                                VariantCode = dLayer.GetAutoNumber("Inv_ItemMaster", "X_ItemCode", Params, connection, transaction);
+                                if (VariantCode == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate product Code")); }
+                                MasterTable.Rows[j]["X_ItemCode"] = VariantCode;
+                                VariantCode = "";
                             }
                             else
                             {
@@ -629,11 +635,18 @@ namespace SmartxAPI.Controllers
                             xBarcode = AutoGenerateBarCode(MasterTable.Rows[k]["X_ItemCode"].ToString(), myFunctions.getIntVAL(MasterTable.Rows[k]["N_CategoryID"].ToString()), nCompanyID, dLayer, connection, transaction);
                             MasterTable.Rows[k]["X_Barcode"] = xBarcode;
                         }
+                        string image = "";
 
-                        string image = MasterTable.Rows[0]["i_Image"].ToString();
+                        if (MasterTable.Columns.Contains("i_Image"))
+                        {
+
+                            image = MasterTable.Rows[0]["i_Image"].ToString();
+
+                            MasterTable.Rows[k]["i_Image"] = "";
+
+                        }
                         Byte[] imageBitmap = new Byte[image.Length];
                         imageBitmap = Convert.FromBase64String(image);
-                        MasterTable.Rows[k]["i_Image"] = "";
                         //MasterTable.Columns.Remove("i_Image");
 
                         string DupCriteria = "";// "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_ItemID="+N_ItemID;  // and X_ItemCode='" + ItemCode + "'";
@@ -648,7 +661,7 @@ namespace SmartxAPI.Controllers
                         if (k == 0 && ItemType == 6)
                         {
                             N_VariantGrpType = N_ItemID;
-                            dLayer.ExecuteNonQuery("update  Inv_ItemMaster set B_Show = 0  where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
+                            dLayer.ExecuteNonQuery("update  Inv_ItemMaster set B_Show = 0 ,b_CanbeSold=0,b_CanbePurchased=0 where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
                         }
                         else
                         {
@@ -669,7 +682,7 @@ namespace SmartxAPI.Controllers
 
                         foreach (DataRow var in ItemUnits.Rows) var["n_ItemID"] = N_ItemID;
 
-                        if (k > 0)
+                        if (k > 0 && MasterTable.Columns.Contains("N_Rate"))
                             foreach (DataRow var in StockUnit.Rows) var["N_SellingPrice"] = MasterTable.Rows[k]["N_Rate"].ToString();
 
 
@@ -1362,21 +1375,21 @@ namespace SmartxAPI.Controllers
                     //     sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and N_ItemID=@p2 and N_CustomerID=@p3 " + Searchkey + " " + xSortBy;
                     // else
                     //     sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 " + Searchkey + " and N_SalesDetailsID not in (select top(" + Count + ") N_SalesDetailsID from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 " + xSearchkey + xSortBy + " ) " + xSortBy;
-                  if(nCustomerID>0)
-                  {
-                    if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and  N_ItemID=@p2 and N_CustomerID=@p3  " + Searchkey + " " + xSortBy;
+                    if (nCustomerID > 0)
+                    {
+                        if (Count == 0)
+                            sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and  N_ItemID=@p2 and N_CustomerID=@p3  " + Searchkey + " " + xSortBy;
+                        else
+                            sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3  " + Searchkey + " and N_SalesDetailsID not in (select top(" + Count + ") N_SalesDetailsID from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3  " + xSearchkey + xSortBy + " ) " + xSortBy;
+                    }
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3  " + Searchkey + " and N_SalesDetailsID not in (select top(" + Count + ") N_SalesDetailsID from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3  " + xSearchkey + xSortBy + " ) " + xSortBy;
-                  }
-                  else
-                  {
-                   if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and  N_ItemID=@p2  " + Searchkey + " " + xSortBy;
-                    else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2  " + Searchkey + " and N_SalesDetailsID not in (select top(" + Count + ") N_SalesDetailsID from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
-                 
-                  }
+                    {
+                        if (Count == 0)
+                            sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and  N_ItemID=@p2  " + Searchkey + " " + xSortBy;
+                        else
+                            sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2  " + Searchkey + " and N_SalesDetailsID not in (select top(" + Count + ") N_SalesDetailsID from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
+
+                    }
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);

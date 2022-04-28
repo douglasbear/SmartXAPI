@@ -21,6 +21,7 @@ using zatca.einvoicing;
 using Microsoft.AspNetCore.Hosting;
 using System.Text.RegularExpressions;
 using System.IO.Compression;
+using System.Net.Cache;
 namespace SmartxAPI.Controllers
 {
     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -404,7 +405,7 @@ namespace SmartxAPI.Controllers
 
                     if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, nPreview, xrptname))
                     {
-                        
+
                         var client = new HttpClient(handler);
                         var dbName = connection.Database;
                         var random = RandomString();
@@ -416,10 +417,10 @@ namespace SmartxAPI.Controllers
 
                         if (nPreview == 2)
                         {
-                            string fileToCopy = RPTLocation + ReportName+".rpt";
-                            string destinationFile = this.TempFilesPath + ReportName+".rpt";
+                            string fileToCopy = RPTLocation + ReportName + ".rpt";
+                            string destinationFile = this.TempFilesPath + ReportName + ".rpt";
                             string ZipLocation = this.TempFilesPath + ReportName + ".rpt.zip";
-                            if (CopyFiles(fileToCopy, destinationFile, ReportName+".rpt"))
+                            if (CopyFiles(fileToCopy, destinationFile, ReportName + ".rpt"))
                                 return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + ".rpt.zip" } }));
 
                         }
@@ -681,6 +682,80 @@ string x_comments="";
             }
 
         }
+        public static DateTime GetFastestNISTDate()
+        {
+            var result = DateTime.MinValue;
+            // Initialize the list of NIST time servers
+            // http://tf.nist.gov/tf-cgi/servers.cgi
+            string[] servers = new string[] {
+"nist1-ny.ustiming.org",
+"nist1-nj.ustiming.org",
+"nist1-pa.ustiming.org",
+"time-a.nist.gov",
+"time-b.nist.gov",
+"nist1.aol-va.symmetricom.com",
+"nist1.columbiacountyga.gov",
+"nist1-chi.ustiming.org",
+"nist.expertsmi.com",
+"nist.netservicesgroup.com"
+};
+
+            // Try 5 servers in random order to spread the load
+            Random rnd = new Random();
+            foreach (string server in servers.OrderBy(s => rnd.NextDouble()).Take(5))
+            {
+                try
+                {
+                    // Connect to the server (at port 13) and get the response
+                    string serverResponse = string.Empty;
+                    using (var reader = new StreamReader(new System.Net.Sockets.TcpClient(server, 13).GetStream()))
+                    {
+                        serverResponse = reader.ReadToEnd();
+                    }
+
+                    // If a response was received
+                    if (!string.IsNullOrEmpty(serverResponse))
+                    {
+                        // Split the response string ("55596 11-02-14 13:54:11 00 0 0 478.1 UTC(NIST) *")
+                        string[] tokens = serverResponse.Split(' ');
+
+                        // Check the number of tokens
+                        if (tokens.Length >= 6)
+                        {
+                            // Check the health status
+                            string health = tokens[5];
+                            if (health == "0")
+                            {
+                                // Get date and time parts from the server response
+                                string[] dateParts = tokens[1].Split('-');
+                                string[] timeParts = tokens[2].Split(':');
+
+                                // Create a DateTime instance
+                                DateTime utcDateTime = new DateTime(
+                                    Convert.ToInt32(dateParts[0]) + 2000,
+                                    Convert.ToInt32(dateParts[1]), Convert.ToInt32(dateParts[2]),
+                                    Convert.ToInt32(timeParts[0]), Convert.ToInt32(timeParts[1]),
+                                    Convert.ToInt32(timeParts[2]));
+
+                                // Convert received (UTC) DateTime value to the local timezone
+                                result = utcDateTime.ToLocalTime();
+
+                                return result;
+                                // Response successfully received; exit the loop
+
+                            }
+                        }
+
+                    }
+
+                }
+                catch
+                {
+                    // Ignore exception and try the next server
+                }
+            }
+            return result;
+        }
 
         [HttpPost("getModuleReport")]
         public IActionResult GetModuleReports([FromBody] DataSet ds)
@@ -714,6 +789,7 @@ string x_comments="";
                 {
                     connection.Open();
                     //int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["moduleID"].ToString());
+
                     int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportCategoryID"].ToString());
                     int ReportID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportID"].ToString());
                     int FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["nFnYearID"].ToString());
@@ -909,13 +985,7 @@ string x_comments="";
 
                     }
 
-
-
-
-
-
                     dbName = connection.Database;
-
                     //Local Time Checking
                     object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
                     object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection);
@@ -942,6 +1012,8 @@ string x_comments="";
                     reportName = rptArray[1].ToString();
                     actReportLocation = actReportLocation + rptArray[0].ToString() + "/";
                 }
+
+
 
 
                 //string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;
