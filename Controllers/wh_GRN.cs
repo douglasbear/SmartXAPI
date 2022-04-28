@@ -312,18 +312,18 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, ex));
                     }
-                 if (Attachment.Rows.Count > 0)
-                    {
-                        try
-                        {
-                            myAttachments.SaveAttachment(dLayer, Attachment, nGrnID, User, connection, transaction);
-                        }
-                        catch (Exception ex)
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, ex));
-                        }
-                    }
+                //  if (Attachment.Rows.Count > 0)
+                //     {
+                //         try
+                //         {
+                //             myAttachments.SaveAttachment(dLayer, Attachment, nGrnID, User, connection, transaction);
+                //         }
+                //         catch (Exception ex)
+                //         {
+                //             transaction.Rollback();
+                //             return Ok(_api.Error(User, ex));
+                //         }
+                //     }
                     transaction.Commit();
                     SortedList Result = new SortedList();
                     Result.Add("N_GRNDetailsID", nGrnID);
@@ -369,7 +369,7 @@ namespace SmartxAPI.Controllers
                     Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
                     if (Results <= 0)
                     {
-                          myAttachments.DeleteAttachment(dLayer, 1, nGRNID, nGRNID, User, transaction, connection);
+                        //   myAttachments.DeleteAttachment(dLayer, 1, nGRNID, nGRNID, User, transaction, connection);
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to Delete Goods Receive Note"));
                     }
