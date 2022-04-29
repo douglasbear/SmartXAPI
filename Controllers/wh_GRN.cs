@@ -120,7 +120,7 @@ namespace SmartxAPI.Controllers
             DataSet ds = new DataSet();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
-
+             DataTable Attachments = new DataTable();
             int companyid = myFunctions.GetCompanyID(User);
 
             QueryParams.Add("@nCompanyID", nCompanyID);
@@ -156,7 +156,7 @@ namespace SmartxAPI.Controllers
                     Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
                     Master = _api.Format(Master, "master");
-
+                   
                     if (Master.Rows.Count == 0)
                     {
                         return Ok(_api.Notice("No Results Found"));
@@ -187,6 +187,10 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Notice("No Results Found"));
                         }
                         ds.Tables.Add(Detail);
+                          DataTable Attachements = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_GRNID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_GRNID"].ToString()), this.N_FormID, myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                        Attachements = _api.Format(Attachements, "attachments");
+                        ds.Tables.Add(Attachements);
+
 
                         return Ok(_api.Success(ds));
                     }
@@ -216,6 +220,7 @@ namespace SmartxAPI.Controllers
                     DataTable DetailTable;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
+                    DataTable Attachment = ds.Tables["attachments"];
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
                     int nGrnID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_GRNID"].ToString());
@@ -307,7 +312,18 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, ex));
                     }
-
+                //  if (Attachment.Rows.Count > 0)
+                //     {
+                //         try
+                //         {
+                //             myAttachments.SaveAttachment(dLayer, Attachment, nGrnID, User, connection, transaction);
+                //         }
+                //         catch (Exception ex)
+                //         {
+                //             transaction.Rollback();
+                //             return Ok(_api.Error(User, ex));
+                //         }
+                //     }
                     transaction.Commit();
                     SortedList Result = new SortedList();
                     Result.Add("N_GRNDetailsID", nGrnID);
@@ -353,6 +369,7 @@ namespace SmartxAPI.Controllers
                     Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
                     if (Results <= 0)
                     {
+                        //   myAttachments.DeleteAttachment(dLayer, 1, nGRNID, nGRNID, User, transaction, connection);
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to Delete Goods Receive Note"));
                     }
