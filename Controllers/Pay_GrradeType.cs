@@ -90,33 +90,43 @@ namespace SmartxAPI.Controllers
         }
        
 
-               [HttpGet("details")]
-        public ActionResult GradeListDetails(string xgradecode)
+        [HttpGet("details")]
+        public ActionResult GradeListDetails(int nGradeID)
         {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
+            DataSet dt=new DataSet();
+            SortedList Params=new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable MasterTable = new DataTable();
+            DataTable DetailTable = new DataTable();
   
-            string sqlCommandText = "select * from Pay_GradeTypeDetails where N_CompanyID=@p1 and X_GradeCode=@p2";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", xgradecode);
+            string Mastersql = "select * from Pay_GradeType where N_CompanyID=@p1 and N_GradeID=@p2";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nGradeID);
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    MasterTable=dLayer.ExecuteDataTable(Mastersql,Params,connection); 
+
+                    if (MasterTable.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Data Found !!"));
+                    }
+
+                    MasterTable = api.Format(MasterTable, "Master");
+                    dt.Tables.Add(MasterTable);
+
+                    int N_GradeID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_GradeID"].ToString());
+
+                    string DetailSql = "select * from Pay_GradeTypeDetails where N_CompanyID=" + nCompanyID + " and N_GradeID=" + N_GradeID ;
+
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    DetailTable = api.Format(DetailTable, "Details");
+                    dt.Tables.Add(DetailTable);
                 }
-                dt = api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Warning("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
+                return Ok(api.Success(dt));
             }
             catch (Exception e)
             {
