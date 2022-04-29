@@ -23,6 +23,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly IMyAttachments myAttachments;
+        private readonly string AppURL;
 
         public Inv_Customer(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
@@ -31,6 +32,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             myAttachments = myAtt;
+            AppURL = conf.GetConnectionString("AppURL");
         }
 
 
@@ -299,7 +301,7 @@ namespace SmartxAPI.Controllers
                                 }
                             }
 
-                            object objUserCat = dLayer.ExecuteScalar("select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + " and N_AppID=10", Params, connection, transaction);
+                            object objUserCat = dLayer.ExecuteScalar("select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + " and N_AppID=13", Params, connection, transaction);
                             if (objUserCat != null)
                             {
                                 UserCatID = myFunctions.getIntVAL(objUserCat.ToString());
@@ -599,7 +601,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    dt = myFunctions.AddNewColumnToDataTable(dt, "customerKey", typeof(string), "");
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "portalURL", typeof(string), "");
                     if (dt.Rows.Count == 0)
                     {
                         return Ok(api.Notice("No Results Found"));
@@ -613,8 +615,12 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            string seperator = "$e$-!";
-                            dt.Rows[0]["customerKey"] = myFunctions.EncryptString(myFunctions.GetCompanyID(User).ToString()) + seperator + myFunctions.EncryptString(dt.Rows[0]["n_CustomerID"].ToString());
+                            string seperator = "$$";
+                            // dt.Rows[0]["customerKey"] = myFunctions.EncryptString(myFunctions.GetCompanyID(User).ToString()) + seperator + myFunctions.EncryptString(dt.Rows[0]["n_CustomerID"].ToString());
+
+                            string xURL = myFunctions.EncryptStringForUrl(myFunctions.GetCompanyID(User).ToString() + seperator + dt.Rows[0]["n_CustomerID"].ToString() + seperator + "HOME" + seperator + "0", System.Text.Encoding.Unicode);
+                                   xURL = AppURL + "/client/customer/13/" + xURL + "/home/new";
+                                   dt.Rows[0]["portalURL"] = xURL;
                         }
                         dt.AcceptChanges();
                     
