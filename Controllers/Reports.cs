@@ -24,6 +24,7 @@ using System.IO.Compression;
 using System.Net.Cache;
 using System.Drawing;
 using System.Drawing.Imaging;
+using ZXing;
 namespace SmartxAPI.Controllers
 {
     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -456,7 +457,7 @@ namespace SmartxAPI.Controllers
                         {
                             object ASNdoc = dLayer.ExecuteScalar("select x_asndocno from vw_Wh_AsnMaster_Disp where n_companyid=" + nCompanyId + " and n_asnid=" + nPkeyID, connection, transaction);
                             CreateBarcode(ASNdoc.ToString());
-                            DataTable AsnDetails = dLayer.ExecuteDataTable("select X_Barcode from vw_Wh_Asndetails_disp where n_companyid=" + nCompanyId + " and n_asnid=" + nPkeyID,QueryParams, connection, transaction);
+                            DataTable AsnDetails = dLayer.ExecuteDataTable("select X_Barcode from vw_Wh_Asndetails_disp where n_companyid=" + nCompanyId + " and n_asnid=" + nPkeyID, QueryParams, connection, transaction);
                             foreach (DataRow var in AsnDetails.Rows)
                             {
                                 CreateBarcode(var["X_Barcode"].ToString());
@@ -511,21 +512,10 @@ namespace SmartxAPI.Controllers
         }
         public bool CreateBarcode(string Data)
         {
-            string barCode = Data;
-            using (Bitmap bitMap = new Bitmap(barCode.Length * 40, 80))
-            {
-                using (Graphics graphics = Graphics.FromImage(bitMap))
-                {
-                    Font oFont = new Font("IDAutomationHC39M Free Version", 16);
-                    PointF point = new PointF(2f, 2f);
-                    SolidBrush blackBrush = new SolidBrush(Color.Black);
-                    SolidBrush whiteBrush = new SolidBrush(Color.White);
-                    graphics.FillRectangle(whiteBrush, 0, 0, bitMap.Width, bitMap.Height);
-                    graphics.DrawString("*" + barCode + "*", oFont, blackBrush, point);
-                }
-                bitMap.Save("C://OLIVOSERVER2020/Barcode/"+Data+".png", ImageFormat.Png);
-                return true;
-            }
+            Zen.Barcode.Code128BarcodeDraw barcode = Zen.Barcode.BarcodeDrawFactory.Code128WithChecksum;
+            Image img = barcode.Draw(Data, 50);
+            img.Save("C://OLIVOSERVER2020/Barcode/"+Data+".png", ImageFormat.Png);
+            return true;
         }
 
         public bool sendmail(string url, string mail)
