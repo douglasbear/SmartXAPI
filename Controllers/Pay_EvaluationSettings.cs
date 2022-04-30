@@ -30,7 +30,7 @@ namespace SmartxAPI.Controllers
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 218;
+            FormID = 1457;
         }
 
         [HttpPost("save")]
@@ -241,7 +241,37 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
+        [HttpGet("listemployee")]
+        public ActionResult ListEmployee(int nFnYearID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+            string sqlCommandText = "Select N_EmpID,X_EmpCode,X_EmpName,X_Department,X_Position from vw_PayEmployee Where N_CompanyID=@nCompanyID and N_Status<2 and N_FnyearID=@nFnYearID";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
 
     }
 }

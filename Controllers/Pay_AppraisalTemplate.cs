@@ -124,16 +124,16 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable;
-                DataTable DetailTable;
+                DataTable CompetencyCategoryTable;
                 DataTable CompetencyTable;
                 DataTable TrainingneedsTable;
                 MasterTable = ds.Tables["master"];
-                DetailTable = ds.Tables["details"];
+                CompetencyCategoryTable = ds.Tables["competencycategory"];
                 CompetencyTable = ds.Tables["competency"];
                 TrainingneedsTable = ds.Tables["trainingneeds"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-                int nTemplateID = myFunctions.getIntVAL(MasterTable.Rows[0]["nTemplateID"].ToString());
+                int nTemplateID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TemplateID"].ToString());
                 int nCategoryID = 0;
                 int nCompetencyID = 0;
                 int nTrainingID = 0;
@@ -146,6 +146,13 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
+                    if (nTemplateID > 0) {
+                        dLayer.DeleteData("Pay_CompetencyCategory", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID , connection, transaction);
+                        dLayer.DeleteData("Pay_CompetencyCategory", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Pay_Competency", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Pay_TrainingNeeds", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                    }
+                    
                     // Auto Gen
                     string Code = "";
                     var values = MasterTable.Rows[0]["x_Code"].ToString();
@@ -165,23 +172,23 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User,"Unable to save"));
                     }
-                    
-                    dLayer.DeleteData("Pay_CompetencyCategory", "N_TemplateID", nTemplateID, "", connection, transaction);
-                    for (int j = 0; j < DetailTable.Rows.Count; j++)
-                    {
-                        DetailTable.Rows[j]["N_TemplateID"] = nTemplateID;  
-                    }
-                    nCategoryID = dLayer.SaveData("Pay_CompetencyCategory", "N_CategoryID", DetailTable, connection, transaction);
-                    if (nCategoryID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
-                    }
 
-                    dLayer.DeleteData("Pay_Competency", "N_TemplateID", nTemplateID, "", connection, transaction);
-                    for (int j = 0; j < CompetencyTable.Rows.Count; j++)
+                    for (int j = 0; j < CompetencyCategoryTable.Rows.Count; j++)
                     {
-                        CompetencyTable.Rows[j]["N_TemplateID"] = nTemplateID;  
+                        CompetencyCategoryTable.Rows[j]["N_TemplateID"] = nTemplateID;  
+                    
+                        nCategoryID = dLayer.SaveDataWithIndex("Pay_CompetencyCategory", "N_CategoryID",  "", "", j, CompetencyCategoryTable, connection, transaction);
+                        if (nCategoryID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User,"Unable to save"));
+                        }
+
+                        for (int i = 0; i < CompetencyTable.Rows.Count; i++)
+                        {
+                            CompetencyTable.Rows[i]["N_TemplateID"] = nTemplateID;  
+                            CompetencyTable.Rows[i]["N_CategoryID"] = nCategoryID;  
+                        }
                     }
                     nCompetencyID = dLayer.SaveData("Pay_Competency", "N_CompetencyID", CompetencyTable, connection, transaction);
                     if (nCompetencyID <= 0)
@@ -190,7 +197,6 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User,"Unable to save"));
                     }
 
-                    dLayer.DeleteData("Pay_TrainingNeeds", "N_TemplateID", nTemplateID, "", connection, transaction);
                     for (int j = 0; j < TrainingneedsTable.Rows.Count; j++)
                     {
                         TrainingneedsTable.Rows[j]["N_TemplateID"] = nTemplateID;  

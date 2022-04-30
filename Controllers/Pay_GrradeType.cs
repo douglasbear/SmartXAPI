@@ -33,16 +33,18 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
-                [HttpGet("list")]
-        public ActionResult Gradetype(int ngradeId,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        [HttpGet("list")]
+        public ActionResult Gradetype(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string sqlCommandCount = "";
-            int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText ="";
 
+            int Count = (nPage - 1) * nSizeperpage;
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
             string Searchkey = "";
+
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = " and (X_GradeCode like '%" + xSearchkey + "%'or X_GradeCode like '%" + xSearchkey + "%' )";
 
@@ -50,9 +52,12 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by N_GradeID desc";
             else
                 xSortBy = " order by " + xSortBy;
-            
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_GradeType where N_CompanyID=@p1" + Searchkey + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_GradeType where N_CompanyID=@p1" + Searchkey +" and  N_GradeID not in (select top(" + Count + ") N_GradeID from Pay_GradeType where N_CompanyID=@p1 )" + Searchkey + xSortBy;
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p3", ngradeId);
             SortedList OutPut = new SortedList();
 
             try
@@ -62,7 +67,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    //sqlCommandCount = "select count(*) as N_Count  from vw_CRMCustomer where N_CompanyID=@p1  " + Pattern;
+                    sqlCommandCount = "select count(*) as N_Count from Pay_GradeType where N_CompanyID=@p1  " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -85,33 +90,43 @@ namespace SmartxAPI.Controllers
         }
        
 
-               [HttpGet("details")]
-        public ActionResult GradeListDetails(string xgradecode)
+        [HttpGet("details")]
+        public ActionResult GradeListDetails(int nGradeID)
         {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
+            DataSet dt=new DataSet();
+            SortedList Params=new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable MasterTable = new DataTable();
+            DataTable DetailTable = new DataTable();
   
-            string sqlCommandText = "select * from Pay_GradeTypeDetails where N_CompanyID=@p1 and X_GradeCode=@p2";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", xgradecode);
+            string Mastersql = "select * from Pay_GradeType where N_CompanyID=@p1 and N_GradeID=@p2";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nGradeID);
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    MasterTable=dLayer.ExecuteDataTable(Mastersql,Params,connection); 
+
+                    if (MasterTable.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Data Found !!"));
+                    }
+
+                    MasterTable = api.Format(MasterTable, "Master");
+                    dt.Tables.Add(MasterTable);
+
+                    int N_GradeID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_GradeID"].ToString());
+
+                    string DetailSql = "select * from Pay_GradeTypeDetails where N_CompanyID=" + nCompanyID + " and N_GradeID=" + N_GradeID ;
+
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    DetailTable = api.Format(DetailTable, "Details");
+                    dt.Tables.Add(DetailTable);
                 }
-                dt = api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Warning("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
+                return Ok(api.Success(dt));
             }
             catch (Exception e)
             {
