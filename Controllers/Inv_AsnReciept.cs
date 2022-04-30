@@ -21,14 +21,17 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int FormID;
+         private readonly IMyAttachments myAttachments;
 
-        public Inv_AsnReciept(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+
+        public Inv_AsnReciept(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf,IMyAttachments myAtt)
         {
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 1406;
+             myAttachments = myAtt;
 
         }
 
@@ -168,6 +171,7 @@ namespace SmartxAPI.Controllers
                     DataTable DetailTable;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
+                    DataTable Attachment = ds.Tables["attachments"];
                     SortedList Params = new SortedList();
 
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
@@ -175,6 +179,7 @@ namespace SmartxAPI.Controllers
                     int N_CustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
                     int N_BranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
+                 
                     string X_AsnDocNo = "";
                     var values = MasterTable.Rows[0]["X_AsnDocNo"].ToString();
 
@@ -183,6 +188,8 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_FormID", 370);
                         Params.Add("N_YearID", N_FnYearID);
+                         
+
 
 
                         X_AsnDocNo = dLayer.GetAutoNumber("Wh_AsnMaster", "X_AsnDocNo", Params, connection, transaction);
@@ -203,16 +210,28 @@ namespace SmartxAPI.Controllers
                     nAsnID = dLayer.SaveData("Wh_AsnMaster", "N_AsnID", MasterTable, connection, transaction);
 
                     if (nAsnID <= 0)
-                    {
-                        transaction.Rollback();
+                    {                                                                         
+                        transaction.Rollback();  
                         return Ok(_api.Error(User, "Unable to save"));
                     }
 
+                        SortedList CustomerParams = new SortedList();
+                        CustomerParams.Add("@nCustomerID", N_CustomerID);
 
-
-                    //Inv_ItemMaster Creation
-
-
+                        DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID=@nCustomerID", CustomerParams, connection, transaction);
+                        if (CustomerInfo.Rows.Count > 0)
+                        {
+                            try
+                            {
+                                myAttachments.SaveAttachment(dLayer, Attachment, X_AsnDocNo, nAsnID, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), CustomerInfo.Rows[0]["X_CustomerCode"].ToString(), N_CustomerID, "WareHouse Document", User, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
+                        }
+                  
 
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -331,12 +350,20 @@ namespace SmartxAPI.Controllers
 
                         Detail = _api.Format(Detail, "details");
 
+                         DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_AsnID"].ToString()), this.FormID, myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                        Attachments = _api.Format(Attachments, "attachments");
+
+
                         if (Detail.Rows.Count == 0)
                         {
                             return Ok(_api.Notice("No Results Found"));
                         }
                         ds.Tables.Add(Detail);
+                        ds.Tables.Add(Attachments);
 
+
+                   
+                     
                         return Ok(_api.Success(ds));
                     }
 
@@ -467,6 +494,8 @@ namespace SmartxAPI.Controllers
                                 dLayer.ExecuteScalar("delete from  Inv_ItemUnit  Where N_ItemID=" + _itemID + " and N_CompanyID=" + nCompanyID, Params,connection, transaction);
                                 dLayer.ExecuteScalar("delete from  Inv_BOMEmployee  Where N_MainItem=" + _itemID + " and N_CompanyID=" + nCompanyID, Params,connection, transaction);
                                 dLayer.ExecuteScalar("delete from  Inv_BOMAsset  Where N_MainItemID=" + _itemID + " and N_CompanyID=" + nCompanyID, Params,connection, transaction);
+
+                                //  myAttachments.DeleteAttachment(dLayer, 1, nAsnID, N_CustomerId, nFnYearID, N_FormID, User, transaction, connection);
                                 // transaction.Commit();
                                 // return Ok(_api.Success("Product deleted"));
                             }
