@@ -184,10 +184,10 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User,"Unable to save"));
                         }
 
-                        for (int j = 0; j < CompetencyTable.Rows.Count; j++)
+                        for (int i = 0; i < CompetencyTable.Rows.Count; i++)
                         {
-                            CompetencyTable.Rows[j]["N_TemplateID"] = nTemplateID;  
-                            CompetencyTable.Rows[j]["N_CategoryID"] = nCategoryID;  
+                            CompetencyTable.Rows[i]["N_TemplateID"] = nTemplateID;  
+                            CompetencyTable.Rows[i]["N_CategoryID"] = nCategoryID;  
                         }
                     }
                     nCompetencyID = dLayer.SaveData("Pay_Competency", "N_CompetencyID", CompetencyTable, connection, transaction);
