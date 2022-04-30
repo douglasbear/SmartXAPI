@@ -34,8 +34,15 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable(); 
             SortedList Params = new SortedList();
- 
-            string sqlCommandText = "select * from Acc_City where N_CompanyID=@p1 and N_CountryID=@p2 order by N_CityID";
+            string sqlCommandText ;
+          if(nCountryID>0)
+          {
+               sqlCommandText = "select * from Acc_City where N_CompanyID=@p1 and N_CountryID=@p2 order by N_CityID";  
+          }
+          else{
+               sqlCommandText = "select * from Acc_City where N_CompanyID=@p1 order by N_CityID";
+          }
+          
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nCountryID);
             try
