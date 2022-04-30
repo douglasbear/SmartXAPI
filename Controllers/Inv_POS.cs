@@ -242,7 +242,7 @@ namespace SmartxAPI.Controllers
                 categorySql = " and N_CategoryID=@p2 ";
 
             if (mainItemID > 0)
-                parentItemFilterSql = " and vw_InvItem_Search.N_ItemID in (select N_ItemID from Inv_ItemDetails where N_MainItemID=@mainItemID  and N_CompanyID=@p1) ";
+                parentItemFilterSql = " and vw_InvItemDetails.N_MainItemID=@mainItemID  ";
 
 
 
@@ -262,14 +262,14 @@ namespace SmartxAPI.Controllers
                         " where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4  and vw_InvItem_Search.N_ItemID=Inv_ItemUnit.N_ItemID " + BranchandLocation + categorySql + parentItemFilterSql + Searchkey;
             
             if (mainItemID > 0)
-            sqlCommandText = " vw_InvItem_Search.*, " +
-                                    " dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID, vw_InvItem_Search.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, '' AS i_Image, Inv_DisplayImages.X_ImageName, " +
-                                    " vw_UC_Item.N_LocationID, vw_UC_Item.N_BranchID, vw_InvItemDetails.X_ItemUnit AS X_SubItemUnit, vw_InvItemDetails.N_ItemUnitID AS N_SubItemUnitID, vw_InvItemDetails.N_Qty AS N_SubItemQty " +
-            " FROM            vw_InvItem_Search LEFT OUTER JOIN " +
-                                    " vw_InvItemDetails ON vw_InvItem_Search.N_ItemID = vw_InvItemDetails.N_ItemID AND vw_InvItem_Search.N_CompanyID = vw_InvItemDetails.N_CompanyID LEFT OUTER JOIN " +
-                                    " Inv_DisplayImages ON vw_InvItem_Search.N_CompanyID = Inv_DisplayImages.N_CompanyID AND vw_InvItem_Search.N_ItemID = Inv_DisplayImages.N_ItemID LEFT OUTER JOIN " +
-                                    " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID FULL OUTER JOIN " +
-                                    " vw_UC_Item ON vw_InvItem_Search.N_CompanyID = vw_UC_Item.N_CompanyID AND vw_InvItem_Search.N_ItemID = vw_UC_Item.N_ItemID " +
+            sqlCommandText = " vw_InvItem_Search.*, "+
+                         " dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID, vw_InvItem_Search.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, '' AS i_Image, Inv_DisplayImages.X_ImageName, "+
+                         " vw_UC_Item.N_LocationID, vw_UC_Item.N_BranchID, vw_InvItemDetails.X_ItemUnit AS X_SubItemUnit, vw_InvItemDetails.N_ItemUnitID AS N_SubItemUnitID, vw_InvItemDetails.N_Qty AS N_SubItemQty "+
+" FROM            vw_InvItem_Search LEFT OUTER JOIN "+
+                         " vw_InvItemDetails ON vw_InvItem_Search.N_ItemID = vw_InvItemDetails.N_ItemID AND vw_InvItem_Search.N_CompanyID = vw_InvItemDetails.N_CompanyID LEFT OUTER JOIN "+
+                         " Inv_DisplayImages ON vw_InvItem_Search.N_CompanyID = Inv_DisplayImages.N_CompanyID AND vw_InvItem_Search.N_ItemID = Inv_DisplayImages.N_ItemID LEFT OUTER JOIN "+
+                         " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID LEFT OUTER JOIN "+
+                         " vw_UC_Item ON vw_InvItem_Search.N_CompanyID = vw_UC_Item.N_CompanyID AND vw_InvItem_Search.N_ItemID = vw_UC_Item.N_ItemID " + 
                                     " where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4  and vw_InvItem_Search.N_ItemID=Inv_ItemUnit.N_ItemID " + BranchandLocation + categorySql + parentItemFilterSql + Searchkey;
 
             Params.Add("@p1", nCompanyId);
