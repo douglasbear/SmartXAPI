@@ -22,6 +22,8 @@ using Microsoft.AspNetCore.Hosting;
 using System.Text.RegularExpressions;
 using System.IO.Compression;
 using System.Net.Cache;
+using System.Drawing;
+using System.Drawing.Imaging;
 namespace SmartxAPI.Controllers
 {
     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -440,18 +442,28 @@ namespace SmartxAPI.Controllers
                         if (docNumber.Contains("/"))
                             docNumber = docNumber.ToString().Substring(0, Math.Min(3, docNumber.ToString().Length));
 
-DateTime currentTime;
-string x_comments="";
- //Local Time Checking
-                    object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyId, connection,transaction);
-                    object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection,transaction);
-                    if (Timezone != null && Timezone.ToString() != "")
-                    {
-                        currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
-                        x_comments = currentTime.ToString();
-                    }
+                        DateTime currentTime;
+                        string x_comments = "";
+                        //Local Time Checking
+                        object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyId, connection, transaction);
+                        object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection, transaction);
+                        if (Timezone != null && Timezone.ToString() != "")
+                        {
+                            currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
+                            x_comments = currentTime.ToString();
+                        }
+                        if (nFormID == 1406)
+                        {
+                            object ASNdoc = dLayer.ExecuteScalar("select x_asndocno from vw_Wh_AsnMaster_Disp where n_companyid=" + nCompanyId + " and n_asnid=" + nPkeyID, connection, transaction);
+                            CreateBarcode(ASNdoc.ToString());
+                            DataTable AsnDetails = dLayer.ExecuteDataTable("select X_Barcode from vw_Wh_Asndetails_disp where n_companyid=" + nCompanyId + " and n_asnid=" + nPkeyID,QueryParams, connection, transaction);
+                            foreach (DataRow var in AsnDetails.Rows)
+                            {
+                                CreateBarcode(var["X_Barcode"].ToString());
+                            }
+                        }
 
-                        string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments="+x_comments+"&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
+                        string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
                         var path = client.GetAsync(URL);
                         if (nFormID == 80)
                         {
@@ -496,6 +508,24 @@ string x_comments="";
                 return Ok(_api.Error(User, e));
             }
 
+        }
+        public bool CreateBarcode(string Data)
+        {
+            string barCode = Data;
+            using (Bitmap bitMap = new Bitmap(barCode.Length * 40, 80))
+            {
+                using (Graphics graphics = Graphics.FromImage(bitMap))
+                {
+                    Font oFont = new Font("IDAutomationHC39M Free Version", 16);
+                    PointF point = new PointF(2f, 2f);
+                    SolidBrush blackBrush = new SolidBrush(Color.Black);
+                    SolidBrush whiteBrush = new SolidBrush(Color.White);
+                    graphics.FillRectangle(whiteBrush, 0, 0, bitMap.Width, bitMap.Height);
+                    graphics.DrawString("*" + barCode + "*", oFont, blackBrush, point);
+                }
+                bitMap.Save("C://OLIVOSERVER2020/Barcode/"+Data+".png", ImageFormat.Png);
+                return true;
+            }
         }
 
         public bool sendmail(string url, string mail)
@@ -940,10 +970,11 @@ string x_comments="";
                         Criteria = Criteria + CompanyData + "=" + nCompanyID;
                         if (YearData != "")
                             Criteria = Criteria + " and " + YearData + "=" + FnYearID;
-                        if(BranchData !=""){
-                            bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID="+nCompanyID+" and N_BranchID="+BranchID, Params, connection).ToString());
-                            if(mainBranch==false)
-                            Criteria = Criteria + " and " + BranchData + "=" + BranchID;
+                        if (BranchData != "")
+                        {
+                            bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
+                            if (mainBranch == false)
+                                Criteria = Criteria + " and " + BranchData + "=" + BranchID;
 
                         }
                     }
@@ -952,11 +983,12 @@ string x_comments="";
                         Criteria = Criteria + " and " + CompanyData + "=" + nCompanyID;
                         if (YearData != "")
                             Criteria = Criteria + " and " + YearData + "=" + FnYearID;
-                        if(BranchData !=""){
-                            bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID="+nCompanyID+" and N_BranchID="+BranchID, Params, connection).ToString());
-                            if(mainBranch==false)
-                            Criteria = Criteria + " and " + BranchData + "=" + BranchID;
-                            }
+                        if (BranchData != "")
+                        {
+                            bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
+                            if (mainBranch == false)
+                                Criteria = Criteria + " and " + BranchData + "=" + BranchID;
+                        }
                     }
                     if (UserData != "")
                     {
@@ -1012,9 +1044,6 @@ string x_comments="";
                     reportName = rptArray[1].ToString();
                     actReportLocation = actReportLocation + rptArray[0].ToString() + "/";
                 }
-
-
-
 
                 //string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;
                 string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention + "&N_FormID=0&QRUrl=&N_PkeyID=0&partyName=&docNumber=&formName=";
