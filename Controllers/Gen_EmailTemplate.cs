@@ -395,6 +395,10 @@ namespace SmartxAPI.Controllers
              "                        Inv_Vendor ON Inv_PurchaseOrder.N_CompanyID = Inv_Vendor.N_CompanyID AND Inv_PurchaseOrder.N_VendorID = Inv_Vendor.N_VendorID AND Inv_PurchaseOrder.N_FnYearID = Inv_Vendor.N_FnYearID" +
              " where Inv_Vendor.N_FnYearID=@nFnYearID and Inv_PurchaseOrder.N_CompanyID=@nCompanyID and Inv_PurchaseOrder.N_POrderID=@nPkeyID group by  Inv_PurchaseOrder.N_POrderID, Inv_PurchaseOrder.N_VendorID, Inv_Vendor.X_VendorCode,Sec_User.N_UserID, Inv_Vendor.X_Email,  Sec_User.X_UserID, Inv_Vendor.X_VendorName,Inv_PurchaseOrder.N_FnYearID, Inv_PurchaseOrder.X_POrderNo";
             }
+             else if (type.ToLower() == "customerPortal")
+             {
+                 sqlCommandText="SELECT Inv_Customer.N_CustomerID AS N_PKeyID,Inv_Customer.N_CustomerID AS N_PartyID,Inv_Customer.X_CustomerCode AS X_PartyCode,Inv_Customer.X_Email,Inv_Customer.X_CustomerName,'customer' AS X_PartyName "+" FROM Inv_Customer LEFT OUTER JOIN "+" Sec_User ON Inv_Customer.N_CompanyID=Sec_User.N_CompanyID where Inv_Customer.N_FnYearID=@nFnYearID and Inv_Customer.N_CompanyID=nCompanyID";
+             }
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
