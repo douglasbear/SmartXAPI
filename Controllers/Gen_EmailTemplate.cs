@@ -389,12 +389,17 @@ namespace SmartxAPI.Controllers
             }
             else if (type.ToLower() == "purchaseorder")
             {
-                sqlCommandText = "SELECT        Inv_PurchaseOrder.N_POrderID AS N_PKeyID, Inv_PurchaseOrder.N_VendorID AS N_PartyID, Inv_Vendor.X_VendorCode AS X_PartyCode, Sec_User.N_UserID, Inv_Vendor.X_Email, Sec_User.X_UserID,Inv_Vendor.X_VendorName AS X_PartyName, 'Vendor' AS X_PartyName, 'Purchase Order' AS X_TxnType,Inv_PurchaseOrder.N_FnYearID, Inv_PurchaseOrder.X_POrderNo as X_DocNo " +
+                sqlCommandText = "SELECT        Inv_PurchaseOrder.N_POrderID AS N_PKeyID, Inv_PurchaseOrder.N_VendorID AS N_PartyID, Inv_Vendor.X_VendorCode AS X_PartyCode, Sec_User.N_UserID, Inv_Vendor.X_Email, Sec_User.X_UserID,Inv_Vendor.X_VendorName AS X_PartyName, 'Vendor' AS X_PartyType, 'Purchase Order' AS X_TxnType,Inv_PurchaseOrder.N_FnYearID, Inv_PurchaseOrder.X_POrderNo as X_DocNo " +
              " FROM            Inv_PurchaseOrder LEFT OUTER JOIN " +
              "                        Sec_User ON Inv_PurchaseOrder.N_CompanyID = Sec_User.N_CompanyID AND Inv_PurchaseOrder.N_VendorID = Sec_User.N_CustomerID LEFT OUTER JOIN " +
              "                        Inv_Vendor ON Inv_PurchaseOrder.N_CompanyID = Inv_Vendor.N_CompanyID AND Inv_PurchaseOrder.N_VendorID = Inv_Vendor.N_VendorID AND Inv_PurchaseOrder.N_FnYearID = Inv_Vendor.N_FnYearID" +
              " where Inv_Vendor.N_FnYearID=@nFnYearID and Inv_PurchaseOrder.N_CompanyID=@nCompanyID and Inv_PurchaseOrder.N_POrderID=@nPkeyID group by  Inv_PurchaseOrder.N_POrderID, Inv_PurchaseOrder.N_VendorID, Inv_Vendor.X_VendorCode,Sec_User.N_UserID, Inv_Vendor.X_Email,  Sec_User.X_UserID, Inv_Vendor.X_VendorName,Inv_PurchaseOrder.N_FnYearID, Inv_PurchaseOrder.X_POrderNo";
             }
+             else if (type.ToLower() == "customer portal")
+             {
+                 sqlCommandText="SELECT N_CustomerID AS N_PKeyID,N_CustomerID AS N_PartyID,X_CustomerCode AS X_PartyCode,X_Email,X_CustomerName AS X_PartyName ,'customer' AS X_PartyType,'Customer Portal' AS X_TxnType,N_FnYearID,N_FnYearID  From Inv_Customer where  N_CompanyID=@nCompanyID and N_CustomerID=@nPkeyID";
+
+             }
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
@@ -497,6 +502,15 @@ namespace SmartxAPI.Controllers
                             xBodyText=xBodyText.Replace("@PartyName",row["X_PartyName"].ToString());
 
                             myFunctions.SendMailWithAttachments(82, myFunctions.getIntVAL(row["N_FnYearID"].ToString()), myFunctions.getIntVAL(row["N_PKeyID"].ToString()),myFunctions.getIntVAL(row["N_PartyID"].ToString()), row["X_PartyName"].ToString(), xSubject, row["X_DocNo"].ToString(), row["X_Email"].ToString(), xBodyText, dLayer, User);
+                        }
+                        else if(row["x_TxnType"].ToString().ToLower() == "customer portal")
+                        {
+                             xSubject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyId="+companyid+" and X_Type='customer portal'", connection, transaction).ToString();
+                            xBodyText = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyId="+companyid+" and X_Type='customer portal'", connection, transaction).ToString();
+                            xBodyText=xBodyText.Replace("@PartyName",row["X_PartyName"].ToString());
+
+                            myFunctions.SendMailWithAttachments(51, myFunctions.getIntVAL(row["N_FnYearID"].ToString()), myFunctions.getIntVAL(row["N_PKeyID"].ToString()),myFunctions.getIntVAL(row["N_PartyID"].ToString()), row["X_PartyName"].ToString(), xSubject, row["X_DocNo"].ToString(), row["X_Email"].ToString(), xBodyText, dLayer, User);
+
                         }
                     }
 
