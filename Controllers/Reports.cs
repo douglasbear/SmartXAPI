@@ -512,9 +512,12 @@ namespace SmartxAPI.Controllers
         }
         public bool CreateBarcode(string Data)
         {
-            Zen.Barcode.Code128BarcodeDraw barcode = Zen.Barcode.BarcodeDrawFactory.Code128WithChecksum;
-            Image img = barcode.Draw(Data, 50);
-            img.Save("C://OLIVOSERVER2020/Barcode/"+Data+".png", ImageFormat.Png);
+            if (Data != "")
+            {
+                Zen.Barcode.Code128BarcodeDraw barcode = Zen.Barcode.BarcodeDrawFactory.Code128WithChecksum;
+                Image img = barcode.Draw(Data, 50);
+                img.Save("C://OLIVOSERVER2020/Barcode/" + Data + ".png", ImageFormat.Png);
+            }
             return true;
         }
 
