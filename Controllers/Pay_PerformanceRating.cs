@@ -30,63 +30,39 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
-  
-
-                [HttpGet("list")]
-        public ActionResult PerformanceRating(int nPerformanceID,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        [HttpGet("list")]
+        public ActionResult PerformanceRating()
         {
+            int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string sqlCommandCount = "";
-            int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText ="";
-
-            string Searchkey = "";
-            if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = " and (X_Code like '%" + xSearchkey + "%'or X_Code like '%" + xSearchkey + "%' )";
-
-            if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_PerformanceID desc";
-            else
-                xSortBy = " order by " + xSortBy;
-            
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p3", nPerformanceID);
-            SortedList OutPut = new SortedList();
+ 
+            string sqlCommandText = "select * from Pay_Performance where N_CompanyID=@p1 order by N_PerformanceID";
+            Params.Add("@p1", nCompanyID);
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
-
-                    //sqlCommandCount = "select count(*) as N_Count  from vw_CRMCustomer where N_CompanyID=@p1  " + Pattern;
-                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                    OutPut.Add("Details", api.Format(dt));
-                    OutPut.Add("TotalCount", TotalCount);
-                    if (dt.Rows.Count == 0)
-                    {
-                        return Ok(api.Warning("No Results Found"));
-                    }
-                    else
-                    {
-                        return Ok(api.Success(OutPut));
-                    }
-
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
-                
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok( _api.Error(User,e));
             }
         }
 
-
-
-
-             [HttpGet("details")]
+        [HttpGet("details")]
         public ActionResult GradeListDetails(string xcode)
         {
             DataTable dt = new DataTable();
