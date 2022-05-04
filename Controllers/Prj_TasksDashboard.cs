@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("listDetails")]
-        public ActionResult GetTasksDetails(int xProjectCode,int nFnYearID)
+        public ActionResult GetTasksDetails(int xProjectCode,int nFnYearID,int nTaskID)
         {
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
@@ -40,6 +40,7 @@ namespace SmartxAPI.Controllers
             int nUserID = myFunctions.GetUserID(User);
 
             string sqlCommandTasksList = "select * from vw_Tsk_TaskMaster where N_CompanyID=@p1 and X_ProjectCode=@p2 and N_FnYearID=@nFnYearID and isnull(N_ParentID,0)=0 order by N_Order";
+            string sqlCommandTaskList = "select * from vw_Tsk_TaskMaster where N_CompanyID=@p1 and X_ProjectCode=@p2 and N_FnYearID=@nFnYearID and isnull(N_ParentID,0)=@nTaskID order by N_Order";
             string sqlCommandContactList = "Select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and X_ProjectCode=@p2";
             string sqlCommandMailLogList = "Select CONVERT(VARCHAR(10), d_Date, 103) + ' '  + convert(VARCHAR(8), d_Date, 14) as d_Entry,* from Gen_MailLog where N_CompanyID=@p1 and N_ProjectID=@p3 order by N_maillogid desc";
             string sqlCommandOrderList = "Select * from inv_salesOrder where N_CompanyID=@p1 and n_ProjectID=@p3";
@@ -51,6 +52,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", xProjectCode);
             Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@nTaskID",nTaskID);
 
             DataTable TasksList = new DataTable();
             DataTable ContactList = new DataTable();
@@ -60,6 +62,7 @@ namespace SmartxAPI.Controllers
             // DataTable QuotationList = new DataTable();
             DataTable OrderList = new DataTable();
             DataTable InvoiceList = new DataTable();
+             DataTable TaskList = new DataTable();
 
             // DataTable ProjectList = new DataTable();
 
@@ -76,6 +79,7 @@ namespace SmartxAPI.Controllers
                     MailLogList = dLayer.ExecuteDataTable(sqlCommandMailLogList, Params, connection);
                     OrderList = dLayer.ExecuteDataTable(sqlCommandOrderList, Params, connection);
                     InvoiceList = dLayer.ExecuteDataTable(sqlCommandinvoiceList, Params, connection);
+                    TaskList = dLayer.ExecuteDataTable(sqlCommandTaskList, Params, connection);
                     // TasksList = myFunctions.AddNewColumnToDataTable(TasksList, "N_AssigneeID", typeof(int), 0);
                     object N_AssigneeID = null;
 
@@ -92,12 +96,15 @@ namespace SmartxAPI.Controllers
                     MailLogList = api.Format(MailLogList, "MailLogList");
                     OrderList = api.Format(OrderList, "OrderList");
                     InvoiceList = api.Format(InvoiceList, "InvoiceList");
+                     TaskList = api.Format(TaskList, "TaskList");
 
                     dt.Tables.Add(TasksList);
                     dt.Tables.Add(ContactList);
                     dt.Tables.Add(MailLogList);
                     dt.Tables.Add(OrderList);
                     dt.Tables.Add(InvoiceList);
+                     dt.Tables.Add(TaskList);
+
 
                     return Ok(api.Success(dt));
 
