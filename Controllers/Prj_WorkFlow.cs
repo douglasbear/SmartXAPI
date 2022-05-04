@@ -102,7 +102,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_Prj_WorkflowDetails where N_CompanyID=@p1 and X_WTaskCode=@p3 order by N_Order";
+            string sqlCommandText = "select * from vw_Prj_WorkflowDetails where N_CompanyID=0 and X_WTaskCode=@p3 order by N_Order";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", xWTaskCode);
             try
