@@ -275,9 +275,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
          
                 if (Count == 0)
-                    sqlCommandText = "select top(" + nSizeperpage + ")  * from vw_InvItem_Search_cloud where N_CompanyID="+nCompanyID+" and N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID="+nCompanyID+" and N_WarehouseID="+nLocationID+" ) and N_ItemID in (Select N_ItemID from Inv_StockMaster where N_CompanyID="+nCompanyID+" and N_LocationID="+nLocationID+" and  D_ExpiryDate<='"+d_Date+"'  ) ";
+                    sqlCommandText = "select top(" + nSizeperpage + ")  * from Vw_ItemWiseLocation where N_CompanyID="+nCompanyID+" and N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID="+nCompanyID+" and N_WarehouseID="+nLocationID+" ) and N_ItemID in (Select N_ItemID from Inv_StockMaster where N_CompanyID="+nCompanyID+" and N_LocationID="+nLocationID+" and  D_ExpiryDate<='"+d_Date+"'  ) ";
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvItem_Search_cloud where N_CompanyID="+nCompanyID+" and N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID="+nCompanyID+" and N_WarehouseID="+nLocationID+" ) and N_ItemID in (Select N_ItemID from Inv_StockMaster where N_CompanyID="+nCompanyID+" and N_LocationID="+nLocationID+" and  D_ExpiryDate>='"+d_Date+"'  ) and N_ItemID not in (select top(" + Count + ") N_ItemID from  vw_InvItem_Search_cloud where N_CompanyID="+nCompanyID+" and N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID="+nCompanyID+" and N_WarehouseID="+nLocationID+" ) and N_ItemID in (Select N_ItemID from Inv_StockMaster where N_CompanyID="+nCompanyID+" and N_LocationID=2 and  D_ExpiryDate<='"+d_Date+"'  )";
+                    sqlCommandText = "select top(" + nSizeperpage + ")  * from Vw_ItemWiseLocation where N_CompanyID="+nCompanyID+" and N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID="+nCompanyID+" and N_WarehouseID="+nLocationID+" ) and N_ItemID in (Select N_ItemID from Inv_StockMaster where N_CompanyID="+nCompanyID+" and N_LocationID="+nLocationID+" and  D_ExpiryDate<='"+d_Date+"'  ) ";
 
          
             SortedList OutPut = new SortedList();
@@ -290,7 +290,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count from vw_InvItem_Search_cloud where N_CompanyID=2 and N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=2 and N_WarehouseID=2 ) and N_ItemID in (Select N_ItemID from Inv_StockMaster where N_CompanyID=2 and N_LocationID=2 and  D_ExpiryDate<='"+d_Date+" '  ) ";
+                    sqlCommandCount = "select count(*) as N_Count from Vw_ItemWiseLocation where N_CompanyID=2 and N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=2 and N_WarehouseID=2 ) and N_ItemID in (Select N_ItemID from Inv_StockMaster where N_CompanyID=2 and N_LocationID=2 and  D_ExpiryDate<='"+d_Date+" '  ) ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
