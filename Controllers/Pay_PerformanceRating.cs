@@ -30,81 +30,23 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
-  
-
-                [HttpGet("list")]
-        public ActionResult PerformanceRating(int nPerformanceID,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        [HttpGet("list")]
+        public ActionResult PerformanceRating()
         {
+            int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string sqlCommandCount = "";
-            int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText ="";
-
-            string Searchkey = "";
-            if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = " and (X_Code like '%" + xSearchkey + "%'or X_Code like '%" + xSearchkey + "%' )";
-
-            if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_PerformanceID desc";
-            else
-                xSortBy = " order by " + xSortBy;
-            
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p3", nPerformanceID);
-            SortedList OutPut = new SortedList();
+ 
+            string sqlCommandText = "select X_Code as X_PerformanceCode,* from Pay_Performance where N_CompanyID=@p1 order by N_PerformanceID";
+            Params.Add("@p1", nCompanyID);
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
-
-                    //sqlCommandCount = "select count(*) as N_Count  from vw_CRMCustomer where N_CompanyID=@p1  " + Pattern;
-                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                    OutPut.Add("Details", api.Format(dt));
-                    OutPut.Add("TotalCount", TotalCount);
-                    if (dt.Rows.Count == 0)
-                    {
-                        return Ok(api.Warning("No Results Found"));
-                    }
-                    else
-                    {
-                        return Ok(api.Success(OutPut));
-                    }
-
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
-                
-            }
-            catch (Exception e)
-            {
-                return Ok(api.Error(User,e));
-            }
-        }
-
-
-
-
-             [HttpGet("details")]
-        public ActionResult GradeListDetails(string xcode)
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
-  
-            string sqlCommandText = "select * from Pay_PerformanceDetails where N_CompanyID=@p1 and X_Code=@p2";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", xcode);
-
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
-                }
-                dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
                     return Ok(api.Warning("No Results Found"));
@@ -120,85 +62,49 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("details")]
+        public ActionResult GradeListDetails(string xCode)
+        {
+            DataSet dt=new DataSet();
+            SortedList Params=new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable MasterTable = new DataTable();
+            DataTable DetailTable = new DataTable();
+  
+            string Mastersql = "select * from Pay_Performance where N_CompanyID=@p1 and X_Code=@p2";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", xCode);
 
-    //  [HttpPost("save")]
-    //     public ActionResult SaveData([FromBody] DataSet ds)
-    //     {
-    //         try
-    //         {
-    //             using (SqlConnection connection = new SqlConnection(connectionString))
-    //             {
-    //                 connection.Open();
-    //                 SqlTransaction transaction = connection.BeginTransaction();
-    //                 DataTable MasterTable;
-    //                 DataTable DetailTable;
-    //                 MasterTable = ds.Tables["master"];
-    //                  DetailTable = ds.Tables["details"];
-    //                 DataRow MasterRow = MasterTable.Rows[0];
-    //                 SortedList Params = new SortedList();
-    //                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-    //                  int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
-    //                 int nPerformanceID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PerformanceID"].ToString());
-    //                 string X_Code = MasterTable.Rows[0]["X_Code"].ToString();
-      
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    MasterTable=dLayer.ExecuteDataTable(Mastersql,Params,connection); 
 
-    //                 if (X_Code == "@Auto")
-    //                 {
-    //                     Params.Add("N_CompanyID", nCompanyID);
-    //                     Params.Add("N_FormID", this.FormID);
+                    if (MasterTable.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Data Found !!"));
+                    }
 
-                        
-                        
-    //                     X_Code = dLayer.GetAutoNumber("Pay_Performance", "X_Code", Params, connection, transaction);
-    //                     if (X_Code == "")
-    //                     {
-    //                         transaction.Rollback();
-    //                         return Ok(api.Error(User, "Unable to generate  Code"));
-    //                     }
-    //                     MasterTable.Rows[0]["X_Code"] = X_Code;
-    //                 }
-                 
+                    MasterTable = api.Format(MasterTable, "Master");
+                    dt.Tables.Add(MasterTable);
 
-    //                 if (nPerformanceID > 0)
-    //                 {
-    //                     dLayer.DeleteData("Pay_Performance", "n_PerformanceID", nPerformanceID, "N_CompanyID=" + nCompanyID + " and n_PerformanceID=" + nPerformanceID, connection, transaction);
-    //                     dLayer.DeleteData("Pay_PerformanceDetails", "n_PerformanceID", nPerformanceID, "N_CompanyID=" + nCompanyID + " and n_PerformanceID=" + nPerformanceID, connection, transaction);
-    //                 }
-                
-    //                  nPerformanceID = dLayer.SaveData("Pay_Performance", "n_PerformanceID", MasterTable, connection, transaction);
+                    int N_PerformanceID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PerformanceID"].ToString());
 
-    //                 if (nPerformanceID <= 0)
-    //                 {
-    //                     transaction.Rollback();
-    //                     return Ok(api.Error(User, "Unable to save"));
-    //                 }
+                    string DetailSql = "select * from Pay_PerformanceDetails where N_CompanyID=" + nCompanyID + " and N_PerformanceID=" + N_PerformanceID ;
 
-    //                  for (int j = 0; j < DetailTable.Rows.Count; j++)
-    //                 {
-    //                     DetailTable.Rows[j]["n_PerformanceID"] = nPerformanceID;
-    //                 }
-
-    //                 int N_PerformanceDetailsID = dLayer.SaveData("Pay_PerformanceDetails", "N_PerformanceDetailsID", DetailTable, connection, transaction);
-    //                 if (N_PerformanceDetailsID <= 0)
-    //                 {
-    //                     transaction.Rollback();
-    //                     return Ok(api.Error(User, "Unable to save"));
-
-    //                 }
-
-    //                 transaction.Commit();
-    //                 SortedList Result = new SortedList();
-    //                 Result.Add("N_PerformanceDetailsID", nPerformanceID);
-    //                 Result.Add("x_Code", X_Code);
-    //                 return Ok(api.Success(Result, "Saved successfully"));
-
-    //             }
-    //         }
-    //         catch (Exception ex)
-    //         {
-    //             return Ok(api.Error(User, ex));
-    //         }
-    //     }
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    DetailTable = api.Format(DetailTable, "Details");
+                    dt.Tables.Add(DetailTable);
+                }
+                return Ok(api.Success(dt));
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
 
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
