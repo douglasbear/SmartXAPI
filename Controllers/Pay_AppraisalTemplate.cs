@@ -60,6 +60,60 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("dashboardlist")]
+        public ActionResult GetAppraisalTemplateDashboardList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            int Count = (nPage - 1) * nSizeperpage;
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = " and (X_Code like '%" + xSearchkey + "%'or X_TemplateName like '%" + xSearchkey + "%' )";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_TemplateID desc";
+            else
+                xSortBy = " order by " + xSortBy;
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_AppraisalTemplate where N_CompanyID=@p1" + Searchkey + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_AppraisalTemplate where N_CompanyID=@p1" + Searchkey +" and  N_TemplateID not in (select top(" + Count + ") N_TemplateID from Pay_AppraisalTemplate where N_CompanyID=@p1 )" + Searchkey + xSortBy;
+            Params.Add("@p1", nCompanyID);
+            SortedList OutPut = new SortedList();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+
+                    sqlCommandCount = "select count(*) as N_Count from Pay_AppraisalTemplate where N_CompanyID=@p1" + Searchkey;
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
+
         [HttpGet("details")]
         public ActionResult GetAppraisalTemplateDetails(string xCode)
         {
@@ -67,11 +121,11 @@ namespace SmartxAPI.Controllers
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable MasterTable = new DataTable();
-            DataTable DetailTable = new DataTable();
+            DataTable CompetencyCategoryTable = new DataTable();
             DataTable CompetencyTable = new DataTable();
             DataTable TrainingneedsTable = new DataTable();
 
-            string Mastersql="Select * from vw_PayAppraisalTemplate Where N_CompanyID=@p1 and X_Code=@p2 ";
+            string Mastersql="Select * from vw_Pay_AppraisalTemplate Where N_CompanyID=@p1 and X_Code=@p2 ";
             Params.Add("@p1",nCompanyID);
             Params.Add("@p2",xCode);
             
@@ -92,11 +146,11 @@ namespace SmartxAPI.Controllers
 
                     int N_TemplateID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TemplateID"].ToString());
 
-                    string DetailSql = "select * from vw_PayCompetencyCategory where N_CompanyID=" + nCompanyID + " and N_TemplateID=" + N_TemplateID ;
+                    string CompetencyCategorySql = "select * from vw_Pay_CompetencyCategory where N_CompanyID=" + nCompanyID + " and N_TemplateID=" + N_TemplateID ;
 
-                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
-                    DetailTable = _api.Format(DetailTable, "Details");
-                    dt.Tables.Add(DetailTable);
+                    CompetencyCategoryTable = dLayer.ExecuteDataTable(CompetencyCategorySql, Params, connection);
+                    CompetencyCategoryTable = _api.Format(CompetencyCategoryTable, "Competencycategory");
+                    dt.Tables.Add(CompetencyCategoryTable);
 
                     string CompetencySql = "select * from Pay_Competency where N_CompanyID=" + nCompanyID + " and N_TemplateID=" + N_TemplateID ;
 

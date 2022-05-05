@@ -36,14 +36,15 @@ namespace SmartxAPI.Controllers
 
         //GET api/productcategory/list?....
         [HttpGet("list")]
-        public ActionResult GetTerminalList()
+        public ActionResult GetTerminalList(DateTime dDate)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from vw_InvTerminal_Disp where N_CompanyID=@p1";
+            string sqlCommandText = "select * from vw_InvTerminal_Disp where N_CompanyID=@p1 and isnull(B_Closed,0)=0";
             Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", dDate);
 
             try
             {
@@ -69,7 +70,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("setTerminal")]
-        public ActionResult SetTerminal(int n_TerminalID, int n_SessionID, int n_BranchID, int n_LocationID, int n_FnYearID)
+        public ActionResult SetTerminal(int n_TerminalID, int n_SessionID, int n_BranchID, int n_LocationID, int n_FnYearID,int n_CashOpening,DateTime d_SessionDate)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -88,8 +89,9 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     if (n_SessionID == 0)
                     {
-                        sqlCommandText = "select N_CompanyID," + n_FnYearID + " as N_FnYearID," + n_BranchID + " as N_BranchID,getDate() as D_SessionDate,0 as N_SessionID,N_TerminalID,getDate() as D_EntryDate," + nUserID + " as N_UserID,0 as B_Closed from vw_InvTerminal_Disp where N_CompanyID=@p1 and N_TerminalID=" + n_TerminalID;
+                        sqlCommandText = "select N_CompanyID," + n_FnYearID + " as N_FnYearID," + n_BranchID + " as N_BranchID,@p2 as D_SessionDate,0 as N_SessionID,N_TerminalID,@p2 as D_EntryDate," + nUserID + " as N_UserID,0 as B_Closed,"+n_CashOpening+" as n_CashOpening from vw_InvTerminal_Disp where N_CompanyID=@p1 and N_TerminalID=" + n_TerminalID;
                         Params.Add("@p1", nCompanyId);
+                        Params.Add("@p2", d_SessionDate);
 
                         dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
 
@@ -214,14 +216,32 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
                     DataRow dRow = MasterTable.Rows[0];
                     int nUserId = myFunctions.GetUserID(User);
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     int nTerminalID = myFunctions.getIntVAL(dRow["n_TerminalID"].ToString());
                     int nSessionID = myFunctions.getIntVAL(dRow["n_SessionID"].ToString());
-                    string updateSql = "Update Acc_PosSession set B_closed=1 ,D_SessionEndTime=getDate() where N_CompanyID="+nCompanyID+" and N_TerminalID="+nTerminalID+" and N_SessionID="+nSessionID;
-                    object result = dLayer.ExecuteNonQuery(updateSql,connection,transaction);
+                    int nCashWithdrawal = myFunctions.getIntVAL(dRow["n_CashWithdrawal"].ToString());
+                    SortedList Params = new SortedList();
+                    Params.Add("@endTime", dRow["d_ClosedDate"]);
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@nTerminalID", nCompanyID);
+                    Params.Add("@nSessionID", nSessionID);
+                    Params.Add("@nCashWithdrawal", nCashWithdrawal);
+                    string balance = "select isnull(sum(Credit)-sum(debit),0) as Balance from Vw_POSTxnSummery where N_CompanyID=@nCompanyID and N_SessionID=@nSessionID";
+                    object balAmt = dLayer.ExecuteScalar(balance, Params, connection);
+                    
+                    Double balanceAmount=myFunctions.getFloatVAL(balAmt.ToString());
+                    balanceAmount = balanceAmount - nCashWithdrawal;
+                    Params.Add("@nCashBalance", balanceAmount);
+                    balance = "select isnull(sum(Credit),0) as Balance from Vw_POSTxnSummery where N_CompanyID=@nCompanyID and N_SessionID=@nSessionID and X_BalanceType<>'Cash Opening'";
+                    Double credit = myFunctions.getFloatVAL(dLayer.ExecuteScalar(balance, Params, connection).ToString());
+                    Params.Add("@nCredit", credit);
+                    balance = "select isnull(sum(Debit),0) as Balance from Vw_POSTxnSummery where N_CompanyID=@nCompanyID and N_SessionID=@nSessionID";
+                    Double debit = myFunctions.getFloatVAL(dLayer.ExecuteScalar(balance, Params, connection).ToString());
+                    Params.Add("@nDebit", debit);
+                    string updateSql = "Update Acc_PosSession set N_CashBalance=@nCashBalance,N_CashCr=@nCredit,N_CashDr=@nDebit,B_closed=1 ,D_SessionEndTime=@endTime,N_CashWithdrawal=@nCashWithdrawal where N_CompanyID=@nCompanyID and N_TerminalID=@nTerminalID and N_SessionID=@nSessionID";
+                    object result = dLayer.ExecuteNonQuery(updateSql,Params,connection);
                     if(result==null)
                     result=0;
                     if(myFunctions.getIntVAL(result.ToString())>0)
