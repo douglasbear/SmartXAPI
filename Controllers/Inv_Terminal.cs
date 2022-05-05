@@ -227,17 +227,18 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@nTerminalID", nCompanyID);
                     Params.Add("@nSessionID", nSessionID);
-                    Params.Add("@nSessionID", nSessionID);
                     Params.Add("@nCashWithdrawal", nCashWithdrawal);
-                    string balance = "select sum(Credit)-sum(debit) as Balance from Vw_POSTxnSummery where N_CompanyID=@nCompanyID and N_SessionID=@nSessionID";
-                    int balanceAmount = myFunctions.getIntVAL(dLayer.ExecuteScalar(balance, Params, connection).ToString());
+                    string balance = "select isnull(sum(Credit)-sum(debit),0) as Balance from Vw_POSTxnSummery where N_CompanyID=@nCompanyID and N_SessionID=@nSessionID";
+                    object balAmt = dLayer.ExecuteScalar(balance, Params, connection);
+                    
+                    Double balanceAmount=myFunctions.getFloatVAL(balAmt.ToString());
                     balanceAmount = balanceAmount - nCashWithdrawal;
                     Params.Add("@nCashBalance", balanceAmount);
-                    balance = "select sum(Credit) as Balance from Vw_POSTxnSummery where N_CompanyID=@nCompanyID and N_SessionID=@nSessionID";
-                    int credit = myFunctions.getIntVAL(dLayer.ExecuteScalar(balance, Params, connection).ToString());
+                    balance = "select isnull(sum(Credit),0) as Balance from Vw_POSTxnSummery where N_CompanyID=@nCompanyID and N_SessionID=@nSessionID and X_BalanceType<>'Cash Opening'";
+                    Double credit = myFunctions.getFloatVAL(dLayer.ExecuteScalar(balance, Params, connection).ToString());
                     Params.Add("@nCredit", credit);
-                    balance = "select sum(Debit) as Balance from Vw_POSTxnSummery where N_CompanyID=@nCompanyID and N_SessionID=@nSessionID";
-                    int debit = myFunctions.getIntVAL(dLayer.ExecuteScalar(balance, Params, connection).ToString());
+                    balance = "select isnull(sum(Debit),0) as Balance from Vw_POSTxnSummery where N_CompanyID=@nCompanyID and N_SessionID=@nSessionID";
+                    Double debit = myFunctions.getFloatVAL(dLayer.ExecuteScalar(balance, Params, connection).ToString());
                     Params.Add("@nDebit", debit);
                     string updateSql = "Update Acc_PosSession set N_CashBalance=@nCashBalance,N_CashCr=@nCredit,N_CashDr=@nDebit,B_closed=1 ,D_SessionEndTime=@endTime,N_CashWithdrawal=@nCashWithdrawal where N_CompanyID=@nCompanyID and N_TerminalID=@nTerminalID and N_SessionID=@nSessionID";
                     object result = dLayer.ExecuteNonQuery(updateSql,Params,connection);
