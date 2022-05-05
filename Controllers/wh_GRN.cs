@@ -371,7 +371,7 @@ namespace SmartxAPI.Controllers
                                 {"X_TransType","WHGRN"},
                                 {"N_VoucherID",nGRNID},
                                 {"N_UserID",myFunctions.GetUserID(User)},
-                                {"@nPartyID",nCustomerID},
+                                // {"@nPartyID",nCustomerID},
                                 {"X_SystemName","WebRequest"},
                                 {"@B_MRNVisible","0"}};
 

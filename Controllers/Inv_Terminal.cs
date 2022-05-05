@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/productcategory/list?....
         [HttpGet("list")]
-        public ActionResult GetTerminalList()
+        public ActionResult GetTerminalList(DateTime dDate)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -44,6 +44,7 @@ namespace SmartxAPI.Controllers
 
             string sqlCommandText = "select * from vw_InvTerminal_Disp where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", dDate);
 
             try
             {
