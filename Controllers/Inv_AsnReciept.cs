@@ -257,7 +257,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-       [HttpGet("details")]
+        [HttpGet("details")]
         public ActionResult GetDetails(string xAsnDocNo, int nFnYearID, int nBranchID, bool bShowAllBranchData)
         {
             DataTable Master = new DataTable();
@@ -272,8 +272,11 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@xAsnDocNo", xAsnDocNo);
             QueryParams.Add("@nBranchID", nBranchID);
             QueryParams.Add("@nFnYearID", nFnYearID);
+
             string Condition = "";
             string _sqlQuery = "";
+            string sql = "";
+            bool InvoiceProcessed = false;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -290,6 +293,10 @@ namespace SmartxAPI.Controllers
 
                     Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
+
+
+
+
                     Master = _api.Format(Master, "master");
 
                     if (Master.Rows.Count == 0)
@@ -305,11 +312,25 @@ namespace SmartxAPI.Controllers
 
                         ds.Tables.Add(Master);
 
+                        // Master= myFunctions.AddNewColumnToDataTable(Master, "N_Processed", typeof(int), 0);
+                        
+                      object GroupCodeObj = dLayer.ExecuteScalar("select count(*) as N_Count from Wh_GRN Where N_CompanyID=@nCompanyID and N_AsnID=@N_AsnID", QueryParams, connection);
+                        if (myFunctions.getIntVAL(GroupCodeObj.ToString()) > 0)
+                        {
+                            Master.Rows[0]["N_Processed"] = 1;
+                           
+                        }
+                        else
+                        {
+                            Master.Rows[0]["N_Processed"] = 0;
+                           
+                        }
 
                         _sqlQuery = "Select * from vw_Wh_AsnDetails_Disp Where N_CompanyID=@nCompanyID and N_AsnID=@N_AsnID";
                         Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
                         Detail = _api.Format(Detail, "details");
+
                         if (Detail.Rows.Count == 0)
                         {
                             return Ok(_api.Notice("No Results Found"));
@@ -321,6 +342,9 @@ namespace SmartxAPI.Controllers
 
 
                 }
+
+
+
 
 
             }
@@ -416,9 +440,9 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    string sqlCommandCount3 = "select count(*) as N_Count from Wh_Grn where   N_CompanyID= " + nCompanyID + "  and N_AsnID=" + nAsnID + " ";
-                    object count = dLayer.ExecuteScalar(sqlCommandCount3, Params, connection,transaction);
-                    if(myFunctions.getIntVAL(count.ToString())>0)
+                    string sqlCommandCount3 = "select count(*) as N_Count from Wh_GRN where N_CompanyID= " + nCompanyID + "and N_AsnID=" + nAsnID + " ";
+                    object count = dLayer.ExecuteScalar(sqlCommandCount3, Params, connection, transaction);
+                    if (myFunctions.getIntVAL(count.ToString()) > 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Warning("GRN Already Processed"));
