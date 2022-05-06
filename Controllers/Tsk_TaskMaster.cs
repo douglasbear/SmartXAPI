@@ -140,7 +140,7 @@ namespace SmartxAPI.Controllers
 
 
 
-            string sqlCommandText = "select  * from vw_Tsk_TaskCurrentStatus where N_CompanyID=@p1 and isnull(N_ParentID,0)=0";
+            string sqlCommandText = "select  * from vw_Tsk_TaskCurrentStatus where N_CompanyID=@p1";
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@nUserID", nUserID);
