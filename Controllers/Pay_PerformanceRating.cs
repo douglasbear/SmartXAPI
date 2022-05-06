@@ -17,24 +17,96 @@ namespace SmartxAPI.Controllers
     public class Pay_PerformanceRating : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
-        private readonly IApiFunctions _api;
+        private readonly IApiFunctions api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int FormID;
+        private readonly int N_FormID = 1443;
 
-        public Pay_PerformanceRating(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Pay_PerformanceRating(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
+            api = apifun;
             dLayer = dl;
-            _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 1443;
-
         }
 
+        [HttpGet("list")]
+        public ActionResult PerformanceRating()
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+ 
+            string sqlCommandText = "select X_Code as X_PerformanceCode,* from Pay_Performance where N_CompanyID=@p1 order by N_PerformanceID";
+            Params.Add("@p1", nCompanyID);
 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
 
-     [HttpPost("save")]
+        [HttpGet("details")]
+        public ActionResult GradeListDetails(string xCode)
+        {
+            DataSet dt=new DataSet();
+            SortedList Params=new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable MasterTable = new DataTable();
+            DataTable DetailTable = new DataTable();
+  
+            string Mastersql = "select * from Pay_Performance where N_CompanyID=@p1 and X_Code=@p2";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", xCode);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    MasterTable=dLayer.ExecuteDataTable(Mastersql,Params,connection); 
+
+                    if (MasterTable.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Data Found !!"));
+                    }
+
+                    MasterTable = api.Format(MasterTable, "Master");
+                    dt.Tables.Add(MasterTable);
+
+                    int N_PerformanceID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PerformanceID"].ToString());
+
+                    string DetailSql = "select * from Pay_PerformanceDetails where N_CompanyID=" + nCompanyID + " and N_PerformanceID=" + N_PerformanceID ;
+
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    DetailTable = api.Format(DetailTable, "Details");
+                    dt.Tables.Add(DetailTable);
+                }
+                return Ok(api.Success(dt));
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+
+        [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
@@ -46,67 +118,102 @@ namespace SmartxAPI.Controllers
                     DataTable MasterTable;
                     DataTable DetailTable;
                     MasterTable = ds.Tables["master"];
-                     DetailTable = ds.Tables["details"];
+                    DetailTable = ds.Tables["details"];
+                    DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
-                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-                    int nPerformanceID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PerformanceID"].ToString());
-                    string x_Code = MasterTable.Rows[0]["x_Code"].ToString();
-      
 
-                    if (x_Code == "@Auto")
+                    int nPerformanceID = myFunctions.getIntVAL(MasterRow["n_PerformanceID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
+                    int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+                    string xCode = MasterRow["x_Code"].ToString();
+
+                    string x_Code = "";
+                    if (xCode == "@Auto")
                     {
-                        Params.Add("N_CompanyID", nCompanyID);
-                        Params.Add("N_FormID", this.FormID);
-
-                        
-                        
-                        x_Code = dLayer.GetAutoNumber("Pay_Performance", "x_Code", Params, connection, transaction);
+                         Params.Add("N_CompanyID", nCompanyID);
+                         Params.Add("N_YearID", nFnYearID);
+                         Params.Add("N_FormID", this.N_FormID);
+                        x_Code = dLayer.GetAutoNumber("Pay_Performance", "X_Code", Params, connection, transaction);
                         if (x_Code == "")
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User, "Unable to generate  Code"));
+                            return Ok("Unable to generate Performance Rating");
                         }
                         MasterTable.Rows[0]["x_Code"] = x_Code;
                     }
 
-                    if (nPerformanceID > 0)
+                      if (MasterTable.Columns.Contains("n_FnYearID"))
                     {
-                        dLayer.DeleteData("Pay_Performance", "n_PerformanceID", nPerformanceID, "N_CompanyID=" + nCompanyID + " and n_PerformanceID=" + nPerformanceID, connection, transaction);
-                        dLayer.DeleteData("Pay_PerformanceDetails", "n_PerformanceID", nPerformanceID, "N_CompanyID=" + nCompanyID + " and n_PerformanceID=" + nPerformanceID, connection, transaction);
+
+                        MasterTable.Columns.Remove("n_FnYearID");
+
                     }
 
-                     nPerformanceID = dLayer.SaveData("Pay_Performance", "n_PerformanceID", MasterTable, connection, transaction);
-
-                    if (nPerformanceID <= 0)
+                    int n_PerformanceID = dLayer.SaveData("Pay_Performance", "N_PerformanceID", "", "", MasterTable, connection, transaction);
+                    if (n_PerformanceID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to save"));
+                        return Ok("Unable to save performance rating");
                     }
-
-                     for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        DetailTable.Rows[j]["n_PerformanceID"] = nPerformanceID;
+                        DetailTable.Rows[j]["n_PerformanceID"] = n_PerformanceID;
                     }
-
-                    int N_PerformanceDetailsID = dLayer.SaveData("Pay_PerformanceDetails", "N_PerformanceDetailsID", DetailTable, connection, transaction);
-                    if (N_PerformanceDetailsID <= 0)
+                    int n_PerformanceDetailsID = dLayer.SaveData("Pay_PerformanceDetails", "n_PerformanceDetailsID", DetailTable, connection, transaction);
+                    if (n_PerformanceDetailsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to save"));
-
+                        return Ok("Unable to save ");
                     }
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
-                    Result.Add("N_PerformanceDetailsID", nPerformanceID);
+                    Result.Add("n_PerformanceID", n_PerformanceID);
                     Result.Add("x_Code", x_Code);
-                    return Ok(_api.Success(Result, "Saved successfully"));
+                    Result.Add("n_PerformanceDetailsID", n_PerformanceDetailsID);
 
+                    return Ok(api.Success(Result, "Performance Rating Created"));
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User, ex));
+                return Ok(api.Error(User,ex));
+            }
+        }
+
+        
+       
+
+
+          [HttpDelete("delete")]
+        public ActionResult DeleteData(int nPerformanceID, int nCompanyID, int nFnYearID)
+        {
+            int Results = 0;
+            try
+            {
+                SortedList QueryParams = new SortedList();
+                QueryParams.Add("@nCompanyID", nCompanyID);
+                QueryParams.Add("@nFnYearID", nFnYearID);
+                QueryParams.Add("@nPerformanceID", nPerformanceID);
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    Results = dLayer.DeleteData("Pay_Performance", "N_PerformanceID", nPerformanceID, "", connection);
+
+                    if (Results > 0)
+                    {
+                        dLayer.DeleteData("Pay_PerformanceDetails", "N_PerformanceID", nPerformanceID, "", connection);
+                        return Ok(api.Success("Performance deleted"));
+                    }
+                    else
+                    {
+                        return Ok(api.Error(User,"Unable to delete"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(User,ex));
             }
         }
     }

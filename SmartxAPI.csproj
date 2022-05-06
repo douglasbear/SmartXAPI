@@ -5,7 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- <PackageReference Include="Aspose.BarCode" Version="22.3.0" /> -->
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="7.0.0" />
+    <!-- <PackageReference Include="BarCode" Version="2022.3.0" /> -->
+    <!-- <PackageReference Include="BarcodeLib" Version="2.4.0" /> -->
+    <!-- <PackageReference Include="BarcodeLib" Version="2.4.0" /> -->
     <PackageReference Include="Cake.CoreCLR" Version="1.1.0" />
     <PackageReference Include="CrystalDecisions.CrystalReports.Engine" Version="1.0.0" />
     <PackageReference Include="CrystalDecisions.ReportSource" Version="1.0.0" />
@@ -28,13 +32,16 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="NetBarcode" Version="1.4.5" />
+    <!-- <PackageReference Include="NetBarcode" Version="1.4.5" /> -->
     <PackageReference Include="QRCoder" Version="1.4.1" />
+    <PackageReference Include="Spire.Barcode" Version="6.3.1" />
     
     <PackageReference Include="System.Data.SqlClient" Version="4.8.1" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.5.1" />
     <PackageReference Include="System.Text.Json" Version="4.7.2" />
     <PackageReference Include="Vse.Web.Serialization.ControlledSerializationJsonConverter" Version="1.0.4" />
+    <PackageReference Include="Zen.Barcode.Rendering.Framework" Version="3.1.10729.1" />
+    <PackageReference Include="ZXing.Net" Version="0.16.8" />
   </ItemGroup>
 
 

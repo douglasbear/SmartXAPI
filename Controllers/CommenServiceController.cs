@@ -389,11 +389,10 @@ namespace SmartxAPI.Controllers
                 if (reqType.ToLower() == "customer")
                 {
                     SortedList Res = new SortedList();
-                    string seperator = "$e$-!";
-                    string[] cred = customerKey.Split(seperator);
-
-                    int companyID = myFunctions.getIntVAL(myFunctions.DecryptString(cred[0]));
-                    int nCustomerID = myFunctions.getIntVAL(myFunctions.DecryptString(cred[1]));
+                    string seperator = "$$";
+                    string[] cred = myFunctions.DecryptStringFromUrl(customerKey,System.Text.Encoding.Unicode ).Split(seperator);
+                    int companyID = myFunctions.getIntVAL(cred[0]);
+                    int nCustomerID = myFunctions.getIntVAL(cred[1]);
                     using (SqlConnection conn = new SqlConnection(connectionString))
                     {
                         conn.Open();
@@ -407,7 +406,7 @@ namespace SmartxAPI.Controllers
 
                         DataRow dRow = output.Rows[0];
 
-                        var user = _repository.Authenticate(myFunctions.getIntVAL(dRow["N_CompanyID"].ToString()), dRow["X_CompanyName"].ToString(), dRow["X_UserID"].ToString(), myFunctions.getIntVAL(dRow["N_UserID"].ToString()), "customer", 10, "", myFunctions.getIntVAL(dRow["N_ClientID"].ToString()), 0, ipAddress,myFunctions.GetLoginID(User));
+                        var user = _repository.Authenticate(myFunctions.getIntVAL(dRow["N_CompanyID"].ToString()), dRow["X_CompanyName"].ToString(), dRow["X_UserID"].ToString(), myFunctions.getIntVAL(dRow["N_UserID"].ToString()), reqType, appID, "", myFunctions.getIntVAL(dRow["N_ClientID"].ToString()), 0, ipAddress,myFunctions.GetLoginID(User));
 
                         if (user == null) { return Ok(_api.Error(User, "Unauthorized Access")); }
 

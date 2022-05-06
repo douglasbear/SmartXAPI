@@ -39,7 +39,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, int nItemUsedFor, bool isServiceItem, bool b_whGrn, int n_CustomerID)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -60,6 +60,10 @@ namespace SmartxAPI.Controllers
             if (b_whGrn == true && n_CustomerID > 0)
             {
                 warehouseSql = "and vw_InvItem_Search_cloud.N_ItemID in (select N_ItemID from  Vw_wh_AsnDetails_disp where N_CompanyID=@p1 and N_CustomerID=" + n_CustomerID + ")";
+            }
+            if (b_PickList == true && n_CustomerID > 0)
+            {
+                warehouseSql = "and vw_InvItem_Search_cloud.N_ItemID in (select N_ItemID from  vw_Wh_GRNDetails where N_CompanyID=@p1 and N_CustomerID=" + n_CustomerID + ")";
             }
 
             if (query != "" && query != null)
@@ -586,6 +590,8 @@ namespace SmartxAPI.Controllers
                                 MasterTable.Rows[j]["X_ItemName"] = VariantList.Rows[i]["X_ItemName"].ToString();
                                 if (VariantList.Rows[i]["X_Barcode"].ToString() != "")
                                     MasterTable.Rows[j]["X_Barcode"] = VariantList.Rows[i]["X_Barcode"].ToString();
+
+                                if(MasterTable.Columns.Contains("N_Rate") && VariantList.Columns.Contains("N_Rate"))
                                 if (VariantList.Rows[i]["N_Rate"].ToString() != "")
                                     MasterTable.Rows[j]["N_Rate"] = myFunctions.getVAL(VariantList.Rows[i]["N_Rate"].ToString());
                                 MasterTable.Rows[j]["N_CLassID"] = "2";
@@ -655,7 +661,7 @@ namespace SmartxAPI.Controllers
                         if (k == 0 && ItemType == 6)
                         {
                             N_VariantGrpType = N_ItemID;
-                            dLayer.ExecuteNonQuery("update  Inv_ItemMaster set B_Show = 0  where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
+                            dLayer.ExecuteNonQuery("update  Inv_ItemMaster set B_Show = 0 ,b_CanbeSold=0,b_CanbePurchased=0 where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
                         }
                         else
                         {
@@ -676,7 +682,7 @@ namespace SmartxAPI.Controllers
 
                         foreach (DataRow var in ItemUnits.Rows) var["n_ItemID"] = N_ItemID;
 
-                        if (k > 0)
+                        if (k > 0 && MasterTable.Columns.Contains("N_Rate"))
                             foreach (DataRow var in StockUnit.Rows) var["N_SellingPrice"] = MasterTable.Rows[k]["N_Rate"].ToString();
 
 

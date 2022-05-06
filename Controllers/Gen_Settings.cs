@@ -320,7 +320,7 @@ namespace SmartxAPI.Controllers
 
                     foreach (DataRow var in AccountMaps.Rows)
                     {
-                        int b_IsDefault = myFunctions.getIntVAL(AccountMaps.Rows[0]["b_IsDefault"].ToString());
+                        int b_IsDefault = AccountMaps.Columns.Contains("b_IsDefault") ?myFunctions.getIntVAL(AccountMaps.Rows[0]["b_IsDefault"].ToString()):0;
 
                         string defaultsSql = "SP_AccountDefaults_ins " + nCompanyID + ",'" + var["x_Group"].ToString() + "','" + var["x_Value"].ToString() + "'," + nFnYearID + "";
                         dLayer.ExecuteNonQuery(defaultsSql, connection, transaction);

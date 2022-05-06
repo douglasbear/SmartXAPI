@@ -86,15 +86,15 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("cashSummary")]
-        public ActionResult GetSalesSummaryDetails(int nCompanyID,int nFnYearID,int nBranchID,DateTime dTransDate)
+        public ActionResult GetSalesSummaryDetails(int nCompanyID,int nFnYearID,int nSessionID,DateTime dTransDate)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             Params.Add("@p1",nCompanyID);
             Params.Add("@p2",nFnYearID);
-            Params.Add("@p3",nBranchID);
+            Params.Add("@p3",nSessionID);
             Params.Add("@p4",dTransDate);
-            string sqlCommandText="Select * from vw_VoucherTransaction where N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 and D_TransDate=@p4";
+            string sqlCommandText="Select * from Vw_POSTxnSummery where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SessionID=@p3 and D_TransDate=@p4";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

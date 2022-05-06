@@ -23,6 +23,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly IMyAttachments myAttachments;
+        private readonly string AppURL;
 
         public Inv_Customer(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
@@ -31,6 +32,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             myAttachments = myAtt;
+            AppURL = conf.GetConnectionString("AppURL");
         }
 
 
@@ -106,7 +108,7 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and (X_CustomerName like '%" + xSearchkey + "%' or X_CustomerCode like '%" + xSearchkey + "%' or X_ContactName like '%" + xSearchkey + "%' or X_Address like '%" + xSearchkey + "%' or X_PhoneNo1 like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by X_CustomerCode desc";
+                xSortBy = " order by N_CustomerID desc";
             else
             {
                 switch (xSortBy.Split(" ")[0])
@@ -177,12 +179,15 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 DataTable Attachment = ds.Tables["attachments"];
                  bool b_AutoGenerate=false;
+             
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchId"].ToString());
                 int nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerId"].ToString());
+               
                 int flag=0;
 
+            
                 if(MasterTable.Columns.Contains("b_AutoGenerate"))
                 {
                        b_AutoGenerate = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_AutoGenerate"].ToString());
@@ -233,6 +238,8 @@ namespace SmartxAPI.Controllers
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_CustomerCode='" + CustomerCode + "'";
                     string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
                     nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
+              
+                  
                     if (nCustomerID <= 0)
                     {
                         transaction.Rollback();
@@ -294,7 +301,7 @@ namespace SmartxAPI.Controllers
                                 }
                             }
 
-                            object objUserCat = dLayer.ExecuteScalar("select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + " and N_AppID=10", Params, connection, transaction);
+                            object objUserCat = dLayer.ExecuteScalar("select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + " and N_AppID=13", Params, connection, transaction);
                             if (objUserCat != null)
                             {
                                 UserCatID = myFunctions.getIntVAL(objUserCat.ToString());
@@ -380,7 +387,7 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(api.Error(User, ex));
                         }
-
+                    
                         transaction.Commit();
                         // return GetCustomerList(nCompanyID, nFnYearId, nBranchId, true, nCustomerID.ToString(), "");
                         return Ok(api.Success("Customer Saved"));
@@ -594,7 +601,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    dt = myFunctions.AddNewColumnToDataTable(dt, "customerKey", typeof(string), "");
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "portalURL", typeof(string), "");
                     if (dt.Rows.Count == 0)
                     {
                         return Ok(api.Notice("No Results Found"));
@@ -608,8 +615,12 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            string seperator = "$e$-!";
-                            dt.Rows[0]["customerKey"] = myFunctions.EncryptString(myFunctions.GetCompanyID(User).ToString()) + seperator + myFunctions.EncryptString(dt.Rows[0]["n_CustomerID"].ToString());
+                            string seperator = "$$";
+                            // dt.Rows[0]["customerKey"] = myFunctions.EncryptString(myFunctions.GetCompanyID(User).ToString()) + seperator + myFunctions.EncryptString(dt.Rows[0]["n_CustomerID"].ToString());
+
+                            string xURL = myFunctions.EncryptStringForUrl(myFunctions.GetCompanyID(User).ToString() + seperator + dt.Rows[0]["n_CustomerID"].ToString() + seperator + "HOME" + seperator + "0", System.Text.Encoding.Unicode);
+                                   xURL = AppURL + "/client/customer/13/" + xURL + "/home/new";
+                                   dt.Rows[0]["portalURL"] = xURL;
                         }
                         dt.AcceptChanges();
                     
@@ -681,6 +692,7 @@ namespace SmartxAPI.Controllers
                     object invoiceamt = dLayer.ExecuteScalar("select sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalInvoiceAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", Params, connection);
                     object returnamt = dLayer.ExecuteScalar("select sum(Cast(REPLACE(N_TotalPaidAmount,',','') as Numeric(10,2)) ) as TotalReturnAmount from vw_InvDebitNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", Params, connection);
                     double  currentBalance=  myFunctions.getVAL(dLayer.ExecuteScalar("SELECT  Sum(n_Amount)  as N_BalanceAmount from  vw_InvCustomerStatement Where N_AccType=2 and N_AccID=" + nCustomerID + " and N_CompanyID=" + nCompanyID,Params,connection).ToString());
+                    object invoiceDate=dLayer.ExecuteScalar("select Top 1 D_SalesDate from vw_InvSalesInvoiceNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID and N_TypeID<>1 and N_SalesID NOt in (Select N_SalesID from VW_SALESRECEIPT_CLOUD where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+")", Params, connection);
                     {
                         returnamt = "0";
                     }
@@ -691,7 +703,7 @@ namespace SmartxAPI.Controllers
                     double amount = myFunctions.getVAL(invoiceamt.ToString()) - myFunctions.getVAL(returnamt.ToString());
                     dt.Rows[0]["TotalInvoiceAmount"] = amount.ToString();
                     dt = myFunctions.AddNewColumnToDataTable(dt, "currentBalance", typeof(double), currentBalance);
-             
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "d_invDate",typeof(string), invoiceDate);
                     dt.AcceptChanges();
                     
 
