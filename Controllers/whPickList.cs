@@ -88,6 +88,44 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+        [HttpGet("pickuplist")]
+        public ActionResult GetDashboardList(int nFnYearID,string xbarcode)
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string query="";
+            if(xbarcode!="" && xbarcode!=null)
+                query=" and X_PickListCode="+xbarcode;
+
+
+            string sqlCommandText = "select * from vw_WhPickListMaster where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and isnull(N_FormID,0)<>1411"+query;
+
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+            SortedList OutPut = new SortedList();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Success(dt));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
         
         [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)

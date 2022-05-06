@@ -120,6 +120,11 @@ namespace SmartxAPI.Data
                                         X_SalesmanCode = dr["X_SalesmanCode"].ToString(),
                                         X_SalesmanName = dr["X_SalesmanName"].ToString(),
                                         B_AllowEdit = (bool)dr["B_AllowEdit"],
+                                        N_CustomerID = myFunctions.getIntVAL(dr["N_CustomerID"].ToString()),
+                                        X_CustomerCode = dr["X_CustomerCode"].ToString(),
+                                        X_CustomerName = dr["X_CustomerName"].ToString(),
+
+
                                     }).ToList()
                             .FirstOrDefault();
 
