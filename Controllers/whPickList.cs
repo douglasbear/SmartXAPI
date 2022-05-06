@@ -95,7 +95,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string query="";
-            if(xbarcode!="" || xbarcode!=null)
+            if(xbarcode!="" && xbarcode!=null)
                 query=" and X_PickListCode="+xbarcode;
 
 
