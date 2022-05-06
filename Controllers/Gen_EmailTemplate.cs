@@ -507,9 +507,17 @@ namespace SmartxAPI.Controllers
                         {
                              xSubject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyId="+companyid+" and X_Type='customer portal'", connection, transaction).ToString();
                             xBodyText = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyId="+companyid+" and X_Type='customer portal'", connection, transaction).ToString();
-                            xBodyText=xBodyText.Replace("@PartyName",row["X_PartyName"].ToString());
+                            xBodyText=xBodyText.Replace("@ContactName",row["X_PartyName"].ToString());
+                            xBodyText=xBodyText.Replace("@CompanyName",myFunctions.GetCompanyName(User));
+                            string seperator = "$$";
+                            xURL = myFunctions.EncryptStringForUrl(myFunctions.GetCompanyID(User).ToString() + seperator + row["N_PartyID"].ToString() + seperator + "HOME" + seperator + "0", System.Text.Encoding.Unicode);
+                                   xURL = AppURL + "/client/customer/13/" + xURL + "/home/new";
+                            xBodyText=xBodyText.Replace("@URL",xURL);
+                            xSubject=xSubject.Replace("@CompanyName",myFunctions.GetCompanyName(User));
 
-                            myFunctions.SendMailWithAttachments(51, myFunctions.getIntVAL(row["N_FnYearID"].ToString()), myFunctions.getIntVAL(row["N_PKeyID"].ToString()),myFunctions.getIntVAL(row["N_PartyID"].ToString()), row["X_PartyName"].ToString(), xSubject, row["X_DocNo"].ToString(), row["X_Email"].ToString(), xBodyText, dLayer, User);
+
+
+                            myFunctions.SendMailWithAttachments(0, myFunctions.getIntVAL(row["N_FnYearID"].ToString()), myFunctions.getIntVAL(row["N_PKeyID"].ToString()),myFunctions.getIntVAL(row["N_PartyID"].ToString()), row["X_PartyName"].ToString(), xSubject, "0", row["X_Email"].ToString(), xBodyText, dLayer, User);
 
                         }
                     }
