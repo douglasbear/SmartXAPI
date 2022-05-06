@@ -70,7 +70,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("setTerminal")]
-        public ActionResult SetTerminal(int n_TerminalID, int n_SessionID, int n_BranchID, int n_LocationID, int n_FnYearID,int n_CashOpening,DateTime d_SessionDate,DateTime d_SessionStartTime)
+        public ActionResult SetTerminal(int n_TerminalID, int n_SessionID, int n_BranchID, int n_LocationID, int n_FnYearID,int n_CashOpening,string d_SessionDate,string d_SessionStartTime)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -89,10 +89,9 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     if (n_SessionID == 0)
                     {
-                        sqlCommandText = "select N_CompanyID," + n_FnYearID + " as N_FnYearID," + n_BranchID + " as N_BranchID,@p2 as D_SessionDate,0 as N_SessionID,N_TerminalID,@p2 as D_EntryDate," + nUserID + " as N_UserID,0 as B_Closed,"+n_CashOpening+" as n_CashOpening,"+HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString()+" as X_SessionStartIP,@p3 as D_SessionStartTime,"+System.Net.Dns.GetHostName()+" as X_SystemName from vw_InvTerminal_Disp where N_CompanyID=@p1 and N_TerminalID=" + n_TerminalID;
+                        sqlCommandText = "select N_CompanyID," + n_FnYearID + " as N_FnYearID," + n_BranchID + " as N_BranchID,'"+DateTime.ParseExact(d_SessionDate, "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture)+"' as D_SessionDate,0 as N_SessionID,N_TerminalID,'"+DateTime.ParseExact(d_SessionDate, "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture)+"' as D_EntryDate," + nUserID + " as N_UserID,0 as B_Closed,"+n_CashOpening+" as n_CashOpening,'"+HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString()+"' as X_SessionStartIP,'"+DateTime.ParseExact(d_SessionStartTime, "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture)+"' as D_SessionStartTime,'"+System.Net.Dns.GetHostName()+"' as X_SystemName from vw_InvTerminal_Disp where N_CompanyID=@p1 and N_TerminalID=" + n_TerminalID;
                         Params.Add("@p1", nCompanyId);
                         Params.Add("@p2", d_SessionDate);
-                        Params.Add("@p3", d_SessionStartTime);
 
                         dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
 
