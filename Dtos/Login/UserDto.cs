@@ -30,6 +30,9 @@ namespace SmartxAPI.Dtos.Login
         public string X_UserCategoryIDList { get; set; }
         public bool B_AllowEdit { get; set; }
         public string Warning { get; set; }
+        public int N_CustomerID { get; set; }
+        public string X_CustomerCode { get; set; }
+        public string X_CustomerName { get; set; }
 
 
     }
