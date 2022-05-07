@@ -13,14 +13,14 @@ namespace SmartxAPI.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("appraisal")]
     [ApiController]
-    public class Pay_AppraisalTemplate : ControllerBase
+    public class Pay_Appraisalform : ControllerBase
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int N_FormID = 1454;
-        public Pay_AppraisalTemplate(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Pay_Appraisalform(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             _api = api;
             dLayer = dl;
