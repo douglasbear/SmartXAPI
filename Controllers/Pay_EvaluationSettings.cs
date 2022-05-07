@@ -40,8 +40,8 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 DataTable DetailTable;
-                MasterTable = ds.Tables["payEvaluationSettingsConstant"];
-                DetailTable = ds.Tables["payEvaluatorsConstant"];
+                MasterTable = ds.Tables["master"];
+                DetailTable = ds.Tables["details"];
                 int nCompanyID = myFunctions.GetCompanyID(User);
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 int N_EvalSettingsID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_EvalSettingsID"].ToString());
