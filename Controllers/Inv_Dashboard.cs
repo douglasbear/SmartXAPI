@@ -276,9 +276,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
          
                 if (Count == 0)
-                    sqlCommandText = "select * from Vw_ItemWiseLocation where N_CompanyID="+nCompanyID+" and D_ExpiryDate is not null and D_ExpiryDate <='"+d_Date+"' and  N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID="+nCompanyID+" and N_WarehouseID="+nLocationID+" ) and N_ItemID in (Select N_ItemID from Inv_StockMaster where N_CompanyID="+nCompanyID+" and N_LocationID="+nLocationID+" and D_ExpiryDate<='"+d_Date+"'  ) ";
+                    sqlCommandText = "select * from Vw_ItemWiseLocation where N_CompanyID="+nCompanyID+" and X_BatchCode is not null and D_ExpiryDate is not null and D_ExpiryDate <='"+d_Date+"' and  N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID="+nCompanyID+" and N_WarehouseID="+nLocationID+" ) and N_ItemID in (Select N_ItemID from Inv_StockMaster where N_CompanyID="+nCompanyID+" and N_LocationID="+nLocationID+" and D_ExpiryDate<='"+d_Date+"'  ) ";
                 else
-                    sqlCommandText = "select * from Vw_ItemWiseLocation where N_CompanyID="+nCompanyID+" and D_ExpiryDate is not null and  D_ExpiryDate <='"+d_Date+"' and  N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID="+nCompanyID+" and N_WarehouseID="+nLocationID+" ) and N_ItemID in (Select N_ItemID from Inv_StockMaster where N_CompanyID="+nCompanyID+" and N_LocationID="+nLocationID+" and D_ExpiryDate<='"+d_Date+"'  ) ";
+                    sqlCommandText = "select * from Vw_ItemWiseLocation where N_CompanyID="+nCompanyID+" and X_BatchCode is not null and D_ExpiryDate is not null and  D_ExpiryDate <='"+d_Date+"' and  N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID="+nCompanyID+" and N_WarehouseID="+nLocationID+" ) and N_ItemID in (Select N_ItemID from Inv_StockMaster where N_CompanyID="+nCompanyID+" and N_LocationID="+nLocationID+" and D_ExpiryDate<='"+d_Date+"'  ) ";
 
          
             SortedList OutPut = new SortedList();
@@ -291,7 +291,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count from Vw_ItemWiseLocation where N_CompanyID=@p1 and D_ExpiryDate is not null and D_ExpiryDate <='"+d_Date+"' and N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=@p1 and N_WarehouseID=@p3 ) and N_ItemID in (Select N_ItemID from Inv_StockMaster where N_CompanyID=@p1 and N_LocationID=@p3 and D_ExpiryDate<='"+d_Date+" '  ) ";
+                    sqlCommandCount = "select count(*) as N_Count from Vw_ItemWiseLocation where N_CompanyID=@p1 and X_BatchCode is not null and D_ExpiryDate is not null and D_ExpiryDate <='"+d_Date+"' and N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=@p1 and N_WarehouseID=@p3 ) and N_ItemID in (Select N_ItemID from Inv_StockMaster where N_CompanyID=@p1 and N_LocationID=@p3 and D_ExpiryDate<='"+d_Date+" '  ) ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
