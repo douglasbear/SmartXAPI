@@ -124,7 +124,7 @@ namespace SmartxAPI.Controllers
               if (bAllBranchData == false)
                    
                     {
-                        Searchkey = Searchkey + " and N_BranchID= "+nBranchID+" or N_BranchID=0";
+                        Searchkey = Searchkey + " and ( N_BranchID= "+nBranchID+" or N_BranchID=0 ) ";
                     }
             // if(nBranchID>0)
             // Searchkey= Searchkey + " and N_BranchID= "+nBranchID+" ";
