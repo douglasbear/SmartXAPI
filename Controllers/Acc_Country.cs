@@ -104,13 +104,13 @@ namespace SmartxAPI.Controllers
                      
 
                     string X_CountryName= MasterTable.Rows[0]["X_CountryName"].ToString();
-                    string DupCriteria = "";
+                    string DupCriteria = "X_CountryName='" + X_CountryName + "' and N_CompanyID=" + nCompanyID;
 
                     nCountryID = dLayer.SaveData("Acc_Country", "N_CountryID",DupCriteria,"", MasterTable, connection, transaction);
                     if (nCountryID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User,"Country name already exist"));
                     }
                     else
                     {
