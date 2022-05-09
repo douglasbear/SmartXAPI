@@ -179,10 +179,12 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 DataTable CompetencyCategoryTable;
+                DataTable CompetencyCategoryCopyTable;
                 DataTable CompetencyTable;
                 DataTable TrainingneedsTable;
                 MasterTable = ds.Tables["master"];
                 CompetencyCategoryTable = ds.Tables["competencycategory"];
+                CompetencyCategoryCopyTable = ds.Tables["competencycategory"];
                 CompetencyTable = ds.Tables["competency"];
                 TrainingneedsTable = ds.Tables["trainingneeds"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
@@ -194,17 +196,21 @@ namespace SmartxAPI.Controllers
 
                 if (MasterTable.Columns.Contains("n_FnYearID"))
                     MasterTable.Columns.Remove("n_FnYearID");
+                    
+                if (CompetencyCategoryTable.Columns.Contains("x_ID"))
+                    CompetencyCategoryTable.Columns.Remove("x_ID");                    
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
-                    if (nTemplateID > 0) {
-                        dLayer.DeleteData("Pay_CompetencyCategory", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID , connection, transaction);
-                        dLayer.DeleteData("Pay_CompetencyCategory", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection, transaction);
-                        dLayer.DeleteData("Pay_Competency", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                    if (nTemplateID > 0) 
+                    {  
                         dLayer.DeleteData("Pay_TrainingNeeds", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Pay_Competency", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Pay_CompetencyCategory", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Pay_AppraisalTemplate", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID , connection, transaction);
                     }
                     
                     // Auto Gen
@@ -240,10 +246,15 @@ namespace SmartxAPI.Controllers
 
                         for (int i = 0; i < CompetencyTable.Rows.Count; i++)
                         {
-                            CompetencyTable.Rows[i]["N_TemplateID"] = nTemplateID;  
-                            CompetencyTable.Rows[i]["N_CategoryID"] = nCategoryID;  
+                            if(CompetencyTable.Rows[i]["x_ID"].ToString()==CompetencyCategoryCopyTable.Rows[j]["x_ID"].ToString())
+                            {
+                                CompetencyTable.Rows[i]["N_TemplateID"] = nTemplateID;  
+                                CompetencyTable.Rows[i]["N_CategoryID"] = nCategoryID;  
+                            }
                         }
                     }
+                    if (CompetencyTable.Columns.Contains("x_ID"))
+                        CompetencyTable.Columns.Remove("x_ID");
                     nCompetencyID = dLayer.SaveData("Pay_Competency", "N_CompetencyID", CompetencyTable, connection, transaction);
                     if (nCompetencyID <= 0)
                     {
@@ -285,13 +296,13 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Results = dLayer.DeleteData("Pay_AppraisalTemplate", "N_TemplateID", nTemplateID, "", connection);
+                    Results = dLayer.DeleteData("Pay_AppraisalTemplate", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection);
 
                     if (Results > 0)
                     {
-                        dLayer.DeleteData("Pay_CompetencyCategory", "N_TemplateID", nTemplateID, "", connection);
-                        dLayer.DeleteData("Pay_Competency", "N_TemplateID", nTemplateID, "", connection);
-                        dLayer.DeleteData("Pay_TrainingNeeds", "N_TemplateID", nTemplateID, "", connection);
+                        dLayer.DeleteData("Pay_CompetencyCategory", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection);
+                        dLayer.DeleteData("Pay_Competency", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection);
+                        dLayer.DeleteData("Pay_TrainingNeeds", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection);
                         return Ok(_api.Success("Appraisal Template deleted"));
                     }
                     else
