@@ -42,7 +42,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@isCompany",isCompany);
             Params.Add("@nFnYearID",nFnYearID);
-            string sqlCommandText=" select N_CompanyID,N_BankID,X_BankCode,X_BankName,X_BankNameLocale,N_LedgerID,N_CountryID from Acc_BankMaster where N_CompanyID=@nCompanyID  and B_isCompany=@isCompany and N_FnYearID=@nFnYearID order by X_BankCode";
+            string sqlCommandText="select N_CompanyID,N_BankID,X_BankCode,X_BankName,X_BankNameLocale,N_LedgerID,N_CountryID from Acc_BankMaster where N_CompanyID=@nCompanyID  and B_isCompany=@isCompany and N_FnYearID=@nFnYearID order by X_BankCode";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
