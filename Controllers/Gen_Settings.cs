@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("settingsDetails")]
-        public ActionResult GetDetails(int nFnYearID, int nLangID, int nFormID, int nCompanyID)
+        public ActionResult GetDetails(int nFnYearID, int nLangID, int nFormID, int nCompanyID,int nBranchID)
         {
             try
             {
@@ -117,7 +117,8 @@ namespace SmartxAPI.Controllers
                         {"N_FnYearID",nFnYearID},
                         {"N_LanguageID",nLangID},
                         {"X_UserCategoryIDList",myFunctions.GetUserCategoryList(User)},
-                        {"N_ParentmenuID",NParentMenuId}
+                        {"N_ParentmenuID",NParentMenuId},
+                         {"N_BranchID",nBranchID}
                     };
 
                     DataTable MasterTable = dLayer.ExecuteDataTablePro("SP_InvInvoiceCounter_Disp_Cloud", mParamsList, connection);
