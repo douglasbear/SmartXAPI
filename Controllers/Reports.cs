@@ -463,6 +463,12 @@ namespace SmartxAPI.Controllers
                                 CreateBarcode(var["X_Barcode"].ToString());
                             }
                         }
+                        if (nFormID == 1411)
+                        {
+                            object PICKList = dLayer.ExecuteScalar("select X_PickListCode from vw_WhPickListMaster where n_companyid=" + nCompanyId + " and N_PickListID=" + nPkeyID, connection, transaction);
+                            CreateBarcode(PICKList.ToString());
+                            
+                        }
 
                         string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
                         var path = client.GetAsync(URL);
