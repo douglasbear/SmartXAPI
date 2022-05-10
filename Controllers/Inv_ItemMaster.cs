@@ -278,6 +278,21 @@ namespace SmartxAPI.Controllers
             }
 
         }
+        [HttpGet("generatebarcode")]
+        public ActionResult GenerateBarcode(string xItemName,double nPrice)
+        {
+            string barcode="";
+            try
+            {
+                 return Ok(_api.Success(new SortedList() { { "FileName", barcode } }));
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+
+        }
 
 
 
