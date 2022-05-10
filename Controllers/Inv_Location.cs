@@ -9,11 +9,12 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
-using iTextSharp.text.pdf;
-using iTextSharp.text;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Drawing;
+using System.Drawing.Imaging;
+using ZXing;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
