@@ -100,7 +100,7 @@ namespace SmartxAPI.Controllers
                 query=" and X_PickListCode="+xbarcode;
 
 
-            string sqlCommandText = "select * from vw_WhPickListMaster where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and isnull(N_FormID,0)<>1411"+query;
+            string sqlCommandText = "select * from vw_WhPickListMaster where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and isnull(N_FormID,0)<>1460"+query;
 
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
