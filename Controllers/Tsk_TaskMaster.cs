@@ -449,7 +449,8 @@ namespace SmartxAPI.Controllers
 
                                 int NOrder = myFunctions.getIntVAL(Count.ToString()) + 1;
                                 dLayer.ExecuteNonQuery("update tsk_taskmaster set N_Order=" + NOrder + " where N_Order=" + Count + " and N_ProjectID=" + MasterTable.Rows[0]["N_ProjectID"].ToString(), Params, connection, transaction);
-                                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_Order", typeof(int), 0);
+                                if (!MasterTable.Columns.Contains("N_Order"))
+                                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_Order", typeof(int), 0);
                                 MasterTable.Rows[0]["N_Order"] = Count.ToString();
                             }
                         }

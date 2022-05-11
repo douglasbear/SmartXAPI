@@ -98,6 +98,7 @@ namespace SmartxAPI.Controllers
                             xTableName = "Mig_CustomerOpening";
                         if (dt.TableName.ToString().ToLower() == "vendor balances")
                             xTableName = "Mig_VendorOpening";
+                            
 
                         if (dt.TableName.ToString().ToLower() == "product list" || dt.TableName.ToString().ToLower() == "products")
                         {
@@ -113,6 +114,17 @@ namespace SmartxAPI.Controllers
                         if (dt.TableName.ToString().ToLower() == "category")
                         {
                             xTableName = "Mig_POSCategory";
+                            Mastertable.Columns.Add("N_CompanyID");
+                            foreach (DataRow dtRow in Mastertable.Rows)
+                            {
+                                dtRow["N_CompanyID"] = nCompanyID;
+                            }
+                        }
+
+                           if (dt.TableName.ToString().ToLower() == "delivery notes")
+                        {
+                            xTableName = "Mig_Deliverynote";
+                            
                             Mastertable.Columns.Add("N_CompanyID");
                             foreach (DataRow dtRow in Mastertable.Rows)
                             {
