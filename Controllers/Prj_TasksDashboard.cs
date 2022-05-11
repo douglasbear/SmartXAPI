@@ -42,7 +42,7 @@ namespace SmartxAPI.Controllers
 
             string sqlCommandTasksList = "";
             if (nTaskID > 0)
-                sqlCommandTasksList = "select * from vw_Tsk_TaskMaster where N_CompanyID=@p1  and  N_ParentID=@nTaskID order by N_Order";
+                sqlCommandTasksList = "select * from vw_Tsk_TaskCurrentStatus where N_CompanyID=@p1  and  N_ParentID=@nTaskID order by N_Order";
             else
                 sqlCommandTasksList = "select * from vw_Tsk_TaskMaster where N_CompanyID=@p1 and X_ProjectCode=@p2 and N_FnYearID=@nFnYearID and isnull(N_ParentID,0)=0 order by N_Order";
 
