@@ -327,6 +327,7 @@ namespace SmartxAPI.GeneralFunctions
                 {
                     dLayer.ExecuteNonQuery("insert into DMS_MasterFiles(N_CompanyID,N_FileID,X_FileCode,X_Name,X_Title,X_Contents,N_FolderID,N_UserID,X_refName,N_AttachmentID,N_FormID,D_ExpiryDate,N_CategoryID,N_TransID)values(" + nCompanyID + "," + FileID + ",'" + filecode + "','" + filename + "','" + category + "','" + subject + "'," + folderId + "," + nUserID + ",'" + refname + "'," + attachID + "," + FormID + ",'" + dtExpire.ToString("dd/MMM/yyyy") + "'," + remCategoryId + "," + transId + ")", connection, transaction);
                     int ReminderId = ReminderSave(dLayer, FormID, partyID, strExpireDate, subject, filename, remCategoryId, 1, settingsId, User, transaction, connection);
+                   // int ReminderId =myReminder.ReminderSet(dLayer,settingsId, partyID, strExpireDate,FormID, nUserID,  User,  connection,transaction);
                     dLayer.ExecuteNonQuery("update DMS_MasterFiles set N_ReminderID=" + ReminderId + " where N_FileID=" + FileID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                 }
                 else
@@ -352,26 +353,57 @@ namespace SmartxAPI.GeneralFunctions
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
 
-            DataTable Gen_Reminder = new DataTable();
-            Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "N_CompanyId", typeof(int), nCompanyID);
-            Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "N_FormID", typeof(int), N_FormID);
-            Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "N_PartyID", typeof(int), partyId);
-            Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "X_Subject", typeof(string), strSubject);
-            Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "X_Title", typeof(string), Title);
-            if (dateval != "")
-            {
-                DateTime dtExpire;
-                dtExpire = Convert.ToDateTime(dateval);
-                Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "D_ExpiryDate", typeof(DateTime), dtExpire.ToString("dd/MMM/yyyy"));
-                Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "N_RemCategoryID", typeof(int), CategoryID);
+           // DataTable Gen_Reminder = new DataTable();
+            // Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "N_CompanyId", typeof(int), nCompanyID);
+            // Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "N_ReminderId", typeof(int), 0);
+            // Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "N_FormID", typeof(int), N_FormID);
+            // Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "N_PartyID", typeof(int), partyId);
+            // Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "X_Subject", typeof(string), strSubject);
+            // Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "X_Title", typeof(string), Title);
+            // if (dateval != "")
+            // {
+            //     DateTime dtExpire;
+            //     dtExpire = Convert.ToDateTime(dateval);
+            //     Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "D_ExpiryDate", typeof(DateTime), dtExpire.ToString("dd/MMM/yyyy"));
+            //     Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "N_RemCategoryID", typeof(int), CategoryID);
 
-            }
-            Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "B_IsAttachment", typeof(bool), Isattachment);
-            Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "N_SettingsID", typeof(int), settingsId);
-            Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "N_UserID", typeof(int), nUserID);
+            // }
+            // Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "B_IsAttachment", typeof(bool), Isattachment);
+            // Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "N_SettingsID", typeof(int), settingsId);
+            // Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "N_UserID", typeof(int), nUserID);
+            // Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "N_Processed", typeof(int), 0);
+            // Gen_Reminder = myFunctions.AddNewColumnToDataTable(Gen_Reminder, "D_EntryDate", typeof(DateTime), DateTime.Now);
+
+            DataTable dtSave = new DataTable();
+                dtSave.Clear();
+                dtSave.Columns.Add("N_CompanyID");
+                dtSave.Columns.Add("N_FormID");
+                dtSave.Columns.Add("N_PartyID");
+                dtSave.Columns.Add("X_Subject");
+                dtSave.Columns.Add("X_Title");
+                dtSave.Columns.Add("D_ExpiryDate");
+                dtSave.Columns.Add("N_RemCategoryID");
+                dtSave.Columns.Add("B_IsAttachment");
+                dtSave.Columns.Add("N_SettingsID");
+                dtSave.Columns.Add("N_UserID");
+                dtSave.Columns.Add("N_ReminderId");
+
+                DataRow row = dtSave.NewRow();
+                row["N_ReminderId"] = 0;
+                row["N_CompanyID"] = myFunctions.GetCompanyID(User);
+                row["N_FormID"] = N_FormID;
+                row["N_PartyID"] = partyId;
+                row["X_Subject"] = strSubject;
+                row["X_Title"] = Title;
+                row["D_ExpiryDate"] = dateval;
+                row["N_RemCategoryID"] = CategoryID;
+                row["B_IsAttachment"] = 0;
+                row["N_SettingsID"] = settingsId;
+                row["N_UserID"] = nUserID;
+                dtSave.Rows.Add(row);
 
             object Result = 0;
-            dLayer.SaveData("Gen_Reminder", "N_ReminderId", Gen_Reminder, connection, transaction);
+            Result=dLayer.SaveData("Gen_Reminder", "N_ReminderId", dtSave, connection, transaction);
             if (myFunctions.getIntVAL(Result.ToString()) > 0)
             {
                 return myFunctions.getIntVAL(Result.ToString());
