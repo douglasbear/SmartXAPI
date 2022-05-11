@@ -194,15 +194,31 @@ namespace SmartxAPI.Controllers
                 int nCompetencyID = 0;
                 int nTrainingID = 0;
 
-                CompetencyCategoryCopyTable.Rows.Clear();
+
+
+                CompetencyCategoryCopyTable.Clear();
+                CompetencyCategoryCopyTable.Columns.Add("N_CompanyID");
+                CompetencyCategoryCopyTable.Columns.Add("N_TemplateID");
+                CompetencyCategoryCopyTable.Columns.Add("N_CategoryID");
+                CompetencyCategoryCopyTable.Columns.Add("X_Category");
+                CompetencyCategoryCopyTable.Columns.Add("N_Weightage");
+                CompetencyCategoryCopyTable.Columns.Add("N_EntryTypeID");
+                CompetencyCategoryCopyTable.Columns.Add("N_GradeTypeID");
+
                 int nCount = CompetencyCategoryTable.Rows.Count;
-                for (int j = 0; j < nCount; j++)
+                foreach (DataRow dRow in CompetencyCategoryTable.Rows)
                 {
-                    
-
-
-
+                    DataRow row = CompetencyCategoryCopyTable.NewRow();
+                    row["N_CompanyID"] = dRow["N_CompanyID"];
+                    row["N_TemplateID"] = dRow["N_TemplateID"];
+                    row["N_CategoryID"] = dRow["N_CategoryID"];
+                    row["X_Category"] = dRow["X_Category"];
+                    row["N_Weightage"] = dRow["N_Weightage"];
+                    row["N_EntryTypeID"] = dRow["N_EntryTypeID"];
+                    row["N_GradeTypeID"] = dRow["N_GradeTypeID"];
+                    CompetencyCategoryCopyTable.Rows.Add(row);
                 }
+                CompetencyCategoryCopyTable.AcceptChanges();
 
                 if (MasterTable.Columns.Contains("n_FnYearID"))
                     MasterTable.Columns.Remove("n_FnYearID");
