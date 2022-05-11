@@ -43,23 +43,33 @@ namespace SmartxAPI.Controllers
 
  
             string sqlpendingAsnList = "Select count(*) as N_Count  from vw_Wh_AsnMaster_Disp Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearId  + " and N_AsnID Not in (select N_AsnID from Wh_Grn  Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearId+" )";
-            // string sqlPendingPickupList="select count(*) as N_Count from "
+            string sqlPendingPickup ="select count(*) as N_Pickup from Wh_PickList where N_CompanyID= " + nCompanyID + " and N_FnYearID="+nFnYearId +"and N_FormID=1460";
+            string sqlPendingPicklist ="select count(*) as N_Pick from Wh_PickList where N_CompanyID= " + nCompanyID + " and N_FnYearID="+nFnYearId +"and N_FormID=1459";
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearId",nFnYearId);
 
             SortedList OutPut = new SortedList();
             DataTable PendingAsnList = new DataTable();
+            DataTable PendingPickup = new DataTable();
+            DataTable PendingPickList = new DataTable();
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                      PendingAsnList = dLayer.ExecuteDataTable(sqlpendingAsnList, Params, connection);
+                      PendingPickup = dLayer.ExecuteDataTable(sqlPendingPickup, Params, connection);
+                       PendingPickList = dLayer.ExecuteDataTable(sqlPendingPicklist, Params, connection);
 
                 }
                  PendingAsnList.AcceptChanges();
+                 PendingPickup.AcceptChanges();
+                 PendingPickList.AcceptChanges();
 
                  if (PendingAsnList.Rows.Count > 0) OutPut.Add("PendingAsnList", PendingAsnList);
+                 if (PendingPickup.Rows.Count > 0) OutPut.Add("PendingPickup", PendingPickup);
+                 if (PendingPickList.Rows.Count > 0) OutPut.Add("PendingPickList", PendingPickList);
+  
 
                  return Ok(api.Success(OutPut));
 
