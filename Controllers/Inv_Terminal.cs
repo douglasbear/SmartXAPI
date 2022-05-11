@@ -71,10 +71,14 @@ namespace SmartxAPI.Controllers
 
         [HttpGet("setTerminal")]
 <<<<<<< HEAD
+<<<<<<< HEAD
         public ActionResult SetTerminal(int n_TerminalID, int n_SessionID, int n_BranchID, int n_LocationID, int n_FnYearID,int n_CashOpening,string d_SessionDate,string d_SessionStartTime)
 =======
         public ActionResult SetTerminal(int n_TerminalID, int n_SessionID, int n_BranchID, int n_LocationID, int n_FnYearID, int n_CashOpening, string d_SessionDate, string d_SessionStartTime)
 >>>>>>> b44c06facc1326f68fcd41846a388e135fa11864
+=======
+        public ActionResult SetTerminal(int n_TerminalID, int n_SessionID, int n_BranchID, int n_LocationID, int n_FnYearID, int n_CashOpening, string d_SessionDate, string d_SessionStartTime)
+>>>>>>> 462871a41e83dd03bbc98d07cd88c7eecc011d5a
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -94,10 +98,13 @@ namespace SmartxAPI.Controllers
                     if (n_SessionID == 0)
                     {
 <<<<<<< HEAD
+<<<<<<< HEAD
                         sqlCommandText = "select N_CompanyID," + n_FnYearID + " as N_FnYearID," + n_BranchID + " as N_BranchID,cast(@p2 as datetime) as D_SessionDate,0 as N_SessionID,N_TerminalID,cast(@p2 as datetime) as D_EntryDate," + nUserID + " as N_UserID,0 as B_Closed,"+n_CashOpening+" as n_CashOpening,'"+HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString()+"' as X_SessionStartIP,cast(@p2 as datetime) as D_SessionStartTime,'"+System.Net.Dns.GetHostName()+"' as X_SystemName from vw_InvTerminal_Disp where N_CompanyID=@p1 and N_TerminalID=" + n_TerminalID;
                         Params.Add("@p1", nCompanyId);
                         Params.Add("@p2", DateTime.ParseExact(d_SessionStartTime, "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture));
 =======
+=======
+>>>>>>> 462871a41e83dd03bbc98d07cd88c7eecc011d5a
                         sqlCommandText = "select Top(1) N_CompanyID," + n_FnYearID + " as N_FnYearID," + n_BranchID + " as N_BranchID,cast(@sessionTime as datetime) as D_SessionDate,0 as N_SessionID,N_TerminalID,cast(@sessionTime as datetime) as D_EntryDate," + nUserID + " as N_UserID,0 as B_Closed," + n_CashOpening + " as n_CashOpening,'" + HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString() + "' as X_SessionStartIP,cast(@sessionTime as datetime) as D_SessionStartTime,'" + System.Net.Dns.GetHostName() + "' as X_SystemName from vw_InvTerminal_Disp where N_CompanyID=@nCompanyID and N_TerminalID=" + n_TerminalID;
                         Params.Add("@nCompanyID", nCompanyId);
                         Params.Add("@sessionTime", DateTime.ParseExact(d_SessionStartTime, "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture));
@@ -141,7 +148,10 @@ namespace SmartxAPI.Controllers
 
 
 
+<<<<<<< HEAD
 >>>>>>> b44c06facc1326f68fcd41846a388e135fa11864
+=======
+>>>>>>> 462871a41e83dd03bbc98d07cd88c7eecc011d5a
 
                         dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
 

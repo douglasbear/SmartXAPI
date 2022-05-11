@@ -104,12 +104,8 @@ namespace SmartxAPI.Controllers
                      
 
                     string X_CountryName= MasterTable.Rows[0]["X_CountryName"].ToString();
-<<<<<<< HEAD
-                    string DupCriteria =  "X_CountryName='" + X_CountryName + "' and N_CompanyID=" + nCompanyID;
-=======
-                    string DupCriteria = "X_CountryName='" + X_CountryName + "' and N_CompanyID=" + nCompanyID;
->>>>>>> b44c06facc1326f68fcd41846a388e135fa11864
 
+                    string DupCriteria = "X_CountryName='" + X_CountryName + "' and N_CompanyID=" + nCompanyID;
                     nCountryID = dLayer.SaveData("Acc_Country", "N_CountryID",DupCriteria,"", MasterTable, connection, transaction);
                     if (nCountryID <= 0)
                     {

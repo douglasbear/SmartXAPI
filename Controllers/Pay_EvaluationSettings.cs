@@ -250,10 +250,14 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
 <<<<<<< HEAD
+<<<<<<< HEAD
             string sqlCommandText = "Select N_EmpID,X_EmpCode,X_EmpName,X_Department,X_Position,N_TemplateID,X_TemplateCode,X_TemplateCode from vw_PayEmployee Where N_CompanyID=@nCompanyID and N_Status<2 and N_FnyearID=@nFnYearID";
 =======
             string sqlCommandText = "Select N_EmpID,X_EmpCode,X_EmpName,X_Department,X_Position,N_TemplateID,X_TemplateCode,X_TemplateName from vw_PayEmployee Where N_CompanyID=@nCompanyID and N_Status<2 and N_FnyearID=@nFnYearID";
 >>>>>>> b44c06facc1326f68fcd41846a388e135fa11864
+=======
+            string sqlCommandText = "Select N_EmpID,X_EmpCode,X_EmpName,X_Department,X_Position,N_TemplateID,X_TemplateCode,X_TemplateName from vw_PayEmployee Where N_CompanyID=@nCompanyID and N_Status<2 and N_FnyearID=@nFnYearID";
+>>>>>>> 462871a41e83dd03bbc98d07cd88c7eecc011d5a
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

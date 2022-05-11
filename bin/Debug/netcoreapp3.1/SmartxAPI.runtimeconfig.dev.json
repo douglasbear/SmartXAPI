@@ -3,6 +3,7 @@
     "additionalProbingPaths": [
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -84,6 +85,10 @@
 >>>>>>> 8c88a72074bd3de1a263db489ab236d92b4b44cc
 >>>>>>> 7723a93036389996128b87ed6822cd306f27c670
 >>>>>>> 605607294ea072ba4abcc0618ffdad8f469a6c5d
+=======
+      "C:\\Users\\sreej\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\sreej\\.nuget\\packages"
+>>>>>>> ca8a32a9bce89a1f446f86acfdbff854bb8ea9c4
     ]
   }
 }
