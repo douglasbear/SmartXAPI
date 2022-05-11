@@ -204,6 +204,7 @@ namespace SmartxAPI.Controllers
                 CompetencyCategoryCopyTable.Columns.Add("N_Weightage");
                 CompetencyCategoryCopyTable.Columns.Add("N_EntryTypeID");
                 CompetencyCategoryCopyTable.Columns.Add("N_GradeTypeID");
+                CompetencyCategoryCopyTable.Columns.Add("X_ID");
 
                 int nCount = CompetencyCategoryTable.Rows.Count;
                 foreach (DataRow dRow in CompetencyCategoryTable.Rows)
@@ -214,8 +215,11 @@ namespace SmartxAPI.Controllers
                     row["N_CategoryID"] = dRow["N_CategoryID"];
                     row["X_Category"] = dRow["X_Category"];
                     row["N_Weightage"] = dRow["N_Weightage"];
-                    row["N_EntryTypeID"] = dRow["N_EntryTypeID"];
-                    row["N_GradeTypeID"] = dRow["N_GradeTypeID"];
+                    if (CompetencyCategoryTable.Columns.Contains("N_EntryTypeID"))
+                        row["N_EntryTypeID"] = dRow["N_EntryTypeID"];
+                    if (CompetencyCategoryTable.Columns.Contains("N_GradeTypeID"))
+                        row["N_GradeTypeID"] = dRow["N_GradeTypeID"];
+                    row["X_ID"] = dRow["X_ID"];
                     CompetencyCategoryCopyTable.Rows.Add(row);
                 }
                 CompetencyCategoryCopyTable.AcceptChanges();
@@ -261,6 +265,7 @@ namespace SmartxAPI.Controllers
 
                     for (int j = 0; j < CompetencyCategoryTable.Rows.Count; j++)
                     {
+                        int p=0;
                         CompetencyCategoryTable.Rows[j]["N_TemplateID"] = nTemplateID;
 
                         nCategoryID = dLayer.SaveDataWithIndex("Pay_CompetencyCategory", "N_CategoryID", "", "", j, CompetencyCategoryTable, connection, transaction);
@@ -272,12 +277,13 @@ namespace SmartxAPI.Controllers
 
                         for (int i = 0; i < CompetencyTable.Rows.Count; i++)
                         {
-                            if (CompetencyTable.Rows[i]["x_ID"].ToString() == CompetencyCategoryCopyTable.Rows[j]["x_ID"].ToString())
+                            if (CompetencyTable.Rows[i]["x_ID"].ToString() == CompetencyCategoryCopyTable.Rows[j]["X_ID"].ToString())
                             {
                                 CompetencyTable.Rows[i]["N_TemplateID"] = nTemplateID;
                                 CompetencyTable.Rows[i]["N_CategoryID"] = nCategoryID;
                             }
                         }
+                        p=p+1;
                     }
                     if (CompetencyTable.Columns.Contains("x_ID"))
                         CompetencyTable.Columns.Remove("x_ID");
@@ -293,11 +299,11 @@ namespace SmartxAPI.Controllers
                         TrainingneedsTable.Rows[j]["N_TemplateID"] = nTemplateID;
                     }
                     nTrainingID = dLayer.SaveData("Pay_TrainingNeeds", "N_TrainingID", TrainingneedsTable, connection, transaction);
-                    if (nTrainingID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to save"));
-                    }
+                    // if (nTrainingID <= 0)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(_api.Error(User, "Unable to save"));
+                    // }
 
                     transaction.Commit();
                     return Ok(_api.Success("Appraisal Template Saved"));
