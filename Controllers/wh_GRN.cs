@@ -56,20 +56,20 @@ namespace SmartxAPI.Controllers
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_GRNID desc";
-                      else
-            {
-                switch (xSortBy.Split(" ")[0])
-                {
-                    case "X_GRNNo":
-                        xSortBy = "X_GRNNo " + xSortBy.Split(" ")[1];
-                        break;
-                    case "N_GRNID":
-                        xSortBy = "N_GRNID " + xSortBy.Split(" ")[1];
-                        break;
-                    default: break;
-                }
-                xSortBy = " order by " + xSortBy;
-            }
+                    else
+                    {
+                        switch (xSortBy.Split(" ")[0])
+                        {
+                            case "X_GRNNo":
+                                xSortBy = "X_GRNNo " + xSortBy.Split(" ")[1];
+                                break;
+                            case "N_GRNID":
+                                xSortBy = "N_GRNID " + xSortBy.Split(" ")[1];
+                                break;
+                            default: break;
+                        }
+                        xSortBy = " order by " + xSortBy;
+                    }
 
                     int Count = (nPage - 1) * nSizeperpage;
                     if (Count == 0)
@@ -121,7 +121,7 @@ namespace SmartxAPI.Controllers
             DataSet ds = new DataSet();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
-             DataTable Attachments = new DataTable();
+            DataTable Attachments = new DataTable();
             int companyid = myFunctions.GetCompanyID(User);
 
             QueryParams.Add("@nCompanyID", nCompanyID);
@@ -157,7 +157,7 @@ namespace SmartxAPI.Controllers
                     Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
                     Master = _api.Format(Master, "master");
-                   
+
                     if (Master.Rows.Count == 0)
                     {
                         return Ok(_api.Notice("No Results Found"));
@@ -187,10 +187,10 @@ namespace SmartxAPI.Controllers
                         {
                             return Ok(_api.Notice("No Results Found"));
                         }
-                         ds.Tables.Add(Detail);
+                        ds.Tables.Add(Detail);
                         // DataTable Attachements = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_GRNID"].ToString()), this.N_FormID, myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()), User, connection);
                         // Attachements = _api.Format(Attachements, "attachments");
-                       // ds.Tables.Add(Attachements);
+                        // ds.Tables.Add(Attachements);
 
 
                         return Ok(_api.Success(ds));
@@ -213,8 +213,8 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                  DataTable MasterTable;
-                  MasterTable = ds.Tables["master"];
+                DataTable MasterTable;
+                MasterTable = ds.Tables["master"];
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -231,11 +231,9 @@ namespace SmartxAPI.Controllers
                     int N_UserID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
                     int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
-                    string i_Signature = Regex.Replace(MasterRow["i_signature"].ToString(), @"^data:image\/[a-zA-Z]+;base64,", string.Empty);
-                    MasterTable.Rows[0]["i_Signature"] = i_Signature;
                     string X_GRNNo = "";
                     var values = MasterTable.Rows[0]["X_GRNNo"].ToString();
-
+                    string i_Signature = "";
 
 
                     if (values == "@Auto")
@@ -276,7 +274,19 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
+                    //Signature
+                    i_Signature = Regex.Replace(MasterRow["i_signature"].ToString(), @"^data:image\/[a-zA-Z]+;base64,", string.Empty);
+                    if (myFunctions.ContainColumn("i_signature", MasterTable))
+                        MasterTable.Columns.Remove("i_signature");
+                    Byte[] ImageBitmap = new Byte[i_Signature.Length];
+                    ImageBitmap = Convert.FromBase64String(i_Signature);
+
+
                     nGrnID = dLayer.SaveData("wh_GRN", "N_GRNID", MasterTable, connection, transaction);
+                    //Saving Signature
+                    if (i_Signature.Length > 0)
+                        dLayer.SaveImage("wh_GRN", "i_signature", ImageBitmap, "N_GRNID", nGrnID, connection, transaction);
+
 
                     if (nGrnID <= 0)
                     {
@@ -319,15 +329,15 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, ex));
                     }
-                      SortedList WareHouseParams = new SortedList();
-                      WareHouseParams.Add("@nCustomerID", N_CustomerID);
+                    SortedList WareHouseParams = new SortedList();
+                    WareHouseParams.Add("@nCustomerID", N_CustomerID);
                     DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID=@nCustomerID", WareHouseParams, connection, transaction);
                     if (CustomerInfo.Rows.Count > 0)
                     {
                         try
                         {
-                         
-                            myAttachments.SaveAttachment(dLayer, Attachment, X_GRNNo,  nGrnID, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), CustomerInfo.Rows[0]["X_CustomerCode"].ToString(), myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerID"].ToString()), "WareHouse Document", User, connection, transaction);
+
+                            myAttachments.SaveAttachment(dLayer, Attachment, X_GRNNo, nGrnID, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), CustomerInfo.Rows[0]["X_CustomerCode"].ToString(), myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerID"].ToString()), "WareHouse Document", User, connection, transaction);
                         }
                         catch (Exception ex)
                         {
@@ -354,12 +364,12 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nGRNID,int nCustomerID, int nFnYearID)
+        public ActionResult DeleteData(int nGRNID, int nCustomerID, int nFnYearID)
         {
             int Results = 0;
             try
             {
-                int nCompanyID=myFunctions.GetCompanyID(User);
+                int nCompanyID = myFunctions.GetCompanyID(User);
                 SortedList QueryParams = new SortedList();
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nFnYearID", nFnYearID);
@@ -381,7 +391,7 @@ namespace SmartxAPI.Controllers
                     Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
                     if (Results <= 0)
                     {
-                       myAttachments.DeleteAttachment(dLayer, 1, nGRNID, nCustomerID, nFnYearID, this.N_FormID, User, transaction, connection);
+                        myAttachments.DeleteAttachment(dLayer, 1, nGRNID, nCustomerID, nFnYearID, this.N_FormID, User, transaction, connection);
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to Delete Goods Receive Note"));
                     }
@@ -399,7 +409,7 @@ namespace SmartxAPI.Controllers
 
 
         }
-        
+
         [HttpGet("grnLocation")]
         public ActionResult AccruedTypeList(int nItemID)
         {
@@ -408,7 +418,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nComapnyID", nCompanyID);
             SortedList OutPut = new SortedList();
-            string sqlCommandText = "select * from Vw_ItemWiseLocation where N_ItemID="+nItemID+" and N_CompanyID="+nCompanyID+"";
+            string sqlCommandText = "select * from Vw_ItemWiseLocation where N_ItemID=" + nItemID + " and N_CompanyID=" + nCompanyID + "";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -428,7 +438,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
