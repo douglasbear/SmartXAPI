@@ -42,7 +42,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from vw_InvTerminal_Disp where N_CompanyID=@p1 and isnull(B_Closed,0)=0";
+            string sqlCommandText = "select * from vw_InvTerminal_Disp where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", dDate);
 
@@ -55,7 +55,7 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                     return Ok(_api.Warning(""));
+                    return Ok(_api.Warning(""));
                 }
                 else
                 {
@@ -70,7 +70,11 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("setTerminal")]
+<<<<<<< HEAD
         public ActionResult SetTerminal(int n_TerminalID, int n_SessionID, int n_BranchID, int n_LocationID, int n_FnYearID,int n_CashOpening,string d_SessionDate,string d_SessionStartTime)
+=======
+        public ActionResult SetTerminal(int n_TerminalID, int n_SessionID, int n_BranchID, int n_LocationID, int n_FnYearID, int n_CashOpening, string d_SessionDate, string d_SessionStartTime)
+>>>>>>> b44c06facc1326f68fcd41846a388e135fa11864
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -89,9 +93,55 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     if (n_SessionID == 0)
                     {
+<<<<<<< HEAD
                         sqlCommandText = "select N_CompanyID," + n_FnYearID + " as N_FnYearID," + n_BranchID + " as N_BranchID,cast(@p2 as datetime) as D_SessionDate,0 as N_SessionID,N_TerminalID,cast(@p2 as datetime) as D_EntryDate," + nUserID + " as N_UserID,0 as B_Closed,"+n_CashOpening+" as n_CashOpening,'"+HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString()+"' as X_SessionStartIP,cast(@p2 as datetime) as D_SessionStartTime,'"+System.Net.Dns.GetHostName()+"' as X_SystemName from vw_InvTerminal_Disp where N_CompanyID=@p1 and N_TerminalID=" + n_TerminalID;
                         Params.Add("@p1", nCompanyId);
                         Params.Add("@p2", DateTime.ParseExact(d_SessionStartTime, "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture));
+=======
+                        sqlCommandText = "select Top(1) N_CompanyID," + n_FnYearID + " as N_FnYearID," + n_BranchID + " as N_BranchID,cast(@sessionTime as datetime) as D_SessionDate,0 as N_SessionID,N_TerminalID,cast(@sessionTime as datetime) as D_EntryDate," + nUserID + " as N_UserID,0 as B_Closed," + n_CashOpening + " as n_CashOpening,'" + HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString() + "' as X_SessionStartIP,cast(@sessionTime as datetime) as D_SessionStartTime,'" + System.Net.Dns.GetHostName() + "' as X_SystemName from vw_InvTerminal_Disp where N_CompanyID=@nCompanyID and N_TerminalID=" + n_TerminalID;
+                        Params.Add("@nCompanyID", nCompanyId);
+                        Params.Add("@sessionTime", DateTime.ParseExact(d_SessionStartTime, "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture));
+
+
+                        // Close Current active sessions
+
+                        Double nCashWithdrawal = 0;
+                        Params.Add("@nTerminalID", n_TerminalID);
+                        string sessionsql = "select max(N_SessionID) from Acc_PosSession where N_CompanyID=@nCompanyID and N_TerminalID=@nTerminalID and isnull(B_Closed,0)=0";
+                        object sessionID = dLayer.ExecuteScalar(sessionsql, Params, connection,transaction);
+                        if (sessionID != null)
+                        {
+                            n_SessionID = myFunctions.getIntVAL(sessionID.ToString());
+                            Params.Add("@nSessionID", n_SessionID);
+                            Params.Add("@nCashWithdrawal", nCashWithdrawal);
+                            string balance = "select cast(isnull(sum(Credit)-sum(debit),0) as decimal(10,2)) as Balance from Vw_POSTxnSummery where N_CompanyID=@nCompanyID and N_SessionID=@nSessionID";
+                            object balAmt = dLayer.ExecuteScalar(balance, Params, connection,transaction);
+
+                            Double balanceAmount = myFunctions.getFloatVAL(balAmt.ToString());
+                            balanceAmount = balanceAmount - nCashWithdrawal;
+                            Params.Add("@nCashBalance", balanceAmount);
+                            balance = "select cast(isnull(sum(Credit),0) as decimal(10,2)) as Balance from Vw_POSTxnSummery where N_CompanyID=@nCompanyID and N_SessionID=@nSessionID and X_BalanceType<>'Cash Opening'";
+                            Double credit = myFunctions.getFloatVAL(dLayer.ExecuteScalar(balance, Params, connection,transaction).ToString());
+                            Params.Add("@nCredit", credit);
+                            balance = "select cast(isnull(sum(Debit),0) as decimal(10,2)) as Balance from Vw_POSTxnSummery where N_CompanyID=@nCompanyID and N_SessionID=@nSessionID";
+                            Double debit = myFunctions.getFloatVAL(dLayer.ExecuteScalar(balance, Params, connection,transaction).ToString());
+                            Params.Add("@nDebit", debit);
+
+                            Params.Add("@xHostName", System.Net.Dns.GetHostName());
+                            Params.Add("@xEndIp", HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString());
+
+                            string updateSql = "Update Acc_PosSession set X_SessionEndIP='" + HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString() + "', X_SystemName ='" + System.Net.Dns.GetHostName() + "', N_CashBalance=" + balanceAmount + ",N_CashCr=" + credit + ",N_CashDr=" + debit + ",B_closed=1 ,D_SessionEndTime='" + DateTime.ParseExact(d_SessionStartTime, "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture) + "',N_CashWithdrawal=" + nCashWithdrawal + " where N_CompanyID=@nCompanyID and N_TerminalID=@nTerminalID and N_SessionID=@nSessionID";
+                            object result = dLayer.ExecuteNonQuery(updateSql, Params, connection,transaction);
+
+                        }
+
+
+
+                        // End
+
+
+
+>>>>>>> b44c06facc1326f68fcd41846a388e135fa11864
 
                         dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
 
@@ -101,14 +151,14 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Unable to create session"));
                         }
-                        sqlCommandText = "select * from Acc_PosSession where N_CompanyID=@p1 and N_SessionID=" + N_SessionID;
+                        sqlCommandText = "select * from Acc_PosSession where N_CompanyID=@nCompanyID and N_SessionID=" + N_SessionID;
                         OutPut = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
                         transaction.Commit();
                         return Ok(_api.Success(OutPut));
                     }
                     else
                     {
-                        sqlCommandText = "select isnull(B_Closed,0) as B_Closed from vw_InvTerminal_Disp where N_CompanyID=@p1 and N_SessionID=" + n_SessionID;
+                        sqlCommandText = "select isnull(B_Closed,0) as B_Closed from vw_InvTerminal_Disp where  N_CompanyID=@p1 and N_SessionID=" + n_SessionID;
                         int closed = myFunctions.getIntVAL(dLayer.ExecuteScalar(sqlCommandText, Params, connection, transaction).ToString());
                         if (closed == 1)
                         {
@@ -223,15 +273,15 @@ namespace SmartxAPI.Controllers
                     int nSessionID = myFunctions.getIntVAL(dRow["n_SessionID"].ToString());
                     Double nCashWithdrawal = myFunctions.getFloatVAL(dRow["n_CashWithdrawal"].ToString());
                     SortedList Params = new SortedList();
-                    Params.Add("@endTime",DateTime.ParseExact(dRow["d_ClosedDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture) );
+                    Params.Add("@endTime", DateTime.ParseExact(dRow["d_ClosedDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture));
                     Params.Add("@nCompanyID", nCompanyID);
-                    Params.Add("@nTerminalID", nCompanyID);
+                    Params.Add("@nTerminalID", nTerminalID);
                     Params.Add("@nSessionID", nSessionID);
                     Params.Add("@nCashWithdrawal", nCashWithdrawal);
                     string balance = "select cast(isnull(sum(Credit)-sum(debit),0) as decimal(10,2)) as Balance from Vw_POSTxnSummery where N_CompanyID=@nCompanyID and N_SessionID=@nSessionID";
                     object balAmt = dLayer.ExecuteScalar(balance, Params, connection);
-                    
-                    Double balanceAmount=myFunctions.getFloatVAL(balAmt.ToString());
+
+                    Double balanceAmount = myFunctions.getFloatVAL(balAmt.ToString());
                     balanceAmount = balanceAmount - nCashWithdrawal;
                     Params.Add("@nCashBalance", balanceAmount);
                     balance = "select cast(isnull(sum(Credit),0) as decimal(10,2)) as Balance from Vw_POSTxnSummery where N_CompanyID=@nCompanyID and N_SessionID=@nSessionID and X_BalanceType<>'Cash Opening'";
@@ -244,14 +294,14 @@ namespace SmartxAPI.Controllers
                     Params.Add("@xHostName", System.Net.Dns.GetHostName());
                     Params.Add("@xEndIp", HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString());
 
-                    string updateSql = "Update Acc_PosSession set X_SessionEndIP='"+HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString()+"', X_SystemName ='"+System.Net.Dns.GetHostName()+"', N_CashBalance="+balanceAmount+",N_CashCr="+credit+",N_CashDr="+debit+",B_closed=1 ,D_SessionEndTime='"+DateTime.ParseExact(dRow["d_ClosedDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture)+"',N_CashWithdrawal="+nCashWithdrawal+" where N_CompanyID=@nCompanyID and N_TerminalID=@nTerminalID and N_SessionID=@nSessionID";
-                    object result = dLayer.ExecuteNonQuery(updateSql,Params,connection);
-                    if(result==null)
-                    result=0;
-                    if(myFunctions.getIntVAL(result.ToString())>0)
-                    return Ok(_api.Success("Session closed"));
+                    string updateSql = "Update Acc_PosSession set X_SessionEndIP='" + HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString() + "', X_SystemName ='" + System.Net.Dns.GetHostName() + "', N_CashBalance=" + balanceAmount + ",N_CashCr=" + credit + ",N_CashDr=" + debit + ",B_closed=1 ,D_SessionEndTime='" + DateTime.ParseExact(dRow["d_ClosedDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture) + "',N_CashWithdrawal=" + nCashWithdrawal + " where N_CompanyID=@nCompanyID and N_TerminalID=@nTerminalID and N_SessionID=@nSessionID";
+                    object result = dLayer.ExecuteNonQuery(updateSql, Params, connection);
+                    if (result == null)
+                        result = 0;
+                    if (myFunctions.getIntVAL(result.ToString()) > 0)
+                        return Ok(_api.Success("Session closed"));
                     else
-                    return Ok(_api.Error(User,"Unable to end Session"));
+                        return Ok(_api.Error(User, "Unable to end Session"));
 
 
                 }

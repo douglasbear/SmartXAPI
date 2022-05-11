@@ -70,20 +70,21 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult ContactListDetails(int nCustomerID, int nContactID)
+        public ActionResult ContactListDetails(int nCustomerID, int nContactID,int nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
             string sqlCommandText = "";
-            sqlCommandText = "select * from vw_Inv_CustomerContact where N_CompanyID=@p1 and N_CustomerID=@p2";
+            sqlCommandText = "select * from vw_Inv_CustomerContact where N_CompanyID=@p1 and N_FnYearId=@p3 and ( N_CustomerID=@p2 OR (N_CustomerID Is NUlL or N_CustomerID=0))";
             if (nContactID > 0)
                 sqlCommandText = "select * from vw_Inv_CustomerContact where N_CompanyID=@p1 and N_ContactID="+nContactID+"";
 
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nCustomerID);
+            Params.Add("@p3", nFnYearID);
 
 
             try
