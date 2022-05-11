@@ -7,6 +7,7 @@ using System.Data;
 using System.Collections;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using System.Text.RegularExpressions;
 
 namespace SmartxAPI.Controllers
 
@@ -230,6 +231,8 @@ namespace SmartxAPI.Controllers
                     int N_UserID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
                     int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
+                    string i_Signature = Regex.Replace(MasterRow["i_signature"].ToString(), @"^data:image\/[a-zA-Z]+;base64,", string.Empty);
+                    MasterTable.Rows[0]["i_Signature"] = i_Signature;
                     string X_GRNNo = "";
                     var values = MasterTable.Rows[0]["X_GRNNo"].ToString();
 
