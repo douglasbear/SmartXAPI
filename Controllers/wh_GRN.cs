@@ -155,6 +155,7 @@ namespace SmartxAPI.Controllers
 
 
                     Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+                    
 
                     Master = _api.Format(Master, "master");
 
