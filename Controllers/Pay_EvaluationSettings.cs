@@ -70,6 +70,12 @@ namespace SmartxAPI.Controllers
                         if (xEvalSettingsCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Evaluation Settings Code")); }
                         MasterTable.Rows[0]["X_EvalSettingsCode"] = xEvalSettingsCode;
                     }
+
+                    if (N_EvalSettingsID > 0) 
+                    {  
+                        dLayer.DeleteData("Pay_Evaluators", "N_EvalSettingsID", N_EvalSettingsID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Pay_EvaluationSettings", "N_EvalSettingsID", N_EvalSettingsID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                    }
                    
                     MasterTable.Columns.Remove("n_FnYearID");
                     MasterTable.AcceptChanges();
@@ -86,7 +92,7 @@ namespace SmartxAPI.Controllers
                         {
                             DetailTable.Rows[j]["N_EvalSettingsID"] = N_EvalSettingsID;
                         }
-                        int N_EvaluatorID = dLayer.SaveData("Pay_Evaluators", "N_EvaluatorID","","", DetailTable, connection, transaction);
+                        int N_EvaluatorID = dLayer.SaveData("Pay_Evaluators", "N_ID","","", DetailTable, connection, transaction);
 
                         transaction.Commit();
                         return Ok(_api.Success("Evaluation Settings Created"));
