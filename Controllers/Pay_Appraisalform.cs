@@ -242,5 +242,40 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User,ex));
             }
         }
+
+        [HttpGet("listemployee")]
+        public ActionResult ListEmployee(int nFnYearID,DateTime dPeriod,int nUserID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@dPeriod", dPeriod);
+            Params.Add("@nUserID", nUserID);
+            string sqlCommandText = "Select N_EmpID,X_EmpCode,X_EmpName,X_Department,X_Position,N_TemplateID,X_TemplateCode,X_TemplateName from vw_EmployeesOfEvaluators "+
+                                    " Where N_CompanyID=@nCompanyID and N_FnyearID=@nFnYearID and N_UserID=@nUserID and D_PeriodFrom>=@dPeriod and D_PeriodTo<=@dPeriod";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
     }
 }
