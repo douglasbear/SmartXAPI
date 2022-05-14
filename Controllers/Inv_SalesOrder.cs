@@ -833,7 +833,7 @@ namespace SmartxAPI.Controllers
 
 
 
-                    object objSPrice = dLayer.ExecuteScalar("Select Isnull(N_Value,0) from Gen_Settings where N_CompanyID=1 and X_Group='Inventory' and X_Description='Selling Price Calculation'", connection);
+                    object objSPrice = dLayer.ExecuteScalar("Select Isnull(N_Value,0) from Gen_Settings where N_CompanyID=@nCompanyID and X_Group='Inventory' and X_Description='Selling Price Calculation'", connection);
 
                     string X_ItemUnit = ItemDetailRow["X_ItemUnit"].ToString();
                     qParam2.Add("@X_ItemUnit", X_ItemUnit);

@@ -194,8 +194,6 @@ namespace SmartxAPI.Controllers
                 int nCompetencyID = 0;
                 int nTrainingID = 0;
 
-
-
                 CompetencyCategoryCopyTable.Clear();
                 CompetencyCategoryCopyTable.Columns.Add("N_CompanyID");
                 CompetencyCategoryCopyTable.Columns.Add("N_TemplateID");
