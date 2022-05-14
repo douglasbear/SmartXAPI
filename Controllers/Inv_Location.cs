@@ -9,11 +9,12 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
-using iTextSharp.text.pdf;
-using iTextSharp.text;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Drawing;
+using System.Drawing.Imaging;
+using ZXing;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -47,12 +48,13 @@ namespace SmartxAPI.Controllers
             }
 
             string sqlCommandText = "";
-            if (prs == null || prs == ""){
-                if(nBranchID>0)
-                sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 and N_BranchID="+nBranchID+ xCondition +" order by [Location Name]";
+            if (prs == null || prs == "")
+            {
+                if (nBranchID > 0)
+                    sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 and N_BranchID=" + nBranchID + xCondition + " order by [Location Name]";
                 else
-                sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1" +xCondition +" order by [Location Name]";
-                }
+                    sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1" + xCondition + " order by [Location Name]";
+            }
             else
             {
                 if (!bLocationRequired)
@@ -408,37 +410,12 @@ namespace SmartxAPI.Controllers
 
 
         }
-        [HttpGet("printbarcode")]
-        public IActionResult GetModulePrint(string xBarcode)
+        [HttpGet("generatebarcode")]
+        public ActionResult GenerateBarcode(string name, string barcode)
         {
-            int nCompanyId = myFunctions.GetCompanyID(User);
             try
             {
-                var myBitmap = new Bitmap(500, 50);
-                var g = Graphics.FromImage(myBitmap);
-                var jgpEncoder = GetEncoder(ImageFormat.Jpeg);
-
-                g.Clear(Color.White);
-
-                var strFormat = new StringFormat { Alignment = StringAlignment.Center };
-                g.DrawString(xBarcode, new System.Drawing.Font("Free 3 of 9", 50), Brushes.Black, new RectangleF(0, 0, 500, 50), strFormat);
-
-                var myEncoder = Encoder.Quality;
-                var myEncoderParameters = new EncoderParameters(1);
-
-                var myEncoderParameter = new EncoderParameter(myEncoder, 100L);
-                myEncoderParameters.Param[0] = myEncoderParameter;
-                string BarcodePath = this.TempFilesPath;
-                DirectoryInfo info = new DirectoryInfo(BarcodePath);
-                if (!info.Exists)
-                {
-                    info.Create();
-                }
-                BarcodePath = BarcodePath + "/Barcode.jpg";
-                myBitmap.Save(@"c:\Barcode.jpg", jgpEncoder, myEncoderParameters);
-                // myBitmap.Save(@"C://OLIVOSERVER2020/Barcode/Barcode.jpg", jgpEncoder, myEncoderParameters);
-
-                return Ok(_api.Success(new SortedList() { { "FileName", "Barcode.jpg" } }));
+                return Ok(_api.Success(new SortedList() { { "FileName", barcode } }));
 
             }
             catch (Exception e)
@@ -447,6 +424,55 @@ namespace SmartxAPI.Controllers
             }
 
         }
+        public bool CreateBarcode(string Data)
+        {
+            if (Data != "")
+            {
+                Zen.Barcode.Code128BarcodeDraw barcode = Zen.Barcode.BarcodeDrawFactory.Code128WithChecksum;
+                Image img = barcode.Draw(Data, 50);
+                img.Save("C://OLIVOSERVER2020/Barcode/" + Data + ".png", ImageFormat.Png);
+            }
+            return true;
+        }
+        // [HttpGet("printbarcode")]
+        // public IActionResult GetModulePrint(string xBarcode)
+        // {
+        //     int nCompanyId = myFunctions.GetCompanyID(User);
+        //     try
+        //     {
+        //         var myBitmap = new Bitmap(500, 50);
+        //         var g = Graphics.FromImage(myBitmap);
+        //         var jgpEncoder = GetEncoder(ImageFormat.Jpeg);
+
+        //         g.Clear(Color.White);
+
+        //         var strFormat = new StringFormat { Alignment = StringAlignment.Center };
+        //         g.DrawString(xBarcode, new System.Drawing.Font("Free 3 of 9", 50), Brushes.Black, new RectangleF(0, 0, 500, 50), strFormat);
+
+        //         var myEncoder = Encoder.Quality;
+        //         var myEncoderParameters = new EncoderParameters(1);
+
+        //         var myEncoderParameter = new EncoderParameter(myEncoder, 100L);
+        //         myEncoderParameters.Param[0] = myEncoderParameter;
+        //         string BarcodePath = this.TempFilesPath;
+        //         DirectoryInfo info = new DirectoryInfo(BarcodePath);
+        //         if (!info.Exists)
+        //         {
+        //             info.Create();
+        //         }
+        //         BarcodePath = BarcodePath + "/Barcode.jpg";
+        //         myBitmap.Save(@"c:\Barcode.jpg", jgpEncoder, myEncoderParameters);
+        //         // myBitmap.Save(@"C://OLIVOSERVER2020/Barcode/Barcode.jpg", jgpEncoder, myEncoderParameters);
+
+        //         return Ok(_api.Success(new SortedList() { { "FileName", "Barcode.jpg" } }));
+
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(User, e));
+        //     }
+
+        // }
         // private static void CreateBarcode(string code)
         // {
         //     var myBitmap = new Bitmap(500, 50);

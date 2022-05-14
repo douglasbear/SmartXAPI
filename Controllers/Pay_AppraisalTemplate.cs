@@ -34,7 +34,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
- 
+
             string sqlCommandText = "select * from Pay_AppraisalTemplate where N_CompanyID=@p1 order by N_TemplateID";
             Params.Add("@p1", nCompanyID);
 
@@ -56,12 +56,12 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok( _api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
         [HttpGet("dashboardlist")]
-        public ActionResult GetAppraisalTemplateDashboardList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetAppraisalTemplateDashboardList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -83,7 +83,7 @@ namespace SmartxAPI.Controllers
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_AppraisalTemplate where N_CompanyID=@p1" + Searchkey + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_AppraisalTemplate where N_CompanyID=@p1" + Searchkey +" and  N_TemplateID not in (select top(" + Count + ") N_TemplateID from Pay_AppraisalTemplate where N_CompanyID=@p1 )" + Searchkey + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_AppraisalTemplate where N_CompanyID=@p1" + Searchkey + " and  N_TemplateID not in (select top(" + Count + ") N_TemplateID from Pay_AppraisalTemplate where N_CompanyID=@p1 )" + Searchkey + xSortBy;
             Params.Add("@p1", nCompanyID);
             SortedList OutPut = new SortedList();
 
@@ -92,7 +92,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     sqlCommandCount = "select count(*) as N_Count from Pay_AppraisalTemplate where N_CompanyID=@p1" + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
@@ -110,31 +110,31 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
         [HttpGet("details")]
         public ActionResult GetAppraisalTemplateDetails(string xCode)
         {
-            DataSet dt=new DataSet();
-            SortedList Params=new SortedList();
+            DataSet dt = new DataSet();
+            SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable MasterTable = new DataTable();
             DataTable CompetencyCategoryTable = new DataTable();
             DataTable CompetencyTable = new DataTable();
             DataTable TrainingneedsTable = new DataTable();
 
-            string Mastersql="Select * from vw_Pay_AppraisalTemplate Where N_CompanyID=@p1 and X_Code=@p2 ";
-            Params.Add("@p1",nCompanyID);
-            Params.Add("@p2",xCode);
-            
+            string Mastersql = "Select * from vw_Pay_AppraisalTemplate Where N_CompanyID=@p1 and X_Code=@p2 ";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", xCode);
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    MasterTable=dLayer.ExecuteDataTable(Mastersql,Params,connection); 
+                    MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
 
                     if (MasterTable.Rows.Count == 0)
                     {
@@ -146,19 +146,19 @@ namespace SmartxAPI.Controllers
 
                     int N_TemplateID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TemplateID"].ToString());
 
-                    string CompetencyCategorySql = "select * from vw_Pay_CompetencyCategory where N_CompanyID=" + nCompanyID + " and N_TemplateID=" + N_TemplateID ;
+                    string CompetencyCategorySql = "select * from vw_Pay_CompetencyCategory where N_CompanyID=" + nCompanyID + " and N_TemplateID=" + N_TemplateID;
 
                     CompetencyCategoryTable = dLayer.ExecuteDataTable(CompetencyCategorySql, Params, connection);
                     CompetencyCategoryTable = _api.Format(CompetencyCategoryTable, "Competencycategory");
                     dt.Tables.Add(CompetencyCategoryTable);
 
-                    string CompetencySql = "select * from Pay_Competency where N_CompanyID=" + nCompanyID + " and N_TemplateID=" + N_TemplateID ;
+                    string CompetencySql = "select * from Pay_Competency where N_CompanyID=" + nCompanyID + " and N_TemplateID=" + N_TemplateID;
 
                     CompetencyTable = dLayer.ExecuteDataTable(CompetencySql, Params, connection);
                     CompetencyTable = _api.Format(CompetencyTable, "Competency");
                     dt.Tables.Add(CompetencyTable);
 
-                    string TrainingneedsSql = "select * from Pay_TrainingNeeds where N_CompanyID=" + nCompanyID + " and N_TemplateID=" + N_TemplateID ;
+                    string TrainingneedsSql = "select * from Pay_TrainingNeeds where N_CompanyID=" + nCompanyID + " and N_TemplateID=" + N_TemplateID;
 
                     TrainingneedsTable = dLayer.ExecuteDataTable(TrainingneedsSql, Params, connection);
                     TrainingneedsTable = _api.Format(TrainingneedsTable, "Trainingneeds");
@@ -168,7 +168,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -179,10 +179,12 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 DataTable CompetencyCategoryTable;
+                DataTable CompetencyCategoryCopyTable;
                 DataTable CompetencyTable;
                 DataTable TrainingneedsTable;
                 MasterTable = ds.Tables["master"];
                 CompetencyCategoryTable = ds.Tables["competencycategory"];
+                CompetencyCategoryCopyTable = CompetencyCategoryTable.Clone();
                 CompetencyTable = ds.Tables["competency"];
                 TrainingneedsTable = ds.Tables["trainingneeds"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
@@ -192,21 +194,53 @@ namespace SmartxAPI.Controllers
                 int nCompetencyID = 0;
                 int nTrainingID = 0;
 
+                CompetencyCategoryCopyTable.Clear();
+                CompetencyCategoryCopyTable.Columns.Add("N_CompanyID");
+                CompetencyCategoryCopyTable.Columns.Add("N_TemplateID");
+                CompetencyCategoryCopyTable.Columns.Add("N_CategoryID");
+                CompetencyCategoryCopyTable.Columns.Add("X_Category");
+                CompetencyCategoryCopyTable.Columns.Add("N_Weightage");
+                CompetencyCategoryCopyTable.Columns.Add("N_EntryTypeID");
+                CompetencyCategoryCopyTable.Columns.Add("N_GradeTypeID");
+                CompetencyCategoryCopyTable.Columns.Add("X_ID");
+
+                int nCount = CompetencyCategoryTable.Rows.Count;
+                foreach (DataRow dRow in CompetencyCategoryTable.Rows)
+                {
+                    DataRow row = CompetencyCategoryCopyTable.NewRow();
+                    row["N_CompanyID"] = dRow["N_CompanyID"];
+                    row["N_TemplateID"] = dRow["N_TemplateID"];
+                    row["N_CategoryID"] = dRow["N_CategoryID"];
+                    row["X_Category"] = dRow["X_Category"];
+                    row["N_Weightage"] = dRow["N_Weightage"];
+                    if (CompetencyCategoryTable.Columns.Contains("N_EntryTypeID"))
+                        row["N_EntryTypeID"] = dRow["N_EntryTypeID"];
+                    if (CompetencyCategoryTable.Columns.Contains("N_GradeTypeID"))
+                        row["N_GradeTypeID"] = dRow["N_GradeTypeID"];
+                    row["X_ID"] = dRow["X_ID"];
+                    CompetencyCategoryCopyTable.Rows.Add(row);
+                }
+                CompetencyCategoryCopyTable.AcceptChanges();
+
                 if (MasterTable.Columns.Contains("n_FnYearID"))
                     MasterTable.Columns.Remove("n_FnYearID");
+
+                if (CompetencyCategoryTable.Columns.Contains("x_ID"))
+                    CompetencyCategoryTable.Columns.Remove("x_ID");
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
-                    if (nTemplateID > 0) {
-                        dLayer.DeleteData("Pay_CompetencyCategory", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID , connection, transaction);
-                        dLayer.DeleteData("Pay_CompetencyCategory", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection, transaction);
-                        dLayer.DeleteData("Pay_Competency", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                    if (nTemplateID > 0)
+                    {
                         dLayer.DeleteData("Pay_TrainingNeeds", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Pay_Competency", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Pay_CompetencyCategory", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Pay_AppraisalTemplate", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection, transaction);
                     }
-                    
+
                     // Auto Gen
                     string Code = "";
                     var values = MasterTable.Rows[0]["x_Code"].ToString();
@@ -217,50 +251,57 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.N_FormID);
                         Params.Add("N_TemplateID", nTemplateID);
                         Code = dLayer.GetAutoNumber("Pay_AppraisalTemplate", "X_Code", Params, connection, transaction);
-                        if (Code == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Grade Code")); }
+                        if (Code == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Grade Code")); }
                         MasterTable.Rows[0]["X_Code"] = Code;
                     }
                     nTemplateID = dLayer.SaveData("Pay_AppraisalTemplate", "N_TemplateID", MasterTable, connection, transaction);
                     if (nTemplateID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User, "Unable to save"));
                     }
 
                     for (int j = 0; j < CompetencyCategoryTable.Rows.Count; j++)
                     {
-                        CompetencyCategoryTable.Rows[j]["N_TemplateID"] = nTemplateID;  
-                    
-                        nCategoryID = dLayer.SaveDataWithIndex("Pay_CompetencyCategory", "N_CategoryID",  "", "", j, CompetencyCategoryTable, connection, transaction);
+                        int p=0;
+                        CompetencyCategoryTable.Rows[j]["N_TemplateID"] = nTemplateID;
+
+                        nCategoryID = dLayer.SaveDataWithIndex("Pay_CompetencyCategory", "N_CategoryID", "", "", j, CompetencyCategoryTable, connection, transaction);
                         if (nCategoryID <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,"Unable to save"));
+                            return Ok(_api.Error(User, "Unable to save"));
                         }
 
                         for (int i = 0; i < CompetencyTable.Rows.Count; i++)
                         {
-                            CompetencyTable.Rows[i]["N_TemplateID"] = nTemplateID;  
-                            CompetencyTable.Rows[i]["N_CategoryID"] = nCategoryID;  
+                            if (CompetencyTable.Rows[i]["x_ID"].ToString() == CompetencyCategoryCopyTable.Rows[j]["X_ID"].ToString())
+                            {
+                                CompetencyTable.Rows[i]["N_TemplateID"] = nTemplateID;
+                                CompetencyTable.Rows[i]["N_CategoryID"] = nCategoryID;
+                            }
                         }
+                        p=p+1;
                     }
+                    if (CompetencyTable.Columns.Contains("x_ID"))
+                        CompetencyTable.Columns.Remove("x_ID");
                     nCompetencyID = dLayer.SaveData("Pay_Competency", "N_CompetencyID", CompetencyTable, connection, transaction);
                     if (nCompetencyID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User, "Unable to save"));
                     }
 
                     for (int j = 0; j < TrainingneedsTable.Rows.Count; j++)
                     {
-                        TrainingneedsTable.Rows[j]["N_TemplateID"] = nTemplateID;  
+                        TrainingneedsTable.Rows[j]["N_TemplateID"] = nTemplateID;
                     }
                     nTrainingID = dLayer.SaveData("Pay_TrainingNeeds", "N_TrainingID", TrainingneedsTable, connection, transaction);
-                    if (nTrainingID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
-                    }
+                    // if (nTrainingID <= 0)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(_api.Error(User, "Unable to save"));
+                    // }
 
                     transaction.Commit();
                     return Ok(_api.Success("Appraisal Template Saved"));
@@ -268,7 +309,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
@@ -285,25 +326,25 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Results = dLayer.DeleteData("Pay_AppraisalTemplate", "N_TemplateID", nTemplateID, "", connection);
+                    Results = dLayer.DeleteData("Pay_AppraisalTemplate", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection);
 
                     if (Results > 0)
                     {
-                        dLayer.DeleteData("Pay_CompetencyCategory", "N_TemplateID", nTemplateID, "", connection);
-                        dLayer.DeleteData("Pay_Competency", "N_TemplateID", nTemplateID, "", connection);
-                        dLayer.DeleteData("Pay_TrainingNeeds", "N_TemplateID", nTemplateID, "", connection);
+                        dLayer.DeleteData("Pay_CompetencyCategory", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection);
+                        dLayer.DeleteData("Pay_Competency", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection);
+                        dLayer.DeleteData("Pay_TrainingNeeds", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection);
                         return Ok(_api.Success("Appraisal Template deleted"));
                     }
                     else
                     {
-                        return Ok(_api.Error(User,"Unable to delete"));
+                        return Ok(_api.Error(User, "Unable to delete"));
                     }
 
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
     }

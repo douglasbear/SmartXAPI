@@ -140,6 +140,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable dt = new DataTable();
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
@@ -149,6 +150,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p5", nParentGroup);
                     string X_LedgerCode = "";
                     string X_GroupCode = "";
+                     string level = "";
                     dt.Clear();
                     dt.Columns.Add("X_LedgerCode");
                     dt.Columns.Add("X_GroupCode");
@@ -161,7 +163,7 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error(User, "Error"));
 
                         object LedgerCodeObj = dLayer.ExecuteScalar("select X_GroupCode From Acc_MastGroup where N_GroupID =@p3 and N_CompanyID =@p1 and N_FnYearID=@p2", Params, connection);
-
+          
                         int count = myFunctions.getIntVAL(LedgerCodeCount.ToString());
                         while (true)
                         {
@@ -176,6 +178,10 @@ namespace SmartxAPI.Controllers
                         row["X_LedgerCode"] = X_LedgerCode;
                         dt.Rows.Add(row);
                     }
+                    
+
+
+                        //MasterTable.Rows[0]["X_GroupCode"] = X_GroupCode;
                     if (nParentGroup > 0)
                     {
 
@@ -200,7 +206,29 @@ namespace SmartxAPI.Controllers
 
 
                     }
+                      if (nParentGroup == 0)
+                      {
+                     object GroupCodeCount = dLayer.ExecuteScalar("select COUNT(convert(numeric,X_GroupCode)) From Acc_MastGroup where X_Level like '" + level + "%' and N_CompanyID =" + nCompanyID + " and  N_ParentGroup =" + nParentGroup + "  and N_FnYearID=" + nFnYearID, connection, transaction);
+                    object GroupCodeObj = dLayer.ExecuteScalar("Select X_GroupCode from Acc_MastGroup Where N_GroupID =" + nParentGroup + " and N_CompanyID= " + nCompanyID + " and N_FnYearID =" + nFnYearID, connection, transaction);
+                          if(GroupCodeObj==null)
+                            GroupCodeObj=0;
+                        int count = myFunctions.getIntVAL(GroupCodeCount.ToString());
+                        while (true)
+                        {
+                            count += 1;
+                            if(myFunctions.getIntVAL(GroupCodeObj.ToString())==0)
+                            X_GroupCode = dLayer.ExecuteScalar("Select max(cast(X_GroupCode as numeric))+1 from Acc_MastGroup Where N_ParentGroup=0 and N_CompanyID= " + nCompanyID + " and N_FnYearID =" + nFnYearID, connection, transaction).ToString();
+                            else
+                            X_GroupCode = GroupCodeObj.ToString() + count.ToString("00");
 
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_MastGroup Where X_GroupCode ='" + X_GroupCode + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID =" + nFnYearID, connection, transaction);
+                            if (N_Result == null)
+                                break;
+                        }
+                          DataRow row = dt.NewRow();
+                        row["X_GroupCode"] = X_GroupCode;
+                        dt.Rows.Add(row);
+                      }
 
                     dt = api.Format(dt);
                     if (dt.Rows.Count == 0)
@@ -340,6 +368,9 @@ namespace SmartxAPI.Controllers
                     if (X_Operation == "Save")
                     {
                         MasterTable.Rows[0]["x_Level"] = ReturnNewLevel(paramList, connection, transaction).ToString();
+                        if(ReturnNewLevel(paramList, connection, transaction).ToString()=="")
+                            MasterTable.Rows[0]["x_Level"]=MasterTable.Rows[0]["x_GroupCode"].ToString();
+
                         string level = "";
 
                         if (x_Type == "A")
@@ -357,12 +388,17 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error(User, "Error"));
 
                         object GroupCodeObj = dLayer.ExecuteScalar("Select X_GroupCode from Acc_MastGroup Where N_GroupID =" + N_ParentGroupID + " and N_CompanyID= " + nCompanyID + " and N_FnYearID =" + nFnYearId, connection, transaction);
-
+                          if(GroupCodeObj==null)
+                            GroupCodeObj=0;
                         int count = myFunctions.getIntVAL(GroupCodeCount.ToString());
                         while (true)
                         {
                             count += 1;
+                            if(myFunctions.getIntVAL(GroupCodeObj.ToString())==0)
+                            X_GroupCode = dLayer.ExecuteScalar("Select max(cast(X_GroupCode as numeric))+1 from Acc_MastGroup Where N_ParentGroup=0 and N_CompanyID= " + nCompanyID + " and N_FnYearID =" + nFnYearId, connection, transaction).ToString();
+                            else
                             X_GroupCode = GroupCodeObj.ToString() + count.ToString("00");
+
                             object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_MastGroup Where X_GroupCode ='" + X_GroupCode + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID =" + nFnYearId, connection, transaction);
                             if (N_Result == null)
                                 break;

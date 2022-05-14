@@ -130,7 +130,7 @@ namespace SmartxAPI.Controllers
             if (xBarcode != null && xBarcode != "")
                 QRY = " and x_asndocno=" + xBarcode;
 
-            string sqlCommandText = "Select *  from vw_Wh_AsnMaster_Disp Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + QRY;
+            string sqlCommandText = "Select *  from vw_Wh_AsnMaster_Disp Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + QRY + " and N_AsnID Not in (select N_AsnID from Wh_Grn  Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID+" )";
 
 
             try

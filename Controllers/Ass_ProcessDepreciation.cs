@@ -288,15 +288,15 @@ namespace SmartxAPI.Controllers
                     dLayer.ExecuteScalarPro("SP_Ass_DepreciationMaster" ,ProcParams, connection, transaction);
                     B_completed=true;
 
-                    if(B_completed)
-                    {
-                        SortedList PostParams = new SortedList(){
-                                    {"N_CompanyID",N_CompanyID.ToString()},
-                                    {"X_InventoryMode","Depreciation"},
-                                    {"N_InternalID",N_DeprID},
-                                    {"N_UserID",N_UserID}};
-                        dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting", PostParams, connection, transaction);
-                    }
+                    // if(B_completed)
+                    // {
+                    //     SortedList PostParams = new SortedList(){
+                    //                 {"N_CompanyID",N_CompanyID.ToString()},
+                    //                 {"X_InventoryMode","Depreciation"},
+                    //                 {"N_InternalID",N_DeprID},
+                    //                 {"N_UserID",N_UserID}};
+                    //     dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting", PostParams, connection, transaction);
+                    // }
 
                     SortedList Result = new SortedList();
                     Result.Add("N_DeprID", N_DeprID);

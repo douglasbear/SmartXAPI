@@ -278,6 +278,21 @@ namespace SmartxAPI.Controllers
             }
 
         }
+        [HttpGet("generatebarcode")]
+        public ActionResult GenerateBarcode(string xItemName,double nPrice)
+        {
+            string barcode="test";
+            try
+            {
+                 return Ok(_api.Success(new SortedList() { { "FileName", barcode } }));
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+
+        }
 
 
 
@@ -1193,7 +1208,7 @@ namespace SmartxAPI.Controllers
                 else
                     x_Criteria = " (@N_LocationID) ";
 
-                string sql = "select N_CompanyID,N_ItemID,N_LocationID,X_BatchCode,D_ExpiryDate,Stock from vw_BatchwiseStockDisp where N_CompanyID=@N_CompanyID and N_ItemID=@N_ItemID and N_LocationID in " + x_Criteria + " and CurrentStock>0 and ISNULL(X_BatchCode,'')<>''";
+                string sql = "select  N_CompanyID,N_ItemID,N_LocationID,X_BatchCode,',  Exp Date : ' + CONVERT(varchar(110),DATEADD(YEAR,1,D_ExpiryDate),106) + ',  Qty : '+ cast(Stock as varchar) as Stock_Disp,D_ExpiryDate,Stock from vw_BatchwiseStockDisp where N_CompanyID=@N_CompanyID and N_ItemID=@N_ItemID and N_LocationID in " + x_Criteria + " and CurrentStock>0 and ISNULL(X_BatchCode,'')<>'' order by D_ExpiryDate Desc";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {

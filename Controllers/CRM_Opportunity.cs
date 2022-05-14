@@ -61,11 +61,11 @@ namespace SmartxAPI.Controllers
                 Pattern = " and (Left(X_Pattern,Len(@p2))=@p2 or N_LoginUserID="+nUserID+")";
                 Params.Add("@p2", UserPattern);
             }
-            else
-            {
-                Pattern = " and (N_CreatedUser=" + nUserID + " or N_LoginUserID="+nUserID+")";
+            // else
+            // {
+            //     Pattern = " and (N_CreatedUser=" + nUserID + " or N_LoginUserID="+nUserID+")";
 
-            }
+            // }
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Searchkey = "";

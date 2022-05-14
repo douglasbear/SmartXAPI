@@ -13,8 +13,8 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-     [Route("whpick")]
-     [ApiController]
+    [Route("whpick")]
+    [ApiController]
     public class WhPickList : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
@@ -22,18 +22,18 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly IMyFunctions myFunctions;
         private readonly IApiFunctions _api;
-        private readonly int nFormID = 1411;
-        public WhPickList(IDataAccessLayer dl,IMyFunctions myFun, IApiFunctions apiFun, IConfiguration conf)
+        private readonly int nFormID = 1463;
+        public WhPickList(IDataAccessLayer dl, IMyFunctions myFun, IApiFunctions apiFun, IConfiguration conf)
         {
             dLayer = dl;
             api = apiFun;
             _api = api;
-            myFunctions=myFun;
+            myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
         [HttpGet("list")]
-        public ActionResult GetDashboardList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nFnYearID,int nFormID)
+        public ActionResult GetDashboardList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nFnYearID, int nFormID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -90,17 +90,17 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("pickuplist")]
-        public ActionResult GetDashboardList(int nFnYearID,string xbarcode)
+        public ActionResult GetDashboardList(int nFnYearID, string xbarcode,int nFormID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string query="";
-            if(xbarcode!="" && xbarcode!=null)
-                query=" and X_PickListCode="+xbarcode;
+            string query = "";
+            if (xbarcode != "" && xbarcode != null)
+                query = " and X_PickListCode=" + xbarcode;
 
 
-            string sqlCommandText = "select * from vw_WhPickListMaster where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and isnull(N_FormID,0)<>1411"+query;
+            string sqlCommandText = "select * from vw_WhPickListMaster where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and isnull(N_FormID,0)<>"+nFormID+" and N_PickListID not in (select isnull(n_RefID,0) from vw_WhPickListMaster where N_CompanyID=@nCompanyID)" + query;
 
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
@@ -128,6 +128,7 @@ namespace SmartxAPI.Controllers
             }
         }
         
+
         [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
@@ -164,7 +165,7 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_PickListCode"] = x_PickListCode;
                     }
 
-                     if (nPickListID > 0)
+                    if (nPickListID > 0)
                     {
                         dLayer.DeleteData("Wh_PickListDetails", "n_PickListID", nPickListID, "N_CompanyID=" + nCompanyID + " and n_PickListID=" + nPickListID, connection, transaction);
                         dLayer.DeleteData("Wh_PickList", "n_PickListID", nPickListID, "N_CompanyID=" + nCompanyID + " and n_PickListID=" + nPickListID, connection, transaction);
@@ -199,12 +200,12 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
         [HttpGet("details")]
-        public ActionResult EmployeeEvaluation(string xPickListCode)
+        public ActionResult EmployeeEvaluation(string xPickListCode, bool bConvert)
         {
             try
             {
@@ -221,15 +222,25 @@ namespace SmartxAPI.Controllers
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     Params.Add("@xPickListCode", xPickListCode);
-                    Mastersql = "select * from vw_WhPickListMaster where N_CompanyID=@nCompanyID and X_PickListCode=@xPickListCode ";
-                   
+                    if (bConvert)
+                        Mastersql = "select * from vw_WhPickupListMaster where N_CompanyID=@nCompanyID and x_pickcode=@xPickListCode ";
+                    else
+                        Mastersql = "select * from vw_WhPickListMaster where N_CompanyID=@nCompanyID and X_PickListCode=@xPickListCode ";
+
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                    int nPickListID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PickListID"].ToString());
+                    int nPickListID = 0;
+                    if (bConvert)
+                        nPickListID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PickID"].ToString());
+                    else
+                        nPickListID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PickListID"].ToString());
                     Params.Add("@nPickListID", nPickListID);
 
                     MasterTable = _api.Format(MasterTable, "Master");
-                    DetailSql = "select * from vw_WhPickListDetails where N_CompanyID=@nCompanyID and N_PickListID=@nPickListID ";
+                    if (bConvert)
+                        DetailSql = "select * from vw_WhPickupListDetails where N_CompanyID=@nCompanyID and N_PickID=@nPickListID ";
+                    else
+                        DetailSql = "select * from vw_WhPickListDetails where N_CompanyID=@nCompanyID and N_PickListID=@nPickListID ";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(MasterTable);
@@ -239,7 +250,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -265,15 +276,14 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error(User,"Unable to delete"));
+                        return Ok(_api.Error(User, "Unable to delete"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
     }
 }
-    

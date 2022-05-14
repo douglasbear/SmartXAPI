@@ -34,7 +34,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("dashboardList")]
-   public ActionResult myReminderList(int nPage,int nSizeperpage,string xSearchkey, string xSortBy,bool x_Expire)
+   public ActionResult myReminderList(int nPage,int nSizeperpage,string xSearchkey, string xSortBy,bool x_Expire,DateTime d_Date)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -45,10 +45,11 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
               Params.Add("@nCompanyID", nCompanyID);
 
-          if (x_Expire == true)
-            {
-                Criteria = "and N_ReminderId=@nReminderId ";
-            }
+        //   if (x_Expire == true)
+        //     {
+        //         Criteria = "and D_ExpiryDate=@d_Date";
+        //          Params.Add("@d_Date", d_Date);
+        //     }
            
 
 
@@ -60,15 +61,15 @@ namespace SmartxAPI.Controllers
              if (x_Expire == true)
             {
                 if (Count == 0)
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Gen_ReminderDashboardExpired where N_CompanyID=@nCompanyID  "  + Criteria  + xSortBy;
+                    sqlCommandText = "select * from vw_Gen_ReminderDashboardExpired where N_CompanyID=@nCompanyID and D_ExpiryDate<='"+d_Date+"'" + xSortBy;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Gen_ReminderDashboardExpired where N_CompanyID=@nCompanyID"  + Criteria  + " and N_ReminderId not in (select top(" + Count + ") N_ReminderId from vw_Gen_ReminderDashboardExpired where N_CompanyID=@nCompanyID " + Criteria  + xSortBy + " ) " + xSortBy;
+                    sqlCommandText = "select * from vw_Gen_ReminderDashboardExpired where N_CompanyID=@nCompanyID and D_ExpiryDate<='"+d_Date+"'" + xSortBy;
             }
             else{
                  if (Count == 0)
-                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Gen_ReminderDashboard where N_CompanyID=@nCompanyID  "  + Criteria  + xSortBy;
+                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Gen_ReminderDashboard where N_CompanyID=@nCompanyID" + xSortBy;
                   else
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Gen_ReminderDashboard where N_CompanyID=@nCompanyID"  + Criteria  + " and N_ReminderId not in (select top(" + Count + ") N_ReminderId from vw_Gen_ReminderDashboard where N_CompanyID=@nCompanyID " + Criteria  + xSortBy + " ) " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Gen_ReminderDashboard where N_CompanyID=@nCompanyID" + xSortBy;
             }
 
             SortedList OutPut = new SortedList();
@@ -80,7 +81,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_Gen_ReminderDashboardExpired where N_CompanyID=@nCompanyID ";
+                    sqlCommandCount = "select count(*) as N_Count from vw_Gen_ReminderDashboardExpired where N_CompanyID=@nCompanyID";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
