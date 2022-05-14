@@ -242,7 +242,7 @@ namespace SmartxAPI.Controllers
                 var nUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var nFormID = 0;
                 int N_NextApproverID=0;
-                int N_SaveDraft = myFunctions.getIntVAL(masterRow["b_IssaveDraft"].ToString());
+                int N_SaveDraft = 0;// myFunctions.getIntVAL(masterRow["b_IssaveDraft"].ToString());
                 // int N_SaveDraft = 0;
                 // if(saveDraft) N_SaveDraft=1;
 
