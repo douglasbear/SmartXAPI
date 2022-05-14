@@ -24,11 +24,14 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int FormID;
-        public Gen_Attachments(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+
+        private readonly IMyAttachments myAttachments;
+        public Gen_Attachments(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             api = apifun;
             dLayer = dl;
             myFunctions = myFun;
+            myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 0;
         }
@@ -70,7 +73,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -104,11 +107,32 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
+        // Delete....
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nAttachmentId, int formId, int nFnyearID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    int nUserID = myFunctions.GetUserID(User);
+                    myAttachments.DeleteAttachment(dLayer, formId, 2, nFnyearID, nAttachmentId, User, transaction, connection);
+                    transaction.Commit();
+                    return Ok(api.Success("Attachment Deleted"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(User, ex));
+            }
 
+        }
 
 
 
