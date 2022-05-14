@@ -23,16 +23,16 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int FormID;
-        private readonly IMyReminders myReminders;
+       // private readonly IMyReminders myReminders;
 
-        public CRM_Activity(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, MyReminders myRem)
+        public CRM_Activity(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 1307;
-            myReminders = myRem;
+           // myReminders = myRem;
         }
 
 
@@ -256,15 +256,15 @@ namespace SmartxAPI.Controllers
                     nActivityID = dLayer.SaveData("CRM_Activity", "n_ActivityID", MasterTable, connection, transaction);
                     if (nActivityID > 0)
                     {
-                        try
-                        {
-                            myReminders.ReminderDelete(dLayer, nActivityID, this.FormID, connection, transaction);
-                        }
-                        catch (Exception ex)
-                        {
-                            transaction.Rollback();
-                            return Ok(api.Error(User, "Unable to save"));
-                        }
+                        // try
+                        // {
+                        //     myReminders.ReminderDelete(dLayer, nActivityID, this.FormID, connection, transaction);
+                        // }
+                        // catch (Exception ex)
+                        // {
+                        //     transaction.Rollback();
+                        //     return Ok(api.Error(User, "Unable to save"));
+                        // }
                     }
 
 
@@ -319,7 +319,7 @@ namespace SmartxAPI.Controllers
                                 row["N_RemCategoryID"] = MasterTable.Rows[0]["N_ReminderCategoryID"].ToString();
                             }
                             dtSave.Rows.Add(row);
-                            myReminders.ReminderSave(dLayer, dtSave, connection, transaction);
+                          //  myReminders.ReminderSave(dLayer, dtSave, connection, transaction);
                         }
                         if (MasterTable.Columns.Contains("b_IsAutoMail"))
                         {
@@ -339,7 +339,7 @@ namespace SmartxAPI.Controllers
                             //     row1["N_RemCategoryID"] = MasterTable.Rows[0]["N_ScheduleCategoryID"].ToString();
                             // }
                             dtSave.Rows.Add(row1);
-                            myReminders.ReminderSave(dLayer, dtSave, connection, transaction);
+                           // myReminders.ReminderSave(dLayer, dtSave, connection, transaction);
                         }
 
 
