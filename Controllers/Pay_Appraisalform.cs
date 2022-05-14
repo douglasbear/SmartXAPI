@@ -29,14 +29,46 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetAppraisalTemplateList()
+        public ActionResult GetAppraisalList(int? nCompanyId,int nFnYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
- 
-            string sqlCommandText = "select * from Vw_Pay_Appraisal where N_CompanyID=@p1 order by N_AppraisalID";
-            Params.Add("@p1", nCompanyID);
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_AppraisalCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%' or X_Position like '%" + xSearchkey + "%' or X_Department like '%" + xSearchkey + "%' or X_TemplateName like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by X_AppraisalCode desc";
+            else
+            {
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "X_AppraisalCode":
+                        xSortBy = "X_AppraisalCode " + xSortBy.Split(" ")[1];
+                        break;
+                    case "D_DocDate":
+                        xSortBy = "Cast(D_DocDate as DateTime )" + xSortBy.Split(" ")[1];
+                        break;
+                    case "D_PeriodTo":
+                        xSortBy = "X_EmpName" + xSortBy.Split(" ")[1];
+                        break;
+                    default: break;
+                }
+                xSortBy = " order by " + xSortBy;
+            }
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID "  + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID "  + Searchkey + " and N_AppraisalID not in (select top(" + Count + ") N_AppraisalID from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID " + xSortBy + " ) " + " " + xSortBy;
+
+            Params.Add("@nCompanyId", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
 
             try
             {
@@ -44,6 +76,20 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    SortedList OutPut = new SortedList();
+
+                    sqlCommandCount = "select count(*) as N_Count  from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
                 }
                 if (dt.Rows.Count == 0)
                 {
@@ -61,19 +107,19 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetAppraisalTemplateDetails(int nAppraisallD)
+        public ActionResult GetAppraisalDetails(string xAppraisalCode)
         {
             DataSet dt=new DataSet();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable MasterTable = new DataTable();
-            DataTable DetailTable = new DataTable();
+            DataTable CompetencyCategoryTable = new DataTable();
             DataTable CompetencyTable = new DataTable();
             DataTable TrainingneedsTable = new DataTable();
 
-            string Mastersql="Select * from vw_PayAppraisalTemplate Where N_CompanyID=@p1 and N_AppraisalID=@p3 ";
-            Params.Add("@p1",nCompanyID);
-            Params.Add("@p2",nAppraisallD);
+            string Mastersql="Select * from Vw_Pay_Appraisal Where N_CompanyID=@nCompanyID and x_AppraisalCode=@xAppraisalCode ";
+            Params.Add("@nCompanyID",nCompanyID);
+            Params.Add("@xAppraisalCode",xAppraisalCode);
             
             try
             {
@@ -92,11 +138,11 @@ namespace SmartxAPI.Controllers
 
                     int N_AppraisalID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AppraisalID"].ToString());
 
-                    string DetailSql = "select * from Vw_Pay_Appraisal where N_CompanyID=" + nCompanyID + " and N_AppraisalID=" + N_AppraisalID ;
+                    string CompetencycategorySql = "select * from Vw_Pay_Appraisal where N_CompanyID=" + nCompanyID + " and N_AppraisalID=" + N_AppraisalID ;
 
-                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
-                    DetailTable = _api.Format(DetailTable, "Details");
-                    dt.Tables.Add(DetailTable);
+                    CompetencyCategoryTable = dLayer.ExecuteDataTable(CompetencycategorySql, Params, connection);
+                    CompetencyCategoryTable = _api.Format(CompetencyCategoryTable, "Competencycategory");
+                    dt.Tables.Add(CompetencyCategoryTable);
 
                     string CompetencySql = "select * from Pay_AppraisalCompetency where N_CompanyID=" + nCompanyID + " and N_AppraisalID=" + N_AppraisalID ;
 
