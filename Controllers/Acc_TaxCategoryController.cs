@@ -150,6 +150,7 @@ namespace SmartxAPI.Controllers
                     bool bIsCess= myFunctions.getBoolVAL(MasterTable.Rows[0]["b_IsCess"].ToString());
                     bool bIsExclude =myFunctions.getBoolVAL(MasterTable.Rows[0]["b_IsExclude"].ToString());
                     int nIsExclude=0;
+                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
 
                     if(bIsExclude)
                     {
@@ -161,7 +162,7 @@ namespace SmartxAPI.Controllers
                     }
                     if (values == "@Auto")
                     {
-                        Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
+                        Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
                         Params.Add("N_FormID", 852);
                         Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
@@ -176,7 +177,12 @@ namespace SmartxAPI.Controllers
                     MasterTable.Columns.Remove("n_FnYearId");
                     MasterTable.Columns.Remove("n_BranchId");
                     MasterTable.Columns.Remove("b_IsExclude");
-                    int N_TaxCategoryID = dLayer.SaveData("Acc_TaxCategory", "N_PkeyID", MasterTable, connection, transaction);
+
+                 string X_CategoryName= MasterTable.Rows[0]["X_CategoryName"].ToString();
+
+                 string DupCriteria = "X_CategoryName='" + X_CategoryName + "' and N_CompanyID=" + nCompanyID;
+
+                    int N_TaxCategoryID = dLayer.SaveData("Acc_TaxCategory", "N_PkeyID",DupCriteria,"", MasterTable, connection, transaction);
                            
                                   if(bIsCess == true)
                                  {  
