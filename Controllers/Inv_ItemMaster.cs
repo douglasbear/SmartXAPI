@@ -286,17 +286,46 @@ namespace SmartxAPI.Controllers
             }
 
         }
-        [HttpGet("generatebarcode")]
-        public ActionResult GenerateBarcode(string xItemName, string xBarcode, double nPrice, int nPurchaseID)
+
+        [HttpPost("generatebarcode")]
+        public ActionResult GenerateBarcode([FromBody] DataSet ds)
         {
             try
             {
-                string bimageloc = "C://Olivoserver2020/Barcode/";
-                if (CreateBarcode(xBarcode))
+                DataTable products = new DataTable();
+                // Datatable products = new Datatable();
+                products = ds.Tables["details"];
+                
+                string path = this.TempFilesPath + "//barcode.pdf";
+                Document doc = new Document(PageSize.A4);
+                var output = new FileStream(path, FileMode.Create);
+                var writer = PdfWriter.GetInstance(doc, output);
+                doc.Open();
+                for (int k = 0; k < products.Rows.Count; k++)
                 {
-                    bimageloc = bimageloc + xBarcode + ".png";
-                    createpdf(bimageloc, xItemName, nPrice);
+                    string xItemName = products.Rows[k]["x_ItemName"].ToString();
+                    string xBarcode = products.Rows[k]["x_ItemCode"].ToString();
+                    string nPrice = products.Rows[k]["n_Cost"].ToString();
+
+                    if (CreateBarcode(xBarcode))
+                    {
+                        string bimageloc = "C://Olivoserver2020/Barcode/";
+                        bimageloc = bimageloc + xBarcode + ".png";
+                        //string path = this.TempFilesPath + "//barcode" + xBarcode + ".pdf";
+                        Chunk c1 = new Chunk(xItemName);
+                        doc.Add(c1);
+
+                        var logo = iTextSharp.text.Image.GetInstance(bimageloc);
+                        logo.SetAbsolutePosition(0, 550);
+                        logo.ScaleAbsoluteHeight(200);
+                        logo.ScaleAbsoluteWidth(280);
+                        doc.Add(logo);
+                        doc.NewPage();
+
+                        //createpdf(bimageloc, xItemName, nPrice, xBarcode);
+                    }
                 }
+                doc.Close();
                 return Ok(_api.Success(new SortedList() { { "FileName", "barcode.pdf" } }));
 
             }
@@ -306,10 +335,10 @@ namespace SmartxAPI.Controllers
             }
 
         }
-        public void createpdf(string bimage, string productname, double price)
+        public void createpdf(string bimage, string productname, string price, string xBarcode)
         {
             Document doc = new Document(PageSize.A4);
-            string path = this.TempFilesPath + "//barcode"+productname+".pdf";
+            string path = this.TempFilesPath + "//barcode" + xBarcode + ".pdf";
             var output = new FileStream(path, FileMode.Create);
             var writer = PdfWriter.GetInstance(doc, output);
             doc.Open();
@@ -322,6 +351,7 @@ namespace SmartxAPI.Controllers
             logo.ScaleAbsoluteHeight(200);
             logo.ScaleAbsoluteWidth(280);
             doc.Add(logo);
+            doc.NewPage();
             doc.Close();
         }
 
