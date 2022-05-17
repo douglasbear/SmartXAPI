@@ -309,7 +309,7 @@ namespace SmartxAPI.Controllers
         public void createpdf(string bimage, string productname, double price)
         {
             Document doc = new Document(PageSize.A4);
-            string path = this.TempFilesPath + "//barcode"+productname+".pdf";
+            string path = this.TempFilesPath + "//barcode" + productname + ".pdf";
             var output = new FileStream(path, FileMode.Create);
             var writer = PdfWriter.GetInstance(doc, output);
             doc.Open();
