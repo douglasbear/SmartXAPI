@@ -29,13 +29,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetAppraisalTemplateList()
+        public ActionResult GetAppraisalTemplateList(DateTime dPeriodFrom,DateTime dPeriodTo)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from Pay_AppraisalTemplate where N_CompanyID=@p1 order by N_TemplateID";
+            string sqlCommandText ="";
+            sqlCommandText= "select * from Pay_AppraisalTemplate where N_CompanyID=@p1 order by N_TemplateID";
             Params.Add("@p1", nCompanyID);
 
             try

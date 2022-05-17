@@ -75,6 +75,8 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nCountryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CountryID"].ToString());
                 int N_CountryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CountryID"].ToString());
+             
+                string xCountryName = MasterTable.Rows[0]["X_CountryName"].ToString();
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -89,7 +91,19 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
-                      
+                        // Params.Add("xCountryName",xCountryName);
+
+                        DataTable count = new DataTable();
+                        string sql = "select * from Acc_Country where X_CountryName='"+xCountryName+"' and N_CompanyID="+nCompanyID+"" ;
+                        count = dLayer.ExecuteDataTable(sql, Params, connection, transaction);
+                        if(count.Rows.Count > 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Country name already exists"));
+                        }
+                  
+
+                      char[] trim = { ',', ' ' };
                         CountryCode = dLayer.GetAutoNumber("Acc_Country", "X_CountryCode", Params, connection, transaction);
                         if (CountryCode == "") { transaction.Rollback();
                         return Ok(_api.Error(User,"Unable to generate Country Master")); }
@@ -104,8 +118,8 @@ namespace SmartxAPI.Controllers
                      
 
                     string X_CountryName= MasterTable.Rows[0]["X_CountryName"].ToString();
-                    string DupCriteria = "X_CountryName='" + X_CountryName + "' and N_CompanyID=" + nCompanyID;
 
+                    string DupCriteria = "";
                     nCountryID = dLayer.SaveData("Acc_Country", "N_CountryID",DupCriteria,"", MasterTable, connection, transaction);
                     if (nCountryID <= 0)
                     {

@@ -158,18 +158,18 @@ namespace SmartxAPI.Controllers
                     if (nGroupID > 0)
                     {
 
-                        object LedgerCodeCount = dLayer.ExecuteScalar("select COUNT(convert(nvarchar(100),X_LedgerCode)) From Acc_MastLedger where N_GroupID =@p3 and N_CompanyID =@p1 and N_FnYearID=@p2", Params, connection);
+                        object LedgerCodeCount = dLayer.ExecuteScalar("select COUNT(convert(nvarchar(100),X_LedgerCode)) From Acc_MastLedger where N_GroupID =@p3 and N_CompanyID =@p1 and N_FnYearID=@p2",Params, connection,transaction);
                         if (LedgerCodeCount == null)
                             return Ok(api.Error(User, "Error"));
 
-                        object LedgerCodeObj = dLayer.ExecuteScalar("select X_GroupCode From Acc_MastGroup where N_GroupID =@p3 and N_CompanyID =@p1 and N_FnYearID=@p2", Params, connection);
+                        object LedgerCodeObj = dLayer.ExecuteScalar("select X_GroupCode From Acc_MastGroup where N_GroupID =@p3 and N_CompanyID =@p1 and N_FnYearID=@p2", Params, connection,transaction);
           
                         int count = myFunctions.getIntVAL(LedgerCodeCount.ToString());
                         while (true)
                         {
                             count += 1;
                             X_LedgerCode = LedgerCodeObj.ToString() + count.ToString("000");
-                            object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_MastLedger Where X_LedgerCode ='" + X_LedgerCode + "' and N_CompanyID=@p1 and N_FnYearID =@p2", Params, connection);
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_MastLedger Where X_LedgerCode ='" + X_LedgerCode + "' and N_CompanyID=@p1 and N_FnYearID =@p2", Params, connection,transaction);
                             if (N_Result == null)
                                 break;
                         }
