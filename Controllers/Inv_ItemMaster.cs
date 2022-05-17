@@ -14,6 +14,12 @@ using System.Text.RegularExpressions;
 using System.IO;
 using System.Net;
 using System.Web;
+using System.Drawing.Imaging;
+using ZXing;
+using System.Drawing;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
+
 
 namespace SmartxAPI.Controllers
 {
@@ -27,6 +33,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
+        private readonly string TempFilesPath;
 
         public Inv_ItemMaster(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
@@ -35,6 +42,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            TempFilesPath = conf.GetConnectionString("TempFilesPath");
         }
 
         //GET api/Projects/list
@@ -115,7 +123,7 @@ namespace SmartxAPI.Controllers
             // string sqlComandText = " * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
 
             string sqlComandText = "  vw_InvItem_Search_cloud.*,dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID,vw_InvItem_Search_cloud.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_SellingPrice2 FROM vw_InvItem_Search_cloud LEFT OUTER JOIN " +
-             " Inv_ItemUnit ON vw_InvItem_Search_cloud.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search_cloud.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search_cloud.N_CompanyID=@p1 and vw_InvItem_Search_cloud.B_Inactive=@p2 and vw_InvItem_Search_cloud.[Item Code]<> @p3 and vw_InvItem_Search_cloud.N_ItemTypeID<>@p4  and vw_InvItem_Search_cloud.N_ItemID=Inv_ItemUnit.N_ItemID and  vw_InvItem_Search_cloud.N_ClassID!=6 " + qry + Category + Condition+ warehouseSql;
+             " Inv_ItemUnit ON vw_InvItem_Search_cloud.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search_cloud.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search_cloud.N_CompanyID=@p1 and vw_InvItem_Search_cloud.B_Inactive=@p2 and vw_InvItem_Search_cloud.[Item Code]<> @p3 and vw_InvItem_Search_cloud.N_ItemTypeID<>@p4  and vw_InvItem_Search_cloud.N_ItemID=Inv_ItemUnit.N_ItemID and  vw_InvItem_Search_cloud.N_ClassID!=6 " + qry + Category + Condition + warehouseSql;
 
 
 
@@ -279,12 +287,17 @@ namespace SmartxAPI.Controllers
 
         }
         [HttpGet("generatebarcode")]
-        public ActionResult GenerateBarcode(string xItemName,double nPrice)
+        public ActionResult GenerateBarcode(string xItemName, string xBarcode, double nPrice, int nPurchaseID)
         {
-            string barcode="test";
             try
             {
-                 return Ok(_api.Success(new SortedList() { { "FileName", barcode } }));
+                string bimageloc = "C://Olivoserver2020/Barcode/";
+                if (CreateBarcode(xBarcode))
+                {
+                    bimageloc = bimageloc + xBarcode + ".png";
+                    createpdf(bimageloc, xItemName, nPrice);
+                }
+                return Ok(_api.Success(new SortedList() { { "FileName", "barcode.pdf" } }));
 
             }
             catch (Exception e)
@@ -292,6 +305,36 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
 
+        }
+        public void createpdf(string bimage, string productname, double price)
+        {
+            Document doc = new Document(PageSize.A4);
+            string path = this.TempFilesPath + "//barcode"+productname+".pdf";
+            var output = new FileStream(path, FileMode.Create);
+            var writer = PdfWriter.GetInstance(doc, output);
+            doc.Open();
+
+            Chunk c1 = new Chunk(productname);
+            doc.Add(c1);
+
+            var logo = iTextSharp.text.Image.GetInstance(bimage);
+            logo.SetAbsolutePosition(0, 550);
+            logo.ScaleAbsoluteHeight(200);
+            logo.ScaleAbsoluteWidth(280);
+            doc.Add(logo);
+            doc.Close();
+        }
+
+
+        public bool CreateBarcode(string Data)
+        {
+            if (Data != "")
+            {
+                Zen.Barcode.Code128BarcodeDraw barcode = Zen.Barcode.BarcodeDrawFactory.Code128WithChecksum;
+                System.Drawing.Image img = barcode.Draw(Data, 50);
+                img.Save("C://OLIVOSERVER2020/Barcode/" + Data + ".png", ImageFormat.Png);
+            }
+            return true;
         }
 
 
@@ -606,9 +649,9 @@ namespace SmartxAPI.Controllers
                                 if (VariantList.Rows[i]["X_Barcode"].ToString() != "")
                                     MasterTable.Rows[j]["X_Barcode"] = VariantList.Rows[i]["X_Barcode"].ToString();
 
-                                if(MasterTable.Columns.Contains("N_Rate") && VariantList.Columns.Contains("N_Rate"))
-                                if (VariantList.Rows[i]["N_Rate"].ToString() != "")
-                                    MasterTable.Rows[j]["N_Rate"] = myFunctions.getVAL(VariantList.Rows[i]["N_Rate"].ToString());
+                                if (MasterTable.Columns.Contains("N_Rate") && VariantList.Columns.Contains("N_Rate"))
+                                    if (VariantList.Rows[i]["N_Rate"].ToString() != "")
+                                        MasterTable.Rows[j]["N_Rate"] = myFunctions.getVAL(VariantList.Rows[i]["N_Rate"].ToString());
                                 MasterTable.Rows[j]["N_CLassID"] = "2";
 
 
