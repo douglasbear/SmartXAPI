@@ -29,14 +29,24 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetAppraisalTemplateList(DateTime dPeriodFrom,DateTime dPeriodTo)
+        public ActionResult GetAppraisalTemplateList(string xFrom,DateTime dPeriodFrom,DateTime dPeriodTo)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
             string sqlCommandText ="";
-            sqlCommandText= "select * from Pay_AppraisalTemplate where N_CompanyID=@p1 order by N_TemplateID";
+            if(xFrom==null)xFrom="";
+
+            if(xFrom=="EvaluationSettings")
+            {
+                sqlCommandText= "select * from Pay_AppraisalTemplate where N_CompanyID=@p1 and N_TemplateID not in (select N_TemplateID from pay_evaluationsettings where n_companyid=4 and (D_PeriodFrom<=@dPeriodFrom and D_PeriodTo>=@dPeriodFrom) or ((D_PeriodFrom<=@dPeriodTo and D_PeriodTo>=@dPeriodTo))) order by N_TemplateID"; 
+                Params.Add("@dPeriodFrom", dPeriodFrom);
+                Params.Add("@dPeriodTo", dPeriodTo);
+            }
+            else
+                sqlCommandText= "select * from Pay_AppraisalTemplate where N_CompanyID=@p1 order by N_TemplateID"; 
+
             Params.Add("@p1", nCompanyID);
 
             try
