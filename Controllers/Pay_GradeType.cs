@@ -178,8 +178,15 @@ namespace SmartxAPI.Controllers
                         MasterTable.Columns.Remove("n_FnYearID");
 
                     }
+                     if (nGradeID>0)
+                    {
+                        
+                         dLayer.DeleteData("Pay_GradeType", "N_GradeID", nGradeID, "N_CompanyID=" + nCompanyID + " and N_GradeID=" + nGradeID, connection, transaction);
+                         dLayer.DeleteData("Pay_GradeTypeDetails", "N_GradeID", nGradeID, "N_CompanyID=" + nCompanyID + " and N_GradeID=" + nGradeID, connection, transaction);
 
+                    }
                     int n_GradeID = dLayer.SaveData("Pay_GradeType", "N_GradeID", "", "", MasterTable, connection, transaction);
+                    
                     if (n_GradeID <= 0)
                     {
                         transaction.Rollback();
@@ -230,7 +237,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Pay_GradeType", "nGradeID", nGradeID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Pay_GradeType", "n_GradeID", nGradeID, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)
