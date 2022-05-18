@@ -164,94 +164,141 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpPost("save")]
+         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
             {
                 DataTable MasterTable;
-                DataTable DetailTable;
+                DataTable CompetencyCategoryTable;
+                DataTable CompetencyCategoryCopyTable;
                 DataTable CompetencyTable;
                 DataTable TrainingneedsTable;
                 MasterTable = ds.Tables["master"];
-                DetailTable = ds.Tables["details"];
+                CompetencyCategoryTable = ds.Tables["competencycategory"];
+                CompetencyCategoryCopyTable = CompetencyCategoryTable.Clone();
                 CompetencyTable = ds.Tables["competency"];
                 TrainingneedsTable = ds.Tables["trainingneeds"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 int nAppraisalID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AppraisalID"].ToString());
                 int nCategoryID = 0;
                 int nCompetencyID = 0;
                 int nTrainingID = 0;
 
-                
+                CompetencyCategoryCopyTable.Clear();
+                CompetencyCategoryCopyTable.Columns.Add("N_CompanyID");
+                CompetencyCategoryCopyTable.Columns.Add("N_AppraisalID");
+                CompetencyCategoryCopyTable.Columns.Add("N_CategoryID");
+                CompetencyCategoryCopyTable.Columns.Add("X_Category");
+                CompetencyCategoryCopyTable.Columns.Add("N_Weightage");
+                CompetencyCategoryCopyTable.Columns.Add("N_EntryTypeID");
+                CompetencyCategoryCopyTable.Columns.Add("N_GradeTypeID");
+                CompetencyCategoryCopyTable.Columns.Add("N_TotalPerc");
+                CompetencyCategoryCopyTable.Columns.Add("X_ID");
+
+                int nCount = CompetencyCategoryTable.Rows.Count;
+                foreach (DataRow dRow in CompetencyCategoryTable.Rows)
+                {
+                    DataRow row = CompetencyCategoryCopyTable.NewRow();
+                    row["N_CompanyID"] = dRow["N_CompanyID"];
+                    row["N_AppraisalID"] = dRow["N_AppraisalID"];
+                    row["N_CategoryID"] = dRow["N_CategoryID"];
+                    row["X_Category"] = dRow["X_Category"];
+                    row["N_Weightage"] = dRow["N_Weightage"];
+                    if (CompetencyCategoryTable.Columns.Contains("N_EntryTypeID"))
+                        row["N_EntryTypeID"] = dRow["N_EntryTypeID"];
+                    if (CompetencyCategoryTable.Columns.Contains("N_GradeTypeID"))
+                        row["N_GradeTypeID"] = dRow["N_GradeTypeID"];
+                    row["N_TotalPerc"] = dRow["N_TotalPerc"];
+                    row["X_ID"] = dRow["X_ID"];
+                    CompetencyCategoryCopyTable.Rows.Add(row);
+                }
+                CompetencyCategoryCopyTable.AcceptChanges();
+
+                if (MasterTable.Columns.Contains("n_FnYearID"))
+                    MasterTable.Columns.Remove("n_FnYearID");
+
+                if (CompetencyCategoryTable.Columns.Contains("x_ID"))
+                    CompetencyCategoryTable.Columns.Remove("x_ID");
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
+                    if (nAppraisalID > 0)
+                    {
+                        dLayer.DeleteData("Pay_AppraisalTrainingNeeds", "nAppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Pay_AppraisalCompetency", "nAppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Pay_AppraisalCompetencyCategory", "nAppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Pay_Appraisal", "nAppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                    }
+
                     // Auto Gen
                     string Code = "";
                     var values = MasterTable.Rows[0]["X_AppraisalCode"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
+                        Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.N_FormID);
-                        Params.Add("N_AppraisalID", nAppraisalID);
+                        Params.Add("nAppraisalID", nAppraisalID);
                         Code = dLayer.GetAutoNumber("Pay_Appraisal", "X_AppraisalCode", Params, connection, transaction);
-                        if (Code == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Grade Code")); }
+                        if (Code == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Grade Code")); }
                         MasterTable.Rows[0]["X_AppraisalCode"] = Code;
                     }
-                    nAppraisalID = dLayer.SaveData("Pay_Appraisal", "N_AppraisalID", MasterTable, connection, transaction);
+                    nAppraisalID = dLayer.SaveData("Pay_Appraisal", "nAppraisalID", MasterTable, connection, transaction);
                     if (nAppraisalID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
-                    }
-                    
-                    dLayer.DeleteData("Pay_CompetencyCategory", "N_AppraisalID", nAppraisalID, "", connection, transaction);
-                    for (int j = 0; j < DetailTable.Rows.Count; j++)
-                    {
-                        DetailTable.Rows[j]["N_AppraisalID"] = nAppraisalID;  
-                    }
-                    nCategoryID = dLayer.SaveData("Pay_CompetencyCategory", "N_AppraisalID", DetailTable, connection, transaction);
-                    if (nCategoryID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User, "Unable to save"));
                     }
 
-                    dLayer.DeleteData("Pay_AppraisalCompetency", "N_AppraisalID", nAppraisalID, "", connection, transaction);
-                    for (int j = 0; j < CompetencyTable.Rows.Count; j++)
+                    for (int j = 0; j < CompetencyCategoryTable.Rows.Count; j++)
                     {
-                        CompetencyTable.Rows[j]["N_AppraisalID"] = nAppraisalID;  
+                        int p=0;
+                        CompetencyCategoryTable.Rows[j]["nAppraisalID"] = nAppraisalID;
+
+                        nCategoryID = dLayer.SaveDataWithIndex("Pay_AppraisalCompetencyCategory", "N_CategoryID", "", "", j, CompetencyCategoryTable, connection, transaction);
+                        if (nCategoryID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to save"));
+                        }
+
+                        for (int i = 0; i < CompetencyTable.Rows.Count; i++)
+                        {
+                            if (CompetencyTable.Rows[i]["x_ID"].ToString() == CompetencyCategoryCopyTable.Rows[j]["X_ID"].ToString())
+                            {
+                                CompetencyTable.Rows[i]["nAppraisalID"] = nAppraisalID;
+                                CompetencyTable.Rows[i]["N_CategoryID"] = nCategoryID;
+                            }
+                        }
+                        p=p+1;
                     }
-                    nCompetencyID = dLayer.SaveData("Pay_AppraisalCompetency", "N_AppraisalID", CompetencyTable, connection, transaction);
+                    if (CompetencyTable.Columns.Contains("x_ID"))
+                        CompetencyTable.Columns.Remove("x_ID");
+                    nCompetencyID = dLayer.SaveData("Pay_AppraisalCompetency", "N_CompetencyID", CompetencyTable, connection, transaction);
                     if (nCompetencyID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User, "Unable to save"));
                     }
 
-                    dLayer.DeleteData("Pay_AppraisalTrainingNeeds", "N_AppraisalID", nAppraisalID, "", connection, transaction);
                     for (int j = 0; j < TrainingneedsTable.Rows.Count; j++)
                     {
-                        TrainingneedsTable.Rows[j]["N_AppraisalID"] = nAppraisalID;  
+                        TrainingneedsTable.Rows[j]["nAppraisalID"] = nAppraisalID;
                     }
                     nTrainingID = dLayer.SaveData("Pay_AppraisalTrainingNeeds", "N_TrainingID", TrainingneedsTable, connection, transaction);
-                    if (nTrainingID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
-                    }
 
                     transaction.Commit();
-                    return Ok(_api.Success("Appraisal Template Saved"));
+                    return Ok(_api.Success("Appraisal Saved"));
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
@@ -267,13 +314,13 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Results = dLayer.DeleteData("Pay_Appraisal", "N_AppraisalID", nAppraisalID, "", connection);
+                    Results = dLayer.DeleteData("Pay_Appraisal", "N_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection);
 
                     if (Results > 0)
                     {
-                        dLayer.DeleteData("Pay_AppraisalCompetencyCategory", "N_AppraisalID", nAppraisalID, "", connection);
-                        dLayer.DeleteData("Pay_AppraisalCompetency", "N_AppraisalID", nAppraisalID, "", connection);
-                        dLayer.DeleteData("Pay_AppraisalTrainingNeeds", "N_AppraisalID", nAppraisalID, "", connection);
+                        dLayer.DeleteData("Pay_AppraisalCompetencyCategory", "N_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection);
+                        dLayer.DeleteData("Pay_AppraisalCompetency", "N_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection);
+                        dLayer.DeleteData("Pay_AppraisalTrainingNeeds", "N_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection);
                         return Ok(_api.Success("Appraisal deleted"));
                     }
                     else
