@@ -1058,6 +1058,10 @@ namespace SmartxAPI.Controllers
                     object mrnCount = dLayer.ExecuteScalar("SELECT count(Sec_UserPrevileges.N_MenuID) as Count FROM Sec_UserPrevileges INNER JOIN Sec_UserCategory ON Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID and Sec_UserPrevileges.N_MenuID=555 and Sec_UserCategory.N_CompanyID=" + nCompanyID + " and Sec_UserPrevileges.B_Visible=1", connection, transaction);
                     bool B_MRNVisible = myFunctions.getIntVAL(mrnCount.ToString()) > 0 ? true : false;
                     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "PURCHASE", nPurchaseID, TransRow["X_InvoiceNo"].ToString(), ProcStatus, "Inv_Purchase", X_Criteria, objVendorName.ToString(), User, dLayer, connection, transaction);
+                    bool B_isDirectMRN = false;
+                    if(nMRNID > 0)
+                     B_isDirectMRN = myFunctions.getBoolVAL(dLayer.ExecuteScalar("SELECT B_isDirectMRN from Inv_MRN where N_CompanyID=" + nCompanyID + " and N_MRNID = "+nMRNID, connection, transaction).ToString());
+
                     if (status != "Error")
                     {
                         if (ButtonTag == "6" || ButtonTag == "0")
@@ -1068,7 +1072,7 @@ namespace SmartxAPI.Controllers
                                     {"N_VoucherID",nPurchaseID},
                                     {"N_UserID",nUserID},
                                     {"X_SystemName","WebRequest"},
-                                    {"B_MRNVisible",(nMRNID>0 && B_MRNVisible) ?"1":"0"}};
+                                    {"B_MRNVisible",(B_isDirectMRN && B_MRNVisible) ?"1":"0"}};
                             //{"B_MRNVisible",n_MRNID>0?"1":"0"}};
 
                             Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
