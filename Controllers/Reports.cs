@@ -996,6 +996,9 @@ namespace SmartxAPI.Controllers
                     if (xProCode != "")
                     {
 
+                         bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
+                        
+
                         SortedList mParamsList = new SortedList()
                             {
                             {"N_CompanyID",nCompanyID},
@@ -1004,7 +1007,7 @@ namespace SmartxAPI.Controllers
                             {"X_Code",xProCode},
                             {"X_Parameter", procParam },
                             {"N_UserID",myFunctions.GetUserID(User)},
-                            {"N_BranchID",BranchID},
+                            {"N_BranchID", mainBranch ? 0 : BranchID},
                             // {"N_SalesmanID",SalesmanID},
 
                             // {"X_InstanceCode",random},
