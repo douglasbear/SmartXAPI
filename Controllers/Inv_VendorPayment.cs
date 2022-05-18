@@ -344,7 +344,7 @@ namespace SmartxAPI.Controllers
                     {
                         if (PayReceipt.Columns.Contains("n_PayReceiptID"))
                         {
-                            object payrcptid = dr["n_PayReceiptID"].ToString();
+                            object payrcptid = dr["N_PayReceiptId"].ToString();
                             if (payrcptid != null)
                             {
                                 if (payrcptid.ToString() == nPayReceiptID.ToString() && dr["x_Type"].ToString() == "PA")
