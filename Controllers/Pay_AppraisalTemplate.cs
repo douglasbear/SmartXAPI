@@ -182,7 +182,7 @@ namespace SmartxAPI.Controllers
                             {
                                 if((myFunctions.getIntVAL(CompetencyTable.Rows[i]["N_GradeTypeID"].ToString())==myFunctions.getIntVAL(GradeTypeTable.Rows[j]["N_GradeID"].ToString())) && (myFunctions.getVAL(CompetencyTable.Rows[i]["N_ToBeAchieved"].ToString())==myFunctions.getVAL(GradeTypeTable.Rows[j]["N_Weightage"].ToString())))
                                 {
-                                    CompetencyTable.Rows[i]["X_ToBeAchievedGradeType"]=GradeTypeTable.Rows[j]["N_GradeID"].ToString();
+                                    CompetencyTable.Rows[i]["X_Name"]=GradeTypeTable.Rows[j]["X_Name"].ToString();
                                     CompetencyTable.Rows[i]["N_ToBeAchievedGradeDetailsID"]=GradeTypeTable.Rows[j]["N_GradeDetailsID"].ToString();
                                 }
                             }

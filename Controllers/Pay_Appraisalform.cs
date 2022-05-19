@@ -288,7 +288,7 @@ namespace SmartxAPI.Controllers
 
                     for (int j = 0; j < TrainingneedsTable.Rows.Count; j++)
                     {
-                        TrainingneedsTable.Rows[j]["nAppraisalID"] = nAppraisalID;
+                        TrainingneedsTable.Rows[j]["n_AppraisalID"] = nAppraisalID;
                     }
                     nTrainingID = dLayer.SaveData("Pay_AppraisalTrainingNeeds", "N_TrainingID", TrainingneedsTable, connection, transaction);
 
