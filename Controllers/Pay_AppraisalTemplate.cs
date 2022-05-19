@@ -29,14 +29,24 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetAppraisalTemplateList(DateTime dPeriodFrom,DateTime dPeriodTo)
+        public ActionResult GetAppraisalTemplateList(string xFrom,DateTime dPeriodFrom,DateTime dPeriodTo)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
             string sqlCommandText ="";
-            sqlCommandText= "select * from Pay_AppraisalTemplate where N_CompanyID=@p1 order by N_TemplateID";
+            if(xFrom==null)xFrom="";
+
+            if(xFrom=="EvaluationSettings")
+            {
+                sqlCommandText= "select * from Pay_AppraisalTemplate where N_CompanyID=@p1 and N_TemplateID not in (select N_TemplateID from pay_evaluationsettings where n_companyid=4 and (D_PeriodFrom<=@dPeriodFrom and D_PeriodTo>=@dPeriodFrom) or ((D_PeriodFrom<=@dPeriodTo and D_PeriodTo>=@dPeriodTo))) order by N_TemplateID"; 
+                Params.Add("@dPeriodFrom", dPeriodFrom);
+                Params.Add("@dPeriodTo", dPeriodTo);
+            }
+            else
+                sqlCommandText= "select * from Pay_AppraisalTemplate where N_CompanyID=@p1 order by N_TemplateID"; 
+
             Params.Add("@p1", nCompanyID);
 
             try
@@ -125,6 +135,7 @@ namespace SmartxAPI.Controllers
             DataTable CompetencyCategoryTable = new DataTable();
             DataTable CompetencyTable = new DataTable();
             DataTable TrainingneedsTable = new DataTable();
+            DataTable GradeTypeTable = new DataTable();
 
             string Mastersql = "Select * from vw_Pay_AppraisalTemplate Where N_CompanyID=@p1 and X_Code=@p2 ";
             Params.Add("@p1", nCompanyID);
@@ -149,13 +160,35 @@ namespace SmartxAPI.Controllers
 
                     string CompetencyCategorySql = "select * from vw_Pay_CompetencyCategory where N_CompanyID=" + nCompanyID + " and N_TemplateID=" + N_TemplateID;
 
-                    CompetencyCategoryTable = dLayer.ExecuteDataTable(CompetencyCategorySql, Params, connection);
+                    CompetencyCategoryTable = dLayer.ExecuteDataTable(CompetencyCategorySql, Params, connection);                  
                     CompetencyCategoryTable = _api.Format(CompetencyCategoryTable, "Competencycategory");
                     dt.Tables.Add(CompetencyCategoryTable);
 
-                    string CompetencySql = "select * from Pay_Competency where N_CompanyID=" + nCompanyID + " and N_TemplateID=" + N_TemplateID;
+                    string CompetencySql = "select * from vw_Pay_Competency where N_CompanyID=" + nCompanyID + " and N_TemplateID=" + N_TemplateID;
 
                     CompetencyTable = dLayer.ExecuteDataTable(CompetencySql, Params, connection);
+
+                    string GradeTypeSql = "select * from Pay_GradeTypeDetails where N_CompanyID="+nCompanyID+" and N_GradeID in (select N_GradeTypeID from Pay_CompetencyCategory where N_CompanyID="+nCompanyID+" and N_TemplateID="+N_TemplateID+" and N_GradeTypeID is not null group by N_GradeTypeID)";
+
+                    GradeTypeTable = dLayer.ExecuteDataTable(GradeTypeSql, Params, connection);
+                    GradeTypeTable = _api.Format(GradeTypeTable, "GradeType");
+                    dt.Tables.Add(GradeTypeTable);
+
+                    for(int i=0;i<CompetencyTable.Rows.Count;i++)
+                    {
+                        if(myFunctions.getIntVAL(CompetencyTable.Rows[i]["N_GradeTypeID"].ToString())>0)
+                        {
+                            for(int j=0;j<GradeTypeTable.Rows.Count;j++)
+                            {
+                                if((myFunctions.getIntVAL(CompetencyTable.Rows[i]["N_GradeTypeID"].ToString())==myFunctions.getIntVAL(GradeTypeTable.Rows[j]["N_GradeID"].ToString())) && (myFunctions.getVAL(CompetencyTable.Rows[i]["N_ToBeAchieved"].ToString())==myFunctions.getVAL(GradeTypeTable.Rows[j]["N_Weightage"].ToString())))
+                                {
+                                    CompetencyTable.Rows[i]["X_ToBeAchievedGradeType"]=GradeTypeTable.Rows[j]["N_GradeID"].ToString();
+                                    CompetencyTable.Rows[i]["N_ToBeAchievedGradeDetailsID"]=GradeTypeTable.Rows[j]["N_GradeDetailsID"].ToString();
+                                }
+                            }
+                        }
+                    }
+
                     CompetencyTable = _api.Format(CompetencyTable, "Competency");
                     dt.Tables.Add(CompetencyTable);
 

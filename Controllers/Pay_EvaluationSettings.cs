@@ -168,16 +168,16 @@ namespace SmartxAPI.Controllers
                     string Searchkey = "";
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and (X_Code like '%" + xSearchkey + "%' or X_Title like '%" + xSearchkey + "%' or X_TemplateName like '%" + xSearchkey + "%' or D_PeriodFrom like '%" + xSearchkey + "%' or D_PeriodTo like '%" + xSearchkey + "%')";
+                        Searchkey = "and (X_EvalSettingsCode like '%" + xSearchkey + "%' or X_Title like '%" + xSearchkey + "%' or X_TemplateName like '%" + xSearchkey + "%' or D_PeriodFrom like '%" + xSearchkey + "%' or D_PeriodTo like '%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
-                        xSortBy = " order by X_Code desc";
+                        xSortBy = " order by X_EvalSettingsCode desc";
                     else
                     {
                         switch (xSortBy.Split(" ")[0])
                         {
-                            case "X_Code":
-                                xSortBy = "X_Code " + xSortBy.Split(" ")[1];
+                            case "X_EvalSettingsCode":
+                                xSortBy = "X_EvalSettingsCode " + xSortBy.Split(" ")[1];
                                 break;
                             case "D_PeriodFrom":
                                 xSortBy = "Cast(D_PeriodFrom as DateTime )" + xSortBy.Split(" ")[1];
