@@ -16,7 +16,7 @@
     <PackageReference Include="CrystalDecisions.Shared" Version="1.0.0" />
     <PackageReference Include="CrystalDecisions.Windows.Forms" Version="1.0.0" />
     <PackageReference Include="Dapper" Version="2.0.35" />
-    <PackageReference Include="iTextSharp.LGPLv2.Core" Version="1.7.5" />
+    <PackageReference Include="iTextSharp" Version="5.5.13.3" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Cors" Version="5.2.7" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.4" />
     <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
@@ -35,6 +35,7 @@
     <!-- <PackageReference Include="NetBarcode" Version="1.4.5" /> -->
     <PackageReference Include="QRCoder" Version="1.4.1" />
     <PackageReference Include="Spire.Barcode" Version="6.3.1" />
+    <PackageReference Include="Spire.PDF" Version="8.5.0" />
     
     <PackageReference Include="System.Data.SqlClient" Version="4.8.1" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.5.1" />

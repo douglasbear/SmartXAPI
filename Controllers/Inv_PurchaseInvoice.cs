@@ -299,7 +299,7 @@ namespace SmartxAPI.Controllers
                         if (res != null)
                         {
                             nPurchaseNO = res.ToString();
-                            X_MasterSql = "select * from vw_Inv_PurchaseDisp where N_CompanyID=@CompanyID and X_InvoiceNo=" + nPurchaseNO + " and N_FnYearID=@YearID and X_TransType=@TransType" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                            X_MasterSql = "select * from vw_Inv_PurchaseDisp where N_CompanyID=@CompanyID and X_InvoiceNo='" + nPurchaseNO + "' and N_FnYearID=@YearID and X_TransType=@TransType" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                         }
                         else
                         {
@@ -347,7 +347,7 @@ namespace SmartxAPI.Controllers
                     {
                         int n_MRNID = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_MRNID"].ToString());
 
-                        X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID) As N_UnitSPrice  from vw_InvMRNDetails Where N_CompanyID=@CompanyID and N_MRNID=" + n_MRNID;
+                        X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID) As N_UnitSPrice , N_MrnID as N_RsID from vw_InvMRNDetails Where N_CompanyID=@CompanyID and N_MRNID=" + n_MRNID;
                     }
 
                     dtPurchaseInvoiceDetails = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
@@ -854,6 +854,7 @@ namespace SmartxAPI.Controllers
                         if (n_MRNID > 0 && B_MRNVisible)
                         {
                             dLayer.ExecuteScalar("Update Inv_MRNDetails Set N_SPrice=" + myFunctions.getVAL(DetailTableCopy.Rows[j]["N_PPrice"].ToString()) + ",N_PurchaseDetailsID=" + N_InvoiceDetailId + " Where N_ItemID=" + myFunctions.getIntVAL(DetailTableCopy.Rows[j]["N_ItemID"].ToString()) + "  and N_MRNID=" + n_MRNID + " and N_CompanyID=" + nCompanyID + " and N_MRNDetailsID=" + myFunctions.getVAL(DetailTableCopy.Rows[j]["n_MRNDetailsID"].ToString()), connection, transaction);
+                            dLayer.ExecuteScalar("Update Inv_MRN Set N_Processed = 1 Where  N_MRNID=" + myFunctions.getVAL(DetailTableCopy.Rows[j]["n_RsID"].ToString())+ " and N_CompanyID=" + nCompanyID , connection, transaction);
 
                             SortedList UpdateStockParam = new SortedList();
                             UpdateStockParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
@@ -1057,6 +1058,10 @@ namespace SmartxAPI.Controllers
                     object mrnCount = dLayer.ExecuteScalar("SELECT count(Sec_UserPrevileges.N_MenuID) as Count FROM Sec_UserPrevileges INNER JOIN Sec_UserCategory ON Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID and Sec_UserPrevileges.N_MenuID=555 and Sec_UserCategory.N_CompanyID=" + nCompanyID + " and Sec_UserPrevileges.B_Visible=1", connection, transaction);
                     bool B_MRNVisible = myFunctions.getIntVAL(mrnCount.ToString()) > 0 ? true : false;
                     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "PURCHASE", nPurchaseID, TransRow["X_InvoiceNo"].ToString(), ProcStatus, "Inv_Purchase", X_Criteria, objVendorName.ToString(), User, dLayer, connection, transaction);
+                    bool B_isDirectMRN = false;
+                    if(nMRNID > 0)
+                     B_isDirectMRN = myFunctions.getBoolVAL(dLayer.ExecuteScalar("SELECT B_isDirectMRN from Inv_MRN where N_CompanyID=" + nCompanyID + " and N_MRNID = "+nMRNID, connection, transaction).ToString());
+
                     if (status != "Error")
                     {
                         if (ButtonTag == "6" || ButtonTag == "0")
@@ -1067,7 +1072,7 @@ namespace SmartxAPI.Controllers
                                     {"N_VoucherID",nPurchaseID},
                                     {"N_UserID",nUserID},
                                     {"X_SystemName","WebRequest"},
-                                    {"B_MRNVisible",(nMRNID>0 && B_MRNVisible) ?"1":"0"}};
+                                    {"B_MRNVisible",(B_isDirectMRN && B_MRNVisible) ?"1":"0"}};
                             //{"B_MRNVisible",n_MRNID>0?"1":"0"}};
 
                             Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
