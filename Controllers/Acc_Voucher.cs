@@ -344,11 +344,11 @@ namespace SmartxAPI.Controllers
                         if (N_VoucherID > 0)
                         {
                             int dltRes = dLayer.DeleteData("Acc_VoucherDetails", "N_InventoryID", N_VoucherID, "x_transtype='" + xTransType + "' and x_voucherno ='" + xVoucherNo + "' and N_CompanyID =" + nCompanyId + " and N_FnYearID =" + nFnYearId, connection, transaction);
-                            if (dltRes <= 0){transaction.Rollback();return Ok(api.Error(User,"Unable to Update"));}
+                            // if (dltRes <= 0){transaction.Rollback();return Ok(api.Error(User,"Unable to Update"));}
                             dltRes = dLayer.DeleteData("Acc_VoucherMaster_Details_Segments", "N_VoucherID", N_VoucherID, "N_VoucherID= " + N_VoucherID + " and N_CompanyID = " + nCompanyId + " and N_FnYearID=" + nFnYearId, connection, transaction);
                             // if (dltRes <= 0){transaction.Rollback();return Ok(api.Error(User,"Unable to Update"));}
                             dltRes = dLayer.DeleteData("Acc_VoucherMaster_Details", "N_VoucherID", N_VoucherID, "N_VoucherID= " + N_VoucherID + " and N_CompanyID = " + nCompanyId, connection, transaction);
-                            if (dltRes <= 0){transaction.Rollback();return Ok(api.Error(User,"Unable to Update"));}
+                             if (dltRes <= 0){transaction.Rollback();return Ok(api.Error(User,"Unable to Update"));}
 
                         }
                     }
@@ -416,9 +416,11 @@ namespace SmartxAPI.Controllers
                        DupCriteria = "";
                         int N_SegmentId = dLayer.SaveData("Acc_VoucherMaster_Details_Segments", "N_VoucherSegmentID", DupCriteria, "", CostCenterTable, connection, transaction);
 
-
+                        
                         if (N_InvoiceDetailId > 0)
                         {
+                            if (N_SaveDraft == 0)
+                            {
                             SortedList PostingParams = new SortedList();
                             PostingParams.Add("N_CompanyID", nCompanyId);
                             PostingParams.Add("X_InventoryMode", xTransType);
@@ -426,8 +428,11 @@ namespace SmartxAPI.Controllers
                             PostingParams.Add("N_UserID", nUserId);
                             PostingParams.Add("X_SystemName", "ERP Cloud");
                             object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
+                            }
+                        
                             transaction.Commit();
                         }
+                        
                         else
                         {
                             transaction.Rollback();
