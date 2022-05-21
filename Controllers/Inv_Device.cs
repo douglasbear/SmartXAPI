@@ -22,7 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int nFormID = 1463;
+        private readonly int nFormID = 1471;
 
         public Inv_Device(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
@@ -46,9 +46,13 @@ namespace SmartxAPI.Controllers
 
                     DataTable Master = ds.Tables["master"];
                     DataTable Details = ds.Tables["details"];
+                     DataTable MasterTable;
+                      MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
                     DataRow MasterRow = Master.Rows[0];
+                     // DataRow MasterRow = MasterTable.Rows[0];
                     int N_DeviceID = myFunctions.getIntVAL(MasterRow["N_DeviceID"].ToString());
+                     int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["N_CompanyID"].ToString());
                     int N_UserID = myFunctions.getIntVAL(MasterRow["n_UserID"].ToString());
                     string x_DeviceCode = MasterRow["X_DeviceCode"].ToString();
@@ -59,6 +63,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_FormID", nFormID);
+                          Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_UserID", N_UserID);
                         x_DeviceCode = dLayer.GetAutoNumber("Inv_Device", "X_DeviceCode", Params, connection, transaction);
                         if (x_DeviceCode == "")
@@ -68,7 +73,12 @@ namespace SmartxAPI.Controllers
                         }
                         Master.Rows[0]["X_DeviceCode"] = x_DeviceCode;
                     }
+                     if (MasterTable.Columns.Contains("n_FnYearID"))
+                    {
 
+                        MasterTable.Columns.Remove("n_FnYearID");
+
+                    }
                       if (N_DeviceID > 0)
                     {
                         dLayer.DeleteData("Inv_DeviceDetails", "N_DeviceID", N_DeviceID, "N_CompanyID=" + N_CompanyID + " and N_DeviceID=" + N_DeviceID, connection, transaction);
