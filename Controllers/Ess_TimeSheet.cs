@@ -25,7 +25,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int N_FormID = 1305;
-        private static TimeZoneInfo India_Standard_Time = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"); 
+        private static TimeZoneInfo India_Standard_Time = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
 
 
         public Ess_TimeSheet(IDataAccessLayer dl, IApiFunctions apiFun, IMyFunctions myFun, IConfiguration conf)
@@ -301,11 +301,11 @@ namespace SmartxAPI.Controllers
                     string defultTime = "00:00:00";
                     string currentTime = DateTime.Now.ToString("HH:mm:ss");
                     //DateTime date = DateTime.Now;
-                    
-                    object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID , connection,transaction);
-                    object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID , connection,transaction);
 
-                    DateTime dateTime_Indian = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, India_Standard_Time);  
+                    object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection, transaction);
+                    object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection, transaction);
+
+                    DateTime dateTime_Indian = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, India_Standard_Time);
                     DateTime date = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, Timezone.ToString());
 
 
@@ -348,11 +348,11 @@ namespace SmartxAPI.Controllers
                     else
                     {
 
-                         SortedList postingParams = new SortedList();
-                            postingParams.Add("D_Date", date);
-                            postingParams.Add("N_UserID", userIDIndex);
-                            postingParams.Add("N_CompanyID", nCompanyID);
-                            dLayer.ExecuteScalarPro("SP_Pay_TimesheetLog", postingParams, connection, transaction);
+                        SortedList postingParams = new SortedList();
+                        postingParams.Add("D_Date", date);
+                        postingParams.Add("N_UserID", userIDIndex);
+                        postingParams.Add("N_CompanyID", nCompanyID);
+                        dLayer.ExecuteScalarPro("SP_Pay_TimesheetLog", postingParams, connection, transaction);
 
                         SortedList QueryParams = new SortedList();
 
@@ -389,8 +389,8 @@ namespace SmartxAPI.Controllers
         [HttpGet("dayAttendanceDetails")]
         public ActionResult GetDayAttendance(int nEmpID, int nFnYear)
         {
-            DataTable Details = new DataTable();
-            DateTime date = DateTime.Today;
+            //DataTable Details = new DataTable();
+            //DateTime date = DateTime.Today;
 
             int companyid = myFunctions.GetCompanyID(User);
             try
@@ -398,24 +398,43 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+
+                    // SortedList QueryParams = new SortedList();
+
+                    // QueryParams.Add("@nCompanyID", companyid);
+                    // QueryParams.Add("@nFnYear", nFnYear);
+                    // QueryParams.Add("@nDate", date);
+                    // QueryParams.Add("@nEmpID", nEmpID);
+                    // //string sqlCommandDailyLogin = "SELECT isNull(MAX(D_In),'00:00:00') as D_In,isNull(MAX(D_Out),'00:00:00') as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,MAX(D_In),case when Max(D_Out)='00:00:00.0000000' then  Convert(Time, GetDate()) else Max(D_Out) end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
+                    // string sqlDIN = "SELECT isNull(MIN(D_In),'00:00:00') as D_In from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID and D_In<> '00:00:00'";
+                    // //string sqlDOUT = "SELECT isNull(MAX(D_Out),'00:00:00') as D_Out from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID and D_Out<> '00:00:00'";
+                    // string sqlDOUT = "SELECT top(1) D_Out as D_Out from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID order by N_SheetID desc";
+                    // object DIN = dLayer.ExecuteScalar(sqlDIN, QueryParams, connection);
+                    // object DOUT = dLayer.ExecuteScalar(sqlDOUT, QueryParams, connection);
+
+                    // string sqlCommandDailyLogin = "SELECT top(1) '" + DIN + "' as D_In,'" + DOUT + "' as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,'" + DIN + "',case when '" + DOUT + "'='00:00:00.0000000' then  Convert(Time, GetDate()) else '" + DOUT + "' end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
+
+                    // Details = dLayer.ExecuteDataTable(sqlCommandDailyLogin, QueryParams, connection);
+                    // Details = myFunctions.AddNewColumnToDataTable(Details, "workHours", typeof(string), "00:00:00");
+
+                    //New Details
+                    object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + companyid, connection, transaction);
+                    object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection, transaction);
+
+                    DateTime dateTime_Indian = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, India_Standard_Time);
+                    DateTime date = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, Timezone.ToString());
 
                     SortedList QueryParams = new SortedList();
-
                     QueryParams.Add("@nCompanyID", companyid);
                     QueryParams.Add("@nFnYear", nFnYear);
                     QueryParams.Add("@nDate", date);
                     QueryParams.Add("@nEmpID", nEmpID);
-                    //string sqlCommandDailyLogin = "SELECT isNull(MAX(D_In),'00:00:00') as D_In,isNull(MAX(D_Out),'00:00:00') as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,MAX(D_In),case when Max(D_Out)='00:00:00.0000000' then  Convert(Time, GetDate()) else Max(D_Out) end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
-                    string sqlDIN = "SELECT isNull(MIN(D_In),'00:00:00') as D_In from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID and D_In<> '00:00:00'";
-                    //string sqlDOUT = "SELECT isNull(MAX(D_Out),'00:00:00') as D_Out from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID and D_Out<> '00:00:00'";
-                    string sqlDOUT = "SELECT top(1) D_Out as D_Out from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID order by N_SheetID desc";
-                    object DIN = dLayer.ExecuteScalar(sqlDIN, QueryParams, connection);
-                    object DOUT = dLayer.ExecuteScalar(sqlDOUT, QueryParams, connection);
+                    string sqlCommandDailyLogin = "SELECT isNull(MAX(D_In),'00:00:00') as D_In,isNull(MAX(D_Out),'00:00:00') as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,MAX(D_In),case when Max(D_Out)='00:00:00.0000000' then  Convert(Time, GetDate()) else Max(D_Out) end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
 
-                    string sqlCommandDailyLogin = "SELECT top(1) '" + DIN + "' as D_In,'" + DOUT + "' as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,'" + DIN + "',case when '" + DOUT + "'='00:00:00.0000000' then  Convert(Time, GetDate()) else '" + DOUT + "' end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
+                    DataTable Details = dLayer.ExecuteDataTable(sqlCommandDailyLogin, QueryParams, connection, transaction);
 
-                    Details = dLayer.ExecuteDataTable(sqlCommandDailyLogin, QueryParams, connection);
-                    Details = myFunctions.AddNewColumnToDataTable(Details, "workHours", typeof(string), "00:00:00");
+
 
                     if (Details.Rows.Count == 0)
                     {
