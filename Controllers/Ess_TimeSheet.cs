@@ -340,6 +340,7 @@ namespace SmartxAPI.Controllers
                     // nTimesheetID = dLayer.SaveData("Pay_TimeSheetImport", "N_SheetID", MasterTable, connection, transaction);
                     nTimesheetID = dLayer.SaveData("Pay_TimeSheetLog", "indexKey", MasterTable, connection, transaction);
 
+
                     if (nTimesheetID <= 0)
                     {
                         transaction.Rollback();
@@ -353,6 +354,12 @@ namespace SmartxAPI.Controllers
                         postingParams.Add("N_UserID", userIDIndex);
                         postingParams.Add("N_CompanyID", nCompanyID);
                         dLayer.ExecuteScalarPro("SP_Pay_TimesheetLog", postingParams, connection, transaction);
+
+                        //Time Updates
+                        if (Punchtype == "IN")
+                            dLayer.ExecuteNonQuery("update Pay_TimeSheetImport set D_Out='00:00:00.0000000' where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + date.ToString("yyyy-M-dd")+"'", Params, connection, transaction);
+                        if (Punchtype == "OUT")
+                            dLayer.ExecuteNonQuery("update Pay_TimeSheetImport set D_Out='" + date.ToString() + "' where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + date.ToString("yyyy-M-dd")+"'", Params, connection, transaction);
 
                         SortedList QueryParams = new SortedList();
 
