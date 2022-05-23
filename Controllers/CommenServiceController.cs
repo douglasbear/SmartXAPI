@@ -81,7 +81,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection con = new SqlConnection(connectionString))
                 {
                     con.Open();
-                    if(appID!=2 && appID!=8)
+                    if(appID!=2 && appID!=8 && appID!=18 && appID!=7)
                     {
                         if (!myFunctions.CheckVersion(xVersion, dLayer, con))
                         {

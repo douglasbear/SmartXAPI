@@ -134,7 +134,39 @@ namespace SmartxAPI.Controllers
             }
         }
 
+ [HttpGet("gradeWiselist")]
+        public ActionResult GetGradeWiseList(int nGradeID)
+        {
+            int nCompanyId= myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
 
+            string sqlCommandText = "select * from Pay_GradeTypeDetails where N_CompanyID=" + nCompanyId + " and N_GradeID=" + nGradeID ;
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nGradeID);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
 
    [HttpPost("save")]
         public ActionResult SavePay([FromBody] DataSet ds)
@@ -178,8 +210,15 @@ namespace SmartxAPI.Controllers
                         MasterTable.Columns.Remove("n_FnYearID");
 
                     }
+                     if (nGradeID>0)
+                    {
+                        
+                         dLayer.DeleteData("Pay_GradeType", "N_GradeID", nGradeID, "N_CompanyID=" + nCompanyID + " and N_GradeID=" + nGradeID, connection, transaction);
+                         dLayer.DeleteData("Pay_GradeTypeDetails", "N_GradeID", nGradeID, "N_CompanyID=" + nCompanyID + " and N_GradeID=" + nGradeID, connection, transaction);
 
+                    }
                     int n_GradeID = dLayer.SaveData("Pay_GradeType", "N_GradeID", "", "", MasterTable, connection, transaction);
+                    
                     if (n_GradeID <= 0)
                     {
                         transaction.Rollback();
@@ -230,7 +269,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Pay_GradeType", "nGradeID", nGradeID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Pay_GradeType", "n_GradeID", nGradeID, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)

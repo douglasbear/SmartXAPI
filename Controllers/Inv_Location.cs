@@ -434,6 +434,7 @@ namespace SmartxAPI.Controllers
             }
             return true;
         }
+        
         // [HttpGet("printbarcode")]
         // public IActionResult GetModulePrint(string xBarcode)
         // {
