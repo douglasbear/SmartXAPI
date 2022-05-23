@@ -145,39 +145,65 @@ namespace SmartxAPI.Controllers
         }
 
            [HttpGet("details")]
-        public ActionResult EmployeeEvaluation(int n_DeviceID, int nCompanyID)
+        public ActionResult device(int n_DeviceID, int nCompanyID)
         {
-             DataTable dt = new DataTable();
+             DataTable Master = new DataTable();
+              DataTable Detail = new DataTable();
+            DataSet ds = new DataSet();
             SortedList Params = new SortedList();
             nCompanyID = myFunctions.GetCompanyID(User);
-            string xCriteria = "", sqlCommandText = "";
+            string xCriteria = "", 
+            sqlCommandText = "";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", n_DeviceID);
-
-              sqlCommandText = "select * from vw_inv_device Where N_CompanyID = @p1 and n_DeviceID = @p2";
-               sqlCommandText = "select * from vw_inv_deviceDetails Where N_CompanyID = @p1 and n_DeviceID = @p2";
+            // Params.Add("@p3",x_SerialNo);
            
          try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    if (dt.Rows.Count == 0)
+
+                    sqlCommandText = "select * from Vw_Inv_Device Where N_CompanyID = @p1 and n_DeviceID = @p2";
+                 Master = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                 Master = api.Format(Master, "master");
+
+                  
+                    if (Master.Rows.Count == 0)
                     {
-                        return Ok(api.Warning("No Results Found"));
+                        return Ok(api.Notice("No Results Found"));
                     }
                     else
                     {
-                        return Ok(api.Success(dt));
+                        Params.Add("@n_DeviceID", Master.Rows[0]["n_DeviceID"].ToString());
+                       ds.Tables.Add(Master);
+                        sqlCommandText = "Select * from Vw_Inv_DeviceDetails Where N_CompanyID=@p1 and n_DeviceID=@p2";
+                        Detail = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                  
+                       if (Detail.Rows.Count == 0)
+                        {
+                            return Ok(api.Notice("No Results Found"));
+                        }
+                        ds.Tables.Add(Detail);
+                      
+
                     }
+                
+              
                 }
+                 return Ok(api.Success(ds));
             }
             catch (Exception e)
-            {
+            { 
                 return Ok(api.Error(User, e));
             }
-        }
+
+        }   
+
+        
+         
+        
     }
 }
+    
