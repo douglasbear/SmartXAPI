@@ -295,7 +295,7 @@ namespace SmartxAPI.Controllers
                 DataTable products = new DataTable();
                 // Datatable products = new Datatable();
                 products = ds.Tables["details"];
-                
+
                 string path = this.TempFilesPath + "//barcode.pdf";
                 Document doc = new Document(PageSize.A4);
                 var output = new FileStream(path, FileMode.Create);
@@ -310,19 +310,24 @@ namespace SmartxAPI.Controllers
                     if (CreateBarcode(xBarcode))
                     {
                         string bimageloc = "C://Olivoserver2020/Barcode/";
-                        bimageloc = bimageloc + xBarcode + ".png";
-                        //string path = this.TempFilesPath + "//barcode" + xBarcode + ".pdf";
-                        Chunk c1 = new Chunk(xItemName);
-                        doc.Add(c1);
 
+                        //Font
+                        BaseFont bf = BaseFont.CreateFont(BaseFont.TIMES_ROMAN, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+                        iTextSharp.text.Font font = new iTextSharp.text.Font(bf, 15, iTextSharp.text.Font.NORMAL);
+                        Paragraph p1 = new Paragraph(new Chunk(xItemName, font));
+                        p1.IndentationRight = 100;
+                        p1.IndentationLeft = 100;
+                        //Chunk c1 = new Chunk(xItemName);
+                        doc.Add(p1);
+
+                        bimageloc = bimageloc + xBarcode + ".png";
                         var logo = iTextSharp.text.Image.GetInstance(bimageloc);
-                        logo.SetAbsolutePosition(0, 550);
-                        logo.ScaleAbsoluteHeight(200);
+                        // logo.SetAbsolutePosition(0, 550);
+                        logo.ScaleAbsoluteHeight(100);
                         logo.ScaleAbsoluteWidth(280);
                         doc.Add(logo);
                         doc.NewPage();
 
-                        //createpdf(bimageloc, xItemName, nPrice, xBarcode);
                     }
                 }
                 doc.Close();
