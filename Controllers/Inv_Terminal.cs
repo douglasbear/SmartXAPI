@@ -121,7 +121,7 @@ namespace SmartxAPI.Controllers
                             Params.Add("@xHostName", System.Net.Dns.GetHostName());
                             Params.Add("@xEndIp", HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString());
 
-                            string updateSql = "Update Session set X_SessionEndIP='" + HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString() + "', X_SystemName ='" + System.Net.Dns.GetHostName() + "', N_CashBalance=" + balanceAmount + ",N_CashCr=" + credit + ",N_CashDr=" + debit + ",B_closed=1 ,D_SessionEndTime='" + DateTime.ParseExact(d_SessionStartTime, "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture) + "',N_CashWithdrawal=" + nCashWithdrawal + " where N_CompanyID=@nCompanyID and N_TerminalID=@nTerminalID and N_SessionID=@nSessionID";
+                            string updateSql = "Update Acc_PosSession set X_SessionEndIP='" + HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString() + "', X_SystemName ='" + System.Net.Dns.GetHostName() + "', N_CashBalance=" + balanceAmount + ",N_CashCr=" + credit + ",N_CashDr=" + debit + ",B_closed=1 ,D_SessionEndTime='" + DateTime.ParseExact(d_SessionStartTime, "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture) + "',N_CashWithdrawal=" + nCashWithdrawal + " where N_CompanyID=@nCompanyID and N_TerminalID=@nTerminalID and N_SessionID=@nSessionID";
                             object result = dLayer.ExecuteNonQuery(updateSql, Params, connection,transaction);
 
                         }

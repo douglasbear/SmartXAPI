@@ -108,7 +108,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetAppraisalDetails(string xAppraisalCode)
+        public ActionResult GetAppraisalDetails(string xAppraisalCode,int nFnYearID)
         {
             DataSet dt=new DataSet();
             SortedList Params=new SortedList();
@@ -119,9 +119,10 @@ namespace SmartxAPI.Controllers
             DataTable TrainingneedsTable = new DataTable();
             DataTable GradeTypeTable = new DataTable();
 
-            string Mastersql="Select * from Vw_Pay_Appraisal Where N_CompanyID=@nCompanyID and x_AppraisalCode=@xAppraisalCode ";
+            string Mastersql="Select * from Vw_Pay_Appraisal Where N_CompanyID=@nCompanyID and x_AppraisalCode=@xAppraisalCode and n_FnYearID=@nFnYearID ";
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@xAppraisalCode",xAppraisalCode);
+            Params.Add("@nFnYearID",nFnYearID);
             
             try
             {
