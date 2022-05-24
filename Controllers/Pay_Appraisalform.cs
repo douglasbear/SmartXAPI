@@ -381,7 +381,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nFnYearID", nFnYearID);
             Params.Add("@dPeriod", dPeriod);
             Params.Add("@nUserID", nUserID);
-            string sqlCommandText = "Select N_EmpID,X_EmpCode,X_EmpName,X_Department,X_Position,N_TemplateID,X_TemplateCode,X_TemplateName from vw_EmployeesOfEvaluators "+
+            string sqlCommandText = "Select N_EmpID,X_EmpCode,X_EmpName,X_Department,X_Position,N_TemplateID,X_TemplateCode,X_TemplateName,N_EvalSettingsID from vw_EmployeesOfEvaluators "+
                                     " Where N_CompanyID=@nCompanyID and N_FnyearID=@nFnYearID and N_UserID=@nUserID and D_PeriodTo>=@dPeriod and D_PeriodFrom<=@dPeriod";
             try
             {
@@ -455,13 +455,13 @@ namespace SmartxAPI.Controllers
                     CompetencyTable = _api.Format(CompetencyTable, "Competency");
                     dt.Tables.Add(CompetencyTable);
 
-                    string EvaluatorSql = "select * from vw_Pay_EvaluatorUser where N_CompanyID=" + nCompanyID + " and N_TemplateID=" + N_TemplateID+" and D_PeriodFrom<='"+dDate+"' D_PeriodTo>='"+dDate+"'" ;
+                    string EvaluatorSql = "select * from vw_Pay_EvaluatorUser where N_CompanyID=" + nCompanyID + " and N_TemplateID=" + N_TemplateID+" and D_PeriodFrom<='"+dDate+"' and D_PeriodTo>='"+dDate+"'" ;
 
                     EvaluatorsTable = dLayer.ExecuteDataTable(EvaluatorSql, Params, connection);
 
-                    string CompetencySummarySql = "select * from vw_Pay_AppraisalCompetencySummary where N_CompanyID=" + nCompanyID + " and N_TemplateID=" + N_TemplateID +" and D_PeriodFrom<='"+dDate+"' D_PeriodTo>='"+dDate+"'" ;
+                    string CompetencySummarySql = "select * from vw_Pay_AppraisalCompetencySummary where N_CompanyID=" + nCompanyID + " and N_TemplateID=" + N_TemplateID +" and N_EmpID="+N_EmpID+" and D_DocDate<='"+EvaluatorsTable.Rows[0]["D_PeriodTo"].ToString()+"' and D_DocDate>='"+EvaluatorsTable.Rows[0]["D_PeriodFrom"].ToString()+"'" ;
 
-                    CompetencySummaryTable = dLayer.ExecuteDataTable(CompetencySql, Params, connection);
+                    CompetencySummaryTable = dLayer.ExecuteDataTable(CompetencySummarySql, Params, connection);
 
                     for(int i=0;i<CompetencySummaryTable.Rows.Count;i++)
                     {
