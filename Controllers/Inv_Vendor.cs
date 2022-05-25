@@ -441,6 +441,23 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     dt = _api.Format(dt);
+
+                    object Count = dLayer.ExecuteScalar("select count(*)  from vw_Inv_CheckVendor where N_CompanyID=@p1 and X_VendorCode=@xVendorCode", Params, connection);
+                    int NCount = myFunctions.getIntVAL(Count.ToString());
+                    if (NCount > 0)
+                    {
+                       
+                        if (dt.Rows.Count > 0)
+                        {
+                            dt.Columns.Add("b_isUsed");
+                            dt.Rows[0]["b_isUsed"]=true;
+                            
+                          
+                        }
+
+
+                    }
+
                     if (dt.Rows.Count == 0)
                     {
                         return Ok(_api.Warning("No Results Found"));
