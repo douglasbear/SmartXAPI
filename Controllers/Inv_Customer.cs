@@ -671,7 +671,7 @@ namespace SmartxAPI.Controllers
             }
         } 
 
-   [HttpGet("totalInvoiceAmount")]
+        [HttpGet("totalInvoiceAmount")]
         public ActionResult GetCustomerDetail(int nCustomerID, int nFnYearID)
         {
             DataTable dt = new DataTable();
