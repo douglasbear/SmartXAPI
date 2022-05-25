@@ -22,7 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int nFormID = 1463;
+        private readonly int nFormID = 1471;
 
         public Inv_Device(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
@@ -46,9 +46,13 @@ namespace SmartxAPI.Controllers
 
                     DataTable Master = ds.Tables["master"];
                     DataTable Details = ds.Tables["details"];
+                     DataTable MasterTable;
+                      MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
                     DataRow MasterRow = Master.Rows[0];
+                     // DataRow MasterRow = MasterTable.Rows[0];
                     int N_DeviceID = myFunctions.getIntVAL(MasterRow["N_DeviceID"].ToString());
+                     int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["N_CompanyID"].ToString());
                     int N_UserID = myFunctions.getIntVAL(MasterRow["n_UserID"].ToString());
                     string x_DeviceCode = MasterRow["X_DeviceCode"].ToString();
@@ -59,6 +63,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_FormID", nFormID);
+                          Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_UserID", N_UserID);
                         x_DeviceCode = dLayer.GetAutoNumber("Inv_Device", "X_DeviceCode", Params, connection, transaction);
                         if (x_DeviceCode == "")
@@ -68,7 +73,12 @@ namespace SmartxAPI.Controllers
                         }
                         Master.Rows[0]["X_DeviceCode"] = x_DeviceCode;
                     }
+                     if (MasterTable.Columns.Contains("n_FnYearID"))
+                    {
 
+                        MasterTable.Columns.Remove("n_FnYearID");
+
+                    }
                       if (N_DeviceID > 0)
                     {
                         dLayer.DeleteData("Inv_DeviceDetails", "N_DeviceID", N_DeviceID, "N_CompanyID=" + N_CompanyID + " and N_DeviceID=" + N_DeviceID, connection, transaction);
@@ -135,39 +145,65 @@ namespace SmartxAPI.Controllers
         }
 
            [HttpGet("details")]
-        public ActionResult EmployeeEvaluation(int n_DeviceID, int nCompanyID)
+        public ActionResult device(int n_DeviceID, int nCompanyID)
         {
-             DataTable dt = new DataTable();
+             DataTable Master = new DataTable();
+              DataTable Detail = new DataTable();
+            DataSet ds = new DataSet();
             SortedList Params = new SortedList();
             nCompanyID = myFunctions.GetCompanyID(User);
-            string xCriteria = "", sqlCommandText = "";
+            string xCriteria = "", 
+            sqlCommandText = "";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", n_DeviceID);
-
-              sqlCommandText = "select * from vw_inv_device Where N_CompanyID = @p1 and n_DeviceID = @p2";
-               sqlCommandText = "select * from vw_inv_deviceDetails Where N_CompanyID = @p1 and n_DeviceID = @p2";
+            // Params.Add("@p3",x_SerialNo);
            
          try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    if (dt.Rows.Count == 0)
+
+                    sqlCommandText = "select * from Vw_Inv_Device Where N_CompanyID = @p1 and n_DeviceID = @p2";
+                 Master = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                 Master = api.Format(Master, "master");
+
+                  
+                    if (Master.Rows.Count == 0)
                     {
-                        return Ok(api.Warning("No Results Found"));
+                        return Ok(api.Notice("No Results Found"));
                     }
                     else
                     {
-                        return Ok(api.Success(dt));
+                        Params.Add("@n_DeviceID", Master.Rows[0]["n_DeviceID"].ToString());
+                       ds.Tables.Add(Master);
+                        sqlCommandText = "Select * from Vw_Inv_DeviceDetails Where N_CompanyID=@p1 and n_DeviceID=@p2";
+                        Detail = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                  
+                       if (Detail.Rows.Count == 0)
+                        {
+                            return Ok(api.Notice("No Results Found"));
+                        }
+                        ds.Tables.Add(Detail);
+                      
+
                     }
+                
+              
                 }
+                 return Ok(api.Success(ds));
             }
             catch (Exception e)
-            {
+            { 
                 return Ok(api.Error(User, e));
             }
-        }
+
+        }   
+
+        
+         
+        
     }
 }
+    
