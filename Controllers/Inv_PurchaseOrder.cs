@@ -642,7 +642,11 @@ namespace SmartxAPI.Controllers
                     if (objPurchaseProcessed == null)
                         objPurchaseProcessed = 0;
 
-                    if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) == 0)
+                    object objGRNProcessed = dLayer.ExecuteScalar("Select Isnull(N_MRNID,0) from Inv_MRN where N_CompanyID=" + nCompanyID + " and N_POrderID=" + nPOrderID + " and ISNULL(B_IsSaveDraft,0) = 0", connection, transaction);
+                    if (objGRNProcessed == null)
+                        objGRNProcessed = 0;
+
+                    if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) == 0 && myFunctions.getIntVAL(objGRNProcessed.ToString()) == 0)
                     {
                         SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
@@ -671,6 +675,8 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) > 0)
                             return Ok(api.Error(User, "Purchase invoice processed! Unable to delete"));
+                        else if (myFunctions.getIntVAL(objGRNProcessed.ToString()) > 0)
+                            return Ok(api.Error(User, "Goods Receive Note processed! Unable to delete"));
                         else
                             return Ok(api.Error(User, "Unable to delete!"));
 
