@@ -113,7 +113,7 @@ namespace SmartxAPI.Controllers
         }
 
                 [HttpDelete("delete")]
-        public ActionResult DeleteData(int n_DeviceID, int nCompanyID)
+        public ActionResult DeleteData(int nDeviceID, int nCompanyID)
         {
             int Results = 0;
              nCompanyID = myFunctions.GetCompanyID(User);
@@ -123,8 +123,8 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    Results = dLayer.DeleteData("Inv_Device", "N_DeviceID", n_DeviceID, "N_CompanyID=" + nCompanyID  + "", connection);
-                    dLayer.DeleteData("Inv_DeviceDetails", "N_DeviceID", n_DeviceID, "N_CompanyID=" + nCompanyID + "", connection);
+                    Results = dLayer.DeleteData("Inv_Device", "N_DeviceID", nDeviceID, "N_CompanyID=" + nCompanyID  + "", connection);
+                    dLayer.DeleteData("Inv_DeviceDetails", "N_DeviceID", nDeviceID, "N_CompanyID=" + nCompanyID + "", connection);
 
                 }
                 if (Results > 0)
