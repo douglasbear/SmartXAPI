@@ -879,8 +879,8 @@ namespace SmartxAPI.Controllers
 
                     int N_AddOrDedID = 0;
 
-                    if(N_SProcessType==1)
-                    {
+                    // if(N_SProcessType==1)
+                    // {
                         object obj = dLayer.ExecuteScalar(" select N_TransID from Pay_MonthlyAddOrDed where N_CompanyID=" + nCompanyID + " and N_PayrunID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_BatchID"].ToString())+ "", connection, transaction);
                         if (obj == null)
                             N_AddOrDedID = 0;
@@ -889,7 +889,7 @@ namespace SmartxAPI.Controllers
 
                         if(N_AddOrDedID==0)
                              N_AddOrDedID = dLayer.SaveData("Pay_MonthlyAddOrDed", "N_TransID", AddOrDedTable, connection, transaction);
-                    }            
+                    // }            
 
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_BatchCode='" + X_BatchCode + "' and N_FnyearID=" + nFnYearId;
                     N_TimeSheetApproveID = dLayer.SaveData("Pay_TimeSheetApproveMaster", "N_TimeSheetApproveID", DupCriteria, "", MasterTable, connection, transaction);
@@ -933,10 +933,10 @@ namespace SmartxAPI.Controllers
 
                     int nTimesheetID = 0, nAddOrDedDetailID = 0;
 
-                    if(N_SProcessType==1)
-                    {
+                    // if(N_SProcessType==1)
+                    // {
                         nAddOrDedDetailID = dLayer.SaveData("Pay_MonthlyAddOrDedDetails", "N_TransDetailsID", AddOrDedDetailTable, connection, transaction);
-                    }   
+                    // }   
 
                     nTimesheetID = dLayer.SaveData("Pay_TimeSheet", "N_SheetID", DetailTable, connection, transaction);
                     if (nTimesheetID <= 0)
