@@ -314,7 +314,7 @@ namespace SmartxAPI.Controllers
                         transaction.Commit();
                     }
 
-                    return Ok(_api.Success("Department/Cost Centre Saved"));
+                    return Ok(_api.Success("Entry Saved"));
                 }
             }
             catch (Exception ex)
@@ -348,13 +348,13 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            return Ok(_api.Error(User,"Department Allready Used"));
+                            return Ok(_api.Error(User,"Department/Costcenter Allready in use"));
                         }
                     }
                 }
                 if (Results > 0)
                 {
-                    return Ok(_api.Success("Department/Cost centre deleted"));
+                    return Ok(_api.Success("Entry deleted"));
                 }
                 else
                 {
