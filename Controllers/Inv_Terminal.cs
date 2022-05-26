@@ -35,16 +35,48 @@ namespace SmartxAPI.Controllers
 
 
         //GET api/productcategory/list?....
+        // [HttpGet("list")]
+        // public ActionResult GetTerminalList(DateTime dDate)
+        // {
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
+        //     int nCompanyId = myFunctions.GetCompanyID(User);
+
+        //     string sqlCommandText = "select * from vw_InvTerminal_Disp where N_CompanyID=@p1";
+        //     Params.Add("@p1", nCompanyId);
+        //     Params.Add("@p2", dDate);
+
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+        //         }
+        //         if (dt.Rows.Count == 0)
+        //         {
+        //             return Ok(_api.Warning(""));
+        //         }
+        //         else
+        //         {
+        //             return Ok(_api.Success(dt));
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(User, e));
+        //     }
+        // }
+
         [HttpGet("list")]
-        public ActionResult GetTerminalList(DateTime dDate)
+        public ActionResult GetTerminalList()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from vw_InvTerminal_Disp where N_CompanyID=@p1";
+            string sqlCommandText = "select * from Inv_Terminal where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", dDate);
 
             try
             {
@@ -211,40 +243,55 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetTerminalDetails(int nTerminalID)
+        public ActionResult GetTerminalDetails(int nTerminalID, bool bAllBranchData, int nBranchID)
         {
-            DataTable dt = new DataTable();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataSet dt = new DataSet();
             SortedList Params = new SortedList();
+            DataTable MasterTable = new DataTable();
+            DataTable DetailTable = new DataTable();
+            string Mastersql = "";
 
-            string sqlCommandText = "select * from vw_InvTerminal where N_CompanyID=@p1 and N_TerminalID=@p2";
+            if (bAllBranchData == true)
+                Mastersql = "select * from vw_InvTerminalMaster where N_CompanyID=@p1 and N_TerminalID=@p3 ";
+            else
+                Mastersql = "select * from vw_InvTerminalMaster where N_CompanyID=@p1 and N_BranchID=@p2 and N_TerminalID=@p3 ";
 
-            Params.Add("@p1", myFunctions.GetCompanyID(User));
-            Params.Add("@p2", nTerminalID);
-
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nBranchID);
+            Params.Add("@p3", nTerminalID);
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+
+                    if (MasterTable.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Data Found !!"));
+                    }
+
+                    MasterTable = _api.Format(MasterTable, "Master");
+                    dt.Tables.Add(MasterTable);
+
+                    int n_TerminalID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TerminalID"].ToString());
+
+                    string DetailSql = "";
+
+                    DetailSql = "Select * from vw_InvTerminal where N_CompanyID=@p1 and N_TerminalID=" + n_TerminalID;
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    DetailTable = _api.Format(DetailTable, "Details");
+                    dt.Tables.Add(DetailTable);
                 }
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Data Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(dt));
-                }
+                return Ok(_api.Success(dt));
             }
             catch (Exception e)
             {
                 return Ok(_api.Error(User, e));
             }
         }
-
-
 
         [HttpPost("closeSession")]
         public ActionResult CloseSession([FromBody] DataSet ds)
@@ -302,8 +349,6 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
-        //Save....
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
@@ -313,44 +358,51 @@ namespace SmartxAPI.Controllers
                 DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
+                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                int nTerminalID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TerminalID"].ToString());
+                int nSettingsID = 0;
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-
-                    int N_FnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearId"].ToString());
                     SortedList Params = new SortedList();
+
                     // Auto Gen
-                    string TerminalCode = "";
-                    var values = MasterTable.Rows[0]["X_TerminalCode"].ToString();
+                    string xTerminalCode = "";
+                    var values = MasterTable.Rows[0]["x_TerminalCode"].ToString();
                     if (values == "@Auto")
                     {
-                        Params.Add("N_CompanyID", MasterTable.Rows[0]["N_CompanyId"].ToString());
-                        Params.Add("N_YearID", N_FnYearId);
+                        Params.Add("N_CompanyID", nCompanyID);
+                        Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", 895);
-                        TerminalCode = dLayer.GetAutoNumber("Inv_Terminal", "X_TerminalCode", Params, connection, transaction);
-                        if (TerminalCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Terminal Code")); }
-                        MasterTable.Rows[0]["X_TerminalCode"] = TerminalCode;
+                        Params.Add("N_TerminalID", nTerminalID);
+                        xTerminalCode = dLayer.GetAutoNumber("Inv_Terminal", "X_TerminalCode", Params, connection, transaction);
+                        if (xTerminalCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Code")); }
+                        MasterTable.Rows[0]["X_TerminalCode"] = xTerminalCode;
                     }
                     MasterTable.Columns.Remove("N_FnYearId");
-                    int N_TerminalID = dLayer.SaveData("Inv_Terminal", "N_TerminalID", MasterTable, connection, transaction);
-                    if (N_TerminalID <= 0)
+                    nTerminalID = dLayer.SaveData("Inv_Terminal", "N_TerminalID", MasterTable, connection, transaction);
+                    if (nTerminalID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to save"));
                     }
-                    // else{
-                    // transaction.Commit();
-                    // return Ok(_api.Success("Terminal Saved"));
-                    // }
 
-                    else
+                    dLayer.DeleteData("Inv_TerminalDetails", "N_TerminalID", nTerminalID, "", connection, transaction);
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        DetailTable.Rows[0]["N_TerminalID"] = N_TerminalID;
-                        dLayer.SaveData("Inv_Terminaldetails", "N_SettingsID", DetailTable, connection, transaction);
-                        transaction.Commit();
-                        return Ok(_api.Success("Terminal Saved"));
+                        DetailTable.Rows[j]["N_TerminalID"] = nTerminalID;
                     }
+                    nSettingsID = dLayer.SaveData("Inv_TerminalDetails", "N_SettingsID", DetailTable, connection, transaction);
+                    if (nSettingsID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User,"Unable To Save"));
+                    }
+                    transaction.Commit();
+                    return Ok(_api.Success("Terminal Saved"));
                 }
             }
             catch (Exception ex)
@@ -365,18 +417,23 @@ namespace SmartxAPI.Controllers
             int Results = 0;
             try
             {
+                int nCompanyID = myFunctions.GetCompanyID(User);
+                SortedList Params = new SortedList();
+                Params.Add("@p1", nCompanyID);
+                Params.Add("@p2", nTerminalID);
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
                     Results = dLayer.DeleteData("Inv_Terminal", "N_TerminalID", nTerminalID, "", connection);
+
                     if (Results > 0)
                     {
+                        dLayer.DeleteData("Inv_TerminalDetails", "N_TerminalID", nTerminalID, "", connection);
                         return Ok(_api.Success("Terminal deleted"));
                     }
                     else
                     {
-                        return Ok(_api.Error(User, "Unable to delete Terminal"));
+                        return Ok(_api.Error(User, "Unable to delete"));
                     }
                 }
             }
@@ -384,8 +441,6 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(_api.Error(User, ex));
             }
-
-
         }
     }
 }
