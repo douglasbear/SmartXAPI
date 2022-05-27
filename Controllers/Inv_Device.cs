@@ -113,7 +113,7 @@ namespace SmartxAPI.Controllers
         }
 
                 [HttpDelete("delete")]
-        public ActionResult DeleteData(int n_DeviceID, int nCompanyID)
+        public ActionResult DeleteData(int nDeviceID, int nCompanyID)
         {
             int Results = 0;
              nCompanyID = myFunctions.GetCompanyID(User);
@@ -123,8 +123,8 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    Results = dLayer.DeleteData("Inv_Device", "N_DeviceID", n_DeviceID, "N_CompanyID=" + nCompanyID  + "", connection);
-                    dLayer.DeleteData("Inv_DeviceDetails", "N_DeviceID", n_DeviceID, "N_CompanyID=" + nCompanyID + "", connection);
+                    Results = dLayer.DeleteData("Inv_Device", "N_DeviceID", nDeviceID, "N_CompanyID=" + nCompanyID  + "", connection);
+                    dLayer.DeleteData("Inv_DeviceDetails", "N_DeviceID", nDeviceID, "N_CompanyID=" + nCompanyID + "", connection);
 
                 }
                 if (Results > 0)
@@ -145,7 +145,7 @@ namespace SmartxAPI.Controllers
         }
 
            [HttpGet("details")]
-        public ActionResult device(int n_DeviceID, int nCompanyID)
+        public ActionResult device(int n_DeviceID, int nCompanyID,string x_SerialNo)
         {
              DataTable Master = new DataTable();
               DataTable Detail = new DataTable();
@@ -156,7 +156,8 @@ namespace SmartxAPI.Controllers
             sqlCommandText = "";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", n_DeviceID);
-            // Params.Add("@p3",x_SerialNo);
+           
+            Params.Add("@p3",x_SerialNo);
            
          try
             {
@@ -165,7 +166,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
 
-                    sqlCommandText = "select * from Vw_Inv_Device Where N_CompanyID = @p1 and n_DeviceID = @p2";
+                    sqlCommandText = "select * from Vw_Inv_Device Where N_CompanyID = @p1 and x_SerialNo = @p3";
                  Master = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                  Master = api.Format(Master, "master");
 
@@ -178,13 +179,14 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("@n_DeviceID", Master.Rows[0]["n_DeviceID"].ToString());
                        ds.Tables.Add(Master);
-                        sqlCommandText = "Select * from Vw_Inv_DeviceDetails Where N_CompanyID=@p1 and n_DeviceID=@p2";
+                        sqlCommandText = "Select * from Vw_Inv_DeviceDetails Where N_CompanyID=@p1 and n_DeviceID=@n_DeviceID";
                         Detail = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                   
                        if (Detail.Rows.Count == 0)
                         {
                             return Ok(api.Notice("No Results Found"));
                         }
+                             Detail = api.Format(Detail, "Detail");
                         ds.Tables.Add(Detail);
                       
 
