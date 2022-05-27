@@ -406,7 +406,21 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                   
+                    Object PoCount=dLayer.ExecuteScalar("select count(*) from Inv_MRNDetails where N_PONo="+N_POrderID+" and N_CompanyID="+nCompanyId, Params, connection);
+                    int nPoCount = myFunctions.getIntVAL(PoCount.ToString());
+                    if (nPoCount > 0)
+                    {
+                       
+                        if (MasterTable.Rows.Count > 0)
+                        {
+                            MasterTable.Columns.Add("b_GRNProcessed");
+                            MasterTable.Rows[0]["b_GRNProcessed"]=true;
+                            
+                          
+                        }
+
+
+                    }     
                     // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "GRNNotProcessed", typeof(bool),GRNNotProcessed);
                     // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "InvoiceNotProcessed", typeof(bool),InvoiceNotProcessed);
 
