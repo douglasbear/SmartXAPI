@@ -303,6 +303,14 @@ namespace SmartxAPI.Controllers
                     // }
                     if (MasterTable.Columns.Contains("n_empid"))
                         MasterTable.Columns.Remove("n_empid");
+
+                    if (MasterTable.Columns.Contains("B_AllowTransactionPosting"))
+                        MasterTable.Rows[0]["B_AllowTransactionPosting"]=1;
+                    else
+                    {
+                        myFunctions.AddNewColumnToDataTable(MasterTable, "B_AllowTransactionPosting", typeof(bool), 1);
+                    }
+
                     N_CostCentreID = dLayer.SaveData("Acc_CostCentreMaster", "N_CostCentreID", MasterTable, connection, transaction);
                     if (N_CostCentreID <= 0)
                     {
