@@ -400,6 +400,15 @@ namespace SmartxAPI.Controllers
                  sqlCommandText="SELECT N_CustomerID AS N_PKeyID,N_CustomerID AS N_PartyID,X_CustomerCode AS X_PartyCode,X_Email,X_CustomerName AS X_PartyName ,'customer' AS X_PartyType,'Customer Portal' AS X_TxnType,N_FnYearID,N_FnYearID  From Inv_Customer where  N_CompanyID=@nCompanyID and N_CustomerID=@nPkeyID";
 
              }
+              else if (type.ToLower() == "amendment")
+             {
+               sqlCommandText = "SELECT        Pay_PayHistoryMaster.N_HistoryID AS N_PKeyID, Pay_PayHistoryMaster.N_EmpID AS N_PartyID, Pay_Employee.X_EmpCode AS X_PartyCode, Pay_Employee.X_EmailID as X_Email,Pay_Employee.X_EmpName AS X_PartyName, 'Employee' AS X_PartyType, 'Amendment' AS X_TxnType, Pay_PayHistoryMaster.X_HistoryCode as X_DocNo " +
+             " FROM            Pay_PayHistoryMaster LEFT OUTER JOIN " +         
+             "                        Pay_Employee ON Pay_PayHistoryMaster.N_CompanyID = Pay_Employee.N_CompanyID AND Pay_PayHistoryMaster.N_EmpID = Pay_Employee.N_EmpID " +
+             " where Pay_PayHistoryMaster.N_CompanyID=@nCompanyID and Pay_PayHistoryMaster.N_HistoryID=@nPkeyID group by  Pay_PayHistoryMaster.N_HistoryID, Pay_PayHistoryMaster.N_EmpID, Pay_Employee.X_EmpCode, Pay_Employee.X_EmailID, Pay_Employee.X_EmpName, Pay_PayHistoryMaster.X_HistoryCode";
+
+             }
+             
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
@@ -507,6 +516,23 @@ namespace SmartxAPI.Controllers
                         {
                              xSubject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyId="+companyid+" and X_Type='customer portal'", connection, transaction).ToString();
                             xBodyText = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyId="+companyid+" and X_Type='customer portal'", connection, transaction).ToString();
+                            xBodyText=xBodyText.Replace("@ContactName",row["X_PartyName"].ToString());
+                            xBodyText=xBodyText.Replace("@CompanyName",myFunctions.GetCompanyName(User));
+                            string seperator = "$$";
+                            xURL = myFunctions.EncryptStringForUrl(myFunctions.GetCompanyID(User).ToString() + seperator + row["N_PartyID"].ToString() + seperator + "HOME" + seperator + "0", System.Text.Encoding.Unicode);
+                                   xURL = AppURL + "/client/customer/13/" + xURL + "/home/new";
+                            xBodyText=xBodyText.Replace("@URL",xURL);
+                            xSubject=xSubject.Replace("@CompanyName",myFunctions.GetCompanyName(User));
+
+
+
+                            myFunctions.SendMailWithAttachments(0, myFunctions.getIntVAL(row["N_FnYearID"].ToString()), myFunctions.getIntVAL(row["N_PKeyID"].ToString()),myFunctions.getIntVAL(row["N_PartyID"].ToString()), row["X_PartyName"].ToString(), xSubject, "0", row["X_Email"].ToString(), xBodyText, dLayer, User);
+
+                        }
+                       else if(row["x_TxnType"].ToString().ToLower() == "amendment")
+                        {
+                             xSubject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyId="+companyid+" and X_Type='amendment'", connection, transaction).ToString();
+                            xBodyText = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyId="+companyid+" and X_Type='amendment'", connection, transaction).ToString();
                             xBodyText=xBodyText.Replace("@ContactName",row["X_PartyName"].ToString());
                             xBodyText=xBodyText.Replace("@CompanyName",myFunctions.GetCompanyName(User));
                             string seperator = "$$";
