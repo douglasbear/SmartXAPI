@@ -40,7 +40,7 @@ namespace SmartxAPI.Controllers
 
             if(xFrom=="EvaluationSettings")
             {
-                sqlCommandText= "select * from Pay_AppraisalTemplate where N_CompanyID=@p1 and N_TemplateID not in (select N_TemplateID from pay_evaluationsettings where n_companyid=4 and (D_PeriodFrom<=@dPeriodFrom and D_PeriodTo>=@dPeriodFrom) or ((D_PeriodFrom<=@dPeriodTo and D_PeriodTo>=@dPeriodTo))) order by N_TemplateID"; 
+                sqlCommandText= "select * from Pay_AppraisalTemplate where N_CompanyID=@p1 and N_TemplateID not in (select N_TemplateID from pay_evaluationsettings where n_companyid=@p1 and (D_PeriodFrom<=@dPeriodFrom and D_PeriodTo>=@dPeriodFrom) or ((D_PeriodFrom<=@dPeriodTo and D_PeriodTo>=@dPeriodTo))) order by N_TemplateID"; 
                 Params.Add("@dPeriodFrom", dPeriodFrom);
                 Params.Add("@dPeriodTo", dPeriodTo);
             }
@@ -363,8 +363,20 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Results = dLayer.DeleteData("Pay_AppraisalTemplate", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection);
 
+                     object tempcount = dLayer.ExecuteScalar("select count(*) from Pay_EvaluationSettings where N_TemplateID=" + nTemplateID + " and N_CompanyID=" + nCompanyID + "", connection);
+                     object tempempcount= dLayer.ExecuteScalar("select count(*) from Pay_Employee where N_TemplateID=" + nTemplateID + " and N_CompanyID=" + nCompanyID + "", connection);
+                      
+                         int ntempcount = myFunctions.getIntVAL(tempcount.ToString());
+                         int ntempempcount = myFunctions.getIntVAL(tempempcount.ToString());
+                         if(ntempcount==0 && ntempempcount==0) 
+                      {
+                     Results = dLayer.DeleteData("Pay_AppraisalTemplate", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection);
+                      }
+                      else{
+                    return Ok(_api.Error(User, "Unable to delete template already in use"));
+                      }
+                     
                     if (Results > 0)
                     {
                         dLayer.DeleteData("Pay_CompetencyCategory", "N_TemplateID", nTemplateID, "N_CompanyID =" + nCompanyID, connection);

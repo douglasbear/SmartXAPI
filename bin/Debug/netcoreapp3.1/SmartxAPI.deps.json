@@ -50,6 +50,7 @@
           "ZXing.Net": "0.16.8",
           "Zen.Barcode.Rendering.Framework": "3.1.10729.1",
           "iTextSharp": "5.5.13.3",
+          "Twilio": "5.75.1",
           "Microsoft.AspNetCore.Antiforgery": "3.1.0.0",
           "Microsoft.AspNetCore.Authentication.Abstractions": "3.1.0.0",
           "Microsoft.AspNetCore.Authentication.Cookies": "3.1.0.0",
@@ -1720,6 +1721,23 @@
           "System.Threading": "4.3.0",
           "System.Xml.ReaderWriter": "4.3.0",
           "System.Xml.XmlDocument": "4.3.0"
+        }
+      },
+      "Twilio/5.75.1": {
+        "dependencies": {
+          "Microsoft.IdentityModel.Tokens": "6.5.1",
+          "Newtonsoft.Json": "12.0.2",
+          "System.Collections.Specialized": "4.3.0",
+          "System.IdentityModel.Tokens.Jwt": "6.5.1"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Twilio.dll": {
+            "assemblyVersion": "5.75.1.0",
+            "fileVersion": "5.75.1.0"
+          }
+        },
+        "compile": {
+          "lib/netstandard2.0/Twilio.dll": {}
         }
       },
       "Vse.Web.Serialization.ControlledSerializationJsonConverter/1.0.4": {
@@ -4285,6 +4303,13 @@
       "sha512": "sha512-MYoTCP7EZ98RrANESW05J5ZwskKDoN0AuZ06ZflnowE50LTpbR5yRg3tHckTVm5j/m47stuGgCrCHWePyHS70Q==",
       "path": "system.xml.xmlserializer/4.3.0",
       "hashPath": "system.xml.xmlserializer.4.3.0.nupkg.sha512"
+    },
+    "Twilio/5.75.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-uYkeKaWiewfxWyQXkPsOD3tUyAAvEYEu097D7SFlpDhCFDVuDz1MoDYFvu/w10Z0Jb1c96Y/ZAr8PqB7tnv9lA==",
+      "path": "twilio/5.75.1",
+      "hashPath": "twilio.5.75.1.nupkg.sha512"
     },
     "Vse.Web.Serialization.ControlledSerializationJsonConverter/1.0.4": {
       "type": "package",

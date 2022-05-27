@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
 
         }
 
-          [HttpGet("list")]
+        [HttpGet("list")]
         public ActionResult GetTimsheetList(int? nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
@@ -198,6 +198,7 @@ namespace SmartxAPI.Controllers
                     DataSet dt = new DataSet();
                     SortedList Params = new SortedList();
                     SortedList secParams = new SortedList();
+                    SortedList payRateParams = new SortedList();
                     SortedList payParams = new SortedList();
                     bool bCategoryWiseDeduction = false;
                     bool bCategoryWiseAddition = false;
@@ -215,6 +216,7 @@ namespace SmartxAPI.Controllers
                     DataTable PayOffDays = new DataTable();
                     DataTable PayWorkingHours = new DataTable();
                     DataTable SummaryTable = new DataTable();
+                    DataTable payRate = new DataTable();
 
 
 
@@ -342,7 +344,7 @@ namespace SmartxAPI.Controllers
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "N_Workhours", typeof(double), null);
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "Attandance", typeof(string), null);
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "X_Type", typeof(string), null);
-                               // TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "N_Vacation", typeof(int), 0);
+                                // TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "N_Vacation", typeof(int), 0);
 
                                 string Sql8 = "Select * from vw_pay_OffDays Where N_CompanyID =" + nCompanyID + " and (N_FNyearID= " + nFnYearID + " or N_FNyearID=0)  ";
                                 PayOffDays = dLayer.ExecuteDataTable(Sql8, secParams, connection);
@@ -434,6 +436,13 @@ namespace SmartxAPI.Controllers
                                 string payAttendanceSql = "SP_Pay_TimeSheet @nCompanyID,@nFnYearID,@dtpFromdate,@dtpTodate,@N_EmpID";
                                 PayAttendence = dLayer.ExecuteDataTable(payAttendanceSql, secParams, connection);
 
+                                payRateParams.Add("@nCompanyID", nCompanyID);
+                                payRateParams.Add("@nFnYearID", nFnYearID);
+                                payRateParams.Add("@dtpFromdate", dtpFromdate);
+                                payRateParams.Add("@dtpTodate", dtpTodate);
+                                payRateParams.Add("@N_EmpID", nEmpID);
+                                string payRateSql = "SP_Pay_SelAddOrDed_Emp " + nCompanyID + "," +payRunID + "," +nFnYearID + "," + nEmpID;
+                                payRate = dLayer.ExecuteDataTable(payRateSql, Params,connection);
 
                                 PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "N_Vacation", typeof(int), 0);
                                 PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "N_Workhours", typeof(double), null);
@@ -763,6 +772,7 @@ namespace SmartxAPI.Controllers
                                 PayOffDays = _api.Format(PayOffDays, "PayOffDays");
                                 PayWorkingHours = _api.Format(PayWorkingHours, "PayWorkingHours");
                                 SummaryTable = _api.Format(SummaryTable, "SummaryTable");//Accept this line ==>Aswin
+                                payRate= _api.Format(payRate, "payRate");//Accept this line ==>Aswin
 
                                 // Master = _api.Format(Master, "Master");
 
@@ -772,6 +782,7 @@ namespace SmartxAPI.Controllers
                                 dt.Tables.Add(PayOffDays);
                                 dt.Tables.Add(PayWorkingHours);
                                 dt.Tables.Add(SummaryTable);
+                                dt.Tables.Add(payRate);
 
                                 //dt.Tables.Add(Master);
 
@@ -806,22 +817,22 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 DataTable MasterDetailTable;
-                DataTable DetailTable; 
-                DataTable AddOrDedTable; 
-                DataTable AddOrDedDetailTable; 
+                DataTable DetailTable;
+                DataTable AddOrDedTable;
+                DataTable AddOrDedDetailTable;
                 MasterTable = ds.Tables["master"];
                 MasterDetailTable = ds.Tables["masterDetails"];
                 DetailTable = ds.Tables["details"];
-                // AddOrDedTable = ds.Tables["AddOrDed"];
-                // AddOrDedDetailTable = ds.Tables["AddOrDedDetails"];
+                AddOrDedTable = ds.Tables["AddOrDed"];
+                AddOrDedDetailTable = ds.Tables["AddOrDedDetails"];
 
-                bool bSavePaycode=false;
+                bool bSavePaycode = false;
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
                 int N_TimeSheetApproveID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TimeSheetApproveID"].ToString());
-                // int N_SProcessType = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SProcessType"].ToString());
-                // MasterTable.Columns.Remove("N_SProcessType");
+                int N_SProcessType = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SProcessType"].ToString());
+                MasterTable.Columns.Remove("N_SProcessType");
 
                 DateTime dSalDate = Convert.ToDateTime(MasterTable.Rows[0]["D_SalaryDate"].ToString());
                 DateTime dFromDate = Convert.ToDateTime(MasterTable.Rows[0]["D_DateFrom"].ToString());
@@ -864,20 +875,20 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_TimeSheet", "N_TimesheetID", N_TimeSheetApproveID, "N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Pay_TimeSheetMaster", "N_TimesheetID", N_TimeSheetApproveID, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearId, connection, transaction);
                         dLayer.DeleteData("Pay_TimeSheetApproveMaster", "N_TimesheetID", N_TimeSheetApproveID, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearId, connection, transaction);
-                    }    
+                    }
 
-                    int N_AddOrDedID=0; 
+                    int N_AddOrDedID = 0;
 
                     // if(N_SProcessType==1)
                     // {
-                    //     object obj = dLayer.ExecuteScalar(" select N_TransID from Pay_MonthlyAddOrDed where N_CompanyID=" + nCompanyID + " and N_PayrunID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_BatchID"].ToString())+ "", connection, transaction);
-                    //     if (obj == null)
-                    //         N_AddOrDedID = 0;
-                    //     else if (myFunctions.getIntVAL(obj.ToString()) > 0)
-                    //         N_AddOrDedID = myFunctions.getIntVAL(obj.ToString());
+                        object obj = dLayer.ExecuteScalar(" select N_TransID from Pay_MonthlyAddOrDed where N_CompanyID=" + nCompanyID + " and N_PayrunID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_BatchID"].ToString())+ "", connection, transaction);
+                        if (obj == null)
+                            N_AddOrDedID = 0;
+                        else if (myFunctions.getIntVAL(obj.ToString()) > 0)
+                            N_AddOrDedID = myFunctions.getIntVAL(obj.ToString());
 
-                    //     if(N_AddOrDedID==0)
-                    //          N_AddOrDedID = dLayer.SaveData("Pay_MonthlyAddOrDed", "N_TransID", AddOrDedTable, connection, transaction);
+                        if(N_AddOrDedID==0)
+                             N_AddOrDedID = dLayer.SaveData("Pay_MonthlyAddOrDed", "N_TransID", AddOrDedTable, connection, transaction);
                     // }            
 
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_BatchCode='" + X_BatchCode + "' and N_FnyearID=" + nFnYearId;
@@ -888,21 +899,21 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to save"));
                     }
 
-                    int nTimesheetmasterID=0;
+                    int nTimesheetmasterID = 0;
                     for (int j = 0; j < MasterDetailTable.Rows.Count; j++)
                     {
                         MasterDetailTable.Rows[j]["N_TimeSheetApproveID"] = N_TimeSheetApproveID;
-                        MasterDetailTable.Rows[j]["X_BatchCode"] = (myFunctions.getIntVAL(MasterTable.Rows[0]["X_BatchCode"].ToString())+j).ToString();
+                        MasterDetailTable.Rows[j]["X_BatchCode"] = (myFunctions.getIntVAL(MasterTable.Rows[0]["X_BatchCode"].ToString()) + j).ToString();
 
-                       // DataTable dtRFQ = dLayer.ExecuteDataTable("select * from Pay_MonthlyAddOrDed where N_CompanyID is null",Params, connection,transaction);
-                   
-                        nTimesheetmasterID = dLayer.SaveDataWithIndex("Pay_TimeSheetMaster", "N_TimeSheetID","","",j, MasterDetailTable, connection, transaction);
+                        // DataTable dtRFQ = dLayer.ExecuteDataTable("select * from Pay_MonthlyAddOrDed where N_CompanyID is null",Params, connection,transaction);
+
+                        nTimesheetmasterID = dLayer.SaveDataWithIndex("Pay_TimeSheetMaster", "N_TimeSheetID", "", "", j, MasterDetailTable, connection, transaction);
                         if (nTimesheetmasterID <= 0)
                         {
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Unable to save"));
                         }
-                      
+
                         foreach (DataRow var in DetailTable.Rows)
                         {
                             if (MasterDetailTable.Rows[j]["N_EmpID"].ToString() != var["N_EmpID"].ToString()) continue;
@@ -911,20 +922,20 @@ namespace SmartxAPI.Controllers
                             var["N_TimeSheetID"] = nTimesheetmasterID;
                             var["N_TimeSheetApproveID"] = N_TimeSheetApproveID;
                         }
-                        // foreach (DataRow var1 in AddOrDedDetailTable.Rows)
-                        // {
-                        //     if (MasterDetailTable.Rows[j]["N_EmpID"].ToString() != var1["N_EmpID"].ToString()) continue;
+                        foreach (DataRow var1 in AddOrDedDetailTable.Rows)
+                        {
+                            if (MasterDetailTable.Rows[j]["N_EmpID"].ToString() != var1["N_EmpID"].ToString()) continue;
 
-                        //     var1["N_TransID"] = N_AddOrDedID;
-                        //     var1["N_RefID"] = nTimesheetmasterID;
-                        // }
+                            var1["N_TransID"] = N_AddOrDedID;
+                            var1["N_RefID"] = nTimesheetmasterID;
+                        }
                     }
 
-                    int nTimesheetID=0,nAddOrDedDetailID=0;
+                    int nTimesheetID = 0, nAddOrDedDetailID = 0;
 
                     // if(N_SProcessType==1)
                     // {
-                    //     nAddOrDedDetailID = dLayer.SaveData("Pay_MonthlyAddOrDedDetails", "N_TransDetailsID", AddOrDedDetailTable, connection, transaction);
+                        nAddOrDedDetailID = dLayer.SaveData("Pay_MonthlyAddOrDedDetails", "N_TransDetailsID", AddOrDedDetailTable, connection, transaction);
                     // }   
 
                     nTimesheetID = dLayer.SaveData("Pay_TimeSheet", "N_SheetID", DetailTable, connection, transaction);
@@ -933,8 +944,8 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to save"));
                     }
-                        
-                    
+
+
 
                     transaction.Commit();
                     return Ok(_api.Success("Saved Successfully"));

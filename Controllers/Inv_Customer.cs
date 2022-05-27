@@ -602,6 +602,23 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "portalURL", typeof(string), "");
+
+                    object Count = dLayer.ExecuteScalar("select count(*)  from vw_Inv_CheckCustomer where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID", Params, connection);
+                    int NCount = myFunctions.getIntVAL(Count.ToString());
+                    if (NCount > 0)
+                    {
+                       
+                        if (dt.Rows.Count > 0)
+                        {
+                            dt.Columns.Add("b_isUsed");
+                            dt.Rows[0]["b_isUsed"]=true;
+                            
+                          
+                        }
+
+
+                    }
+
                     if (dt.Rows.Count == 0)
                     {
                         return Ok(api.Notice("No Results Found"));
@@ -671,7 +688,7 @@ namespace SmartxAPI.Controllers
             }
         } 
 
-   [HttpGet("totalInvoiceAmount")]
+        [HttpGet("totalInvoiceAmount")]
         public ActionResult GetCustomerDetail(int nCustomerID, int nFnYearID)
         {
             DataTable dt = new DataTable();

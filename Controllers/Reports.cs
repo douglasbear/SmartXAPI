@@ -467,7 +467,7 @@ namespace SmartxAPI.Controllers
                         {
                             object PICKList = dLayer.ExecuteScalar("select X_PickListCode from vw_WhPickListMaster where n_companyid=" + nCompanyId + " and N_PickListID=" + nPkeyID, connection, transaction);
                             CreateBarcode(PICKList.ToString());
-                            
+
                         }
 
                         string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
@@ -996,8 +996,8 @@ namespace SmartxAPI.Controllers
                     if (xProCode != "")
                     {
 
-                         bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
-                        
+                        bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
+
 
                         SortedList mParamsList = new SortedList()
                             {
@@ -1440,6 +1440,28 @@ namespace SmartxAPI.Controllers
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             return new string(Enumerable.Repeat(chars, length)
               .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+        [HttpPost("sendmessage")]
+        public IActionResult SendMessage([FromBody] DataSet ds)
+        {
+            DataTable dt = new DataTable();
+            dt = ds.Tables["master"];
+            string x_Mobile = "+" + dt.Rows[0]["x_MobileNo"].ToString();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            SortedList QueryParams = new SortedList();
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                object Currency = dLayer.ExecuteScalar("select x_currency from acc_company  where n_companyid=" + nCompanyId, QueryParams, connection);
+                DateTime deldate = Convert.ToDateTime(dt.Rows[0]["d_Deliverydate"].ToString());
+                string body = "Dear " + dt.Rows[0]["x_CustomerName"].ToString() + ",%0A%0AThe *Repair Order* for your Device is *" + dt.Rows[0]["x_ServiceCode"].ToString() + "* opened on " + dt.Rows[0]["d_Entrydate"].ToString() + ".%0A%0AEstimated time of delivery (ETD) is " + deldate.ToString("dd/MM/yyyy") + " and estimated amount is " + dt.Rows[0]["n_BillAmountF"].ToString()+" "+Currency + ". %0A%0ARegards, %0A" + dt.Rows[0]["x_UserName"].ToString();
+                var client = new WebClient();
+                var content = client.DownloadString("https://api.textmebot.com/send.php?recipient=" + x_Mobile + "&apikey=FmxUWUvgeou2&text=" + body);
+
+            }
+            return Ok(_api.Success("Message Sent"));
+
         }
 
 

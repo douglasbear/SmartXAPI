@@ -73,7 +73,7 @@ namespace SmartxAPI.Controllers
                 Searchkey = " and (X_Opportunity like'%" + xSearchkey + "%'or X_OpportunityCode like'%" + xSearchkey + "%'or N_ExpRevenue like'%" + xSearchkey + "%'or X_Stage like'%" + xSearchkey + "%'or D_ClosingDate like'%" + xSearchkey + "%'or X_nextStep like'%" + xSearchkey + "%'or X_Contact like'%" + xSearchkey + "%'or X_Mobile like'%" + xSearchkey + "%'or X_SalesmanName like'%" + xSearchkey + "%'or X_StatusType like'%" + xSearchkey + "%' or X_Probability like'%" + xSearchkey + "%' or x_NextActivity like'%" + xSearchkey + "%' or X_WorkType like'%" + xSearchkey + "%' or X_Contact like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by D_LeadDate desc";
+                xSortBy = " order by D_EntryDate desc";
             else
                 xSortBy = " order by " + xSortBy;
 

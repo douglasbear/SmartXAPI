@@ -19,6 +19,10 @@ using ZXing;
 using System.Drawing;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
+using System.Collections.Generic;
+using Twilio;
+using Twilio.Rest.Api.V2010.Account;
+using Twilio.Types;
 
 
 namespace SmartxAPI.Controllers
@@ -290,51 +294,50 @@ namespace SmartxAPI.Controllers
         [HttpPost("generatebarcode")]
         public ActionResult GenerateBarcode([FromBody] DataSet ds)
         {
-            try
+            DataTable products = new DataTable();
+            // Datatable products = new Datatable();
+            products = ds.Tables["details"];
+
+            string path = this.TempFilesPath + "//barcode.pdf";
+            Document doc = new Document(PageSize.A4);
+            var output = new FileStream(path, FileMode.Create);
+            var writer = PdfWriter.GetInstance(doc, output);
+            doc.Open();
+            for (int k = 0; k < products.Rows.Count; k++)
             {
-                DataTable products = new DataTable();
-                // Datatable products = new Datatable();
-                products = ds.Tables["details"];
-                
-                string path = this.TempFilesPath + "//barcode.pdf";
-                Document doc = new Document(PageSize.A4);
-                var output = new FileStream(path, FileMode.Create);
-                var writer = PdfWriter.GetInstance(doc, output);
-                doc.Open();
-                for (int k = 0; k < products.Rows.Count; k++)
+                string xItemName = products.Rows[k]["x_ItemName"].ToString();
+                string xBarcode = products.Rows[k]["x_ItemCode"].ToString();
+                string nPrice = products.Rows[k]["n_Cost"].ToString();
+
+                if (CreateBarcode(xBarcode))
                 {
-                    string xItemName = products.Rows[k]["x_ItemName"].ToString();
-                    string xBarcode = products.Rows[k]["x_ItemCode"].ToString();
-                    string nPrice = products.Rows[k]["n_Cost"].ToString();
+                    string bimageloc = "C://Olivoserver2020/Barcode/";
 
-                    if (CreateBarcode(xBarcode))
-                    {
-                        string bimageloc = "C://Olivoserver2020/Barcode/";
-                        bimageloc = bimageloc + xBarcode + ".png";
-                        //string path = this.TempFilesPath + "//barcode" + xBarcode + ".pdf";
-                        Chunk c1 = new Chunk(xItemName);
-                        doc.Add(c1);
+                    //Font
+                    BaseFont bf = BaseFont.CreateFont(BaseFont.TIMES_ROMAN, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+                    iTextSharp.text.Font font = new iTextSharp.text.Font(bf, 15, iTextSharp.text.Font.NORMAL);
+                    Paragraph p1 = new Paragraph(new Chunk(xItemName, font));
+                    p1.IndentationRight = 100;
+                    p1.IndentationLeft = 100;
+                    //Chunk c1 = new Chunk(xItemName);
+                    doc.Add(p1);
 
-                        var logo = iTextSharp.text.Image.GetInstance(bimageloc);
-                        logo.SetAbsolutePosition(0, 550);
-                        logo.ScaleAbsoluteHeight(200);
-                        logo.ScaleAbsoluteWidth(280);
-                        doc.Add(logo);
-                        doc.NewPage();
+                    bimageloc = bimageloc + xBarcode + ".png";
+                    var logo = iTextSharp.text.Image.GetInstance(bimageloc);
+                    // logo.SetAbsolutePosition(0, 550);
+                    logo.ScaleAbsoluteHeight(100);
+                    logo.ScaleAbsoluteWidth(280);
+                    doc.Add(logo);
+                    doc.NewPage();
 
-                        //createpdf(bimageloc, xItemName, nPrice, xBarcode);
-                    }
                 }
-                doc.Close();
-                return Ok(_api.Success(new SortedList() { { "FileName", "barcode.pdf" } }));
-
             }
-            catch (Exception e)
-            {
-                return Ok(_api.Error(User, e));
-            }
+            doc.Close();
+            return Ok(_api.Success(new SortedList() { { "FileName", "barcode.pdf" } }));
 
         }
+
+
         public void createpdf(string bimage, string productname, string price, string xBarcode)
         {
             Document doc = new Document(PageSize.A4);

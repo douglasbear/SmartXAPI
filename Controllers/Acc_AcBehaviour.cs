@@ -204,6 +204,34 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User,ex));
             }
         }
+
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nLedgerID, int nFnYearID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nFnYearID);
+
+                    dLayer.ExecuteNonQuery("Update Acc_MastLedger Set X_CashTypeBehaviour='',N_CashBahavID=0,N_TransBehavID=0 where N_LedgerID= " + nLedgerID + " and N_CompanyID = @p1 and N_FnYearID = @p2", Params, connection, transaction);
+                    
+                    transaction.Commit();
+                    return Ok(_api.Success(""));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+
+        }
      
 
         }
