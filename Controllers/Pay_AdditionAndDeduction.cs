@@ -527,10 +527,29 @@ if (xBatch != null)
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (x_Batch like '%" + xSearchkey + "%' or right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) like '%" + xSearchkey + "%' or X_Notes like '%" + xSearchkey + "%' or REPLACE(CONVERT(CHAR(11), D_TransDate, 106),' ','-') like '%" + xSearchkey + "%')";
 
-            if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by X_Batch desc,D_TransDate desc";
-            else
-                xSortBy = " order by " + xSortBy;
+         
+           if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by X_Batch desc";
+           else
+             {
+               switch (xSortBy.Split(" ")[0])
+                    {
+                        case "d_TransDate":
+                            xSortBy = "Cast([d_TransDate] as DateTime ) " + xSortBy.Split(" ")[1];
+                            break;
+                        case "x_PayrunText":
+                            xSortBy = "Cast([x_PayrunText] as Date ) " + xSortBy.Split(" ")[1];
+                            break;
+           
+                            
+                        default: break;
+                        }
+                        xSortBy = " order by " + xSortBy;
+                    }
+           //}
+            //     xSortBy = " order by X_Batch desc,x_PayrunText,D_TransDate desc";
+            // else
+            //     xSortBy = " order by " + xSortBy;
 
 
             if (Count == 0)
