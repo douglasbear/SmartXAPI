@@ -40,74 +40,74 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
 
-            int Count = (nPage - 1) * nSizeperpage;
-            string sqlCommandText = "";
-            string sqlCommandCount = "";
-            string Searchkey = "";
-            string UserPattern = myFunctions.GetUserPattern(User);
-            int nUserID = myFunctions.GetUserID(User);
-            string Pattern = "";
-            if (UserPattern != "")
-            {
-                Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
-                Params.Add("@UserPattern", UserPattern);
-            }
-            // else
-            // {
-            //      object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
-
-
-                // if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
-                //     Pattern = " and N_CreatedUser=" + nUserID;
-
-            //     if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
-            //         Pattern = " and N_UserID=" + nUserID;
-            //     if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
-            //         Pattern = " and N_CreatedUser=" + nUserID;
-
-               
-            // }
-
-            Pattern="";
-            if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([Voucher No] like '%" + xSearchkey + "%' or Account like '%" + xSearchkey + "%' or X_Remarks like '%" + xSearchkey + "%' or [Voucher Date] like '%" + xSearchkey + "%' or n_Amount like '%" + xSearchkey + "%' )";
-
-            if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_VoucherID desc";
-            else
-            {
-                switch (xSortBy.Split(" ")[0])
-                {
-                    case "voucherNo":
-                        xSortBy = "N_VoucherID " + xSortBy.Split(" ")[1];
-                        break;
-                    case "voucherDate":
-                        xSortBy = "[Voucher Date] " + xSortBy.Split(" ")[1];
-                        break;
-                    case "n_Amount":
-                        xSortBy = "Cast(REPLACE(n_Amount,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
-                        break;
-                    default: break;
-                }
-                xSortBy = " order by " + xSortBy;
-            }
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string sqlCommandCount = "";
+                    string Searchkey = "";
+                    string UserPattern = myFunctions.GetUserPattern(User);
+                    int nUserID = myFunctions.GetUserID(User);
+                    string Pattern = "";
+                    if (UserPattern != "")
+                    {
+                        Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
+                        Params.Add("@UserPattern", UserPattern);
+                    }
+                    // else
+                    // {
+                    //      object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
 
 
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + Pattern + Searchkey + " " + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + Searchkey + " and X_TransType=@p3 and N_VoucherId not in (select top(" + Count + ") N_VoucherId from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + xSortBy + " ) " + xSortBy;
+                    // if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    //     Pattern = " and N_CreatedUser=" + nUserID;
+
+                    //     if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    //         Pattern = " and N_UserID=" + nUserID;
+                    //     if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    //         Pattern = " and N_CreatedUser=" + nUserID;
 
 
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
-            Params.Add("@p3", voucherType);
-            SortedList OutPut = new SortedList();
+                    // }
 
-           
+                    Pattern = "";
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and ([Voucher No] like '%" + xSearchkey + "%' or Account like '%" + xSearchkey + "%' or X_Remarks like '%" + xSearchkey + "%' or [Voucher Date] like '%" + xSearchkey + "%' or n_Amount like '%" + xSearchkey + "%' )";
+
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by N_VoucherID desc";
+                    else
+                    {
+                        switch (xSortBy.Split(" ")[0])
+                        {
+                            case "voucherNo":
+                                xSortBy = "N_VoucherID " + xSortBy.Split(" ")[1];
+                                break;
+                            case "voucherDate":
+                                xSortBy = "[Voucher Date] " + xSortBy.Split(" ")[1];
+                                break;
+                            case "n_Amount":
+                                xSortBy = "Cast(REPLACE(n_Amount,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
+                                break;
+                            default: break;
+                        }
+                        xSortBy = " order by " + xSortBy;
+                    }
+
+
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + Pattern + Searchkey + " " + xSortBy;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + Searchkey + " and X_TransType=@p3 and N_VoucherId not in (select top(" + Count + ") N_VoucherId from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + xSortBy + " ) " + xSortBy;
+
+
+                    Params.Add("@p1", nCompanyId);
+                    Params.Add("@p2", nFnYearId);
+                    Params.Add("@p3", voucherType);
+                    SortedList OutPut = new SortedList();
+
+
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(16,2)) ) as TotalAmount from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + Pattern + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
@@ -122,16 +122,16 @@ namespace SmartxAPI.Controllers
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     OutPut.Add("TotalSum", TotalSum);
-                
-                if (dt.Rows.Count == 0)
-                {
-                    // return Ok(api.Warning("No Results Found"));
-                    return Ok(api.Success(OutPut));
-                }
-                else
-                {
-                    return Ok(api.Success(OutPut));
-                }
+
+                    if (dt.Rows.Count == 0)
+                    {
+                        // return Ok(api.Warning("No Results Found"));
+                        return Ok(api.Success(OutPut));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
                 }
             }
             catch (Exception e)
@@ -218,14 +218,21 @@ namespace SmartxAPI.Controllers
 
             try
             {
+
                 DataTable MasterTable;
                 DataTable DetailTable;
                 DataTable InfoTable;
                 DataTable CostCenterTable;
+                DataTable DetailsToImport;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
                 CostCenterTable = ds.Tables["CostCenterTable"];
                 InfoTable = ds.Tables["info"];
+                DetailsToImport = ds.Tables["detailsImport"];
+                bool B_isImport = false;
+
+                if (ds.Tables.Contains("detailsImport"))
+                    B_isImport = true;
                 SortedList Params = new SortedList();
 
                 DataTable Approvals;
@@ -234,18 +241,17 @@ namespace SmartxAPI.Controllers
 
                 DataRow masterRow = MasterTable.Rows[0];
                 var xVoucherNo = masterRow["x_VoucherNo"].ToString();
-                var xTransType = masterRow["x_TransType"].ToString();
+                var xTransType = masterRow["x_TransType"].ToString(); 
                 var InvoiceNo = masterRow["x_TransType"].ToString();
                 var nCompanyId = masterRow["n_CompanyId"].ToString();
                 var nFnYearId = masterRow["n_FnYearId"].ToString();
                 int N_VoucherID = myFunctions.getIntVAL(masterRow["n_VoucherID"].ToString());
                 var nUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var nFormID = 0;
-                int N_NextApproverID=0;
+                int N_NextApproverID = 0;
                 int N_SaveDraft = 0;// myFunctions.getIntVAL(masterRow["b_IssaveDraft"].ToString());
-                // int N_SaveDraft = 0;
-                // if(saveDraft) N_SaveDraft=1;
-
+                                    // int N_SaveDraft = 0;
+                                    // if(saveDraft) N_SaveDraft=1;
 
 
                 if (xTransType.ToLower() == "pv")
@@ -272,28 +278,28 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
 
-                    
-                //  if (!myFunctions.CheckActiveYearTransaction(myFunctions.getIntVAL(nCompanyId.ToString()),myFunctions.getIntVAL(nFnYearId.ToString()), DateTime.ParseExact(MasterTable.Rows[0]["D_VoucherDate"].ToString(), "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
-                //     {
-                //         object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyId+" and convert(date ,'" + MasterTable.Rows[0]["D_VoucherDate"].ToString() + "') between D_Start and D_End", connection, transaction);
-                //         if (DiffFnYearID != null)
-                //         {
-                //             MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
-                //             nFnYearId = DiffFnYearID.ToString();
-                //            // QueryParams["@nFnYearID"] = N_FnYearID;
-                //         }
-                //         else
-                //         {
-                //             transaction.Rollback();
-                //             return Ok(api.Error(User, "Transaction date must be in the active Financial Year."));
-                //         }
-                //     }
+
+                    //  if (!myFunctions.CheckActiveYearTransaction(myFunctions.getIntVAL(nCompanyId.ToString()),myFunctions.getIntVAL(nFnYearId.ToString()), DateTime.ParseExact(MasterTable.Rows[0]["D_VoucherDate"].ToString(), "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                    //     {
+                    //         object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyId+" and convert(date ,'" + MasterTable.Rows[0]["D_VoucherDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                    //         if (DiffFnYearID != null)
+                    //         {
+                    //             MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                    //             nFnYearId = DiffFnYearID.ToString();
+                    //            // QueryParams["@nFnYearID"] = N_FnYearID;
+                    //         }
+                    //         else
+                    //         {
+                    //             transaction.Rollback();
+                    //             return Ok(api.Error(User, "Transaction date must be in the active Financial Year."));
+                    //         }
+                    //     }
                     if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_VoucherID > 0)
                     {
                         int N_PkeyID = N_VoucherID;
                         string X_Criteria = "N_VoucherID=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId;
                         myFunctions.UpdateApproverEntry(Approvals, "Acc_VoucherMaster", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearId.ToString()), xTransType, N_PkeyID, xVoucherNo, 1, "", 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, myFunctions.getIntVAL(nFnYearId.ToString()), xTransType, N_PkeyID, xVoucherNo, 1, "", 0, "", User, dLayer, connection, transaction);
                         //myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_SalesID, objCustName.ToString().Trim(), objCustCode.ToString(), N_CustomerID, "Customer Document", User, connection, transaction);
 
                         N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Acc_VoucherMaster where N_VoucherID=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, connection, transaction).ToString());
@@ -312,7 +318,7 @@ namespace SmartxAPI.Controllers
                         transaction.Commit();
                         return Ok(api.Success("Voucher Approved " + "-" + xVoucherNo));
                     }
-                    
+
                     if (xVoucherNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyId);
@@ -358,13 +364,14 @@ namespace SmartxAPI.Controllers
                     MasterTable.Rows[0]["n_UserID"] = myFunctions.GetUserID(User);
                     MasterTable.AcceptChanges();
 
+
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
 
                     N_VoucherID = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId", DupCriteria, "", MasterTable, connection, transaction);
                     if (N_VoucherID > 0)
                     {
 
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearId.ToString()), xTransType, N_VoucherID, xVoucherNo, 1, "", 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, myFunctions.getIntVAL(nFnYearId.ToString()), xTransType, N_VoucherID, xVoucherNo, 1, "", 0, "", User, dLayer, connection, transaction);
                         N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Acc_VoucherMaster where N_VoucherId=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, connection, transaction).ToString());
 
                         SortedList LogParams = new SortedList();
@@ -381,6 +388,43 @@ namespace SmartxAPI.Controllers
 
                         //dLayer.ExecuteNonQuery("SP_Log_SysActivity ",LogParams,connection,transaction);
                         int N_InvoiceDetailId = 0;
+
+                        if (B_isImport)
+                        {
+                            foreach (DataColumn col in DetailsToImport.Columns)
+                            {
+                                col.ColumnName = col.ColumnName.Replace(" ", "_");
+                                col.ColumnName = col.ColumnName.Replace("*", "");
+                                col.ColumnName = col.ColumnName.Replace("/", "_");
+                            }
+
+                            DetailsToImport.Columns.Add("N_MasterID");
+                            DetailsToImport.Columns.Add("X_Type");
+                            DetailsToImport.Columns.Add("N_CompanyID");
+                            DetailsToImport.Columns.Add("PkeyID");
+                            foreach (DataRow dtRow in DetailsToImport.Rows)
+                            {
+                                dtRow["N_MasterID"] = N_VoucherID;
+                                dtRow["X_Type"] = xTransType;
+                                dtRow["N_CompanyID"] = nCompanyId;
+                                dtRow["PkeyID"] = 0;
+
+                            }
+
+                            dLayer.ExecuteNonQuery("delete from Mig_vouchers ", connection, transaction);
+                            dLayer.SaveData("Mig_vouchers", "PkeyID", "", "", DetailsToImport, connection, transaction);
+
+                            SortedList ProParam = new SortedList();
+                            ProParam.Add("N_CompanyID", nCompanyId);
+                            ProParam.Add("N_PKeyID", N_VoucherID);
+                         
+                            ProParam.Add("X_Type", xTransType);
+                            DetailTable = dLayer.ExecuteDataTablePro("SP_ScreenDataImport", ProParam, connection,transaction);
+
+
+
+                        }
+
                         for (int j = 0; j < DetailTable.Rows.Count; j++)
                         {
                             DetailTable.Rows[j]["N_VoucherId"] = N_VoucherID;
@@ -412,8 +456,8 @@ namespace SmartxAPI.Controllers
                             CostCenterTable.Columns.Remove("percentage");
 
                         CostCenterTable.AcceptChanges();
-                      // DupCriteria = "N_CompanyID = " + nCompanyId + " and N_VoucherID = '" + N_VoucherID + "' and N_FnYearID=" + nFnYearId;
-                       DupCriteria = "";
+                        // DupCriteria = "N_CompanyID = " + nCompanyId + " and N_VoucherID = '" + N_VoucherID + "' and N_FnYearID=" + nFnYearId;
+                        DupCriteria = "";
                         int N_SegmentId = dLayer.SaveData("Acc_VoucherMaster_Details_Segments", "N_VoucherSegmentID", DupCriteria, "", CostCenterTable, connection, transaction);
 
                         
@@ -440,6 +484,8 @@ namespace SmartxAPI.Controllers
                         }
 
                     }
+
+                    
                     //return Ok(api.Success("Data Saved"));
                     // return Ok(api.Success("Data Saved" + ":" + xVoucherNo));
                     SortedList Result = new SortedList();
@@ -455,7 +501,7 @@ namespace SmartxAPI.Controllers
         }
         //Delete....
         [HttpDelete()]
-        public ActionResult DeleteData(int nVoucherID, string xTransType,int nCompanyID, int nFnYearID,string comments)
+        public ActionResult DeleteData(int nVoucherID, string xTransType, int nCompanyID, int nFnYearID, string comments)
         {
             int Results = 0;
             try
@@ -464,7 +510,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     DataTable TransData = new DataTable();
-                    SortedList ParamList = new SortedList(); 
+                    SortedList ParamList = new SortedList();
                     ParamList.Add("@nTransID", nVoucherID);
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", nCompanyID);
@@ -477,7 +523,7 @@ namespace SmartxAPI.Controllers
                     }
                     DataRow TransRow = TransData.Rows[0];
 
-                    int nFormID=0;
+                    int nFormID = 0;
                     if (xTransType.ToLower() == "pv")
                         nFormID = 44;
                     else if (xTransType.ToLower() == "rv")
@@ -493,7 +539,7 @@ namespace SmartxAPI.Controllers
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
 
-                     if (ButtonTag == "6" || ButtonTag == "0")
+                    if (ButtonTag == "6" || ButtonTag == "0")
                     {
                         SortedList Params = new SortedList();
                         Params.Add("N_CompanyID", myFunctions.GetCompanyID(User));
@@ -511,9 +557,9 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(api.Error(User, "Unable to delete Voucher"));
                         }
-                  
-                }
-                return Ok(api.Success("Voucher deleted"));
+
+                    }
+                    return Ok(api.Success("Voucher deleted"));
                 }
 
             }

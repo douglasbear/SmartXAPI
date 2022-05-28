@@ -178,6 +178,7 @@ namespace SmartxAPI.Controllers
                     int N_LocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationID"].ToString());
                     int N_LocationIDFrom = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationIDfrom"].ToString());
                     MasterTable.Columns.Remove("N_LocationIDfrom");
+                  
 
                     string X_ReferenceNo = MasterTable.Rows[0]["X_ReferenceNo"].ToString();
                     string X_TransType = "STOCK RECEIVE";
@@ -220,6 +221,15 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_ReferenceNo"] = X_ReferenceNo;
 
                     }
+
+                  object nprocessed= dLayer.ExecuteScalar("select n_processed from Inv_TransferStock where N_TransferId='"+N_TransferId+"' and N_CompanyID= " + nCompanyID,connection,transaction);
+             
+                     bool isProcessed= myFunctions.getBoolVAL(nprocessed.ToString());
+                     if(isProcessed==true)
+                     {
+                              return Ok(_api.Error(User, "Already Processed"));
+                    }
+
                     nReceivableId = dLayer.SaveData("Inv_ReceivableStock", "N_ReceivableId", MasterTable, connection, transaction);
                     if (nReceivableId <= 0)
                     {

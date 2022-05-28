@@ -988,6 +988,7 @@ namespace SmartxAPI.Controllers
 
                     int N_PaymentMethodID = myFunctions.getIntVAL(MasterRow["n_PaymentMethodID"].ToString());
                     int N_DeliveryNoteID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteId"].ToString());
+                     int N_ServiceID = myFunctions.getIntVAL(MasterRow["N_ServiceID"].ToString());
                     int N_CreatedUser = myFunctions.getIntVAL(MasterRow["n_CreatedUser"].ToString());
                     int N_UserID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
                     int UserCategoryID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
@@ -1419,7 +1420,7 @@ namespace SmartxAPI.Controllers
                             StockPostingParams.Add("N_SalesID", N_SalesID);
                             StockPostingParams.Add("N_SaveDraft", N_SaveDraft);
                             StockPostingParams.Add("N_DeliveryNoteID", N_DeliveryNoteID);
-                            if (N_DeliveryNoteID == 0)
+                            if (N_DeliveryNoteID == 0 && N_ServiceID == 0 )
                             {
                                 try
                                 {
