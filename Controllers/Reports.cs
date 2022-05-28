@@ -818,6 +818,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     //int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["moduleID"].ToString());
+                    int MainMenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["moduleID"].ToString());
 
                     int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportCategoryID"].ToString());
                     int ReportID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportID"].ToString());
@@ -904,6 +905,7 @@ namespace SmartxAPI.Controllers
                         {
                             DateTime dateFrom = Convert.ToDateTime(value);
                             DateTime dateTo = Convert.ToDateTime(valueTo);
+                            x_comments = dateFrom.ToString("dd-MM-yyyy") + " to " + dateTo.ToString("dd-MM-yyyy");
 
                             if (dateFrom != null && (bRange && dateTo != null))
                             {
@@ -1019,6 +1021,8 @@ namespace SmartxAPI.Controllers
                     }
 
                     dbName = connection.Database;
+                    if (MainMenuID != 340)
+                    {
                     //Local Time Checking
                     object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
                     object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection);
@@ -1026,6 +1030,7 @@ namespace SmartxAPI.Controllers
                     {
                         currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
                         x_comments = currentTime.ToString();
+                    }
                     }
                 }
 
