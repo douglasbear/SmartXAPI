@@ -268,13 +268,23 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_AppraisalCompetency", "n_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Pay_AppraisalCompetencyCategory", "n_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Pay_Appraisal", "n_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection, transaction);
-                    }
+                    }                   
 
                     // Auto Gen
                     string Code = "";
                     var values = MasterTable.Rows[0]["X_AppraisalCode"].ToString();
                     if (values == "@Auto")
                     {
+                        if( myFunctions.getIntVAL(MasterTable.Rows[0]["N_Type"].ToString())==1)
+                        {
+                            object Count = dLayer.ExecuteScalar("select COUNT(*) from Pay_Appraisal where N_CompanyID="+nCompanyID+" and N_EmpID="+ myFunctions.getIntVAL(MasterTable.Rows[0]["N_EmpID"].ToString())+" and N_EntryUserID="+ myFunctions.getIntVAL(MasterTable.Rows[0]["N_EntryUserID"].ToString())+" and N_Type=1", connection, transaction);
+                            if(myFunctions.getIntVAL(Count.ToString())>0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, "Evaluation already done for this employee! Unable to save"));
+                            }
+                        }
+
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.N_FormID);

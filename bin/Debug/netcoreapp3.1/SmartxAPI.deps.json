@@ -272,10 +272,15 @@
           "System.Runtime.Serialization.Xml": "4.1.5.0",
           "System.Security.Claims": "4.1.2.0",
           "System.Security.Cryptography.Algorithms": "4.3.2.0",
+          "System.Security.Cryptography.Cng.Reference": "4.3.3.0",
           "System.Security.Cryptography.Csp": "4.1.2.0",
           "System.Security.Cryptography.Encoding": "4.1.2.0",
           "System.Security.Cryptography.Primitives.Reference": "4.1.2.0",
           "System.Security.Cryptography.X509Certificates": "4.2.2.0",
+<<<<<<< HEAD
+=======
+          "System.Security.Cryptography.Xml": "4.0.3.0",
+>>>>>>> c9ac637bb4c3f5bb5eaedda05a01d178b0edec3c
           "System.Security": "4.0.0.0",
           "System.Security.Principal": "4.1.2.0",
           "System.Security.SecureString.Reference": "4.1.2.0",
@@ -1525,11 +1530,15 @@
           "System.Security.Principal.Windows": "4.7.0"
         }
       },
+<<<<<<< HEAD
       "System.Security.Cryptography.Cng/4.5.0": {
         "compile": {
           "ref/netcoreapp2.1/System.Security.Cryptography.Cng.dll": {}
         }
       },
+=======
+      "System.Security.Cryptography.Cng/4.5.0": {},
+>>>>>>> c9ac637bb4c3f5bb5eaedda05a01d178b0edec3c
       "System.Security.Cryptography.Primitives/4.3.0": {
         "dependencies": {
           "System.Diagnostics.Debug": "4.3.0",
@@ -3094,6 +3103,15 @@
         },
         "compileOnly": true
       },
+<<<<<<< HEAD
+=======
+      "System.Security.Cryptography.Cng.Reference/4.3.3.0": {
+        "compile": {
+          "System.Security.Cryptography.Cng.dll": {}
+        },
+        "compileOnly": true
+      },
+>>>>>>> c9ac637bb4c3f5bb5eaedda05a01d178b0edec3c
       "System.Security.Cryptography.Csp/4.1.2.0": {
         "compile": {
           "System.Security.Cryptography.Csp.dll": {}
@@ -5378,6 +5396,14 @@
       "serviceable": false,
       "sha512": ""
     },
+<<<<<<< HEAD
+=======
+    "System.Security.Cryptography.Cng.Reference/4.3.3.0": {
+      "type": "referenceassembly",
+      "serviceable": false,
+      "sha512": ""
+    },
+>>>>>>> c9ac637bb4c3f5bb5eaedda05a01d178b0edec3c
     "System.Security.Cryptography.Csp/4.1.2.0": {
       "type": "referenceassembly",
       "serviceable": false,
