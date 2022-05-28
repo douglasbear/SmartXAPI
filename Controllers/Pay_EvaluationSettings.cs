@@ -229,6 +229,15 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     int nCompanyId = myFunctions.GetCompanyID(User);
+
+                    object objProcessed = dLayer.ExecuteScalar("select COUNT(*) from Pay_Appraisal where N_CompanyID="+nCompanyId+" and N_EvalSettingsID="+nEvalSettingsID, connection);
+                    if (objProcessed == null) objProcessed = 0;
+
+                    if(myFunctions.getIntVAL(objProcessed.ToString())>0)
+                    {
+                        return Ok(_api.Error(User, "Already Used! Unable to delete."));
+                    }
+
                     Results = dLayer.DeleteData("Pay_EvaluationSettings", "N_EvalSettingsID", nEvalSettingsID, "N_CompanyID="+nCompanyId, connection);
                      if (Results > 0)
                     {
