@@ -1,39 +1,8 @@
 {
   "runtimeOptions": {
     "additionalProbingPaths": [
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
       "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\rathe\\.nuget\\packages"
-=======
-      "C:\\Users\\Administrator\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Administrator\\.nuget\\packages"
->>>>>>> dc290b7d5ee4b2f9bbe893b62452c45d40ed250c
-=======
-      "C:\\Users\\user\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\user\\.nuget\\packages",
-      "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
->>>>>>> 83a7a0d8fdaadc1fbe4bc109d6cae137ef5dffaf
-=======
-      "C:\\Users\\Administrator\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Administrator\\.nuget\\packages"
->>>>>>> c5c993404bc82716b17e61a488f2e74a86a631cb
-=======
-      "C:\\Users\\sreej\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\sreej\\.nuget\\packages"
->>>>>>> ff0c021ef5470e360ac2048da43b85c310482a85
-=======
-      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\rathe\\.nuget\\packages"
->>>>>>> c50ee4f7908deb0ea8e7a10c9cc0ffd4f2149a89
-=======
-      "C:\\Users\\Aky77\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Aky77\\.nuget\\packages"
->>>>>>> c9ac637bb4c3f5bb5eaedda05a01d178b0edec3c
     ]
   }
 }
