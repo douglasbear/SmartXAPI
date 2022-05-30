@@ -98,93 +98,53 @@ namespace SmartxAPI.Controllers
             }
         }
    [HttpGet("dashboardList")]
-        public ActionResult GetProductUnitList(int nPage,bool adjustment,int nSizeperpage, string xSearchkey, string xSortBy, string screen,int nItemUnitID)
+        public ActionResult GetProductUnitList(int nPage,bool adjustment,int nSizeperpage, string xSearchkey, string xSortBy,int nItemUnitID,int nCompanyId)
         {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyID=myFunctions.GetCompanyID(User);
-               
-           int Count = (nPage - 1) * nSizeperpage;
-            string Searchkey = "";
-            Params.Add("@p1",nCompanyID);
-           // Params.Add("@p2", nFnYearID);
-             string criteria = "";
-            string cndn = "";
-            string sqlCommandText="";
-            sqlCommandText="Select * from vw_InvItemUnit_Disp Where N_CompanyID=@p1";
-           
-
-           
-            if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvItemUnit_Disp where N_CompanyID=@p1 " + criteria + cndn + Searchkey + " " + xSortBy;
-                    else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvItemUnit_Disp where N_CompanyID=@p1 " + criteria + Searchkey + " and N_ReasonID not in (select top(" + Count + ") N_ReasonID from vw_InvItemUnit_Disp where N_CompanyID=@p1" + criteria + cndn + xSearchkey + xSortBy + " ) " + xSortBy;
-
-            // if(adjustment)
-            //   sqlCommandText="Select X_Description as X_Reason,N_ReasonID,X_ReasonCode,b_ISstockIn from vw_InvItemUnit_Disp Where N_CompanyID=@p1 and N_FnYearID=@p2";
-
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
-                }
-                dt = api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
-            }
-            catch (Exception e)
-            {
-                return Ok(api.Error(User,e));
-            }
-        }
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                     nCompanyId = myFunctions.GetCompanyID(User);
+                    string sqlCommandCount = "", xCriteria = "";
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string Searchkey = "";
+                    Params.Add("@p1", nCompanyId);
+                   
 
-        //Save....
-        [HttpPost("Save")]
-        public ActionResult SaveData([FromBody] DataSet ds)
-        {
-            try
-            {
-                DataTable MasterTable;
-                MasterTable = ds.Tables["master"];
+                   if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_ItemUnit where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0";
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_ItemUnit where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0";
 
-                SortedList Params = new SortedList();
 
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    string X_ItemUnit= MasterTable.Rows[0]["X_ItemUnit"].ToString();
-                    string DupCriteria = "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_ItemUnit='" + X_ItemUnit + "'";
-                    int N_ItemUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID",DupCriteria,"", MasterTable, connection, transaction);
-                    if (N_ItemUnitID <= 0)
+                    SortedList OutPut = new SortedList();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
+                   sqlCommandCount = "select count(*) as N_Count  from Inv_ItemUnit where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
                     {
-                        transaction.Rollback();
-                        return Ok( api.Warning("Unit Already Exist"));
+                        return Ok(api.Warning("No Results Found"));
                     }
                     else
                     {
-                        transaction.Commit();
+                        return Ok(api.Success(OutPut));
                     }
-                    return Ok( api.Success("Unit Created"));
                 }
-                
-
             }
+              catch (Exception e)
+                {
+                return BadRequest(api.Error(User, e));
+                }
+            
 
-            catch (Exception ex)
-            {
-                return Ok(api.Error(User,ex));
-            }
         }
-
 
         [HttpGet("itemwiselist")]
         public ActionResult GetItemWiseUnitList( string baseUnit, int itemId)
