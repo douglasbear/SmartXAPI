@@ -66,14 +66,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("listdetails")]
-        public ActionResult GetItemUnitListDetails(int? nCompanyId,int? nItemUnitID)
+        public ActionResult GetItemUnitListDetails(int? nCompanyId,int? n_ItemUnitID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
             string sqlCommandText = "select * from Inv_ItemUnit where N_CompanyID=@p1 and N_ItemUnitID=@p2 ";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nItemUnitID);
+            Params.Add("@p2", n_ItemUnitID);
 
             try
             {
@@ -97,6 +97,10 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,e));
             }
         }
+
+
+     
+
    [HttpGet("dashboardList")]
         public ActionResult GetProductUnitList(int nPage,bool adjustment,int nSizeperpage, string xSearchkey, string xSortBy,int nItemUnitID,int nCompanyId)
         {
@@ -111,19 +115,31 @@ namespace SmartxAPI.Controllers
                     string sqlCommandCount = "", xCriteria = "";
                     int Count = (nPage - 1) * nSizeperpage;
                     string sqlCommandText = "";
+                    string criteria = "";
+                    string cndn = "";
                     string Searchkey = "";
                     Params.Add("@p1", nCompanyId);
+
+
+                   if (xSearchkey != null && xSearchkey.Trim() != "")
+                    Searchkey = "and (N_ItemUnitID like '%" + xSearchkey + "%' OR X_Description like '%" + xSearchkey + "%')";
+
+                    
                    
+                   if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by N_ItemUnitID desc";
+                      
+
 
                    if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_ItemUnit where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0";
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_ItemUnit where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0"+ criteria + cndn + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_ItemUnit where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0";
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_ItemUnit where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0 and N_ItemUnitID not in (select top(" + Count + ") N_ItemUnitID from Inv_ItemUnit where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0 )"+ criteria + cndn + Searchkey + " " + xSortBy ;
 
 
                     SortedList OutPut = new SortedList();
 
-                    dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText , Params, connection);
                    sqlCommandCount = "select count(*) as N_Count  from Inv_ItemUnit where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
@@ -145,6 +161,80 @@ namespace SmartxAPI.Controllers
             
 
         }
+
+
+          [HttpGet("unitList")]
+        public ActionResult unitList()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nComapnyID", nCompanyID);
+            SortedList OutPut = new SortedList();
+            string sqlCommandText = "select * from Inv_ItemUnit where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@nComapnyID and ISNULL(N_ItemID,0)=0";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+
+
+         [HttpPost("Save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable MasterTable;
+                MasterTable = ds.Tables["master"];
+
+                SortedList Params = new SortedList();
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    string X_ItemUnit= MasterTable.Rows[0]["X_ItemUnit"].ToString();
+                    string DupCriteria = "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_ItemUnit='" + X_ItemUnit + "'";
+                    int N_ItemUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID",DupCriteria,"", MasterTable, connection, transaction);
+                    if (N_ItemUnitID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok( api.Warning("Unit Already Exist"));
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                    }
+                    return Ok( api.Success("Unit Created"));
+                }
+                
+
+            }
+
+            catch (Exception ex)
+            {
+                return Ok(api.Error(User,ex));
+            }
+        }
+
+
 
         [HttpGet("itemwiselist")]
         public ActionResult GetItemWiseUnitList( string baseUnit, int itemId)

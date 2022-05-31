@@ -194,7 +194,7 @@ namespace SmartxAPI.Controllers
         }
 
            [HttpGet("dashboardList")]
-        public ActionResult GetProductUnitList(int nPage,bool adjustment,int nSizeperpage, string xSearchkey, string xSortBy,int nItemUnitID,int nCompanyId)
+        public ActionResult GetProductUnitList(int nPage,bool adjustment,int nSizeperpage, string xSearchkey, string xSortBy,int nCategoryID,int nCompanyId)
         {
             try
             {
@@ -207,14 +207,26 @@ namespace SmartxAPI.Controllers
                     string sqlCommandCount = "", xCriteria = "";
                     int Count = (nPage - 1) * nSizeperpage;
                     string sqlCommandText = "";
-                    string Searchkey = "";
+                    string criteria = "";
+                    string cndn = "";
                     Params.Add("@p1", nCompanyId);
-                   
+                    string Searchkey = "";
+      
+                //    if (xSearchkey != null && xSearchkey.Trim() != "")
+                //     Searchkey = "and (X_CategoryCode like '%" + xSearchkey + "%' OR X_Category like '%" + xSearchkey + "%')";
 
+                    
+                   
+                //    if (xSortBy == null || xSortBy.Trim() == "")
+                //         xSortBy = "order by N_CategoryID desc";
+                      
                    if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") ,X_Category,N_CategoryID,X_CategoryCode from Inv_ItemCategory where N_CompanyID=@p1";
+                        sqlCommandText = "select top(" + nSizeperpage + ") X_Category,N_CategoryID,X_CategoryCode from Inv_ItemCategory where N_CompanyID=@p1"+ criteria + cndn + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") ,X_Category,N_CategoryID,X_CategoryCode from Inv_ItemCategory where N_CompanyID=@p1";
+                       // sqlCommandText = "select top(" + nSizeperpage + ") ,X_Category,N_CategoryID,X_CategoryCode from Inv_ItemCategory where N_CompanyID=@p1";
+                         sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_ItemCategory where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1 and N_CategoryID not in (select top(" + Count + ") N_CategoryID from Inv_ItemCategory where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1)"+ criteria + cndn + Searchkey + " " + xSortBy;
+
+
 
 
                     SortedList OutPut = new SortedList();
