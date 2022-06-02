@@ -252,7 +252,11 @@ namespace SmartxAPI.Controllers
                         }
                     
                     }
-
+                       TimeSpan t = TimeSpan.FromSeconds(seconds);
+                     string answer = string.Format("{0:D2}h:{1:D2}m",
+                                     t.Hours,
+                                     t.Minutes);
+                                    
 
 
                     //Detail
@@ -317,7 +321,7 @@ namespace SmartxAPI.Controllers
                         }
                          if (row["x_HistoryText"].ToString().Contains("#STOPTIME"))
                         {
-                            row["x_HistoryText"] = row["x_HistoryText"].ToString().Replace("#STOPTIME", seconds.ToString());
+                            row["x_HistoryText"] = row["x_HistoryText"].ToString().Replace("#STOPTIME", answer );
                         }
 
 
