@@ -192,5 +192,55 @@ namespace SmartxAPI.Controllers
 
 
         }
+
+           [HttpGet("dashboardList")]
+        public ActionResult GetProductUnitList(int nPage,bool adjustment,int nSizeperpage, string xSearchkey, string xSortBy,int nItemUnitID,int nCompanyId)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                     nCompanyId = myFunctions.GetCompanyID(User);
+                    string sqlCommandCount = "", xCriteria = "";
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string Searchkey = "";
+                    Params.Add("@p1", nCompanyId);
+                   
+
+                   if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") ,X_Category,N_CategoryID,X_CategoryCode from Inv_ItemCategory where N_CompanyID=@p1";
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") ,X_Category,N_CategoryID,X_CategoryCode from Inv_ItemCategory where N_CompanyID=@p1";
+
+
+                    SortedList OutPut = new SortedList();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
+                   sqlCommandCount = "select count(*) as N_Count  from Inv_ItemCategory where N_CompanyID=@p1";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+                }
+            }
+              catch (Exception e)
+                {
+                return BadRequest(_api.Error(User, e));
+                }
+            
+
+        }
+
     }
 }
