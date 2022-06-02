@@ -306,6 +306,10 @@ namespace SmartxAPI.Controllers
                         {
                             row["x_HistoryText"] = row["x_HistoryText"].ToString().Replace("#ASSIGNEE", assignee.ToString());
                         }
+                         if (row["x_HistoryText"].ToString().Contains("#STOPTIME"))
+                        {
+                            row["x_HistoryText"] = row["x_HistoryText"].ToString().Replace("#STOPTIME", seconds.ToString());
+                        }
 
 
                     }
