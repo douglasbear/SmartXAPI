@@ -146,6 +146,39 @@ namespace SmartxAPI.Controllers
 
         }
 
+            [HttpGet("unitList")]
+        public ActionResult unitList()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nComapnyID", nCompanyID);
+            SortedList OutPut = new SortedList();
+            string sqlCommandText = "select * from Inv_ItemUnit where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@nComapnyID and ISNULL(N_ItemID,0)=0";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+
+
         [HttpGet("itemwiselist")]
         public ActionResult GetItemWiseUnitList( string baseUnit, int itemId)
         {
