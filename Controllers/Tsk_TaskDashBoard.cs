@@ -394,7 +394,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("upcomingDetails")]
+         [HttpGet("upcomingDetails")]
         public ActionResult GetupcominDetails(int nUserID, DateTime d_Date, int nPage, int nSizeperpage)
 
         {
@@ -412,16 +412,16 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     if (Count == 0)
                     {
-                        sqlUpcomingList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + "  and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_TaskDate as DATE) >  '" + d_Date + "' order by N_PriorityID asc";
+                        sqlUpcomingList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and   D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) >  '" + d_Date + "' order by N_PriorityID asc";
                     }
                     else
                     {
-                        sqlUpcomingList = "select  top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and D_TaskDate >  '" + d_Date + "' and N_TaskID not in (select top(" + Count + ") N_TaskID from vw_Tsk_TaskCurrentStatus where  N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + "  and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and  Cast(D_TaskDate as DATE)='" + d_Date + "') order by N_PriorityID asc";
+                        sqlUpcomingList = "select  top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and   D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and D_DueDate >  '" + d_Date + "' and N_TaskID not in (select top(" + Count + ") N_TaskID from vw_Tsk_TaskCurrentStatus where  N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and  D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and D_DueDate='" + d_Date + "') order by N_PriorityID asc";
                     }
 
                     UpComingTasks = dLayer.ExecuteDataTable(sqlUpcomingList, Params, connection);
                     UpComingTasks = api.Format(UpComingTasks, "UpComingTasks");
-                    string sqlCommandCount2 = "select count(*) as N_Count from vw_Tsk_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_TaskDate as DATE)> '" + d_Date + "' ";
+                    string sqlCommandCount2 = "select count(*) as N_Count from vw_Tsk_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and   D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and D_DueDate >  '" + d_Date + "'";
                     DataTable Summary2 = dLayer.ExecuteDataTable(sqlCommandCount2, Params, connection);
                     string TotalCount2 = "0";
                     if (Summary2.Rows.Count > 0)
@@ -431,9 +431,9 @@ namespace SmartxAPI.Controllers
 
                     }
                     CountTable.Clear();
-                    CountTable.Columns.Add("UpComingTasksCount");
+                    CountTable.Columns.Add("UpComingTasksTotalCount");
                     DataRow row = CountTable.NewRow();
-                    row["UpComingTasksCount"] = myFunctions.getIntVAL(TotalCount2);
+                    row["UpComingTasksTotalCount"] = myFunctions.getIntVAL(TotalCount2);
                     CountTable.Rows.Add(row);
                     CountTable = api.Format(CountTable, "CountTable");
                     TaskManager.Tables.Add(UpComingTasks);
@@ -506,6 +506,64 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, e));
             }
         }
+
+        
+        [HttpGet("completedTaskDetails")]
+        public ActionResult GetcompletedDetails(int nUserID, DateTime d_Date, int nPage, int nSizeperpage)
+
+        {
+             SortedList Params = new SortedList();
+            DataSet TaskManager = new DataSet();
+            DataTable UpComingTasks = new DataTable();
+            DataTable CountTable = new DataTable();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlUpcomingList = "";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    if (Count == 0)
+                    {
+                        sqlUpcomingList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "  and N_Status >= 4 and Cast(D_EntryDate as DATE) =  '" + d_Date + "' order by N_TaskID desc";
+                    }
+                    else
+                    {
+                        sqlUpcomingList = "select  top(" + nSizeperpage + ") * from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + " and   N_Status >= 4 and Cast(D_EntryDate as DATE) =  '" + d_Date + "'  and N_TaskID not in (select top(" + Count + ") N_TaskID from vw_Tsk_TaskCompletedStatus where  N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "  and  Cast(D_TaskDate as DATE)='" + d_Date + "') order by N_PriorityID asc";
+                    }
+
+                    UpComingTasks = dLayer.ExecuteDataTable(sqlUpcomingList, Params, connection);
+                    UpComingTasks = api.Format(UpComingTasks, "UpComingTasks");
+                    string sqlCommandCount2 = "select count(*) as N_Count from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + " and  N_Status >= 4 and Cast(D_EntryDate as DATE) =  '" + d_Date + " ";
+                    DataTable Summary2 = dLayer.ExecuteDataTable(sqlCommandCount2, Params, connection);
+                    string TotalCount2 = "0";
+                    if (Summary2.Rows.Count > 0)
+                    {
+                        DataRow drow = Summary2.Rows[0];
+                        TotalCount2 = drow["N_Count"].ToString();
+
+                    }
+                    CountTable.Clear();
+                    CountTable.Columns.Add("UpComingTasksCount");
+                    DataRow row = CountTable.NewRow();
+                    row["UpComingTasksCount"] = myFunctions.getIntVAL(TotalCount2);
+                    CountTable.Rows.Add(row);
+                    CountTable = api.Format(CountTable, "CountTable");
+                    TaskManager.Tables.Add(UpComingTasks);
+                    TaskManager.Tables.Add(CountTable);
+
+                    return Ok(api.Success(TaskManager));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+
+        }
+
+
 
 
 

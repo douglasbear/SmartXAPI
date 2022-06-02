@@ -225,6 +225,7 @@ namespace SmartxAPI.Controllers
 
                     DateTime entryDateHold = new DateTime();
                     DateTime entryDateStart = new DateTime();
+                    DateTime entryDateComplete = new DateTime();
                     foreach (DataRow row in TimeTable.Rows)
                     {
 
@@ -238,10 +239,18 @@ namespace SmartxAPI.Controllers
                         {
                             entryDateHold = Convert.ToDateTime(row["d_EntryDate"].ToString());
                         }
+                        if (row["N_Status"].ToString() == "4")
+                        {
+                          entryDateComplete =Convert.ToDateTime(row["d_EntryDate"].ToString());
+                        }
                         if (row["N_Status"].ToString() == "6")
                         {
                             seconds = seconds + (entryDateHold - entryDateStart).TotalSeconds;
                         }
+                        else if(row["N_Status"].ToString() != "7" && row["N_Status"].ToString() != "6" &&  row["N_Status"].ToString() == "4"  ){
+                            seconds = seconds + (entryDateComplete - entryDateStart).TotalSeconds;
+                        }
+                    
                     }
 
 
