@@ -514,7 +514,7 @@ namespace SmartxAPI.Controllers
         {
              SortedList Params = new SortedList();
             DataSet TaskManager = new DataSet();
-            DataTable UpComingTasks = new DataTable();
+            DataTable todayCompletedTasks = new DataTable();
             DataTable CountTable = new DataTable();
             int nCompanyID = myFunctions.GetCompanyID(User);
             int Count = (nPage - 1) * nSizeperpage;
@@ -533,9 +533,9 @@ namespace SmartxAPI.Controllers
                         sqlUpcomingList = "select  top(" + nSizeperpage + ") * from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + " and   N_Status >= 4 and Cast(D_EntryDate as DATE) =  '" + d_Date + "'  and N_TaskID not in (select top(" + Count + ") N_TaskID from vw_Tsk_TaskCompletedStatus where  N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "  and  Cast(D_TaskDate as DATE)='" + d_Date + "') order by N_PriorityID asc";
                     }
 
-                    UpComingTasks = dLayer.ExecuteDataTable(sqlUpcomingList, Params, connection);
-                    UpComingTasks = api.Format(UpComingTasks, "UpComingTasks");
-                    string sqlCommandCount2 = "select count(*) as N_Count from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + " and  N_Status >= 4 and Cast(D_EntryDate as DATE) =  '" + d_Date + " ";
+                    todayCompletedTasks = dLayer.ExecuteDataTable(sqlUpcomingList, Params, connection);
+                    todayCompletedTasks = api.Format(todayCompletedTasks, "todayCompletedTasks");
+                    string sqlCommandCount2 = "select count(*) as N_Count from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + " and  N_Status >= 4 and Cast(D_EntryDate as DATE) =  '" + d_Date + "' ";
                     DataTable Summary2 = dLayer.ExecuteDataTable(sqlCommandCount2, Params, connection);
                     string TotalCount2 = "0";
                     if (Summary2.Rows.Count > 0)
@@ -545,12 +545,12 @@ namespace SmartxAPI.Controllers
 
                     }
                     CountTable.Clear();
-                    CountTable.Columns.Add("UpComingTasksCount");
+                    CountTable.Columns.Add("todayCompletedTasks");
                     DataRow row = CountTable.NewRow();
-                    row["UpComingTasksCount"] = myFunctions.getIntVAL(TotalCount2);
+                    row["todayCompletedTasks"] = myFunctions.getIntVAL(TotalCount2);
                     CountTable.Rows.Add(row);
                     CountTable = api.Format(CountTable, "CountTable");
-                    TaskManager.Tables.Add(UpComingTasks);
+                    TaskManager.Tables.Add(todayCompletedTasks);
                     TaskManager.Tables.Add(CountTable);
 
                     return Ok(api.Success(TaskManager));
