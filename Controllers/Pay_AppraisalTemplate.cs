@@ -82,20 +82,36 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string sqlCommandCount = "";
             string Searchkey = "";
+            string sqlCondition = "";
+
+                Params.Add("@p1", nCompanyID);
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = " and (X_Code like '%" + xSearchkey + "%'or X_TemplateName like '%" + xSearchkey + "%' )";
+                Searchkey = "and (X_Code like '%" + xSearchkey + "%' OR X_TemplateName like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_TemplateID desc";
-            else
-                xSortBy = " order by " + xSortBy;
+                xSortBy = "order by X_Code desc";
+           else
+            {
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "X_Code":
+                        xSortBy = "X_Code" + xSortBy.Split(" ")[1];
+                        break;
+                    case "N_TemplateID":
+                        xSortBy = "N_TemplateID" + xSortBy.Split(" ")[1];
+                        break;
 
+                    default: break;
+                }
+                 xSortBy = " order by " + xSortBy;
+            }
+             sqlCondition = "N_CompanyID=@p1";
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_AppraisalTemplate where N_CompanyID=@p1" + Searchkey + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_AppraisalTemplate where " + sqlCondition + " " + Searchkey +" "+ xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_AppraisalTemplate where N_CompanyID=@p1" + Searchkey + " and  N_TemplateID not in (select top(" + Count + ") N_TemplateID from Pay_AppraisalTemplate where N_CompanyID=@p1 )" + Searchkey + xSortBy;
-            Params.Add("@p1", nCompanyID);
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_AppraisalTemplate where " + sqlCondition + " " + Searchkey +" "+ " and  N_TemplateID not in (select top(" + Count + ") N_TemplateID from Pay_AppraisalTemplate where N_CompanyID=@p1 )" + Searchkey +" "+ xSortBy;
+           
             SortedList OutPut = new SortedList();
 
             try
@@ -105,7 +121,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count from Pay_AppraisalTemplate where N_CompanyID=@p1" + Searchkey;
+                    sqlCommandCount = "select count(*) as N_Count from Pay_AppraisalTemplate where " + sqlCondition + " " + Searchkey + " ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -291,7 +307,11 @@ namespace SmartxAPI.Controllers
                         if (Code == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Grade Code")); }
                         MasterTable.Rows[0]["X_Code"] = Code;
                     }
-                    nTemplateID = dLayer.SaveData("Pay_AppraisalTemplate", "N_TemplateID", MasterTable, connection, transaction);
+
+                     string X_TemplateName= MasterTable.Rows[0]["X_TemplateName"].ToString();
+                    string DupCriteria = "X_TemplateName='" + X_TemplateName + "' and N_CompanyID=" + nCompanyID;
+
+                    nTemplateID = dLayer.SaveData("Pay_AppraisalTemplate", "N_TemplateID",DupCriteria,"", MasterTable, connection, transaction);
                     if (nTemplateID <= 0)
                     {
                         transaction.Rollback();
