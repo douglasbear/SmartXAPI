@@ -97,43 +97,84 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,e));
             }
         }
-
-        //Save....
-        [HttpPost("Save")]
-        public ActionResult SaveData([FromBody] DataSet ds)
+   [HttpGet("dashboardList")]
+        public ActionResult GetProductUnitList(int nPage,bool adjustment,int nSizeperpage, string xSearchkey, string xSortBy,int nItemUnitID,int nCompanyId)
         {
             try
             {
-                DataTable MasterTable;
-                MasterTable = ds.Tables["master"];
-
-                SortedList Params = new SortedList();
-
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    string X_ItemUnit= MasterTable.Rows[0]["X_ItemUnit"].ToString();
-                    string DupCriteria = "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_ItemUnit='" + X_ItemUnit + "'";
-                    int N_ItemUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID",DupCriteria,"", MasterTable, connection, transaction);
-                    if (N_ItemUnitID <= 0)
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                     nCompanyId = myFunctions.GetCompanyID(User);
+                    string sqlCommandCount = "", xCriteria = "";
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string Searchkey = "";
+                    Params.Add("@p1", nCompanyId);
+                   
+
+                   if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_ItemUnit where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0";
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_ItemUnit where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0";
+
+
+                    SortedList OutPut = new SortedList();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
+                   sqlCommandCount = "select count(*) as N_Count  from Inv_ItemUnit where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
                     {
-                        transaction.Rollback();
-                        return Ok( api.Warning("Unit Already Exist"));
+                        return Ok(api.Warning("No Results Found"));
                     }
                     else
                     {
-                        transaction.Commit();
+                        return Ok(api.Success(OutPut));
                     }
-                    return Ok( api.Success("Unit Created"));
                 }
-                
-
             }
+              catch (Exception e)
+                {
+                return BadRequest(api.Error(User, e));
+                }
+            
 
-            catch (Exception ex)
+        }
+
+            [HttpGet("unitList")]
+        public ActionResult unitList()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nComapnyID", nCompanyID);
+            SortedList OutPut = new SortedList();
+            string sqlCommandText = "select * from Inv_ItemUnit where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@nComapnyID and ISNULL(N_ItemID,0)=0";
+            try
             {
-                return Ok(api.Error(User,ex));
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
             }
         }
 

@@ -124,7 +124,6 @@ namespace SmartxAPI.Controllers
                     DataTable defaultPaycode = new DataTable();
                     string empSql = "";
 
-
                     if (b_AllBranchData == true)
                         empSql = "select N_CompanyID,N_EmpID,N_BranchID,N_Status,N_FnYearID,N_CatagoryId,X_DefEmpCode,X_Position,X_Department,N_DepartmentID,N_PositionID,Name as X_EmpName,[Employee Code] as X_EmpCode from vw_PayEmployee_Disp where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and (N_Status = 0 OR N_Status = 1)   order by X_EmpCode";
                     else
@@ -133,7 +132,6 @@ namespace SmartxAPI.Controllers
                     EmpTable = dLayer.ExecuteDataTable(empSql, Params, connection);
                     if (EmpTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     EmpTable.AcceptChanges();
-
 
                     defaultPaycode.Clear();
                     defaultPaycode.Columns.Add("X_Addition");
@@ -204,9 +202,6 @@ namespace SmartxAPI.Controllers
                     bool bCategoryWiseAddition = false;
                     bool bCategoryWiseComp = false;
 
-
-
-
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     Params.Add("@nCompanyID", nCompanyID);
                     DataTable ElementsTable = new DataTable();
@@ -218,11 +213,8 @@ namespace SmartxAPI.Controllers
                     DataTable SummaryTable = new DataTable();
                     DataTable payRate = new DataTable();
 
-
-
                     DataTable TimeSheetMaster = new DataTable();
                     DataTable TimeSheetDetails = new DataTable();
-
 
                     int N_AdditionPayID = 0;
                     string X_Additions = "";
@@ -234,9 +226,7 @@ namespace SmartxAPI.Controllers
 
                     SortedList Master = new SortedList();
 
-
-                    Double N_Diffrence = 0, N_NonDedApp = 0, txtAdjustment = 0, N_WorkdHrs = 0, N_WorkHours = 0;
-
+                    Double N_Diffrence = 0, N_NonDedApp = 0, txtAdjustment = 0, N_WorkdHrs = 0, N_WorkHours = 0,N_TotalDays=0;
 
                     object N_Result;
 
@@ -281,8 +271,8 @@ namespace SmartxAPI.Controllers
                         }
                     }
                     else
-
                         X_DefaultAbsentCode = "";
+
                     bool B_MonthlyaddordedProcess = Convert.ToBoolean(dLayer.ExecuteScalar("Select N_Value from Gen_Settings Where X_Description ='Salary Process' and N_CompanyID= " + nCompanyID + " and X_Group='HR'", Params, connection));
                     bool B_ManualEntry_InGrid = Convert.ToBoolean(dLayer.ExecuteScalar("Select N_Value from Gen_Settings Where X_Description ='ManualEntryInGrid' and N_CompanyID= " + nCompanyID + " and X_Group='HR'", Params, connection));
                     bool B_DoubleEntry = Convert.ToBoolean(dLayer.ExecuteScalar("Select N_Value from Gen_Settings Where X_Description ='DoubleShiftEntry' and N_CompanyID= " + nCompanyID + " and X_Group='HR'", Params, connection));
@@ -294,22 +284,47 @@ namespace SmartxAPI.Controllers
                     {
                         if (myFunctions.getIntVAL(obj.ToString()) > 0)
                         {
+                            double additionTime = 0, deductionTime = 0, CompsateDed = 0, OfficeHours = 0, AbsentCount = 0;
+                            double N_additionTime = 0, N_deductionTime = 0, N_CompsateDed = 0, N_OfficeHours = 0, N_ExtraHours = 0;
+                            double balanc = 0, N_NetDeduction = 0;
+
                             N_BatchID = myFunctions.getIntVAL(payRunID);
                             if (N_BatchID > 0 && nEmpID > 0)
                             {
                                 string Sql6 = "Select * from vw_TimeSheetMaster_Disp where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_BatchID=" + N_BatchID.ToString() + " and N_EmpID=" + nEmpID.ToString() + "";
                                 TimeSheetMaster = dLayer.ExecuteDataTable(Sql6, Params, connection);
 
+                                 //checksettings---------------------------------------------------------------------------------------
+                                string Sql1 = "Select B_Addition,B_Deduction,B_Compensation from Pay_EmployeeGroup where N_CompanyID=" + nCompanyID + " and N_PkeyId=" + nCategoryID;
+                                settingsTable = dLayer.ExecuteDataTable(Sql1, Params, connection);
+                                settingsTable.AcceptChanges();
+
+                                if (settingsTable.Rows.Count == 0)
+                                {
+                                    bCategoryWiseAddition = true;
+                                    bCategoryWiseDeduction = true;
+                                    bCategoryWiseComp = false;
+                                }
+                                else
+                                {
+                                    bCategoryWiseAddition = myFunctions.getBoolVAL(settingsTable.Rows[0]["B_Addition"].ToString());
+                                    bCategoryWiseDeduction = myFunctions.getBoolVAL(settingsTable.Rows[0]["B_Deduction"].ToString());
+                                    bCategoryWiseComp = myFunctions.getBoolVAL(settingsTable.Rows[0]["B_Compensation"].ToString());
+                                }
 
                                 TimeSheetMaster = myFunctions.AddNewColumnToDataTable(TimeSheetMaster, "TransDetailID", typeof(int), 0);
                                 TimeSheetMaster = myFunctions.AddNewColumnToDataTable(TimeSheetMaster, "B_IsAdditionEntry", typeof(bool), false);
 
-                                string Sql1 = "Select B_Addition,B_Deduction,B_Compensation from Pay_EmployeeGroup where N_CompanyID=" + nCompanyID + " and N_PkeyId=" + nCategoryID;
-                                settingsTable = dLayer.ExecuteDataTable(Sql1, Params, connection);
-                                settingsTable.AcceptChanges();
-                                // settingsTable = _api.Format(settingsTable);
-                                // dt.Tables.Add(settingsTable);
-
+                                //PayRate
+                                payRateParams.Add("@nCompanyID", nCompanyID);
+                                payRateParams.Add("@nFnYearID", nFnYearID);
+                                payRateParams.Add("@dtpFromdate", dtpFromdate);
+                                payRateParams.Add("@dtpTodate", dtpTodate);
+                                payRateParams.Add("@N_EmpID", nEmpID);
+                                string payRateSql = "SP_Pay_SelAddOrDed_Emp " + nCompanyID + "," +payRunID + "," +nFnYearID + "," + nEmpID;
+                                payRate = dLayer.ExecuteDataTable(payRateSql, Params,connection);
+                              
+                                //Emp Work hours
                                 string sql7 = "Select * From vw_EmpGrp_Workhours Where N_CompanyID = " + nCompanyID + " and N_PkeyId = " + nCategoryID + "";
                                 EmpGrpWorkhours = dLayer.ExecuteDataTable(sql7, Params, connection);
                                 N_TimeSheetID = myFunctions.getIntVAL(TimeSheetMaster.Rows[0]["N_TimeSheetID"].ToString());
@@ -344,9 +359,8 @@ namespace SmartxAPI.Controllers
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "N_Workhours", typeof(double), null);
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "Attandance", typeof(string), null);
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "X_Type", typeof(string), null);
-                                // TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "N_Vacation", typeof(int), 0);
 
-                                string Sql8 = "Select * from vw_pay_OffDays Where N_CompanyID =" + nCompanyID + " and (N_FNyearID= " + nFnYearID + " or N_FNyearID=0)  ";
+                                string Sql8 = "Select * from vw_pay_OffDays Where N_CompanyID =" + nCompanyID + " and (N_FnyearID= " + nFnYearID + " or N_FnyearID=0)  ";
                                 PayOffDays = dLayer.ExecuteDataTable(Sql8, secParams, connection);
 
                                 string Sql10 = "Select * from vw_pay_WorkingHours Where N_CompanyID =" + nCompanyID;
@@ -383,9 +397,98 @@ namespace SmartxAPI.Controllers
                                         Avar["N_Vacation"] = 2;
                                         Avar["Attandance"] = "A";
                                     }
-
                                 }
                             }
+
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_EmpID", typeof(int), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_OfficeHours", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_AdditionTime", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_DeductionTime", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_CompsateDed", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NetDeduction", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_ExtraHours", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_AbsentCount", typeof(int), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NonDepApp", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_WorkdHrs", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_WorkHours", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NonCompMin", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_CompDed", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_Balance", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_Adjustment", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NetDedApp", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NetAddition", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NetAddApp", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NonDedApp", typeof(double), 0);
+
+
+                                OfficeHours = MinutesToHours(OfficeHours);
+                                additionTime = MinutesToHours(additionTime);
+                                deductionTime = MinutesToHours(deductionTime);
+                                CompsateDed = MinutesToHours(CompsateDed);
+                                N_NetDeduction = MinutesToHours(N_NetDeduction);
+                                N_ExtraHours = MinutesToHours(N_ExtraHours);
+                                N_WorkdHrs = MinutesToHours(N_WorkdHrs);
+                                N_WorkHours = MinutesToHours(N_WorkHours);
+
+                                double N_NonCompMin = (-1 * CompsateDed);
+                                double N_CompDed = (-1 * CompsateDed);
+                                double N_Balance = additionTime + deductionTime;
+                                double Adjustment = 0, Balance = 0;
+                                if ((N_Balance % 60) < 0)
+                                {
+                                    Balance = ((int)N_Balance / 1) + (-1 * N_Balance % 1) * .60;
+                                    Adjustment = ((int)N_Balance / 1) + (-1 * N_Balance % 1) * .60;
+                                }
+                                else
+                                {
+                                    Balance = ((int)N_Balance / 1) + (N_Balance % 1) * .60;
+                                    Adjustment = ((int)N_Balance / 1) + (N_Balance % 1) * .60;
+                                }
+
+                                DataRow newRow = SummaryTable.NewRow();
+
+                                newRow["N_EmpID"] = myFunctions.getIntVAL(nEmpID.ToString());
+                                newRow["N_OfficeHours"] = myFunctions.getVAL(OfficeHours.ToString());
+                                newRow["N_AdditionTime"] = myFunctions.getVAL(additionTime.ToString());
+                                newRow["N_DeductionTime"] = myFunctions.getVAL(deductionTime.ToString());
+                                newRow["N_CompsateDed"] = myFunctions.getVAL(CompsateDed.ToString());
+                                newRow["N_NetDeduction"] = myFunctions.getVAL(N_NetDeduction.ToString());
+                                newRow["N_NetDedApp"] = myFunctions.getVAL(N_NetDeduction.ToString());
+                                newRow["N_NetAddition"] = myFunctions.getVAL(additionTime.ToString());
+                                newRow["N_NetAddApp"] = myFunctions.getVAL(additionTime.ToString());
+                                newRow["N_ExtraHours"] = myFunctions.getVAL(N_ExtraHours.ToString());
+                                newRow["N_AbsentCount"] = myFunctions.getIntVAL(AbsentCount.ToString());
+                                newRow["N_NonDedApp"] = myFunctions.getVAL(N_NonDedApp.ToString());
+                                newRow["N_WorkdHrs"] = myFunctions.getVAL(N_WorkdHrs.ToString());
+                                newRow["N_WorkHours"] = myFunctions.getVAL(N_WorkHours.ToString());
+                                newRow["N_NonCompMin"] = myFunctions.getVAL(N_NonCompMin.ToString());
+                                newRow["N_CompDed"] = myFunctions.getVAL(N_CompDed.ToString());
+                                newRow["N_Balance"] = myFunctions.getVAL(Balance.ToString());
+                                newRow["N_Adjustment"] = myFunctions.getVAL(Adjustment.ToString());
+                                SummaryTable.Rows.Add(newRow);
+
+                                SummaryTable.AcceptChanges();
+
+                                EmpGrpWorkhours = _api.Format(EmpGrpWorkhours, "EmpGrpWorkhours");
+                                settingsTable = _api.Format(settingsTable, "settingsTable");
+                                TimeSheetMaster = _api.Format(TimeSheetMaster, "TimeSheetMaster");
+                                TimeSheetDetails = _api.Format(TimeSheetDetails, "TimeSheetDetails");
+                                PayOffDays = _api.Format(PayOffDays, "PayOffDays");
+                                PayWorkingHours = _api.Format(PayWorkingHours, "PayWorkingHours");
+                                SummaryTable = _api.Format(SummaryTable, "SummaryTable");//Accept this line ==>Aswin
+                                payRate= _api.Format(payRate, "payRate");//Accept this line ==>Aswin
+
+                                // Master = _api.Format(Master, "Master");
+
+                                dt.Tables.Add(EmpGrpWorkhours);
+                                dt.Tables.Add(settingsTable);
+                                dt.Tables.Add(TimeSheetMaster);
+                                dt.Tables.Add(TimeSheetDetails);
+                                dt.Tables.Add(PayOffDays);
+                                dt.Tables.Add(PayWorkingHours);
+                                dt.Tables.Add(SummaryTable);
+                                dt.Tables.Add(payRate);
+
                         }
                         else//New Entry
                         {
@@ -436,6 +539,7 @@ namespace SmartxAPI.Controllers
                                 string payAttendanceSql = "SP_Pay_TimeSheet @nCompanyID,@nFnYearID,@dtpFromdate,@dtpTodate,@N_EmpID";
                                 PayAttendence = dLayer.ExecuteDataTable(payAttendanceSql, secParams, connection);
 
+                                //PayRate
                                 payRateParams.Add("@nCompanyID", nCompanyID);
                                 payRateParams.Add("@nFnYearID", nFnYearID);
                                 payRateParams.Add("@dtpFromdate", dtpFromdate);
@@ -479,10 +583,6 @@ namespace SmartxAPI.Controllers
                                 foreach (DataRow row in PayAttendence.Rows)
                                 {
                                     DateTime Date5 = Convert.ToDateTime(row["D_date"].ToString());
-                                    if (Date5.ToString() == "9/12/2021 12:00:00 AM")
-                                    {
-
-                                    }
                                     //Default Paycodes
                                     foreach (DataRow Var1 in PayOffDays.Rows)
                                     {
@@ -683,6 +783,7 @@ namespace SmartxAPI.Controllers
                                         AbsentCount++;
 
                                 }
+                      
 
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_EmpID", typeof(int), 0);
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_OfficeHours", typeof(double), 0);
@@ -703,7 +804,9 @@ namespace SmartxAPI.Controllers
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NetAddition", typeof(double), 0);
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NetAddApp", typeof(double), 0);
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NonDedApp", typeof(double), 0);
-
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_TotalDays", typeof(double), 0);
+                       
+                                   
                                 if (CompsateDed < 0)
                                 {
                                     double netded = -1 * CompsateDed;
@@ -741,6 +844,11 @@ namespace SmartxAPI.Controllers
                                     Balance = ((int)N_Balance / 1) + (N_Balance % 1) * .60;
                                     Adjustment = ((int)N_Balance / 1) + (N_Balance % 1) * .60;
                                 }
+                                object obj1 = dLayer.ExecuteScalar("SELECT  [dbo].[SP_TimeSheetCalc_TotalHours](" + nCompanyID + ",'" +dtpFromdate + "','" + dtpTodate + "'," + nEmpID + ")",Params,connection );
+                                if (obj1 != null)
+                                  N_TotalDays=myFunctions.getVAL(obj1.ToString());
+                                else 
+                                  N_TotalDays=N_WorkHours;
 
                                 DataRow newRow = SummaryTable.NewRow();
 
@@ -762,6 +870,7 @@ namespace SmartxAPI.Controllers
                                 newRow["N_CompDed"] = myFunctions.getVAL(N_CompDed.ToString());
                                 newRow["N_Balance"] = myFunctions.getVAL(Balance.ToString());
                                 newRow["N_Adjustment"] = myFunctions.getVAL(Adjustment.ToString());
+                                newRow["N_TotalDays"] = myFunctions.getVAL(N_TotalDays.ToString());
                                 SummaryTable.Rows.Add(newRow);
 
                                 SummaryTable.AcceptChanges();
@@ -787,14 +896,6 @@ namespace SmartxAPI.Controllers
                                 //dt.Tables.Add(Master);
 
                                 //return Ok(_api.Success(dt));
-
-
-
-
-
-
-
-
                             }
 
                         }
@@ -831,8 +932,8 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
                 int N_TimeSheetApproveID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TimeSheetApproveID"].ToString());
-                int N_SProcessType = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SProcessType"].ToString());
-                MasterTable.Columns.Remove("N_SProcessType");
+                // int N_SProcessType = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SProcessType"].ToString());
+                // MasterTable.Columns.Remove("N_SProcessType");
 
                 DateTime dSalDate = Convert.ToDateTime(MasterTable.Rows[0]["D_SalaryDate"].ToString());
                 DateTime dFromDate = Convert.ToDateTime(MasterTable.Rows[0]["D_DateFrom"].ToString());
@@ -997,5 +1098,48 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("details")]
+        public ActionResult GetTimesheetApprovalDetails(string xBatchCode)
+        {
+            DataSet dt = new DataSet();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable ApproveMasterTable = new DataTable();
+            DataTable TimesheetMasterTable = new DataTable();
+
+            string Mastersql = "Select * from Pay_TimeSheetApproveMaster Where N_CompanyID=@p1 and X_BatchCode=@xBatchCode ";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@xBatchCode", xBatchCode);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    ApproveMasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+
+                    if (ApproveMasterTable.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Data Found !!"));
+                    }
+
+                    ApproveMasterTable = _api.Format(ApproveMasterTable, "master");
+                    dt.Tables.Add(ApproveMasterTable);
+
+                    int N_TimeSheetApproveID = myFunctions.getIntVAL(ApproveMasterTable.Rows[0]["N_TimeSheetApproveID"].ToString());
+
+                    string TimesheetMasterSql = "select * from Pay_TimeSheetMaster where N_CompanyID=" + nCompanyID + " and N_TimeSheetApproveID=" + N_TimeSheetApproveID;
+
+                    TimesheetMasterTable = dLayer.ExecuteDataTable(TimesheetMasterSql, Params, connection);                  
+                    TimesheetMasterTable = _api.Format(TimesheetMasterTable, "masterDetails");
+                    dt.Tables.Add(TimesheetMasterTable);                 
+                }
+                return Ok(_api.Success(dt));
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
     }
 }

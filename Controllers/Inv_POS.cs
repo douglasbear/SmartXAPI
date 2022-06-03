@@ -63,7 +63,7 @@ namespace SmartxAPI.Controllers
                 if (Count == 0)
                     sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 and isNull(N_TerminalID,0)= " + nTerminalID + " " + Searchkey + " " + xSortBy;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 and isNull(N_TerminalID,0)= " + nTerminalID + " " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_TerminalID,0)= " + nTerminalID + " " + xSearchkey + xSortBy + " ) " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 and isNull(N_TerminalID,0)= " + nTerminalID + " " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 and isNull(N_TerminalID,0)= " + nTerminalID + " " + xSearchkey + xSortBy + " ) " + xSortBy;
 
             }
             Params.Add("@p1", nCompanyId);
