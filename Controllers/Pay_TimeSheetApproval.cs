@@ -359,6 +359,9 @@ namespace SmartxAPI.Controllers
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "N_Workhours", typeof(double), null);
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "Attandance", typeof(string), null);
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "X_Type", typeof(string), null);
+                                TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "OverTime", typeof(double), null);
+                                TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "Deduction", typeof(double), null);
+                                TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "CompMinutes", typeof(double), null);
 
                                 string Sql8 = "Select * from vw_pay_OffDays Where N_CompanyID =" + nCompanyID + " and (N_FnyearID= " + nFnYearID + " or N_FnyearID=0)  ";
                                 PayOffDays = dLayer.ExecuteDataTable(Sql8, secParams, connection);
@@ -385,6 +388,36 @@ namespace SmartxAPI.Controllers
                                             Avar["N_Workhours"] = Cvar["N_Workhours"];
                                         }
                                     }
+                                    TimeSheetDetails.AcceptChanges();
+
+                                    if (bCategoryWiseAddition)
+                                    {
+                                        Avar["OverTime"] = myFunctions.getVAL(Avar["DailyOT"].ToString()).ToString("0.00");
+                                    }
+                                    else
+                                    {
+                                        Avar["OverTime"] = "0.00";
+                                    }
+                                    if (bCategoryWiseDeduction)
+                                    {
+                                        Avar["Deduction"] = myFunctions.getVAL(Avar["DailyOT"].ToString()).ToString("0.00");
+                                        Avar["CompMinutes"] = myFunctions.getVAL(Avar["N_CompMinutes"].ToString()).ToString("0.00");
+                                    }
+                                    else
+                                    {
+                                        Avar["Deduction"] = "0.00";
+                                        Avar["CompMinutes"] = "0.00";
+                                    }
+
+                                    if (!bCategoryWiseDeduction && N_Diffrence < 0)
+                                    {
+                                        N_Diffrence = HoursToMinutes(Convert.ToDouble(Avar["N_Diff"].ToString()));
+                                        N_NonDedApp = HoursToMinutes(N_NonDedApp);
+                                        N_NonDedApp += N_Diffrence;
+
+                                        N_NonDedApp = MinutesToHours(N_NonDedApp);
+                                    }
+
                                     object objPayID = dLayer.ExecuteScalar("Select X_Description from PAy_PayMaster where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_PayID=" + myFunctions.getIntVAL(Avar["N_OTPayID"].ToString()), Params, connection);
                                     if (objPayID != null)
                                         Avar["X_Type"] = objPayID.ToString();
@@ -415,7 +448,7 @@ namespace SmartxAPI.Controllers
                                         N_deductionTime = 0;
                                     }
                                     
-                                    N_CompsateDed = myFunctions.getVAL(Avar["CompMinutes"].ToString());
+                                    N_CompsateDed = myFunctions.getVAL(Avar["N_Compensate"].ToString());
                                     if (N_additionTime > 0)
                                         additionTime += HoursToMinutes(N_additionTime);
                                     if (N_deductionTime > 0)
