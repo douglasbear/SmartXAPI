@@ -566,6 +566,7 @@ namespace SmartxAPI.Controllers
 
             DataTable MasterTable;
             DataTable DetailTable;
+            DataTable DetailsToImport;
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
             DataTable Approvals;
@@ -589,6 +590,11 @@ namespace SmartxAPI.Controllers
                 n_MRNID = myFunctions.getIntVAL(masterRow["N_RsID"].ToString());
             int Dir_Purchase = 1;
             int b_FreightAmountDirect = myFunctions.getIntVAL(masterRow["b_FreightAmountDirect"].ToString());
+            DetailsToImport = ds.Tables["detailsImport"];
+            bool B_isImport = false;
+
+            if (ds.Tables.Contains("detailsImport"))
+                B_isImport = true;
 
 
             try
@@ -824,6 +830,37 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to save Purchase Invoice!"));
+                    }
+
+                    if (B_isImport)
+                    {
+                        foreach (DataColumn col in DetailsToImport.Columns)
+                        {
+                            col.ColumnName = col.ColumnName.Replace(" ", "_");
+                            col.ColumnName = col.ColumnName.Replace("*", "");
+                            col.ColumnName = col.ColumnName.Replace("/", "_");
+                        }
+
+                        DetailsToImport.Columns.Add("N_MasterID");
+                        DetailsToImport.Columns.Add("X_Type");
+                        DetailsToImport.Columns.Add("N_CompanyID");
+                        DetailsToImport.Columns.Add("PkeyID");
+                        foreach (DataRow dtRow in DetailsToImport.Rows)
+                        {
+                            dtRow["N_MasterID"] = N_PurchaseID;
+                            dtRow["N_CompanyID"] = nCompanyID;
+                            dtRow["PkeyID"] = 0;
+                        }
+
+                        dLayer.ExecuteNonQuery("delete from Mig_Purchase ", connection, transaction);
+                        dLayer.SaveData("Mig_Purchase", "PkeyID", "", "", DetailsToImport, connection, transaction);
+
+                        SortedList ProParam = new SortedList();
+                        ProParam.Add("N_CompanyID", nCompanyID);
+                        ProParam.Add("N_PKeyID", N_PurchaseID);
+                         
+                        ProParam.Add("X_Type", "purchase invoice");
+                        DetailTable = dLayer.ExecuteDataTablePro("SP_ScreenDataImport", ProParam, connection,transaction);
                     }
 
                     N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "PURCHASE", N_PurchaseID, InvoiceNo, 1, objVendorName.ToString(), 0, "", User, dLayer, connection, transaction);

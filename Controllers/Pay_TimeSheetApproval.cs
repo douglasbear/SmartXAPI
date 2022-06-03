@@ -397,8 +397,37 @@ namespace SmartxAPI.Controllers
                                         Avar["N_Vacation"] = 2;
                                         Avar["Attandance"] = "A";
                                     }
+
+                                    N_OfficeHours = myFunctions.getVAL(Avar["N_DutyHours"].ToString());///////////////////////////////////
+                                    if(myFunctions.getVAL(Avar["DailyOT"].ToString())>0)
+                                    {
+                                        N_additionTime = myFunctions.getVAL(Avar["DailyOT"].ToString());
+                                        N_deductionTime = 0;
+                                    }
+                                    else if(myFunctions.getVAL(Avar["DailyOT"].ToString())<0)
+                                    {
+                                        N_additionTime = 0;
+                                        N_deductionTime = myFunctions.getVAL(Avar["DailyOT"].ToString());
+                                    }
+                                    else
+                                    {
+                                        N_additionTime = 0;
+                                        N_deductionTime = 0;
+                                    }
+                                    
+                                    N_CompsateDed = myFunctions.getVAL(Avar["CompMinutes"].ToString());
+                                    if (N_additionTime > 0)
+                                        additionTime += HoursToMinutes(N_additionTime);
+                                    if (N_deductionTime > 0)
+                                        deductionTime += HoursToMinutes(N_deductionTime);
+                                    if (N_CompsateDed != 0)
+                                        CompsateDed += HoursToMinutes(N_CompsateDed);
+                                    if (N_OfficeHours != 0)
+                                        OfficeHours += HoursToMinutes(N_OfficeHours);
+                                    if (Avar["Attandance"].ToString() == "A")
+                                        AbsentCount++;
                                 }
-                            }
+                            
 
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_EmpID", typeof(int), 0);
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_OfficeHours", typeof(double), 0);
@@ -496,6 +525,7 @@ namespace SmartxAPI.Controllers
                                 dt.Tables.Add(SummaryTable);
                                 dt.Tables.Add(payRate);
 
+                            }
                         }
                         else//New Entry
                         {

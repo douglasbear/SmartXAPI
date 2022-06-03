@@ -159,9 +159,15 @@ namespace SmartxAPI.Controllers
                     DataTable MasterTable;
                     DataTable DetailTable;
                     DataTable StockTable;
+                    DataTable DetailsToImport;
                     string DocNo = "";
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
+                    DetailsToImport = ds.Tables["detailsImport"];
+                    bool B_isImport = false;
+                    if (ds.Tables.Contains("detailsImport"))
+                    B_isImport = true;
+                    
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
@@ -170,29 +176,34 @@ namespace SmartxAPI.Controllers
                     int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString());
                     int  n_LoactionID =  myFunctions.getIntVAL(MasterTable.Rows[0]["n_LoactionID"].ToString());
                     string X_RefNo = MasterTable.Rows[0]["X_RefNo"].ToString();
+                    int n_isSaveDraft = myFunctions.getIntVAL(MasterTable.Rows[0]["b_IsSaveDraft"].ToString());
                     DataTable newTable = new DataTable();
                     bool bStockMisMatch = false;
                     string X_TransType = "IA";
                     string stockMasterSql = "select vw_InvItem_Search.N_ItemID,N_CompanyID,[Description], dbo.[SP_LocationStock](vw_InvItem_Search.N_ItemID,"+n_LoactionID+") As N_Stock   From vw_InvItem_Search where   [Item Code]<>'001' and N_CompanyID=" + nCompanyID + " and N_ClassID<>4 ";
                     StockTable = dLayer.ExecuteDataTable(stockMasterSql, Params, connection, transaction);
                  
-                    if (StockTable.Rows.Count > 0)
+
+                    if (n_isSaveDraft == 0)
                     {
-                        foreach (DataRow stockItem in StockTable.Rows)
+                        if (StockTable.Rows.Count > 0)
                         {
-                            foreach (DataRow DetailItem in DetailTable.Rows)
+                            foreach (DataRow stockItem in StockTable.Rows)
                             {
-                                if (stockItem["N_ItemID"].ToString() == DetailItem["N_ItemID"].ToString())
+                                foreach (DataRow DetailItem in DetailTable.Rows)
                                 {
-                                    if (myFunctions.getVAL(stockItem["N_Stock"].ToString()) !=(myFunctions.getVAL(DetailItem["N_QtyOnHand"].ToString())))
+                                    if (stockItem["N_ItemID"].ToString() == DetailItem["N_ItemID"].ToString())
                                     {
-                                        bStockMisMatch = true;
-                                     
+                                        if (myFunctions.getVAL(stockItem["N_Stock"].ToString()) !=(myFunctions.getVAL(DetailItem["N_QtyOnHand"].ToString())))
+                                        {
+                                            bStockMisMatch = true;
+                                        }
                                     }
                                 }
                             }
                         }
                     }
+
                     if(bStockMisMatch)
                     {
                          return Ok(_api.Success(bStockMisMatch));
@@ -234,6 +245,37 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable To Save"));
                     }
 
+                    if (B_isImport)
+                    {
+                        foreach (DataColumn col in DetailsToImport.Columns)
+                        {
+                            col.ColumnName = col.ColumnName.Replace(" ", "_");
+                            col.ColumnName = col.ColumnName.Replace("*", "");
+                            col.ColumnName = col.ColumnName.Replace("/", "_");
+                        }
+
+                        DetailsToImport.Columns.Add("N_MasterID");
+                        DetailsToImport.Columns.Add("X_Type");
+                        DetailsToImport.Columns.Add("N_CompanyID");
+                        DetailsToImport.Columns.Add("PkeyID");
+                        foreach (DataRow dtRow in DetailsToImport.Rows)
+                        {
+                            dtRow["N_MasterID"] = nAdjustmentID;
+                            dtRow["N_CompanyID"] = nCompanyID;
+                            dtRow["PkeyID"] = 0;
+                        }
+
+                        dLayer.ExecuteNonQuery("delete from Mig_Adjustment ", connection, transaction);
+                        dLayer.SaveData("Mig_Adjustment", "PkeyID", "", "", DetailsToImport, connection, transaction);
+
+                        SortedList ProParam = new SortedList();
+                        ProParam.Add("N_CompanyID", nCompanyID);
+                        ProParam.Add("N_PKeyID", nAdjustmentID);
+                         
+                        ProParam.Add("X_Type", "inventory adjustment");
+                        DetailTable = dLayer.ExecuteDataTablePro("SP_ScreenDataImport", ProParam, connection,transaction);
+                    }
+
                     for (int i = 0; i < DetailTable.Rows.Count; i++)
                     {
                         DetailTable.Rows[i]["N_AdjustmentID"] = nAdjustmentID;
@@ -249,31 +291,35 @@ namespace SmartxAPI.Controllers
                     StockParam.Add("N_AdjustmentID", nAdjustmentID);
                     StockParam.Add("N_UserID", nUserID);
 
-                    try
+                    if (n_isSaveDraft == 0)
                     {
-                        dLayer.ExecuteNonQueryPro("SP_Inv_StockAdjustmentIns ", StockParam, connection, transaction).ToString();
-                    }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, ex));
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Inv_StockAdjustmentIns ", StockParam, connection, transaction).ToString();
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, ex));
+                        }
+
+                        SortedList PostingParam = new SortedList();
+                        PostingParam.Add("N_CompanyID", nCompanyID);
+                        PostingParam.Add("X_InventoryMode", X_TransType);
+                        PostingParam.Add("N_InternalID", nAdjustmentID);
+                        PostingParam.Add("N_UserID", nUserID);
+                        PostingParam.Add("X_SystemName", "WebRequest");
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting ", PostingParam, connection, transaction).ToString();
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, ex));
+                        }
                     }
 
-                    SortedList PostingParam = new SortedList();
-                    PostingParam.Add("N_CompanyID", nCompanyID);
-                    PostingParam.Add("X_InventoryMode", X_TransType);
-                    PostingParam.Add("N_InternalID", nAdjustmentID);
-                    PostingParam.Add("N_UserID", nUserID);
-                    PostingParam.Add("X_SystemName", "WebRequest");
-                    try
-                    {
-                        dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting ", PostingParam, connection, transaction).ToString();
-                    }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, ex));
-                    }
                     transaction.Commit();
                     return Ok(_api.Success("Saved Successfully"));
                 }
