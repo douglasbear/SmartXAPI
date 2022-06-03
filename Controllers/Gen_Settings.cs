@@ -44,6 +44,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SortedList Params = new SortedList();
+                    DataTable OffDays = new DataTable();
                     Params.Add("@nFormID", nFormID);
                     Params.Add("@nLangID", nLangID);
                     Params.Add("@nFnYearID", nFnYearID);
@@ -51,6 +52,8 @@ namespace SmartxAPI.Controllers
 
                     string settingsSql = "";
                     string defaultAccountsSql="";
+                    string offDaysSql="";
+
                     if (env.EnvironmentName == "Development")
                     {
                         settingsSql = "SELECT ROW_NUMBER() OVER(ORDER BY Gen_Settings.X_Group,Gen_Settings.X_Description,Gen_Settings.N_UserCategoryID ASC) AS N_RowID,Gen_Settings.X_Group, Gen_Settings.X_Description, max(Gen_Settings.N_Value) as N_Value, Gen_Settings.X_Value, Gen_Settings.N_UserCategoryID, Gen_Settings.X_FieldType, Gen_Settings.X_SettingsTabCode,Lan_MultiLingual.X_WText + ' [ '+Gen_Settings.X_Description+' - ' + Gen_Settings.X_Group + ' ]' as X_WText,Gen_Settings.X_DataSource FROM Gen_Settings LEFT OUTER JOIN Lan_MultiLingual ON Gen_Settings.N_SettingsFormID = Lan_MultiLingual.N_FormID AND Gen_Settings.X_WLanControlNo = Lan_MultiLingual.X_WControlName WHERE (Gen_Settings.B_WShow = 1) AND (Gen_Settings.N_SettingsFormID = @nFormID) AND (Gen_Settings.N_CompanyID = @nCompanyID) and (Lan_MultiLingual.N_LanguageId=@nLangID) group by Gen_Settings.X_Group,Gen_Settings.X_Description, Gen_Settings.X_Value, Gen_Settings.N_UserCategoryID, Gen_Settings.X_FieldType, Gen_Settings.X_SettingsTabCode,Lan_MultiLingual.X_WText,Gen_Settings.X_DataSource,Gen_Settings.N_Order order by X_SettingsTabCode,N_Order,N_UserCategoryID";
@@ -63,6 +66,12 @@ namespace SmartxAPI.Controllers
                         defaultAccountsSql = "SELECT Acc_AccountDefaults.X_FieldDescr as X_Group, vw_AccMastLedger.Account  as name, vw_AccMastLedger.N_LedgerID  as N_Value, vw_AccMastLedger.[Account Code] as X_Value, Acc_AccountDefaults.N_CompanyID, Acc_AccountDefaults.N_FieldValue, Acc_AccountDefaults.N_Type, Acc_AccountDefaults.N_FnYearID, Acc_AccountDefaults.D_Entrydate, Acc_AccountDefaults.N_BranchID, Acc_AccountDefaults.N_FormID, Acc_AccountDefaults.X_WLanControlNo, Acc_AccountDefaults.N_Order, Acc_AccountDefaults.X_AccountCriteria, Lan_MultiLingual.X_WText FROM Acc_AccountDefaults LEFT OUTER JOIN Lan_MultiLingual ON Acc_AccountDefaults.X_WLanControlNo = Lan_MultiLingual.X_WControlName AND Acc_AccountDefaults.N_FormID = Lan_MultiLingual.N_FormID LEFT OUTER JOIN vw_AccMastLedger ON Acc_AccountDefaults.N_FnYearID = vw_AccMastLedger.N_FnYearID AND Acc_AccountDefaults.N_CompanyID = vw_AccMastLedger.N_CompanyID AND Acc_AccountDefaults.N_FieldValue = vw_AccMastLedger.N_LedgerID WHERE (Acc_AccountDefaults.N_FormID = @nFormID) AND (Acc_AccountDefaults.N_CompanyID = @nCompanyID) AND (Acc_AccountDefaults.N_FnYearID = @nFnYearID) AND (Lan_MultiLingual.N_LanguageID = @nLangID) order by N_Order";
                     
                     
+                    }
+
+                    if (nFormID == 589)
+                    {
+                        offDaysSql = "Select * from pay_YearlyOffDays Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID order by N_OffID";
+                        OffDays = dLayer.ExecuteDataTable(offDaysSql, Params, connection);
                     }
 
                     DataTable Settings = dLayer.ExecuteDataTable(settingsSql, Params, connection);
@@ -110,6 +119,8 @@ namespace SmartxAPI.Controllers
                         NParentMenuId = 133;
                     if (nFormID == 1464)
                         NParentMenuId = 6;
+                    if (nFormID == 589)
+                        NParentMenuId = 185;
 
                     SortedList mParamsList = new SortedList()
                     {
@@ -125,7 +136,8 @@ namespace SmartxAPI.Controllers
                     SortedList OutPut = new SortedList(){
                             {"Settings",_api.Format(Settings)},
                             {"InvoiceCounter",_api.Format(MasterTable)},
-                            {"AccountMap",_api.Format(AccountMap)}
+                            {"AccountMap",_api.Format(AccountMap)},
+                            {"OffDays",_api.Format(OffDays)}
                         };
                     return Ok(_api.Success(OutPut));
                 }
@@ -287,6 +299,7 @@ namespace SmartxAPI.Controllers
             DataTable InvoiceCounter = ds.Tables["invoiceCounter"];
             DataTable AccountMaps = ds.Tables["accountMaps"];
             DataTable General = ds.Tables["general"];
+            DataTable OffDays = ds.Tables["offdays"];
 
             try
             {
@@ -332,6 +345,19 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQuery("update Acc_PaymentMethodMaster set B_IsDefault=1 where N_CompanyID=" + nCompanyID + " and N_TypeID= " + var["n_TypeID"].ToString() +"and N_PaymentMethodID="+ var["n_PaymentMethodID"].ToString() + "",connection, transaction);
                         }
                     }
+                    // foreach (DataRow var in OffDays.Rows)
+                    // {
+                    //     object N_OffID = 0;
+
+                    //     N_OffID = dLayer.SaveData("pay_YearlyOffDays", "N_OffID", OffDays, connection, transaction);
+                    //     dLayer.ExecuteNonQuery(defaultsSql, connection, transaction);
+
+                    // if (myFunctions.getIntVAL(N_OffID.ToString()) <= 0)
+                    // {
+                    //     B_Completed = false;
+                    //     break;
+                    // }
+                    // }
                     transaction.Commit();
 
                     return Ok(_api.Success("Settings Saved"));
