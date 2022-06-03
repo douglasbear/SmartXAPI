@@ -110,6 +110,10 @@ namespace SmartxAPI.Controllers
                         NParentMenuId = 133;
                     if (nFormID == 1464)
                         NParentMenuId = 6;
+                     if (nFormID == 1475)
+                        NParentMenuId =1372;
+                    if (nFormID == 1476)
+                        NParentMenuId =1372;
 
                     SortedList mParamsList = new SortedList()
                     {
