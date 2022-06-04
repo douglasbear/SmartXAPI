@@ -254,7 +254,7 @@ namespace SmartxAPI.Controllers
                     N_OpeningID = dLayer.SaveData("Inv_OpeningStock", "N_TransID", "", "", openingStock, connection, transaction);
 
                     openingStock.AcceptChanges();
-                    N_OpeningID = dLayer.SaveData("Inv_OpeningStock", "N_TransID", "", "", openingStock, connection, transaction);
+                    // N_OpeningID = dLayer.SaveData("Inv_OpeningStock", "N_TransID", "", "", openingStock, connection, transaction);
                     if (N_OpeningID < 0)
                     {
 

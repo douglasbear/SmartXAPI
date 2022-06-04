@@ -415,7 +415,7 @@ namespace SmartxAPI.Controllers
                                         N_deductionTime = 0;
                                     }
                                     
-                                    N_CompsateDed = myFunctions.getVAL(Avar["CompMinutes"].ToString());
+                                    N_CompsateDed = myFunctions.getVAL(Avar["N_CompMinutes"].ToString());
                                     if (N_additionTime > 0)
                                         additionTime += HoursToMinutes(N_additionTime);
                                     if (N_deductionTime > 0)
@@ -448,6 +448,8 @@ namespace SmartxAPI.Controllers
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NetAddition", typeof(double), 0);
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NetAddApp", typeof(double), 0);
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NonDedApp", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_TotalDays", typeof(double), 0);
+                       
 
 
                                 OfficeHours = MinutesToHours(OfficeHours);
