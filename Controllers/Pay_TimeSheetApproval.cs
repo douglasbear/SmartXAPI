@@ -287,6 +287,7 @@ namespace SmartxAPI.Controllers
                             double additionTime = 0, deductionTime = 0, CompsateDed = 0, OfficeHours = 0, AbsentCount = 0;
                             double N_additionTime = 0, N_deductionTime = 0, N_CompsateDed = 0, N_OfficeHours = 0, N_ExtraHours = 0;
                             double balanc = 0, N_NetDeduction = 0;
+                            double N_NetAddApp=0,N_NetDedApp=0;
 
                             N_BatchID = myFunctions.getIntVAL(payRunID);
                             if (N_BatchID > 0 && nEmpID > 0)
@@ -362,6 +363,7 @@ namespace SmartxAPI.Controllers
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "OverTime", typeof(double), null);
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "Deduction", typeof(double), null);
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "CompMinutes", typeof(double), null);
+                                TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "N_TotHours", typeof(double), null);
 
                                 string Sql8 = "Select * from vw_pay_OffDays Where N_CompanyID =" + nCompanyID + " and (N_FnyearID= " + nFnYearID + " or N_FnyearID=0)  ";
                                 PayOffDays = dLayer.ExecuteDataTable(Sql8, secParams, connection);
@@ -372,6 +374,9 @@ namespace SmartxAPI.Controllers
                                 foreach (DataRow Avar in TimeSheetDetails.Rows)
                                 {
                                     DateTime Date5 = Convert.ToDateTime(Avar["D_Date"].ToString());
+
+                                    Avar["N_TotHours"] = Avar["N_TotalWorkHour"];
+
                                     foreach (DataRow Bvar in PayOffDays.Rows)
                                     {
                                         if (((int)Date5.DayOfWeek) + 1 == myFunctions.getIntVAL(Bvar["N_DayID"].ToString()) || myFunctions.getDateVAL(Date5) == myFunctions.getDateVAL(Convert.ToDateTime(Bvar["D_Date"].ToString())))
@@ -459,8 +464,25 @@ namespace SmartxAPI.Controllers
                                         OfficeHours += HoursToMinutes(N_OfficeHours);
                                     if (Avar["Attandance"].ToString() == "A")
                                         AbsentCount++;
+                                            
+
+                                    if(myFunctions.getIntVAL(Avar["N_AddorDedID"].ToString())>0)
+                                    {
+                                        string Sql11 = "lect N_HrsOrDays from Pay_MonthlyAddOrDedDetails where N_TransID=" + myFunctions.getIntVAL(Avar["N_AddorDedID"].ToString()) + " and N_EmpID=" + nEmpID + " and N_CompanyID=" + nCompanyID + " and B_TimeSheetEntry=1 and N_refID=" + myFunctions.getIntVAL(Avar["N_TimeSheetID"].ToString())  + " and N_FormID=" + this.FormID;
+                                        DataTable dtApplicable = dLayer.ExecuteDataTable(Sql11, secParams, connection);
+
+                                        if (dtApplicable != null && dtApplicable.Rows.Count > 0)
+                                        {
+                                            foreach (DataRow row in dtApplicable.Rows)
+                                            {
+                                                if (myFunctions.getVAL(row["N_HrsOrDays"].ToString()) >= 0)
+                                                    N_NetAddApp = myFunctions.getVAL(row["N_HrsOrDays"].ToString());
+                                                if (myFunctions.getVAL(row["N_HrsOrDays"].ToString()) <= 0)
+                                                    N_NetDedApp = (-1 * myFunctions.getVAL(row["N_HrsOrDays"].ToString()));
+                                            }
+                                        }
+                                    }
                                 }
-                            
 
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_EmpID", typeof(int), 0);
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_OfficeHours", typeof(double), 0);
@@ -515,9 +537,9 @@ namespace SmartxAPI.Controllers
                                 newRow["N_DeductionTime"] = myFunctions.getVAL(deductionTime.ToString());
                                 newRow["N_CompsateDed"] = myFunctions.getVAL(CompsateDed.ToString());
                                 newRow["N_NetDeduction"] = myFunctions.getVAL(N_NetDeduction.ToString());
-                                newRow["N_NetDedApp"] = myFunctions.getVAL(N_NetDeduction.ToString());
+                                newRow["N_NetDedApp"] = myFunctions.getVAL(N_NetDedApp.ToString());
                                 newRow["N_NetAddition"] = myFunctions.getVAL(additionTime.ToString());
-                                newRow["N_NetAddApp"] = myFunctions.getVAL(additionTime.ToString());
+                                newRow["N_NetAddApp"] = myFunctions.getVAL(N_NetAddApp.ToString());
                                 newRow["N_ExtraHours"] = myFunctions.getVAL(N_ExtraHours.ToString());
                                 newRow["N_AbsentCount"] = myFunctions.getIntVAL(AbsentCount.ToString());
                                 newRow["N_NonDedApp"] = myFunctions.getVAL(N_NonDedApp.ToString());
