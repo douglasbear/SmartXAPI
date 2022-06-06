@@ -108,24 +108,65 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
 
                 SortedList Params = new SortedList();
-
+                
+            
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                      string image = "";
-                    if (MasterTable.Columns.Contains("x_ImageName"))
+                  
+                     string itemtype1 = "";
+                       if (MasterTable.Rows.Count > 0)
                         {
+                            MasterTable.Columns.Add("X_ImageName", typeof(System.String));
+                            MasterTable.Columns.Add("X_ImageLocation", typeof(System.String));
+                            MasterTable.Columns.Add("N_ImageID", typeof(System.Int32));
+                            MasterTable.Columns.Add("N_ItemID", typeof(System.Int32));
+                            int i = 0;
+                            int type=myFunctions.getIntVAL(MasterTable.Rows[0]["n_Type"].ToString());
+                          
+                            foreach (DataRow dRow in MasterTable.Rows)
+                            {
+                                object xItemCode = MasterTable.Rows[i]["ItemCode"].ToString();
+                                object N_ItemID = dLayer.ExecuteScalar("Select N_ItemID from Inv_ItemMaster where X_ItemCode='" + xItemCode + "'", Params, connection,transaction);
+                                int NItemID=0;
+                                
+                                if(N_ItemID!=null)
+                                {
+                                
+                                 NItemID=myFunctions.getIntVAL(N_ItemID.ToString());
+                                }
+                                // else 
+                                // {
+                                //   int NItemID=0;  
+                                // }
+                               
+                                 if(type==1)
+                           {
+                              myFunctions.writeImageFile(dRow["I_Image"].ToString(), myFunctions.GetUploadsPath(User, "ProductImages"), xItemCode + "-POS-" + i);
+                              dRow["X_ImageName"] =xItemCode + "-POS-" + i + ".jpg";
+                              dRow["X_ImageLocation"] = myFunctions.GetUploadsPath(User, "PosProductImages");
+                           }
+                           else
+                           {
+                             myFunctions.writeImageFile(dRow["I_Image"].ToString(), myFunctions.GetUploadsPath(User, "ProductImages"), xItemCode + "-ECOM-" + i);
+                             dRow["X_ImageName"] =xItemCode + "-ECOM-" + i + ".jpg";
+                             dRow["X_ImageLocation"] = myFunctions.GetUploadsPath(User, "EcomProductImages");
+                           }
+                               
+                               
+                                dRow["N_ImageID"] = MasterTable.Rows[i]["N_ImageID"] ;
+                                dRow["N_ItemID"] = NItemID ;
+                                i++;
 
-                            image = MasterTable.Rows[0]["x_ImageName"].ToString();
-
-                            MasterTable.Rows[0]["x_ImageName"] = "";
-
-                        }
-                        Byte[] imageBitmap = new Byte[image.Length];
-                        imageBitmap = Convert.FromBase64String(image);
-                    int N_ImageID = dLayer.SaveData("Inv_DisplayImages","N_ImageID", MasterTable, connection, transaction);
-                    if (N_ImageID <= 0)
+                            }
+                           
+                            MasterTable.Columns.Remove("I_Image");
+                            MasterTable.Columns.Remove("ItemCode");
+                            MasterTable.Columns.Remove("fileName");
+                            int N_ImageID=dLayer.SaveData("Inv_DisplayImages", "N_ImageID", MasterTable, connection, transaction);
+                            if (N_ImageID <= 0)
                     {
                         transaction.Rollback();
                         return Ok( api.Warning("no result fount"));
@@ -134,6 +175,31 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Commit();
                     }
+                        }
+                    // if (MasterTable.Columns.Contains("i_Image"))
+                    //     {
+
+                    //         image = MasterTable.Rows[0]["i_Image"].ToString();
+
+                    //         MasterTable.Rows[0]["i_Image"] = "";
+
+                    //     }
+                    //     Byte[] imageBitmap = new Byte[image.Length];
+                    //     imageBitmap = Convert.FromBase64String(image);
+                    //     MasterTable.Columns.Remove("i_Image");
+                    //     int N_ImageID = dLayer.SaveData("Inv_DisplayImages","N_ImageID", MasterTable, connection, transaction);
+                    //    if (image.Length > 0)
+                    //    dLayer.SaveImage("Inv_DisplayImages","X_ImageName",imageBitmap,"N_ImageID",N_ImageID,connection, transaction);
+                 
+                    // if (N_ImageID <= 0)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok( api.Warning("no result fount"));
+                    // }
+                    // else
+                    // {
+                    //     transaction.Commit();
+                    // }
                     return Ok( api.Success("Upload sucessfully"));
                 }
                 
