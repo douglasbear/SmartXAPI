@@ -503,6 +503,8 @@ namespace SmartxAPI.Controllers
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NetAddition", typeof(double), 0);
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NetAddApp", typeof(double), 0);
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NonDedApp", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_TotalDays", typeof(double), 0);
+                       
 
 
                                 OfficeHours = MinutesToHours(OfficeHours);
@@ -528,6 +530,12 @@ namespace SmartxAPI.Controllers
                                     Balance = ((int)N_Balance / 1) + (N_Balance % 1) * .60;
                                     Adjustment = ((int)N_Balance / 1) + (N_Balance % 1) * .60;
                                 }
+                                     object obj1 = dLayer.ExecuteScalar("SELECT  [dbo].[SP_TimeSheetCalc_TotalHours](" + nCompanyID + ",'" +dtpFromdate + "','" + dtpTodate + "'," + nEmpID + ")",Params,connection );
+                                if (obj1 != null)
+                                  N_TotalDays=myFunctions.getVAL(obj1.ToString());
+                                else 
+                                  N_TotalDays=N_WorkHours;
+
 
                                 DataRow newRow = SummaryTable.NewRow();
 
@@ -549,6 +557,7 @@ namespace SmartxAPI.Controllers
                                 newRow["N_CompDed"] = myFunctions.getVAL(N_CompDed.ToString());
                                 newRow["N_Balance"] = myFunctions.getVAL(Balance.ToString());
                                 newRow["N_Adjustment"] = myFunctions.getVAL(Adjustment.ToString());
+                                newRow["N_TotalDays"] = myFunctions.getVAL(N_TotalDays.ToString());
                                 SummaryTable.Rows.Add(newRow);
 
                                 SummaryTable.AcceptChanges();
