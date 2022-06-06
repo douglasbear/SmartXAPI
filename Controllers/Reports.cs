@@ -975,7 +975,11 @@ namespace SmartxAPI.Controllers
                         {
                             bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
                             if (mainBranch == false)
+<<<<<<< HEAD
                                 Criteria = Criteria + " and " + BranchData + "=" + BranchID ;
+=======
+                                Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )" ;
+>>>>>>> 812ae77eb64cd8e315925197312ccccc0d584602
 
                         }
                     }
@@ -988,7 +992,7 @@ namespace SmartxAPI.Controllers
                         {
                             bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
                             if (mainBranch == false)
-                                Criteria = Criteria + " and " + BranchData + "=" + BranchID;
+                                Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )" ;
                         }
                     }
                     if (UserData != "")
