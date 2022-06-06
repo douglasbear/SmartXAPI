@@ -381,21 +381,27 @@ namespace SmartxAPI.Controllers
 
                         //dLayer.ExecuteNonQuery("SP_Log_SysActivity ",LogParams,connection,transaction);
                         int N_InvoiceDetailId = 0;
+                        double N_Amt=0;
                         for (int j = 0; j < DetailTable.Rows.Count; j++)
                         {
                             DetailTable.Rows[j]["N_VoucherId"] = N_VoucherID;
+                            N_Amt=myFunctions.getVAL(DetailTable.Rows[j]["N_Amount"].ToString());
 
                             N_InvoiceDetailId = dLayer.SaveDataWithIndex("Acc_VoucherMaster_Details", "N_VoucherDetailsID", "", "", j, DetailTable, connection, transaction);
 
-
+                            double N_CCAmt=0;
+                            int Flag=0;
                             if (N_InvoiceDetailId > 0)
                             {
                                 for (int k = 0; k < CostCenterTable.Rows.Count; k++)
                                 {
+                                    
                                     if (myFunctions.getIntVAL(CostCenterTable.Rows[k]["rowID"].ToString()) == j)
                                     {
+                                        Flag=1;
                                         CostCenterTable.Rows[k]["N_VoucherID"] = N_VoucherID;
                                         CostCenterTable.Rows[k]["N_VoucherDetailsID"] = N_InvoiceDetailId;
+                                        N_CCAmt=N_CCAmt+myFunctions.getVAL(CostCenterTable.Rows[k]["n_Amount"].ToString());
                                           if(myFunctions.getVAL(DetailTable.Rows[j]["N_Amount"].ToString())<0)
                                         {
                                         CostCenterTable.Rows[k]["n_Amount"]= -1 *  myFunctions.getVAL(CostCenterTable.Rows[k]["n_Amount"].ToString());
@@ -405,6 +411,16 @@ namespace SmartxAPI.Controllers
                                     }
                                     CostCenterTable.AcceptChanges();
                                 }
+
+                                if(Flag==1)
+                                {
+                                    if(N_Amt!=N_CCAmt)                                    
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(api.Error(User, "Unable to save! Cost center distribution mismatch."));
+                                    }
+                                }
+
                                 CostCenterTable.AcceptChanges();
                             }
                             DetailTable.AcceptChanges();
