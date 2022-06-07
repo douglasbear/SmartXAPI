@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
 
 
                     [HttpDelete("delete")]
-        public ActionResult DeleteData(int n_TemplateID, int nCompanyID)
+        public ActionResult DeleteData(int nTemplateID, int nCompanyID)
         {
             int Results = 0;
              nCompanyID = myFunctions.GetCompanyID(User);
@@ -119,8 +119,8 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    Results = dLayer.DeleteData("Inv_DeviceTemplate", "N_TemplateID", n_TemplateID, "N_CompanyID=" + nCompanyID  + "", connection);
-                    dLayer.DeleteData("Inv_DeviceTemplateDetails", "N_TemplateID", n_TemplateID, "N_CompanyID=" + nCompanyID + "", connection);
+                    Results = dLayer.DeleteData("Inv_DeviceTemplate", "N_TemplateID", nTemplateID, "N_CompanyID=" + nCompanyID  + "", connection);
+                    dLayer.DeleteData("Inv_DeviceTemplateDetails", "N_TemplateID", nTemplateID, "N_CompanyID=" + nCompanyID + "", connection);
 
                 }
                 if (Results > 0)
@@ -141,7 +141,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-                 [HttpPost("Save")]
+        [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
@@ -163,6 +163,7 @@ namespace SmartxAPI.Controllers
                     int N_TemplateID = myFunctions.getIntVAL(MasterRow["N_TemplateID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["N_CompanyID"].ToString());
                     int N_UserID = myFunctions.getIntVAL(MasterRow["n_UserID"].ToString());
+                    int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     string X_TemplateCode = MasterRow["X_TemplateCode"].ToString();
 
                     
@@ -171,7 +172,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_FormID", nFormID);
-                        Params.Add("N_UserID", N_UserID);
+                        Params.Add("N_YearID", N_FnYearID);
                         X_TemplateCode = dLayer.GetAutoNumber("Inv_DeviceTemplate", "X_TemplateCode", Params, connection, transaction);
                         if (X_TemplateCode == "")
                         {
@@ -187,7 +188,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Inv_DeviceTemplate", "N_TemplateID", N_TemplateID, "N_CompanyID=" + N_CompanyID + " and N_TemplateID=" + N_TemplateID, connection, transaction);
                     }
                     // string DupCriteria = "";
-
+                     MasterTable.Columns.Remove("n_FnYearId");
 
                      N_TemplateID = dLayer.SaveData("Inv_DeviceTemplate", "N_TemplateID","","", Master, connection, transaction);
                     if (N_TemplateID <= 0)
@@ -256,6 +257,7 @@ namespace SmartxAPI.Controllers
                         {
                             return Ok(api.Notice("No Results Found"));
                         }
+                        Detail = api.Format(Detail, "Detail");
                         ds.Tables.Add(Detail);
                       
 
