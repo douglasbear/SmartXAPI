@@ -85,7 +85,7 @@ namespace SmartxAPI.Controllers
                     if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ")  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " Group By  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName";
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ")  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + "and N_ItemID not in (select top(" + Count + ") N_ItemID from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " ) " + " Group By  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName";
+                        sqlCommandText = "select top(" + nSizeperpage + ")  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " and N_ItemID not in (select top(" + Count + ") N_ItemID from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " ) " + " Group By  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName";
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);

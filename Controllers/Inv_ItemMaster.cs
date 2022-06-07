@@ -108,7 +108,8 @@ namespace SmartxAPI.Controllers
                 Condition = Condition + "  and vw_InvItem_Search_cloud.N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=@p1 and N_WarehouseID=" + nLocationID + " )  ";
             if (isStockItem)
                 Condition = Condition + " and N_ClassID =2";
-
+            if(isServiceItem) 
+                  Condition = Condition + " and N_ClassID =4";
             if (nItemUsedFor != 0)
             {
                 if (nItemUsedFor == 1)

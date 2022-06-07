@@ -151,7 +151,12 @@ namespace SmartxAPI.Controllers
                     string xLocationCode = MasterTable.Rows[0]["x_BranchCode"].ToString();
                     string xLocationName = MasterTable.Rows[0]["x_BranchName"].ToString();
                     string logo = myFunctions.ContainColumn("i_Logo", MasterTable) ? MasterTable.Rows[0]["i_Logo"].ToString() : "";
-
+                    bool bDefaultBranch = false;
+                    if (MasterTable.Columns.Contains("b_DefaultBranch"))
+                    {
+                        bDefaultBranch = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_DefaultBranch"].ToString());
+                      
+                    }
                     Byte[] logoBitmap = new Byte[logo.Length];
                     logoBitmap = Convert.FromBase64String(logo);
                     if (myFunctions.ContainColumn("i_Logo", MasterTable))
@@ -165,7 +170,7 @@ namespace SmartxAPI.Controllers
                     {
                         ValidateParams.Add("@N_CompanyID", nCompanyID);
                         object BranchCount = dLayer.ExecuteScalar("select count(N_BranchID)  from Acc_BranchMaster where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
-                        object limit = dLayer.ExecuteScalar("select N_BranchLimit from Acc_Company where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
+                        object limit = dLayer.ExecuteScalar("select isnull(N_BranchLimit,0) from Acc_Company where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
                         if (BranchCount != null && limit != null)
                         {
                             if (myFunctions.getIntVAL(BranchCount.ToString()) >= myFunctions.getIntVAL(limit.ToString()))
@@ -174,7 +179,8 @@ namespace SmartxAPI.Controllers
                                 return Ok(_api.Error(User, "Branch Limit exceeded!!!"));
                             }
                         }
-
+                       
+                   
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
@@ -182,11 +188,23 @@ namespace SmartxAPI.Controllers
                         if (xBranchCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Branch Code")); }
                         MasterTable.Rows[0]["x_BranchCode"] = xBranchCode;
                     }
+
                     else
                     {
                         dLayer.DeleteData("Acc_BranchMaster", "N_BranchID", nBranchID, "", connection, transaction);
                     }
-
+                     if(bDefaultBranch==true)
+                    {
+                       object headoffcCount = dLayer.ExecuteScalar("select count(B_DefaultBranch) from Acc_BranchMaster where N_CompanyID=" + nCompanyID,connection, transaction);
+                          if (headoffcCount != null )
+                        {
+                            if (myFunctions.getIntVAL(headoffcCount.ToString()) >= 1)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, "Head Office Limit exceeded!!!"));
+                            }
+                        }
+                    }
                     nBranchID = dLayer.SaveData("Acc_BranchMaster", "N_BranchID", MasterTable, connection, transaction);
                     if (nBranchID <= 0)
                     {
