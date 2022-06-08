@@ -470,11 +470,11 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     if (Count == 0)
                     {
-                        sqlFollowUp = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskStatus where   N_Status <> 1 and N_CreaterID=" + nUserID + " and ISNULL(B_Closed,0)=0  and N_TaskStatusID in (select Max(N_TaskStatusID) from vw_Tsk_TaskStatus  group by N_TaskID,N_CompanyID)";
+                        sqlFollowUp = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskStatus where   N_Status <> 1 and N_CreaterID=" + nUserID + " and ISNULL(B_Closed,0)=0  and N_TaskStatusID in (select Max(N_TaskStatusID) from vw_Tsk_TaskStatus  where   N_Status <> 1 and N_CreaterID="+nUserID+" and ISNULL(B_Closed,0)=0   group by N_TaskID,N_CompanyID) order by N_TaskStatusID desc " ;
                     }
                     else
                     {
-                        sqlFollowUp = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskStatus where   N_Status <> 1 and N_CreaterID=" + nUserID + " and ISNULL(B_Closed,0)=0  and  N_TaskStatusID in (select Max(N_TaskStatusID) from vw_Tsk_TaskStatus  group by N_TaskID,N_CompanyID) and  N_TaskID not in (select top(" + Count + ") N_TaskID from vw_Tsk_TaskCurrentStatus where  N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + "  and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and  Cast(D_DueDate as DATE)='" + d_Date + "') order By N_TaskID desc";
+                        sqlFollowUp = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskStatus where   N_Status <> 1 and N_CreaterID=" + nUserID + " and ISNULL(B_Closed,0)=0  and  N_TaskStatusID in (select Max(N_TaskStatusID) from vw_Tsk_TaskStatus  where   N_Status <> 1 and N_CreaterID="+nUserID+" and ISNULL(B_Closed,0)=0   group by N_TaskID,N_CompanyID) and  N_TaskID not in (select top(" + Count + ") N_TaskID from vw_Tsk_TaskStatus where   N_Status <> 1 and N_CreaterID=" + nUserID + " and ISNULL(B_Closed,0)=0  and N_TaskStatusID in (select Max(N_TaskStatusID) from vw_Tsk_TaskStatus  where   N_Status <> 1 and N_CreaterID="+nUserID+" and ISNULL(B_Closed,0)=0   group by N_TaskID,N_CompanyID)) order By N_TaskStatusID desc";
                     }
 
                     FollowupTasks = dLayer.ExecuteDataTable(sqlFollowUp, Params, connection);
