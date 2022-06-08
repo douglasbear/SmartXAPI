@@ -72,7 +72,7 @@ namespace SmartxAPI.Controllers
                     statusParams.Add("@N_CompanyID", nCompanyID);
                     statusParams.Add("@N_UserID", nUserID);
                     statusParams.Add("@N_Year", N_Year);
-
+                    statusParams.Add("@D_Date", d_Date); 
 
                     try
                     {
