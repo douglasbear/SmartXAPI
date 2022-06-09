@@ -468,7 +468,7 @@ namespace SmartxAPI.Controllers
 
                                     if(myFunctions.getIntVAL(Avar["N_AddorDedID"].ToString())>0)
                                     {
-                                        string Sql11 = "lect N_HrsOrDays from Pay_MonthlyAddOrDedDetails where N_TransID=" + myFunctions.getIntVAL(Avar["N_AddorDedID"].ToString()) + " and N_EmpID=" + nEmpID + " and N_CompanyID=" + nCompanyID + " and B_TimeSheetEntry=1 and N_refID=" + myFunctions.getIntVAL(Avar["N_TimeSheetID"].ToString())  + " and N_FormID=" + this.FormID;
+                                        string Sql11 = "select N_HrsOrDays from Pay_MonthlyAddOrDedDetails where N_TransID=" + myFunctions.getIntVAL(Avar["N_AddorDedID"].ToString()) + " and N_EmpID=" + nEmpID + " and N_CompanyID=" + nCompanyID + " and B_TimeSheetEntry=1 and N_refID=" + myFunctions.getIntVAL(Avar["N_TimeSheetID"].ToString())  + " and N_FormID=" + this.FormID;
                                         DataTable dtApplicable = dLayer.ExecuteDataTable(Sql11, secParams, connection);
 
                                         if (dtApplicable != null && dtApplicable.Rows.Count > 0)
@@ -1026,8 +1026,8 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
                 int N_TimeSheetApproveID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TimeSheetApproveID"].ToString());
-                // int N_SProcessType = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SProcessType"].ToString());
-                // MasterTable.Columns.Remove("N_SProcessType");
+                int N_SProcessType = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SProcessType"].ToString());
+                MasterTable.Columns.Remove("N_SProcessType");
 
                 DateTime dSalDate = Convert.ToDateTime(MasterTable.Rows[0]["D_SalaryDate"].ToString());
                 DateTime dFromDate = Convert.ToDateTime(MasterTable.Rows[0]["D_DateFrom"].ToString());
@@ -1067,15 +1067,15 @@ namespace SmartxAPI.Controllers
 
                     if (N_TimeSheetApproveID > 0)
                     {
-                        dLayer.DeleteData("Pay_TimeSheet", "N_TimesheetID", N_TimeSheetApproveID, "N_CompanyID=" + nCompanyID, connection, transaction);
-                        dLayer.DeleteData("Pay_TimeSheetMaster", "N_TimesheetID", N_TimeSheetApproveID, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearId, connection, transaction);
-                        dLayer.DeleteData("Pay_TimeSheetApproveMaster", "N_TimesheetID", N_TimeSheetApproveID, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearId, connection, transaction);
+                        dLayer.DeleteData("Pay_TimeSheet", "N_TimeSheetApproveID", N_TimeSheetApproveID, "N_CompanyID=" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Pay_TimeSheetMaster", "N_TimeSheetApproveID", N_TimeSheetApproveID, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearId, connection, transaction);
+                        dLayer.DeleteData("Pay_TimeSheetApproveMaster", "N_TimeSheetApproveID", N_TimeSheetApproveID, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearId, connection, transaction);
                     }
 
                     int N_AddOrDedID = 0;
 
-                    // if(N_SProcessType==1)
-                    // {
+                    if(N_SProcessType==0)
+                    {
                         object obj = dLayer.ExecuteScalar(" select N_TransID from Pay_MonthlyAddOrDed where N_CompanyID=" + nCompanyID + " and N_PayrunID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_BatchID"].ToString())+ "", connection, transaction);
                         if (obj == null)
                             N_AddOrDedID = 0;
@@ -1084,7 +1084,7 @@ namespace SmartxAPI.Controllers
 
                         if(N_AddOrDedID==0)
                              N_AddOrDedID = dLayer.SaveData("Pay_MonthlyAddOrDed", "N_TransID", AddOrDedTable, connection, transaction);
-                    // }            
+                    }            
 
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_BatchCode='" + X_BatchCode + "' and N_FnyearID=" + nFnYearId;
                     N_TimeSheetApproveID = dLayer.SaveData("Pay_TimeSheetApproveMaster", "N_TimeSheetApproveID", DupCriteria, "", MasterTable, connection, transaction);
@@ -1098,6 +1098,7 @@ namespace SmartxAPI.Controllers
                     for (int j = 0; j < MasterDetailTable.Rows.Count; j++)
                     {
                         MasterDetailTable.Rows[j]["N_TimeSheetApproveID"] = N_TimeSheetApproveID;
+                        MasterDetailTable.Rows[j]["N_AddOrDedID"] = N_AddOrDedID;
                         MasterDetailTable.Rows[j]["X_BatchCode"] = (myFunctions.getIntVAL(MasterTable.Rows[0]["X_BatchCode"].ToString()) + j).ToString();
 
                         // DataTable dtRFQ = dLayer.ExecuteDataTable("select * from Pay_MonthlyAddOrDed where N_CompanyID is null",Params, connection,transaction);
@@ -1128,10 +1129,10 @@ namespace SmartxAPI.Controllers
 
                     int nTimesheetID = 0, nAddOrDedDetailID = 0;
 
-                    // if(N_SProcessType==1)
-                    // {
+                    if(N_SProcessType==0)
+                    {
                         nAddOrDedDetailID = dLayer.SaveData("Pay_MonthlyAddOrDedDetails", "N_TransDetailsID", AddOrDedDetailTable, connection, transaction);
-                    // }   
+                    }   
 
                     nTimesheetID = dLayer.SaveData("Pay_TimeSheet", "N_SheetID", DetailTable, connection, transaction);
                     if (nTimesheetID <= 0)
