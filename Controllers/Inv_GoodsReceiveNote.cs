@@ -184,6 +184,9 @@ namespace SmartxAPI.Controllers
                     if (dtGoodReceive.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     dtGoodReceive = _api.Format(dtGoodReceive, "Master");
 
+                    SortedList Status = StatusSetup(dtGoodReceive, connection);
+                    dtGoodReceive = myFunctions.AddNewColumnToDataTable(dtGoodReceive, "TxnProcessStatus", typeof(SortedList), Status);
+
                     if (poNo != null)
                     {
                         N_POrderID = myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_POrderid"].ToString());
@@ -485,9 +488,6 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
             int Results = 0;
-            if (CheckProcessed(nGRNID))
-                return Ok(_api.Error(User,"Transaction Started"));
-
 
             try
             {
@@ -511,37 +511,48 @@ namespace SmartxAPI.Controllers
                     int VendorID = myFunctions.getIntVAL(TransRow["N_VendorID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(TransRow["N_FnYearID"].ToString());
 
-
                     SqlTransaction transaction = connection.BeginTransaction();
-                    SortedList DeleteParams = new SortedList(){
-                                {"N_CompanyID",nCompanyID},
-                                {"X_TransType","GRN"},
-                                {"N_VoucherID",nGRNID},
-                                {"N_UserID",nUserID},
-                                {"X_SystemName","WebRequest"},
-                                {"@B_MRNVisible","0"}};
 
-                    Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
-                    if (Results <= 0)
+                    object objPurchaseProcessed = dLayer.ExecuteScalar("Select Isnull(N_PurchaseID,0) from Inv_Purchase where N_CompanyID=" + nCompanyID + " and N_RsID=" + nGRNID + " and B_IsSaveDraft = 0", connection, transaction);
+                    if (objPurchaseProcessed == null)
+                        objPurchaseProcessed = 0;
+
+                    if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) == 0)
+                    {
+                        SortedList DeleteParams = new SortedList(){
+                            {"N_CompanyID",nCompanyID},
+                            {"X_TransType","GRN"},
+                            {"N_VoucherID",nGRNID},
+                            {"N_UserID",nUserID},
+                            {"X_SystemName","WebRequest"},
+                            {"@B_MRNVisible","0"}};
+
+                        Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
+                        if (Results <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User,"Unable to Delete Goods Receive Note"));
+                        }
+
+                        myAttachments.DeleteAttachment(dLayer, 1, nGRNID, VendorID, nFnYearID, this.N_FormID, User, transaction, connection);
+
+                        transaction.Commit();
+                        return Ok(_api.Success("Goods Receive Note deleted"));
+                    }
+                    else
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to Delete Goods Receive Note"));
+                        if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) > 0)
+                            return Ok(_api.Error(User, "Purchase invoice processed! Unable to delete"));
+                        else
+                            return Ok(_api.Error(User, "Unable to delete!"));
                     }
-
-                    myAttachments.DeleteAttachment(dLayer, 1, nGRNID, VendorID, nFnYearID, this.N_FormID, User, transaction, connection);
-
-                    transaction.Commit();
-                    return Ok(_api.Success("Goods Receive Note deleted"));
-
                 }
-
             }
             catch (Exception ex)
             {
                 return Ok(_api.Error(User,ex));
             }
-
-
         }
 
         [HttpGet("freighttype")]
@@ -570,6 +581,34 @@ namespace SmartxAPI.Controllers
             {
                 return Ok( _api.Error(User,e));
             }
+        }
+
+        private SortedList StatusSetup(DataTable dtGoodReceive, SqlConnection connection)
+        {
+            SortedList TxnStatus = new SortedList();
+            TxnStatus.Add("Label", "");
+            TxnStatus.Add("LabelColor", "");
+            TxnStatus.Add("Alert", "");
+
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            if (dtGoodReceive.Columns.Contains("N_MRNID")) 
+            {
+            int nGRNID = myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_MRNID"].ToString());
+            object objPurchaseProcessed = dLayer.ExecuteScalar("Select Isnull(N_PurchaseID,0) from Inv_Purchase where N_CompanyID=" + nCompanyID + " and N_RsID=" + nGRNID + " and B_IsSaveDraft = 0", connection);
+            if (objPurchaseProcessed == null)
+                objPurchaseProcessed = 0;
+
+            if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) != 0)
+                {
+                    TxnStatus["Label"] = "Invoice Processed";
+                    TxnStatus["LabelColor"] = "Green";
+                    TxnStatus["Alert"] = "";
+                }
+
+            return TxnStatus;
+            }
+            else 
+            return null;
         }
 
     }
