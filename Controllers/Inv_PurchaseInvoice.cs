@@ -346,8 +346,13 @@ namespace SmartxAPI.Controllers
                     else if (xGrnNo != null || xGrnNo != "")
                     {
                         int n_MRNID = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_MRNID"].ToString());
-
+                            
+                        int EnableInvoicebasedtax  = myFunctions.getIntVAL(myFunctions.ReturnSettings("65", "EnableInvoicebasedtax", "N_Value", nCompanyID, dLayer, connection));
+                        if(N_POrderID>0 || EnableInvoicebasedtax ==1 )
                         X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID) As N_UnitSPrice  from vw_InvMRNDetails Where N_CompanyID=@CompanyID and N_MRNID=" + n_MRNID;
+                        else
+                        X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_UnitSPrice  from vw_InvMRNDetailsDirect Where N_CompanyID=@CompanyID and N_MRNID=" + n_MRNID;
+
                     }
 
                     dtPurchaseInvoiceDetails = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
