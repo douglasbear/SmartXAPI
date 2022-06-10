@@ -184,6 +184,7 @@ namespace SmartxAPI.Controllers
                     DataTable CommentsTable = new DataTable();
                     DataTable TimeTable = new DataTable();
                     DataTable options = new DataTable();
+                    int loginUserID=myFunctions.GetUserID(User);
 
 
                     string Mastersql = "";
@@ -222,6 +223,7 @@ namespace SmartxAPI.Controllers
                     timeSql = "select * from vw_Tsk_TaskStatus where N_TaskID=" + TaskID + " ";
                     TimeTable = dLayer.ExecuteDataTable(timeSql, Params, connection);
                     double seconds = 0;
+                    double Individualseconds = 0;
 
                     DateTime entryDateHold = new DateTime();
                     DateTime entryDateStart = new DateTime();
@@ -230,16 +232,42 @@ namespace SmartxAPI.Controllers
                     {
 
 
-                        if (row["N_Status"].ToString() == "7")
+                        if (row["N_Status"].ToString() == "7" && row["N_CreaterID"].ToString()==loginUserID.ToString() )
                         {
                             entryDateStart = Convert.ToDateTime(row["d_EntryDate"].ToString());
 
                         }
-                        if (row["N_Status"].ToString() == "6")
+                        if (row["N_Status"].ToString() == "6" && row["N_CreaterID"].ToString()==loginUserID.ToString())
                         {
                             entryDateHold = Convert.ToDateTime(row["d_EntryDate"].ToString());
                         }
-                        if (row["N_Status"].ToString() == "4")
+                        if (row["N_Status"].ToString() == "4" && row["N_CreaterID"].ToString()==loginUserID.ToString())
+                        {
+                          entryDateComplete =Convert.ToDateTime(row["d_EntryDate"].ToString());
+                        }
+                        if (row["N_Status"].ToString() == "6" && row["N_CreaterID"].ToString()==loginUserID.ToString())
+                        {
+                            Individualseconds = Individualseconds + (entryDateHold - entryDateStart).TotalSeconds;
+                        }
+                        else if(row["N_Status"].ToString() != "7" && row["N_Status"].ToString() != "6" &&  row["N_Status"].ToString() == "4" && row["N_CreaterID"].ToString()==loginUserID.ToString() ){
+                            Individualseconds = Individualseconds + (entryDateComplete - entryDateStart).TotalSeconds;
+                        }
+                    
+                    }
+                     foreach (DataRow row in TimeTable.Rows)
+                    {
+
+
+                        if (row["N_Status"].ToString() == "7"  )
+                        {
+                            entryDateStart = Convert.ToDateTime(row["d_EntryDate"].ToString());
+
+                        }
+                        if (row["N_Status"].ToString() == "6" )
+                        {
+                            entryDateHold = Convert.ToDateTime(row["d_EntryDate"].ToString());
+                        }
+                        if (row["N_Status"].ToString() == "4" )
                         {
                           entryDateComplete =Convert.ToDateTime(row["d_EntryDate"].ToString());
                         }
@@ -252,10 +280,11 @@ namespace SmartxAPI.Controllers
                         }
                     
                     }
-                       TimeSpan t = TimeSpan.FromSeconds(seconds);
-                     string answer = string.Format("{0:D2}h:{1:D2}m",
-                                     t.Hours,
-                                     t.Minutes);
+                    
+                    //    TimeSpan t = TimeSpan.FromSeconds(seconds);
+                    //  string answer = string.Format("{0:D2}h:{1:D2}m",
+                    //                  t.Hours,
+                    //                  t.Minutes);
                                     
 
 
@@ -264,6 +293,7 @@ namespace SmartxAPI.Controllers
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     nextAction = DetailTable.Rows[0]["X_NextActions"].ToString();
                     DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "seconds", typeof(double), seconds);
+                    DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "Individualseconds", typeof(double), Individualseconds);
 
                     DetailTable = _api.Format(DetailTable, "Details");
 
@@ -319,10 +349,10 @@ namespace SmartxAPI.Controllers
                         {
                             row["x_HistoryText"] = row["x_HistoryText"].ToString().Replace("#ASSIGNEE", assignee.ToString());
                         }
-                         if (row["x_HistoryText"].ToString().Contains("#STOPTIME"))
-                        {
-                            row["x_HistoryText"] = row["x_HistoryText"].ToString().Replace("#STOPTIME", answer );
-                        }
+                        //  if (row["x_HistoryText"].ToString().Contains("#STOPTIME"))
+                        // {
+                        //     row["x_HistoryText"] = row["x_HistoryText"].ToString().Replace("#STOPTIME", answer );
+                        // }
 
 
                     }
