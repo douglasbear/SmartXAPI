@@ -817,7 +817,6 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    //int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["moduleID"].ToString());
                     int MainMenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["moduleID"].ToString());
 
                     int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportCategoryID"].ToString());
@@ -1024,12 +1023,15 @@ namespace SmartxAPI.Controllers
                     if (MainMenuID != 340)
                     {
                     //Local Time Checking
-                    object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
-                    object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection);
-                    if (Timezone != null && Timezone.ToString() != "")
+                    if (MainMenuID != 340)
                     {
-                        currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
-                        x_comments = currentTime.ToString();
+                        object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
+                        object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection);
+                        if (Timezone != null && Timezone.ToString() != "")
+                        {
+                            currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
+                            x_comments = currentTime.ToString();
+                        }
                     }
                     }
                 }
@@ -1444,6 +1446,47 @@ namespace SmartxAPI.Controllers
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             return new string(Enumerable.Repeat(chars, length)
               .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+        [HttpPost("sendmessage")]
+        public IActionResult SendMessage([FromBody] DataSet ds)
+        {
+            DataTable dt = new DataTable();
+            dt = ds.Tables["master"];
+            SortedList QueryParams = new SortedList();
+            DataColumnCollection columns = dt.Columns;
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string Company = myFunctions.GetCompanyName(User);
+            string x_Mobile = "";
+            string body = "";
+            var client = new WebClient();
+            var content = "";
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+
+                connection.Open();
+                SqlTransaction transaction;
+                transaction = connection.BeginTransaction();
+                object Currency = dLayer.ExecuteScalar("select x_currency from acc_company  where n_companyid=" + nCompanyId, QueryParams, connection, transaction);
+                if (columns.Contains("n_SalesId"))
+                {
+                    object x_mobilenumber = dLayer.ExecuteScalar("select X_PhoneNo1 from Inv_Customer where n_companyid=" + nCompanyId + " and n_fnyearid=" + dt.Rows[0]["n_fnyearid"].ToString() + " and N_CustomerID=" + dt.Rows[0]["n_CustomerID"].ToString(), QueryParams, connection, transaction);
+                    double TotalAmt = myFunctions.getVAL(dt.Rows[0]["n_BillAmtF"].ToString()) - myFunctions.getVAL(dt.Rows[0]["n_DiscountDisplay"].ToString()) + myFunctions.getVAL(dt.Rows[0]["n_TaxAmtF"].ToString()) - myFunctions.getVAL(dt.Rows[0]["n_DiscountAmtF"].ToString());
+                    x_Mobile = "+" + x_mobilenumber.ToString();
+                    body = "Dear " + dt.Rows[0]["x_CustomerName"].ToString() + ",%0A%0A*_Thank you for your purchase._*%0A%0ADoc No : " + dt.Rows[0]["x_ReceiptNo"].ToString() + "%0ATotal Amount : " + dt.Rows[0]["n_BillAmtF"].ToString() + "%0ADiscount : " + dt.Rows[0]["n_DiscountDisplay"].ToString() + "%0AVAT Amount : " + dt.Rows[0]["n_TaxAmtF"].ToString() + "%0ARound Off : " + dt.Rows[0]["n_DiscountAmtF"].ToString() + "%0ANet Amount : " + TotalAmt + " " + Currency + ". %0A%0ARegards, %0A" + Company;
+                    content = client.DownloadString("https://api.textmebot.com/send.php?recipient=" + x_Mobile + "&apikey=FmxUWUvgeou2&text=" + body);
+                    return Ok(_api.Success("Message Sent"));
+
+                }
+                x_Mobile = "+" + dt.Rows[0]["x_MobileNo"].ToString();
+                DateTime deldate = Convert.ToDateTime(dt.Rows[0]["d_Deliverydate"].ToString());
+                body = "Dear " + dt.Rows[0]["x_CustomerName"].ToString() + ",%0A%0AThe *Repair Order* for your Device is *" + dt.Rows[0]["x_ServiceCode"].ToString() + "* opened on " + dt.Rows[0]["d_Entrydate"].ToString() + ".%0A%0AEstimated time of delivery (ETD) is " + deldate.ToString("dd/MM/yyyy") + " and estimated amount is " + dt.Rows[0]["n_BillAmountF"].ToString() + " " + Currency + ". %0A%0ARegards, %0A" + dt.Rows[0]["x_UserName"].ToString();
+
+                content = client.DownloadString("https://api.textmebot.com/send.php?recipient=" + x_Mobile + "&apikey=FmxUWUvgeou2&text=" + body);
+
+            }
+            return Ok(_api.Success("Message Sent"));
+
         }
 
 
