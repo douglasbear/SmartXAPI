@@ -290,7 +290,7 @@ namespace SmartxAPI.Controllers
                     int nLocationIDfrom = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationIDFrom"].ToString());
                     int nLocationIDto = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationIDTo"].ToString());
                     string X_ReferenceNo = MasterTable.Rows[0]["X_ReferenceNo"].ToString();
-                    bool Processed =myFunctions.getBoolVAL(MasterTable.Rows[0]["N_Processed"].ToString());
+                    // bool Processed =myFunctions.getBoolVAL(MasterTable.Rows[0]["N_Processed"]);
                     string X_TransType = "TRANSFER";
 
                     // int nUsercategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserCategoryID"].ToString());
@@ -326,11 +326,11 @@ namespace SmartxAPI.Controllers
                         if (X_ReferenceNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate")); }
                         MasterTable.Rows[0]["X_ReferenceNo"] = X_ReferenceNo;
 
-                        if(Processed)
-                           {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable To Save"));
-                    }
+                    //     if(Processed)
+                    //        {
+                    //     transaction.Rollback();
+                    //     return Ok(_api.Error(User,"Unable To Save"));
+                    // }
 
                     }
                     else
