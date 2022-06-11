@@ -98,10 +98,12 @@ namespace SmartxAPI.Controllers
                     case "X_Code":
                         xSortBy = "X_Code" + xSortBy.Split(" ")[1];
                         break;
-                    case "N_TemplateID":
-                        xSortBy = "N_TemplateID" + xSortBy.Split(" ")[1];
+                    case "d_EntryDate":
+                xSortBy = "Cast([D_EntryDate] as DateTime )" + xSortBy.Split(" ")[1];
                         break;
-
+                    case "x_TemplateName":
+                        xSortBy = "x_TemplateName" + xSortBy.Split(" ")[1];
+                        break;
                     default: break;
                 }
                  xSortBy = " order by " + xSortBy;
