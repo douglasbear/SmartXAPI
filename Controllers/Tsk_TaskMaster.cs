@@ -486,6 +486,8 @@ namespace SmartxAPI.Controllers
 
                     }
 
+                    MasterTable.Rows[0]["N_StatusID"]= DetailTable.Rows[0]["N_Status"].ToString();
+
                     if (nProjectID > 0)
                     {
                         if (nTaskId == 0)
@@ -523,6 +525,7 @@ namespace SmartxAPI.Controllers
                         row["n_Status"] = 1;
                         row["d_EntryDate"] = DetailTable.Rows[0]["d_EntryDate"];
                         DetailTable.Rows.InsertAt(row, 0);
+                        dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 1  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskId, Params, connection,transaction);
                     }
 
 
@@ -587,15 +590,52 @@ namespace SmartxAPI.Controllers
                     // }
 
 
-                    if (nStatus == "4" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() != DetailTable.Rows[0]["N_SubmitterID"].ToString()))
+                    
+                    if (nStatus == "4" && (DetailTable.Rows[0]["N_AssigneeID"].ToString()== DetailTable.Rows[0]["N_SubmitterID"].ToString()) && ( DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_ClosedUserID"].ToString()))
+                    {
+                        DataRow row = DetailTable.NewRow();
+                        row["N_TaskID"] = nTaskID;
+                        row["n_TaskStatusID"] = 0;
+                        row["n_CompanyId"] = nCompanyID;
+                        row["n_AssigneeID"] = DetailTable.Rows[0]["N_AssigneeID"].ToString();
+                        row["n_CreaterID"] = myFunctions.GetUserID(User);
+                        row["n_SubmitterID"] = DetailTable.Rows[0]["N_AssigneeID"].ToString();
+                        row["n_ClosedUserID"] = DetailTable.Rows[0]["N_AssigneeID"].ToString();
+                        row["n_Status"] = 5;
+                        row["d_EntryDate"] = DetailTable.Rows[0]["d_EntryDate"];
+                        DetailTable.Rows.InsertAt(row, 1);
+
+                      dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 5  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
+                      dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed= 1  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
+                    }
+                     if (nStatus == "4" && (DetailTable.Rows[0]["N_AssigneeID"].ToString()== DetailTable.Rows[0]["N_SubmitterID"].ToString()) && ( DetailTable.Rows[0]["N_AssigneeID"].ToString() != DetailTable.Rows[0]["N_ClosedUserID"].ToString()))
+                    {
+                         DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
+                        dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 9  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
+
+                    }
+                    else if (nStatus == "4" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() != DetailTable.Rows[0]["N_SubmitterID"].ToString()))
                     {
                         DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_SubmitterID"].ToString();
 
                     }
-                    else if (nStatus == "9" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_SubmitterID"].ToString()))
+
+                 
+                   if (nStatus == "9" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_ClosedUserID"].ToString()))
+                    {
+                            DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
+                            DetailTable.Rows[0]["n_Status"] = 5;
+                 
+
+                      dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 5  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
+                      dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed= 1  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
+                    
+                    }
+                     else   if (nStatus == "9" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_SubmitterID"].ToString()))
                     {
                         DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
                     }
+                    
                     else if (nStatus == "5")
                     {
                         // DetailTable.Rows[0]["N_AssigneeID"] = 0;
@@ -618,6 +658,7 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows[0]["N_TaskStatusID"] = 0;
                     }
 
+
                     int nTaskStatusID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", DetailTable, connection, transaction);
                     if (nTaskStatusID <= 0)
                     {
@@ -632,6 +673,11 @@ namespace SmartxAPI.Controllers
                     SortedList Result = new SortedList();
                     Result.Add("n_AssigneeID", DetailTable.Rows[0]["N_AssigneeID"]);
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET d_DueDate='" + MasterTable.Rows[0]["d_DueDate"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CurrentAssigneeID='" + DetailTable.Rows[0]["N_AssigneeID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CurrentAssignerID='" + DetailTable.Rows[0]["n_CreaterID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_SubmitterID='" + DetailTable.Rows[0]["n_SubmitterID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_ClosedUserID='" + DetailTable.Rows[0]["n_ClosedUserID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                   
                     transaction.Commit();
                     return Ok(_api.Success(Result, "Task Updated Successfully"));
                 }
