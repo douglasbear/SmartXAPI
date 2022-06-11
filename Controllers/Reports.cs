@@ -467,7 +467,7 @@ namespace SmartxAPI.Controllers
                         {
                             object PICKList = dLayer.ExecuteScalar("select X_PickListCode from vw_WhPickListMaster where n_companyid=" + nCompanyId + " and N_PickListID=" + nPkeyID, connection, transaction);
                             CreateBarcode(PICKList.ToString());
-                            
+
                         }
 
                         string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
@@ -974,7 +974,7 @@ namespace SmartxAPI.Controllers
                         {
                             bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
                             if (mainBranch == false)
-                                Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )" ;
+                                Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
 
                         }
                     }
@@ -987,7 +987,7 @@ namespace SmartxAPI.Controllers
                         {
                             bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
                             if (mainBranch == false)
-                                Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )" ;
+                                Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
                         }
                     }
                     if (UserData != "")
@@ -1022,17 +1022,17 @@ namespace SmartxAPI.Controllers
                     dbName = connection.Database;
                     if (MainMenuID != 340)
                     {
-                    //Local Time Checking
-                    if (MainMenuID != 340)
-                    {
-                        object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
-                        object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection);
-                        if (Timezone != null && Timezone.ToString() != "")
+                        //Local Time Checking
+                        if (MainMenuID != 340)
                         {
-                            currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
-                            x_comments = currentTime.ToString();
+                            object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
+                            object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection);
+                            if (Timezone != null && Timezone.ToString() != "")
+                            {
+                                currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
+                                x_comments = currentTime.ToString();
+                            }
                         }
-                    }
                     }
                 }
 
@@ -1459,8 +1459,14 @@ namespace SmartxAPI.Controllers
             string Company = myFunctions.GetCompanyName(User);
             string x_Mobile = "";
             string body = "";
-            var client = new WebClient();
+            //var client = new WebClient();
             var content = "";
+            string URL = "";
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
+            };
+            var client = new HttpClient(handler);
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
 
@@ -1473,16 +1479,21 @@ namespace SmartxAPI.Controllers
                     object x_mobilenumber = dLayer.ExecuteScalar("select X_PhoneNo1 from Inv_Customer where n_companyid=" + nCompanyId + " and n_fnyearid=" + dt.Rows[0]["n_fnyearid"].ToString() + " and N_CustomerID=" + dt.Rows[0]["n_CustomerID"].ToString(), QueryParams, connection, transaction);
                     double TotalAmt = myFunctions.getVAL(dt.Rows[0]["n_BillAmtF"].ToString()) - myFunctions.getVAL(dt.Rows[0]["n_DiscountDisplay"].ToString()) + myFunctions.getVAL(dt.Rows[0]["n_TaxAmtF"].ToString()) - myFunctions.getVAL(dt.Rows[0]["n_DiscountAmtF"].ToString());
                     x_Mobile = "+" + x_mobilenumber.ToString();
-                    body = "Dear " + dt.Rows[0]["x_CustomerName"].ToString() + ",%0A%0A*_Thank you for your purchase._*%0A%0ADoc No : " + dt.Rows[0]["x_ReceiptNo"].ToString() + "%0ATotal Amount : " + dt.Rows[0]["n_BillAmtF"].ToString() + "%0ADiscount : " + dt.Rows[0]["n_DiscountDisplay"].ToString() + "%0AVAT Amount : " + dt.Rows[0]["n_TaxAmtF"].ToString() + "%0ARound Off : " + dt.Rows[0]["n_DiscountAmtF"].ToString() + "%0ANet Amount : " + TotalAmt + " " + Currency + ". %0A%0ARegards, %0A" + Company;
-                    content = client.DownloadString("https://api.textmebot.com/send.php?recipient=" + x_Mobile + "&apikey=FmxUWUvgeou2&text=" + body);
+                    body = "Dear " + dt.Rows[0]["x_CustomerName"].ToString() + ",%0A%0A*_Thank you for your purchase._*%0A%0ADoc No : " + dt.Rows[0]["x_ReceiptNo"].ToString() + "%0ATotal Amount : " + dt.Rows[0]["n_BillAmtF"].ToString() + "%0ADiscount : " + dt.Rows[0]["n_DiscountDisplay"].ToString() + "%0AVAT Amount : " + dt.Rows[0]["n_TaxAmtF"].ToString() + "%0ARound Off : " + dt.Rows[0]["n_DiscountAmtF"].ToString() + "%0ANet Amount : " + TotalAmt + " " + Currency + " %0A%0ARegards, %0A" + Company;
+                    URL = "https://api.textmebot.com/send.php?recipient=" + x_Mobile + "&apikey=KjFdsG2hRjfK&text=" + body;
+                    var path = client.GetAsync(URL);
+                    path.Wait();
+                    //content = client.DownloadString("https://api.textmebot.com/send.php?recipient=" + x_Mobile + "&apikey=KjFdsG2hRjfK&text=" + body);
                     return Ok(_api.Success("Message Sent"));
 
                 }
                 x_Mobile = "+" + dt.Rows[0]["x_MobileNo"].ToString();
                 DateTime deldate = Convert.ToDateTime(dt.Rows[0]["d_Deliverydate"].ToString());
-                body = "Dear " + dt.Rows[0]["x_CustomerName"].ToString() + ",%0A%0AThe *Repair Order* for your Device is *" + dt.Rows[0]["x_ServiceCode"].ToString() + "* opened on " + dt.Rows[0]["d_Entrydate"].ToString() + ".%0A%0AEstimated time of delivery (ETD) is " + deldate.ToString("dd/MM/yyyy") + " and estimated amount is " + dt.Rows[0]["n_BillAmountF"].ToString() + " " + Currency + ". %0A%0ARegards, %0A" + dt.Rows[0]["x_UserName"].ToString();
-
-                content = client.DownloadString("https://api.textmebot.com/send.php?recipient=" + x_Mobile + "&apikey=FmxUWUvgeou2&text=" + body);
+                body = "Dear " + dt.Rows[0]["x_CustomerName"].ToString() + ",%0A%0AThe *Repair Order* for your Device is *" + dt.Rows[0]["x_ServiceCode"].ToString() + "* opened on " + dt.Rows[0]["d_Entrydate"].ToString() + ".%0A%0AEstimated time of delivery (ETD) is " + deldate.ToString("dd/MM/yyyy") + " and estimated amount is " + dt.Rows[0]["n_BillAmountF"].ToString() + " " + Currency + " %0A%0ARegards, %0A" + dt.Rows[0]["x_UserName"].ToString();
+                URL = "https://api.textmebot.com/send.php?recipient=" + x_Mobile + "&apikey=wnmyMLo9QV2K&text=" + body;
+                var path1 = client.GetAsync(URL);
+                path1.Wait();
+                //content = client.DownloadString("https://api.textmebot.com/send.php?recipient=" + x_Mobile + "&apikey=wnmyMLo9QV2K&text=" + body);
 
             }
             return Ok(_api.Success("Message Sent"));
