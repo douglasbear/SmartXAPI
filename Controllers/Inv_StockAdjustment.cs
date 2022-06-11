@@ -180,10 +180,19 @@ namespace SmartxAPI.Controllers
                     DataTable newTable = new DataTable();
                     bool bStockMisMatch = false;
                     string X_TransType = "IA";
-                    string stockMasterSql = "select vw_InvItem_Search.N_ItemID,N_CompanyID,[Description], dbo.[SP_LocationStock](vw_InvItem_Search.N_ItemID,"+n_LoactionID+") As N_Stock   From vw_InvItem_Search where   [Item Code]<>'001' and N_CompanyID=" + nCompanyID + " and N_ClassID<>4 ";
-                    StockTable = dLayer.ExecuteDataTable(stockMasterSql, Params, connection, transaction);
+
                  
 
+
+                    if (nAdjustmentID > 0)
+                    {
+                        SortedList DelParam = new SortedList();
+                        DelParam.Add("N_CompanyID", nCompanyID);
+                        DelParam.Add("N_AdjustmentID", nAdjustmentID);
+                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_StockAdjustment", DelParam, connection, transaction);
+                    }
+                    string stockMasterSql = "select vw_InvItem_Search.N_ItemID,N_CompanyID,[Description], dbo.[SP_LocationStock](vw_InvItem_Search.N_ItemID,"+n_LoactionID+") As N_Stock   From vw_InvItem_Search where   [Item Code]<>'001' and N_CompanyID=" + nCompanyID + " and N_ClassID<>4 ";
+                    StockTable = dLayer.ExecuteDataTable(stockMasterSql, Params, connection, transaction);
                     if (n_isSaveDraft == 0)
                     {
                         if (StockTable.Rows.Count > 0)
@@ -209,14 +218,8 @@ namespace SmartxAPI.Controllers
                          return Ok(_api.Success(bStockMisMatch));
 
                     }
-
-                    if (nAdjustmentID > 0)
-                    {
-                        SortedList DelParam = new SortedList();
-                        DelParam.Add("N_CompanyID", nCompanyID);
-                        DelParam.Add("N_AdjustmentID", nAdjustmentID);
-                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_StockAdjustment", DelParam, connection, transaction);
-                    }
+                    
+                    
                     DocNo = MasterRow["X_RefNo"].ToString();
                     if (X_RefNo == "@Auto")
                     {
