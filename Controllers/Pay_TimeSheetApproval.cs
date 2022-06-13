@@ -1089,6 +1089,7 @@ namespace SmartxAPI.Controllers
                     for (int j = 0; j < MasterDetailTable.Rows.Count; j++)
                     {
                         MasterDetailTable.Rows[j]["N_TimeSheetApproveID"] = N_TimeSheetApproveID;
+                        MasterDetailTable.Rows[j]["N_AddOrDedID"] = N_AddOrDedID;
                         MasterDetailTable.Rows[j]["X_BatchCode"] = (myFunctions.getIntVAL(MasterTable.Rows[0]["X_BatchCode"].ToString()) + j).ToString();
 
                         // DataTable dtRFQ = dLayer.ExecuteDataTable("select * from Pay_MonthlyAddOrDed where N_CompanyID is null",Params, connection,transaction);
