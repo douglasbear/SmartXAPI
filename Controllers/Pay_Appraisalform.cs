@@ -288,7 +288,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.N_FormID);
-                        Params.Add("nAppraisalID", nAppraisalID);
+                    
                         Code = dLayer.GetAutoNumber("Pay_Appraisal", "X_AppraisalCode", Params, connection, transaction);
                         if (Code == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Grade Code")); }
                         MasterTable.Rows[0]["X_AppraisalCode"] = Code;
