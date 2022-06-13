@@ -83,13 +83,13 @@ namespace SmartxAPI.Controllers
                     else
                         xSortBy = " order by " + xSortBy;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ")  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " Group By  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName";
+                        sqlCommandText = "select top(" + nSizeperpage + ")  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_LocationName,X_Remarks from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " Group By  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_LocationName,X_Remarks";
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ")  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " and N_ItemID not in (select top(" + Count + ") N_ItemID from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " ) " + " Group By  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName";
+                        sqlCommandText = "select top(" + nSizeperpage + ")  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName,X_Remarks from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " and N_ItemID not in (select top(" + Count + ") N_ItemID from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " ) " + " Group By  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName,X_Remarks";
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count   from (select N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName   from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " Group By N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName ) as AdjustmentCountTable";
+                    sqlCommandCount = "select count(*) as N_Count   from (select N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_LocationName,X_Remarks from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " Group By N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_LocationName,X_Remarks) as AdjustmentCountTable";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -180,10 +180,19 @@ namespace SmartxAPI.Controllers
                     DataTable newTable = new DataTable();
                     bool bStockMisMatch = false;
                     string X_TransType = "IA";
-                    string stockMasterSql = "select vw_InvItem_Search.N_ItemID,N_CompanyID,[Description], dbo.[SP_LocationStock](vw_InvItem_Search.N_ItemID,"+n_LoactionID+") As N_Stock   From vw_InvItem_Search where   [Item Code]<>'001' and N_CompanyID=" + nCompanyID + " and N_ClassID<>4 ";
-                    StockTable = dLayer.ExecuteDataTable(stockMasterSql, Params, connection, transaction);
+
                  
 
+
+                    if (nAdjustmentID > 0)
+                    {
+                        SortedList DelParam = new SortedList();
+                        DelParam.Add("N_CompanyID", nCompanyID);
+                        DelParam.Add("N_AdjustmentID", nAdjustmentID);
+                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_StockAdjustment", DelParam, connection, transaction);
+                    }
+                    string stockMasterSql = "select vw_InvItem_Search.N_ItemID,N_CompanyID,[Description], dbo.[SP_LocationStock](vw_InvItem_Search.N_ItemID,"+n_LoactionID+") As N_Stock   From vw_InvItem_Search where   [Item Code]<>'001' and N_CompanyID=" + nCompanyID + " and N_ClassID<>4 ";
+                    StockTable = dLayer.ExecuteDataTable(stockMasterSql, Params, connection, transaction);
                     if (n_isSaveDraft == 0)
                     {
                         if (StockTable.Rows.Count > 0)
@@ -209,14 +218,8 @@ namespace SmartxAPI.Controllers
                          return Ok(_api.Success(bStockMisMatch));
 
                     }
-
-                    if (nAdjustmentID > 0)
-                    {
-                        SortedList DelParam = new SortedList();
-                        DelParam.Add("N_CompanyID", nCompanyID);
-                        DelParam.Add("N_AdjustmentID", nAdjustmentID);
-                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_StockAdjustment", DelParam, connection, transaction);
-                    }
+                    
+                    
                     DocNo = MasterRow["X_RefNo"].ToString();
                     if (X_RefNo == "@Auto")
                     {
