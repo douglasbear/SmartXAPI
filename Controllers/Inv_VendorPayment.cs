@@ -259,7 +259,7 @@ namespace SmartxAPI.Controllers
                                 {"N_CompanyID",nCompanyId},
                                 {"X_VoucherNo",xInvoiceNo},
                                 {"N_FnYearID",nFnYearId},
-                                {"N_BranchID",nBranchID}};
+                                {"N_BranchID",bShowAllbranch?0:nBranchID}};
                         PayInfo = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_Disp", proParams1, connection);
                         if (PayInfo.Rows.Count > 0)
                         {

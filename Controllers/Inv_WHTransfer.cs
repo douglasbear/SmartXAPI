@@ -370,21 +370,21 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         }
 
-                        // SortedList PostingParam = new SortedList();
-                        // PostingParam.Add("N_CompanyID", nCompanyID);
-                        // PostingParam.Add("X_InventoryMode", X_TransType);
-                        // PostingParam.Add("N_InternalID", nTransferId);
-                        // PostingParam.Add("N_UserID", nUserID);
-                        // PostingParam.Add("X_SystemName", "WebRequest");
-                        // try
-                        // {
-                        //     dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting ", PostingParam, connection, transaction).ToString();
-                        // }
-                        // catch (Exception ex)
-                        // {
-                        //     transaction.Rollback();
-                        //     return Ok(_api.Error(User, ex));
-                        // }
+                        SortedList PostingParam = new SortedList();
+                        PostingParam.Add("N_CompanyID", nCompanyID);
+                        PostingParam.Add("X_InventoryMode", X_TransType);
+                        PostingParam.Add("N_InternalID", nTransferId);
+                        PostingParam.Add("N_UserID", nUserID);
+                        PostingParam.Add("X_SystemName", "WebRequest");
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting ", PostingParam, connection, transaction).ToString();
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, ex));
+                        }
 
 
 

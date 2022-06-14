@@ -401,12 +401,12 @@ namespace SmartxAPI.Controllers
                                         Flag=1;
                                         CostCenterTable.Rows[k]["N_VoucherID"] = N_VoucherID;
                                         CostCenterTable.Rows[k]["N_VoucherDetailsID"] = N_InvoiceDetailId;
-                                        N_CCAmt=N_CCAmt+myFunctions.getVAL(CostCenterTable.Rows[k]["n_Amount"].ToString());
                                           if(myFunctions.getVAL(DetailTable.Rows[j]["N_Amount"].ToString())<0)
                                         {
                                         CostCenterTable.Rows[k]["n_Amount"]= -1 *  myFunctions.getVAL(CostCenterTable.Rows[k]["n_Amount"].ToString());
                                         CostCenterTable.Rows[k]["n_AmountF"]=-1 *  myFunctions.getVAL(CostCenterTable.Rows[k]["n_AmountF"].ToString());
                                         }
+                                        N_CCAmt=N_CCAmt+myFunctions.getVAL(CostCenterTable.Rows[k]["n_Amount"].ToString());
                                         CostCenterTable.AcceptChanges();
                                     }
                                     CostCenterTable.AcceptChanges();
