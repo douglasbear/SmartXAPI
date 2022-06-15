@@ -235,45 +235,6 @@ namespace SmartxAPI.Controllers
         }
 
 
-         [HttpPost("Save")]
-        public ActionResult SaveData([FromBody] DataSet ds)
-        {
-            try
-            {
-                DataTable MasterTable;
-                MasterTable = ds.Tables["master"];
-
-                SortedList Params = new SortedList();
-
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    string X_ItemUnit= MasterTable.Rows[0]["X_ItemUnit"].ToString();
-                    string DupCriteria = "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_ItemUnit='" + X_ItemUnit + "'";
-                    int N_ItemUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID",DupCriteria,"", MasterTable, connection, transaction);
-                    if (N_ItemUnitID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok( api.Warning("Unit Already Exist"));
-                    }
-                    else
-                    {
-                        transaction.Commit();
-                    }
-                    return Ok( api.Success("Unit Created"));
-                }
-                
-
-            }
-
-            catch (Exception ex)
-            {
-                return Ok(api.Error(User,ex));
-            }
-        }
-
-
 
         [HttpGet("itemwiselist")]
         public ActionResult GetItemWiseUnitList( string baseUnit, int itemId)
