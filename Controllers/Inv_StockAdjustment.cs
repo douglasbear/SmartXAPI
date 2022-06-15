@@ -275,19 +275,19 @@ namespace SmartxAPI.Controllers
                         ProParam.Add("N_CompanyID", nCompanyID);
                         ProParam.Add("N_PKeyID", nAdjustmentID);
 
-                        SortedList ValidationParam = new SortedList();
-                        ValidationParam.Add("N_CompanyID", nCompanyID);
-                        ValidationParam.Add("N_FnYearID", nFnYearID);
-                        ValidationParam.Add("X_Type", "inventory adjustment");
-                            try
-                            {
-                                dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
-                            }
-                            catch (Exception ex)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, ex));
-                            }
+                        // SortedList ValidationParam = new SortedList();
+                        // ValidationParam.Add("N_CompanyID", nCompanyID);
+                        // ValidationParam.Add("N_FnYearID", nFnYearID);
+                        // ValidationParam.Add("X_Type", "inventory adjustment");
+                        //     try
+                        //     {
+                        //         dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
+                        //     }
+                        //     catch (Exception ex)
+                        //     {
+                        //         transaction.Rollback();
+                        //         return Ok(_api.Error(User, ex));
+                        //     }
                          
                         ProParam.Add("X_Type", "inventory adjustment");
                         DetailTable = dLayer.ExecuteDataTablePro("SP_ScreenDataImport", ProParam, connection,transaction);
