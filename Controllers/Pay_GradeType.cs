@@ -67,7 +67,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count from Pay_GradeType where N_CompanyID=@p1  " + Searchkey;
+                    sqlCommandCount = "select count(*) as N_Count from Pay_GradeType where N_CompanyID=@p1" + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -269,20 +269,20 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Pay_GradeType", "n_GradeID", nGradeID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Pay_GradeType", "n_GradeID", nGradeID, "", connection,transaction);
                     transaction.Commit();
-                }
-                if (Results > 0)
-                {
-                    Dictionary<string,string> res=new Dictionary<string, string>();
-                    res.Add("N_GradeID",nGradeID.ToString());
-                    return Ok(api.Success(res," deleted"));
-                }
+                
+                 if (Results > 0)
+                    {
+                        dLayer.DeleteData("Pay_GradeTypeDetails", "n_GradeID", nGradeID, "", connection,transaction);
+                        return Ok(api.Success("grade type deleted"));
+                    }
                 else
                 {
                     return Ok(api.Error(User,"Unable to delete "));
                 }
 
+            }
             }
             catch (Exception ex)
             {

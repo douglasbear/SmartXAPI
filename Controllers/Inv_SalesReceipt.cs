@@ -209,9 +209,9 @@ namespace SmartxAPI.Controllers
                                 {"@nBranchID",nBranchId}};
                         string sql = "";
                         if (bShowAllbranch == true)
-                            sql = "select N_PayReceiptId,X_Type,N_PartyID,D_Date,N_UserId,N_ProcStatus,N_ApprovalLevelId,B_IssaveDraft from Inv_PayReceipt where N_CompanyID=@nCompanyID and X_VoucherNo=@xInvoiceNo and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
-                            else
                             sql = "select N_PayReceiptId,X_Type,N_PartyID,D_Date,N_UserId,N_ProcStatus,N_ApprovalLevelId,B_IssaveDraft from Inv_PayReceipt where N_CompanyID=@nCompanyID and X_VoucherNo=@xInvoiceNo and N_FnYearID=@nFnYearID";
+                            else
+                            sql = "select N_PayReceiptId,X_Type,N_PartyID,D_Date,N_UserId,N_ProcStatus,N_ApprovalLevelId,B_IssaveDraft from Inv_PayReceipt where N_CompanyID=@nCompanyID and X_VoucherNo=@xInvoiceNo and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
 
                         DataTable PayInfo = dLayer.ExecuteDataTable(sql, proParams1, connection);
                         if (PayInfo.Rows.Count > 0)
@@ -228,10 +228,19 @@ namespace SmartxAPI.Controllers
                         {"N_CompanyID",nCompanyId},
                         {"X_VoucherNo",xInvoiceNo},
                         {"N_FnYearID",nFnYearId},
-                        {"N_BranchId",nBranchId},
+                        {"N_BranchId",bShowAllbranch?0:nBranchId},
                         {"X_Type",xTransType}
                     };
                         MasterTable = dLayer.ExecuteDataTablePro("SP_InvSalesReceipt_Disp", mParamsList, connection);
+
+                        if (MasterTable.Rows.Count > 0)
+                        {
+                            int nCurrencyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CurrencyID"].ToString());
+                            string X_CurrencyName = dLayer.ExecuteScalar("select X_CurrencyName from Acc_CurrencyMaster where N_CompanyID="+nCompanyId+" and N_CurrencyID="+nCurrencyID, connection).ToString();
+                             myFunctions.AddNewColumnToDataTable(MasterTable, "X_CurrencyName", typeof(string), X_CurrencyName);
+                            
+                        }
+
                         MasterTable = api.Format(MasterTable, "Master");
                         Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), 66, 0, User, connection);
                         Attachments = api.Format(Attachments, "attachments");
@@ -302,15 +311,15 @@ namespace SmartxAPI.Controllers
                                     {"N_CustomerId",nCustomerId},
                                     {"D_SalesDate",dTransDate},
                                     {"N_PayReceiptId",n_PayReceiptId},
-                                    {"N_BranchID",nBranchId}
+                                    {"N_BranchID",bShowAllbranch?0:nBranchId}
                                 };
                             DetailTable = dLayer.ExecuteDataTablePro("SP_InvReceivables_Disp", detailParams, connection);
                         }
                     }
                     else
                     {
-                        int branchFlag = 0;
-                        if (bShowAllbranch) { branchFlag = 1; }
+                        int branchFlag = 1;
+                        if (bShowAllbranch) { branchFlag = 0; }
                         SortedList detailParams = new SortedList()
                     {
                         {"N_CompanyID",nCompanyId},
@@ -392,6 +401,9 @@ namespace SmartxAPI.Controllers
                     ds.Tables.Add(MasterTable);
                     ds.Tables.Add(DetailTable);
                 }
+
+
+
                 return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) },
                 { "master", MasterTable },
                  { "attachments", Attachments},

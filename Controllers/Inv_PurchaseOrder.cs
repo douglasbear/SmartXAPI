@@ -406,7 +406,21 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                   
+                    Object PoCount=dLayer.ExecuteScalar("select count(*) from Inv_MRNDetails where N_PONo="+N_POrderID+" and N_CompanyID="+nCompanyId, Params, connection);
+                    int nPoCount = myFunctions.getIntVAL(PoCount.ToString());
+                    if (nPoCount > 0)
+                    {
+                       
+                        if (MasterTable.Rows.Count > 0)
+                        {
+                            MasterTable.Columns.Add("b_GRNProcessed");
+                            MasterTable.Rows[0]["b_GRNProcessed"]=true;
+                            
+                          
+                        }
+
+
+                    }     
                     // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "GRNNotProcessed", typeof(bool),GRNNotProcessed);
                     // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "InvoiceNotProcessed", typeof(bool),InvoiceNotProcessed);
 
@@ -434,11 +448,17 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 DataTable DetailTable;
+                DataTable DetailsToImport;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
                 DataTable Attachment = ds.Tables["attachments"];
+                DetailsToImport = ds.Tables["detailsImport"];
+                bool B_isImport = false;
                 SortedList Params = new SortedList();
                 int N_POrderID = 0; var X_POrderNo = "";
+
+                if (ds.Tables.Contains("detailsImport"))
+                    B_isImport = true;
                 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -537,6 +557,7 @@ namespace SmartxAPI.Controllers
                             //         }
                             //     }
                             // }
+
                             SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyId},
                                 {"X_TransType","Purchase Order"},
@@ -551,6 +572,37 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                         return Ok(api.Error(User, "Error"));
+                    }
+
+                    if (B_isImport)
+                    {
+                        foreach (DataColumn col in DetailsToImport.Columns)
+                        {
+                            col.ColumnName = col.ColumnName.Replace(" ", "_");
+                            col.ColumnName = col.ColumnName.Replace("*", "");
+                            col.ColumnName = col.ColumnName.Replace("/", "_");
+                        }
+
+                        DetailsToImport.Columns.Add("N_MasterID");
+                        DetailsToImport.Columns.Add("X_Type");
+                        DetailsToImport.Columns.Add("N_CompanyID");
+                        DetailsToImport.Columns.Add("PkeyID");
+                        foreach (DataRow dtRow in DetailsToImport.Rows)
+                        {
+                            dtRow["N_MasterID"] = N_POrderID;
+                            dtRow["N_CompanyID"] = nCompanyId;
+                            dtRow["PkeyID"] = 0;
+                        }
+
+                        dLayer.ExecuteNonQuery("delete from Mig_PurchaseOrder ", connection, transaction);
+                        dLayer.SaveData("Mig_PurchaseOrder", "PkeyID", "", "", DetailsToImport, connection, transaction);
+
+                        SortedList ProParam = new SortedList();
+                        ProParam.Add("N_CompanyID", nCompanyId);
+                        ProParam.Add("N_PKeyID", N_POrderID);
+                         
+                        ProParam.Add("X_Type", "purchase order");
+                        DetailTable = dLayer.ExecuteDataTablePro("SP_ScreenDataImport", ProParam, connection,transaction);
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {

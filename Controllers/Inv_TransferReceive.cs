@@ -222,13 +222,14 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                  object nprocessed= dLayer.ExecuteScalar("select n_processed from Inv_TransferStock where N_TransferId='"+N_TransferId+"' and N_CompanyID= " + nCompanyID,connection,transaction);
+                //   object nprocessed= dLayer.ExecuteScalar("select n_processed from Inv_TransferStock where N_TransferId='"+N_TransferId+"' and N_CompanyID= " + nCompanyID,connection,transaction);
              
-                     bool isProcessed= myFunctions.getBoolVAL(nprocessed.ToString());
-                     if(isProcessed==true)
-                     {
-                              return Ok(_api.Error(User, "Already Processed"));
-                    }
+                //      bool isProcessed= myFunctions.getBoolVAL(nprocessed.ToString());
+                //      if(isProcessed)
+                //      {
+                //                transaction.Rollback();
+                //         return Ok(_api.Error(User, "Unable To Save"));
+                //     }
 
                     nReceivableId = dLayer.SaveData("Inv_ReceivableStock", "N_ReceivableId", MasterTable, connection, transaction);
                     if (nReceivableId <= 0)

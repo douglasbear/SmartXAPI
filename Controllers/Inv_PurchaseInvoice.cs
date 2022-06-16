@@ -335,7 +335,7 @@ namespace SmartxAPI.Controllers
                     if (nPurchaseNO != null)
                     {
                         if (B_MRNVisible)
-                            X_DetailsSql = "SELECT vw_InvPurchaseDetails.*,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID, vw_InvPurchaseDetails.N_CompanyID) AS N_UnitSPrice, Inv_MRNDetails.N_MRNDetailsID FROM vw_InvPurchaseDetails LEFT OUTER JOIN Inv_MRNDetails ON vw_InvPurchaseDetails.N_CompanyID = Inv_MRNDetails.N_CompanyID AND  vw_InvPurchaseDetails.N_PurchaseDetailsID = Inv_MRNDetails.N_PurchaseDetailsID LEFT OUTER JOIN Inv_PurchaseOrder ON vw_InvPurchaseDetails.N_POrderID = Inv_PurchaseOrder.N_POrderID LEFT OUTER JOIN Inv_MRN ON vw_InvPurchaseDetails.N_RsID = Inv_MRN.N_MRNID  Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID=" + N_PurchaseID + (showAllBranch ? "" : " and vw_InvPurchaseDetails.N_BranchId=@BranchID");
+                            X_DetailsSql = "SELECT vw_InvPurchaseDetails.*,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID, vw_InvPurchaseDetails.N_CompanyID) AS N_UnitSPrice,Inv_MRN.B_IsDirectMRN, Inv_MRNDetails.N_MRNDetailsID FROM vw_InvPurchaseDetails LEFT OUTER JOIN Inv_MRNDetails ON vw_InvPurchaseDetails.N_CompanyID = Inv_MRNDetails.N_CompanyID AND  vw_InvPurchaseDetails.N_PurchaseDetailsID = Inv_MRNDetails.N_PurchaseDetailsID LEFT OUTER JOIN Inv_PurchaseOrder ON vw_InvPurchaseDetails.N_POrderID = Inv_PurchaseOrder.N_POrderID LEFT OUTER JOIN Inv_MRN ON vw_InvPurchaseDetails.N_RsID = Inv_MRN.N_MRNID  Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID=" + N_PurchaseID + (showAllBranch ? "" : " and vw_InvPurchaseDetails.N_BranchId=@BranchID");
                         else
                             X_DetailsSql = "SELECT vw_InvPurchaseDetails.*, Inv_PurchaseOrder.X_POrderNo, dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID, vw_InvPurchaseDetails.N_CompanyID, '') AS N_UnitLPrice,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID, vw_InvPurchaseDetails.N_CompanyID) AS N_UnitSPrice, Inv_MRNDetails.N_MRNDetailsID FROM vw_InvPurchaseDetails LEFT OUTER JOIN Inv_MRNDetails ON vw_InvPurchaseDetails.N_CompanyID = Inv_MRNDetails.N_CompanyID AND vw_InvPurchaseDetails.N_PurchaseDetailsID = Inv_MRNDetails.N_PurchaseDetailsID LEFT OUTER JOIN Inv_PurchaseOrder ON vw_InvPurchaseDetails.N_POrderID = Inv_PurchaseOrder.N_POrderID Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID=" + N_PurchaseID + (showAllBranch ? "" : " and vw_InvPurchaseDetails.N_BranchId=@BranchID");
                     }
@@ -346,8 +346,13 @@ namespace SmartxAPI.Controllers
                     else if (xGrnNo != null || xGrnNo != "")
                     {
                         int n_MRNID = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_MRNID"].ToString());
+                            
+                        int EnableInvoicebasedtax  = myFunctions.getIntVAL(myFunctions.ReturnSettings("65", "EnableInvoicebasedtax", "N_Value", nCompanyID, dLayer, connection));
+                        if(N_POrderID>0 || EnableInvoicebasedtax ==1 )
+                        X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID) As N_UnitSPrice  from vw_InvMRNDetails Where N_CompanyID=@CompanyID and N_MRNID=" + n_MRNID;
+                        else
+                        X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_UnitSPrice  from vw_InvMRNDetailsDirect Where N_CompanyID=@CompanyID and N_MRNID=" + n_MRNID;
 
-                        X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID) As N_UnitSPrice , N_MrnID as N_RsID from vw_InvMRNDetails Where N_CompanyID=@CompanyID and N_MRNID=" + n_MRNID;
                     }
 
                     dtPurchaseInvoiceDetails = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
@@ -566,6 +571,7 @@ namespace SmartxAPI.Controllers
 
             DataTable MasterTable;
             DataTable DetailTable;
+            DataTable DetailsToImport;
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
             DataTable Approvals;
@@ -589,6 +595,11 @@ namespace SmartxAPI.Controllers
                 n_MRNID = myFunctions.getIntVAL(masterRow["N_RsID"].ToString());
             int Dir_Purchase = 1;
             int b_FreightAmountDirect = myFunctions.getIntVAL(masterRow["b_FreightAmountDirect"].ToString());
+            DetailsToImport = ds.Tables["detailsImport"];
+            bool B_isImport = false;
+
+            if (ds.Tables.Contains("detailsImport"))
+                B_isImport = true;
 
 
             try
@@ -826,6 +837,37 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to save Purchase Invoice!"));
                     }
 
+                    if (B_isImport)
+                    {
+                        foreach (DataColumn col in DetailsToImport.Columns)
+                        {
+                            col.ColumnName = col.ColumnName.Replace(" ", "_");
+                            col.ColumnName = col.ColumnName.Replace("*", "");
+                            col.ColumnName = col.ColumnName.Replace("/", "_");
+                        }
+
+                        DetailsToImport.Columns.Add("N_MasterID");
+                        DetailsToImport.Columns.Add("X_Type");
+                        DetailsToImport.Columns.Add("N_CompanyID");
+                        DetailsToImport.Columns.Add("PkeyID");
+                        foreach (DataRow dtRow in DetailsToImport.Rows)
+                        {
+                            dtRow["N_MasterID"] = N_PurchaseID;
+                            dtRow["N_CompanyID"] = nCompanyID;
+                            dtRow["PkeyID"] = 0;
+                        }
+
+                        dLayer.ExecuteNonQuery("delete from Mig_Purchase ", connection, transaction);
+                        dLayer.SaveData("Mig_Purchase", "PkeyID", "", "", DetailsToImport, connection, transaction);
+
+                        SortedList ProParam = new SortedList();
+                        ProParam.Add("N_CompanyID", nCompanyID);
+                        ProParam.Add("N_PKeyID", N_PurchaseID);
+                         
+                        ProParam.Add("X_Type", "purchase invoice");
+                        DetailTable = dLayer.ExecuteDataTablePro("SP_ScreenDataImport", ProParam, connection,transaction);
+                    }
+
                     N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "PURCHASE", N_PurchaseID, InvoiceNo, 1, objVendorName.ToString(), 0, "", User, dLayer, connection, transaction);
                     N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
 
@@ -870,6 +912,7 @@ namespace SmartxAPI.Controllers
                     if (N_PurchaseID > 0)
                     {
                         dLayer.ExecuteScalar("Update Inv_PurchaseOrder Set N_Processed=1 , N_PurchaseID=" + N_PurchaseID + " Where N_POrderID=" + n_POrderID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                        dLayer.ExecuteScalar("Update Inv_MRN Set N_Processed=1 Where N_MRNID=" + n_MRNID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                         // if (B_ServiceSheet)
                         //     dba.ExecuteNonQuery("Update Inv_VendorServiceSheet Set N_Processed=1  Where N_RefID=" + n_POrderID + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID,connection,transaction);
 

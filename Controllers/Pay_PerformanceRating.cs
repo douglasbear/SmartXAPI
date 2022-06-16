@@ -148,6 +148,13 @@ namespace SmartxAPI.Controllers
                         MasterTable.Columns.Remove("n_FnYearID");
 
                     }
+                      if (nPerformanceID>0)
+                    {
+                        
+                         dLayer.DeleteData("Pay_Performance", "n_PerformanceID", nPerformanceID, "N_CompanyID=" + nCompanyID + " and n_PerformanceID=" + nPerformanceID, connection, transaction);
+                         dLayer.DeleteData("Pay_PerformanceDetails", "n_PerformanceID", nPerformanceID, "N_CompanyID=" + nCompanyID + " and n_PerformanceID=" + nPerformanceID, connection, transaction);
+
+                    }
 
                     int n_PerformanceID = dLayer.SaveData("Pay_Performance", "N_PerformanceID", "", "", MasterTable, connection, transaction);
                     if (n_PerformanceID <= 0)
@@ -159,18 +166,18 @@ namespace SmartxAPI.Controllers
                     {
                         DetailTable.Rows[j]["n_PerformanceID"] = n_PerformanceID;
                     }
-                    int n_PerformanceDetailsID = dLayer.SaveData("Pay_PerformanceDetails", "n_PerformanceDetailsID", DetailTable, connection, transaction);
+                    int n_PerformanceDetailsID = dLayer.SaveData("Pay_PerformanceDetails", "N_PerformanceDetailsID", DetailTable, connection, transaction);
                     if (n_PerformanceDetailsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok("Unable to save ");
+                        return Ok("Unable to save");
                     }
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
                     Result.Add("n_PerformanceID", n_PerformanceID);
                     Result.Add("x_Code", x_Code);
-                    Result.Add("n_PerformanceDetailsID", n_PerformanceDetailsID);
+                    Result.Add("N_PerformanceDetailsID", n_PerformanceDetailsID);
 
                     return Ok(api.Success(Result, "Performance Rating Created"));
                 }

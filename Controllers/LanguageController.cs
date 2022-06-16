@@ -57,7 +57,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
+  [AllowAnonymous]
         [HttpGet("ml-dataset")]
         public ActionResult GetControllsListnew(int nLangId)
         {

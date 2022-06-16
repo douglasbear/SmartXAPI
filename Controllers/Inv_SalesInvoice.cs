@@ -988,7 +988,7 @@ namespace SmartxAPI.Controllers
 
                     int N_PaymentMethodID = myFunctions.getIntVAL(MasterRow["n_PaymentMethodID"].ToString());
                     int N_DeliveryNoteID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteId"].ToString());
-                     int N_ServiceID = myFunctions.getIntVAL(MasterRow["N_ServiceID"].ToString());
+                     int N_ServiceID = MasterTable.Columns.Contains("N_ServiceID")? myFunctions.getIntVAL(MasterRow["N_ServiceID"].ToString()):0;
                     int N_CreatedUser = myFunctions.getIntVAL(MasterRow["n_CreatedUser"].ToString());
                     int N_UserID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
                     int UserCategoryID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
