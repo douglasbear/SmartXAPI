@@ -583,6 +583,7 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     int nTaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
                     string nStatus = DetailTable.Rows[0]["N_Status"].ToString();
+                    int masterStatus= myFunctions.getIntVAL(DetailTable.Rows[0]["N_Status"].ToString());
 
                     // if(DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_SubmitterID"].ToString())
                     // {
@@ -606,14 +607,15 @@ namespace SmartxAPI.Controllers
                         row["n_Status"] = 5;
                         row["d_EntryDate"] = DetailTable.Rows[0]["d_EntryDate"];
                         DetailTable.Rows.InsertAt(row, 1);
-
-                      dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 5  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
+                     masterStatus=5;
+                    //  dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 5  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
                       dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed= 1  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
                     }
                      if (nStatus == "4" && (DetailTable.Rows[0]["N_AssigneeID"].ToString()== DetailTable.Rows[0]["N_SubmitterID"].ToString()) && ( DetailTable.Rows[0]["N_AssigneeID"].ToString() != DetailTable.Rows[0]["N_ClosedUserID"].ToString()))
                     {
                          DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
-                        dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 9  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
+                         masterStatus=9;
+                      //  dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 9  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
 
                     }
                     else if (nStatus == "4" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() != DetailTable.Rows[0]["N_SubmitterID"].ToString()))
@@ -627,9 +629,10 @@ namespace SmartxAPI.Controllers
                     {
                             DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
                             DetailTable.Rows[0]["n_Status"] = 5;
+                            masterStatus=5;
                  
 
-                      dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 5  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
+                     // dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 5  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
                       dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed= 1  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
                     
                     }
@@ -637,14 +640,8 @@ namespace SmartxAPI.Controllers
                     {
                         DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
                     }
-                    
-                    else if (nStatus == "5")
-                    {
-                        // DetailTable.Rows[0]["N_AssigneeID"] = 0;
-
-
-
-                    }
+                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= "+masterStatus+"  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
+                  
                     if (DetailTable.Columns.Contains("X_Assignee"))
                         DetailTable.Columns.Remove("X_Assignee");
                     if (DetailTable.Columns.Contains("x_Submitter"))

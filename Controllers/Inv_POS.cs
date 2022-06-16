@@ -238,7 +238,7 @@ namespace SmartxAPI.Controllers
 
 
             if (xSearchkey != null)
-                Searchkey = " and (vw_InvItem_Search.Description like '%" + xSearchkey + "%')";
+                Searchkey = " and (vw_InvItem_Search.Description like '%" + xSearchkey + "%' or vw_InvItem_Search.X_Barcode like '%" + xSearchkey + "%')";
 
             if (nCategoryID > 0)
                 categorySql = " and N_CategoryID=@p2 ";
@@ -377,7 +377,7 @@ namespace SmartxAPI.Controllers
 
             string sqlCommandText = "";
             sqlCommandText = "select vw_InvItem_Search.N_CompanyID, vw_InvItem_Search.N_ItemID, vw_InvItem_Search.[Item Code], vw_InvItem_Search.Description, vw_InvItem_Search.Description_Ar, vw_InvItem_Search.Category, " +
-                            " vw_InvItem_Search.N_ClassID, vw_InvItem_Search.[Item Class], vw_InvItem_Search.N_Rate, vw_InvItem_Search.B_InActive, vw_InvItem_Search.[Part No], vw_InvItem_Search.N_ItemUnitID, vw_InvItem_Search.X_ItemUnit, " +
+                            " vw_InvItem_Search.N_ClassID, vw_InvItem_Search.[Item Class], vw_InvItem_Search.N_Rate,vw_InvItem_Search.N_Rate as N_SpriceF,vw_InvItem_Search.N_Rate as N_SellingPrice2, vw_InvItem_Search.N_Rate as N_SellingPrice, vw_InvItem_Search.B_InActive, vw_InvItem_Search.[Part No], vw_InvItem_Search.N_ItemUnitID, vw_InvItem_Search.X_ItemUnit, " +
                             " vw_InvItem_Search.B_BaseUnit, vw_InvItem_Search.N_Qty, vw_InvItem_Search.N_BaseUnitID, vw_InvItem_Search.N_MinimumMargin, vw_InvItem_Search.N_ItemManufacturerID, vw_InvItem_Search.X_ItemManufacturer, " +
                             " vw_InvItem_Search.X_SalesUnit, vw_InvItem_Search.X_PurchaseUnit, vw_InvItem_Search.X_Barcode, vw_InvItem_Search.B_BarcodewithQty, vw_InvItem_Search.X_StockUnit, vw_InvItem_Search.N_StockUnitQty, " +
                             " vw_InvItem_Search.B_IsIMEI, vw_InvItem_Search.N_LengthID, vw_InvItem_Search.N_PurchaseUnitQty, vw_InvItem_Search.N_SalesUnitQty, vw_InvItem_Search.Stock, vw_InvItem_Search.Rate, " +
