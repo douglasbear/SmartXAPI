@@ -232,6 +232,15 @@ namespace SmartxAPI.Controllers
                         {"X_Type",xTransType}
                     };
                         MasterTable = dLayer.ExecuteDataTablePro("SP_InvSalesReceipt_Disp", mParamsList, connection);
+
+                        if (MasterTable.Rows.Count > 0)
+                        {
+                            int nCurrencyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CurrencyID"].ToString());
+                            string X_CurrencyName = dLayer.ExecuteScalar("select X_CurrencyName from Acc_CurrencyMaster where N_CompanyID="+nCompanyId+" and N_CurrencyID="+nCurrencyID, connection).ToString();
+                             myFunctions.AddNewColumnToDataTable(MasterTable, "X_CurrencyName", typeof(string), X_CurrencyName);
+                            
+                        }
+
                         MasterTable = api.Format(MasterTable, "Master");
                         Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), 66, 0, User, connection);
                         Attachments = api.Format(Attachments, "attachments");
@@ -392,6 +401,9 @@ namespace SmartxAPI.Controllers
                     ds.Tables.Add(MasterTable);
                     ds.Tables.Add(DetailTable);
                 }
+
+
+
                 return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) },
                 { "master", MasterTable },
                  { "attachments", Attachments},
