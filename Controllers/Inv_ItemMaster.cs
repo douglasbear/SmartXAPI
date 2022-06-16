@@ -112,7 +112,7 @@ namespace SmartxAPI.Controllers
             if(isServiceItem) 
                   Condition = Condition + " and N_ClassID =4" ;
             if(isCustomerMaterial)
-                  itemTypeCondition=itemTypeCondition+ " and N_ItemTypeID=279 " ;
+                  itemTypeCondition=itemTypeCondition+ " and N_ItemTypeID=5 " ;
                   
             if (nItemUsedFor != 0)
             {

@@ -235,6 +235,7 @@ namespace SmartxAPI.Controllers
                     string X_GRNNo = "";
                     var values = MasterTable.Rows[0]["X_GRNNo"].ToString();
                     string i_Signature = "";
+                    bool SigEnable=false;
 
 
                     if (values == "@Auto")
@@ -276,17 +277,28 @@ namespace SmartxAPI.Controllers
                     }
 
                     //Signature
+                    Byte[] ImageBitmap = new Byte[i_Signature.Length];
+                      if (MasterTable.Columns.Contains("i_signature"))
+                    {
+                    if(!MasterRow["i_signature"].ToString().Contains("undefined"))
+                    {
                     i_Signature = Regex.Replace(MasterRow["i_signature"].ToString(), @"^data:image\/[a-zA-Z]+;base64,", string.Empty);
                     if (myFunctions.ContainColumn("i_signature", MasterTable))
                         MasterTable.Columns.Remove("i_signature");
-                    Byte[] ImageBitmap = new Byte[i_Signature.Length];
+                    ImageBitmap = new Byte[i_Signature.Length];
                     ImageBitmap = Convert.FromBase64String(i_Signature);
+                    SigEnable=true;
+                    }
+                    }
 
 
                     nGrnID = dLayer.SaveData("wh_GRN", "N_GRNID", MasterTable, connection, transaction);
                     //Saving Signature
+                   if(SigEnable)
+                   {
                     if (i_Signature.Length > 0)
                         dLayer.SaveImage("wh_GRN", "i_signature", ImageBitmap, "N_GRNID", nGrnID, connection, transaction);
+                    }
 
 
                     if (nGrnID <= 0)
