@@ -1236,5 +1236,58 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+
+
+         [HttpDelete("Delete")]
+            public ActionResult DeleteData(int nTransID,int nCompanyID,int nTimeSheetApproveID,string X_PayrunText,DateTime dFromDate,DateTime dToDate,int nBatchID,int nFnYearID)
+        {
+            int Results = 0;
+            string criteria = "";
+            try
+            {
+                SortedList QueryParams = new SortedList();
+                // DataTable MasterTable;
+                 DataTable TransData = new DataTable();
+                //  MasterTable = ds.Tables["master"];
+                QueryParams.Add("@nCompanyID", nCompanyID);
+                QueryParams.Add("@nTimeSheetApproveID", nTimeSheetApproveID);
+                QueryParams.Add("@nTransID", nTransID);
+                QueryParams.Add("@X_PayrunText", X_PayrunText);
+                QueryParams.Add("@nBatchID", nBatchID);
+                 QueryParams.Add("@nFnYearID", nFnYearID);
+                // dFromDate = Convert.ToDateTime(MasterTable.Rows[0]["D_DateFrom"].ToString());
+                // dToDate = Convert.ToDateTime(MasterTable.Rows[0]["D_DateTo"].ToString());
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                 criteria = "select n_EmpID from Pay_TimesheetMaster where n_TimeSheetApproveID=@nTimeSheetApproveID and n_CompanyID=@nCompanyID";
+
+                 object Count = dLayer.ExecuteScalar("select count(*) from vw_PayProcessingDetails where n_EmpID in ("+criteria+") and X_PayrunText=@X_PayrunText", QueryParams, connection);               
+                   if (myFunctions.getIntVAL(Count.ToString()) >0)
+                    {
+                        return Ok(_api.Error(User, "Unable To Delete"));
+                    }
+
+                     Results = dLayer.DeleteData("Pay_TimeSheetApproveMaster", "N_TimeSheetApproveID", nTimeSheetApproveID,"N_CompanyID="+nCompanyID+ "", connection);
+
+                    if (Results > 0)
+                    {
+                        dLayer.DeleteData("Pay_MonthlyAddOrDedDetails ", "N_TransID", nTransID,"N_CompanyID="+nCompanyID+ "", connection);
+                        dLayer.DeleteData("Pay_MonthlyAddOrDed", "N_TransID", nTransID,"N_CompanyID="+nCompanyID+ "", connection);
+                        dLayer.DeleteData("Pay_VacationDetails", "N_TransID", nTransID,"N_CompanyID="+nCompanyID+" and N_EmpID in("+criteria+") and N_FormID=" + this.FormID+" and d_VacDateFrom>="+dFromDate+ " and D_VacDateTo<="+dToDate+ "", connection);
+                        dLayer.DeleteData("Pay_TimeSheet", "N_batchID", nBatchID,"N_CompanyID="+nCompanyID+ " and N_timeSheetApproveID="+nTimeSheetApproveID+" and N_FnYearID="+nFnYearID+ "", connection);
+                        return Ok(_api.Success("deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error(User, "Unable to delete"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+        }
     }
 }
