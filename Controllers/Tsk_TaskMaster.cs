@@ -582,6 +582,7 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     int nTaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
+                    //int nparentID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ParentID"].ToString());
                     string nStatus = DetailTable.Rows[0]["N_Status"].ToString();
                     int masterStatus= myFunctions.getIntVAL(DetailTable.Rows[0]["N_Status"].ToString());
 
@@ -591,9 +592,17 @@ namespace SmartxAPI.Controllers
 
 
                     // }
-
-
-                    
+                    if(myFunctions.getIntVAL(nStatus.ToString())==4)
+                    {
+                    object N_ClosedTaskStatus = dLayer.ExecuteScalar("select COUNT(*) from Tsk_TaskMaster where N_ParentID=" + nTaskID + " and ISNULL(B_Closed,0)=0 and N_CompanyID=" + nCompanyID.ToString(), Params, connection,transaction);
+                    int N_Count = myFunctions.getIntVAL(N_ClosedTaskStatus.ToString());
+                    if (N_Count>0)
+                    {
+                         transaction.Rollback();
+                         return Ok(_api.Error(User, "Please complete the subtasks........."));  
+                    }
+                    }
+                  
                     if (nStatus == "4" && (DetailTable.Rows[0]["N_AssigneeID"].ToString()== DetailTable.Rows[0]["N_SubmitterID"].ToString()) && ( DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_ClosedUserID"].ToString()))
                     {
                         DataRow row = DetailTable.NewRow();
