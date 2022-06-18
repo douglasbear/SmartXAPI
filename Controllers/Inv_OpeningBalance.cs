@@ -88,72 +88,64 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        // [HttpPost("save")]
-        // public ActionResult SaveData([FromBody] DataSet ds)
-        // {
-        //     try
-        //     {
-        //         DataTable MasterTable;
-        //         MasterTable = ds.Tables["master"];
-        //         int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-        //         int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-        //         int N_SalesID = myFunctions.getIntVAL(MasterRow["n_SalesID"].ToString());
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable SaveDataTable;
+                DataTable PartyListTable;
+                SaveDataTable = ds.Tables["master"];
+                PartyListTable = ds.Tables["partylist"];
+                int nCompanyID = myFunctions.GetCompanyID(User);
+                int nFnYearID = myFunctions.getIntVAL(PartyListTable.Rows[0]["n_FnYearID"].ToString());
+                string xTransType = PartyListTable.Rows[0]["x_TransType"].ToString();
+                int nUserID = myFunctions.GetUserID(User);
+                int nBranchID = myFunctions.getIntVAL(PartyListTable.Rows[0]["n_BranchID"].ToString());
 
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             SqlTransaction transaction = connection.BeginTransaction();
-        //             SortedList Params = new SortedList();
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
 
-        //             // Auto Gen
-        //             string InvoiceNo = "";
-        //             var values = MasterTable.Rows[0]["x_ReceiptNo"].ToString();
-        //             if (values == "@Auto")
-        //             {
-        //                 Params.Add("N_CompanyID", nCompanyID);
-        //                 Params.Add("N_YearID", nFnYearID);
-        //                 Params.Add("N_FormID", this.FormID);
-        //                 InvoiceNo = dLayer.GetAutoNumber("Inv_Sales", "x_ReceiptNo", Params, connection, transaction);
-        //                 if (xEvaluationCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Code")); }
-        //                 MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
-        //             }
-        //             nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesID", MasterTable, connection, transaction);
-        //             if (nSalesID <= 0)
-        //             {
-        //                 transaction.Rollback();
-        //                 return Ok(_api.Error(User, "Unable to save"));
-        //             }
+                    for (int j = 0; j < PartyListTable.Rows.Count; j++)
+                    {
+                        int nPartyID = myFunctions.getIntVAL(PartyListTable.Rows[j]["nPartyID"].ToString());
 
-        //             for (int j = 0; j < DetailTable.Rows.Count; j++)
-        //             {
-        //                 DetailTable.Rows[j]["N_EvaluationID"] = nEvaluationID;
-        //             }
-        //             nEvaluationDetailsID = dLayer.SaveData("Pay_EmpEvaluationSettingsDetails", "N_EvaluationDetailsID", DetailTable, connection, transaction);
-        //             if (nEvaluationDetailsID <= 0)
-        //             {
-        //                 transaction.Rollback();
-        //                 return Ok(_api.Error(User, "Unable to save"));
-        //             }
+                        int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesID", SaveDataTable, connection, transaction);
 
-        //             dLayer.DeleteData("Pay_EmpEvaluators", "N_EvaluationID", nEvaluationID, "", connection, transaction);
-        //             for (int j = 0; j < EmpEvalTable.Rows.Count; j++)
-        //             {
-        //                 EmpEvalTable.Rows[j]["N_EvaluationID"] = nEvaluationID;
-        //             }
-        //             nEvaluatorsDetailsID = dLayer.SaveData("Pay_EmpEvaluators", "N_EvaluatorsDetailsID", EmpEvalTable, connection, transaction);
-        //             // if (nEvaluatorsDetailsID <= 0)
-        //             // {
-        //             //     transaction.Rollback();
-        //             //     return Ok(_api.Error(User, "Unable to save"));
-        //             // }
-        //             transaction.Commit();
-        //             return Ok(_api.Success("Employee Evaluation Settings Saved"));
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return Ok(_api.Error(User, ex));
-        //     }
-        // }
+                        if (nSalesID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to save"));
+                        }
+
+                        SortedList ProcParam = new SortedList();
+                        ProcParam.Add("N_CompanyID", nCompanyID);
+                        ProcParam.Add("N_FnYearID", nFnYearID);
+                        ProcParam.Add("X_TransType", xTransType);
+                        ProcParam.Add("N_UserID", nUserID);
+                        ProcParam.Add("N_PartyID", nPartyID);
+                        ProcParam.Add("N_BranchID", nBranchID);
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Acc_BeginingBalancePosting_Ins", ProcParam, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, ex));
+                        }
+                    }
+
+                    transaction.Commit();
+                    return Ok(_api.Success("Opening Balance Saved"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+        }
     }
 }
