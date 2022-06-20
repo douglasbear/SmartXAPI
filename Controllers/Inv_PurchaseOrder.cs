@@ -600,6 +600,20 @@ namespace SmartxAPI.Controllers
                         SortedList ProParam = new SortedList();
                         ProParam.Add("N_CompanyID", nCompanyId);
                         ProParam.Add("N_PKeyID", N_POrderID);
+
+                        SortedList ValidationParam = new SortedList();
+                        ValidationParam.Add("N_CompanyID", myFunctions.getIntVAL(Master["n_CompanyId"].ToString()));
+                        ValidationParam.Add("N_FnYearID", Master["n_FnYearId"].ToString());
+                        ValidationParam.Add("X_Type", "purchase order");
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error(User, ex));
+                            }
                          
                         ProParam.Add("X_Type", "purchase order");
                         DetailTable = dLayer.ExecuteDataTablePro("SP_ScreenDataImport", ProParam, connection,transaction);

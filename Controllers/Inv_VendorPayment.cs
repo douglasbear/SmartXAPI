@@ -259,13 +259,16 @@ namespace SmartxAPI.Controllers
                                 {"N_CompanyID",nCompanyId},
                                 {"X_VoucherNo",xInvoiceNo},
                                 {"N_FnYearID",nFnYearId},
-                                {"N_BranchID",nBranchID}};
+                                {"N_BranchID",bShowAllbranch?0:nBranchID}};
                         PayInfo = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_Disp", proParams1, connection);
                         if (PayInfo.Rows.Count > 0)
                         {
                             nPayReceiptID = myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString());
                             xTransType = PayInfo.Rows[0]["X_Type"].ToString();
                             nVendorID = myFunctions.getIntVAL(PayInfo.Rows[0]["N_PartyID"].ToString());
+                            int nCurrencyID = myFunctions.getIntVAL(PayInfo.Rows[0]["N_CurrencyID"].ToString());
+                            string X_CurrencyName = dLayer.ExecuteScalar("select X_CurrencyName from Acc_CurrencyMaster where N_CompanyID="+nCompanyId+" and N_CurrencyID="+nCurrencyID, connection).ToString();
+                             myFunctions.AddNewColumnToDataTable(PayInfo, "X_CurrencyName", typeof(string), X_CurrencyName);
                             dTransDate = myFunctions.getDateVAL(Convert.ToDateTime(PayInfo.Rows[0]["D_Date"].ToString()));
                         }
                     }

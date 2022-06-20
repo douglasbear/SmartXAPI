@@ -129,7 +129,7 @@ namespace SmartxAPI.Controllers
                             foreach (DataRow dRow in MasterTable.Rows)
                             {
                                 object xItemCode = MasterTable.Rows[i]["ItemCode"].ToString();
-                                object N_ItemID = dLayer.ExecuteScalar("Select N_ItemID from Inv_ItemMaster where X_ItemCode='" + xItemCode + "'", Params, connection,transaction);
+                                object N_ItemID = dLayer.ExecuteScalar("Select N_ItemID from Inv_ItemMaster where X_ItemCode='" + xItemCode + "' and N_CompanyID="+myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString())+"", Params, connection,transaction);
                                 int NItemID=0;
                                 
                                 if(N_ItemID!=null)
@@ -142,15 +142,15 @@ namespace SmartxAPI.Controllers
                                 //   int NItemID=0;  
                                 // }
                                
-                                 if(type==1)
+                            if(type==1)
                            {
-                              myFunctions.writeImageFile(dRow["I_Image"].ToString(), myFunctions.GetUploadsPath(User, "ProductImages"), xItemCode + "-POS-" + i);
+                              myFunctions.writeImageFile(dRow["I_Image"].ToString(), myFunctions.GetUploadsPath(User, "PosProductImages"), xItemCode + "-POS-" + i);
                               dRow["X_ImageName"] =xItemCode + "-POS-" + i + ".jpg";
                               dRow["X_ImageLocation"] = myFunctions.GetUploadsPath(User, "PosProductImages");
                            }
-                           else
+                           else   if(type==2)
                            {
-                             myFunctions.writeImageFile(dRow["I_Image"].ToString(), myFunctions.GetUploadsPath(User, "ProductImages"), xItemCode + "-ECOM-" + i);
+                             myFunctions.writeImageFile(dRow["I_Image"].ToString(), myFunctions.GetUploadsPath(User, "EcomProductImages"), xItemCode + "-ECOM-" + i);
                              dRow["X_ImageName"] =xItemCode + "-ECOM-" + i + ".jpg";
                              dRow["X_ImageLocation"] = myFunctions.GetUploadsPath(User, "EcomProductImages");
                            }

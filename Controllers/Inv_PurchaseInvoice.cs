@@ -87,11 +87,11 @@ namespace SmartxAPI.Controllers
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     if (screen == "Invoice")
-                        criteria = "and MONTH(Cast(InvoiceDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(InvoiceDate)= YEAR(CURRENT_TIMESTAMP)";
+                        criteria = " and MONTH(Cast(InvoiceDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(InvoiceDate)= YEAR(CURRENT_TIMESTAMP) ";
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
                         Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%' or x_BranchName like '%" + xSearchkey + "%' or [Invoice Date] like '%" + xSearchkey + "%' or invoiceNetAmt like '%" + xSearchkey + "%' or x_Description like '%" + xSearchkey + "%')";
-
+                       
                     if (CheckClosedYear == false)
                     {
                         if (bAllBranchData == true)
@@ -114,9 +114,7 @@ namespace SmartxAPI.Controllers
                             Searchkey = Searchkey + "and X_TransType='" + X_TransType + "' and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess=0 and N_PurchaseType = 0  and N_BranchID=" + nBranchID + "";
                         }
                     }
-
-
-                    if (xSortBy == null || xSortBy.Trim() == "")
+                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_PurchaseID desc";
                     else
                     {
@@ -135,11 +133,13 @@ namespace SmartxAPI.Controllers
                         }
                         xSortBy = " order by " + xSortBy;
                     }
+
+                 
                     int Count = (nPage - 1) * nSizeperpage;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + "Group By N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate" + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + Searchkey + " " + " Group By N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate "+ xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + "Group By N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + Searchkey + " and  N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + Searchkey + xSortBy + " ) " + "Group By N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate " + xSortBy;
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
@@ -178,7 +178,7 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(10," + N_decimalPlace + ")) ) as TotalAmount from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(10," + N_decimalPlace + ")) ) as TotalAmount from vw_InvPurchaseInvoiceNo_Search_Cloud where  N_CompanyID=@p1 and N_FnYearID=@p2 "   + criteria +" " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -335,7 +335,7 @@ namespace SmartxAPI.Controllers
                     if (nPurchaseNO != null)
                     {
                         if (B_MRNVisible)
-                            X_DetailsSql = "SELECT vw_InvPurchaseDetails.*,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID, vw_InvPurchaseDetails.N_CompanyID) AS N_UnitSPrice, Inv_MRNDetails.N_MRNDetailsID FROM vw_InvPurchaseDetails LEFT OUTER JOIN Inv_MRNDetails ON vw_InvPurchaseDetails.N_CompanyID = Inv_MRNDetails.N_CompanyID AND  vw_InvPurchaseDetails.N_PurchaseDetailsID = Inv_MRNDetails.N_PurchaseDetailsID LEFT OUTER JOIN Inv_PurchaseOrder ON vw_InvPurchaseDetails.N_POrderID = Inv_PurchaseOrder.N_POrderID LEFT OUTER JOIN Inv_MRN ON vw_InvPurchaseDetails.N_RsID = Inv_MRN.N_MRNID  Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID=" + N_PurchaseID + (showAllBranch ? "" : " and vw_InvPurchaseDetails.N_BranchId=@BranchID");
+                            X_DetailsSql = "SELECT vw_InvPurchaseDetails.*,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID, vw_InvPurchaseDetails.N_CompanyID) AS N_UnitSPrice,Inv_MRN.B_IsDirectMRN, Inv_MRNDetails.N_MRNDetailsID FROM vw_InvPurchaseDetails LEFT OUTER JOIN Inv_MRNDetails ON vw_InvPurchaseDetails.N_CompanyID = Inv_MRNDetails.N_CompanyID AND  vw_InvPurchaseDetails.N_PurchaseDetailsID = Inv_MRNDetails.N_PurchaseDetailsID LEFT OUTER JOIN Inv_PurchaseOrder ON vw_InvPurchaseDetails.N_POrderID = Inv_PurchaseOrder.N_POrderID LEFT OUTER JOIN Inv_MRN ON vw_InvPurchaseDetails.N_RsID = Inv_MRN.N_MRNID  Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID=" + N_PurchaseID + (showAllBranch ? "" : " and vw_InvPurchaseDetails.N_BranchId=@BranchID");
                         else
                             X_DetailsSql = "SELECT vw_InvPurchaseDetails.*, Inv_PurchaseOrder.X_POrderNo, dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID, vw_InvPurchaseDetails.N_CompanyID, '') AS N_UnitLPrice,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID, vw_InvPurchaseDetails.N_CompanyID) AS N_UnitSPrice, Inv_MRNDetails.N_MRNDetailsID FROM vw_InvPurchaseDetails LEFT OUTER JOIN Inv_MRNDetails ON vw_InvPurchaseDetails.N_CompanyID = Inv_MRNDetails.N_CompanyID AND vw_InvPurchaseDetails.N_PurchaseDetailsID = Inv_MRNDetails.N_PurchaseDetailsID LEFT OUTER JOIN Inv_PurchaseOrder ON vw_InvPurchaseDetails.N_POrderID = Inv_PurchaseOrder.N_POrderID Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID=" + N_PurchaseID + (showAllBranch ? "" : " and vw_InvPurchaseDetails.N_BranchId=@BranchID");
                     }
@@ -346,8 +346,13 @@ namespace SmartxAPI.Controllers
                     else if (xGrnNo != null || xGrnNo != "")
                     {
                         int n_MRNID = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_MRNID"].ToString());
+                            
+                        int EnableInvoicebasedtax  = myFunctions.getIntVAL(myFunctions.ReturnSettings("65", "EnableInvoicebasedtax", "N_Value", nCompanyID, dLayer, connection));
+                        if(N_POrderID>0 || EnableInvoicebasedtax ==1 )
+                        X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID) As N_UnitSPrice  from vw_InvMRNDetails Where N_CompanyID=@CompanyID and N_MRNID=" + n_MRNID;
+                        else
+                        X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_UnitSPrice  from vw_InvMRNDetailsDirect Where N_CompanyID=@CompanyID and N_MRNID=" + n_MRNID;
 
-                        X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID) As N_UnitSPrice , N_MrnID as N_RsID from vw_InvMRNDetails Where N_CompanyID=@CompanyID and N_MRNID=" + n_MRNID;
                     }
 
                     dtPurchaseInvoiceDetails = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
@@ -858,6 +863,20 @@ namespace SmartxAPI.Controllers
                         SortedList ProParam = new SortedList();
                         ProParam.Add("N_CompanyID", nCompanyID);
                         ProParam.Add("N_PKeyID", N_PurchaseID);
+
+                        SortedList ValidationParam = new SortedList();
+                        ValidationParam.Add("N_CompanyID", nCompanyID);
+                        ValidationParam.Add("N_FnYearID", nFnYearID);
+                        ValidationParam.Add("X_Type", "purchase invoice");
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
                          
                         ProParam.Add("X_Type", "purchase invoice");
                         DetailTable = dLayer.ExecuteDataTablePro("SP_ScreenDataImport", ProParam, connection,transaction);

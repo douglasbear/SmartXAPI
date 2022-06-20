@@ -260,7 +260,8 @@ namespace SmartxAPI.Controllers
                 CompetencyCategoryCopyTable.Columns.Add("X_ID");
 
                 int nCount = CompetencyCategoryTable.Rows.Count;
-                foreach (DataRow dRow in CompetencyCategoryTable.Rows)
+                
+                 foreach(DataRow dRow in CompetencyCategoryTable.Rows)
                 {
                     DataRow row = CompetencyCategoryCopyTable.NewRow();
                     row["N_CompanyID"] = dRow["N_CompanyID"];

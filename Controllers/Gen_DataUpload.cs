@@ -132,6 +132,18 @@ namespace SmartxAPI.Controllers
                             }
                         }
 
+                           if (dt.TableName.ToString().ToLower() == "goods received note")
+                        {
+                            xTableName = "Mig_Grn";
+                            
+                            Mastertable.Columns.Add("N_CompanyID");
+                            foreach (DataRow dtRow in Mastertable.Rows)
+                            {
+                                dtRow["N_CompanyID"] = nCompanyID;
+                            }
+                        }
+                        
+
                         if (dt.TableName.ToString().ToLower() == "package items")
                         {
                             xTableName = "Mig_PackageItem";
