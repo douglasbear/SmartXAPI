@@ -1332,16 +1332,51 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            if (N_SaveDraft == 0)
+                             if (N_SaveDraft == 0)
                             {
-                                int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID", dtsaleamountdetails, connection, transaction);
-                                if (N_SalesAmountID <= 0)
-                                {
-                                    transaction.Rollback();
-                                    return Ok(_api.Error(User, "Unable to save Sales Invoice!"));
-                                }
+                            //   foreach (DataRow data in dtsaleamountdetails.Rows)
+                            //   {
+                            //          double N_SChrgAmt = 0;
+                            //         double N_SChrgAmtMax = 0;
+                            //          object N_ServiceCharge = dLayer.ExecuteScalar("Select ISNULL(N_ServiceCharge , 0) from Inv_Customer where N_CustomerID=" + myFunctions.getVAL(data["N_CustomerID"].ToString()) + " and N_CompanyID=" + N_CompanyID + "and N_FnYearID=" +N_FnYearID, QueryParams, connection, transaction);
+                            //         object N_ServiceChargeMax = dLayer.ExecuteScalar("Select ISNULL(N_ServiceChargeLimit , 0) from Inv_Customer where N_CustomerID=" +  myFunctions.getVAL(data["N_CustomerID"].ToString()) + " and N_CompanyID=" + N_CompanyID + "and N_FnYearID=" + N_FnYearID,  QueryParams, connection, transaction);
+                            //         object N_TaxID = dLayer.ExecuteScalar("Select ISNULL(N_TaxCategoryID , 0) from Inv_Customer where N_CustomerID=" +  myFunctions.getVAL(data["N_CustomerID"].ToString()) + " and N_CompanyID=" + N_CompanyID + "and N_FnYearID=" + N_FnYearID,  QueryParams, connection, transaction);
+                            //          if (myFunctions.getVAL(N_ServiceCharge.ToString()) > 0)
+                            //         {
+                            //              N_SChrgAmt = (myFunctions.getVAL(data["N_Amount"].ToString()) * myFunctions.getVAL((N_ServiceCharge.ToString())) / 100);
+                            //              N_SChrgAmtMax = myFunctions.getVAL(N_ServiceChargeMax.ToString());
+                            //          if (N_SChrgAmtMax > 0)
+                            //              {
+                            //                 if (N_SChrgAmt > N_SChrgAmtMax)
+                            //                      N_SChrgAmt = myFunctions.getVAL(N_ServiceChargeMax.ToString());
+                            //                 }
+                            //          }
+                            //           double AmountH = myFunctions.getVAL((myFunctions.getVAL(data["N_Amount"].ToString()) * myFunctions.getVAL(data["N_Amount"].ToString())).ToString());
+                            //           double CommissionAmtH = N_SChrgAmt * (myFunctions.getVAL(data["N_Amount"].ToString()));
+                            //           if(myFunctions.getVAL(N_ServiceCharge.ToString())>0)
+                            //         {
+                            //             data["N_CommissionAmt"]=CommissionAmtH;
+                            //             data["N_Amount"]=AmountH;
+                            //             data["N_CommissionPer"]=N_ServiceCharge;
+                            //            data["N_CommissionPer"]=N_SChrgAmt;
+                            //          data["N_TaxID"]=N_TaxID;
+                            //          }
+                            //   }
+
+                            //service charge
+                    
+
+                        int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID", dtsaleamountdetails, connection, transaction);
+                        if (N_SalesAmountID <= 0)
+                        {
+                           transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to save Sales Invoice!"));
+                        }
                             }
                         }
+
+
+
                         bool B_salesOrder = false;
                         bool B_DeliveryNote = false;
                         B_DeliveryNote = myFunctions.CheckPermission(N_CompanyID, 729, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection, transaction);
