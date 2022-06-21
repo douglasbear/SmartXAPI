@@ -108,17 +108,24 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
 
+                    for (int i = 0; i < SaveDataTable.Rows.Count; i++)
+                    {
+                        if(myFunctions.getIntVAL(SaveDataTable.Rows[i]["b_DeleteStatus"].ToString()) == 1)
+                        dLayer.DeleteData("Inv_Sales", "N_SalesID", myFunctions.getIntVAL(SaveDataTable.Rows[i]["n_SalesID"].ToString()), "", connection, transaction);
+                    }
+
+                    SaveDataTable.Columns.Remove("b_DeleteStatus");
+                    int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesID", SaveDataTable, connection, transaction);
+
+                    if (nSalesID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable to save"));
+                    }
+
                     for (int j = 0; j < PartyListTable.Rows.Count; j++)
                     {
-                        int nPartyID = myFunctions.getIntVAL(PartyListTable.Rows[j]["nPartyID"].ToString());
-
-                        int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesID", SaveDataTable, connection, transaction);
-
-                        if (nSalesID <= 0)
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, "Unable to save"));
-                        }
+                        int nPartyID = myFunctions.getIntVAL(PartyListTable.Rows[j]["n_PartyID"].ToString());
 
                         SortedList ProcParam = new SortedList();
                         ProcParam.Add("N_CompanyID", nCompanyID);
@@ -127,6 +134,7 @@ namespace SmartxAPI.Controllers
                         ProcParam.Add("N_UserID", nUserID);
                         ProcParam.Add("N_PartyID", nPartyID);
                         ProcParam.Add("N_BranchID", nBranchID);
+                        ProcParam.Add("X_EntryFrom", "Customer Opening Balance");
                         try
                         {
                             dLayer.ExecuteNonQueryPro("SP_Acc_BeginingBalancePosting_Ins", ProcParam, connection, transaction);
