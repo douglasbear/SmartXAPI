@@ -121,7 +121,7 @@ namespace SmartxAPI.Controllers
         }
 
       
-                [HttpDelete("delete")]
+        [HttpDelete("delete")]
         public ActionResult DeleteData(int nSPrintID, int nCompanyID)
         {
             int Results = 0;
