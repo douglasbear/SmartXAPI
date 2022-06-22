@@ -771,7 +771,7 @@ namespace SmartxAPI.Controllers
 
         }
 
-
+         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
          [HttpGet("userlistHierarchy")]
         public ActionResult GetUserHierarchyBasedList()
         {
@@ -796,7 +796,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTablePro(sqlCommandText, Params, connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
