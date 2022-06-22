@@ -95,7 +95,7 @@ namespace SmartxAPI.Controllers
             {
                 DataTable SaveDataTable;
                 DataTable PartyListTable;
-                SaveDataTable = ds.Tables["master"];
+                SaveDataTable = ds.Tables["details"];
                 PartyListTable = ds.Tables["partylist"];
                 int nCompanyID = myFunctions.GetCompanyID(User);
                 int nFnYearID = myFunctions.getIntVAL(PartyListTable.Rows[0]["n_FnYearID"].ToString());
@@ -130,7 +130,7 @@ namespace SmartxAPI.Controllers
                         SortedList ProcParam = new SortedList();
                         ProcParam.Add("N_CompanyID", nCompanyID);
                         ProcParam.Add("N_FnYearID", nFnYearID);
-                        ProcParam.Add("X_TransType", xTransType);
+                        ProcParam.Add("Mode", xTransType);
                         ProcParam.Add("N_UserID", nUserID);
                         ProcParam.Add("N_PartyID", nPartyID);
                         ProcParam.Add("N_BranchID", nBranchID);

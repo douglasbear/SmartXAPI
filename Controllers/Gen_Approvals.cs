@@ -305,7 +305,7 @@ string status="";
 if(partyId==null){
     partyId=0;
 }
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID,  ApprovalRow["x_EntryForm"].ToString(), N_PkeyID, ApprovalRow["x_TransCode"].ToString(), 1, ApprovalRow["x_PartyName"].ToString(), myFunctions.getIntVAL(partyId.ToString()), "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID,  ApprovalRow["x_EntryForm"].ToString(), N_PkeyID, ApprovalRow["x_TransCode"].ToString(), 1, ApprovalRow["x_PartyName"].ToString(), myFunctions.getIntVAL(partyId.ToString()), "",0, User, dLayer, connection, transaction);
                         transaction.Commit();
                         
                
