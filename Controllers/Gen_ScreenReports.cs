@@ -162,7 +162,7 @@ namespace SmartxAPI.Controllers
                                 Pattern = " and ( Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern + ")";
 
                         }
-                        if(nTableViewID ==7 || nTableViewID == 8)
+                        if(nTableViewID ==7 || nTableViewID == 8 || nTableViewID ==5)
                         {
                             Pattern="";
                         }
