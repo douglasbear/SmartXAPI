@@ -114,7 +114,7 @@ namespace SmartxAPI.Controllers
                         int N_PkeyID = nDeviceID;
                         string X_Criteria = "n_DeviceID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpDeviceIDRegistration", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Device Registration", N_PkeyID, x_DeviceCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Device Registration", N_PkeyID, x_DeviceCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
                         transaction.Commit();
                        // myFunctions.SendApprovalMail(N_NextApproverID, this.FormID, nDeviceID, "Device Registration", x_DeviceCode, dLayer, connection, transaction, User);
                         return Ok(api.Success("Device Registration Approval updated" + "-" + x_DeviceCode));
@@ -144,7 +144,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Device Registration", nDeviceID, x_DeviceCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Device Registration", nDeviceID, x_DeviceCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
                         transaction.Commit();
                         //myFunctions.SendApprovalMail(N_NextApproverID, FormID, nDeviceID, "Device Registration", x_DeviceCode, dLayer, connection, transaction, User);
                     }
