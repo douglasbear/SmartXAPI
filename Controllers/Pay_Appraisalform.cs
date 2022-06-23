@@ -278,7 +278,8 @@ namespace SmartxAPI.Controllers
                     EmpParams.Add("@n_PartyID",myFunctions.getIntVAL(MasterTable.Rows[0]["N_EmpID"].ToString()));
                     EmpParams.Add("@nFnYearID", nFnYearID);
                     object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@n_PartyID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);                     
-                    object objUserID = dLayer.ExecuteScalar("select N_UserID from Sec_User where N_CompanyID=@nCompanyID and N_EmpID=@n_PartyID", EmpParams, connection, transaction);                     
+                    object objUserID = dLayer.ExecuteScalar("select N_UserID from Sec_User where N_CompanyID=@nCompanyID and N_EmpID=@n_PartyID", EmpParams, connection, transaction);     
+                    if(objUserID==null) objUserID=0;                
 
                     if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && nAppraisalID > 0)
                     {
