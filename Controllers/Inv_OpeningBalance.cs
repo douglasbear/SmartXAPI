@@ -95,7 +95,7 @@ namespace SmartxAPI.Controllers
             {
                 DataTable SaveDataTable;
                 DataTable PartyListTable;
-                SaveDataTable = ds.Tables["master"];
+                SaveDataTable = ds.Tables["details"];
                 PartyListTable = ds.Tables["partylist"];
                 int nCompanyID = myFunctions.GetCompanyID(User);
                 int nFnYearID = myFunctions.getIntVAL(PartyListTable.Rows[0]["n_FnYearID"].ToString());
@@ -108,25 +108,30 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
 
-                    for (int j = 0; j < PartyListTable.Rows.Count; j++)
-                    {
-                        int nPartyID = myFunctions.getIntVAL(PartyListTable.Rows[j]["nPartyID"].ToString());
 
-                        int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesID", SaveDataTable, connection, transaction);
-
+                    int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesId", SaveDataTable, connection, transaction);
+                    
                         if (nSalesID <= 0)
                         {
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Unable to save"));
                         }
+                    for (int j = 0; j < PartyListTable.Rows.Count; j++)
+                    {
+                        int nPartyID = myFunctions.getIntVAL(PartyListTable.Rows[j]["N_PartyID"].ToString());
+
+                       
+
 
                         SortedList ProcParam = new SortedList();
                         ProcParam.Add("N_CompanyID", nCompanyID);
                         ProcParam.Add("N_FnYearID", nFnYearID);
-                        ProcParam.Add("X_TransType", xTransType);
+                        ProcParam.Add("Mode", xTransType);
                         ProcParam.Add("N_UserID", nUserID);
                         ProcParam.Add("N_PartyID", nPartyID);
                         ProcParam.Add("N_BranchID", nBranchID);
+                        ProcParam.Add("X_EntryFrom","Customer Opening Balance");
+                        
                         try
                         {
                             dLayer.ExecuteNonQueryPro("SP_Acc_BeginingBalancePosting_Ins", ProcParam, connection, transaction);
