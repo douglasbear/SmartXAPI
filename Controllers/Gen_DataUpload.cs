@@ -100,7 +100,7 @@ namespace SmartxAPI.Controllers
                             xTableName = "Mig_VendorOpening";
                             
 
-                        if (dt.TableName.ToString().ToLower() == "product list" || dt.TableName.ToString().ToLower() == "products")
+                        if (dt.TableName.ToString().ToLower() == "product list" || dt.TableName.ToString().ToLower() == "products" || dt.TableName.ToString().ToLower() == "customer materials" )
                         {
                             xTableName = "Mig_Items";
                             Mastertable.Columns.Add("N_CompanyID");
