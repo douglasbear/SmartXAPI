@@ -109,16 +109,16 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(_api.Warning("No Results Found"));
+                    return Ok(api.Warning("No Results Found"));
                 }
                 else
                 {
-                    return Ok(_api.Success(dt));
+                    return Ok(api.Success(dt));
                 }
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -168,7 +168,6 @@ namespace SmartxAPI.Controllers
             sqlCommandText = "";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nSprintID);
-           
             Params.Add("@p3",xSprintCode);
            
          try

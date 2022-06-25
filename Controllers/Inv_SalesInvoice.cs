@@ -359,7 +359,7 @@ namespace SmartxAPI.Controllers
                             QueryParamsList.Add("@nDeliveryNoteID", nDeliveryNoteId);
                             string[] X_Delivery = xDeliveryNoteID.Split(",");
                             int N_DeliveryNote = myFunctions.getIntVAL(X_Delivery[0].ToString());
-                            Mastersql = "select N_CompanyId,N_FnYearId,n_SalesId,x_ReceiptNo,N_CustomerID from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId=" + N_DeliveryNote + "";
+                            Mastersql = "select N_CompanyId,N_FnYearId,n_SalesId,x_ReceiptNo,N_CustomerID,X_CustPONo from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId=" + N_DeliveryNote + "";
                             MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                             if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                             MasterTable = _api.Format(MasterTable, "Master");
@@ -2134,9 +2134,9 @@ namespace SmartxAPI.Controllers
 
             string sqlCommandText = "";
             if (bAllbranchData)
-                sqlCommandText = "Select N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId from vw_Inv_DeliveryNotePending  Where N_CompanyID=@nCompanyID and N_DeliveryNoteID NOT IN (select isnull(N_DeliveryNoteID,0) from Inv_SalesDetails where N_CompanyId=@nCompanyID)  and N_CustomerID=@nCustomerID Group By N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId";
+                sqlCommandText = "Select N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId,X_CustPONo from vw_Inv_DeliveryNotePending  Where N_CompanyID=@nCompanyID and N_DeliveryNoteID NOT IN (select isnull(N_DeliveryNoteID,0) from Inv_SalesDetails where N_CompanyId=@nCompanyID)  and N_CustomerID=@nCustomerID Group By N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId,X_CustPONo";
             else
-                sqlCommandText = "Select N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId from vw_Inv_DeliveryNotePending  Where N_CompanyID=@nCompanyID and N_BranchID=" + nBranchID + "  and N_CustomerID=@nCustomerID and N_DeliveryNoteID NOT IN (select isnull(N_DeliveryNoteID,0) from Inv_SalesDetails where N_CompanyId=@nCompanyID)  Group By N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId";
+                sqlCommandText = "Select N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId,X_CustPONo from vw_Inv_DeliveryNotePending  Where N_CompanyID=@nCompanyID and N_BranchID=" + nBranchID + "  and N_CustomerID=@nCustomerID and N_DeliveryNoteID NOT IN (select isnull(N_DeliveryNoteID,0) from Inv_SalesDetails where N_CompanyId=@nCompanyID)  Group By N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId,X_CustPONo";
 
             try
             {

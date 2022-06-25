@@ -76,7 +76,8 @@ namespace SmartxAPI.Controllers
                     {
                         SortedList Output = new SortedList();
                         Output.Add("partylist",partylist);
-                        Output.Add("settings",settings);
+                        // Output.Add("settings",settings);
+                        Output.Add("details",details);
                         transaction.Commit();
                         return Ok(_api.Success(Output));
                     }
@@ -107,15 +108,22 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-
-
+                     
+                    
                     int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesId", SaveDataTable, connection, transaction);
+
+                    //  if (nSalesID > 0)
+                    // {
+                    //     dLayer.DeleteData("Inv_Sales", "N_SalesId", nSalesID, "N_CompanyID=" + nCompanyID + " and N_SalesId=" + nSalesID, connection, transaction);
+                    // }
                     
                         if (nSalesID <= 0)
                         {
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Unable to save"));
                         }
+                  
+
                     for (int j = 0; j < PartyListTable.Rows.Count; j++)
                     {
                         int nPartyID = myFunctions.getIntVAL(PartyListTable.Rows[j]["N_PartyID"].ToString());
