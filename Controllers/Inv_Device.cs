@@ -145,7 +145,7 @@ namespace SmartxAPI.Controllers
         }
 
            [HttpGet("details")]
-        public ActionResult device(int n_DeviceID, int nCompanyID,string x_SerialNo)
+        public ActionResult device(int n_DeviceID, int nCompanyID,string x_SerialNo, bool list)
         {
              DataTable Master = new DataTable();
               DataTable Detail = new DataTable();
@@ -167,8 +167,13 @@ namespace SmartxAPI.Controllers
 
 
                     sqlCommandText = "select * from Vw_Inv_Device Where N_CompanyID = @p1 and x_SerialNo = @p3";
-                 Master = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                 Master = api.Format(Master, "master");
+                 
+                   if(list)
+                    {
+                        sqlCommandText= "select * from Vw_Inv_Device Where N_CompanyID = @p1 ";
+                    }
+                    Master = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    Master = api.Format(Master, "master");
 
                   
                     if (Master.Rows.Count == 0)
@@ -191,6 +196,8 @@ namespace SmartxAPI.Controllers
                       
 
                     }
+                 
+
                 
               
                 }
