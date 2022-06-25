@@ -124,11 +124,11 @@ namespace SmartxAPI.Controllers
                     //     }
                   
 
-                    for (int j = 0; j < PartyListTable.Rows.Count; j++)
-                    {
-                        if(myFunctions.getIntVAL(SaveDataTable.Rows[i]["b_DeleteStatus"].ToString()) == 1)
-                        dLayer.DeleteData("Inv_Sales", "N_SalesID", myFunctions.getIntVAL(SaveDataTable.Rows[i]["n_SalesID"].ToString()), "", connection, transaction);
-                    }
+                    // for (int j = 0; j < PartyListTable.Rows.Count; j++)
+                    // {
+                    //     if(myFunctions.getIntVAL(SaveDataTable.Rows[i]["b_DeleteStatus"].ToString()) == 1)
+                    //     dLayer.DeleteData("Inv_Sales", "N_SalesID", myFunctions.getIntVAL(SaveDataTable.Rows[i]["n_SalesID"].ToString()), "", connection, transaction);
+                    // }
 
                     SaveDataTable.Columns.Remove("b_DeleteStatus");
                     int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesID", SaveDataTable, connection, transaction);
