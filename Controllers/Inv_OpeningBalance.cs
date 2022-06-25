@@ -110,18 +110,18 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                      
                     
-                    int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesId", SaveDataTable, connection, transaction);
+                    // int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesId", SaveDataTable, connection, transaction);
 
-                    //  if (nSalesID > 0)
-                    // {
-                    //     dLayer.DeleteData("Inv_Sales", "N_SalesId", nSalesID, "N_CompanyID=" + nCompanyID + " and N_SalesId=" + nSalesID, connection, transaction);
-                    // }
+                    // //  if (nSalesID > 0)
+                    // // {
+                    // //     dLayer.DeleteData("Inv_Sales", "N_SalesId", nSalesID, "N_CompanyID=" + nCompanyID + " and N_SalesId=" + nSalesID, connection, transaction);
+                    // // }
                     
-                        if (nSalesID <= 0)
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, "Unable to save"));
-                        }
+                    //     if (nSalesID <= 0)
+                    //     {
+                    //         transaction.Rollback();
+                    //         return Ok(_api.Error(User, "Unable to save"));
+                    //     }
                   
 
                     for (int j = 0; j < PartyListTable.Rows.Count; j++)
