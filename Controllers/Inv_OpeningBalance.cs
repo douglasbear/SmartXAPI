@@ -108,10 +108,6 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-<<<<<<< HEAD
-
-                    for (int i = 0; i < SaveDataTable.Rows.Count; i++)
-=======
                      
                     
                     int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesId", SaveDataTable, connection, transaction);
@@ -129,7 +125,6 @@ namespace SmartxAPI.Controllers
                   
 
                     for (int j = 0; j < PartyListTable.Rows.Count; j++)
->>>>>>> 999ea5794d2d35157f536a3a83e72b8b885644c2
                     {
                         if(myFunctions.getIntVAL(SaveDataTable.Rows[i]["b_DeleteStatus"].ToString()) == 1)
                         dLayer.DeleteData("Inv_Sales", "N_SalesID", myFunctions.getIntVAL(SaveDataTable.Rows[i]["n_SalesID"].ToString()), "", connection, transaction);
