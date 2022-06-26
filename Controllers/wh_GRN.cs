@@ -259,7 +259,7 @@ namespace SmartxAPI.Controllers
 
                         SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
-                                {"X_TransType","GRN"},
+                                {"X_TransType","WHGRN"},
                                 {"N_VoucherID",nGrnID},
                                 {"N_UserID",N_UserID},
                                 {"X_SystemName","WebRequest"},
@@ -327,7 +327,7 @@ namespace SmartxAPI.Controllers
                         StockPosting.Add("N_GRNID", nGrnID);
                         StockPosting.Add("N_UserID", N_UserID);
                         StockPosting.Add("X_SystemName", "ERP Cloud");
-                        // dLayer.ExecuteNonQueryPro("[SP_Inv_AllocateNegStock_WHGRN]", StockPosting, connection, transaction);
+                        dLayer.ExecuteNonQueryPro("[SP_Inv_AllocateNegStock_WHGRN]", StockPosting, connection, transaction);
 
                         // SortedList PostingParam = new SortedList();
                         // PostingParam.Add("N_CompanyID", nCompanyID);
