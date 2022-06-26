@@ -259,7 +259,7 @@ namespace SmartxAPI.Controllers
 
                         SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
-                                {"X_TransType","GRN"},
+                                {"X_TransType","WHGRN"},
                                 {"N_VoucherID",nGrnID},
                                 {"N_UserID",N_UserID},
                                 {"X_SystemName","WebRequest"},
