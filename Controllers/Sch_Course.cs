@@ -37,7 +37,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult PrjFdtDetails(string x_ClassCode)
+        public ActionResult ClassDetails(string x_ClassCode)
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
