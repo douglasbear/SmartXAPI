@@ -167,7 +167,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult TaskDetails(string xTaskCode)
+        public ActionResult TaskDetails(string xTaskCode,int nTaskID)
         {
 
 
@@ -184,6 +184,7 @@ namespace SmartxAPI.Controllers
                     DataTable CommentsTable = new DataTable();
                     DataTable TimeTable = new DataTable();
                     DataTable options = new DataTable();
+                    DataTable TasksList = new DataTable();
                     int loginUserID=myFunctions.GetUserID(User);
 
 
@@ -197,8 +198,17 @@ namespace SmartxAPI.Controllers
 
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    if(nTaskID>0)
+                    {
+                    Params.Add("@xTaskCode", nTaskID);
+                    Mastersql = "select * from vw_Tsk_TaskMaster where N_CompanyId=@nCompanyID and N_TaskID=@xTaskCode  ";
+                    }
+                    else
+                    {
                     Params.Add("@xTaskCode", xTaskCode);
                     Mastersql = "select * from vw_Tsk_TaskMaster where N_CompanyId=@nCompanyID and X_TaskCode=@xTaskCode  ";
+                    }
+                    
 
 
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
@@ -217,6 +227,7 @@ namespace SmartxAPI.Controllers
                     MasterTable.AcceptChanges();
                     Params.Add("@nTaskID", TaskID);
                     MasterTable = _api.Format(MasterTable, "Master");
+                    string subTasksList = "select * from vw_TaskCurrentStatus where N_CompanyID=@nCompanyID  and  N_ParentID=@nTaskID order by N_SortID";
 
 
                     // TimeTable
@@ -371,6 +382,9 @@ namespace SmartxAPI.Controllers
                     options = dLayer.ExecuteDataTable(ActionSql, Params, connection);
                     options = _api.Format(options, "options");
 
+                    TasksList = dLayer.ExecuteDataTable(subTasksList, Params, connection);
+                    TasksList = _api.Format(TasksList, "tasksList");
+
 
 
 
@@ -383,6 +397,7 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(Attachments);
                     dt.Tables.Add(CommentsTable);
                     dt.Tables.Add(options);
+                    dt.Tables.Add(TasksList);
 
                     return Ok(_api.Success(dt));
 

@@ -94,13 +94,13 @@ namespace SmartxAPI.Controllers
                                 // {"@UCval",myFunctions.GetUserCategory(User)}
                             };
 
-                            StringBuilder sb = new StringBuilder();
-                            sb.AppendLine(settingsSql + " --- " + sql + "  -  " + row["X_Group"] + "---" + row["X_Description"]);
-                            if (!Directory.Exists(logPath))
-                                Directory.CreateDirectory(logPath);
+                            // StringBuilder sb = new StringBuilder();
+                            // sb.AppendLine(settingsSql + " --- " + sql + "  -  " + row["X_Group"] + "---" + row["X_Description"]);
+                            // if (!Directory.Exists(logPath))
+                            //     Directory.CreateDirectory(logPath);
 
-                            System.IO.File.AppendAllText(logPath + "Settings Log.log", sb.ToString());
-                            sb.Clear();
+                            // System.IO.File.AppendAllText(logPath + "Settings Log.log", sb.ToString());
+                            // sb.Clear();
                             row["listItems"] = dLayer.ExecuteDataTable(sql, lParamsList, connection);
 
                         }

@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
                 if(nCategoryID!=0)
                     sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID in (@p2,-11,-22) and B_Active=1 and N_UserCategoryID<>1";
                 else
-                    sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID >= -23 and B_Active=1 and N_UserCategoryID<>1";
+                    sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID >= -24 and B_Active=1 and N_UserCategoryID<>1";
             }
             else
             {
@@ -288,7 +288,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_ApprovalDescription like '% " + xSearchkey + ")";
+                Searchkey = "and (X_ApprovalDescription like '%"+ xSearchkey +"%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ApprovalID desc";
@@ -297,9 +297,9 @@ namespace SmartxAPI.Controllers
 
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Gen_ApprovalCodes where N_CompanyID=@p1 ";
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Gen_ApprovalCodes where N_CompanyID=@p1 " + Searchkey +" "+ xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Gen_ApprovalCodes where N_CompanyID=@nCompanyId and  N_ApprovalID not in (select top(" + Count + ") N_ApprovalID from Gen_ApprovalCodes  where N_CompanyID=@p1 )";
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Gen_ApprovalCodes where N_CompanyID=@p1 " + Searchkey +"  N_ApprovalID not in (select top(" + Count + ") N_ApprovalID from Gen_ApprovalCodes  where N_CompanyID=@p1) "  + Searchkey +" "+ xSortBy;
 
             Params.Add("@p1", nCompanyId);
             // Params.Add("@nFnYearId", nFnYearId);

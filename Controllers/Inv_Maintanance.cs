@@ -371,7 +371,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("UpdateStatus")]
-        public ActionResult UpdateStatus(string remarks, int nStatus, int nServiceID, string xStatus, string dClosingDate, int nClosedUserID)
+        public ActionResult UpdateStatus(string remarks, int nStatus, int nServiceID, string xStatus, string dClosingDate, int nClosedUserID,int statusID , string xServiceDetailsID)
         {
             try
             {
@@ -380,14 +380,46 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     SortedList Params = new SortedList();
+                     DataTable DetailTable = new DataTable();
                     Params.Add("@nCompanyID", nCompanyID);
+                    bool flag=true;
                     //DateTime dCloseDate = Convert.ToDateTime(dClosingDate.ToString());
+                    string xCriteria="";
+                    if(xStatus =="update")
+                    {
+                     xCriteria=xServiceDetailsID;
+                    }
+                    else
+                    {
+                     xCriteria=" select N_ServiceDetailsID from Inv_ServiceDetails where N_CompanyID=@nCompanyID and N_AssigneeID="+nClosedUserID+"" ;
+                    }
+                     dLayer.ExecuteNonQuery("Update Inv_ServiceDetails set N_StatusID = " + statusID + "  where N_CompanyID = @nCompanyID and N_ServiceDetailsID in  (" + xCriteria + ")", Params, connection);
+                     string detailSql="select * from Inv_ServiceDetails where n_ServiceID ="+nServiceID+" and N_CompanyID="+nCompanyID+" ";
+                      DetailTable = dLayer.ExecuteDataTable(detailSql, Params, connection);
+
+                  foreach (DataRow row in DetailTable.Rows)
+                    {
+                        if(row["N_StatusID"].ToString()== "2" || row["N_StatusID"].ToString() == "0")
+                        {
+                            flag=false;
+
+                        }
+
+                    }
+                    
+
+                    if(flag)
+                    {
                     dLayer.ExecuteNonQuery("Update Inv_ServiceMaster set N_Status = " + nStatus + " , D_ClosingDate='" + dClosingDate + "' , N_ClosedUserID='" + nClosedUserID + "' where N_CompanyID = @nCompanyID and N_ServiceID = " + nServiceID + "", Params, connection);
                     if (remarks != "" || remarks != null)
                     {
                         dLayer.ExecuteNonQuery("Update Inv_ServiceMaster set X_ClosedRemarks ='" + remarks + "', D_ClosingDate='" + dClosingDate + "', N_ClosedUserID='" + nClosedUserID + "' where N_CompanyID = @nCompanyID and N_ServiceID = " + nServiceID + "", Params, connection);
                     }
                     return Ok(_api.Success("Closed"));
+                    }
+                    else{
+                          return Ok(_api.Success("updated"));
+                    }
                 }
             }
             catch (Exception ex)
