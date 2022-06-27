@@ -63,9 +63,9 @@ namespace SmartxAPI.Controllers
             }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType and (N_EntryUserID=@nUserID or N_UserID=@nUserID or N_EvalUserID=@nUserID) " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType and (N_EntryUserID=@nUserID or N_UserID=@nUserID or N_EvalUserID=@nUserID or N_EmpUserID=@nUserID) " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType and (N_EntryUserID=@nUserID or N_UserID=@nUserID or N_EvalUserID=@nUserID) " + Searchkey + " and N_AppraisalID not in (select top(" + Count + ") N_AppraisalID from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType " + xSortBy + " ) " + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType and (N_EntryUserID=@nUserID or N_UserID=@nUserID or N_EvalUserID=@nUserID or N_EmpUserID=@nUserID) " + Searchkey + " and N_AppraisalID not in (select top(" + Count + ") N_AppraisalID from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType " + xSortBy + " ) " + " " + xSortBy;
 
             Params.Add("@nCompanyId", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
@@ -80,7 +80,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    sqlCommandCount = "select count(*) as N_Count  from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count  from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType and (N_EntryUserID=@nUserID or N_UserID=@nUserID or N_EvalUserID=@nUserID or N_EmpUserID=@nUserID)" + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
