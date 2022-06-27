@@ -88,9 +88,7 @@ namespace SmartxAPI.Controllers
                 return BadRequest(api.Error(User,ex));
             }
         }
-
-
-                [HttpGet("list")]
+    [HttpGet("list")]
         public ActionResult GetItemCategory()
         {
             DataTable dt = new DataTable();
@@ -123,7 +121,7 @@ namespace SmartxAPI.Controllers
         }
 
       
-                [HttpDelete("delete")]
+        [HttpDelete("delete")]
         public ActionResult DeleteData(int nSPrintID, int nCompanyID)
         {
             int Results = 0;
@@ -206,3 +204,5 @@ namespace SmartxAPI.Controllers
 
     }
 }
+
+    
