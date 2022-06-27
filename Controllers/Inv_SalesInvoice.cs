@@ -2164,14 +2164,49 @@ namespace SmartxAPI.Controllers
 
 
 
+       [HttpGet("invStockInfo")]
+        public ActionResult GetInvStockInfoList( int nCompanyID,int nItemID, int nLocationID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                   // int nCompanyID = myFunctions.GetCompanyID(User);
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                   
+                    string sqlCommandText = "";
+                    string sqlCommandCount = "";
+                    string Searchkey = "";
 
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nItemID);
+                   // Params.Add("@p3",nFnYearID);
+                    Params.Add("@p4", nLocationID);
+              
+                    if (nItemID > 0)
+                    {
+                       
+                            sqlCommandText = "select * from vw_StockPOSOQty where N_CompanyID=@p1 and  N_ItemID=@p2 and N_LocationID=@p4  " ;
+                                            
+                    }
+                    SortedList OutPut = new SortedList();
 
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount = "select count(*) as N_Count from vw_StockPOSOQty where N_CompanyID=@p1 and n_ItemID=@p2  ";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
 
-
-
-
-
-
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    return Ok(_api.Success(OutPut));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
 
     }
 }
