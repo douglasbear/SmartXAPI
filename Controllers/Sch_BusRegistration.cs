@@ -91,14 +91,6 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Success(OutPut));
                     }
                 }
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Warning("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
             }
             catch (Exception e)
             {
@@ -241,11 +233,11 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Sch_BusRegistration", "n_RegistrationID", nRegistrationID, "N_CompanyID =" + nCompanyID, connection, transaction);
-                    transaction.Commit();
+                    Results = dLayer.DeleteData("Sch_BusRegistration", "n_RegistrationID", nRegistrationID, "N_CompanyID =" + nCompanyID, connection, transaction);                   
                 
                     if (Results > 0)
                     {
+                        transaction.Commit();
                         return Ok(api.Success("Bus Registration deleted"));
                     }
                     else
