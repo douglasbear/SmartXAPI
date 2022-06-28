@@ -177,11 +177,11 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Sch_ClassDivision ", "n_ClassDivisionID", nClassDivisionID, "N_CompanyID =" + nCompanyID, connection, transaction);
-                    transaction.Commit();
+                    Results = dLayer.DeleteData("Sch_ClassDivision ", "n_ClassDivisionID", nClassDivisionID, "N_CompanyID =" + nCompanyID, connection, transaction);                
                 
                     if (Results > 0)
                     {
+                        transaction.Commit();
                         return Ok(api.Success("Batch deleted"));
                     }
                     else
