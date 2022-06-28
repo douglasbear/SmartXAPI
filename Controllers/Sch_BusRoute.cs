@@ -62,7 +62,7 @@ namespace SmartxAPI.Controllers
                     MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
 
-                    string DetailSql = "select * from Sch_BusRouteDetail where N_CompanyID=@p1 and n_RouteID=@p2";
+                    string DetailSql = "select * from vw_Sch_BusRouteDetailDisp where N_CompanyID=@p1 and n_RouteID=@p2";
 
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = api.Format(DetailTable, "Details");
