@@ -270,17 +270,17 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Pay_GradeType", "n_GradeID", nGradeID, "", connection,transaction);
-                    transaction.Commit();
                 
-                 if (Results > 0)
+                    if (Results > 0)
                     {
                         dLayer.DeleteData("Pay_GradeTypeDetails", "n_GradeID", nGradeID, "", connection,transaction);
+                        transaction.Commit();
                         return Ok(api.Success("grade type deleted"));
                     }
-                else
-                {
-                    return Ok(api.Error(User,"Unable to delete "));
-                }
+                    else
+                    {
+                        return Ok(api.Error(User,"Unable to delete "));
+                    }
 
             }
             }
