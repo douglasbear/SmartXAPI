@@ -37,15 +37,15 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult ClassDetails(string x_ClassCode)
+        public ActionResult ClassDetails(int n_ClassID)
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_Sch_Class where N_CompanyID=@p1  and x_ClassCode=@p2";
+            string sqlCommandText = "select * from vw_Sch_Class where N_CompanyID=@p1  and n_ClassID=@p2";
             Params.Add("@p1", nCompanyId);  
-            Params.Add("@p2", x_ClassCode);
+            Params.Add("@p2", n_ClassID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

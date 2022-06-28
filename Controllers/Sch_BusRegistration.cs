@@ -14,19 +14,19 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("schStudentCategory")]
+    [Route("schBusRegistration")]
     [ApiController]
-    public class Sch_StudentCategory : ControllerBase
+    public class Sch_BusRegistration : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
 
-        private readonly int N_FormID =1490 ;
+        private readonly int N_FormID =744 ;
 
 
-        public Sch_StudentCategory(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Sch_BusRegistration(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
             dLayer = dl;
@@ -34,17 +34,88 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
+        [HttpGet("list")]
+        public ActionResult GetBusRegList(int? nCompanyId, int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_RegistrationCode like '%" + xSearchkey + "%' or X_AdmissionNo like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or X_RouteName like '%" + xSearchkey + "%' or DropRoute like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by X_RegistrationCode desc";
+            else
+            {
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "X_RegistrationCode":
+                        xSortBy = "X_RegistrationCode " + xSortBy.Split(" ")[1];
+                        break;
+                    default: break;
+                }
+                xSortBy = " order by " + xSortBy;
+            }
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchReg_Disp where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID  " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchReg_Disp where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + Searchkey + " and N_RegistrationID not in (select top(" + Count + ") N_RegistrationID from vw_SchReg_Disp where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + xSortBy + " ) " + " " + xSortBy;
+
+            Params.Add("@nCompanyId", nCompanyID);
+            Params.Add("@nAcYearID", nAcYearID);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    SortedList OutPut = new SortedList();
+
+                    sqlCommandCount = "select count(*) as N_Count  from vw_SchReg_Disp where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
 
         [HttpGet("details")]
-        public ActionResult CategoryDetails(int n_StudentCatID)
+        public ActionResult BusRegDetails(string xRegistrationCode)
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_Sch_StudentCategory where N_CompanyID=@p1  and n_StudentCatID=@p2";
+            string sqlCommandText = "select * from vw_SchReg_Disp where N_CompanyID=@p1  and X_RegistrationCode=@p2";
             Params.Add("@p1", nCompanyId);  
-            Params.Add("@p2", n_StudentCatID);
+            Params.Add("@p2", xRegistrationCode);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -78,7 +149,7 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
-                int nStudentCatID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_StudentCatID"].ToString());
+                int nRegistrationID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RegistrationID"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -87,25 +158,24 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string Code = "";
-                    var values = MasterTable.Rows[0]["X_StudentCatCode"].ToString();
+                    var values = MasterTable.Rows[0]["X_RegistrationCode"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                          Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
-                        Code = dLayer.GetAutoNumber("Sch_StudentCategory", "X_StudentCatCode", Params, connection, transaction);
+                        Code = dLayer.GetAutoNumber("Sch_BusRegistration", "X_RegistrationCode", Params, connection, transaction);
                         if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Course Code")); }
-                        MasterTable.Rows[0]["X_StudentCatCode"] = Code;
+                        MasterTable.Rows[0]["X_RegistrationCode"] = Code;
                     }
-                    MasterTable.Columns.Remove("n_FnYearId");
 
-                    if (nStudentCatID > 0) 
+                    if (nRegistrationID > 0) 
                     {  
-                        dLayer.DeleteData("Sch_StudentCategory", "N_StudentCatID", nStudentCatID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
+                        dLayer.DeleteData("Sch_BusRegistration", "n_RegistrationID", nRegistrationID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
                     }
 
-                    nStudentCatID = dLayer.SaveData("Sch_StudentCategory", "N_StudentCatID", MasterTable, connection, transaction);
-                    if (nStudentCatID <= 0)
+                    nRegistrationID = dLayer.SaveData("Sch_BusRegistration", "n_RegistrationID", MasterTable, connection, transaction);
+                    if (nRegistrationID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error(User,"Unable to save"));
@@ -113,7 +183,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Student Category Created"));
+                        return Ok(api.Success("Bus Registration Completed"));
                     }
                 }
             }
@@ -123,15 +193,15 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("list") ]
-        public ActionResult CategoryList(int nCompanyID)
+        [HttpGet("detailList") ]
+        public ActionResult BusRegList(int nCompanyID)
         {    
             SortedList param = new SortedList();           
             DataTable dt=new DataTable();
             
             string sqlCommandText="";
 
-            sqlCommandText="select * from vw_Sch_StudentCategory where N_CompanyID=@p1";
+            sqlCommandText="select * from vw_SchReg_Disp where N_CompanyID=@p1";
 
             param.Add("@p1", nCompanyID);             
                 
@@ -159,7 +229,7 @@ namespace SmartxAPI.Controllers
         }   
       
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nStudentCatID)
+        public ActionResult DeleteData(int nRegistrationID)
         {
 
             int Results = 0;
@@ -171,16 +241,16 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Sch_StudentCategory", "N_StudentCatID", nStudentCatID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                    Results = dLayer.DeleteData("Sch_BusRegistration", "n_RegistrationID", nRegistrationID, "N_CompanyID =" + nCompanyID, connection, transaction);
                     transaction.Commit();
                 
                     if (Results > 0)
                     {
-                        return Ok(api.Success("Student Category deleted"));
+                        return Ok(api.Success("Bus Registration deleted"));
                     }
                     else
                     {
-                        return Ok(api.Error(User,"Unable to delete Student Category"));
+                        return Ok(api.Error(User,"Unable to delete Bus Registration"));
                     }
                 }
 

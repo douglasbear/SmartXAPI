@@ -37,15 +37,15 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult BatchDetails(string x_DivisionCode)
+        public ActionResult BatchDetails(int n_ClassDivisionID)
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_Sch_ClassDivision where N_CompanyID=@p1 and x_DivisionCode=@p2";
+            string sqlCommandText = "select * from vw_Sch_ClassDivision where N_CompanyID=@p1 and n_ClassDivisionID=@p2";
             Params.Add("@p1", nCompanyId);  
-            Params.Add("@p2", x_DivisionCode);
+            Params.Add("@p2", n_ClassDivisionID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
