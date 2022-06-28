@@ -14,19 +14,19 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("schCourse")]
+    [Route("schBatch")]
     [ApiController]
-    public class Sch_Class : ControllerBase
+    public class Sch_Batch : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
 
-        private readonly int N_FormID =158 ;
+        private readonly int N_FormID =166 ;
 
 
-        public Sch_Class(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Sch_Batch(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
             dLayer = dl;
@@ -37,15 +37,15 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult ClassDetails(int n_ClassID)
+        public ActionResult BatchDetails(int n_ClassDivisionID)
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_Sch_Class where N_CompanyID=@p1  and n_ClassID=@p2";
+            string sqlCommandText = "select * from vw_Sch_ClassDivision where N_CompanyID=@p1 and n_ClassDivisionID=@p2";
             Params.Add("@p1", nCompanyId);  
-            Params.Add("@p2", n_ClassID);
+            Params.Add("@p2", n_ClassDivisionID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -69,8 +69,6 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
-
         //Save....
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
@@ -81,7 +79,7 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
-                int nClassID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ClassID"].ToString());
+                int nDivisionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ClassDivisionID"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -90,25 +88,25 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string Code = "";
-                    var values = MasterTable.Rows[0]["X_ClassCode"].ToString();
+                    var values = MasterTable.Rows[0]["x_DivisionCode"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                          Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
-                        Code = dLayer.GetAutoNumber("Sch_Class", "X_ClassCode", Params, connection, transaction);
+                        Code = dLayer.GetAutoNumber("Sch_ClassDivision", "x_DivisionCode", Params, connection, transaction);
                         if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Course Code")); }
-                        MasterTable.Rows[0]["X_ClassCode"] = Code;
+                        MasterTable.Rows[0]["x_DivisionCode"] = Code;
                     }
                     MasterTable.Columns.Remove("n_FnYearId");
 
-                    if (nClassID > 0) 
+                    if (nDivisionID > 0) 
                     {  
-                        dLayer.DeleteData("Sch_Class", "N_ClassID", nClassID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
+                        dLayer.DeleteData("Sch_ClassDivision", "N_ClassDivisionID", nDivisionID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
                     }
 
-                    nClassID = dLayer.SaveData("Sch_Class", "N_ClassID", MasterTable, connection, transaction);
-                    if (nClassID <= 0)
+                    nDivisionID = dLayer.SaveData("Sch_ClassDivision", "N_ClassDivisionID", MasterTable, connection, transaction);
+                    if (nDivisionID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error(User,"Unable to save"));
@@ -116,7 +114,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Course Created"));
+                        return Ok(api.Success("Batch Created"));
                     }
                 }
             }
@@ -127,20 +125,20 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list") ]
-        public ActionResult ClassList(int nCompanyID,int nClassTypeID)
+        public ActionResult BatchList(int nCompanyID,int nClassID)
         {    
             SortedList param = new SortedList();           
             DataTable dt=new DataTable();
             
             string sqlCommandText="";
 
-            if(nClassTypeID>0)
-                sqlCommandText="select * from vw_Sch_Class where N_CompanyID=@p1 and N_ClassTypeID=@p2";
+            if(nClassID>0)
+                sqlCommandText="select * from vw_Sch_ClassDivision where N_CompanyID=@p1 and N_ClassID=@p2";
             else    
-                sqlCommandText="select * from vw_Sch_Class where N_CompanyID=@p1";
+                sqlCommandText="select * from vw_Sch_ClassDivision where N_CompanyID=@p1";
 
             param.Add("@p1", nCompanyID);  
-            param.Add("@p2", nClassTypeID);                
+            param.Add("@p2", nClassID);                
                 
             try
             {
@@ -167,7 +165,7 @@ namespace SmartxAPI.Controllers
         }   
       
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nClassID)
+        public ActionResult DeleteData(int nClassDivisionID)
         {
 
             int Results = 0;
@@ -179,16 +177,16 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Sch_Class ", "N_ClassID", nClassID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                    Results = dLayer.DeleteData("Sch_ClassDivision ", "n_ClassDivisionID", nClassDivisionID, "N_CompanyID =" + nCompanyID, connection, transaction);                
                 
                     if (Results > 0)
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Course deleted"));
+                        return Ok(api.Success("Batch deleted"));
                     }
                     else
                     {
-                        return Ok(api.Error(User,"Unable to delete Course"));
+                        return Ok(api.Error(User,"Unable to delete Batch"));
                     }
                 }
 
@@ -197,9 +195,6 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(User,ex));
             }
-
-
-
         }
     }
 }
