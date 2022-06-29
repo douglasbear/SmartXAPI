@@ -183,7 +183,47 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(User,e));
             }   
-        }   
+        } 
+
+        [HttpGet("pickUpList") ]
+        public ActionResult PickUpList(int nCompanyID,int nRouteID)
+        {    
+            SortedList param = new SortedList();           
+            DataTable dt=new DataTable();
+            
+            string sqlCommandText="";
+
+            if(nRouteID>0)
+                sqlCommandText="select * from Sch_BusRouteDetail where N_CompanyID=@p1 and n_RouteID=@p2";
+            else    
+                sqlCommandText="select * from Sch_BusRouteDetail where N_CompanyID=@p1";
+
+            param.Add("@p1", nCompanyID);  
+            param.Add("@p2", nRouteID);                
+                
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                }
+                if(dt.Rows.Count==0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+                
+            }
+            catch(Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }   
+        }    
       
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nRouteID)
