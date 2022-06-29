@@ -85,7 +85,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p2", nFnYearId);
                     SortedList OutPut = new SortedList();
 
-
+             
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     sqlCommandCount = "select count(*) as N_Count from vw_AccChequeDetails where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);

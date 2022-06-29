@@ -167,7 +167,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult TaskDetails(string xTaskCode)
+        public ActionResult TaskDetails(string xTaskCode,int nTaskID)
         {
 
 
@@ -184,6 +184,7 @@ namespace SmartxAPI.Controllers
                     DataTable CommentsTable = new DataTable();
                     DataTable TimeTable = new DataTable();
                     DataTable options = new DataTable();
+                    DataTable TasksList = new DataTable();
                     int loginUserID=myFunctions.GetUserID(User);
 
 
@@ -197,8 +198,17 @@ namespace SmartxAPI.Controllers
 
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    if(nTaskID>0)
+                    {
+                    Params.Add("@xTaskCode", nTaskID);
+                    Mastersql = "select * from vw_Tsk_TaskMaster where N_CompanyId=@nCompanyID and N_TaskID=@xTaskCode  ";
+                    }
+                    else
+                    {
                     Params.Add("@xTaskCode", xTaskCode);
                     Mastersql = "select * from vw_Tsk_TaskMaster where N_CompanyId=@nCompanyID and X_TaskCode=@xTaskCode  ";
+                    }
+                    
 
 
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
@@ -217,6 +227,7 @@ namespace SmartxAPI.Controllers
                     MasterTable.AcceptChanges();
                     Params.Add("@nTaskID", TaskID);
                     MasterTable = _api.Format(MasterTable, "Master");
+                    string subTasksList = "select * from vw_TaskCurrentStatus where N_CompanyID=@nCompanyID  and  N_ParentID=@nTaskID order by N_SortID";
 
 
                     // TimeTable
@@ -371,6 +382,9 @@ namespace SmartxAPI.Controllers
                     options = dLayer.ExecuteDataTable(ActionSql, Params, connection);
                     options = _api.Format(options, "options");
 
+                    TasksList = dLayer.ExecuteDataTable(subTasksList, Params, connection);
+                    TasksList = _api.Format(TasksList, "tasksList");
+
 
 
 
@@ -383,6 +397,7 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(Attachments);
                     dt.Tables.Add(CommentsTable);
                     dt.Tables.Add(options);
+                    dt.Tables.Add(TasksList);
 
                     return Ok(_api.Success(dt));
 
@@ -420,8 +435,15 @@ namespace SmartxAPI.Controllers
                     string X_TaskCode = MasterTable.Rows[0]["X_TaskCode"].ToString();
                     string xTaskSummery = MasterTable.Rows[0]["x_TaskSummery"].ToString();
                     int nProjectID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ProjectID"].ToString());
+                    int nParentyID=  myFunctions.getIntVAL(MasterTable.Rows[0]["N_ParentID"].ToString());
+                    double n_WeightPercentage=myFunctions.getVAL(MasterTable.Rows[0]["n_WeightPercentage"].ToString());
+                    double TaskPercentage=0.00;
+                    double ParentTaskPercentage=0.00;
 
-
+                    if(DetailTable.Columns.Contains("x_WorkPercentage"))
+                    {
+                        DetailTable.Columns.Remove("x_WorkPercentage");
+                    }
 
 
                     //int nUserID = myFunctions.GetUserID(User);
@@ -431,6 +453,18 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Tsk_TaskStatus", "N_TaskID", nTaskId, "", connection, transaction);
                         dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskId, "", connection, transaction);
                     }
+
+                    if(nParentyID >0)
+                    {
+                        double totalweightage= myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_WeightPercentage) from Tsk_TaskMaster  where N_ParentID="+nParentyID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
+                        ParentTaskPercentage= myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_CompletedPercentage) from Tsk_TaskMaster  where N_TaskID="+nParentyID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
+                        ParentTaskPercentage=(((totalweightage+n_WeightPercentage) *100 )/ParentTaskPercentage );
+                          dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CompletedPercentage= "+ParentTaskPercentage+"  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nParentyID, Params, connection,transaction);
+
+                    
+                   }
+
+
                     DocNo = MasterRow["X_TaskCode"].ToString();
                     if (X_TaskCode == "@Auto")
                     {
@@ -585,13 +619,37 @@ namespace SmartxAPI.Controllers
                     //int nparentID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ParentID"].ToString());
                     string nStatus = DetailTable.Rows[0]["N_Status"].ToString();
                     int masterStatus= myFunctions.getIntVAL(DetailTable.Rows[0]["N_Status"].ToString());
+                    int nParentyID= myFunctions.getIntVAL(MasterTable.Rows[0]["N_ParentID"].ToString());
+                    double n_WeightPercentage=myFunctions.getVAL(MasterTable.Rows[0]["n_WeightPercentage"].ToString());
+                    double workPercentage=myFunctions.getIntVAL(DetailTable.Rows[0]["x_WorkPercentage"].ToString());
+                    double TaskPercentage=0.00;
+                    double ParentTaskPercentage=0.00;
+                    if(DetailTable.Columns.Contains("x_WorkPercentage"))
+                    {
+                        DetailTable.Columns.Remove("x_WorkPercentage");
+                    }
+                    //Percentage Calculation
+         
+                    if(myFunctions.getIntVAL(nStatus)==6 || myFunctions.getIntVAL(nStatus)==4 )
+                    {
+                         TaskPercentage=(n_WeightPercentage * workPercentage)/100;
+                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CompletedPercentage= "+workPercentage+"  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
+                         if(nParentyID >0)
+                         {
+                             double totalweightage= myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_WeightPercentage) from Tsk_TaskMaster  where N_ParentID="+nParentyID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
+                              ParentTaskPercentage= myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_CompletedPercentage) from Tsk_TaskMaster  where N_TaskID="+nParentyID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
+                             ParentTaskPercentage=ParentTaskPercentage+((TaskPercentage * 100)/totalweightage);
+                              dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CompletedPercentage= "+ParentTaskPercentage+"  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nParentyID, Params, connection,transaction);
 
-                    // if(DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_SubmitterID"].ToString())
-                    // {
-                    //      DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
+
+                         }
 
 
-                    // }
+
+                    }
+
+
+
                     if(myFunctions.getIntVAL(nStatus.ToString())==4)
                     {
                     object N_ClosedTaskStatus = dLayer.ExecuteScalar("select COUNT(*) from Tsk_TaskMaster where N_ParentID=" + nTaskID + " and ISNULL(B_Closed,0)=0 and N_CompanyID=" + nCompanyID.ToString(), Params, connection,transaction);

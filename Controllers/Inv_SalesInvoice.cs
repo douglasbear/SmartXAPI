@@ -359,7 +359,7 @@ namespace SmartxAPI.Controllers
                             QueryParamsList.Add("@nDeliveryNoteID", nDeliveryNoteId);
                             string[] X_Delivery = xDeliveryNoteID.Split(",");
                             int N_DeliveryNote = myFunctions.getIntVAL(X_Delivery[0].ToString());
-                            Mastersql = "select N_CompanyId,N_FnYearId,n_SalesId,x_ReceiptNo,N_CustomerID from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId=" + N_DeliveryNote + "";
+                            Mastersql = "select N_CompanyId,N_FnYearId,n_SalesId,x_ReceiptNo,N_CustomerID,X_CustPONo from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId=" + N_DeliveryNote + "";
                             MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                             if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                             MasterTable = _api.Format(MasterTable, "Master");
@@ -2134,9 +2134,9 @@ namespace SmartxAPI.Controllers
 
             string sqlCommandText = "";
             if (bAllbranchData)
-                sqlCommandText = "Select N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId from vw_Inv_DeliveryNotePending  Where N_CompanyID=@nCompanyID and N_DeliveryNoteID NOT IN (select isnull(N_DeliveryNoteID,0) from Inv_SalesDetails where N_CompanyId=@nCompanyID)  and N_CustomerID=@nCustomerID Group By N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId";
+                sqlCommandText = "Select N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId,X_CustPONo from vw_Inv_DeliveryNotePending  Where N_CompanyID=@nCompanyID and N_DeliveryNoteID NOT IN (select isnull(N_DeliveryNoteID,0) from Inv_SalesDetails where N_CompanyId=@nCompanyID)  and N_CustomerID=@nCustomerID Group By N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId,X_CustPONo";
             else
-                sqlCommandText = "Select N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId from vw_Inv_DeliveryNotePending  Where N_CompanyID=@nCompanyID and N_BranchID=" + nBranchID + "  and N_CustomerID=@nCustomerID and N_DeliveryNoteID NOT IN (select isnull(N_DeliveryNoteID,0) from Inv_SalesDetails where N_CompanyId=@nCompanyID)  Group By N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId";
+                sqlCommandText = "Select N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId,X_CustPONo from vw_Inv_DeliveryNotePending  Where N_CompanyID=@nCompanyID and N_BranchID=" + nBranchID + "  and N_CustomerID=@nCustomerID and N_DeliveryNoteID NOT IN (select isnull(N_DeliveryNoteID,0) from Inv_SalesDetails where N_CompanyId=@nCompanyID)  Group By N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId,X_CustPONo";
 
             try
             {
@@ -2164,14 +2164,49 @@ namespace SmartxAPI.Controllers
 
 
 
+       [HttpGet("invStockInfo")]
+        public ActionResult GetInvStockInfoList( int nCompanyID,int nItemID, int nLocationID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                   // int nCompanyID = myFunctions.GetCompanyID(User);
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                   
+                    string sqlCommandText = "";
+                    string sqlCommandCount = "";
+                    string Searchkey = "";
 
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nItemID);
+                   // Params.Add("@p3",nFnYearID);
+                    Params.Add("@p4", nLocationID);
+              
+                    if (nItemID > 0)
+                    {
+                       
+                            sqlCommandText = "select * from vw_StockPOSOQty where N_CompanyID=@p1 and  N_ItemID=@p2 and N_LocationID=@p4  " ;
+                                            
+                    }
+                    SortedList OutPut = new SortedList();
 
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount = "select count(*) as N_Count from vw_StockPOSOQty where N_CompanyID=@p1 and n_ItemID=@p2  ";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
 
-
-
-
-
-
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    return Ok(_api.Success(OutPut));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
 
     }
 }
