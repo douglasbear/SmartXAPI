@@ -87,7 +87,7 @@ namespace SmartxAPI.Controllers
                 DataTable MasterTable;
                 DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
-                DetailTable = ds.Tables["detail"];
+                DetailTable = ds.Tables["details"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nRouteID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RouteID"].ToString());
