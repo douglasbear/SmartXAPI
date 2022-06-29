@@ -643,7 +643,7 @@ namespace SmartxAPI.Controllers
                                 payRate = dLayer.ExecuteDataTable(payRateSql, Params,connection);
 
                                 PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "N_Vacation", typeof(int), 0);
-                                PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "N_Workhours", typeof(double), null);
+                                // PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "N_Workhours", typeof(double), null);
                                 PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "Attandance", typeof(string), null);
                                 PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "X_Type", typeof(string), null);
                                 PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "N_PayID", typeof(int), 0);
@@ -687,13 +687,13 @@ namespace SmartxAPI.Controllers
                                         }
                                     }
                                     PayAttendence.AcceptChanges();
-                                    foreach (DataRow Var2 in PayWorkingHours.Rows)
-                                    {
-                                        if (((int)Date5.DayOfWeek) + 1 == myFunctions.getIntVAL(Var2["N_WHID"].ToString()))
-                                        {
-                                            row["N_Workhours"] = Var2["N_Workhours"];
-                                        }
-                                    }
+                                    // foreach (DataRow Var2 in PayWorkingHours.Rows)
+                                    // {
+                                    //     if (((int)Date5.DayOfWeek) + 1 == myFunctions.getIntVAL(Var2["N_WHID"].ToString()))
+                                    //     {
+                                    //         row["N_Workhours"] = Var2["N_Workhours"];
+                                    //     }
+                                    // }
                                     PayAttendence.AcceptChanges();
 
 
