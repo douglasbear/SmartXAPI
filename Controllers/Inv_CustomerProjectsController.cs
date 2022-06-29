@@ -540,11 +540,11 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             string UserPattern = myFunctions.GetUserPattern(User);
             string Pattern="";
-            if (UserPattern != "")
-            {
-                Pattern = " and Left(X_Pattern,Len(@p3))=@p3";
-                Params.Add("@p3", UserPattern);
-            }
+            // if (UserPattern != "")
+            // {
+            //     Pattern = " and Left(X_Pattern,Len(@p3))=@p3";
+            //     Params.Add("@p3", UserPattern);
+            // }
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Searchkey = "";

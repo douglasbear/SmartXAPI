@@ -95,7 +95,10 @@ namespace SmartxAPI.Controllers
                         for (int i = 0; i < TasksList.Rows.Count; i++)
                         {
                             N_AssigneeID = dLayer.ExecuteScalar("select N_AssigneeID from vw_TaskCurrentStatus where X_TaskCode=" + TasksList.Rows[i]["X_TaskCode"], Params, connection);
+                            if(N_AssigneeID!=null)
+                            {
                             TasksList.Rows[i]["N_AssigneeID"] = N_AssigneeID;
+                            }
                         }
                       
 
