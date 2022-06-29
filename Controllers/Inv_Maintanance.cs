@@ -228,6 +228,7 @@ namespace SmartxAPI.Controllers
                     int WarrantyID = 0;
                     if (xServiceCode != null && xServiceCode != null)
                     {
+                       
                         Mastersql = "select * from Vw_InvService where N_CompanyId=@nCompanyID and X_ServiceCode=@xServiceCode  ";
                         object n_WarrantyID = dLayer.ExecuteScalar("select N_WarrantyID from Vw_InvService where N_CompanyId=@nCompanyID and X_ServiceCode=@xServiceCode", Params, connection);
                         if (n_WarrantyID != null)
@@ -271,8 +272,7 @@ namespace SmartxAPI.Controllers
                     object N_salesWID = 0;
                     object deviceDescription = null;
                     object serialNo = null;
-
-
+                   
                     if (WarrantyID > 0)
                     {
                         periodTo = dLayer.ExecuteScalar("select D_PeriodTo as D_PeriodTo from Inv_WarrantyContract where N_CompanyId=@nCompanyID  and N_WarrantyID=" + WarrantyID + "", Params, connection);
@@ -308,6 +308,9 @@ namespace SmartxAPI.Controllers
                     MasterTable = _api.Format(MasterTable, "Master");
                     //Detail
                     DetailSql = "select * from Vw_InvServiceDetails where N_CompanyId=@nCompanyID and N_ServiceID=@nServiceID ";
+                     object objSalesInvoice = dLayer.ExecuteScalar("select x_ReceiptNo from inv_sales where N_ServiceID =@nServiceID and N_CompanyID=@nCompanyID", Params, connection);
+                      myFunctions.AddNewColumnToDataTable(MasterTable, "x_SalesReceiptNo", typeof(string), objSalesInvoice);
+
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
 
