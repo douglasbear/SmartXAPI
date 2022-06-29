@@ -399,7 +399,7 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nTransID", nAppraisalID);
                     ParamList.Add("@nCompanyID", nCompanyID);
                     string xButtonAction = "Delete";
-                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,X_AppraisalCode,N_AppraisalID,N_EmpID from Pay_Appraisal where N_CompanyId=@nCompanyID and N_AppraisalID=@nTransID";
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,X_AppraisalCode,N_AppraisalID,N_EmpID,X_EmpName from Vw_Pay_Appraisal where N_CompanyId=@nCompanyID and N_AppraisalID=@nTransID";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
@@ -430,7 +430,7 @@ namespace SmartxAPI.Controllers
                     // }
 
 
-                    string status = myFunctions.UpdateApprovals(Approvals, nFnyearID, "APPRAISAL", nAppraisalID, TransRow["X_AppraisalCode"].ToString(), ProcStatus, "Pay_Appraisal", X_Criteria, "", User, dLayer, connection, transaction);
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnyearID, "APPRAISAL", nAppraisalID, TransRow["X_AppraisalCode"].ToString(), ProcStatus, "Pay_Appraisal", X_Criteria, TransRow["X_EmpName"].ToString(), User, dLayer, connection, transaction);
                     if (status != "Error")
                     {
                         if (ButtonTag == "6" || ButtonTag == "0")
