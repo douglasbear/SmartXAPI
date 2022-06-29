@@ -98,92 +98,92 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        // [HttpGet("details")]
-        // public ActionResult BusRegDetails(string xRegistrationCode)
-        // {
-        //     DataSet dt=new DataSet();
-        //     DataTable MasterTable = new DataTable();
-        //     SortedList Params = new SortedList();
-        //     int nCompanyId=myFunctions.GetCompanyID(User);
-        //     string sqlCommandText = "select * from vw_SchReg_Disp where N_CompanyID=@p1  and X_RegistrationCode=@p2";
-        //     Params.Add("@p1", nCompanyId);  
-        //     Params.Add("@p2", xRegistrationCode);
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+        [HttpGet("details")]
+        public ActionResult AdmissionDetails(string xAdmissionNo)
+        {
+            DataSet dt=new DataSet();
+            DataTable MasterTable = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            string sqlCommandText = "select * from vw_SchAdmission where N_CompanyID=@p1  and x_AdmissionNo=@p2";
+            Params.Add("@p1", nCompanyId);  
+            Params.Add("@p2", xAdmissionNo);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-        //             if (MasterTable.Rows.Count == 0)
-        //             {
-        //                 return Ok(api.Warning("No Results Found"));
-        //             }
+                    if (MasterTable.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
                 
-        //             MasterTable = api.Format(MasterTable, "Master");
-        //             dt.Tables.Add(MasterTable);
-        //         }
-        //         return Ok(api.Success(dt));               
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return Ok(api.Error(User,e));
-        //     }
-        // }
+                    MasterTable = api.Format(MasterTable, "Master");
+                    dt.Tables.Add(MasterTable);
+                }
+                return Ok(api.Success(dt));               
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
 
         //Save....
-        // [HttpPost("save")]
-        // public ActionResult SaveData([FromBody] DataSet ds)
-        // {
-        //     try
-        //     {
-        //         DataTable MasterTable;
-        //         MasterTable = ds.Tables["master"];
-        //         int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
-        //         int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
-        //         int nRegistrationID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RegistrationID"].ToString());
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable MasterTable;
+                MasterTable = ds.Tables["master"];
+                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
+                int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
+                int nAdmissionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AdmissionID"].ToString());
 
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             SqlTransaction transaction = connection.BeginTransaction();
-        //             SortedList Params = new SortedList();
-        //             // Auto Gen
-        //             string Code = "";
-        //             var values = MasterTable.Rows[0]["X_RegistrationCode"].ToString();
-        //             if (values == "@Auto")
-        //             {
-        //                 Params.Add("N_CompanyID", nCompanyID);
-        //                  Params.Add("N_YearID", nFnYearId);
-        //                 Params.Add("N_FormID", this.N_FormID);
-        //                 Code = dLayer.GetAutoNumber("Sch_BusRegistration", "X_RegistrationCode", Params, connection, transaction);
-        //                 if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Course Code")); }
-        //                 MasterTable.Rows[0]["X_RegistrationCode"] = Code;
-        //             }
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList Params = new SortedList();
+                    // Auto Gen
+                    string Code = "";
+                    var values = MasterTable.Rows[0]["X_AdmissionNo"].ToString();
+                    if (values == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", nCompanyID);
+                         Params.Add("N_YearID", nFnYearId);
+                        Params.Add("N_FormID", this.N_FormID);
+                        Code = dLayer.GetAutoNumber("Sch_Admission", "X_AdmissionNo", Params, connection, transaction);
+                        if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Admission No")); }
+                        MasterTable.Rows[0]["X_AdmissionNo"] = Code;
+                    }
 
-        //             if (nRegistrationID > 0) 
-        //             {  
-        //                 dLayer.DeleteData("Sch_BusRegistration", "n_RegistrationID", nRegistrationID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
-        //             }
+                    if (nAdmissionID > 0) 
+                    {  
+                        dLayer.DeleteData("Sch_Admission", "n_RegistrationID", nAdmissionID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
+                    }
 
-        //             nRegistrationID = dLayer.SaveData("Sch_BusRegistration", "n_RegistrationID", MasterTable, connection, transaction);
-        //             if (nRegistrationID <= 0)
-        //             {
-        //                 transaction.Rollback();
-        //                 return Ok(api.Error(User,"Unable to save"));
-        //             }
-        //             else
-        //             {
-        //                 transaction.Commit();
-        //                 return Ok(api.Success("Bus Registration Completed"));
-        //             }
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return Ok(api.Error(User,ex));
-        //     }
-        // }
+                    nAdmissionID = dLayer.SaveData("Sch_Admission", "n_RegistrationID", MasterTable, connection, transaction);
+                    if (nAdmissionID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error(User,"Unable to save"));
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                        return Ok(api.Success("Admission Completed"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(User,ex));
+            }
+        }
 
         [HttpGet("detailList") ]
         public ActionResult AdmissionList(int nCompanyID,int nAcYearID)
@@ -221,41 +221,41 @@ namespace SmartxAPI.Controllers
             }   
         }   
       
-        // [HttpDelete("delete")]
-        // public ActionResult DeleteData(int nRegistrationID)
-        // {
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nAdmissionID)
+        {
 
-        //     int Results = 0;
-        //     int nCompanyID=myFunctions.GetCompanyID(User);
-        //     try
-        //     {                        
-        //         SortedList Params = new SortedList();
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             SqlTransaction transaction = connection.BeginTransaction();
-        //             Results = dLayer.DeleteData("Sch_BusRegistration", "n_RegistrationID", nRegistrationID, "N_CompanyID =" + nCompanyID, connection, transaction);                   
+            int Results = 0;
+            int nCompanyID=myFunctions.GetCompanyID(User);
+            try
+            {                        
+                SortedList Params = new SortedList();
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    Results = dLayer.DeleteData("Sch_Admission", "n_AdmissionID", nAdmissionID, "N_CompanyID =" + nCompanyID, connection, transaction);                   
                 
-        //             if (Results > 0)
-        //             {
-        //                 transaction.Commit();
-        //                 return Ok(api.Success("Bus Registration deleted"));
-        //             }
-        //             else
-        //             {
-        //                 return Ok(api.Error(User,"Unable to delete Bus Registration"));
-        //             }
-        //         }
+                    if (Results > 0)
+                    {
+                        transaction.Commit();
+                        return Ok(api.Success("Student deleted"));
+                    }
+                    else
+                    {
+                        return Ok(api.Error(User,"Unable to delete Student"));
+                    }
+                }
 
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return Ok(api.Error(User,ex));
-        //     }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(User,ex));
+            }
 
 
 
-        // }
+        }
     }
 }
 
