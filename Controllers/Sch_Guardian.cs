@@ -14,19 +14,19 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("schBusRoute")]
+    [Route("schGuardian")]
     [ApiController]
-    public class Sch_BusRoute : ControllerBase
+    public class Sch_Guardian : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
 
-        private readonly int N_FormID =741 ;
+        private readonly int N_FormID =181 ;
 
 
-        public Sch_BusRoute(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Sch_Guardian(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
             dLayer = dl;
@@ -37,16 +37,15 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult BusRouteDetails(int nRouteID)
+        public ActionResult GuardianDetails(int nParentID)
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
-            DataTable DetailTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_Sch_BusRouteDisp where N_CompanyID=@p1  and n_RouteID=@p2";
+            string sqlCommandText = "select * from vw_Sch_ParentDetails_Disp where N_CompanyID=@p1  and n_ParentID=@p2";
             Params.Add("@p1", nCompanyId);  
-            Params.Add("@p2", nRouteID);
+            Params.Add("@p2", nParentID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -61,12 +60,6 @@ namespace SmartxAPI.Controllers
                 
                     MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
-
-                    string DetailSql = "select * from Sch_BusRouteDetail where N_CompanyID=@p1 and n_RouteID=@p2";
-
-                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
-                    DetailTable = api.Format(DetailTable, "Details");
-                    dt.Tables.Add(DetailTable);
                 }
                 return Ok(api.Success(dt));               
             }
@@ -85,12 +78,10 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable;
-                DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
-                DetailTable = ds.Tables["detail"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
-                int nRouteID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RouteID"].ToString());
+                int nParentID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ParentID"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -99,44 +90,34 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string Code = "";
-                    var values = MasterTable.Rows[0]["X_RouteNo"].ToString();
+                    var values = MasterTable.Rows[0]["x_ParentCode"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                          Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
-                        Code = dLayer.GetAutoNumber("Sch_BusRoute", "X_RouteNo", Params, connection, transaction);
-                        if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Route Code")); }
-                        MasterTable.Rows[0]["X_RouteNo"] = Code;
+                        Code = dLayer.GetAutoNumber("Sch_ParentDetails", "x_ParentCode", Params, connection, transaction);
+                        if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Guardian Details Code")); }
+                        MasterTable.Rows[0]["x_ParentCode"] = Code;
                     }
                     MasterTable.Columns.Remove("n_FnYearId");
 
-                    if (nRouteID > 0) 
+                    if (nParentID > 0) 
                     {  
-                        dLayer.DeleteData("Sch_BusRouteDetail", "N_RouteID", nRouteID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
-                        dLayer.DeleteData("Sch_BusRoute", "N_RouteID", nRouteID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
+                        dLayer.DeleteData("Sch_ParentDetails", "n_ParentID", nParentID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
                     }
 
-                    nRouteID = dLayer.SaveData("Sch_BusRoute", "N_RouteID", MasterTable, connection, transaction);
-                    if (nRouteID <= 0)
+                    nParentID = dLayer.SaveData("Sch_ParentDetails", "n_ParentID", MasterTable, connection, transaction);
+                    if (nParentID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error(User,"Unable to save"));
                     }
-
-                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    else
                     {
-                        DetailTable.Rows[j]["N_RouteID"] = nRouteID;
+                        transaction.Commit();
+                        return Ok(api.Success("Guardian Details Created"));
                     }
-                    int nRouteDetailID = dLayer.SaveData("Sch_BusRouteDetail", "N_RouteDetailID", DetailTable, connection, transaction);
-                    if (nRouteDetailID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok("Unable to save ");
-                    }
-                    transaction.Commit();
-                    return Ok(api.Success("Route Created"));
-
                 }
             }
             catch (Exception ex)
@@ -146,20 +127,16 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list") ]
-        public ActionResult RouteList(int nCompanyID,int nBusID)
+        public ActionResult GuardianList(int nCompanyID)
         {    
             SortedList param = new SortedList();           
             DataTable dt=new DataTable();
             
             string sqlCommandText="";
 
-            if(nBusID>0)
-                sqlCommandText="select * from vw_Sch_BusRouteDisp where N_CompanyID=@p1 and N_BusID=@p2";
-            else    
-                sqlCommandText="select * from vw_Sch_BusRouteDisp where N_CompanyID=@p1";
+            sqlCommandText="select * from vw_Sch_ParentDetails_Disp where N_CompanyID=@p1";
 
-            param.Add("@p1", nCompanyID);  
-            param.Add("@p2", nBusID);                
+            param.Add("@p1", nCompanyID);              
                 
             try
             {
@@ -186,7 +163,7 @@ namespace SmartxAPI.Controllers
         }   
       
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nRouteID)
+        public ActionResult DeleteData(int nParentID)
         {
 
             int Results = 0;
@@ -198,19 +175,16 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                                       
-                    Results = dLayer.DeleteData("Sch_BusRoute ", "N_RouteID", nRouteID, "N_CompanyID =" + nCompanyID, connection, transaction);
-                                  
+                    Results = dLayer.DeleteData("Sch_ParentDetails ", "N_ParentID", nParentID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                
                     if (Results > 0)
                     {
-                        dLayer.DeleteData("Sch_BusRouteDetail", "N_RouteID", nRouteID, "N_CompanyID =" + nCompanyID, connection, transaction); 
-
                         transaction.Commit();
-                        return Ok(api.Success("Route deleted"));
+                        return Ok(api.Success("Guardian details deleted"));
                     }
                     else
                     {
-                        return Ok(api.Error(User,"Unable to delete Route"));
+                        return Ok(api.Error(User,"Unable to delete Guardian details"));
                     }
                 }
 
