@@ -160,13 +160,13 @@ namespace SmartxAPI.Controllers
                         if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Admission No")); }
                         MasterTable.Rows[0]["X_AdmissionNo"] = Code;
                     }
-
+                     MasterTable.Columns.Remove("n_FnYearId");
                     if (nAdmissionID > 0) 
                     {  
-                        dLayer.DeleteData("Sch_Admission", "n_RegistrationID", nAdmissionID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
+                        dLayer.DeleteData("Sch_Admission", "N_AdmissionID", nAdmissionID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
                     }
 
-                    nAdmissionID = dLayer.SaveData("Sch_Admission", "n_RegistrationID", MasterTable, connection, transaction);
+                    nAdmissionID = dLayer.SaveData("Sch_Admission", "N_AdmissionID", MasterTable, connection, transaction);
                     if (nAdmissionID <= 0)
                     {
                         transaction.Rollback();
