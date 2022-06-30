@@ -215,7 +215,7 @@ namespace SmartxAPI.Controllers
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     DateTime dtpModDate = Convert.ToDateTime(MasterTable.Rows[0]["d_ModifiedDate"].ToString());
                     string X_VacType=(MasterRow["X_VacType"].ToString());
-
+              
                     string x_VacCode = MasterRow["X_VacCode"].ToString();
                     var values = MasterTable.Rows[0]["X_VacCode"].ToString();
                     if (n_VacTypeID > 0)
