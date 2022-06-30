@@ -349,6 +349,14 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Inv_Location", "N_LocationID", N_LocationID, "", connection, transaction);
                     }
 
+                    if (MasterTable.Columns.Contains("B_IsDefault"))
+                    {
+                        MasterTable.Rows[0]["b_DefaultBranch"] = true;
+                      
+                    }else
+                    {
+                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"B_IsDefault",typeof(bool),true);
+                    }
 
                     MasterTable.Columns.Remove("n_FnYearId");
                     MasterTable.Columns.Remove("b_isSubLocation");

@@ -643,7 +643,7 @@ namespace SmartxAPI.Controllers
                                 payRate = dLayer.ExecuteDataTable(payRateSql, Params,connection);
 
                                 PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "N_Vacation", typeof(int), 0);
-                                PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "N_Workhours", typeof(double), null);
+                                // PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "N_Workhours", typeof(double), null);
                                 PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "Attandance", typeof(string), null);
                                 PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "X_Type", typeof(string), null);
                                 PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "N_PayID", typeof(int), 0);
@@ -687,13 +687,13 @@ namespace SmartxAPI.Controllers
                                         }
                                     }
                                     PayAttendence.AcceptChanges();
-                                    foreach (DataRow Var2 in PayWorkingHours.Rows)
-                                    {
-                                        if (((int)Date5.DayOfWeek) + 1 == myFunctions.getIntVAL(Var2["N_WHID"].ToString()))
-                                        {
-                                            row["N_Workhours"] = Var2["N_Workhours"];
-                                        }
-                                    }
+                                    // foreach (DataRow Var2 in PayWorkingHours.Rows)
+                                    // {
+                                    //     if (((int)Date5.DayOfWeek) + 1 == myFunctions.getIntVAL(Var2["N_WHID"].ToString()))
+                                    //     {
+                                    //         row["N_Workhours"] = Var2["N_Workhours"];
+                                    //     }
+                                    // }
                                     PayAttendence.AcceptChanges();
 
 
@@ -1238,7 +1238,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-         [HttpDelete("Delete")]
+         [HttpDelete("delete")]
             public ActionResult DeleteData(int nTransID,int nCompanyID,int nTimeSheetApproveID,string X_PayrunText,DateTime dFromDate,DateTime dToDate,int nBatchID,int nFnYearID)
         {
             int Results = 0;
@@ -1259,27 +1259,32 @@ namespace SmartxAPI.Controllers
                 // dToDate = Convert.ToDateTime(MasterTable.Rows[0]["D_DateTo"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
+
                     connection.Open();
+                     SqlTransaction transaction = connection.BeginTransaction();
                  criteria = "select n_EmpID from Pay_TimesheetMaster where n_TimeSheetApproveID=@nTimeSheetApproveID and n_CompanyID=@nCompanyID";
 
                  object Count = dLayer.ExecuteScalar("select count(*) from vw_PayProcessingDetails where n_EmpID in ("+criteria+") and X_PayrunText=@X_PayrunText", QueryParams, connection);               
                    if (myFunctions.getIntVAL(Count.ToString()) >0)
                     {
+                        transaction.Rollback();
                         return Ok(_api.Error(User, "Unable To Delete"));
                     }
 
-                     Results = dLayer.DeleteData("Pay_TimeSheetApproveMaster", "N_TimeSheetApproveID", nTimeSheetApproveID,"N_CompanyID="+nCompanyID+ "", connection);
+                     Results = dLayer.DeleteData("Pay_TimeSheetApproveMaster", "N_TimeSheetApproveID", nTimeSheetApproveID,"N_CompanyID="+nCompanyID+ "", connection,transaction);
 
                     if (Results > 0)
                     {
-                        dLayer.DeleteData("Pay_MonthlyAddOrDedDetails ", "N_TransID", nTransID,"N_CompanyID="+nCompanyID+ "", connection);
-                        dLayer.DeleteData("Pay_MonthlyAddOrDed", "N_TransID", nTransID,"N_CompanyID="+nCompanyID+ "", connection);
-                        dLayer.DeleteData("Pay_VacationDetails", "N_TransID", nTransID,"N_CompanyID="+nCompanyID+" and N_EmpID in("+criteria+") and N_FormID=" + this.FormID+" and d_VacDateFrom>="+dFromDate+ " and D_VacDateTo<="+dToDate+ "", connection);
-                        dLayer.DeleteData("Pay_TimeSheet", "N_batchID", nBatchID,"N_CompanyID="+nCompanyID+ " and N_timeSheetApproveID="+nTimeSheetApproveID+" and N_FnYearID="+nFnYearID+ "", connection);
+                        dLayer.DeleteData("Pay_MonthlyAddOrDedDetails ", "N_TransID", nTransID,"N_CompanyID="+nCompanyID+ "", connection,transaction);
+                        dLayer.DeleteData("Pay_MonthlyAddOrDed", "N_TransID", nTransID,"N_CompanyID="+nCompanyID+ "", connection,transaction);
+                        dLayer.DeleteData("Pay_VacationDetails", "N_TransID", nTransID,"N_CompanyID="+nCompanyID+" and N_EmpID in("+criteria+") and N_FormID=" + this.FormID+" and d_VacDateFrom>="+dFromDate+ " and D_VacDateTo<="+dToDate+ "", connection,transaction);
+                        dLayer.DeleteData("Pay_TimeSheet", "N_batchID", nBatchID,"N_CompanyID="+nCompanyID+ " and N_timeSheetApproveID="+nTimeSheetApproveID+" and N_FnYearID="+nFnYearID+ "", connection,transaction);
+                        transaction.Commit();
                         return Ok(_api.Success("deleted"));
                     }
                     else
                     {
+                        transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to delete"));
                     }
                 }
