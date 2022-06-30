@@ -163,10 +163,10 @@ namespace SmartxAPI.Controllers
 
                     if (nAdmissionID > 0) 
                     {  
-                        dLayer.DeleteData("Sch_Admission", "n_RegistrationID", nAdmissionID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
+                        dLayer.DeleteData("Sch_Admission", "N_AdmissionID", nAdmissionID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
                     }
 
-                    nAdmissionID = dLayer.SaveData("Sch_Admission", "n_RegistrationID", MasterTable, connection, transaction);
+                    nAdmissionID = dLayer.SaveData("Sch_Admission", "N_AdmissionID", MasterTable, connection, transaction);
                     if (nAdmissionID <= 0)
                     {
                         transaction.Rollback();
@@ -186,17 +186,32 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("detailList") ]
-        public ActionResult AdmissionList(int nCompanyID,int nAcYearID)
+        public ActionResult AdmissionList(int nCompanyID,int nAcYearID,int n_ClassID,int n_DivisionID)
         {    
             SortedList param = new SortedList();           
             DataTable dt=new DataTable();
             
             string sqlCommandText="";
 
-            sqlCommandText="select * from vw_SchAdmission where N_CompanyID=@p1 and nAcYearID=@p2";
+            if(n_ClassID!=0)
+            {
+                if(n_DivisionID!=0)
+                    sqlCommandText="select * from vw_SchAdmission where N_CompanyID=@p1 and nAcYearID=@p2 and n_ClassID=@p3 and n_DivisionID=@p4";
+                else                    
+                    sqlCommandText="select * from vw_SchAdmission where N_CompanyID=@p1 and nAcYearID=@p2 and n_ClassID=@p3 ";
+            }
+            else
+            {
+                if(n_DivisionID!=0)
+                    sqlCommandText="select * from vw_SchAdmission where N_CompanyID=@p1 and nAcYearID=@p2 and n_DivisionID=@p4";
+                else                    
+                    sqlCommandText="select * from vw_SchAdmission where N_CompanyID=@p1 and nAcYearID=@p2";
+            }
 
             param.Add("@p1", nCompanyID);             
             param.Add("@p2", nAcYearID);             
+            param.Add("@p3", n_ClassID);             
+            param.Add("@p4", n_DivisionID);             
                 
             try
             {

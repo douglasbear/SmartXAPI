@@ -14,29 +14,28 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("schGuardian")]
+    [Route("schAssignment")]
     [ApiController]
-    public class Sch_Guardian : ControllerBase
+    public class Sch_Assignment : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
 
-        private readonly int N_FormID =181 ;
+        private readonly int N_FormID =1485 ;
 
 
-        public Sch_Guardian(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Sch_Assignment(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
             dLayer = dl;
             myFunctions = myFun;
-            connectionString = 
-            conf.GetConnectionString("SmartxConnection");
+            connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetGuardianList(int? nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetAssignmentList(int? nCompanyId, int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -47,16 +46,16 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_ParentCode like '%" + xSearchkey + "%' or X_GaurdianName like '%" + xSearchkey + "%' or X_GaurdianName_Ar like '%" + xSearchkey + "%' or X_PFatherName like '%" + xSearchkey + "%' or X_PMotherName like '%" + xSearchkey + "%')";
+                Searchkey = "and (X_AssignmentCode like '%" + xSearchkey + "%' or X_Title like '%" + xSearchkey + "%' or X_Subject like '%" + xSearchkey + "%' or X_ClassDivision like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by X_ParentCode desc";
+                xSortBy = " order by X_AssignmentCode desc";
             else
             {
                 switch (xSortBy.Split(" ")[0])
                 {
-                    case "X_ParentCode":
-                        xSortBy = "X_ParentCode " + xSortBy.Split(" ")[1];
+                    case "X_AssignmentCode":
+                        xSortBy = "X_AssignmentCode " + xSortBy.Split(" ")[1];
                         break;
                     default: break;
                 }
@@ -64,11 +63,12 @@ namespace SmartxAPI.Controllers
             }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_ParentDetails_Disp where N_CompanyID=@nCompanyId  " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_Assignment where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID  " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_ParentDetails_Disp where N_CompanyID=@nCompanyId  " + Searchkey + " and n_ParentID not in (select top(" + Count + ") n_ParentID from vw_Sch_ParentDetails_Disp where N_CompanyID=@nCompanyId " + xSortBy + " ) " + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_Assignment where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + Searchkey + " and N_AssignmentID not in (select top(" + Count + ") N_AssignmentID from vw_Sch_Assignment where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + xSortBy + " ) " + " " + xSortBy;
 
             Params.Add("@nCompanyId", nCompanyID);
+            Params.Add("@nAcYearID", nAcYearID);
 
             try
             {
@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_Sch_ParentDetails_Disp where N_CompanyID=@nCompanyId " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_Sch_Assignment where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -99,15 +99,16 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GuardianDetails(int nParentID)
+        public ActionResult BusRegDetails(string xAssignmentCode)
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
+            DataTable DetailTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_Sch_ParentDetails_Disp where N_CompanyID=@p1  and n_ParentID=@p2";
+            string sqlCommandText = "select * from vw_Sch_Assignment where N_CompanyID=@p1  and x_AssignmentCode=@p2";
             Params.Add("@p1", nCompanyId);  
-            Params.Add("@p2", nParentID);
+            Params.Add("@p2", xAssignmentCode);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -122,6 +123,15 @@ namespace SmartxAPI.Controllers
                 
                     MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
+
+                    int N_AssignmentID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AssignmentID"].ToString());
+                    Params.Add("@p3", N_AssignmentID);
+
+                    string DetailSql = "select * from vw_Sch_AssignmentStudents where N_CompanyID=@p1 and N_AssignmentID=@p3";
+
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    DetailTable = api.Format(DetailTable, "Details");
+                    dt.Tables.Add(DetailTable);
                 }
                 return Ok(api.Success(dt));               
             }
@@ -131,8 +141,6 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
-
         //Save....
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
@@ -140,10 +148,12 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable;
+                DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
+                DetailTable = ds.Tables["details"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
-                int nParentID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ParentID"].ToString());
+                int nAssignmentID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AssignmentID"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -152,34 +162,42 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string Code = "";
-                    var values = MasterTable.Rows[0]["x_ParentCode"].ToString();
+                    var values = MasterTable.Rows[0]["X_AssignmentCode"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
-                         Params.Add("N_YearID", nFnYearId);
+                        Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
-                        Code = dLayer.GetAutoNumber("Sch_ParentDetails", "x_ParentCode", Params, connection, transaction);
-                        if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Guardian Details Code")); }
-                        MasterTable.Rows[0]["x_ParentCode"] = Code;
+                        Code = dLayer.GetAutoNumber("Sch_Assignment", "X_AssignmentCode", Params, connection, transaction);
+                        if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Assignment Code")); }
+                        MasterTable.Rows[0]["X_AssignmentCode"] = Code;
                     }
-                    MasterTable.Columns.Remove("n_FnYearId");
 
-                    if (nParentID > 0) 
+                    if (nAssignmentID > 0) 
                     {  
-                        dLayer.DeleteData("Sch_ParentDetails", "n_ParentID", nParentID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
+                        dLayer.DeleteData("Sch_AssignmentStudents", "n_AssignmentID", nAssignmentID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
+                        dLayer.DeleteData("Sch_Assignment", "n_AssignmentID", nAssignmentID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
                     }
 
-                    nParentID = dLayer.SaveData("Sch_ParentDetails", "n_ParentID", MasterTable, connection, transaction);
-                    if (nParentID <= 0)
+                    nAssignmentID = dLayer.SaveData("Sch_Assignment", "n_AssignmentID", MasterTable, connection, transaction);
+                    if (nAssignmentID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error(User,"Unable to save"));
                     }
-                    else
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        transaction.Commit();
-                        return Ok(api.Success("Guardian Details Created"));
+                        DetailTable.Rows[j]["n_AssignmentID"] = nAssignmentID;
                     }
+                    int nAssignStudentID = dLayer.SaveData("Sch_AssignmentStudents", "N_AssignStudentID", DetailTable, connection, transaction);
+                    if (nAssignStudentID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok("Unable to save ");
+                    }
+                    transaction.Commit();
+                    return Ok(api.Success("Assignment Created"));
+
                 }
             }
             catch (Exception ex)
@@ -189,16 +207,31 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list") ]
-        public ActionResult GuardianList(int nCompanyID)
+        public ActionResult AssignmentList(int nCompanyID,int nSubjectID,int nBatchID)
         {    
             SortedList param = new SortedList();           
             DataTable dt=new DataTable();
             
             string sqlCommandText="";
 
-            sqlCommandText="select * from vw_Sch_ParentDetails_Disp where N_CompanyID=@p1";
+            if(nSubjectID!=0) 
+            { 
+                if(nBatchID!=0)
+                    sqlCommandText="select * from vw_Sch_Assignment where N_CompanyID=@p1 and n_SubjectID=@p2 and n_BatchID=@p3";
+                else
+                    sqlCommandText="select * from vw_Sch_Assignment where N_CompanyID=@p1 and n_SubjectID=@p2";
+            }
+            else
+            {
+                if(nBatchID!=0)
+                    sqlCommandText="select * from vw_Sch_Assignment where N_CompanyID=@p1 and n_BatchID=@p3";
+                else
+                    sqlCommandText="select * from vw_Sch_Assignment where N_CompanyID=@p1";
+            }
 
-            param.Add("@p1", nCompanyID);              
+            param.Add("@p1", nCompanyID);             
+            param.Add("@p2", nSubjectID);             
+            param.Add("@p3", nBatchID);             
                 
             try
             {
@@ -215,8 +248,7 @@ namespace SmartxAPI.Controllers
                 else
                 {
                     return Ok(api.Success(dt));
-                }
-                
+                }              
             }
             catch(Exception e)
             {
@@ -224,8 +256,9 @@ namespace SmartxAPI.Controllers
             }   
         }   
       
+      
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nParentID)
+        public ActionResult DeleteData(int nAssignmentID)
         {
 
             int Results = 0;
@@ -237,16 +270,18 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Sch_ParentDetails ", "N_ParentID", nParentID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                    Results = dLayer.DeleteData("Sch_Assignment", "n_AssignmentID", nAssignmentID, "N_CompanyID =" + nCompanyID, connection, transaction);                   
                 
                     if (Results > 0)
                     {
+                        dLayer.DeleteData("Sch_AssignmentStudents", "n_AssignmentID", nAssignmentID, "N_CompanyID =" + nCompanyID, connection, transaction); 
+
                         transaction.Commit();
-                        return Ok(api.Success("Guardian details deleted"));
+                        return Ok(api.Success("Assignment deleted"));
                     }
                     else
                     {
-                        return Ok(api.Error(User,"Unable to delete Guardian details"));
+                        return Ok(api.Error(User,"Unable to delete Assignment"));
                     }
                 }
 
