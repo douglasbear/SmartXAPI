@@ -35,6 +35,68 @@ namespace SmartxAPI.Controllers
             conf.GetConnectionString("SmartxConnection");
         }
 
+        [HttpGet("list")]
+        public ActionResult GetGuardianList(int? nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_ParentCode like '%" + xSearchkey + "%' or X_GaurdianName like '%" + xSearchkey + "%' or X_GaurdianName_Ar like '%" + xSearchkey + "%' or X_PFatherName like '%" + xSearchkey + "%' or X_PMotherName like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by X_ParentCode desc";
+            else
+            {
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "X_ParentCode":
+                        xSortBy = "X_ParentCode " + xSortBy.Split(" ")[1];
+                        break;
+                    default: break;
+                }
+                xSortBy = " order by " + xSortBy;
+            }
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_ParentDetails_Disp where N_CompanyID=@nCompanyId  " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_ParentDetails_Disp where N_CompanyID=@nCompanyId  " + Searchkey + " and n_ParentID not in (select top(" + Count + ") n_ParentID from vw_Sch_ParentDetails_Disp where N_CompanyID=@nCompanyId " + xSortBy + " ) " + " " + xSortBy;
+
+            Params.Add("@nCompanyId", nCompanyID);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    SortedList OutPut = new SortedList();
+
+                    sqlCommandCount = "select count(*) as N_Count  from vw_Sch_ParentDetails_Disp where N_CompanyID=@nCompanyId " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
 
         [HttpGet("details")]
         public ActionResult GuardianDetails(int nParentID)
