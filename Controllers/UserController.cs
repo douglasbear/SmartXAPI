@@ -771,7 +771,47 @@ namespace SmartxAPI.Controllers
 
         }
 
+         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+         [HttpGet("userlistHierarchy")]
+        public ActionResult GetUserHierarchyBasedList()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
 
-        
+            string UserPattern = myFunctions.GetUserPattern(User);
+            int nUserID = myFunctions.GetUserID(User);
+            string Pattern = "";
+
+            if (UserPattern != "")
+                {
+                Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
+                Params.Add("@UserPattern", UserPattern);
+                }
+            string sqlCommandText = "select * from vw_UserList where N_CompanyID=N_CompanyID  "+Pattern+"";
+            Params.Add("N_CompanyID", nCompanyId);
+            // Params.Add("N_UserId", userid);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                    return Ok(_api.Warning("No Results Found"));
+                else
+                {
+             
+                    return Ok(_api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return StatusCode(403, _api.Error(User, e));
+            }
+        }
     }
 }

@@ -246,20 +246,20 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    SortedList ProductParams = new SortedList();
-                    ProductParams.Add("N_CompanyID", nCompanyID);
-                    ProductParams.Add("N_ASNID", nAsnID);
-                    ProductParams.Add("N_FnYearID", N_FnYearID);
-                    ProductParams.Add("N_BranchID", N_BranchID);
-                    try
-                    {
-                        dLayer.ExecuteNonQueryPro("SP_ASNProductInsert", ProductParams, connection, transaction);
-                    }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, ex));
-                    }
+                    // SortedList ProductParams = new SortedList();
+                    // ProductParams.Add("N_CompanyID", nCompanyID);
+                    // ProductParams.Add("N_ASNID", nAsnID);
+                    // ProductParams.Add("N_FnYearID", N_FnYearID);
+                    // ProductParams.Add("N_BranchID", N_BranchID);
+                    // try
+                    // {
+                    //     dLayer.ExecuteNonQueryPro("SP_ASNProductInsert", ProductParams, connection, transaction);
+                    // }
+                    // catch (Exception ex)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(_api.Error(User, ex));
+                    // }
 
 
                     transaction.Commit();
@@ -486,25 +486,25 @@ namespace SmartxAPI.Controllers
                             {
                                 return Ok(_api.Error(User, "Year Closed , Unable to delete product."));
                             }
-                            dLayer.DeleteData("Inv_ItemDetails", "N_MainItemID", _itemID, "", connection, transaction);
-                            Results = dLayer.DeleteData("Inv_ItemMaster", "N_ItemID", _itemID, "", connection, transaction);
-                            if (Results > 0)
-                            {
+                            // dLayer.DeleteData("Inv_ItemDetails", "N_MainItemID", _itemID, "", connection, transaction);
+                            // Results = dLayer.DeleteData("Inv_ItemMaster", "N_ItemID", _itemID, "", connection, transaction);
+                            // if (Results > 0)
+                            // {
 
-                                dLayer.ExecuteScalar("delete from  Inv_ItemUnit  Where N_ItemID=" + _itemID + " and N_CompanyID=" + nCompanyID, Params,connection, transaction);
-                                dLayer.ExecuteScalar("delete from  Inv_BOMEmployee  Where N_MainItem=" + _itemID + " and N_CompanyID=" + nCompanyID, Params,connection, transaction);
-                                dLayer.ExecuteScalar("delete from  Inv_BOMAsset  Where N_MainItemID=" + _itemID + " and N_CompanyID=" + nCompanyID, Params,connection, transaction);
+                            //     dLayer.ExecuteScalar("delete from  Inv_ItemUnit  Where N_ItemID=" + _itemID + " and N_CompanyID=" + nCompanyID, Params,connection, transaction);
+                            //     dLayer.ExecuteScalar("delete from  Inv_BOMEmployee  Where N_MainItem=" + _itemID + " and N_CompanyID=" + nCompanyID, Params,connection, transaction);
+                            //     dLayer.ExecuteScalar("delete from  Inv_BOMAsset  Where N_MainItemID=" + _itemID + " and N_CompanyID=" + nCompanyID, Params,connection, transaction);
 
-                                //  myAttachments.DeleteAttachment(dLayer, 1, nAsnID, N_CustomerId, nFnYearID, N_FormID, User, transaction, connection);
-                                // transaction.Commit();
-                                // return Ok(_api.Success("Product deleted"));
-                            }
-                            else
-                            {
-                                transaction.Rollback();
+                            //     //  myAttachments.DeleteAttachment(dLayer, 1, nAsnID, N_CustomerId, nFnYearID, N_FormID, User, transaction, connection);
+                            //     // transaction.Commit();
+                            //     // return Ok(_api.Success("Product deleted"));
+                            // }
+                            // else
+                            // {
+                            //     transaction.Rollback();
 
-                                return Ok(_api.Error(User, "Unable to delete product"));
-                            }
+                            //     return Ok(_api.Error(User, "Unable to delete product"));
+                            // }
 
 
 

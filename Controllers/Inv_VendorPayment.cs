@@ -259,13 +259,16 @@ namespace SmartxAPI.Controllers
                                 {"N_CompanyID",nCompanyId},
                                 {"X_VoucherNo",xInvoiceNo},
                                 {"N_FnYearID",nFnYearId},
-                                {"N_BranchID",nBranchID}};
+                                {"N_BranchID",bShowAllbranch?0:nBranchID}};
                         PayInfo = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_Disp", proParams1, connection);
                         if (PayInfo.Rows.Count > 0)
                         {
                             nPayReceiptID = myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString());
                             xTransType = PayInfo.Rows[0]["X_Type"].ToString();
                             nVendorID = myFunctions.getIntVAL(PayInfo.Rows[0]["N_PartyID"].ToString());
+                            int nCurrencyID = myFunctions.getIntVAL(PayInfo.Rows[0]["N_CurrencyID"].ToString());
+                            string X_CurrencyName = dLayer.ExecuteScalar("select X_CurrencyName from Acc_CurrencyMaster where N_CompanyID="+nCompanyId+" and N_CurrencyID="+nCurrencyID, connection).ToString();
+                             myFunctions.AddNewColumnToDataTable(PayInfo, "X_CurrencyName", typeof(string), X_CurrencyName);
                             dTransDate = myFunctions.getDateVAL(Convert.ToDateTime(PayInfo.Rows[0]["D_Date"].ToString()));
                         }
                     }
@@ -456,7 +459,7 @@ namespace SmartxAPI.Controllers
                         int N_PkeyID = n_PayReceiptID;
                         string X_Criteria = "N_PayReceiptId=" + n_PayReceiptID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Inv_PayReceipt", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearID.ToString()), "PURCHASE PAYMENT", N_PkeyID, x_VoucherNo, 1, "", 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearID.ToString()), "PURCHASE PAYMENT", N_PkeyID, x_VoucherNo, 1, "", 0, "",0, User, dLayer, connection, transaction);
 
                         myAttachments.SaveAttachment(dLayer, Attachment,PayReceiptNo, n_PayReceiptID,objVendName.ToString().Trim(),PayReceiptNo, n_PayReceiptID, "VendorPayment Document", User, connection, transaction);
 
@@ -533,7 +536,7 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Error(User, "Error"));
                     }
 
-                    N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearID.ToString()), "PURCHASE PAYMENT", n_PayReceiptID, PayReceiptNo, 1, "", 0, "", User, dLayer, connection, transaction);
+                    N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearID.ToString()), "PURCHASE PAYMENT", n_PayReceiptID, PayReceiptNo, 1, "", 0, "",0, User, dLayer, connection, transaction);
                     N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_PayReceipt where N_PayReceiptId=" + n_PayReceiptID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
 
                     if (x_Type == "PA")

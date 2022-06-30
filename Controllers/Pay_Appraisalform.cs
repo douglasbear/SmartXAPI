@@ -29,7 +29,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetAppraisalList(int? nCompanyId, int nFnYearID, int nType, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetAppraisalList(int? nCompanyId, int nFnYearID, int nType, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nUserID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -63,13 +63,14 @@ namespace SmartxAPI.Controllers
             }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType and (N_EntryUserID=@nUserID or N_UserID=@nUserID or N_EvalUserID=@nUserID or N_EmpUserID=@nUserID) " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType " + Searchkey + " and N_AppraisalID not in (select top(" + Count + ") N_AppraisalID from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType " + xSortBy + " ) " + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType and (N_EntryUserID=@nUserID or N_UserID=@nUserID or N_EvalUserID=@nUserID or N_EmpUserID=@nUserID) " + Searchkey + " and N_AppraisalID not in (select top(" + Count + ") N_AppraisalID from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType " + xSortBy + " ) " + " " + xSortBy;
 
             Params.Add("@nCompanyId", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
             Params.Add("@nType", nType);
+             Params.Add("@nUserID", nUserID);
 
             try
             {
@@ -79,7 +80,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    sqlCommandCount = "select count(*) as N_Count  from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count  from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType and (N_EntryUserID=@nUserID or N_UserID=@nUserID or N_EvalUserID=@nUserID or N_EmpUserID=@nUserID)" + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -214,12 +215,21 @@ namespace SmartxAPI.Controllers
                 CompetencyCategoryCopyTable = CompetencyCategoryTable.Clone();
                 CompetencyTable = ds.Tables["competency"];
                 TrainingneedsTable = ds.Tables["trainingneeds"];
+
+                DataTable Approvals;
+                Approvals = ds.Tables["approval"];
+                DataRow ApprovalRow = Approvals.Rows[0];
+
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 int nAppraisalID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AppraisalID"].ToString());
                 int nCategoryID = 0;
                 int nCompetencyID = 0;
                 int nTrainingID = 0;
+
+                int N_SaveDraft = myFunctions.getIntVAL(MasterTable.Rows[0]["b_IsSaveDraft"].ToString());
+                int nUserID = myFunctions.GetUserID(User);
+                int N_NextApproverID=0;
 
                 CompetencyCategoryCopyTable.Clear();
                 CompetencyCategoryCopyTable.Columns.Add("N_CompanyID");
@@ -262,13 +272,36 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
+  
+
+                    SortedList EmpParams = new SortedList();
+                    EmpParams.Add("@nCompanyID", nCompanyID);
+                    EmpParams.Add("@n_PartyID",myFunctions.getIntVAL(MasterTable.Rows[0]["N_EmpID"].ToString()));
+                    EmpParams.Add("@nFnYearID", nFnYearID);
+                    object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@n_PartyID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);                     
+                    object objUserID = dLayer.ExecuteScalar("select N_UserID from Sec_User where N_CompanyID=@nCompanyID and N_EmpID=@n_PartyID", EmpParams, connection, transaction);     
+                    if(objUserID==null) objUserID=0;                
+
+                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && nAppraisalID > 0)
+                    {
+                        int N_PkeyID = nAppraisalID;
+                        string X_Criteria = "N_AppraisalID=" + nAppraisalID + " and N_CompanyID=" + nCompanyID;
+                        myFunctions.UpdateApproverEntry(Approvals, "Pay_Appraisal", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearID.ToString()), "APPRAISAL", N_PkeyID, MasterTable.Rows[0]["X_AppraisalCode"].ToString(), 1, objEmpName.ToString(), myFunctions.getIntVAL(MasterTable.Rows[0]["N_EmpID"].ToString()), "",myFunctions.getIntVAL(objUserID.ToString()), User, dLayer, connection, transaction);
+
+                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Pay_Appraisal where N_AppraisalID=" + nAppraisalID + " and N_CompanyID=" + nCompanyID , connection, transaction).ToString());
+
+                        transaction.Commit();
+                        return Ok(_api.Success("Appraisal Approved " + "-" + MasterTable.Rows[0]["X_AppraisalCode"].ToString()));
+                    }     
+
                     if (nAppraisalID > 0)
                     {
                         dLayer.DeleteData("Pay_AppraisalTrainingNeeds", "n_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Pay_AppraisalCompetency", "n_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Pay_AppraisalCompetencyCategory", "n_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Pay_Appraisal", "n_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection, transaction);
-                    }                   
+                    }   
 
                     // Auto Gen
                     string Code = "";
@@ -277,7 +310,7 @@ namespace SmartxAPI.Controllers
                     {
                         if( myFunctions.getIntVAL(MasterTable.Rows[0]["N_Type"].ToString())==1)
                         {
-                            object Count = dLayer.ExecuteScalar("select COUNT(*) from Pay_Appraisal where N_CompanyID="+nCompanyID+" and N_EmpID="+ myFunctions.getIntVAL(MasterTable.Rows[0]["N_EmpID"].ToString())+" and N_EntryUserID="+ myFunctions.getIntVAL(MasterTable.Rows[0]["N_EntryUserID"].ToString())+" and N_Type=1", connection, transaction);
+                            object Count = dLayer.ExecuteScalar("select COUNT(*) from Pay_Appraisal where N_CompanyID="+nCompanyID+" and N_EmpID="+ myFunctions.getIntVAL(MasterTable.Rows[0]["N_EmpID"].ToString())+" and N_EntryUserID="+ myFunctions.getIntVAL(MasterTable.Rows[0]["N_EntryUserID"].ToString())+" and N_Type=1 and N_EvalSettingsID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_EvalSettingsID"].ToString()), connection, transaction);
                             if(myFunctions.getIntVAL(Count.ToString())>0)
                             {
                                 transaction.Rollback();
@@ -288,11 +321,14 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.N_FormID);
-                        Params.Add("nAppraisalID", nAppraisalID);
+                    
                         Code = dLayer.GetAutoNumber("Pay_Appraisal", "X_AppraisalCode", Params, connection, transaction);
                         if (Code == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Grade Code")); }
                         MasterTable.Rows[0]["X_AppraisalCode"] = Code;
                     }
+                    MasterTable.Rows[0]["n_UserID"] = nUserID;
+                    MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+
                     nAppraisalID = dLayer.SaveData("Pay_Appraisal", "n_AppraisalID", MasterTable, connection, transaction);
                     if (nAppraisalID <= 0)
                     {
@@ -300,9 +336,11 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to save"));
                     }
 
+                    N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearID.ToString()), "APPRAISAL", nAppraisalID, MasterTable.Rows[0]["X_AppraisalCode"].ToString(), 1, objEmpName.ToString(), myFunctions.getIntVAL(MasterTable.Rows[0]["N_EmpID"].ToString()), "",myFunctions.getIntVAL(objUserID.ToString()), User, dLayer, connection, transaction);
+                    N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Pay_Appraisal where N_AppraisalID=" + nAppraisalID + " and N_CompanyID=" + nCompanyID , connection, transaction).ToString());
+
                     for (int j = 0; j < CompetencyCategoryTable.Rows.Count; j++)
                     {
-                        int p = 0;
                         CompetencyCategoryTable.Rows[j]["n_AppraisalID"] = nAppraisalID;
 
                         nCategoryID = dLayer.SaveDataWithIndex("Pay_AppraisalCompetencyCategory", "N_CategoryID", "", "", j, CompetencyCategoryTable, connection, transaction);
@@ -320,7 +358,6 @@ namespace SmartxAPI.Controllers
                                 CompetencyTable.Rows[i]["N_CategoryID"] = nCategoryID;
                             }
                         }
-                        p = p + 1;
                     }
                     if (CompetencyTable.Columns.Contains("x_ID"))
                         CompetencyTable.Columns.Remove("x_ID");
@@ -348,29 +385,75 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nAppraisalID, int nCompanyID)
+        public ActionResult DeleteData(int nAppraisalID, int nCompanyID,int nFnyearID, string comments)
         {
             int Results = 0;
             try
             {
-                SortedList QueryParams = new SortedList();
-                QueryParams.Add("@nCompanyID", nCompanyID);
-                QueryParams.Add("@nAppraisalID", nAppraisalID);
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Results = dLayer.DeleteData("Pay_Appraisal", "N_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection);
-
-                    if (Results > 0)
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList(); 
+                    ParamList.Add("@nTransID", nAppraisalID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                    string xButtonAction = "Delete";
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,X_AppraisalCode,N_AppraisalID,N_EmpID,X_EmpName from Vw_Pay_Appraisal where N_CompanyId=@nCompanyID and N_AppraisalID=@nTransID";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                    if (TransData.Rows.Count == 0)
                     {
-                        dLayer.DeleteData("Pay_AppraisalCompetencyCategory", "N_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection);
-                        dLayer.DeleteData("Pay_AppraisalCompetency", "N_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection);
-                        dLayer.DeleteData("Pay_AppraisalTrainingNeeds", "N_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection);
-                        return Ok(_api.Success("Appraisal deleted"));
+                        return Ok(_api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+
+                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.N_FormID, nAppraisalID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnyearID, myFunctions.getIntVAL(TransRow["N_EmpID"].ToString()), 1454, User, dLayer, connection));
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
+                    SqlTransaction transaction = connection.BeginTransaction();
+
+                    string X_Criteria = "N_AppraisalID=" + nAppraisalID + " and N_CompanyID=" + nCompanyID;
+                    string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
+            
+                    // Results = dLayer.DeleteData("Pay_Appraisal", "N_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection);
+
+                    // if (Results > 0)
+                    // {
+                    //     dLayer.DeleteData("Pay_AppraisalCompetencyCategory", "N_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection);
+                    //     dLayer.DeleteData("Pay_AppraisalCompetency", "N_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection);
+                    //     dLayer.DeleteData("Pay_AppraisalTrainingNeeds", "N_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection);
+                    //     return Ok(_api.Success("Appraisal deleted"));
+                    // }
+                    // else
+                    // {
+                    //     return Ok(_api.Error(User, "Unable to delete"));
+                    // }
+
+
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnyearID, "APPRAISAL", nAppraisalID, TransRow["X_AppraisalCode"].ToString(), ProcStatus, "Pay_Appraisal", X_Criteria, TransRow["X_EmpName"].ToString(), User, dLayer, connection, transaction);
+                    if (status != "Error")
+                    {
+                        if (ButtonTag == "6" || ButtonTag == "0")
+                        {
+                            if (nAppraisalID > 0)
+                            {
+                                dLayer.DeleteData("Pay_AppraisalCompetencyCategory", "N_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection,transaction);
+                                dLayer.DeleteData("Pay_AppraisalCompetency", "N_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection,transaction);
+                                dLayer.DeleteData("Pay_AppraisalTrainingNeeds", "N_AppraisalID", nAppraisalID, "N_CompanyID =" + nCompanyID, connection,transaction);      
+                                transaction.Commit();
+                                return Ok(_api.Success("Appraisal " + status + " Successfully"));
+                            }
+                        
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to delete Appraisal"));
+                        }
+                        transaction.Commit();
+                        return Ok(_api.Success("Appraisal " + status + " Successfully"));
                     }
                     else
                     {
-                        return Ok(_api.Error(User, "Unable to delete"));
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable to delete Appraisal"));
                     }
 
                 }

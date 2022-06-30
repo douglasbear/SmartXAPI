@@ -148,6 +148,12 @@ namespace SmartxAPI.Controllers
                     MasterTable.Columns.Remove("N_FromUserCatID");
 
                     int N_UserCategoryID = dLayer.SaveData("sec_usercategory", "N_UserCategoryID", MasterTable, connection, transaction);
+                        if (MasterTable.Columns.Contains("N_FromUserCatID"))
+                    {
+
+                        MasterTable.Columns.Remove("N_FromUserCatID");
+
+                    }
                     if (N_UserCategoryID <= 0)
                     {
                         transaction.Rollback();
@@ -248,7 +254,7 @@ namespace SmartxAPI.Controllers
                     if (InUser != null)
                         return Ok(_api.Error(User, "Unable to delete Category"));
 
-                    Results = dLayer.DeleteData("sec_usercategory", "N_UserCategoryID", nUsercategoryId, "", connection);
+                    Results = dLayer.DeleteData("sec_usercategory", "N_UserCategoryID", nUsercategoryId, "", connection,transaction);
                     if (Results > 0)
                     {
                         dLayer.ExecuteNonQuery("DELETE FROM Gen_Settings where N_UserCategoryID=@nUsercategoryID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);

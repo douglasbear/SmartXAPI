@@ -554,7 +554,7 @@ namespace SmartxAPI.Controllers
                         int N_PkeyID = N_QuotationID;
                         string X_Criteria = "n_QuotationID=" + N_PkeyID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Inv_SalesQuotation", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "Sales Quotation", N_PkeyID, QuotationNo, 1, objCustName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "Sales Quotation", N_PkeyID, QuotationNo, 1, objCustName.ToString(), 0, "",0, User, dLayer, connection, transaction);
                         transaction.Commit();
                         //myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_PkeyID, "Sales Quotation", QuotationNo, dLayer, connection, transaction, User);
                         return Ok(_api.Success("Sales Quotation Approval updated" + "-" + QuotationNo));
@@ -599,7 +599,7 @@ namespace SmartxAPI.Controllers
                     if (N_CustomerID == 0)
                         objCustName = "";
 
-                    N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "Sales Quotation", N_QuotationID, QuotationNo, 1, objCustName.ToString(), 0, "", User, dLayer, connection, transaction);
+                    N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "Sales Quotation", N_QuotationID, QuotationNo, 1, objCustName.ToString(), 0, "",0, User, dLayer, connection, transaction);
 
                     int N_QuotationDetailId = dLayer.SaveData("Inv_SalesQuotationDetails", "n_QuotationDetailsID", DetailTable, connection, transaction);
                     if (N_QuotationDetailId <= 0)

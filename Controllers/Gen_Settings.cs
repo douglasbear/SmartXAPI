@@ -94,13 +94,13 @@ namespace SmartxAPI.Controllers
                                 // {"@UCval",myFunctions.GetUserCategory(User)}
                             };
 
-                            StringBuilder sb = new StringBuilder();
-                            sb.AppendLine(settingsSql + " --- " + sql + "  -  " + row["X_Group"] + "---" + row["X_Description"]);
-                            if (!Directory.Exists(logPath))
-                                Directory.CreateDirectory(logPath);
+                            // StringBuilder sb = new StringBuilder();
+                            // sb.AppendLine(settingsSql + " --- " + sql + "  -  " + row["X_Group"] + "---" + row["X_Description"]);
+                            // if (!Directory.Exists(logPath))
+                            //     Directory.CreateDirectory(logPath);
 
-                            System.IO.File.AppendAllText(logPath + "Settings Log.log", sb.ToString());
-                            sb.Clear();
+                            // System.IO.File.AppendAllText(logPath + "Settings Log.log", sb.ToString());
+                            // sb.Clear();
                             row["listItems"] = dLayer.ExecuteDataTable(sql, lParamsList, connection);
 
                         }
@@ -121,6 +121,10 @@ namespace SmartxAPI.Controllers
                         NParentMenuId = 6;
                     if (nFormID == 589)
                         NParentMenuId = 185;
+                     if (nFormID == 1475)
+                        NParentMenuId =1372;
+                    if (nFormID == 1476)
+                        NParentMenuId =1372;
 
                     SortedList mParamsList = new SortedList()
                     {
@@ -345,21 +349,11 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQuery("update Acc_PaymentMethodMaster set B_IsDefault=1 where N_CompanyID=" + nCompanyID + " and N_TypeID= " + var["n_TypeID"].ToString() +"and N_PaymentMethodID="+ var["n_PaymentMethodID"].ToString() + "",connection, transaction);
                         }
                     }
-                    // foreach (DataRow var in OffDays.Rows)
-                    // {
-                    //     object N_OffID = 0;
 
-                    //     N_OffID = dLayer.SaveData("pay_YearlyOffDays", "N_OffID", OffDays, connection, transaction);
-                    //     dLayer.ExecuteNonQuery(defaultsSql, connection, transaction);
-
-                    // if (myFunctions.getIntVAL(N_OffID.ToString()) <= 0)
-                    // {
-                    //     B_Completed = false;
-                    //     break;
-                    // }
-                    // }
+                    // object N_OffID = 0;
+                    // N_OffID = dLayer.SaveData("pay_YearlyOffDays", "N_OffID", OffDays, connection, transaction);
+    
                     transaction.Commit();
-
                     return Ok(_api.Success("Settings Saved"));
                 }
 

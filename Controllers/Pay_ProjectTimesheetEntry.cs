@@ -55,12 +55,13 @@ namespace SmartxAPI.Controllers
 
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_TimeSheetMaster where N_CompanyID=@p1 and N_FnYearID=@p3 " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_TimeSheetMaster where N_CompanyID=@p1 and N_FnYearID=@p3 and N_UserID=@userID  " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_TimeSheetMaster where N_CompanyID=@p1 and N_FnYearID=@p3" + Searchkey + " and N_PrjTimeSheetID not in (select top(" + Count + ") N_PrjTimeSheetID from vw_Prj_TimeSheetMaster where N_CompanyID=@p1 and N_FnYearID=@p3 " + xSearchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_TimeSheetMaster where N_CompanyID=@p1 and N_FnYearID=@p3 and N_UserID=@userID " + Searchkey + " and N_PrjTimeSheetID not in (select top(" + Count + ") N_PrjTimeSheetID from vw_Prj_TimeSheetMaster where N_CompanyID=@p1 and N_FnYearID=@p3 and N_UserID=@userID  " + xSearchkey + xSortBy + " ) " + xSortBy;
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", nFnYearId);
+            Params.Add("@userID", myFunctions.GetUserID(User));
             SortedList OutPut = new SortedList();
 
             try
@@ -69,7 +70,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_Prj_TimeSheetMaster where N_CompanyId=@p1 and N_FnYearID=@p3 " + Searchkey + " ";
+                    sqlCommandCount = "select count(*) as N_Count from vw_Prj_TimeSheetMaster where N_CompanyId=@p1 and N_FnYearID=@p3 and N_UserID=@userID " + Searchkey + " ";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
 

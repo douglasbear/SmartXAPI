@@ -475,7 +475,7 @@ namespace SmartxAPI.Controllers
                         int N_PkeyID = nEmpUpdateID;
                         string X_Criteria = "N_EmpUpdateID=" + nEmpUpdateID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_EmployeeUpdate", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "EMPLOYEE", N_PkeyID, X_EmpUpdateCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "EMPLOYEE", N_PkeyID, X_EmpUpdateCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
 
                         N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(CAST(B_IsSaveDraft as INT),0) from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID", EmpParams, connection, transaction).ToString());
 
@@ -708,7 +708,7 @@ namespace SmartxAPI.Controllers
                             dLayer.SaveImage("Pay_EmployeeUpdate", "i_Employe_Image", empImageBitmap, "n_EmpID", nEmpID, connection, transaction);
 
                         // EmpParams.Add("@nEmpUpdateID", nEmpUpdateID);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "EMPLOYEE", nEmpUpdateID, X_EmpUpdateCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "EMPLOYEE", nEmpUpdateID, X_EmpUpdateCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
                         object bSaveDraft = dLayer.ExecuteScalar("select isnull(B_IsSaveDraft,0) from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID", EmpParams, connection, transaction);
                         if (bSaveDraft == null)
                         {

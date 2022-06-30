@@ -208,6 +208,19 @@ namespace SmartxAPI.Controllers
                             }
                         }
                         DetailTable.AcceptChanges();
+                        foreach (DataRow Kvar in DetailTable.Rows)
+                            {
+                               if(myFunctions.getVAL(Kvar["N_QtyDisplay"].ToString())==0 )
+                               {
+                                     Kvar.Delete();
+                                     continue;
+                               }
+                            }
+                             DetailTable.AcceptChanges();
+
+
+
+
 
                         DetailTable = _api.Format(DetailTable, "Details");
                         dsSalesInvoice.Tables.Add(MasterTable);

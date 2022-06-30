@@ -1037,7 +1037,7 @@ namespace SmartxAPI.GeneralFunctions
                 {
                     MaxLevel = dLayer.ExecuteScalar("Select Isnull (MAX(N_level),0) from Gen_ApprovalCodesDetails where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID", ApprovalParams, connection);
 
-                    if ((nTransApprovalLevel > nNextApprovalLevel) && nTransStatus != 4 && nTransStatus != 3)
+                    if ((nTransApprovalLevel > nNextApprovalID) && nTransStatus != 4 && nTransStatus != 3)
                     {
                         ActionLevel = dLayer.ExecuteScalar("Select Isnull (N_ActionTypeId,0) from Gen_ApprovalCodesDetails where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_UserID=@loggedInUserID  and N_Level=( @nNextApprovalID + 1 )", ApprovalParams, connection);
                     }
@@ -1057,7 +1057,7 @@ namespace SmartxAPI.GeneralFunctions
 
                     MaxLevel = dLayer.ExecuteScalar("Select Isnull (MAX(N_LevelID),0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID", ApprovalParams, connection);
 
-                    if ((nTransApprovalLevel > nNextApprovalLevel) && nTransStatus != 4 && nTransStatus != 3)
+                    if ((nTransApprovalLevel > nNextApprovalID) && nTransStatus != 4 && nTransStatus != 3)
                     {
                         ActionLevel = dLayer.ExecuteScalar("Select Isnull (N_ActionTypeID,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_UserID=@loggedInUserID  and N_LevelID=( @nNextApprovalID + 1 ) and N_FormID=@nFormID and N_TransID=@nTransID", ApprovalParams, connection);
                     }
@@ -1700,7 +1700,7 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
-        public  int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
+        public  int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel,int N_TransOwnUserID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             DataRow ApprovalRow = Approvals.Rows[0];
             string X_Action = ApprovalRow["btnSaveText"].ToString();
@@ -1741,10 +1741,11 @@ namespace SmartxAPI.GeneralFunctions
             LogParams.Add("@nEmpID", EmpID);
             LogParams.Add("@xDepLevel", DepLevel);
             LogParams.Add("@dTransDate", DateTime.Now.ToString("dd/MMM/yyyy"));
+            LogParams.Add("@nTransOwnUserID", N_TransOwnUserID);
 
             if (N_IsApprovalSystem == 1)
             {
-                dLayer.ExecuteNonQuery("SP_Gen_ApprovalCodesTrans @nCompanyID,@nFormID,@nApprovalUserID,@nTransID,@nApprovalLevelID,@nProcStatusID,@nApprovalID,@nGroupID,@nFnYearID,@xAction,@nEmpID,@xDepLevel,@dTransDate,0,0", LogParams, connection, transaction);             
+                dLayer.ExecuteNonQuery("SP_Gen_ApprovalCodesTrans @nCompanyID,@nFormID,@nApprovalUserID,@nTransID,@nApprovalLevelID,@nProcStatusID,@nApprovalID,@nGroupID,@nFnYearID,@xAction,@nEmpID,@xDepLevel,@dTransDate,0,0,@nTransOwnUserID", LogParams, connection, transaction);             
 
                 object NxtUser = null;
                 NxtUser = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=0", LogParams, connection, transaction);
@@ -2078,7 +2079,7 @@ namespace SmartxAPI.GeneralFunctions
             Approvals.Rows[0]["approvalID"] = N_ApprovalID;
             Approvals.AcceptChanges();
 
-            this.LogApprovals(Approvals, N_FnYearID, X_TransType, N_TransID, X_TransCode, 1, PartyName, 0, "", User, dLayer, connection, transaction);
+            this.LogApprovals(Approvals, N_FnYearID, X_TransType, N_TransID, X_TransCode, 1, PartyName, 0, "",0, User, dLayer, connection, transaction);
             return X_Message;
         }
 
@@ -2943,7 +2944,7 @@ namespace SmartxAPI.GeneralFunctions
         public string getDateVAL(DateTime val);
         public DateTime GetFormatedDate(string val);
         public DataTable SaveApprovals(DataTable MasterTable, DataTable Approvals, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
-        public int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
+        public int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel,int N_TransOwnUserID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public void UpdateApproverEntry(DataTable Approvals, string ScreenTable, string Criterea, int N_TransID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public string UpdateApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int N_ProcStatusID, string X_ScreenTable, string X_Criteria, string PartyName, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID, int nTransUserID, int nTransStatus, int nTransApprovalLevel, int nNextApprovalLevel, int nApprovalID, int nGroupID, int nFnYearID, int nEmpID, int nActionID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection);
