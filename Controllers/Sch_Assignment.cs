@@ -34,69 +34,69 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
-        // [HttpGet("list")]
-        // public ActionResult GetBusRegList(int? nCompanyId, int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
-        // {
-        //     int nCompanyID = myFunctions.GetCompanyID(User);
-        //     DataTable dt = new DataTable();
-        //     SortedList Params = new SortedList();
-        //     int Count = (nPage - 1) * nSizeperpage;
-        //     string sqlCommandText = "";
-        //     string sqlCommandCount = "";
-        //     string Searchkey = "";
+        [HttpGet("dashboardList")]
+        public ActionResult GetAssignmentList(int? nCompanyId, int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
 
-        //     if (xSearchkey != null && xSearchkey.Trim() != "")
-        //         Searchkey = "and (X_RegistrationCode like '%" + xSearchkey + "%' or X_AdmissionNo like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or X_RouteName like '%" + xSearchkey + "%' or DropRoute like '%" + xSearchkey + "%')";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_AssignmentCode like '%" + xSearchkey + "%' or X_Title like '%" + xSearchkey + "%' or X_Subject like '%" + xSearchkey + "%' or X_ClassDivision like '%" + xSearchkey + "%')";
 
-        //     if (xSortBy == null || xSortBy.Trim() == "")
-        //         xSortBy = " order by X_RegistrationCode desc";
-        //     else
-        //     {
-        //         switch (xSortBy.Split(" ")[0])
-        //         {
-        //             case "X_RegistrationCode":
-        //                 xSortBy = "X_RegistrationCode " + xSortBy.Split(" ")[1];
-        //                 break;
-        //             default: break;
-        //         }
-        //         xSortBy = " order by " + xSortBy;
-        //     }
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by X_AssignmentCode desc";
+            else
+            {
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "X_AssignmentCode":
+                        xSortBy = "X_AssignmentCode " + xSortBy.Split(" ")[1];
+                        break;
+                    default: break;
+                }
+                xSortBy = " order by " + xSortBy;
+            }
 
-        //     if (Count == 0)
-        //         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchReg_Disp where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID  " + Searchkey + " " + xSortBy;
-        //     else
-        //         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchReg_Disp where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + Searchkey + " and N_RegistrationID not in (select top(" + Count + ") N_RegistrationID from vw_SchReg_Disp where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + xSortBy + " ) " + " " + xSortBy;
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_Assignment where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID  " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_Assignment where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + Searchkey + " and N_AssignmentID not in (select top(" + Count + ") N_AssignmentID from vw_Sch_Assignment where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + xSortBy + " ) " + " " + xSortBy;
 
-        //     Params.Add("@nCompanyId", nCompanyID);
-        //     Params.Add("@nAcYearID", nAcYearID);
+            Params.Add("@nCompanyId", nCompanyID);
+            Params.Add("@nAcYearID", nAcYearID);
 
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-        //             SortedList OutPut = new SortedList();
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    SortedList OutPut = new SortedList();
 
-        //             sqlCommandCount = "select count(*) as N_Count  from vw_SchReg_Disp where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + Searchkey + "";
-        //             object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-        //             OutPut.Add("Details", api.Format(dt));
-        //             OutPut.Add("TotalCount", TotalCount);
-        //             if (dt.Rows.Count == 0)
-        //             {
-        //                 return Ok(api.Warning("No Results Found"));
-        //             }
-        //             else
-        //             {
-        //                 return Ok(api.Success(OutPut));
-        //             }
-        //         }
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return Ok(api.Error(User, e));
-        //     }
-        // }
+                    sqlCommandCount = "select count(*) as N_Count  from vw_Sch_Assignment where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
 
         [HttpGet("details")]
         public ActionResult BusRegDetails(string xAssignmentCode)
@@ -206,20 +206,32 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("detailList") ]
-        public ActionResult BusRegList(int nCompanyID,int nSubjectID,int nBatchID)
+        [HttpGet("list") ]
+        public ActionResult AssignmentList(int nCompanyID,int nSubjectID,int nBatchID)
         {    
             SortedList param = new SortedList();           
             DataTable dt=new DataTable();
             
             string sqlCommandText="";
 
-            if(nSubjectID!=0 && nBatchID!=0)
-                sqlCommandText="select * from vw_Sch_Assignment where N_CompanyID=@p1";
-
-                sqlCommandText="select * from vw_Sch_Assignment where N_CompanyID=@p1";
+            if(nSubjectID!=0) 
+            { 
+                if(nBatchID!=0)
+                    sqlCommandText="select * from vw_Sch_Assignment where N_CompanyID=@p1 and n_SubjectID=@p2 and n_BatchID=@p3";
+                else
+                    sqlCommandText="select * from vw_Sch_Assignment where N_CompanyID=@p1 and n_SubjectID=@p2";
+            }
+            else
+            {
+                if(nBatchID!=0)
+                    sqlCommandText="select * from vw_Sch_Assignment where N_CompanyID=@p1 and n_BatchID=@p3";
+                else
+                    sqlCommandText="select * from vw_Sch_Assignment where N_CompanyID=@p1";
+            }
 
             param.Add("@p1", nCompanyID);             
+            param.Add("@p2", nSubjectID);             
+            param.Add("@p3", nBatchID);             
                 
             try
             {
@@ -244,8 +256,9 @@ namespace SmartxAPI.Controllers
             }   
         }   
       
+      
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nRegistrationID)
+        public ActionResult DeleteData(int nAssignmentID)
         {
 
             int Results = 0;
@@ -257,16 +270,18 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Sch_BusRegistration", "n_RegistrationID", nRegistrationID, "N_CompanyID =" + nCompanyID, connection, transaction);                   
+                    Results = dLayer.DeleteData("Sch_Assignment", "n_AssignmentID", nAssignmentID, "N_CompanyID =" + nCompanyID, connection, transaction);                   
                 
                     if (Results > 0)
                     {
+                        dLayer.DeleteData("Sch_AssignmentStudents", "n_AssignmentID", nAssignmentID, "N_CompanyID =" + nCompanyID, connection, transaction); 
+
                         transaction.Commit();
-                        return Ok(api.Success("Bus Registration deleted"));
+                        return Ok(api.Success("Assignment deleted"));
                     }
                     else
                     {
-                        return Ok(api.Error(User,"Unable to delete Bus Registration"));
+                        return Ok(api.Error(User,"Unable to delete Assignment"));
                     }
                 }
 

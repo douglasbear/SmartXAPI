@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
             conf.GetConnectionString("SmartxConnection");
         }
 
-        [HttpGet("list")]
+        [HttpGet("dashboardList")]
         public ActionResult GetGuardianList(int? nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
