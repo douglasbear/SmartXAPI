@@ -220,7 +220,7 @@ namespace SmartxAPI.Controllers
 
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = " and (Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%' or X_Barcode like '%" + xSearchkey + "%' or [Part No] like '%" + xSearchkey + "%')";
+                Searchkey = " and (Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%' or X_Barcode like '%" + xSearchkey + "%' or X_CustomerName like '%" + xSearchkey + "%' or  X_CustomerSKU like '%" + xSearchkey + "%' or [Part No] like '%" + xSearchkey + "%')";
             // Searchkey = " and (Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or Category like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%' or N_Rate like '%" + xSearchkey + "%' or X_StockUnit like '%" + xSearchkey + "%' or X_Barcode like '%" + xSearchkey + "%' or [Part No] like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
@@ -249,7 +249,7 @@ namespace SmartxAPI.Controllers
 
             }
 
-            string feildList = " N_CompanyID, N_ItemID, [Item Code], Description, Description_Ar, Category, [Item Class], N_Rate, [Part No], X_ItemUnit, N_Qty, X_SalesUnit, X_PurchaseUnit, X_StockUnit, Rate, N_StockUnitID, [Product Code], Stock ";
+            string feildList = " N_CompanyID, N_ItemID, [Item Code], Description, Description_Ar, Category, [Item Class], N_Rate, [Part No], X_ItemUnit, N_Qty, X_SalesUnit, X_PurchaseUnit, X_StockUnit, Rate, N_StockUnitID, [Product Code], Stock,X_CustomerName,X_CustomerSKU ";
 
             // if (Count == 0)
             //     sqlCommandText = "select top(" + nSizeperpage + ") " + feildList + " from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + xCriteria + Searchkey + " group by " + feildList + xSortBy;
