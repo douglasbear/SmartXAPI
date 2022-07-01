@@ -99,15 +99,15 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GuardianDetails(int nParentID)
+        public ActionResult GuardianDetails(string xParentCode)
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_Sch_ParentDetails_Disp where N_CompanyID=@p1  and n_ParentID=@p2";
+            string sqlCommandText = "select * from vw_Sch_ParentDetails_Disp where N_CompanyID=@p1  and x_ParentCode=@p2";
             Params.Add("@p1", nCompanyId);  
-            Params.Add("@p2", nParentID);
+            Params.Add("@p2", xParentCode);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
