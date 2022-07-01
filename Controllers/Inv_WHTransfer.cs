@@ -397,6 +397,21 @@ namespace SmartxAPI.Controllers
 
 
 
+                        SortedList AutoReceiveParam = new SortedList();
+                        AutoReceiveParam.Add("N_CompanyID", nCompanyID);
+                        AutoReceiveParam.Add("N_TransferID", nTransferId);
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_AutoTransferReceive ", AutoReceiveParam, connection, transaction).ToString();
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, ex));
+                        }
+
+
+
 
 
 
