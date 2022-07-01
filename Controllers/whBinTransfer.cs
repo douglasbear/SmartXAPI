@@ -46,16 +46,17 @@ namespace SmartxAPI.Controllers
             //     Searchkey = "and (X_PickListCode like '%" + xSearchkey + "%' or X_CustomerName like '%" + xSearchkey + "%')";
 
             // if (xSortBy == null || xSortBy.Trim() == "")
-            //     xSortBy = " order by N_BinTransID desc";
+            //    
             // else
             // {
-            //     xSortBy = " order by " + xSortBy;
+            //     
             // }
+             xSortBy = " order by N_BinTransID desc";
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_wh_BinTransHistoryDetails where N_CompanyID=@nCompanyID" + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_WhBinTrans_Search where N_CompanyID=@nCompanyID" + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_wh_BinTransHistoryDetails where N_CompanyID=@nCompanyID" + Searchkey + " and N_BinTransID not in (select top(" + Count + ") N_BinTransID from vw_wh_BinTransHistoryDetails where N_CompanyID=@nCompanyID " + Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_WhBinTrans_Search where N_CompanyID=@nCompanyID" + Searchkey + " and N_BinTransID not in (select top(" + Count + ") N_BinTransID from vw_wh_BinTransHistoryDetails where N_CompanyID=@nCompanyID " + Searchkey + xSortBy + " ) " + xSortBy;
 
             Params.Add("@nCompanyID", nCompanyID);
            
@@ -68,7 +69,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    string sqlCommandCount = "select count(*) as N_Count  from vw_wh_BinTransHistoryDetails where N_CompanyID=@nCompanyID" + Searchkey + "";
+                    string sqlCommandCount = "select count(*) as N_Count  from Vw_WhBinTrans_Search where N_CompanyID=@nCompanyID" + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

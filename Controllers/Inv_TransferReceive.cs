@@ -62,16 +62,16 @@ namespace SmartxAPI.Controllers
                     if (!CheckClosedYear)
                     {
                         if (bAllBranchData)
-                            Criteria = "and N_FnYearID=@p2 and B_YearEndProcess=0 and N_CompanyID=@p1 and N_LocationID=@p4 ";
+                            Criteria = "and N_FnYearID=@p2 and B_YearEndProcess=0 and N_CompanyID=@p1 and  ( N_LocationID=" + nLocationID + " or N_LocationID in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID="+nLocationID+")) ";
                         else
-                            Criteria = "and N_FnYearID=@p2 and  B_YearEndProcess=0 and N_LocationID=@p4 and N_CompanyID=@p1 and N_LocationID=@p4";
+                            Criteria = "and N_FnYearID=@p2 and  B_YearEndProcess=0 and N_CompanyID=@p1 and  ( N_LocationID=" + nLocationID + " or N_LocationID in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID="+nLocationID+"))";
                     }
                     else
                     {
                         if (bAllBranchData)
-                            Criteria = "and N_PurchaseType=0 and N_FnYearID=@p2 and N_CompanyID=@p1 and  N_LocationID=@p4";
+                            Criteria = "and N_PurchaseType=0 and N_FnYearID=@p2 and N_CompanyID=@p1 and  ( N_LocationID=" + nLocationID + " or N_LocationID in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID="+nLocationID+")) ";
                         else
-                            Criteria = "and N_PurchaseType=0 and N_FnYearID=@p2 and N_LocationID=@p4 and N_CompanyID=@p1";
+                            Criteria = "and N_PurchaseType=0 and N_FnYearID=@p2 and  ( N_LocationID=" + nLocationID + " or N_LocationID in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID="+nLocationID+")) and N_CompanyID=@p1";
                     }
 
 
@@ -137,7 +137,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearID);
-            string sqlCommandText = "select [reference No] as x_reference,* from vw_InvTransfer_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_LocationTo="+locationID+" and  N_Processed=0";
+            string sqlCommandText = "select [reference No] as x_reference,* from vw_InvTransfer_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_LocationTo in ( select N_LocationID from Inv_Location where N_CompanyID=@p1 and ( N_LocationID="+locationID+" or  isnull(N_WarehouseID,0)="+locationID+" )) and  N_Processed=0";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

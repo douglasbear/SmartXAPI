@@ -41,29 +41,36 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string xCondition = "";
+            string xCriteria=" and  isnull(N_MainLocationID,0) =0";
+
             if (xBarcode != "" && xBarcode != null)
             {
                 xCondition = " and X_barcode='" + xBarcode + "'";
 
             }
 
+            // if(bTransferLocations)
+            // {
+            //     xCondition = xCondition + " and N_LocationID in ( select N_LocationID from Inv_Location where N_CompanyID=@p1 and ( isnull(N_WarehouseID,0)=0 or isnull(N_TypeID,0)=5 )) ";
+            // }
+
             string sqlCommandText = "";
             if (prs == null || prs == "")
             {
                 if (nBranchID > 0)
-                    sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 and N_BranchID=" + nBranchID + xCondition + " order by [Location Name]";
+                    sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 and N_BranchID=" + nBranchID + xCondition  +" order by [Location Name]";
                 else
-                    sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1" + xCondition + " order by [Location Name]";
+                    sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1" + xCondition  + " order by [Location Name]";
             }
             else
             {
                 if (!bLocationRequired)
                 {
                     if (bAllBranchData == true)
-                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where N_MainLocationID =0 and N_CompanyID=" + nCompanyId + xCondition;
+                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where N_CompanyID=" + nCompanyId + xCondition ;
 
                     else
-                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where  N_MainLocationID =0 and N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID + xCondition;
+                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where   N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID + xCondition ;
 
                 }
                 else

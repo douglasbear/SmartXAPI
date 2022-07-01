@@ -63,9 +63,9 @@ namespace SmartxAPI.Controllers
             }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchAdmission where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID  " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchAdmission_Dashboard where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID  " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchAdmission where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + Searchkey + " and N_AdmissionID not in (select top(" + Count + ") N_AdmissionID from vw_SchAdmission where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + xSortBy + " ) " + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchAdmission_Dashboard where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + Searchkey + " and N_AdmissionID not in (select top(" + Count + ") N_AdmissionID from vw_SchAdmission where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + xSortBy + " ) " + " " + xSortBy;
 
             Params.Add("@nCompanyId", nCompanyID);
             Params.Add("@nAcYearID", nAcYearID);
@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_SchAdmission  where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_SchAdmission_Dashboard  where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -196,16 +196,16 @@ namespace SmartxAPI.Controllers
             if(n_ClassID!=0)
             {
                 if(n_DivisionID!=0)
-                    sqlCommandText="select * from vw_SchAdmission where N_CompanyID=@p1 and nAcYearID=@p2 and n_ClassID=@p3 and n_DivisionID=@p4";
+                    sqlCommandText="select * from vw_SchAdmission where N_CompanyID=@p1 and n_AcYearID=@p2 and n_ClassID=@p3 and n_DivisionID=@p4";
                 else                    
-                    sqlCommandText="select * from vw_SchAdmission where N_CompanyID=@p1 and nAcYearID=@p2 and n_ClassID=@p3 ";
+                    sqlCommandText="select * from vw_SchAdmission where N_CompanyID=@p1 and n_AcYearID=@p2 and n_ClassID=@p3 ";
             }
             else
             {
                 if(n_DivisionID!=0)
-                    sqlCommandText="select * from vw_SchAdmission where N_CompanyID=@p1 and nAcYearID=@p2 and n_DivisionID=@p4";
+                    sqlCommandText="select * from vw_SchAdmission where N_CompanyID=@p1 and n_AcYearID=@p2 and n_DivisionID=@p4";
                 else                    
-                    sqlCommandText="select * from vw_SchAdmission where N_CompanyID=@p1 and nAcYearID=@p2";
+                    sqlCommandText="select * from vw_SchAdmission where N_CompanyID=@p1 and n_AcYearID=@p2";
             }
 
             param.Add("@p1", nCompanyID);             
