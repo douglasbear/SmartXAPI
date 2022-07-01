@@ -47,6 +47,11 @@ namespace SmartxAPI.Controllers
 
             }
 
+            // if(bTransferLocations)
+            // {
+            //     xCondition = xCondition + " and N_LocationID in ( select N_LocationID from Inv_Location where N_CompanyID=@p1 and ( isnull(N_WarehouseID,0)=0 or isnull(N_TypeID,0)=5 )) ";
+            // }
+
             string sqlCommandText = "";
             if (prs == null || prs == "")
             {
