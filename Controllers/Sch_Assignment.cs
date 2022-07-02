@@ -178,7 +178,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Sch_AssignmentStudents", "n_AssignmentID", nAssignmentID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
                         dLayer.DeleteData("Sch_Assignment", "n_AssignmentID", nAssignmentID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
                     }
-
+                    MasterTable.Columns.Remove("n_FnYearId");
                     nAssignmentID = dLayer.SaveData("Sch_Assignment", "n_AssignmentID", MasterTable, connection, transaction);
                     if (nAssignmentID <= 0)
                     {
