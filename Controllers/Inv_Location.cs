@@ -189,7 +189,13 @@ namespace SmartxAPI.Controllers
                     string X_Pattern = "10";
                     int N_TypeID = 0;
                     int N_MainLocationID = 0;
+                    string xTerminalCode ="@Auto";
+
                     int N_LocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationID"].ToString());
+
+                    if(N_LocationID>0)
+                    xTerminalCode="1";
+
                     if (MasterTable.Columns.Contains("N_MainLocationID"))
                         N_MainLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MainLocationID"].ToString());
                     if (MasterTable.Columns.Contains("n_TypeID"))
@@ -202,6 +208,7 @@ namespace SmartxAPI.Controllers
                     int n_LocationFromID = 0;
                     string TransferSql = "";
                     string patternNo = "";
+                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     ValidateParams.Add("@N_MainLocationID", N_MainLocationID);
                     // if (LocationCount != null && limit != null)
@@ -231,7 +238,7 @@ namespace SmartxAPI.Controllers
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
-                        Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
+                        Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", 450);
                         // Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         LocationCode = dLayer.GetAutoNumber("Inv_Location", "X_LocationCode", Params, connection, transaction);
@@ -356,14 +363,14 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Inv_Location", "N_LocationID", N_LocationID, "", connection, transaction);
                     }
 
-                    if (MasterTable.Columns.Contains("B_IsDefault"))
-                    {
-                        MasterTable.Rows[0]["b_DefaultBranch"] = true;
+                    // if (MasterTable.Columns.Contains("B_IsDefault"))
+                    // {
+                    //     MasterTable.Rows[0]["B_IsDefault"] = true;
                       
-                    }else
-                    {
-                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"B_IsDefault",typeof(bool),true);
-                    }
+                    // }else
+                    // {
+                    //     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"B_IsDefault",typeof(bool),true);
+                    // }
 
                     MasterTable.Columns.Remove("n_FnYearId");
                     MasterTable.Columns.Remove("b_isSubLocation");
@@ -379,6 +386,37 @@ namespace SmartxAPI.Controllers
                         {
                             dLayer.ExecuteNonQuery("insert into Inv_ItemMasterWHLink  select ROW_NUMBER()over (Order by N_companyId)+ISNULL((Select MAX(N_RowID) from Inv_ItemMasterWHLink),0) ,N_CompanyID," + N_LocationID + ",N_ItemID,D_Entrydate from Inv_ItemMaster where  N_CompanyID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString()) + TransferSql, Params, connection, transaction);
                         }
+
+                    if (xTerminalCode == "@Auto" && N_LocationID>0)
+                        {
+                            String sql = "select N_CompanyID,0 as N_TerminalID,'' as X_TerminalCode,X_LocationName + ' Terminal' as X_TerminalName,0 as N_UserID,getDate() as D_EntryDate,null as N_PriceTypeID,N_LocationID,N_BranchID from Inv_Location where N_CompanyID=@nCompanyID and N_LocationID=@nLocationID";
+                            SortedList TerminalParams = new SortedList();
+                            TerminalParams.Add("@nCompanyID", nCompanyID);
+                            TerminalParams.Add("@nLocationID", N_LocationID);
+                            DataTable TerminalTable = dLayer.ExecuteDataTable(sql, TerminalParams, connection, transaction);
+                            if (TerminalTable.Rows.Count == 0)
+                            {
+                                transaction.Rollback(); return Ok(_api.Error(User, "Unable to Create location"));
+                            }
+                            int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+                            string xLocationName = MasterTable.Rows[0]["x_LocationName"].ToString();
+                            SortedList Params2 = new SortedList();
+                            Params2.Add("N_CompanyID", nCompanyID);
+                            Params2.Add("N_YearID", nFnYearID);
+                            Params2.Add("N_FormID", 895);
+                            xTerminalCode = dLayer.GetAutoNumber("Inv_Terminal", "X_TerminalCode", Params2, connection, transaction);
+                            if (xTerminalCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate location Code")); }
+                            TerminalTable.Rows[0]["X_TerminalCode"] = xTerminalCode;
+                            TerminalTable.AcceptChanges();
+                            String DupCriteria = "N_BranchID=" + nBranchID + " and X_TerminalName= '" + xLocationName + "' and N_CompanyID=" + nCompanyID;
+                            int nTerminalID = dLayer.SaveData("Inv_Terminal", "N_TerminalID", DupCriteria, "", TerminalTable, connection, transaction);
+                            if (nTerminalID <= 0)
+                            {
+                                transaction.Rollback(); return Ok(_api.Error(User, "Unable to Create terminal"));
+                            }
+
+                        }
+
                         transaction.Commit();
                         return GetLocationDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()), N_LocationID);
                     }
