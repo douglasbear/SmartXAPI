@@ -63,9 +63,9 @@ namespace SmartxAPI.Controllers
             }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchAdmission where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID  " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchAdmission_Dashboard where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID  " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchAdmission where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + Searchkey + " and N_AdmissionID not in (select top(" + Count + ") N_AdmissionID from vw_SchAdmission where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + xSortBy + " ) " + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchAdmission_Dashboard where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + Searchkey + " and N_AdmissionID not in (select top(" + Count + ") N_AdmissionID from vw_SchAdmission where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + xSortBy + " ) " + " " + xSortBy;
 
             Params.Add("@nCompanyId", nCompanyID);
             Params.Add("@nAcYearID", nAcYearID);
@@ -161,6 +161,13 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_AdmissionNo"] = Code;
                     }
                      MasterTable.Columns.Remove("n_FnYearId");
+                     string image = myFunctions.ContainColumn("i_Photo", MasterTable) ? MasterTable.Rows[0]["i_Photo"].ToString() : "";
+                     Byte[] photoBitmap = new Byte[image.Length];
+                     photoBitmap = Convert.FromBase64String(image);
+                       if (myFunctions.ContainColumn("i_Photo", MasterTable))
+                        MasterTable.Columns.Remove("i_Photo");
+                        MasterTable.AcceptChanges();
+
                     if (nAdmissionID > 0) 
                     {  
                         dLayer.DeleteData("Sch_Admission", "N_AdmissionID", nAdmissionID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
@@ -174,6 +181,11 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        if (image.Length > 0)
+                        {
+                         dLayer.SaveImage("Sch_Admission", "I_Photo", photoBitmap, "N_AdmissionID",nAdmissionID, connection, transaction);
+                        }
+                       
                         transaction.Commit();
                         return Ok(api.Success("Admission Completed"));
                     }
@@ -205,7 +217,7 @@ namespace SmartxAPI.Controllers
                 if(n_DivisionID!=0)
                     sqlCommandText="select * from vw_SchAdmission where N_CompanyID=@p1 and nAcYearID=@p2 and n_DivisionID=@p4";
                 else                    
-                    sqlCommandText="select * from vw_SchAdmission where N_CompanyID=@p1 and nAcYearID=@p2";
+                    sqlCommandText="select * from vw_SchAdmission where N_CompanyID=@p1 and n_AcYearID=@p2";
             }
 
             param.Add("@p1", nCompanyID);             
