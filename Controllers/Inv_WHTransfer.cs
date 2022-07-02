@@ -193,16 +193,16 @@ namespace SmartxAPI.Controllers
                     if (!CheckClosedYear)
                     {
                         if (bAllBranchData)
-                            Criteria = "and B_YearEndProcess=0 and N_Type=1 and N_LocationFrom=" + nLocationID + " ";
+                            Criteria = "and B_YearEndProcess=0 and N_Type=1 and ( N_LocationFrom=" + nLocationID + " or N_LocationFrom in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID="+nLocationID+"))";
                         else
-                            Criteria = "and B_YearEndProcess=0 and N_Type=1 and N_LocationFrom=" + nLocationID + " ";
+                            Criteria = "and B_YearEndProcess=0 and N_Type=1 and ( N_LocationFrom=" + nLocationID + " or N_LocationFrom in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID="+nLocationID+"))";
                     }
                     else
                     {
                         if (bAllBranchData)
-                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_LocationFrom=" + nLocationID + " ";
+                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4  and ( N_LocationFrom=" + nLocationID + " or N_LocationFrom in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID="+nLocationID+"))";
                         else
-                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_LocationFrom=" + nLocationID + " ";
+                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4  and ( N_LocationFrom=" + nLocationID + " or N_LocationFrom in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID="+nLocationID+"))";
                     }
 
 
@@ -237,8 +237,8 @@ namespace SmartxAPI.Controllers
 
                     }
                     else
-
                         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvTransfer_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_TransferID not in (select top(" + Count + ") N_TransferID from vw_InvTransfer_Search where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
+                    
                     Params.Add("@nCompanyId", nCompanyId);
 
                     SortedList OutPut = new SortedList();
@@ -388,6 +388,21 @@ namespace SmartxAPI.Controllers
                         try
                         {
                             dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting ", PostingParam, connection, transaction).ToString();
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, ex));
+                        }
+
+
+
+                        SortedList AutoReceiveParam = new SortedList();
+                        AutoReceiveParam.Add("N_CompanyID", nCompanyID);
+                        AutoReceiveParam.Add("N_TransferID", nTransferId);
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_AutoTransferReceive ", AutoReceiveParam, connection, transaction).ToString();
                         }
                         catch (Exception ex)
                         {

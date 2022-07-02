@@ -1,5 +1,3 @@
-using AutoMapper;
-using SmartxAPI.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -9,11 +7,8 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.IO;
-using System.Net;
-using System.Threading.Tasks;
 using System.Linq;
 using System.Net.Mail;
 using System.Text;

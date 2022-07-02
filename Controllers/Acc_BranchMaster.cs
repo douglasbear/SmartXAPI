@@ -149,6 +149,7 @@ namespace SmartxAPI.Controllers
                     string xBranchCode = MasterTable.Rows[0]["x_BranchCode"].ToString();
                     int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                     string xLocationCode = MasterTable.Rows[0]["x_BranchCode"].ToString();
+                    string xTerminalCode = MasterTable.Rows[0]["x_BranchCode"].ToString();
                     string xLocationName = MasterTable.Rows[0]["x_BranchName"].ToString();
                     string logo = myFunctions.ContainColumn("i_Logo", MasterTable) ? MasterTable.Rows[0]["i_Logo"].ToString() : "";
                     bool bDefaultBranch = false;
@@ -216,7 +217,7 @@ namespace SmartxAPI.Controllers
                     {
                         if (xLocationCode == "@Auto")
                         {
-                            String sql = "select N_CompanyID,0 as N_LocationID,'' as X_LocationCode,X_BranchName as X_LocationName,N_BranchID,0 as B_IsCurrent,2 as N_typeId,1 as B_IsDefault,X_Address,X_PhoneNo,0 as B_PhysicalSite,0 as N_MainLocationID from Acc_BranchMaster where N_CompanyID=@nCompanyID and N_branchID=@nBranchID";
+                            String sql = "select N_CompanyID,0 as N_LocationID,'' as X_LocationCode,X_BranchName as X_LocationName,N_BranchID,0 as B_IsCurrent,1 as N_typeId,1 as B_IsDefault,X_Address,X_PhoneNo,0 as B_PhysicalSite,0 as N_MainLocationID from Acc_BranchMaster where N_CompanyID=@nCompanyID and N_branchID=@nBranchID";
                             SortedList BranchParams = new SortedList();
                             BranchParams.Add("@nCompanyID", nCompanyID);
                             BranchParams.Add("@nBranchID", nBranchID);
@@ -240,6 +241,36 @@ namespace SmartxAPI.Controllers
                             }
 
                         }
+
+                        if (xTerminalCode == "@Auto" && nLocationID>0)
+                        {
+                            String sql = "select N_CompanyID,0 as N_TerminalID,'' as X_TerminalCode,X_LocationName + ' Terminal' as X_TerminalName,0 as N_UserID,getDate() as D_EntryDate,null as N_PriceTypeID,N_LocationID,N_BranchID from Inv_Location where N_CompanyID=@nCompanyID and N_LocationID=@nLocationID";
+                            SortedList TerminalParams = new SortedList();
+                            TerminalParams.Add("@nCompanyID", nCompanyID);
+                            TerminalParams.Add("@nLocationID", nLocationID);
+                            DataTable TerminalTable = dLayer.ExecuteDataTable(sql, TerminalParams, connection, transaction);
+                            if (TerminalTable.Rows.Count == 0)
+                            {
+                                transaction.Rollback(); return Ok(_api.Error(User, "Unable to Create location"));
+                            }
+                            SortedList Params2 = new SortedList();
+                            Params2.Add("N_CompanyID", nCompanyID);
+                            Params2.Add("N_YearID", nFnYearID);
+                            Params2.Add("N_FormID", 895);
+                            xTerminalCode = dLayer.GetAutoNumber("Inv_Terminal", "X_TerminalCode", Params2, connection, transaction);
+                            if (xTerminalCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate location Code")); }
+                            TerminalTable.Rows[0]["X_TerminalCode"] = xTerminalCode;
+                            TerminalTable.AcceptChanges();
+                            String DupCriteria = "N_BranchID=" + nBranchID + " and X_TerminalName= '" + xLocationName + "' and N_CompanyID=" + nCompanyID;
+                            int nTerminalID = dLayer.SaveData("Inv_Terminal", "N_TerminalID", DupCriteria, "", TerminalTable, connection, transaction);
+                            if (nTerminalID <= 0)
+                            {
+                                transaction.Rollback(); return Ok(_api.Error(User, "Unable to Create terminal"));
+                            }
+
+                        }
+
+
                         if (logo.Length > 0)
                             dLayer.SaveImage("Acc_BranchMaster", "I_Logo", logoBitmap, "N_BranchID", nBranchID, connection, transaction);
                         transaction.Commit();

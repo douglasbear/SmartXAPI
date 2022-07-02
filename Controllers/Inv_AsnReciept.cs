@@ -236,6 +236,7 @@ namespace SmartxAPI.Controllers
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["N_AsnID"] = nAsnID;
+                        DetailTable.Rows[j]["X_BatchCode"] = DetailTable.Rows[j]["X_BatchCode"].ToString().Replace("@Auto",X_AsnDocNo);
                     }
 
                     int N_AsnDetailsID = dLayer.SaveData("Wh_AsnDetails", "N_AsnDetailsID", DetailTable, connection, transaction);

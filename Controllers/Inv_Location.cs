@@ -41,29 +41,36 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string xCondition = "";
+            string xCriteria=" and  isnull(N_MainLocationID,0) =0";
+
             if (xBarcode != "" && xBarcode != null)
             {
                 xCondition = " and X_barcode='" + xBarcode + "'";
 
             }
 
+            // if(bTransferLocations)
+            // {
+            //     xCondition = xCondition + " and N_LocationID in ( select N_LocationID from Inv_Location where N_CompanyID=@p1 and ( isnull(N_WarehouseID,0)=0 or isnull(N_TypeID,0)=5 )) ";
+            // }
+
             string sqlCommandText = "";
             if (prs == null || prs == "")
             {
                 if (nBranchID > 0)
-                    sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 and N_BranchID=" + nBranchID + xCondition + " order by [Location Name]";
+                    sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 and N_BranchID=" + nBranchID + xCondition  +" order by [Location Name]";
                 else
-                    sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1" + xCondition + " order by [Location Name]";
+                    sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1" + xCondition  + " order by [Location Name]";
             }
             else
             {
                 if (!bLocationRequired)
                 {
                     if (bAllBranchData == true)
-                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where N_MainLocationID =0 and N_CompanyID=" + nCompanyId + xCondition;
+                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where N_CompanyID=" + nCompanyId + xCondition ;
 
                     else
-                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where  N_MainLocationID =0 and N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID + xCondition;
+                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where   N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID + xCondition ;
 
                 }
                 else
@@ -182,7 +189,13 @@ namespace SmartxAPI.Controllers
                     string X_Pattern = "10";
                     int N_TypeID = 0;
                     int N_MainLocationID = 0;
+                    string xTerminalCode ="@Auto";
+
                     int N_LocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationID"].ToString());
+
+                    if(N_LocationID>0)
+                    xTerminalCode="1";
+
                     if (MasterTable.Columns.Contains("N_MainLocationID"))
                         N_MainLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MainLocationID"].ToString());
                     if (MasterTable.Columns.Contains("n_TypeID"))
@@ -195,6 +208,7 @@ namespace SmartxAPI.Controllers
                     int n_LocationFromID = 0;
                     string TransferSql = "";
                     string patternNo = "";
+                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     ValidateParams.Add("@N_MainLocationID", N_MainLocationID);
                     // if (LocationCount != null && limit != null)
@@ -224,7 +238,7 @@ namespace SmartxAPI.Controllers
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
-                        Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
+                        Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", 450);
                         // Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         LocationCode = dLayer.GetAutoNumber("Inv_Location", "X_LocationCode", Params, connection, transaction);
@@ -234,61 +248,50 @@ namespace SmartxAPI.Controllers
 
                     if (N_LocationID == 0)
                     {
-                        if (X_Pattern == "10" && N_MainLocationID == 0)
+                        if(N_MainLocationID==0 || N_MainLocationID ==null )
                         {
-                            MasterTable.Rows[0]["X_Pattern"] = "10";
+                        object mainLocationPattern=dLayer.ExecuteScalar("Select isnull(max(X_Pattern),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_LocationID="+N_MainLocationID+"", connection, transaction);
+                       if (mainLocationPattern == null || mainLocationPattern.ToString() == "")
+                       {
+                                 MasterTable.Rows[0]["X_Pattern"] = "10";
+
                         }
                         else
                         {
-                            //  object xHierarchyID = dLayer.ExecuteScalar("Select N_LocationID from Inv_Location where N_CompanyID=" + myFunctions.GetCompanyID(User)  + " and N_MainLocationID=" + N_MainLocationID +  " ", connection, transaction);
-                            //  object xPattern = dLayer.ExecuteScalar("Select X_Pattern  From Inv_Location Where N_CompanyID=" + myFunctions.GetCompanyID(User)  + " and N_LocationID=" + myFunctions.getIntVAL(xHierarchyID.ToString()) + " ", connection, transaction);
-                            //    patternNo = xPattern.ToString();
-                            //    MasterTable.Rows[0]["X_Pattern"] =patternNo + "10"; 
-                            object xHierarchyID = dLayer.ExecuteScalar("Select max(N_LocationID) From Inv_Location Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_MainLocationID=" + N_MainLocationID + " ", connection, transaction);
-                            if (myFunctions.getIntVAL(xHierarchyID.ToString()) > 0)
+                         MasterTable.Rows[0]["X_Pattern"] = (myFunctions.getIntVAL(mainLocationPattern.ToString()) + 10).ToString() ;
+                        }
+                        }
+                        else
+                        {
+                             object childPattern = dLayer.ExecuteScalar("Select isnull(max(X_Pattern),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_TypeID=" + N_TypeID + " and N_MainLocationID=" + N_MainLocationID + " ", connection, transaction);
+                            object parentMainPattern = dLayer.ExecuteScalar("select TOP 1  X_Pattern from Inv_Location where N_LocationID=" + N_MainLocationID + " and N_CompanyID=" + nCompanyID + " ", connection, transaction);
+                          if (childPattern == null || childPattern.ToString() == "")
                             {
-                                object xPattern = dLayer.ExecuteScalar("Select X_Pattern  From Inv_Location Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_LocationID=" + myFunctions.getIntVAL(xHierarchyID.ToString()) + " ", connection, transaction);
-                                if (xPattern != null)
-                                {
-                                    patternNo = xPattern.ToString();
-                                    int length = X_Pattern.Length;
-                                    string removingPattern = patternNo.Substring(length);
-                                    //string pattern = myFunctions.getIntVAL(removingPattern);
-                                    string pattern = removingPattern;
-                                    pattern = pattern + X_Pattern;
-                                    patternNo = pattern;
-                                    //patternNo = pattern.ToString();
-                                    if (removingPattern.Length > (pattern.ToString().Length))
-                                    {
-                                        patternNo = X_Pattern + "0" + patternNo;
-                                    }
-                                    else
-                                    {
-                                        patternNo = X_Pattern + patternNo;
-
-                                    }
-
-                                }
-                                MasterTable.Rows[0]["X_Pattern"] = patternNo;
+                                MasterTable.Rows[0]["X_Pattern"] = parentMainPattern.ToString() + "10";
 
                             }
                             else
                             {
 
-                                MasterTable.Rows[0]["X_Pattern"] = X_Pattern + "10";
+                              
+                                string lastAddedCode=childPattern.ToString().Substring(childPattern.ToString().Length-2);
+                                string lengthofparent=childPattern.ToString().Substring(lastAddedCode.Length);
+                                string lastString=childPattern.ToString().Remove(childPattern.ToString().Length-2);
+                               string  addingCode =  (myFunctions.getIntVAL(lastAddedCode.ToString()) + 10).ToString() ;
+
+                              MasterTable.Rows[0]["X_Pattern"] = lastString.ToString() + addingCode;
+
 
 
                             }
-
-
-
-
                         }
+                    
                         if (N_TypeID == 1)
                         {
 
                             object roomPattern = dLayer.ExecuteScalar("Select isnull(max(X_LocationCode),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_TypeID=1 ", connection, transaction);
-
+                            object normalPattern = dLayer.ExecuteScalar("Select isnull(max(X_Pattern),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_TypeID=1 ", connection, transaction);
+                           // object mainLocationPattern=dLayer.ExecuteScalar("Select isnull(max(X_Pattern),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_LocationID="+N_MainLocationID+"", connection, transaction);
                             if (roomPattern == null || roomPattern.ToString() == "")
                             {
                                 x_LocationCodePattern = 'A';
@@ -303,6 +306,8 @@ namespace SmartxAPI.Controllers
 
 
                             }
+                           
+
 
                         }
                         else if (N_TypeID != 0)
@@ -325,30 +330,40 @@ namespace SmartxAPI.Controllers
 
 
                             }
-
+                         
 
 
                         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                    
                     }
                     else if (N_LocationID > 0)
                     {
                         dLayer.DeleteData("Inv_Location", "N_LocationID", N_LocationID, "", connection, transaction);
                     }
 
+                    // if (MasterTable.Columns.Contains("B_IsDefault"))
+                    // {
+                    //     MasterTable.Rows[0]["B_IsDefault"] = true;
+                      
+                    // }else
+                    // {
+                    //     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"B_IsDefault",typeof(bool),true);
+                    // }
+                    if(MasterTable.Columns.Contains("X_Barcode"))
+                    {
+
+                     string barcode =  MasterTable.Rows[0]["X_BarCode"].ToString();
+                    if(barcode ==null || barcode =="") 
+                    {
+                       MasterTable.Rows[0]["X_BarCode"]= MasterTable.Rows[0]["X_LocationCode"] ;
+                    }
+                    }
+                    else
+                    {
+                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"X_BarCode",typeof(string),"");
+                        MasterTable.Rows[0]["X_BarCode"]= MasterTable.Rows[0]["X_LocationCode"] ;
+                    }
+             
 
                     MasterTable.Columns.Remove("n_FnYearId");
                     MasterTable.Columns.Remove("b_isSubLocation");
@@ -364,6 +379,37 @@ namespace SmartxAPI.Controllers
                         {
                             dLayer.ExecuteNonQuery("insert into Inv_ItemMasterWHLink  select ROW_NUMBER()over (Order by N_companyId)+ISNULL((Select MAX(N_RowID) from Inv_ItemMasterWHLink),0) ,N_CompanyID," + N_LocationID + ",N_ItemID,D_Entrydate from Inv_ItemMaster where  N_CompanyID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString()) + TransferSql, Params, connection, transaction);
                         }
+
+                    if (xTerminalCode == "@Auto" && N_LocationID>0)
+                        {
+                            String sql = "select N_CompanyID,0 as N_TerminalID,'' as X_TerminalCode,X_LocationName + ' Terminal' as X_TerminalName,0 as N_UserID,getDate() as D_EntryDate,null as N_PriceTypeID,N_LocationID,N_BranchID from Inv_Location where N_CompanyID=@nCompanyID and N_LocationID=@nLocationID";
+                            SortedList TerminalParams = new SortedList();
+                            TerminalParams.Add("@nCompanyID", nCompanyID);
+                            TerminalParams.Add("@nLocationID", N_LocationID);
+                            DataTable TerminalTable = dLayer.ExecuteDataTable(sql, TerminalParams, connection, transaction);
+                            if (TerminalTable.Rows.Count == 0)
+                            {
+                                transaction.Rollback(); return Ok(_api.Error(User, "Unable to Create location"));
+                            }
+                            int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+                            string xLocationName = MasterTable.Rows[0]["x_LocationName"].ToString();
+                            SortedList Params2 = new SortedList();
+                            Params2.Add("N_CompanyID", nCompanyID);
+                            Params2.Add("N_YearID", nFnYearID);
+                            Params2.Add("N_FormID", 895);
+                            xTerminalCode = dLayer.GetAutoNumber("Inv_Terminal", "X_TerminalCode", Params2, connection, transaction);
+                            if (xTerminalCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate location Code")); }
+                            TerminalTable.Rows[0]["X_TerminalCode"] = xTerminalCode;
+                            TerminalTable.AcceptChanges();
+                            String DupCriteria = "N_BranchID=" + nBranchID + " and X_TerminalName= '" + xLocationName + "' and N_CompanyID=" + nCompanyID;
+                            int nTerminalID = dLayer.SaveData("Inv_Terminal", "N_TerminalID", DupCriteria, "", TerminalTable, connection, transaction);
+                            if (nTerminalID <= 0)
+                            {
+                                transaction.Rollback(); return Ok(_api.Error(User, "Unable to Create terminal"));
+                            }
+
+                        }
+
                         transaction.Commit();
                         return GetLocationDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()), N_LocationID);
                     }
