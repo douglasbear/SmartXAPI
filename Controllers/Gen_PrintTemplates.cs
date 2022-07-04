@@ -225,6 +225,7 @@ namespace SmartxAPI.Controllers
                     int N_UserCategoryId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserCategoryId"].ToString());
                     var x_SelectedReport = MasterTable.Rows[0]["x_TemplateName"].ToString();
                     int B_Custom = myFunctions.getIntVAL(MasterTable.Rows[0]["B_Custom"].ToString());
+                    int B_PrintAfterSave = myFunctions.getIntVAL(MasterTable.Rows[0]["B_PrintAfterSave"].ToString());
                     if (x_SelectedReport.Contains(".rpt")) { }
                     else { x_SelectedReport = x_SelectedReport + ".rpt"; }
                     int n_CopyNos = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CopyNos"].ToString());
@@ -232,7 +233,7 @@ namespace SmartxAPI.Controllers
                     object result = 0;
                     dLayer.ExecuteNonQuery("SP_GeneralDefaults_ins " + nCompanyID + ",'" + ReportSelectingScreenID + "' ,'PrintTemplate',1,'" + x_SelectedReport + "','" + X_UserCategoryName + "'", connection, transaction);
                     dLayer.ExecuteNonQuery("SP_GeneralDefaults_ins " + nCompanyID + ",'" + ReportSelectingScreenID + "' ,'PrintCopy'," + n_CopyNos + ",''", connection, transaction);
-                    dLayer.ExecuteNonQuery("SP_GenPrintTemplatess_ins " + nCompanyID + "," + ReportSelectingScreenID + " ,'" + x_SelectedReport + "'," + N_UserCategoryId + "," + n_CopyNos + "," + a + ","+B_Custom+" ", connection, transaction);
+                    dLayer.ExecuteNonQuery("SP_GenPrintTemplatess_ins " + nCompanyID + "," + ReportSelectingScreenID + " ,'" + x_SelectedReport + "'," + N_UserCategoryId + "," + n_CopyNos + "," + a + ","+B_Custom+","+B_PrintAfterSave+" ", connection, transaction);
 
                     if (B_Custom==1)
                         CreateCustomTemplate(ReportSelectingScreenID, x_SelectedReport,connection,transaction);

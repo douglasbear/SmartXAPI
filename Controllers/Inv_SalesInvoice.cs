@@ -987,6 +987,12 @@ namespace SmartxAPI.Controllers
                     int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
 
                     int N_PaymentMethodID = myFunctions.getIntVAL(MasterRow["n_PaymentMethodID"].ToString());
+
+                    if(N_PaymentMethodID==0){
+                          transaction.Rollback();
+                          return Ok(_api.Error(User, "No payment method selected !!"));
+                    }
+
                     int N_DeliveryNoteID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteId"].ToString());
                      int N_ServiceID = MasterTable.Columns.Contains("N_ServiceID")? myFunctions.getIntVAL(MasterRow["N_ServiceID"].ToString()):0;
                     int N_CreatedUser = myFunctions.getIntVAL(MasterRow["n_CreatedUser"].ToString());
