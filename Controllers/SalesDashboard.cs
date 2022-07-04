@@ -55,7 +55,7 @@ namespace SmartxAPI.Controllers
             //string sqlCurrentInvoice = "SELECT COUNT(*) as N_ThisMonth,CAST(CONVERT(varchar, CAST(sum(Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)) ) AS Money), 1) AS   varchar) AS  TotalAmount  FROM vw_InvSalesInvoiceNo_Search WHERE MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID;
             string sqlCurrentQuotation = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesQuotationNo_Search WHERE MONTH(Cast(D_QuotationDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID + crieteria;
             string sqlBranchWiseData = "select sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount,X_BranchName from vw_BranchWiseSales where MONTH(D_SalesDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_SalesDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID ="+nCompanyID + crieteria + "Group BY X_BranchName,N_CompanyID";
-             string sqlCustomerbySource = "select top(5) Customer as X_LeadSource,sum(Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)) ) as N_Percentage from vw_InvSalesInvoiceNo_Search where N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID + crieteria + " group by Customer order by N_Percentage Desc";
+             string sqlCustomerbySource = "select top(5) Customer as X_LeadSource,sum(Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)) ) as N_Percentage from vw_InvSalesInvoiceNo_Search where N_TypeID!=1 and  N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID + crieteria + " group by Customer order by N_Percentage Desc";
              string sqlPipelineoppotunity = "select count(*) as N_Count from CRM_Opportunity where (N_ClosingStatusID=0 or N_ClosingStatusID is null) and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID + crieteria;
              string sqlReceivedRevenue = "SELECT SUM(Inv_PayReceiptDetails.N_AmountF-Inv_PayReceiptDetails.N_DiscountAmtF)as N_ReceivedAmount FROM Inv_PayReceiptDetails INNER JOIN Inv_PayReceipt ON Inv_PayReceiptDetails.N_PayReceiptId = Inv_PayReceipt.N_PayReceiptId AND Inv_PayReceiptDetails.N_CompanyID = Inv_PayReceipt.N_CompanyID where Inv_PayReceipt.X_Type in ('SR','SA') and MONTH(Cast(Inv_PayReceiptDetails.D_Entrydate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(Inv_PayReceiptDetails.D_Entrydate)= YEAR(CURRENT_TIMESTAMP) and Inv_PayReceiptDetails.N_CompanyID = " + nCompanyID  + " and Inv_PayReceipt.N_FnyearID="+nFnYearID + crieteria1;
             // string sqlOpenQuotation = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesQuotationNo_Search WHERE MONTH(D_QuotationDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)";
@@ -162,13 +162,13 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "Select * from vw_SalesOrder_Dashboard Where MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_FnyearID="+nFnYearId + crieteria ;
+                    sqlCommandCount = "Select  count(*) from vw_SalesOrder_Dashboard Where YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_FnyearID="+nFnYearId + crieteria ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(api.Warning("No Results Found"));
+                        return Ok(api.Success(OutPut));
                     }
                     else
                     {
@@ -229,13 +229,13 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = api.Format(dt);
-                    sqlCommandCount = "Select * from vw_InvSalesQuotationNo_Search Where  YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_FnyearID="+nFnYearId + crieteria + "  ";
+                    sqlCommandCount = "Select  count(*) from vw_InvSalesQuotationNo_Search Where  YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_FnyearID="+nFnYearId + crieteria + "  ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(api.Warning("No Results Found"));
+                       return Ok(api.Success(OutPut));
                     }
                     else
                     {
@@ -296,13 +296,13 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = api.Format(dt);
-                    sqlCommandCount = "Select * from vw_InvSalesInvoiceNo_Search Where  YEAR(D_SalesDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyId = " + nCompanyID + " and N_FnyearID="+nFnYearID + crieteria;
+                    sqlCommandCount = "Select count(*) from vw_InvSalesInvoiceNo_Search Where  YEAR(D_SalesDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyId = " + nCompanyID + " and N_FnyearID="+nFnYearID + crieteria;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(api.Warning("No Results Found"));
+                       return Ok(api.Success(OutPut));
                     }
                     else
                     {
