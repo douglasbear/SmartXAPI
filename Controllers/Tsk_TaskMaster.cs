@@ -696,29 +696,21 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                ///// all Updates
-                //  { 
-                //       int ParentID=0
-                //      ParentID= myFunctions.getintVAL(dLayer.ExecuteScalar("select N_ParentID from Tsk_TaskMaster  where N_TaskID="+nTaskID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
-                //      bool ok;
-                //      if(ParentID>0){ok=true;}else{ok=false;}
-                //      while (ok)
-                //        {
-                            
-
-
-
-                //             int ParentID=0
-                //             ParentID= myFunctions.getintVAL(dLayer.ExecuteScalar("select N_ParentID from Tsk_TaskMaster  where N_TaskID="+nTaskID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
-                           
-                //       }
-
-                    
-                //      if(nParentID>=)
-                //      double totalweightage= myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_WeightPercentage) from Tsk_TaskMaster  where N_ParentID="+nParentyID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
-                
-            
-                //  }
+                /// all Updates
+                 { 
+                      int ParentID=0;
+                     ParentID= myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ParentID from Tsk_TaskMaster  where N_TaskID="+nTaskID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
+                     bool ok;
+                     if(ParentID>0){ok=true;}else{ok=false;}
+                     while (ok)
+                       {
+                            double totalweightage= myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_WeightPercentage) from Tsk_TaskMaster  where N_ParentID="+ParentID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
+                            dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CompletedPercentage= "+totalweightage+"  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nParentyID, Params, connection,transaction);
+                             ParentID=0;
+                            ParentID= myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_TaskID from Tsk_TaskMaster  where N_TaskID="+ParentID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
+                            if(ParentID>0){ok=true;}else{ok=false;}
+                      }
+                 }
 
 
 
