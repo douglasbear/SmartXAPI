@@ -143,13 +143,13 @@ namespace SmartxAPI.Controllers
 
                         Params["N_FormID"] = 208;
 
-                        string x_Batch = dLayer.GetAutoNumber("Pay_MonthlyAddOrDed", "x_Batch", Params, connection, transaction);
-                        if (x_Batch == "")
-                        {
-                            transaction.Rollback();
-                            return Ok("Unable to generate Code");
-                        }
-                        AdnMaster.Rows[0]["x_Batch"] = x_Batch;
+                        // string x_Batch = dLayer.GetAutoNumber("Pay_MonthlyAddOrDed", "x_Batch", Params, connection, transaction);
+                        // if (x_Batch == "")
+                        // {
+                        //     transaction.Rollback();
+                        //     return Ok("Unable to generate Code");
+                        // }
+                        // AdnMaster.Rows[0]["x_Batch"] = x_Batch;
                     }
                     //  if (nTimeSheetID > 0)
                     // {
@@ -186,24 +186,24 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    int adnID = dLayer.SaveData("Pay_MonthlyAddOrDed", "n_TransID", "", "", AdnMaster, connection, transaction);
-                    if (adnID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok("Unable to save ");
-                    }
-                    for (int j = 0; j < AdnDetails.Rows.Count; j++)
-                    {
-                        AdnDetails.Rows[j]["n_TransID"] = adnID;
-                        AdnDetails.Rows[j]["n_RefID"] = N_PrjTimeSheetID;
-                    }
-                    int adnDetailsID = dLayer.SaveData("Pay_MonthlyAddOrDedDetails", "n_TransDetailsID", "", "", AdnDetails, connection, transaction);
+                    // int adnID = dLayer.SaveData("Pay_MonthlyAddOrDed", "n_TransID", "", "", AdnMaster, connection, transaction);
+                    // if (adnID <= 0)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok("Unable to save ");
+                    // }
+                    // for (int j = 0; j < AdnDetails.Rows.Count; j++)
+                    // {
+                    //     AdnDetails.Rows[j]["n_TransID"] = adnID;
+                    //     AdnDetails.Rows[j]["n_RefID"] = N_PrjTimeSheetID;
+                    // }
+                    // int adnDetailsID = dLayer.SaveData("Pay_MonthlyAddOrDedDetails", "n_TransDetailsID", "", "", AdnDetails, connection, transaction);
 
-                    if (adnDetailsID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok("Unable to save");
-                    }
+                    // if (adnDetailsID <= 0)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok("Unable to save");
+                    // }
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
@@ -231,7 +231,8 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Results = dLayer.DeleteData("prj_timesheetEntry", "n_TimeSheetID", nTimeSheetID, "", connection);
+                    dLayer.DeleteData("prj_timesheetEntry", "N_PrjTimeSheetID", nTimeSheetID, "", connection);
+                    Results = dLayer.DeleteData("prj_timesheetEntryMaster", "N_PrjTimeSheetID", nTimeSheetID, "", connection);
                     if (Results > 0)
                     {
                         return Ok(_api.Success("deleted"));
