@@ -162,13 +162,13 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "Select * from vw_SalesOrder_Dashboard Where MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_FnyearID="+nFnYearId + crieteria ;
+                    sqlCommandCount = "Select  count(*) from vw_SalesOrder_Dashboard Where YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_FnyearID="+nFnYearId + crieteria ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(api.Warning("No Results Found"));
+                        return Ok(api.Success(OutPut));
                     }
                     else
                     {
@@ -229,13 +229,13 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = api.Format(dt);
-                    sqlCommandCount = "Select * from vw_InvSalesQuotationNo_Search Where  YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_FnyearID="+nFnYearId + crieteria + "  ";
+                    sqlCommandCount = "Select  count(*) from vw_InvSalesQuotationNo_Search Where  YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_FnyearID="+nFnYearId + crieteria + "  ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(api.Warning("No Results Found"));
+                       return Ok(api.Success(OutPut));
                     }
                     else
                     {
@@ -296,13 +296,13 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = api.Format(dt);
-                    sqlCommandCount = "Select * from vw_InvSalesInvoiceNo_Search Where  YEAR(D_SalesDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyId = " + nCompanyID + " and N_FnyearID="+nFnYearID + crieteria;
+                    sqlCommandCount = "Select count(*) from vw_InvSalesInvoiceNo_Search Where  YEAR(D_SalesDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyId = " + nCompanyID + " and N_FnyearID="+nFnYearID + crieteria;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(api.Warning("No Results Found"));
+                       return Ok(api.Success(OutPut));
                     }
                     else
                     {
