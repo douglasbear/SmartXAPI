@@ -396,7 +396,7 @@ namespace SmartxAPI.Controllers
                         }
 
 
-
+                       
                         SortedList AutoReceiveParam = new SortedList();
                         AutoReceiveParam.Add("N_CompanyID", nCompanyID);
                         AutoReceiveParam.Add("N_TransferID", nTransferId);
