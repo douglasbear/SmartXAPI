@@ -279,6 +279,7 @@ namespace SmartxAPI.Controllers
                     DataTable MasterTable;
                     DataTable DetailTable;
                     string DocNo = "";
+                    int bAutoReceive =0;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
                     DataRow MasterRow = MasterTable.Rows[0];
@@ -290,7 +291,9 @@ namespace SmartxAPI.Controllers
                     int nLocationIDfrom = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationIDFrom"].ToString());
                     int nLocationIDto = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationIDTo"].ToString());
                     string X_ReferenceNo = MasterTable.Rows[0]["X_ReferenceNo"].ToString();
-                    // bool Processed =myFunctions.getBoolVAL(MasterTable.Rows[0]["N_Processed"]);
+                     if (MasterTable.Columns.Contains("b_AutoReceive"))
+                     bAutoReceive = myFunctions.getIntVAL(MasterTable.Rows[0]["b_AutoReceive"].ToString());
+        
                     string X_TransType = "TRANSFER";
 
                     // int nUsercategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserCategoryID"].ToString());
@@ -395,8 +398,9 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         }
 
-
-
+                         if (bAutoReceive==1)
+                         {
+                           
                         SortedList AutoReceiveParam = new SortedList();
                         AutoReceiveParam.Add("N_CompanyID", nCompanyID);
                         AutoReceiveParam.Add("N_TransferID", nTransferId);
@@ -408,16 +412,10 @@ namespace SmartxAPI.Controllers
                         {
                             transaction.Rollback();
                             return Ok(_api.Error(User, ex));
-                        }
-
-
-
-
-
+                        } 
+                         }
 
                     }
-
-
 
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
