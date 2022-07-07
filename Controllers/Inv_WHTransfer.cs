@@ -279,7 +279,7 @@ namespace SmartxAPI.Controllers
                     DataTable MasterTable;
                     DataTable DetailTable;
                     string DocNo = "";
-                    int bAutoReceive =0;
+                    bool bAutoReceive =false;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
                     DataRow MasterRow = MasterTable.Rows[0];
@@ -292,7 +292,7 @@ namespace SmartxAPI.Controllers
                     int nLocationIDto = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationIDTo"].ToString());
                     string X_ReferenceNo = MasterTable.Rows[0]["X_ReferenceNo"].ToString();
                      if (MasterTable.Columns.Contains("b_AutoReceive"))
-                     bAutoReceive = myFunctions.getIntVAL(MasterTable.Rows[0]["b_AutoReceive"].ToString());
+                     bAutoReceive = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_AutoReceive"].ToString());
         
                     string X_TransType = "TRANSFER";
 
@@ -398,7 +398,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         }
 
-                         if (bAutoReceive==1)
+                         if (bAutoReceive==true)
                          {
                            
                         SortedList AutoReceiveParam = new SortedList();
