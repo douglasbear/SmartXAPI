@@ -252,7 +252,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult GetDetails(string xPrjTimesheetCode, int nFnYearID, bool bShowAllBranchData, int nProjectID, DateTime date)
+        public ActionResult GetDetails(string xPrjTimesheetCode, int nFnYearID, bool bShowAllBranchData, int nProjectID, DateTime date,int nEmpID)
         {
             DataSet ds = new DataSet();
             SortedList Params = new SortedList();
@@ -308,12 +308,12 @@ namespace SmartxAPI.Controllers
 
                         if (nProjectID > 0)
                         {
-                            _sqlQuery = "Select * from vw_Prj_TimeSheet Where N_CompanyID=@nCompanyID and N_ProjectID=@nProjectID and D_Date=@dDate ";
+                            _sqlQuery = "Select * from vw_Prj_TimeSheet Where N_CompanyID=@nCompanyID and N_ProjectID=@nProjectID and D_Date=@dDate and N_EmpID="+nEmpID+" ";
                         }
                         else
                         {
                             QueryParams.Add("@N_PrjTimeSheetID", Master.Rows[0]["N_PrjTimeSheetID"].ToString());
-                            _sqlQuery = "Select * from vw_Prj_TimeSheet Where N_CompanyID=@nCompanyID  and N_PrjTimeSheetID=@N_PrjTimeSheetID";
+                            _sqlQuery = "Select * from vw_Prj_TimeSheet Where N_CompanyID=@nCompanyID  and N_PrjTimeSheetID=@N_PrjTimeSheetID and N_EmpID="+nEmpID+" ";
                         }
                         Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 

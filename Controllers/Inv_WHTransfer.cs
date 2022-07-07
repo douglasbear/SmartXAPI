@@ -292,7 +292,7 @@ namespace SmartxAPI.Controllers
                     int nLocationIDto = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationIDTo"].ToString());
                     string X_ReferenceNo = MasterTable.Rows[0]["X_ReferenceNo"].ToString();
                      if (MasterTable.Columns.Contains("b_AutoReceive"))
-                     bAutoReceive = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_AutoReceive"].ToString());
+                            bAutoReceive = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_AutoReceive"].ToString());
         
                     string X_TransType = "TRANSFER";
 
@@ -398,7 +398,11 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         }
 
+<<<<<<< HEAD
                          if (bAutoReceive==true)
+=======
+                         if (bAutoReceive)
+>>>>>>> 40b1d2e724190469733096fd26acd7cd19e20384
                          {
                            
                         SortedList AutoReceiveParam = new SortedList();
@@ -509,7 +513,7 @@ namespace SmartxAPI.Controllers
                     int N_LocationIDFrom = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationIDFrom"].ToString());
                     // DateTime dTransdate = Convert.ToDateTime(MasterTable.Rows[0]["D_ReceiptDate"].ToString());
                     Params.Add("@nTransferId", nTransferId);
-                    DetailGetSql = "Select vw_InvTransferStockDetails.*,dbo.[SP_LocationStock](vw_InvTransferStockDetails.N_ItemID," + N_LocationIDFrom + ") As N_Stock ,dbo.SP_Cost_Loc(vw_InvTransferStockDetails.N_ItemID,vw_InvTransferStockDetails.N_CompanyID,''," + N_LocationIDFrom + ") As N_LPrice,dbo.SP_SellingPrice(vw_InvTransferStockDetails.N_ItemID,vw_InvTransferStockDetails.N_CompanyID) As N_UnitSPrice " +
+                    DetailGetSql = "Select vw_InvTransferStockDetails.*,dbo.[SP_BatchStock](vw_InvTransferStockDetails.N_ItemID," + N_LocationIDFrom + ",vw_InvTransferStockDetails.X_BatchCode,0) As N_Stock ,dbo.SP_Cost_Loc(vw_InvTransferStockDetails.N_ItemID,vw_InvTransferStockDetails.N_CompanyID,''," + N_LocationIDFrom + ") As N_LPrice,dbo.SP_SellingPrice(vw_InvTransferStockDetails.N_ItemID,vw_InvTransferStockDetails.N_CompanyID) As N_UnitSPrice " +
                     " from vw_InvTransferStockDetails  Where vw_InvTransferStockDetails.N_CompanyID=" + nCompanyID + " and vw_InvTransferStockDetails.N_TransferId=" + nTransferId + "";
                     Details = dLayer.ExecuteDataTable(DetailGetSql, Params, connection);
                     Details = myFunctions.AddNewColumnToDataTable(Details, "N_ClassID", typeof(int), 0);

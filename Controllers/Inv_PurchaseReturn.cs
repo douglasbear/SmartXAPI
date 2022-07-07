@@ -212,12 +212,15 @@ namespace SmartxAPI.Controllers
 
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
+            SortedList NewParams = new SortedList();
+             NewParams.Add("@p1", nCompanyId);
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
             DataTable DataTable = new DataTable();
             if (xCreditNoteNo == null) xCreditNoteNo = "";
             if (xInvoiceNo == null) xInvoiceNo = "0";
             string Mastersql = "";
+           
 
             if (bAllBranchData == true)
             {
@@ -254,6 +257,28 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    if (xCreditNoteNo != "")
+                    {
+                     object purchaseID=dLayer.ExecuteScalar("select N_PurchaseID from Inv_PurchaseReturnMaster where N_CompanyID="+nCompanyId+" and N_FnYearID ="+nFnYearId+" and X_CreditNoteNo="+xCreditNoteNo+"",NewParams,connection);
+                     if((purchaseID!=null && purchaseID !="") && myFunctions.getIntVAL(purchaseID.ToString())>0)
+                     {
+                         if (bAllBranchData == true)
+                         {
+                           if (xInvoiceNo == "0")
+                             Mastersql = "[SP_Inv_PurchaseReturnDirect_Display] @p1, 0, @p3,@p2,'PURCHASE',0";
+                        
+                        }
+                        else
+                         {
+                           if (xInvoiceNo == "0")
+                             {
+                              Mastersql = "[SP_Inv_PurchaseReturnDirect_Display] @p1, 0, @p3,@p2,'PURCHASE',@p5";
+                              Params.Add("@p5", nBranchID);
+                              }
+                       }
+                     }
+                    }
+
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
 
                     MasterTable = _api.Format(MasterTable, "Master");
@@ -263,6 +288,21 @@ namespace SmartxAPI.Controllers
                     string DetailSql = "";
                     if (xCreditNoteNo != "")
                     {
+                            int N_PurchaseID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PurchaseID"].ToString());
+                            if(N_PurchaseID>0)
+                        {
+                                if (bAllBranchData == true)
+                        {
+                            DetailSql = "Select Vw_InvPurchaseReturnDirect.*,dbo.SP_LocationStock(Vw_InvPurchaseReturnDirect.N_ItemID,vw_InvPurchaseReturnEdit_Disp.N_LocationID) As N_Stock from Vw_InvPurchaseReturnDirect Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0";
+                        }
+                        else
+                        {
+                            DetailSql = "Select Vw_InvPurchaseReturnDirect.*,dbo.SP_LocationStock(Vw_InvPurchaseReturnDirect.N_ItemID,vw_InvPurchaseReturnEdit_Disp.N_LocationID) As N_Stock from Vw_InvPurchaseReturnDirect Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0 and N_BranchId=@p5";
+                        }
+
+                        }
+                        else
+                        {
                         if (bAllBranchData == true)
                         {
                             DetailSql = "Select vw_InvPurchaseReturnEdit_Disp.*,dbo.SP_LocationStock(vw_InvPurchaseReturnEdit_Disp.N_ItemID,vw_InvPurchaseReturnEdit_Disp.N_LocationID) As N_Stock from vw_InvPurchaseReturnEdit_Disp Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0";
@@ -271,7 +311,7 @@ namespace SmartxAPI.Controllers
                         {
                             DetailSql = "Select vw_InvPurchaseReturnEdit_Disp.*,dbo.SP_LocationStock(vw_InvPurchaseReturnEdit_Disp.N_ItemID,vw_InvPurchaseReturnEdit_Disp.N_LocationID) As N_Stock from vw_InvPurchaseReturnEdit_Disp Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0 and N_BranchId=@p5";
                         }
-
+                        }
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
 
 
@@ -393,8 +433,8 @@ namespace SmartxAPI.Controllers
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["N_CreditNoteID"] = N_CreditNoteID;
-                        DetailTable.Rows[j]["n_RetQty"] = (myFunctions.getVAL(DetailTable.Rows[j]["n_RetQty"].ToString())) * (myFunctions.getVAL(DetailTable.Rows[j]["N_UnitQty"].ToString()));
-                        DetailTable.Rows[j]["N_QtyDisplay"] = DetailTable.Rows[j]["n_RetQty"];
+                        // DetailTable.Rows[j]["n_RetQty"] = (myFunctions.getVAL(DetailTable.Rows[j]["n_RetQty"].ToString())) * (myFunctions.getVAL(DetailTable.Rows[j]["N_UnitQty"].ToString()));
+                        // DetailTable.Rows[j]["N_QtyDisplay"] = DetailTable.Rows[j]["n_RetQty"];
                     }
                     if(DetailTable.Columns.Contains("N_UnitQty"))
                     DetailTable.Columns.Remove("N_UnitQty");

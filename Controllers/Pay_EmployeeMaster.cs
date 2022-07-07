@@ -107,12 +107,12 @@ namespace SmartxAPI.Controllers
                         if (nIsManager != null)
                         {
                             if (nUserEmpID == myFunctions.getIntVAL(nIsManager.ToString()))
-                                flag = true;
+                                flag = false;
                         }
                         if (nIsCoordinator != null)
                         {
                             if (nUserEmpID == myFunctions.getIntVAL(nIsCoordinator.ToString()))
-                                flag = true;
+                                flag = false;
                         }
                         if (flag == true)
                         {
