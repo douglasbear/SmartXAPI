@@ -328,15 +328,18 @@ namespace SmartxAPI.Controllers
                     Paragraph p1 = new Paragraph(new Chunk(xItemName, font));
                     p1.IndentationRight = 100;
                     p1.IndentationLeft = 100;
-                    //Chunk c1 = new Chunk(xItemName);
                     doc.Add(p1);
 
                     bimageloc = bimageloc + xBarcode + ".png";
                     var logo = iTextSharp.text.Image.GetInstance(bimageloc);
-                    // logo.SetAbsolutePosition(0, 550);
                     logo.ScaleAbsoluteHeight(100);
                     logo.ScaleAbsoluteWidth(280);
                     doc.Add(logo);
+
+                    Paragraph p2 = new Paragraph(new Chunk(xBarcode, font));
+                    p2.IndentationRight = 100;
+                    p2.IndentationLeft = 100;
+                    doc.Add(p2);
                     doc.NewPage();
 
                 }
