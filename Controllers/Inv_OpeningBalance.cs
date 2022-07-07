@@ -52,8 +52,8 @@ namespace SmartxAPI.Controllers
                     ProParams.Add("N_BranchID",nBranchID);
 
                     SqlTransaction transaction = connection.BeginTransaction();
-                    partylist = dLayer.ExecuteDataTablePro("Sp_Inv_OpeningBalance_View", ProParams, connection,transaction);
-                    details = dLayer.ExecuteDataTablePro("Sp_Inv_OpeningBalance_DispAll", ProParams, connection,transaction);
+                    partylist = dLayer.ExecuteDataTablePro("Sp_Inv_OpeningBalance_CloudView", ProParams, connection,transaction);
+                    details = dLayer.ExecuteDataTablePro("Sp_Inv_OpeningBalance_CloudDispAll", ProParams, connection,transaction);
 
                     settings.Clear();
                     settings.Columns.Add("N_CompanyID");
