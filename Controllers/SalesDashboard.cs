@@ -60,6 +60,7 @@ namespace SmartxAPI.Controllers
             string sqlCustomerbySource = "select top(5) Customer as X_LeadSource,sum(Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)) ) as N_Percentage from vw_InvSalesInvoiceNo_Search where N_CompanyID = " + nCompanyID  + " and N_TypeID <>1 and  N_FnyearID="+nFnYearID + crieteria + " group by Customer order by N_Percentage Desc";
             string sqlPipelineoppotunity = "select count(*) as N_Count from CRM_Opportunity where (N_ClosingStatusID=0 or N_ClosingStatusID is null) and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID + crieteria;
             string sqlReceivedRevenue = "select sum(N_ReceivedAmount) as N_ReceivedAmount,N_CompanyId from (select SUM(N_BillAmt)+ SUM(N_TaxAmt) AS N_ReceivedAmount,Inv_Sales.N_CompanyId from Inv_Sales WHERE N_PaymentMethodId=1 AND MONTH(Cast(Inv_Sales.D_Entrydate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(Inv_Sales.D_Entrydate)= YEAR(CURRENT_TIMESTAMP) AND N_CompanyId="+nCompanyID+" AND N_FnYearId="+nFnYearID+ crieteria +" group by Inv_Sales.N_CompanyID union SELECT SUM(Inv_PayReceiptDetails.N_AmountF-Inv_PayReceiptDetails.N_DiscountAmtF)as N_ReceivedAmount,Inv_PayReceiptDetails.N_CompanyID  FROM Inv_PayReceiptDetails INNER JOIN Inv_PayReceipt ON Inv_PayReceiptDetails.N_PayReceiptId = Inv_PayReceipt.N_PayReceiptId AND Inv_PayReceiptDetails.N_CompanyID = Inv_PayReceipt.N_CompanyID where Inv_PayReceipt.X_Type in ('SR','SA') and MONTH(Cast(Inv_PayReceiptDetails.D_Entrydate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(Inv_PayReceiptDetails.D_Entrydate)= YEAR(CURRENT_TIMESTAMP) and Inv_PayReceiptDetails.N_CompanyID = " + nCompanyID  + " and Inv_PayReceipt.N_FnyearID="+nFnYearID + revCriteria+" group by Inv_PayReceiptDetails.N_CompanyID) as temp where N_CompanyID="+nCompanyID+" group by N_CompanyID";
+            string sqlDailySales = " select sum(Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)) ) AS  TotalAmount,Cast(D_SalesDate as date) as d_date ,sum(Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)) ) AS  TotalCashAmount,Cast(D_SalesDate as date) as d_cashdate from vw_InvSalesInvoiceNo_Search  where MONTH(Cast(D_SalesDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_SalesDate)= YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID + crieteria + "  group by  Cast(D_SalesDate as date)";
             // string sqlReceivedRevenue = "SELECT SUM(Inv_PayReceiptDetails.N_AmountF-Inv_PayReceiptDetails.N_DiscountAmtF)as N_ReceivedAmount FROM Inv_PayReceiptDetails INNER JOIN Inv_PayReceipt ON Inv_PayReceiptDetails.N_PayReceiptId = Inv_PayReceipt.N_PayReceiptId AND Inv_PayReceiptDetails.N_CompanyID = Inv_PayReceipt.N_CompanyID where Inv_PayReceipt.X_Type in ('SR','SA') and MONTH(Cast(Inv_PayReceiptDetails.D_Entrydate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(Inv_PayReceiptDetails.D_Entrydate)= YEAR(CURRENT_TIMESTAMP) and Inv_PayReceiptDetails.N_CompanyID = " + nCompanyID  + " and Inv_PayReceipt.N_FnyearID="+nFnYearID + crieteria1;
             // string sqlOpenQuotation = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesQuotationNo_Search WHERE MONTH(D_QuotationDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)";
             // "select X_LeadSource,CAST(COUNT(*) as varchar(50)) as N_Percentage from vw_CRMLeads group by X_LeadSource";
@@ -73,7 +74,8 @@ namespace SmartxAPI.Controllers
             DataTable CurrentCustomer = new DataTable();
             DataTable OpenOpportunities = new DataTable();
             DataTable ReceivedRevenue = new DataTable();
-           DataTable BranchWiseData = new DataTable();
+            DataTable BranchWiseData = new DataTable();
+            DataTable DailySales = new DataTable();
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -87,6 +89,7 @@ namespace SmartxAPI.Controllers
                     OpenOpportunities = dLayer.ExecuteDataTable(sqlPipelineoppotunity, Params, connection);
                     ReceivedRevenue = dLayer.ExecuteDataTable(sqlReceivedRevenue, Params, connection);
                     BranchWiseData = dLayer.ExecuteDataTable(sqlBranchWiseData, Params, connection);
+                    DailySales = dLayer.ExecuteDataTable(sqlDailySales, Params, connection);
                      if(B_customer) 
                      { 
                      Data.Add("permision",true);
@@ -102,15 +105,15 @@ namespace SmartxAPI.Controllers
                 OpenOpportunities.AcceptChanges();
                 ReceivedRevenue.AcceptChanges();
                 BranchWiseData.AcceptChanges();
-
+                DailySales.AcceptChanges();
                 if (CurrentOrder.Rows.Count > 0) Data.Add("orderData", CurrentOrder);
                 if (CurrentInvoice.Rows.Count > 0) Data.Add("invoiceData", CurrentInvoice);
                 if (CurrentQuotation.Rows.Count > 0) Data.Add("quotationData", CurrentQuotation);
                 if (CurrentCustomer.Rows.Count > 0) Data.Add("customerbySource", CurrentCustomer);
                 if (OpenOpportunities.Rows.Count > 0) Data.Add("opportunityData", OpenOpportunities);
                 if (ReceivedRevenue.Rows.Count > 0) Data.Add("receivedRevenue", ReceivedRevenue);
-                 if (BranchWiseData.Rows.Count > 0) Data.Add("branchWiseData", BranchWiseData);
-
+                if (BranchWiseData.Rows.Count > 0) Data.Add("branchWiseData", BranchWiseData);
+                if (DailySales.Rows.Count > 0) Data.Add("dailySales", DailySales);
                 return Ok(api.Success(Data));
 
             }
