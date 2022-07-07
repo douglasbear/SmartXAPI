@@ -98,7 +98,7 @@ namespace SmartxAPI.Controllers
             string Condition = "";
             if (query != "" && query != null)
             {
-                qry = " and (Description like @query or [Item Code] like @query ) ";
+                qry = " and (Description like @query or [Item Code] like @query or  X_BarCode like @query ) ";
                 Params.Add("@query", "%" + query + "%");
             }
             if(xBarcode!="" && xBarcode!=null)
