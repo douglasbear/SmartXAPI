@@ -62,21 +62,89 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listdetails")]
-        public ActionResult TimetableFillDetails(int nClassID,int nClassDivisionID)
+        public ActionResult TimetableFillDetails(int nClassID, int nClassDivisionID)
         {
             DataTable dt = new DataTable();
+            DataTable dtSunday = new DataTable();
+            DataTable dtMonday = new DataTable();
+            DataTable dtTuesday = new DataTable();
+            DataTable dtWednesday = new DataTable();
+            DataTable dtThursday = new DataTable();
+            DataTable dtFriday = new DataTable();
+            DataTable dtSaturday = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nClassID", nClassID);
             Params.Add("@nClassDivisionID", nClassDivisionID);
-            string sqlCommandText = "select * from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID";
+            dt = myFunctions.AddNewColumnToDataTable(dt, "Day", typeof(string), null);
+            dt = myFunctions.AddNewColumnToDataTable(dt, "weekdata", typeof(DataTable), null);
+            //string sqlCommandText = "select * from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID";
+            string sqlSunday = "select * from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Sunday'";
+            string sqlMonday = "select * from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Monday'";
+            string sqlTuesday = "select * from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Tuesday'";
+            string sqlWednesday = "select * from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Wednesday'";
+            string sqlThursday = "select * from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Thursday'";
+            string sqlFriday = "select * from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Friday'";
+            string sqlSaturday = "select * from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Saturday'";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    string Day = "";
+
+                    dtSunday = dLayer.ExecuteDataTable(sqlSunday, Params, connection);
+                    dtMonday = dLayer.ExecuteDataTable(sqlMonday, Params, connection);
+                    dtTuesday = dLayer.ExecuteDataTable(sqlTuesday, Params, connection);
+                    dtWednesday = dLayer.ExecuteDataTable(sqlWednesday, Params, connection);
+                    dtThursday = dLayer.ExecuteDataTable(sqlThursday, Params, connection);
+                    dtFriday = dLayer.ExecuteDataTable(sqlFriday, Params, connection);
+                    dtSaturday = dLayer.ExecuteDataTable(sqlSaturday, Params, connection);
+                    for (int i = 0; i <= 6; i++)
+                    {
+                        dt.Rows.Add();
+                        if (i == 0)
+                        {
+                            Day = "Sunday";
+                            dt.Rows[i]["weekdata"] = dtSunday;
+                        }
+                        if (i == 1)
+                        {
+                            Day = "Monday";
+                            dt.Rows[i]["weekdata"] = dtMonday;
+                        }
+                        if (i == 2)
+                        {
+                            Day = "Tuesday";
+                            dt.Rows[i]["weekdata"] = dtTuesday;
+                        }
+                        if (i == 3)
+                        {
+                            Day = "Wednesday";
+                            dt.Rows[i]["weekdata"] = dtWednesday;
+                        }
+                        if (i == 4)
+                        {
+                            Day = "Thursday";
+                            dt.Rows[i]["weekdata"] = dtThursday;
+                        }
+
+                        if (i == 5)
+                        {
+                            Day = "Friday";
+                            dt.Rows[i]["weekdata"] = dtFriday;
+                        }
+                        if (i == 6)
+                        {
+                            Day = "Saturday";
+                            dt.Rows[i]["weekdata"] = dtSaturday;
+                        }
+                        dt.Rows[i]["Day"] = Day;
+
+
+                    }
+
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -140,7 +208,7 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, e));
             }
         }
-        
+
 
         [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)
@@ -163,12 +231,12 @@ namespace SmartxAPI.Controllers
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     string X_WeekCode = MasterRow["x_WeekCode"].ToString();
 
-                    if(N_WeekID>0)
-                     {
-                      dLayer.DeleteData("Sch_Weekdays", "N_WeekID", N_WeekID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection,transaction);
-                      dLayer.DeleteData("Sch_WeekdaysDetails", "N_WeekID", N_WeekID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection,transaction);
-                     }
-               
+                    if (N_WeekID > 0)
+                    {
+                        dLayer.DeleteData("Sch_Weekdays", "N_WeekID", N_WeekID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+                        dLayer.DeleteData("Sch_WeekdaysDetails", "N_WeekID", N_WeekID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+                    }
+
                     if (X_WeekCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
