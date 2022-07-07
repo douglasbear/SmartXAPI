@@ -398,11 +398,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         }
 
-<<<<<<< HEAD
-                         if (bAutoReceive==true)
-=======
                          if (bAutoReceive)
->>>>>>> 40b1d2e724190469733096fd26acd7cd19e20384
                          {
                            
                         SortedList AutoReceiveParam = new SortedList();
