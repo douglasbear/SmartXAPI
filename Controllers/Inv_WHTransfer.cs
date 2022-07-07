@@ -279,6 +279,7 @@ namespace SmartxAPI.Controllers
                     DataTable MasterTable;
                     DataTable DetailTable;
                     string DocNo = "";
+                    bool bAutoReceive =false;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
                     DataRow MasterRow = MasterTable.Rows[0];
@@ -290,7 +291,9 @@ namespace SmartxAPI.Controllers
                     int nLocationIDfrom = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationIDFrom"].ToString());
                     int nLocationIDto = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationIDTo"].ToString());
                     string X_ReferenceNo = MasterTable.Rows[0]["X_ReferenceNo"].ToString();
-                    // bool Processed =myFunctions.getBoolVAL(MasterTable.Rows[0]["N_Processed"]);
+                     if (MasterTable.Columns.Contains("b_AutoReceive"))
+                            bAutoReceive = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_AutoReceive"].ToString());
+        
                     string X_TransType = "TRANSFER";
 
                     // int nUsercategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserCategoryID"].ToString());
@@ -395,8 +398,9 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         }
 
-
-                       
+                         if (bAutoReceive)
+                         {
+                           
                         SortedList AutoReceiveParam = new SortedList();
                         AutoReceiveParam.Add("N_CompanyID", nCompanyID);
                         AutoReceiveParam.Add("N_TransferID", nTransferId);
@@ -408,16 +412,10 @@ namespace SmartxAPI.Controllers
                         {
                             transaction.Rollback();
                             return Ok(_api.Error(User, ex));
-                        }
-
-
-
-
-
+                        } 
+                         }
 
                     }
-
-
 
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
@@ -511,7 +509,7 @@ namespace SmartxAPI.Controllers
                     int N_LocationIDFrom = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationIDFrom"].ToString());
                     // DateTime dTransdate = Convert.ToDateTime(MasterTable.Rows[0]["D_ReceiptDate"].ToString());
                     Params.Add("@nTransferId", nTransferId);
-                    DetailGetSql = "Select vw_InvTransferStockDetails.*,dbo.[SP_LocationStock](vw_InvTransferStockDetails.N_ItemID," + N_LocationIDFrom + ") As N_Stock ,dbo.SP_Cost_Loc(vw_InvTransferStockDetails.N_ItemID,vw_InvTransferStockDetails.N_CompanyID,''," + N_LocationIDFrom + ") As N_LPrice,dbo.SP_SellingPrice(vw_InvTransferStockDetails.N_ItemID,vw_InvTransferStockDetails.N_CompanyID) As N_UnitSPrice " +
+                    DetailGetSql = "Select vw_InvTransferStockDetails.*,dbo.[SP_BatchStock](vw_InvTransferStockDetails.N_ItemID," + N_LocationIDFrom + ",vw_InvTransferStockDetails.X_BatchCode,0) As N_Stock ,dbo.SP_Cost_Loc(vw_InvTransferStockDetails.N_ItemID,vw_InvTransferStockDetails.N_CompanyID,''," + N_LocationIDFrom + ") As N_LPrice,dbo.SP_SellingPrice(vw_InvTransferStockDetails.N_ItemID,vw_InvTransferStockDetails.N_CompanyID) As N_UnitSPrice " +
                     " from vw_InvTransferStockDetails  Where vw_InvTransferStockDetails.N_CompanyID=" + nCompanyID + " and vw_InvTransferStockDetails.N_TransferId=" + nTransferId + "";
                     Details = dLayer.ExecuteDataTable(DetailGetSql, Params, connection);
                     Details = myFunctions.AddNewColumnToDataTable(Details, "N_ClassID", typeof(int), 0);
