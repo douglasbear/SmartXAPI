@@ -548,6 +548,7 @@ namespace SmartxAPI.Controllers
                 }
                 DataTable dtpayReceipt = dLayer.ExecuteDataTable("SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and dbo.Inv_PayReceiptDetails.N_InventoryId in (" + nPurchaseID + ")", connection);
                 string InvoiceNos = "";
+                if (N_PaymentMethod == 2) {
                 foreach (DataRow var in dtpayReceipt.Rows)
                 {
                     InvoiceNos += var["X_VoucherNo"].ToString() + " , ";
@@ -555,7 +556,7 @@ namespace SmartxAPI.Controllers
                 char[] trim = { ',', ' ' };
                 TxnStatus["Label"] = TxnStatus["Label"].ToString() + " (Payment No: " + InvoiceNos.ToString().TrimEnd(trim) + ")";
             }
-
+            }
 
 
             return TxnStatus;

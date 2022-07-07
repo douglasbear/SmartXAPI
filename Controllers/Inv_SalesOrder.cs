@@ -345,6 +345,10 @@ namespace SmartxAPI.Controllers
                         {
                             InDeliveryNote = null;
                         }
+                        else
+                        {
+                            InDeliveryNote=1;
+                        }
                     }
 
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_SalesReceiptNo", typeof(string), InSales);

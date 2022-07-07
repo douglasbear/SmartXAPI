@@ -263,10 +263,11 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                             object childPattern = dLayer.ExecuteScalar("Select isnull(max(X_Pattern),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_TypeID=" + N_TypeID + " and N_MainLocationID=" + N_MainLocationID + " ", connection, transaction);
+                             object childPattern = dLayer.ExecuteScalar("Select isnull(max(X_Pattern),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + "  and N_MainLocationID=" + N_MainLocationID + " ", connection, transaction);
                             object parentMainPattern = dLayer.ExecuteScalar("select TOP 1  X_Pattern from Inv_Location where N_LocationID=" + N_MainLocationID + " and N_CompanyID=" + nCompanyID + " ", connection, transaction);
                           if (childPattern == null || childPattern.ToString() == "")
                             {
+                                
                                 MasterTable.Rows[0]["X_Pattern"] = parentMainPattern.ToString() + "10";
 
                             }
