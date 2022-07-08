@@ -118,15 +118,18 @@ namespace SmartxAPI.Controllers
                         }
                         MasterTable.Rows[0]["X_ExamTimeCode"] = xExamTimeCode;
                     }
+                    MasterTable.Columns.Remove("n_FnYearID");
+
                     nExamTimeMasterID = dLayer.SaveData("Sch_ExamTimeMaster", "N_ExamTimeMasterID", "", "", MasterTable, connection, transaction);
                     if (nExamTimeMasterID <= 0)
                     {
                         transaction.Rollback();
                         return Ok("Unable to save Exam TimeTable");
                     }
+                    dLayer.DeleteData("Sch_ExamTimeTable", "N_ExamTimeMasterID", nExamTimeMasterID, "", connection, transaction);
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        DetailTable.Rows[j]["nExamTimeMasterID"] = nExamTimeMasterID;
+                        DetailTable.Rows[j]["n_ExamTimeMasterID"] = nExamTimeMasterID;
                     }
                     int nExamTimeID = dLayer.SaveData("Sch_ExamTimeTable", "N_ExamTimeID", DetailTable, connection, transaction);
                     if (nExamTimeID <= 0)
