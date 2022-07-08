@@ -44,12 +44,25 @@ namespace SmartxAPI.Controllers
                 DetailTable = ds.Tables["details"];
                 int nCompanyID = myFunctions.GetCompanyID(User);
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-                int N_EvalSettingsID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_EvalSettingsID"].ToString());
+                int N_EvalSettingsID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_EvalSettingsID"].ToString());  
+                DateTime d_DateFrom = Convert.ToDateTime(MasterTable.Rows[0]["D_PeriodFrom"].ToString());
+                DateTime d_DateTo = Convert.ToDateTime(MasterTable.Rows[0]["D_PeriodTo"].ToString());
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
+
+                    object objProcessed = dLayer.ExecuteScalar("select COUNT(N_TemplateID) from pay_evaluationsettings where n_companyid="+nCompanyID+" and ((D_PeriodFrom<= convert(VARCHAR ,'"+d_DateFrom+"',23) and D_PeriodTo>=convert(VARCHAR ,'"+d_DateFrom+"',23)) or (D_PeriodFrom<=convert(VARCHAR ,'"+d_DateTo+"',23) and D_PeriodTo>=convert(VARCHAR ,'"+d_DateTo+"',23)) OR (D_PeriodFrom>=convert(VARCHAR ,'"+d_DateFrom+"',23) AND D_PeriodFrom<=convert(VARCHAR ,'"+d_DateTo+"',23) ) OR (D_PeriodTo>=convert(VARCHAR ,'"+d_DateFrom+"',23) AND D_PeriodTo<=convert(VARCHAR ,'"+d_DateTo+"',23) )) and N_TemplateID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_TemplateID"].ToString())+" and N_EvalSettingsID<>"+N_EvalSettingsID, connection,transaction);
+                    if (objProcessed == null) objProcessed = 0;
+
+                    if(myFunctions.getIntVAL(objProcessed.ToString())>0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Evaluation settings of this template already done in this date range!"));
+                    }
+
                     // Auto Gen
                     string xEvalSettingsCode = "";
                     var values = MasterTable.Rows[0]["X_EvalSettingsCode"].ToString();

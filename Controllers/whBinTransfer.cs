@@ -114,6 +114,33 @@ namespace SmartxAPI.Controllers
                     string xBinTransferHistoryCode = MasterRow["x_BinTransHistoryCode"].ToString();
                     
 
+                    //Parent Chaning Function
+                   foreach (DataRow row in DetailTable.Rows)
+                    {
+
+                       
+                        object childPattern = dLayer.ExecuteScalar("Select isnull(max(X_Pattern),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + "  and N_MainLocationID=" + myFunctions.getIntVAL(row["N_ParentLocationID"].ToString()) + " ", connection, transaction);
+                        if(childPattern.ToString()=="")
+                        {
+                            object parentMainPattern = dLayer.ExecuteScalar("select TOP 1  X_Pattern from Inv_Location where N_LocationID=" + myFunctions.getIntVAL(row["N_ParentLocationID"].ToString()) + " and N_CompanyID=" + nCompanyID + " ", connection, transaction);
+                              string newpattern = parentMainPattern.ToString() + "10";
+                                dLayer.ExecuteNonQuery("Update Inv_Location SET X_Pattern= '"+newpattern+"'  where N_CompanyID=" + nCompanyID + " and N_LocationID=" +myFunctions.getIntVAL(row["N_LocationID"].ToString()), Params, connection,transaction);
+                        dLayer.ExecuteNonQuery("Update Inv_Location SET N_MainLocationID= '"+ myFunctions.getIntVAL(row["N_ParentLocationID"].ToString())+"'  where N_CompanyID=" + nCompanyID + " and N_LocationID=" +myFunctions.getIntVAL(row["N_LocationID"].ToString()), Params, connection,transaction);                        
+
+                        }
+                        else
+                        {
+                        string removingPattern =childPattern.ToString().Substring(childPattern.ToString().Length-2);
+                        string addingPattern=((myFunctions.getIntVAL(removingPattern.ToString())) + 10 ).ToString();
+                        childPattern=childPattern.ToString().Remove(childPattern.ToString().Length-2);
+                        string Pattern=childPattern+addingPattern;
+                        dLayer.ExecuteNonQuery("Update Inv_Location SET X_Pattern= '"+Pattern+"'  where N_CompanyID=" + nCompanyID + " and N_LocationID=" +myFunctions.getIntVAL(row["N_LocationID"].ToString()), Params, connection,transaction);
+                        dLayer.ExecuteNonQuery("Update Inv_Location SET N_MainLocationID= '"+ myFunctions.getIntVAL(row["N_ParentLocationID"].ToString())+"'  where N_CompanyID=" + nCompanyID + " and N_LocationID=" +myFunctions.getIntVAL(row["N_LocationID"].ToString()), Params, connection,transaction);                        
+                        }
+                    }
+
+
+
                     string x_BinTransHistoryCode = "";
                     if (xBinTransferHistoryCode == "@Auto")
                     {

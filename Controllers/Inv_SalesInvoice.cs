@@ -987,6 +987,12 @@ namespace SmartxAPI.Controllers
                     int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
 
                     int N_PaymentMethodID = myFunctions.getIntVAL(MasterRow["n_PaymentMethodID"].ToString());
+
+                    if(N_PaymentMethodID==0){
+                          transaction.Rollback();
+                          return Ok(_api.Error(User, "No payment method selected !!"));
+                    }
+
                     int N_DeliveryNoteID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteId"].ToString());
                      int N_ServiceID = MasterTable.Columns.Contains("N_ServiceID")? myFunctions.getIntVAL(MasterRow["N_ServiceID"].ToString()):0;
                     int N_CreatedUser = myFunctions.getIntVAL(MasterRow["n_CreatedUser"].ToString());
@@ -1006,7 +1012,7 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nSalesID", N_SalesID);
                     QueryParams.Add("@nBranchID", N_BranchID);
                     QueryParams.Add("@nLocationID", N_LocationID);
-                    QueryParams.Add("@nCustomerID", N_CustomerID);
+                    QueryParams.Add("@nCustomerID", N_CustomerID); 
 
                     if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_SalesDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
                     {

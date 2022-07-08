@@ -94,7 +94,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p2",nFnYearID);
             Params.Add("@p3",nSessionID);
             Params.Add("@p4",dTransDate);
-            string sqlCommandText="Select * from Vw_POSTxnSummery where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SessionID=@p3 and D_TransDate=@p4 union all select 'Cash Opening' as X_BalanceType,CASE WHEN  N_CashBalance>0 then N_CashBalance else 0 END as Credit, 0 as Debit,Cast(D_SessionDate as date) as D_TransDate,N_CompanyID,N_FnYearID,N_SessionID from Acc_PosSession group by Acc_PosSession.N_CompanyID,Acc_PosSession.N_FnYearID,Acc_PosSession.N_CashBalance,Acc_PosSession.D_SessionDate,Acc_PosSession.N_SessionID having N_SessionID= (select max(N_SessionID)-1 from Acc_PosSession)";
+            string sqlCommandText="Select * from Vw_POSSessionSummery where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SessionID=@p3 and D_TransDate=@p4 ";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

@@ -1262,23 +1262,31 @@ namespace SmartxAPI.Controllers
 
                     connection.Open();
                      SqlTransaction transaction = connection.BeginTransaction();
-                 criteria = "select n_EmpID from Pay_TimesheetMaster where n_TimeSheetApproveID=@nTimeSheetApproveID and n_CompanyID=@nCompanyID";
+                 criteria = "select n_EmpID from Pay_TimesheetMaster where n_TimeSheetApproveID="+nTimeSheetApproveID+" and n_CompanyID="+nCompanyID;
 
-                 object Count = dLayer.ExecuteScalar("select count(*) from vw_PayProcessingDetails where n_EmpID in ("+criteria+") and X_PayrunText=@X_PayrunText", QueryParams, connection);               
+                 object Count = dLayer.ExecuteScalar("select count(*) from vw_PayProcessingDetails where n_EmpID in ("+criteria+") and X_PayrunText=@X_PayrunText", QueryParams, connection,transaction);               
                    if (myFunctions.getIntVAL(Count.ToString()) >0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable To Delete"));
                     }
 
+                   object DedID = dLayer.ExecuteScalar("select Top(1) N_TransID from Pay_MonthlyAddOrDedDetails where N_CompanyID="+nCompanyID+ " and B_TimeSheetEntry=1 and N_FormID=216 and N_RefID="+nTimeSheetApproveID, QueryParams, connection,transaction);               
+                   
+                    if(DedID==null)
+                    DedID=0;
+
                      Results = dLayer.DeleteData("Pay_TimeSheetApproveMaster", "N_TimeSheetApproveID", nTimeSheetApproveID,"N_CompanyID="+nCompanyID+ "", connection,transaction);
 
                     if (Results > 0)
                     {
-                        dLayer.DeleteData("Pay_MonthlyAddOrDedDetails ", "N_TransID", nTransID,"N_CompanyID="+nCompanyID+ "", connection,transaction);
-                        dLayer.DeleteData("Pay_MonthlyAddOrDed", "N_TransID", nTransID,"N_CompanyID="+nCompanyID+ "", connection,transaction);
-                        dLayer.DeleteData("Pay_VacationDetails", "N_TransID", nTransID,"N_CompanyID="+nCompanyID+" and N_EmpID in("+criteria+") and N_FormID=" + this.FormID+" and d_VacDateFrom>="+dFromDate+ " and D_VacDateTo<="+dToDate+ "", connection,transaction);
+                        dLayer.DeleteData("Pay_MonthlyAddOrDedDetails ", "N_RefID", nTimeSheetApproveID,"N_CompanyID="+nCompanyID+ " and B_TimeSheetEntry=1 and N_FormID=216", connection,transaction);
+                        dLayer.DeleteData("Pay_MonthlyAddOrDed", "N_TransID", myFunctions.getIntVAL(DedID.ToString()),"N_CompanyID="+nCompanyID+ "", connection,transaction);
+                        // dLayer.DeleteData("Pay_VacationDetails", "N_TransID", nTransID,"N_CompanyID="+nCompanyID+" and N_EmpID in("+criteria+") and N_FormID=" + this.FormID+" and d_VacDateFrom>='"+Convert.ToDateTime(dFromDate.ToString()) + "' and D_VacDateTo<='"+Convert.ToDateTime(dToDate.ToString()) + "'", connection,transaction);
                         dLayer.DeleteData("Pay_TimeSheet", "N_batchID", nBatchID,"N_CompanyID="+nCompanyID+ " and N_timeSheetApproveID="+nTimeSheetApproveID+" and N_FnYearID="+nFnYearID+ "", connection,transaction);
+                        dLayer.DeleteData("Pay_TimeSheetMaster", "N_batchID", nBatchID,"N_CompanyID="+nCompanyID+ " and N_TimeSheetApproveID="+nTimeSheetApproveID+" and N_FnYearID="+nFnYearID+ "", connection,transaction);
+                        
+
                         transaction.Commit();
                         return Ok(_api.Success("deleted"));
                     }

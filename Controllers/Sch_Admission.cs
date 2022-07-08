@@ -161,6 +161,13 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_AdmissionNo"] = Code;
                     }
                      MasterTable.Columns.Remove("n_FnYearId");
+                     string image = myFunctions.ContainColumn("i_Photo", MasterTable) ? MasterTable.Rows[0]["i_Photo"].ToString() : "";
+                     Byte[] photoBitmap = new Byte[image.Length];
+                     photoBitmap = Convert.FromBase64String(image);
+                       if (myFunctions.ContainColumn("i_Photo", MasterTable))
+                        MasterTable.Columns.Remove("i_Photo");
+                        MasterTable.AcceptChanges();
+
                     if (nAdmissionID > 0) 
                     {  
                         dLayer.DeleteData("Sch_Admission", "N_AdmissionID", nAdmissionID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
@@ -174,6 +181,11 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        if (image.Length > 0)
+                        {
+                         dLayer.SaveImage("Sch_Admission", "I_Photo", photoBitmap, "N_AdmissionID",nAdmissionID, connection, transaction);
+                        }
+                       
                         transaction.Commit();
                         return Ok(api.Success("Admission Completed"));
                     }

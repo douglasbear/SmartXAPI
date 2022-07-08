@@ -1,5 +1,3 @@
-using AutoMapper;
-using SmartxAPI.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -9,11 +7,8 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.IO;
-using System.Net;
-using System.Threading.Tasks;
 using System.Linq;
 using System.Net.Mail;
 using System.Text;
@@ -391,6 +386,7 @@ namespace SmartxAPI.Controllers
         {
             SortedList QueryParams = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
+            string xUserCategoryList = myFunctions.GetUserCategoryList(User);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -406,6 +402,18 @@ namespace SmartxAPI.Controllers
                         ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                     };
 
+ if (nPreview != 1)
+                    {
+                    object printAfterSave = dLayer.ExecuteScalar("select B_PrintAfterSave from Gen_PrintTemplates where N_CompanyID= " + nCompanyId+ " and N_FormID="+nFormID + " and  N_UsercategoryID in (" + xUserCategoryList + ")", connection, transaction);
+                         if (printAfterSave != null)
+                         {
+                  if(!myFunctions.getBoolVAL(printAfterSave.ToString()))
+                    {
+                         return Ok(_api.Error(User, "No-Print"));
+                    }
+                         }
+                           
+                    }
                     if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, nPreview, xrptname))
                     {
 
