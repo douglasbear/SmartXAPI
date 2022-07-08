@@ -40,7 +40,8 @@ namespace SmartxAPI.Controllers
 
             if(xFrom=="EvaluationSettings")
             {
-                sqlCommandText= "select * from Pay_AppraisalTemplate where N_CompanyID=@p1 and N_TemplateID not in (select N_TemplateID from pay_evaluationsettings where n_companyid=@p1 and (D_PeriodFrom<=@dPeriodFrom and D_PeriodTo>=@dPeriodFrom) or ((D_PeriodFrom<=@dPeriodTo and D_PeriodTo>=@dPeriodTo))) order by N_TemplateID"; 
+                //sqlCommandText= "select * from Pay_AppraisalTemplate where N_CompanyID=@p1 and N_TemplateID not in (select N_TemplateID from pay_evaluationsettings where n_companyid=@p1 and ((D_PeriodFrom<=@dPeriodFrom and D_PeriodTo>=@dPeriodFrom) or (D_PeriodFrom<=@dPeriodTo and D_PeriodTo>=@dPeriodTo))) order by N_TemplateID"; 
+                sqlCommandText= "select * from Pay_AppraisalTemplate where N_CompanyID=@p1 and N_TemplateID not in (select N_TemplateID from pay_evaluationsettings where n_companyid=@p1 and ((D_PeriodFrom<= @dPeriodFrom and D_PeriodTo>=@dPeriodFrom) or (D_PeriodFrom<=@dPeriodTo and D_PeriodTo>=@dPeriodTo) OR (D_PeriodFrom>=@dPeriodFrom AND D_PeriodFrom<=@dPeriodTo ) OR (D_PeriodTo>=@dPeriodFrom AND D_PeriodTo<=@dPeriodTo ))) order by N_TemplateID"; 
                 Params.Add("@dPeriodFrom", dPeriodFrom);
                 Params.Add("@dPeriodTo", dPeriodTo);
             }
