@@ -249,7 +249,7 @@ namespace SmartxAPI.Controllers
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable = _api.Format(MasterTable, "Master");
                         string DetailSql = "";
-                        DetailSql = "select N_CompanyID,0 as N_DeliveryNoteID,0 as N_DeliveryNoteDetailsID,N_ItemID,X_ItemName,X_ItemCode,X_BatchCode,D_ExpiryDate,N_ItemUnitID,X_ItemUnit,N_Qty,N_Qty as N_QtyDisplay,0 as N_Sprice,0 as N_IteDiscAmt,2 as N_ClassID,N_Qty as n_QtyDisplay,0 as N_Cost,N_LocationID from vw_WhPickListDetails where N_CompanyId=@nCompanyID and N_PickListID=@nPickListID";
+                        DetailSql = "select N_CompanyID,0 as N_DeliveryNoteID,0 as N_DeliveryNoteDetailsID,N_ItemID,X_ItemName,X_ItemCode,X_BatchCode,D_ExpiryDate,N_ItemUnitID,X_ItemUnit,N_Qty,N_Qty as N_QtyDisplay,0 as N_Sprice,0 as N_IteDiscAmt,2 as N_ClassID,N_Qty as n_QtyDisplay,0 as N_Cost,N_LocationID,X_CustomerSKU from vw_WhPickListDetails where N_CompanyId=@nCompanyID and N_PickListID=@nPickListID";
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
 
                         DetailTable = _api.Format(DetailTable, "Details");

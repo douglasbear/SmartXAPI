@@ -72,6 +72,7 @@ namespace SmartxAPI.Controllers
             DataTable dtThursday = new DataTable();
             DataTable dtFriday = new DataTable();
             DataTable dtSaturday = new DataTable();
+            DataTable dtMain = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
@@ -79,20 +80,22 @@ namespace SmartxAPI.Controllers
             Params.Add("@nClassDivisionID", nClassDivisionID);
             dt = myFunctions.AddNewColumnToDataTable(dt, "Day", typeof(string), null);
             dt = myFunctions.AddNewColumnToDataTable(dt, "weekdata", typeof(DataTable), null);
-            //string sqlCommandText = "select * from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID";
-            string sqlSunday = "select * from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Sunday'";
-            string sqlMonday = "select * from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Monday'";
-            string sqlTuesday = "select * from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Tuesday'";
-            string sqlWednesday = "select * from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Wednesday'";
-            string sqlThursday = "select * from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Thursday'";
-            string sqlFriday = "select * from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Friday'";
-            string sqlSaturday = "select * from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Saturday'";
+            dt = myFunctions.AddNewColumnToDataTable(dt, "x_weekname", typeof(string), null);
+            string sqlMain = "select * from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID";
+            string sqlSunday = "select CONVERT(VARCHAR(5),vw_TimetableDisplay.D_StartTime,108) +' - '+ CONVERT(VARCHAR(5),vw_TimetableDisplay.D_EndTime,108)as x_time from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Sunday'";
+            string sqlMonday = "select CONVERT(VARCHAR(5),vw_TimetableDisplay.D_StartTime,108) +' - '+ CONVERT(VARCHAR(5),vw_TimetableDisplay.D_EndTime,108)as x_time from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Monday'";
+            string sqlTuesday = "select CONVERT(VARCHAR(5),vw_TimetableDisplay.D_StartTime,108) +' - '+ CONVERT(VARCHAR(5),vw_TimetableDisplay.D_EndTime,108)as x_time from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Tuesday'";
+            string sqlWednesday = "select CONVERT(VARCHAR(5),vw_TimetableDisplay.D_StartTime,108) +' - '+ CONVERT(VARCHAR(5),vw_TimetableDisplay.D_EndTime,108)as x_time from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Wednesday'";
+            string sqlThursday = "select CONVERT(VARCHAR(5),vw_TimetableDisplay.D_StartTime,108) +' - '+ CONVERT(VARCHAR(5),vw_TimetableDisplay.D_EndTime,108)as x_time from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Thursday'";
+            string sqlFriday = "select CONVERT(VARCHAR(5),vw_TimetableDisplay.D_StartTime,108) +' - '+ CONVERT(VARCHAR(5),vw_TimetableDisplay.D_EndTime,108)as x_time from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Friday'";
+            string sqlSaturday = "select CONVERT(VARCHAR(5),vw_TimetableDisplay.D_StartTime,108) +' - '+ CONVERT(VARCHAR(5),vw_TimetableDisplay.D_EndTime,108)as x_time from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Saturday'";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     string Day = "";
+                    string Weekname = "";
 
                     dtSunday = dLayer.ExecuteDataTable(sqlSunday, Params, connection);
                     dtMonday = dLayer.ExecuteDataTable(sqlMonday, Params, connection);
@@ -101,12 +104,14 @@ namespace SmartxAPI.Controllers
                     dtThursday = dLayer.ExecuteDataTable(sqlThursday, Params, connection);
                     dtFriday = dLayer.ExecuteDataTable(sqlFriday, Params, connection);
                     dtSaturday = dLayer.ExecuteDataTable(sqlSaturday, Params, connection);
+                    dtMain = dLayer.ExecuteDataTable(sqlMain, Params, connection);
                     for (int i = 0; i <= 6; i++)
                     {
                         dt.Rows.Add();
                         if (i == 0)
                         {
                             Day = "Sunday";
+                            Weekname = dtMain.Rows[0]["x_weekname"].ToString();
                             dt.Rows[i]["weekdata"] = dtSunday;
                         }
                         if (i == 1)
@@ -141,6 +146,7 @@ namespace SmartxAPI.Controllers
                             dt.Rows[i]["weekdata"] = dtSaturday;
                         }
                         dt.Rows[i]["Day"] = Day;
+                        dt.Rows[i]["x_weekname"] = Weekname;
 
 
                     }
