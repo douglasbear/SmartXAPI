@@ -313,7 +313,23 @@ namespace SmartxAPI.Controllers
                         }
                         else if (N_TypeID != 0)
                         {
-                            object rowPattern = dLayer.ExecuteScalar("Select isnull(max(X_LocationCode),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_TypeID=" + N_TypeID + " and N_MainLocationID=" + N_MainLocationID + " ", connection, transaction);
+                            object rowPattern="";
+                            object parentID= dLayer.ExecuteScalar("Select isnull(N_WareHouseID,0) From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_LocationID=" + N_MainLocationID + " ", connection, transaction);
+                            if(myFunctions.getIntVAL(parentID.ToString())==0)
+                            {
+                                if(N_TypeID==5)
+                                {
+                                    rowPattern = dLayer.ExecuteScalar("Select isnull(max(X_LocationCode),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + "  and N_MainLocationID=" + N_MainLocationID + " ", connection, transaction);
+                                    x_LocationCodePattern = Convert.ToChar(rowPattern);
+                                    x_LocationCodePattern++;
+                                    MasterTable.Rows[0]["X_LocationCode"] = x_LocationCodePattern.ToString();
+
+
+                                }
+                            }
+                            else
+                            {
+                             rowPattern = dLayer.ExecuteScalar("Select isnull(max(X_LocationCode),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_TypeID=" + N_TypeID + " and N_MainLocationID=" + N_MainLocationID + " ", connection, transaction);
                             object parentRomPattern = dLayer.ExecuteScalar("select TOP 1  X_LocationCode from Inv_Location where N_LocationID=" + N_MainLocationID + " and N_CompanyID=" + nCompanyID + " ", connection, transaction);
                             if (rowPattern == null || rowPattern.ToString() == "")
                             {
@@ -330,6 +346,7 @@ namespace SmartxAPI.Controllers
                                 MasterTable.Rows[0]["X_LocationCode"] = parentRomPattern.ToString() + "-" + addingCode;
 
 
+                            }
                             }
                          
 

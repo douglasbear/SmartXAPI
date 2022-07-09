@@ -293,11 +293,11 @@ namespace SmartxAPI.Controllers
                         {
                                 if (bAllBranchData == true)
                         {
-                            DetailSql = "Select Vw_InvPurchaseReturnDirect.*,dbo.SP_LocationStock(Vw_InvPurchaseReturnDirect.N_ItemID,vw_InvPurchaseReturnEdit_Disp.N_LocationID) As N_Stock from Vw_InvPurchaseReturnDirect Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0";
+                            DetailSql = "Select vw_InvPurchaseReturnEdit_Disp.*,dbo.SP_LocationStock(vw_InvPurchaseReturnEdit_Disp.N_ItemID,vw_InvPurchaseReturnEdit_Disp.N_LocationID) As N_Stock from vw_InvPurchaseReturnEdit_Disp Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0";
                         }
                         else
                         {
-                            DetailSql = "Select Vw_InvPurchaseReturnDirect.*,dbo.SP_LocationStock(Vw_InvPurchaseReturnDirect.N_ItemID,vw_InvPurchaseReturnEdit_Disp.N_LocationID) As N_Stock from Vw_InvPurchaseReturnDirect Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0 and N_BranchId=@p5";
+                            DetailSql = "Select vw_InvPurchaseReturnEdit_Disp.*,dbo.SP_LocationStock(vw_InvPurchaseReturnEdit_Disp.N_ItemID,vw_InvPurchaseReturnEdit_Disp.N_LocationID) As N_Stock from vw_InvPurchaseReturnEdit_Disp Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0 and N_BranchId=@p5";
                         }
 
                         }
