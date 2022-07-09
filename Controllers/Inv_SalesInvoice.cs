@@ -376,7 +376,7 @@ namespace SmartxAPI.Controllers
                         DataTable DeliveryNoteID = new DataTable();
 
                         if(N_salesOrderID>0)
-                        DeliveryNoteID = dLayer.ExecuteDataTable("select N_DeliveryNoteID from Inv_SalesDetails Where N_SalesOrderID=" + N_salesOrderID + "", QueryParamsList, Con);
+                            DeliveryNoteID = dLayer.ExecuteDataTable("select N_DeliveryNoteID from Inv_SalesDetails Where N_SalesOrderID=" + N_salesOrderID + "", QueryParamsList, Con);
                        
                         if (DeliveryNoteID.Rows.Count > 0)
                         {
@@ -387,19 +387,19 @@ namespace SmartxAPI.Controllers
                                     DeliveryNoteAppend = DeliveryNoteAppend + "," + Avar["N_DeliveryNoteID"].ToString();
                             }
                             if (xDeliveryNoteID == "" || xDeliveryNoteID == null)
-                                DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") ";
+                                DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") order by N_SOdetailsID ASC ";
                             else
-                                DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") ";
+                                DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") order by N_SOdetailsID ASC ";
 
                         }
                         else
                         {
                             if ((xDeliveryNoteID == "" || xDeliveryNoteID == null) && N_salesOrderID>0)
-                                DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " ";
+                                DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " order by N_SOdetailsID ASC ";
                             else
-                                DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  ";
+                                DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  order by N_SOdetailsID ASC ";
 
-                        }
+                        }                                          
 
 
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
