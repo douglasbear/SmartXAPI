@@ -290,7 +290,7 @@ namespace SmartxAPI.Controllers
                         if (N_TypeID == 1)
                         {
 
-                            object roomPattern = dLayer.ExecuteScalar("Select isnull(max(X_LocationCode),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_TypeID=1 ", connection, transaction);
+                            object roomPattern = dLayer.ExecuteScalar("Select isnull(max(X_LocationCode),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_MainLocationID=" + N_MainLocationID + " ", connection, transaction);
                             object normalPattern = dLayer.ExecuteScalar("Select isnull(max(X_Pattern),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_TypeID=1 ", connection, transaction);
                            // object mainLocationPattern=dLayer.ExecuteScalar("Select isnull(max(X_Pattern),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_LocationID="+N_MainLocationID+"", connection, transaction);
                             if (roomPattern == null || roomPattern.ToString() == "")
