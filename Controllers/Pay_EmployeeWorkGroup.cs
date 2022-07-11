@@ -106,7 +106,7 @@ namespace SmartxAPI.Controllers
                     if (nPkeyID > 0)
                     {
                         dLayer.DeleteData("Pay_WorkingHours", "N_CatagoryID", nPkeyID, "", con, transaction);
-                        dLayer.DeleteData("Pay_AdditionalWorkingDays", "N_CatagoryID", nPkeyID, "", con, transaction);
+                        dLayer.DeleteData("Pay_EmployeeGroup", "N_PkeyID", nPkeyID, "", con, transaction);
                     }
                     DocNo = MasterTable.Rows[0]["X_PkeyCode"].ToString();
                     if (X_PkeyCode == "@Auto")
