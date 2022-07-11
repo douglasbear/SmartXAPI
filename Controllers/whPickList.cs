@@ -22,7 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly IMyFunctions myFunctions;
         private readonly IApiFunctions _api;
-        private readonly int nFormID = 1463;
+
         public WhPickList(IDataAccessLayer dl, IMyFunctions myFun, IApiFunctions apiFun, IConfiguration conf)
         {
             dLayer = dl;
@@ -149,6 +149,7 @@ namespace SmartxAPI.Controllers
                     int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     string xPickListCode = MasterRow["x_PickListCode"].ToString();
+                    int nFormID = myFunctions.getIntVAL(MasterRow["n_FormID"].ToString());
 
                     string x_PickListCode = "";
                     if (xPickListCode == "@Auto")

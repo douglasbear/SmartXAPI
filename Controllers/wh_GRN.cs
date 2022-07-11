@@ -241,7 +241,7 @@ namespace SmartxAPI.Controllers
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
-                        Params.Add("N_FormID", 370);
+                        Params.Add("N_FormID", 1407);
                         Params.Add("N_YearID", N_FnYearID);
 
                         X_GRNNo = dLayer.GetAutoNumber("wh_GRN", "X_GRNNo", Params, connection, transaction);

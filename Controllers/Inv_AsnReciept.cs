@@ -186,7 +186,7 @@ namespace SmartxAPI.Controllers
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
-                        Params.Add("N_FormID", 370);
+                        Params.Add("N_FormID", 1406);
                         Params.Add("N_YearID", N_FnYearID);
                          
 
