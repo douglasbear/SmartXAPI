@@ -428,6 +428,43 @@ namespace SmartxAPI.Controllers
             }
         }
 
+
+              [HttpDelete("delete")]
+            public ActionResult DeleteData(int nTimesheetID,int nCompanyID,int nFnYearId)
+        {
+            int Results = 0;
+            string criteria = "";
+            try
+            {
+                SortedList QueryParams = new SortedList();
+                 DataTable TransData = new DataTable();
+                //  MasterTable = ds.Tables["master"];
+                QueryParams.Add("@nCompanyID", nCompanyID);
+                QueryParams.Add("@nTimesheetID", nTimesheetID);
+                 QueryParams.Add("@nFnYearId", nFnYearId);
+               
+               using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    Results = dLayer.DeleteData("Pay_TimesheetEntryEmp", "N_TimesheetID", nTimesheetID,"N_CompanyID=" + nCompanyID, connection);
+
+                    if (Results > 0)
+                    {
+                        dLayer.DeleteData("Pay_TimeSheetEntry", "N_TimesheetID", nTimesheetID, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearId, connection);
+                        return Ok(_api.Success("timeSheetEntry deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error(User, "Unable to delete"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+        }
+
     }
 }
 
