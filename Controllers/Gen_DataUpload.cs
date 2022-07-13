@@ -98,7 +98,8 @@ namespace SmartxAPI.Controllers
                             xTableName = "Mig_CustomerOpening";
                         if (dt.TableName.ToString().ToLower() == "vendor balances")
                             xTableName = "Mig_VendorOpening";
-                            
+                        if (dt.TableName.ToString().ToLower() == "sales invoice")
+                            xTableName = "Mig_SalesInvoice";   
 
                         if (dt.TableName.ToString().ToLower() == "product list" || dt.TableName.ToString().ToLower() == "products" || dt.TableName.ToString().ToLower() == "customer materials" )
                         {
@@ -158,6 +159,16 @@ namespace SmartxAPI.Controllers
                         if (dt.TableName.ToString().ToLower() == "warranty items")
                         {
                             xTableName = "Mig_WarrantyItem";
+                            Mastertable.Columns.Add("N_CompanyID");
+                            foreach (DataRow dtRow in Mastertable.Rows)
+                            {
+                                dtRow["N_CompanyID"] = nCompanyID;
+                            }
+                        }
+                           if (dt.TableName.ToString().ToLower() == "sales invoice")
+                        {
+                             Mastertable.Columns.Remove("Pkey_Code");
+                            xTableName = "mig_SalesInvoice";
                             Mastertable.Columns.Add("N_CompanyID");
                             foreach (DataRow dtRow in Mastertable.Rows)
                             {
@@ -241,7 +252,7 @@ namespace SmartxAPI.Controllers
                             ValidationParam.Add("X_Type", dt.TableName);
                             try
                             {
-                                dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
+                               dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
                             }
                             catch (Exception ex)
                             {
@@ -250,7 +261,19 @@ namespace SmartxAPI.Controllers
                             }
                             // if(ValFlag==null)return Ok(_api.Error(User, "Uploaded Error"));
                             // if(myFunctions.getIntVAL(ValFlag.ToString())==0)return Ok(_api.Error(User, "Uploaded Error"));
-                            dLayer.ExecuteNonQueryPro("SP_SetupData_cloud", Params, connection, transaction);
+                            if(dt.TableName.ToString().ToLower() == "sales invoice")
+                            {
+                            SortedList  SalesInvParam= new SortedList();
+                            SalesInvParam.Add("N_CompanyID", nCompanyID);
+                            SalesInvParam.Add("N_FnYearID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_FnYearID"].ToString()));
+                            SalesInvParam.Add("N_UserID",myFunctions.GetUserID(User));  
+                            dLayer.ExecuteNonQueryPro("SP_SalesInvoiceImport", SalesInvParam, connection, transaction);
+                            }
+                            else
+                            {
+                             dLayer.ExecuteNonQueryPro("SP_SetupData_cloud", Params, connection, transaction);
+                            }
+                           
                             if (nMasterID <= 0)
                             {
                                 transaction.Rollback();
