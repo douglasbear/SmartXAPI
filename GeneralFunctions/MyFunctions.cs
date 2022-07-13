@@ -119,7 +119,7 @@ namespace SmartxAPI.GeneralFunctions
             ICryptoTransform transform = provider.CreateEncryptor(key, IV);
             CryptoStream cryptoStream = new CryptoStream(memStream, transform, CryptoStreamMode.Write);
             cryptoStream.Write(byteInput, 0, byteInput.Length);
-            cryptoStream.FlushFinalBlock();
+            cryptoStream.FlushFinalBlock();   
 
             return Convert.ToBase64String(memStream.ToArray());
         }

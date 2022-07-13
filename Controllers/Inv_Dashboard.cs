@@ -206,12 +206,12 @@ namespace SmartxAPI.Controllers
                 
             // criteria="N_CompanyID ="+nCompanyID+" and N_LocationID="+nLocationID+" and N_BranchID="+nBranchID;
 
-            sqlAll = "SELECT COUNT(*) as N_Count FROM vw_InvItem_WHLink WHERE " + criteria1 + " and B_Inactive=0 and X_ItemCode <> '001' and N_ItemTypeID<>1";
-            sqlNoStock = "SELECT COUNT(*) as N_Count FROM vw_stockstatusbylocation WHERE " + criteria + " and N_CurrStock = 0";
-            sqlMinQty = "SELECT COUNT(*) as N_Count FROM vw_stockstatusbylocation WHERE " + criteria + " and N_CurrStock <=N_MinQty";
-            sqlReOrder = "SELECT COUNT(*) as N_Count FROM vw_stockstatusbylocation WHERE " + criteria + " and N_CurrStock <=N_ReOrderQty";
+            sqlAll = "SELECT COUNT(1) as N_Count FROM vw_InvItem_WHLink WHERE " + criteria1 + " and B_Inactive=0 and X_ItemCode <> '001' and N_ItemTypeID<>1";
+            sqlNoStock = "SELECT COUNT(1) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock = 0";
+            sqlMinQty = "SELECT COUNT(1) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock <= N_MinQty";
+            sqlReOrder = "SELECT COUNT(1) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock <= N_ReOrderQty";
 
-            sqlTopSell = "select Top 5 * from vw_TopSellingItem where N_ItemID in (select N_ItemID from vw_InvItem_Search_WHLink where " + criteria1 + ") and N_CompanyID ="+ nCompanyID+" order by N_Count Desc";
+            sqlTopSell = "select Top 5 * from vw_TopSellingItem where N_ItemID in (select N_ItemID from vw_InvItem_WHLink where " + criteria1 + ") and N_CompanyID ="+ nCompanyID+" order by N_Count Desc";
             sqlInvValue = "SELECT vw_InvStock_Status.N_CompanyID, Inv_ItemCategory.X_CategoryCode, Inv_ItemCategory.X_Category,SUM(vw_InvStock_Status.N_Factor*vw_InvStock_Status.N_Cost*vw_InvStock_Status.N_Qty) AS N_Value "
                             + "FROM vw_InvStock_Status INNER JOIN Inv_ItemMaster ON vw_InvStock_Status.N_ItemID = Inv_ItemMaster.N_ItemID AND vw_InvStock_Status.N_CompanyID = Inv_ItemMaster.N_CompanyID INNER JOIN "
                             + "Inv_ItemCategory ON Inv_ItemMaster.N_CategoryID = Inv_ItemCategory.N_CategoryID AND Inv_ItemMaster.N_CategoryID = Inv_ItemCategory.N_CategoryID AND Inv_ItemMaster.N_CompanyID = Inv_ItemCategory.N_CompanyID "

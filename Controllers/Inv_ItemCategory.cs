@@ -129,7 +129,7 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
                     }
                     MasterTable.Columns.Remove("N_FnYearId");
-                    MasterTable.Columns.Remove("b_IsParent");
+                    //MasterTable.Columns.Remove("b_IsParent");
                     string X_Category = MasterTable.Rows[0]["X_Category"].ToString();
                     string DupCriteria = "X_Category='" + X_Category + "' and N_CompanyID="+nCompanyID+"";
                     N_CategoryID = dLayer.SaveData("Inv_ItemCategory", "N_CategoryID", DupCriteria, "", MasterTable, connection, transaction);
