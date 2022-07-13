@@ -1261,6 +1261,7 @@ namespace SmartxAPI.Controllers
                         object N_Result = dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID= " + nCompanyID + " and N_FnYearID= " + nFnYearID, connection, transaction);
                         if (myFunctions.getIntVAL(myFunctions.getBoolVAL(N_Result.ToString())) == 1)
                         {
+                            transaction.Rollback();
                             return Ok(_api.Error(User, "Year Closed , Unable to delete product."));
                         }
 
