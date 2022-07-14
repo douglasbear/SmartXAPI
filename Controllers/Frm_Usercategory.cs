@@ -166,7 +166,7 @@ namespace SmartxAPI.Controllers
                             DataTable UserPrevilegesDT = new DataTable();
                             DataTable Printtemplates = new DataTable();
                             string sqlCommandText = "select 0 AS N_InternalID," + N_UserCategoryID + " AS N_UserCategoryID, N_MenuID, B_Visible, B_Edit, B_Delete, B_Save, B_View from Sec_UserPrevileges where N_UserCategoryID=" + FromUserCatID;
-                            string sqlCommandPrintTemplates = "insert into Gen_PrintTemplates SELECT N_CompanyID, N_FormID, X_RptName, X_Criteria, " + N_UserCategoryID + " AS N_UserCategoryID, N_PrintCopies, X_RptFolder, X_PkeyField, B_ClearScreenAfterSave, B_Custom,X_FormName FROM Gen_PrintTemplates where N_UserCategoryID=" + FromUserCatID;
+                            string sqlCommandPrintTemplates = "insert into Gen_PrintTemplates (N_CompanyID, N_FormID, X_RptName, X_Criteria, N_UserCategoryID, N_PrintCopies, X_RptFolder, X_PkeyField, B_ClearScreenAfterSave, B_Custom, X_FormName, B_PrintAfterSave) SELECT N_CompanyID, N_FormID, X_RptName, X_Criteria, " + N_UserCategoryID + " AS N_UserCategoryID, N_PrintCopies, X_RptFolder, X_PkeyField, B_ClearScreenAfterSave, B_Custom,X_FormName,B_PrintAfterSave FROM Gen_PrintTemplates where N_UserCategoryID=" + FromUserCatID+"";
                             UserPrevilegesDT = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
                             dLayer.ExecuteScalar(sqlCommandPrintTemplates, connection,transaction);
                             // Printtemplates = dLayer.ExecuteDataTable(sqlCommandPrintTemplates, Params, connection, transaction);
