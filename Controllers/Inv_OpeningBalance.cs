@@ -130,7 +130,7 @@ namespace SmartxAPI.Controllers
                     //     dLayer.DeleteData("Inv_Sales", "N_SalesID", myFunctions.getIntVAL(SaveDataTable.Rows[i]["n_SalesID"].ToString()), "", connection, transaction);
                     // }
 
-                    SaveDataTable.Columns.Remove("b_DeleteStatus");
+                    // SaveDataTable.Columns.Remove("b_DeleteStatus");
                     int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesID", SaveDataTable, connection, transaction);
 
                     if (nSalesID <= 0)
