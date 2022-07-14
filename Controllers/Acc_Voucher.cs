@@ -513,6 +513,7 @@ namespace SmartxAPI.Controllers
                     SortedList Result = new SortedList();
                     Result.Add("n_VoucherID", N_VoucherID);
                     Result.Add("x_POrderNo", xVoucherNo);
+                    Result.Add("x_TransType", xTransType);
                     return Ok(api.Success(Result, "Data Saved"));
                 }
             }
