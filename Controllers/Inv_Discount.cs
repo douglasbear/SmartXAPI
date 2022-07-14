@@ -38,7 +38,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
-            string sqlCommandText = "select * from Inv_DiscountMaster where N_CompanyID=@nCompanyID";
+            string sqlCommandText = "select * from Inv_DiscountMaster where N_CompanyID=@nCompanyID and isNull(B_Inactive,0)=0 order by D_Startdate desc";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -315,6 +315,69 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, ex));
             }
 
+        }
+
+        [HttpGet("dashboardList")]
+        public ActionResult GetGuardianList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_DiscCode like '%" + xSearchkey + "%' or X_Discount like '%" + xSearchkey + "%' or X_BranchName like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by X_Status,D_Startdate desc";
+            else
+            {
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "X_DiscCode":
+                        xSortBy = "X_DiscCode " + xSortBy.Split(" ")[1];
+                        break;
+                    default: break;
+                }
+                xSortBy = " order by " + xSortBy;
+            }
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_DiscountMaster where N_CompanyID=@nCompanyID  " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_DiscountMaster where N_CompanyID=@nCompanyID  " + Searchkey + " and N_DiscID not in (select top(" + Count + ") N_DiscID from vw_inv_DiscountMaster where N_CompanyID=@nCompanyID " + xSortBy + " ) " + " " + xSortBy;
+
+            Params.Add("@nCompanyID", nCompanyID);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    SortedList OutPut = new SortedList();
+
+                    sqlCommandCount = "select count(*) as N_Count  from vw_inv_DiscountMaster where N_CompanyID=@nCompanyID " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
         }
 
     }
