@@ -38,7 +38,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
-            string sqlCommandText = "select * from Inv_DiscountMaster where N_CompanyID=@nCompanyID";
+            string sqlCommandText = "select * from Inv_DiscountMaster where N_CompanyID=@nCompanyID and isNull(B_Inactive,0)=0 order by D_Startdate desc";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -332,7 +332,7 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and (X_DiscCode like '%" + xSearchkey + "%' or X_Discount like '%" + xSearchkey + "%' or X_BranchName like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by X_DiscCode desc";
+                xSortBy = " order by X_Status,D_Startdate desc";
             else
             {
                 switch (xSortBy.Split(" ")[0])
