@@ -81,8 +81,8 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from vw_InvSalesman where n_SalesmanID=@p3";
-            // Params.Add("@p1", nCompanyID);
+            string sqlCommandText = "select * from vw_InvSalesman where n_SalesmanID=@p3 and N_CompanyID=@p1";
+            Params.Add("@p1", myFunctions.GetCompanyID(User));
             // Params.Add("@p2", nFnyearID);
             Params.Add("@p3", n_SalesmanID);
 
