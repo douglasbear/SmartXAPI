@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("pricelist")]
-        public ActionResult GetPriceListDetails(int nCustomerID, int nBranchID, int nFnYearID, int nItemID, int nCategoryID, int nItemUnitID, double nQty, int nBrandID,int n_PriceTypeID)
+        public ActionResult GetPriceListDetails(int nCustomerID, int nBranchID, int nFnYearID, int nItemID, int nCategoryID, int nItemUnitID, double nQty, int nBrandID,int n_PriceTypeID,int nLocationID)
         {
             DataTable dtPriceList = new DataTable();
 
@@ -191,8 +191,30 @@ namespace SmartxAPI.Controllers
                         string pricelistAll = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_ItemID=0 and N_ItemUnitID=0 " + Condition + "";
                         dtPriceList = dLayer.ExecuteDataTable(pricelistAll, Params, connection);
                     }
+                     if(dtPriceList.Rows.Count>0)
+                    {
+                    foreach (DataRow row in dtPriceList.Rows)
+                    {
+                        string xItemUnit = "select X_ItemUnit from Inv_ItemUnit where N_ItemUnitID="+nItemUnitID+" and N_CompanyID="+nCompanyId+"";
+                        object unitName=dLayer.ExecuteScalar(xItemUnit,Params,connection);
+                        if(myFunctions.getVAL(row["N_MarginPerc"].ToString()) >0)
+                        {
+                            
+                                object LPrice= dLayer.ExecuteScalar("select dbo.SP_Cost_Loc("+nItemID+","+nCompanyId+",'"+unitName.ToString()+"'," + nLocationID + ")", Params, connection);  
+                                double lastcost=myFunctions.getVAL(LPrice.ToString());
+                                double percentageCost =((lastcost*myFunctions.getVAL(row["N_MarginPerc"].ToString()))/100);
+                                lastcost=lastcost+percentageCost;
+                                
+                                row["X_Price"]=lastcost;
+                            }
+                            dtPriceList.AcceptChanges();
+                        }
+
+                    
+                }
 
                 }
+         
 
                 if (dtPriceList.Rows.Count == 0)
                 {
