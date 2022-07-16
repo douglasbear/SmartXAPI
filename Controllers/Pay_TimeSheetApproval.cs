@@ -858,7 +858,7 @@ namespace SmartxAPI.Controllers
 
                                     if (myFunctions.getDateVAL(Convert.ToDateTime(row["D_Date"].ToString())) == myFunctions.getDateVAL(Date5))
                                     {
-                                        if (row["Attandance"].ToString() != "A")
+                                        if (row["Attandance"].ToString() != "A" && row["Attandance"].ToString() != "" )
                                         {
                                             N_WorkdHrs += HoursToMinutes(myFunctions.getVAL(row["N_Tothours"].ToString()));
                                             N_WorkHours += HoursToMinutes(myFunctions.getVAL(row["N_Workhours"].ToString()));
