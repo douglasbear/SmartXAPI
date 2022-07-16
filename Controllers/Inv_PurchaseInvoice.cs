@@ -603,6 +603,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nFnYearID = myFunctions.getIntVAL(masterRow["n_FnYearId"].ToString());
             int n_POrderID = myFunctions.getIntVAL(masterRow["N_POrderID"].ToString());
+            var vendorInvoice = masterRow["X_VendorInvoice"].ToString();
             int n_MRNID = 0;
             if (MasterTable.Columns.Contains("N_RsID"))
                 n_MRNID = myFunctions.getIntVAL(masterRow["N_RsID"].ToString());
@@ -758,7 +759,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
                         Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
                         Params.Add("N_FormID", this.N_FormID);
-
+                       
                         while (true)
                         {
                             InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
@@ -772,6 +773,14 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Unable to generate Invoice Number"));
                         }
                         MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
+
+                        object invoiceCount = dLayer.ExecuteScalar("select count(N_PurchaseID) as Count from inv_purchase where N_CompanyID= " + nCompanyID + " and X_VendorInvoice= " +vendorInvoice +" and N_VendorID = " + N_VendorID, connection, transaction);
+
+                        if (myFunctions.getIntVAL(invoiceCount.ToString()) >0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, "vendor invoice number already exist"));
+                            }
                     }
 
                     if (N_PurchaseID > 0)
