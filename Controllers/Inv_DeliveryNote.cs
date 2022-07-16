@@ -79,7 +79,7 @@ namespace SmartxAPI.Controllers
 
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or X_OrderNo like '%" + xSearchkey + "%' or [Invoice Date] like '%" + xSearchkey + "%' or D_DeliveryDate like '%" + xSearchkey + "%')";
+                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_CustPONo like '%" + xSearchkey +"%' or X_OrderNo like '%" + xSearchkey + "%' or [Invoice Date] like '%" + xSearchkey + "%' or D_DeliveryDate like '%" + xSearchkey + "%')";
 
                   if (bAllBranchData == true)
                         {
