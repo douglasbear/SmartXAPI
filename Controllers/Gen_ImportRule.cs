@@ -9,6 +9,7 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
+using System.Collections.Generic;
 
 namespace SmartxAPI.Controllers
 {
@@ -17,15 +18,16 @@ namespace SmartxAPI.Controllers
     [ApiController]
     public class Gen_ImportRule : ControllerBase
     {
-        private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions api;
+        private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int nFormID = 1471;
-        public Gen_ImportRule(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+
+        public Gen_ImportRule(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
+            api = apifun;
             dLayer = dl;
-            api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
@@ -72,10 +74,9 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId = myFunctions.GetCompanyID(User);
-
+            
             string sqlCommandText = "select * from vw_GenImportRuleList where N_CompanyID=@p1";
-            Params.Add("@p1", nCompanyId);
+            Params.Add("@p1", nCompanyID);
            
             try
             {
@@ -86,8 +87,7 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                   
-                     return Ok(api.Success(dt));
+                  return Ok(api.Success(dt));
                 }
                 else
                 {
@@ -164,7 +164,7 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    dLayer.SaveData("Gen_ImportRuleDetails", "N_DeviceDetailsID", Details, connection, transaction);
+                    dLayer.SaveData("Gen_ImportRuleDetails", "N_RuleDetailsID", Details, connection, transaction);
                     transaction.Commit();
                     SortedList Result = new SortedList();
 
