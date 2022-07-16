@@ -38,7 +38,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
-            string sqlCommandText = "select * from Inv_DiscountMaster where N_CompanyID=@nCompanyID";
+            string sqlCommandText = "select * from Inv_DiscountMaster where N_CompanyID=@nCompanyID and isNull(B_Inactive,0)=0 order by D_Startdate desc";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("pricelist")]
-        public ActionResult GetPriceListDetails(int nCustomerID, int nBranchID, int nFnYearID, int nItemID, int nCategoryID, int nItemUnitID, double nQty, int nBrandID,int n_PriceTypeID)
+        public ActionResult GetPriceListDetails(int nCustomerID, int nBranchID, int nFnYearID, int nItemID, int nCategoryID, int nItemUnitID, double nQty, int nBrandID,int n_PriceTypeID,int nLocationID)
         {
             DataTable dtPriceList = new DataTable();
 
@@ -191,8 +191,30 @@ namespace SmartxAPI.Controllers
                         string pricelistAll = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_ItemID=0 and N_ItemUnitID=0 " + Condition + "";
                         dtPriceList = dLayer.ExecuteDataTable(pricelistAll, Params, connection);
                     }
+                     if(dtPriceList.Rows.Count>0)
+                    {
+                    foreach (DataRow row in dtPriceList.Rows)
+                    {
+                        string xItemUnit = "select X_ItemUnit from Inv_ItemUnit where N_ItemUnitID="+nItemUnitID+" and N_CompanyID="+nCompanyId+"";
+                        object unitName=dLayer.ExecuteScalar(xItemUnit,Params,connection);
+                        if(myFunctions.getVAL(row["N_MarginPerc"].ToString()) >0)
+                        {
+                            
+                                object LPrice= dLayer.ExecuteScalar("select dbo.SP_Cost_Loc("+nItemID+","+nCompanyId+",'"+unitName.ToString()+"'," + nLocationID + ")", Params, connection);  
+                                double lastcost=myFunctions.getVAL(LPrice.ToString());
+                                double percentageCost =((lastcost*myFunctions.getVAL(row["N_MarginPerc"].ToString()))/100);
+                                lastcost=lastcost+percentageCost;
+                                
+                                row["X_Price"]=lastcost;
+                            }
+                            dtPriceList.AcceptChanges();
+                        }
+
+                    
+                }
 
                 }
+         
 
                 if (dtPriceList.Rows.Count == 0)
                 {
@@ -296,6 +318,19 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
+                    object objSInvoice = dLayer.ExecuteScalar("select COUNT(*) from Inv_Sales where N_CompanyId="+nCompanyID+" and N_FnYearId="+nFnYearID+" and N_DiscID="+n_DiscountId, connection);
+                    object objSInvoiceDetails = dLayer.ExecuteScalar("select COUNT(*) from Inv_SalesDetails where N_CompanyID="+nCompanyID+" and N_PriceListID="+n_DiscountId, connection);
+                    object objSOrder = dLayer.ExecuteScalar("select COUNT(*) from Inv_SalesOrder where N_CompanyId="+nCompanyID+" and N_FnYearId="+nFnYearID+" and N_PriceTypeID="+n_DiscountId, connection);
+                    object objSOrderDetails = dLayer.ExecuteScalar("select COUNT(*) from Inv_SalesOrderDetails where N_CompanyID="+nCompanyID+" and N_PriceListID="+n_DiscountId, connection);
+                    object objCustomer = dLayer.ExecuteScalar("select COUNT(*) from Inv_Customer where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+" and N_DiscID="+n_DiscountId, connection);
+                    if (objSInvoice == null) objSInvoice = 0; if (objSInvoiceDetails == null) objSInvoiceDetails = 0; if (objSOrder == null) objSOrder = 0;
+                    if (objSOrderDetails == null) objSOrderDetails = 0; if (objCustomer == null) objCustomer = 0;
+
+                    if(myFunctions.getIntVAL(objSInvoice.ToString())>0 || myFunctions.getIntVAL(objSInvoiceDetails.ToString())>0 || myFunctions.getIntVAL(objSOrder.ToString())>0 || myFunctions.getIntVAL(objSOrderDetails.ToString())>0 || myFunctions.getIntVAL(objCustomer.ToString())>0)
+                    {
+                        return Ok(api.Error(User, "Already Used! Unable to delete."));
+                    }
+
                     Results = dLayer.DeleteData("Inv_DiscountMaster", "N_DiscID", n_DiscountId, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection);
                     dLayer.DeleteData("Inv_DiscountDetails", "N_DiscID", n_DiscountId, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection);
 
@@ -315,6 +350,69 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, ex));
             }
 
+        }
+
+        [HttpGet("dashboardList")]
+        public ActionResult GetGuardianList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_DiscCode like '%" + xSearchkey + "%' or X_Discount like '%" + xSearchkey + "%' or X_BranchName like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by X_Status,D_Startdate desc";
+            else
+            {
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "X_DiscCode":
+                        xSortBy = "X_DiscCode " + xSortBy.Split(" ")[1];
+                        break;
+                    default: break;
+                }
+                xSortBy = " order by " + xSortBy;
+            }
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_DiscountMaster where N_CompanyID=@nCompanyID  " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_DiscountMaster where N_CompanyID=@nCompanyID  " + Searchkey + " and N_DiscID not in (select top(" + Count + ") N_DiscID from vw_inv_DiscountMaster where N_CompanyID=@nCompanyID " + xSortBy + " ) " + " " + xSortBy;
+
+            Params.Add("@nCompanyID", nCompanyID);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    SortedList OutPut = new SortedList();
+
+                    sqlCommandCount = "select count(*) as N_Count  from vw_inv_DiscountMaster where N_CompanyID=@nCompanyID " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
         }
 
     }

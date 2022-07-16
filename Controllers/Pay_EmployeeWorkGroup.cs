@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("Details")]
-        public ActionResult GetDetails(int categoryID, string xPkeyCode)
+        public ActionResult GetDetails(int categoryID, string xPkeyCode,bool isDefault)
         {
             try
             {
@@ -52,9 +52,9 @@ namespace SmartxAPI.Controllers
                     string workingHoursSql = "";
                     string AdditionalWorkingHourssql = "";
                     string sqlCommandText = "";
-                    if (xPkeyCode != null && xPkeyCode != "")
+                    if (!isDefault)
                     {
-                        sqlCommandText = "Select * From vw_EmpGrp_Workhours Where N_CompanyID=" + nCompanyID + " and X_PkeyCode='" + xPkeyCode + "'";
+                        sqlCommandText = "Select * From vw_EmpGrp_Workhours Where N_CompanyID=" + nCompanyID + " and N_PkeyID="+categoryID;
                         DataTable MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, Con);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable = _api.Format(MasterTable, "Master");
