@@ -365,7 +365,7 @@ namespace SmartxAPI.Controllers
             if (EmpStatus == 0)
                 Criteria = Criteria + " and N_Status<>3 and N_Status<>2 ";
             else if (EmpStatus == 1)
-                Criteria = Criteria + " and N_Status =3 or N_Status =2 ";
+                Criteria = Criteria + " and (N_Status =3 or N_Status =2) ";
 
 
 
