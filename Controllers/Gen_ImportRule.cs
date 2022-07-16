@@ -33,9 +33,6 @@ namespace SmartxAPI.Controllers
         }
 
 
-
-
-
  [HttpGet("listDetails")]
         public ActionResult GetImportListDetails(int nFormID, int nCompanyID)
         {
@@ -74,9 +71,10 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            
-            string sqlCommandText = "select * from vw_GenImportRuleList where N_CompanyID=@p1";
-            Params.Add("@p1", nCompanyID);
+            int nCompanyId = myFunctions.GetCompanyID(User);
+
+            string sqlCommandText = "select * from vw_GenImportRuleList where N_CompanyID=@p1 and b_IsDefault=1";
+            Params.Add("@p1", nCompanyId);
            
             try
             {
