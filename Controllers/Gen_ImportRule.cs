@@ -33,15 +33,13 @@ namespace SmartxAPI.Controllers
         }
 
 
- [HttpGet("listDetails")]
-        public ActionResult GetImportListDetails(int nFormID, int nCompanyID)
+ [HttpGet("defaultDetails")]
+        public ActionResult GetImportListDetails(int nFormID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from vw_GenImportRuleList where N_CompanyID=@p1 and N_FormID=@P2 and b_IsDefault=1";
-            Params.Add("@p1", nCompanyId);
+            string sqlCommandText = "select 0 as N_RuleID," + myFunctions.GetCompanyID(User) + " as N_CompanyID,0 as N_RuleDetailsID, X_FieldName,N_FieldID,'' as X_ColumnRefName from vw_GenImportRuleList where N_CompanyID=-1 and N_FormID=@p2 and b_IsDefault=1";
             Params.Add("@p2", nFormID);
             try
             {
@@ -50,15 +48,8 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
-                if (dt.Rows.Count == 0)
-                {
-                   
-                     return Ok(api.Success(dt));
-                }
-                else
-                {
                     return Ok(api.Success(dt));
-                }
+
             }
             catch (Exception e)
             {
@@ -67,14 +58,15 @@ namespace SmartxAPI.Controllers
         }
 
          [HttpGet("list")]
-        public ActionResult GetImportList(int nCompanyID)
+        public ActionResult GetImportList(int nFormID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from vw_GenImportRuleList where N_CompanyID=@p1 and b_IsDefault=1";
+            string sqlCommandText = "select * from Gen_ImportRuleMaster where N_CompanyID=@p1 and isnull(b_IsDefault,0)=0 and N_FormID=@p2";
             Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFormID);
            
             try
             {
