@@ -822,6 +822,7 @@ namespace SmartxAPI.Controllers
 
                 var dbName = "";
                 string Extention = "";
+                int LanguageID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LanguageID"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -832,6 +833,7 @@ namespace SmartxAPI.Controllers
                     int FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["nFnYearID"].ToString());
                     int BranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["nBranchID"].ToString());
                     int ActionID = myFunctions.getIntVAL(MasterTable.Rows[0]["action"].ToString());
+                    
                     int SalesmanID = 0;
                     string procParam = "";
                     string xProCode = "";
@@ -898,7 +900,7 @@ namespace SmartxAPI.Controllers
                         string xOperator = dLayer.ExecuteScalar("select isNull(X_Operator,'') from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
                         xProCode = dLayer.ExecuteScalar("select X_ProcCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         string xInstanceCode = dLayer.ExecuteScalar("select isNull(X_DataField,'') from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
-                        FieldName = dLayer.ExecuteScalar("select X_Text from vw_WebReportMenus where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and N_LanguageId=1", Params, connection).ToString();
+                        FieldName = dLayer.ExecuteScalar("select X_Text from vw_WebReportMenus where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and N_LanguageId="+LanguageID, Params, connection).ToString();
                         UserData = dLayer.ExecuteScalar("select X_DataFieldUserID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         FieldName = FieldName + "=";
 
@@ -1054,7 +1056,7 @@ namespace SmartxAPI.Controllers
                 //HttpClient client = new HttpClient(clientHandler);
 
                 var rptArray = reportName.Split(@"\");
-                string actReportLocation = reportLocation;
+                string actReportLocation = reportLocation.Remove(reportLocation.Length - 2, 2)+LanguageID+"/";
                 if (rptArray.Length > 1)
                 {
                     reportName = rptArray[1].ToString();
