@@ -428,6 +428,68 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        // [HttpGet("fillDefault")]
+        // public ActionResult Filldefault(DataTable elementsTable,int nEmpID, int nCatID)
+        // {
+        //     DataTable DefaultTable = new DataTable();
+
+        //     SortedList Params = new SortedList();
+
+        //     int nCompanyID = myFunctions.GetCompanyID(User);
+
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+
+        //             foreach (DataRow var in elementsTable.Rows)
+        //             {
+        //                 if ((var["D_In"] == "00:00:00" || var["D_In"] == "") && (var["D_Out"] == "00:00:00" || var["D_Out"] == "") && (var["D_Shift2_In"] == "00:00:00" || var["D_Shift2_In"] == "") && (var["D_Shift2_Out"] == "00:00:00" || var["D_Shift2_Out"] == ""))
+        //                 {
+        //                     string ActualSql = "Select * from Pay_EmpShiftDetails  Where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + var["D_Date"].ToString() + "' and N_ShiftID=(select Max(N_ShiftID) from Pay_EmpShiftDetails Where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + var["D_Date"].ToString() + "')";
+        //                     DefaultTable = dLayer.ExecuteDataTable(ActualSql, Params, connection);
+        //                     DefaultTable.AcceptChanges();
+        //                     if (DefaultTable.Rows.Count != 0)
+        //                     {
+        //                         nCatID = myFunctions.getIntVAL(DefaultTable.Rows[0]["N_GroupID"].ToString());
+
+        //                         var["D_In"] = DefaultTable.Rows[0]["D_In1"].ToString();
+        //                         var["D_Out"] = DefaultTable.Rows[0]["D_Out1"].ToString();
+        //                         var["D_Shift2_In"] = DefaultTable.Rows[0]["D_In2"].ToString();
+        //                         var["D_Shift2_Out"] = DefaultTable.Rows[0]["D_Out2"].ToString();
+        //                     }
+        //                     else if (nCatID > 0)
+        //                     {
+        //                         var["D_In"] = dLayer.ExecuteScalar("select D_In1 from Pay_WorkingHours where DATEPART(DW, '" + var["D_Date"].ToString() + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + nCatID + " and N_CompanyID=" + nCompanyID, Params, connection).ToString();
+        //                         var["D_Out"] = dLayer.ExecuteScalar("select D_Out1 from Pay_WorkingHours where DATEPART(DW, '" + var["D_Date"].ToString() + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + nCatID + " and N_CompanyID=" + nCompanyID, Params, connection).ToString();
+        //                         var["D_Shift2_In"] = dLayer.ExecuteScalar("select D_In2 from Pay_WorkingHours where DATEPART(DW, '" + var["D_Date"].ToString() + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + nCatID + " and N_CompanyID=" + nCompanyID, Params, connection).ToString();
+        //                         var["D_Shift2_Out"] = dLayer.ExecuteScalar("select D_Out2 from Pay_WorkingHours where DATEPART(DW, '" + var["D_Date"].ToString() + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + nCatID + " and N_CompanyID=" + nCompanyID, Params, connection).ToString();
+        //                     }
+        //                     else
+        //                     {
+        //                         var["D_In"] = "00:00:00";
+        //                         var["D_Out"] = "00:00:00";
+        //                         var["D_Shift2_In"] = "00:00:00";
+        //                         var["D_Shift2_Out"] = "00:00:00";
+        //                     }
+
+        //                     if (nCatID > 0)
+        //                         var["N_BreakHrs"] = myFunctions.getFloatVAL(dLayer.ExecuteScalar("select N_BreakHours from Pay_WorkingHours where DATEPART(DW, '" + var["D_Date"].ToString() + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + nCatID + " and N_CompanyID=" + nCompanyID, Params, connection).ToString());
+
+        //                 }
+        //             }
+        //         }
+        //         elementsTable.AcceptChanges();
+        //         elementsTable = _api.Format(elementsTable, "ElementsTable");
+        //         return Ok(_api.Success(elementsTable));
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(User,e));
+        //     }
+        // }
+
     }
 }
 
