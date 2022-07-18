@@ -73,7 +73,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from vw_GenImportRuleList where N_CompanyID=@p1 and b_IsDefault=1";
+            string sqlCommandText = "select * from vw_GenImportRuleList where N_CompanyID=@p1 and b_IsDefault=0";
             Params.Add("@p1", nCompanyId);
            
             try
