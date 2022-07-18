@@ -188,23 +188,34 @@ namespace SmartxAPI.Controllers
             int nUserID = myFunctions.GetUserID(User);
             string sqlAll = "", sqlNoStock = "", sqlMinQty = "", sqlReOrder = "", criteria = "";
             string sqlTopSell = "", sqlInvValue = "";
-
+            string criteriaValue=" ";
+            string criteria1="";
             if (bAllBranchData)
-                criteria = "N_CompanyID =" + nCompanyID;
+            {
+                criteria = "N_CompanyID ="+ nCompanyID ;
+                criteriaValue = "vw_InvStock_Status.N_CompanyID ="+nCompanyID ;
+                criteria1= "N_CompanyID ="+ nCompanyID;
+            }
+               
             else
-                criteria = "N_CompanyID =" + nCompanyID;
+            {
+                criteria = "N_CompanyID =" + nCompanyID+" and N_LocationID="+nLocationID;
+                criteriaValue = "vw_InvStock_Status.N_CompanyID =" + nCompanyID+" and vw_InvStock_Status.N_LocationID="+nLocationID;
+                criteria1= "N_CompanyID =" + nCompanyID+" and N_WarehouseID ="+ nLocationID;
+            }
+                
             // criteria="N_CompanyID ="+nCompanyID+" and N_LocationID="+nLocationID+" and N_BranchID="+nBranchID;
 
-            sqlAll = "SELECT COUNT(*) as N_Count FROM vw_InvItem_Search_cloud WHERE " + criteria + " and B_Inactive=0 and [Item Code]<> '001' and N_ItemTypeID<>1";
-            sqlNoStock = "SELECT COUNT(*) as N_Count FROM vw_stockstatusbylocation WHERE " + criteria + " and N_CurrStock = 0";
-            sqlMinQty = "SELECT COUNT(*) as N_Count FROM vw_stockstatusbylocation WHERE " + criteria + " and N_CurrStock <=N_MinQty";
-            sqlReOrder = "SELECT COUNT(*) as N_Count FROM vw_stockstatusbylocation WHERE " + criteria + " and N_CurrStock <=N_ReOrderQty";
+            sqlAll = "SELECT COUNT(1) as N_Count FROM vw_InvItem_WHLink WHERE " + criteria1 + " and B_Inactive=0 and X_ItemCode <> '001' and N_ItemTypeID<>1";
+            sqlNoStock = "SELECT COUNT(1) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock = 0";
+            sqlMinQty = "SELECT COUNT(1) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock <= N_MinQty";
+            sqlReOrder = "SELECT COUNT(1) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock <= N_ReOrderQty";
 
-            sqlTopSell = "select Top 5 * from vw_TopSellingItem where N_CompanyID=" + nCompanyID + " order by N_Count Desc";
+            sqlTopSell = "select Top 5 * from vw_TopSellingItem where N_ItemID in (select N_ItemID from vw_InvItem_WHLink where " + criteria1 + ") and N_CompanyID ="+ nCompanyID+" order by N_Count Desc";
             sqlInvValue = "SELECT vw_InvStock_Status.N_CompanyID, Inv_ItemCategory.X_CategoryCode, Inv_ItemCategory.X_Category,SUM(vw_InvStock_Status.N_Factor*vw_InvStock_Status.N_Cost*vw_InvStock_Status.N_Qty) AS N_Value "
                             + "FROM vw_InvStock_Status INNER JOIN Inv_ItemMaster ON vw_InvStock_Status.N_ItemID = Inv_ItemMaster.N_ItemID AND vw_InvStock_Status.N_CompanyID = Inv_ItemMaster.N_CompanyID INNER JOIN "
                             + "Inv_ItemCategory ON Inv_ItemMaster.N_CategoryID = Inv_ItemCategory.N_CategoryID AND Inv_ItemMaster.N_CategoryID = Inv_ItemCategory.N_CategoryID AND Inv_ItemMaster.N_CompanyID = Inv_ItemCategory.N_CompanyID "
-                            + "WHERE vw_InvStock_Status.N_CompanyID=" + nCompanyID + " "
+                            + "WHERE "+criteriaValue + " "
                             + "GROUP BY vw_InvStock_Status.N_CompanyID, Inv_ItemCategory.X_CategoryCode, Inv_ItemCategory.X_Category";
 
             SortedList Data = new SortedList();
@@ -254,7 +265,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("expiryList")]
-        public ActionResult ExpiryList(int nFnYearId,DateTime d_Date, int nPage, int nSizeperpage, string xSearchkey,int nLocationID, string xSortBy)
+        public ActionResult ExpiryList(int nFnYearId,DateTime d_Date, int nPage, int nSizeperpage, string xSearchkey,int nLocationID, string xSortBy, bool bAllBranchData)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -263,6 +274,20 @@ namespace SmartxAPI.Controllers
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Searchkey = "";
+            string criteria1="";
+              string criteria="";
+            if (bAllBranchData)
+            {
+                criteria = "N_CompanyID ="+ nCompanyID ;
+                criteria1= "N_CompanyID ="+ nCompanyID ;
+            }
+               
+            else
+            {
+                criteria = "N_CompanyID =" + nCompanyID+" and N_LocationID="+nLocationID;
+                criteria1= "N_CompanyID =" + nCompanyID+" and N_WarehouseID ="+ nLocationID;
+              
+            }
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearId);
             Params.Add("@p3",nLocationID);
@@ -276,9 +301,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
          
                 if (Count == 0)
-                    sqlCommandText = "select * from Vw_ItemWiseLocation where N_CompanyID="+nCompanyID+" and X_BatchCode is not null and D_ExpiryDate is not null and D_ExpiryDate <='"+d_Date+"' and  N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID="+nCompanyID+" and N_WarehouseID="+nLocationID+" ) and N_ItemID in (Select N_ItemID from Inv_StockMaster where N_CompanyID="+nCompanyID+" and N_LocationID="+nLocationID+" and D_ExpiryDate<='"+d_Date+"'  ) ";
+                    sqlCommandText = "select * from Vw_ItemWiseLocation where N_CompanyID="+nCompanyID+" and X_BatchCode is not null and D_ExpiryDate is not null and D_ExpiryDate <='"+d_Date+"' and  N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where "+criteria1+") and N_ItemID in (Select N_ItemID from Inv_StockMaster where "+criteria+" and D_ExpiryDate<='"+d_Date+"'  ) ";
                 else
-                    sqlCommandText = "select * from Vw_ItemWiseLocation where N_CompanyID="+nCompanyID+" and X_BatchCode is not null and D_ExpiryDate is not null and  D_ExpiryDate <='"+d_Date+"' and  N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID="+nCompanyID+" and N_WarehouseID="+nLocationID+" ) and N_ItemID in (Select N_ItemID from Inv_StockMaster where N_CompanyID="+nCompanyID+" and N_LocationID="+nLocationID+" and D_ExpiryDate<='"+d_Date+"'  ) ";
+                    sqlCommandText = "select * from Vw_ItemWiseLocation where N_CompanyID="+nCompanyID+" and X_BatchCode is not null and D_ExpiryDate is not null and  D_ExpiryDate <='"+d_Date+"' and  N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where "+criteria1+") and N_ItemID in (Select N_ItemID from Inv_StockMaster where "+criteria+" and D_ExpiryDate<='"+d_Date+"'  ) ";
 
          
             SortedList OutPut = new SortedList();
@@ -291,7 +316,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count from Vw_ItemWiseLocation where N_CompanyID=@p1 and X_BatchCode is not null and D_ExpiryDate is not null and D_ExpiryDate <='"+d_Date+"' and N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=@p1 and N_WarehouseID=@p3 ) and N_ItemID in (Select N_ItemID from Inv_StockMaster where N_CompanyID=@p1 and N_LocationID=@p3 and D_ExpiryDate<='"+d_Date+" '  ) ";
+                    sqlCommandCount = "select count(*) as N_Count from Vw_ItemWiseLocation where N_CompanyID=@p1 and X_BatchCode is not null and D_ExpiryDate is not null and D_ExpiryDate <='"+d_Date+"' and N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where "+criteria1+") and N_ItemID in (Select N_ItemID from Inv_StockMaster where "+criteria+" and D_ExpiryDate<='"+d_Date+" '  ) ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
