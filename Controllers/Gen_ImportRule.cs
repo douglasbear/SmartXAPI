@@ -200,7 +200,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-    [HttpGet("Details")]
+    [HttpGet("details")]
         public ActionResult GenImportRuleDetails(int nRuleID, int nCompanyID)
         {
              DataTable Master = new DataTable();
