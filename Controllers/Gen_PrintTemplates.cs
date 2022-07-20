@@ -103,7 +103,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName,N_PrintCopies,B_Custom,n_order from vw_PrintSelectDispRpt_Web where  N_LanguageID = " + nLanguageID + " and B_Visible = 'true' and N_UserCategoryID=" + n_UserCategoryID + " and N_CompanyID=" + nCompanyID + " group by N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName,N_PrintCopies,B_Custom,n_order order by N_ParentMenuID,n_order";
+            string sqlCommandText = "select N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName,N_PrintCopies,B_Custom,B_PrintAfterSave,n_order from vw_PrintSelectDispRpt_Web where  N_LanguageID = " + nLanguageID + " and B_Visible = 'true' and N_UserCategoryID=" + n_UserCategoryID + " and N_CompanyID=" + nCompanyID + " group by N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName,N_PrintCopies,B_Custom,B_PrintAfterSave,n_order order by N_ParentMenuID,n_order";
 
             Params.Add("@nCompanyID", nCompanyID);
             try

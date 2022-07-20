@@ -54,7 +54,7 @@ namespace SmartxAPI.Controllers
 
                     if (N_FeeSetupID > 0)
                     {
-                        dLayer.DeleteData("Sch_ClassFeeSetupMaster", "N_FeeSetupID", N_FeeSetupID, "N_CompanyID=" + N_CompanyID + " and N_FeeSetupID=" + N_FnYearID + "", connection, transaction);
+                        dLayer.DeleteData("Sch_ClassFeeSetupMaster", "N_FeeSetupID", N_FeeSetupID, "N_CompanyID=" + N_CompanyID + " and N_FeeSetupID=" + N_FeeSetupID + "", connection, transaction);
                         dLayer.DeleteData("Sch_ClassFeeSetup", "N_FeeSetupID", N_FeeSetupID, "N_CompanyID=" + N_CompanyID + "", connection, transaction);
                     }
 
@@ -98,6 +98,47 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
         }
+        [HttpGet("details")]
+        public ActionResult GetWeekdaysDetails(int nCourseID, int nStudentTypeID,int nFnYearID)
+        {
+
+            DataTable details = new DataTable();
+
+            DataSet DS = new DataSet();
+            SortedList Params = new SortedList();
+            SortedList dParamList = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+
+           
+            string Detailssql = "Select * from VW_CLASSFEESETUP Where N_CompanyID = @p1 and N_AcYearID = @p2 and N_ClassID = @p3 and N_StudentTypeID=@p4";
+
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearID);
+            Params.Add("@p3", nCourseID);
+            Params.Add("@p4", nStudentTypeID);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    details = dLayer.ExecuteDataTable(Detailssql, Params, connection);
+
+                }
+                if(details.Rows.Count==0)
+                {
+                    return Ok(_api.Success(details));
+                }
+                else
+                {
+                    return Ok(_api.Success(details));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
     }
 }
 

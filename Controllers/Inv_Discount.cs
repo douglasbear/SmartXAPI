@@ -318,6 +318,19 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
+                    object objSInvoice = dLayer.ExecuteScalar("select COUNT(*) from Inv_Sales where N_CompanyId="+nCompanyID+" and N_FnYearId="+nFnYearID+" and N_DiscID="+n_DiscountId, connection);
+                    object objSInvoiceDetails = dLayer.ExecuteScalar("select COUNT(*) from Inv_SalesDetails where N_CompanyID="+nCompanyID+" and N_PriceListID="+n_DiscountId, connection);
+                    object objSOrder = dLayer.ExecuteScalar("select COUNT(*) from Inv_SalesOrder where N_CompanyId="+nCompanyID+" and N_FnYearId="+nFnYearID+" and N_PriceTypeID="+n_DiscountId, connection);
+                    object objSOrderDetails = dLayer.ExecuteScalar("select COUNT(*) from Inv_SalesOrderDetails where N_CompanyID="+nCompanyID+" and N_PriceListID="+n_DiscountId, connection);
+                    object objCustomer = dLayer.ExecuteScalar("select COUNT(*) from Inv_Customer where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+" and N_DiscID="+n_DiscountId, connection);
+                    if (objSInvoice == null) objSInvoice = 0; if (objSInvoiceDetails == null) objSInvoiceDetails = 0; if (objSOrder == null) objSOrder = 0;
+                    if (objSOrderDetails == null) objSOrderDetails = 0; if (objCustomer == null) objCustomer = 0;
+
+                    if(myFunctions.getIntVAL(objSInvoice.ToString())>0 || myFunctions.getIntVAL(objSInvoiceDetails.ToString())>0 || myFunctions.getIntVAL(objSOrder.ToString())>0 || myFunctions.getIntVAL(objSOrderDetails.ToString())>0 || myFunctions.getIntVAL(objCustomer.ToString())>0)
+                    {
+                        return Ok(api.Error(User, "Already Used! Unable to delete."));
+                    }
+
                     Results = dLayer.DeleteData("Inv_DiscountMaster", "N_DiscID", n_DiscountId, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection);
                     dLayer.DeleteData("Inv_DiscountDetails", "N_DiscID", n_DiscountId, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection);
 
