@@ -822,6 +822,7 @@ namespace SmartxAPI.Controllers
 
                 var dbName = "";
                 string Extention = "";
+                int LanguageID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LanguageID"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -832,7 +833,7 @@ namespace SmartxAPI.Controllers
                     int FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["nFnYearID"].ToString());
                     int BranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["nBranchID"].ToString());
                     int ActionID = myFunctions.getIntVAL(MasterTable.Rows[0]["action"].ToString());
-                    int LanguageID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LanguageID"].ToString());
+                    
                     int SalesmanID = 0;
                     string procParam = "";
                     string xProCode = "";
@@ -1055,7 +1056,7 @@ namespace SmartxAPI.Controllers
                 //HttpClient client = new HttpClient(clientHandler);
 
                 var rptArray = reportName.Split(@"\");
-                string actReportLocation = reportLocation;
+                string actReportLocation = reportLocation.Remove(reportLocation.Length - 2, 2)+LanguageID+"/";
                 if (rptArray.Length > 1)
                 {
                     reportName = rptArray[1].ToString();

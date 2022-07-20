@@ -788,7 +788,7 @@ namespace SmartxAPI.Controllers
                 Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
                 Params.Add("@UserPattern", UserPattern);
                 }
-            string sqlCommandText = "select * from vw_UserList where N_CompanyID=N_CompanyID  "+Pattern+"";
+            string sqlCommandText = "select * from vw_UserList where N_CompanyID="+nCompanyId+"  "+Pattern+"";
             Params.Add("N_CompanyID", nCompanyId);
             // Params.Add("N_UserId", userid);
             try

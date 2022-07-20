@@ -1171,6 +1171,8 @@ namespace SmartxAPI.Controllers
                 int nDepartmentID = myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_DepartmentID"].ToString());
                 string xEmpCode = dtMasterTable.Rows[0]["x_EmpCode"].ToString();
                 string xEmpName = dtMasterTable.Rows[0]["x_EmpName"].ToString();
+                string xPhone1= dtMasterTable.Rows[0]["x_Phone1"].ToString();
+
                 int nUserID = myFunctions.GetUserID(User);
                 string X_BtnAction = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -1196,6 +1198,22 @@ namespace SmartxAPI.Controllers
                         {
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Employee Code already exist"));
+                        }
+
+
+                    }
+
+                     if (xPhone1 != "")
+                    {
+                        object NPhnCount = dLayer.ExecuteScalar("Select count(*) from pay_Employee Where X_Phone1 ='" + xPhone1 + "' and N_EmpID <> '" + nEmpID + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                        if (NPhnCount == null)
+                        {
+                            NPhnCount = 0;
+                        }
+                        if (myFunctions.getVAL(NPhnCount.ToString()) >= 1)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Phonr Number already exist"));
                         }
 
 
