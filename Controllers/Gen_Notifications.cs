@@ -77,6 +77,40 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("notificationList")]
+        public ActionResult GetNotification()
+        {
+            SortedList Params = new SortedList();
+            DataTable dt = new DataTable();
+
+            int nUserID = myFunctions.GetUserID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "";
+
+            sqlCommandText = "select * from vw_Gen_Notification where N_CompanyID=@nCompanyID and N_UserID=@nUserID ";
+
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nUserID", nUserID);
+
+            try
+            {
+                // int count = 0;
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                SortedList res = new SortedList();
+                res.Add("Details", api.Format(dt));
+                // res.Add("Count", count);
+                return Ok(api.Success(res));
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+
 
 
 
