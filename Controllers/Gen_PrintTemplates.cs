@@ -26,6 +26,11 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly int FormID = 1374;
         private readonly string reportPath;
+        private readonly string reportLocation;
+        string RPTLocation = "";
+        string ReportName = "";
+        string critiria = "";
+        string TableName = "";
 
         public Gen_PrintTemplates(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
@@ -34,6 +39,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             reportPath = conf.GetConnectionString("ReportLocation");
+            reportLocation = conf.GetConnectionString("ReportLocation");
         }
 
         [HttpGet("user")]
@@ -82,7 +88,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
 
-                    return Ok(_api.Success(dt));
+                return Ok(_api.Success(dt));
 
             }
             catch (Exception e)
@@ -92,12 +98,12 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("screen")]
-        public ActionResult GetScreen(int nLanguageID, int n_UserCategoryID, int nModuleID)
+        public ActionResult GetScreen(int nLanguageID, int n_UserCategoryID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName,N_PrintCopies from vw_PrintSelectDispRpt_Web where  N_LanguageID = " + nLanguageID + " and B_Visible = 'true' and N_UserCategoryID=" + n_UserCategoryID + " and N_CompanyID=" + nCompanyID + " and N_ParentMenuID=" + nModuleID + " group by N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName,N_PrintCopies";
+            string sqlCommandText = "select N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName,N_PrintCopies,B_Custom,B_PrintAfterSave,n_order from vw_PrintSelectDispRpt_Web where  N_LanguageID = " + nLanguageID + " and B_Visible = 'true' and N_UserCategoryID=" + n_UserCategoryID + " and N_CompanyID=" + nCompanyID + " group by N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName,N_PrintCopies,B_Custom,B_PrintAfterSave,n_order order by N_ParentMenuID,n_order";
 
             Params.Add("@nCompanyID", nCompanyID);
             try
@@ -177,7 +183,7 @@ namespace SmartxAPI.Controllers
                                 }
                                 else
                                 {
-                                   
+
                                     element.Add("templateimage", "no Image");
 
                                 }
@@ -218,16 +224,19 @@ namespace SmartxAPI.Controllers
                     int ReportSelectingScreenID = myFunctions.getIntVAL(MasterTable.Rows[0]["screenID"].ToString());
                     int N_UserCategoryId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserCategoryId"].ToString());
                     var x_SelectedReport = MasterTable.Rows[0]["x_TemplateName"].ToString();
-                    if(x_SelectedReport.Contains(".rpt")){}
-                    else{x_SelectedReport=x_SelectedReport+".rpt";}
+                    int B_Custom = myFunctions.getIntVAL(MasterTable.Rows[0]["B_Custom"].ToString());
+                    int B_PrintAfterSave = myFunctions.getIntVAL(MasterTable.Rows[0]["B_PrintAfterSave"].ToString());
+                    if (x_SelectedReport.Contains(".rpt")) { }
+                    else { x_SelectedReport = x_SelectedReport + ".rpt"; }
                     int n_CopyNos = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CopyNos"].ToString());
                     int a = 1;
                     object result = 0;
                     dLayer.ExecuteNonQuery("SP_GeneralDefaults_ins " + nCompanyID + ",'" + ReportSelectingScreenID + "' ,'PrintTemplate',1,'" + x_SelectedReport + "','" + X_UserCategoryName + "'", connection, transaction);
                     dLayer.ExecuteNonQuery("SP_GeneralDefaults_ins " + nCompanyID + ",'" + ReportSelectingScreenID + "' ,'PrintCopy'," + n_CopyNos + ",''", connection, transaction);
-                    dLayer.ExecuteNonQuery("SP_GenPrintTemplatess_ins " + nCompanyID + "," + ReportSelectingScreenID + " ,'" + x_SelectedReport + "'," + N_UserCategoryId + "," + n_CopyNos + "," + a + " ", connection, transaction);
+                    dLayer.ExecuteNonQuery("SP_GenPrintTemplatess_ins " + nCompanyID + "," + ReportSelectingScreenID + " ,'" + x_SelectedReport + "'," + N_UserCategoryId + "," + n_CopyNos + "," + a + ","+B_Custom+","+B_PrintAfterSave+" ", connection, transaction);
 
-
+                    if (B_Custom==1)
+                        CreateCustomTemplate(ReportSelectingScreenID, x_SelectedReport,connection,transaction);
                     transaction.Commit();
                 }
                 return Ok(_api.Success("Template Saved"));
@@ -237,6 +246,74 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(_api.Error(User, e));
             }
+        }
+        private bool CreateCustomTemplate(int nFormID, string x_SelectedReport,SqlConnection connection,SqlTransaction transaction)
+        {
+            SortedList QueryParams = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            QueryParams.Add("@nCompanyId", nCompanyId);
+            // QueryParams.Add("@nFnYearID", nFnYearID);
+            QueryParams.Add("@nFormID", nFormID);
+            RPTLocation = "";
+            critiria = "";
+            TableName = "";
+            ReportName = "";
+            try
+            {
+
+                    object ObjTaxType = dLayer.ExecuteScalar("SELECT Acc_TaxType.X_RepPathCaption FROM Acc_TaxType LEFT OUTER JOIN Acc_FnYear ON Acc_TaxType.N_TypeID = Acc_FnYear.N_TaxType where Acc_FnYear.N_CompanyID=@nCompanyId", QueryParams, connection, transaction);
+                    if (ObjTaxType == null)
+                        ObjTaxType = "";
+                    if (ObjTaxType.ToString() == "")
+                        ObjTaxType = "none";
+                    string TaxType = ObjTaxType.ToString();
+
+                    object ObjPath = dLayer.ExecuteScalar("SELECT X_RptFolder FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    if (ObjPath != null)
+                    {
+                        if (ObjPath.ToString() != "")
+                            RPTLocation = reportLocation + "printing/" + ObjPath + "/" + TaxType + "/";
+                        else
+                            RPTLocation = reportLocation + "printing/";
+                    }
+                    // object Templatecritiria = dLayer.ExecuteScalar("SELECT X_PkeyField FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    // critiria = "{" + Templatecritiria + "}=" + nPkeyID;
+
+                    object Othercritiria = dLayer.ExecuteScalar("SELECT X_Criteria FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    if (Othercritiria != null)
+                    {
+                        if (Othercritiria.ToString() != "")
+                            critiria = critiria + "and " + Othercritiria.ToString();
+
+                    }
+                    // TableName = Templatecritiria.ToString().Substring(0, Templatecritiria.ToString().IndexOf(".")).Trim();
+                    object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    ReportName = ObjReportName.ToString();
+                    ReportName = ReportName.Remove(ReportName.Length - 4);
+
+                    //Create and Copy
+
+                    string fileToCopy = RPTLocation + x_SelectedReport;
+                    x_SelectedReport = x_SelectedReport.Remove(x_SelectedReport.Length - 4);
+                    x_SelectedReport = x_SelectedReport + "_" + myFunctions.GetClientID(User) + "_" + myFunctions.GetCompanyID(User) + "_" + myFunctions.GetCompanyName(User).Trim();
+                    string destinationFile = RPTLocation + "/Custom/" + x_SelectedReport + ".rpt";
+                    string destinationDirectory = RPTLocation + "/Custom/";
+                    if (!System.IO.File.Exists(destinationFile))
+                    {
+                        if (!Directory.Exists(destinationDirectory))
+                        {
+                            DirectoryInfo di = Directory.CreateDirectory(destinationDirectory);
+                        }
+                        System.IO.File.Copy(fileToCopy, destinationFile);
+                    }
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+
+            }
+
         }
         //     [HttpGet("getFile")]
         //     public ActionResult GetImages(string X_ReportFilePath,)

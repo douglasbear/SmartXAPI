@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult OpportunityList(int nFnYearId,int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string screen)
+        public ActionResult OpportunityList(int nFnYearId,int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string screen, string winoe)
         {
             DataTable dt = new DataTable();
             DataTable dtRevenue = new DataTable();
@@ -47,17 +47,25 @@ namespace SmartxAPI.Controllers
 
             if (screen=="Opportunity")
                 criteria = "and (N_ClosingStatusID=0 or N_ClosingStatusID is null)";
+             if (screen=="Win")
+            {
+            criteria = "and N_StatusTypeID=308 and MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)";
+            }
+             if (screen=="Lose")
+            {
+            criteria = "and N_StatusTypeID=309 and MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)";
+            }   
 
             if (UserPattern != "")
             {
                 Pattern = " and (Left(X_Pattern,Len(@p2))=@p2 or N_LoginUserID="+nUserID+")";
                 Params.Add("@p2", UserPattern);
             }
-            else
-            {
-                Pattern = " and (N_UserID=" + nUserID + " or N_LoginUserID="+nUserID+")";
+            // else
+            // {
+            //     Pattern = " and (N_CreatedUser=" + nUserID + " or N_LoginUserID="+nUserID+")";
 
-            }
+            // }
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Searchkey = "";
@@ -65,14 +73,25 @@ namespace SmartxAPI.Controllers
                 Searchkey = " and (X_Opportunity like'%" + xSearchkey + "%'or X_OpportunityCode like'%" + xSearchkey + "%'or N_ExpRevenue like'%" + xSearchkey + "%'or X_Stage like'%" + xSearchkey + "%'or D_ClosingDate like'%" + xSearchkey + "%'or X_nextStep like'%" + xSearchkey + "%'or X_Contact like'%" + xSearchkey + "%'or X_Mobile like'%" + xSearchkey + "%'or X_SalesmanName like'%" + xSearchkey + "%'or X_StatusType like'%" + xSearchkey + "%' or X_Probability like'%" + xSearchkey + "%' or x_NextActivity like'%" + xSearchkey + "%' or X_WorkType like'%" + xSearchkey + "%' or X_Contact like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_OpportunityID desc";
+                xSortBy = " order by D_EntryDate desc";
             else
                 xSortBy = " order by " + xSortBy;
 
+            if(screen =="Lose" ||  screen=="Win")
+            {
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnYearId=@p3 and isnull(N_ClosingStatusID,0) = 0 " + criteria + Pattern + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1  " + criteria + Pattern + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnYearId=@p3 and isnull(N_ClosingStatusID,0) = 0 " + criteria + Pattern + Searchkey + " and N_OpportunityID not in (select top(" + Count + ") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1 " + criteria + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1  " + criteria + Pattern + Searchkey + " and N_OpportunityID not in (select top(" + Count + ") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1 " + criteria + xSortBy + " ) " + xSortBy;
+             }
+             else
+             {
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1  and isnull(N_ClosingStatusID,0) = 0 " + criteria + Pattern + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1  and isnull(N_ClosingStatusID,0) = 0 " + criteria + Pattern + Searchkey + " and N_OpportunityID not in (select top(" + Count + ") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1 " + criteria + xSortBy + " ) " + xSortBy;
+           
+             }
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", nFnYearId);
             SortedList OutPut = new SortedList();
@@ -85,12 +104,12 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnYearId=@p3 and  isnull(N_ClosingStatusID,0) = 0 " + criteria + Pattern;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMOpportunity where N_CompanyID=@p1  and  isnull(N_ClosingStatusID,0) = 0 " + criteria + Pattern;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
 
-                    //sqlCommandTotRevenue = "select N_StageID,X_Stage,SUM(ISNULL(N_ExpRevenue,0)) AS N_TotExpRevenue from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnYearId=@p3 and isnull(N_ClosingStatusID,0) = 0 " + Pattern +" group by N_StageID,X_Stage";
+                    //sqlCommandTotRevenue = "select N_StageID,X_Stage,SUM(ISNULL(N_ExpRevenue,0)) AS N_TotExpRevenue from vw_CRMOpportunity where N_CompanyID=@p1  and isnull(N_ClosingStatusID,0) = 0 " + Pattern +" group by N_StageID,X_Stage";
                     sqlCommandTotRevenue = "SELECT Gen_LookupTable.N_PkeyId AS N_StageID, Gen_LookupTable.X_Name AS X_Stage, ISNULL(CRM_Opp.N_TotExpRevenue ,0) AS N_TotExpRevenue from Gen_LookupTable LEFT OUTER JOIN "+
-                                            " (select N_StageID,X_Stage,SUM(ISNULL(N_ExpRevenue,0)) AS N_TotExpRevenue,N_CompanyID from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnYearId=@p3 and isnull(N_ClosingStatusID,0) = 0 " + Pattern +"  "+
+                                            " (select N_StageID,X_Stage,SUM(ISNULL(N_ExpRevenue,0)) AS N_TotExpRevenue,N_CompanyID from vw_CRMOpportunity where N_CompanyID=@p1  and isnull(N_ClosingStatusID,0) = 0 " + Pattern +"  "+
                                             " group by N_StageID,X_Stage,N_CompanyID) AS CRM_Opp ON Gen_LookupTable.N_CompanyID=CRM_Opp.N_CompanyID AND Gen_LookupTable.N_PkeyId=CRM_Opp.N_StageID "+
                                             " WHERE Gen_LookupTable.N_ReferId=1310 AND Gen_LookupTable.N_CompanyID=@p1";
                     dtRevenue = dLayer.ExecuteDataTable(sqlCommandTotRevenue, Params, connection);
@@ -196,9 +215,9 @@ namespace SmartxAPI.Controllers
                         if (OpportunityCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Opportunity Code")); }
                         MasterTable.Rows[0]["x_OpportunityCode"] = OpportunityCode;
                     }
-                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_OpportunityID='" + nOpportunityID + "' and N_FnyearID=" + nFnYearId;
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_OpportunityID='" + nOpportunityID + "'" ;
                     if (nOpportunityID > 0)
-                        N_WorkFlowID = dLayer.ExecuteScalar("select N_WactivityID from CRM_Opportunity where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and N_OpportunityID=" + nOpportunityID, Params, connection, transaction);
+                        N_WorkFlowID = dLayer.ExecuteScalar("select N_WactivityID from CRM_Opportunity where N_CompanyID=" + nCompanyID + " and N_OpportunityID=" + nOpportunityID, Params, connection, transaction);
                     nOpportunityID = dLayer.SaveData("CRM_Opportunity", "n_OpportunityID", DupCriteria, "", MasterTable, connection, transaction);
                     if (Items.Rows.Count > 0)
                     {

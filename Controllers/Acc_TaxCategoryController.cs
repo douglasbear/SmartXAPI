@@ -40,7 +40,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from vw_TaxCategory_Disp where N_CompanyID=@p1";
+            string sqlCommandText = "select *  from vw_TaxCategory_Disp where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyID);
 
             try
@@ -52,7 +52,8 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(_api.Warning("No Results Found"));
+                    return Ok(_api.Success(_api.Format(dt)));
+                    //return Ok(_api.Warning("No Results Found"));
                 }
                 else
                 {
@@ -149,6 +150,7 @@ namespace SmartxAPI.Controllers
                     bool bIsCess= myFunctions.getBoolVAL(MasterTable.Rows[0]["b_IsCess"].ToString());
                     bool bIsExclude =myFunctions.getBoolVAL(MasterTable.Rows[0]["b_IsExclude"].ToString());
                     int nIsExclude=0;
+                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
 
                     if(bIsExclude)
                     {
@@ -160,7 +162,7 @@ namespace SmartxAPI.Controllers
                     }
                     if (values == "@Auto")
                     {
-                        Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
+                        Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
                         Params.Add("N_FormID", 852);
                         Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
@@ -175,7 +177,12 @@ namespace SmartxAPI.Controllers
                     MasterTable.Columns.Remove("n_FnYearId");
                     MasterTable.Columns.Remove("n_BranchId");
                     MasterTable.Columns.Remove("b_IsExclude");
-                    int N_TaxCategoryID = dLayer.SaveData("Acc_TaxCategory", "N_PkeyID", MasterTable, connection, transaction);
+
+                 string X_CategoryName= MasterTable.Rows[0]["X_CategoryName"].ToString();
+
+                 string DupCriteria = "X_CategoryName='" + X_CategoryName + "' and N_CompanyID=" + nCompanyID;
+
+                    int N_TaxCategoryID = dLayer.SaveData("Acc_TaxCategory", "N_PkeyID",DupCriteria,"", MasterTable, connection, transaction);
                            
                                   if(bIsCess == true)
                                  {  

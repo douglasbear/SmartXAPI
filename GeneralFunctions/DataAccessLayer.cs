@@ -526,12 +526,14 @@ namespace SmartxAPI.GeneralFunctions
                 paramList.Add("X_TableName", TableName);
                 paramList.Add("X_IDFieldName", IDFieldName);
                 paramList.Add("N_IDFieldValue", IDFieldValue);
-                paramList.Add("X_FieldList", FieldList);
+                paramList.Add("X_FieldList",FieldList );
                 paramList.Add("X_FieldValue", FieldValues);
                 Result = (int)ExecuteScalarPro("SAVE_DATA", paramList, connection, transaction);
                
 
                 // StringBuilder sb = new StringBuilder();
+                // sb.AppendLine(j+" ");
+                // sb.AppendLine(FieldList);
                 // sb.AppendLine(j+" ");
                 // sb.AppendLine(FieldValues);
                 // if (!Directory.Exists(logPath))
@@ -539,7 +541,7 @@ namespace SmartxAPI.GeneralFunctions
 
                 //     File.AppendAllText(logPath + "Sqllog.log", sb.ToString());
                 //     sb.Clear();
- FieldValues = "";
+                FieldValues = "";
                 if (Result <= 0) return 0;
             }
 

@@ -46,6 +46,28 @@ namespace SmartxAPI.Controllers
                     string sqlCommandText = "";
                     string sqlCommandCount = "";
                     string Searchkey = "";
+                     int nCompanyID = myFunctions.GetCompanyID(User);
+                       int N_decimalPlace = 2;
+                    N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Purchase", "Decimal_Place", "N_Value", nCompanyID, dLayer, connection));
+                    N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
+                    int nUserID = myFunctions.GetUserID(User);
+                    // string UserPattern = myFunctions.GetUserPattern(User);
+                    // string Pattern = "";
+                    
+                    //  if (UserPattern != "")
+                    //  {
+                    // Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
+                    // Params.Add("@UserPattern",UserPattern);
+
+                    //    }
+                    //  else
+                    //    {
+                    // object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId,Params,connection);
+
+                    // if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    // Pattern = " and N_CreatedUser=" + nUserID;
+                    //     }
+
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     if (xSearchkey != null && xSearchkey.Trim() != "")
                         Searchkey = "and (X_CreditNoteNo like '%" + xSearchkey + "%' or X_VendorName like '%" + xSearchkey + "%' or X_InvoiceNo like '%" + xSearchkey + "%')";
@@ -89,9 +111,9 @@ namespace SmartxAPI.Controllers
 
 
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 "   + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_CreditNoteID not in (select top(" + Count + ") N_CreditNoteID from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 "   + Searchkey + " and N_CreditNoteID not in (select top(" + Count + ") N_CreditNoteID from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
@@ -100,14 +122,14 @@ namespace SmartxAPI.Controllers
 
                     // connection.Open();
                     //  dt=dLayer.ExecuteDataTable(sqlCommandText,Params, connection);
-                    //  sqlCommandCount = "select count(*) as N_Count  from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                    //  sqlCommandCount = "select count(*) as N_Count  from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2";
                     // object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     // OutPut.Add("Details",_api.Format(dt));
                     // OutPut.Add("TotalCount",TotalCount);
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_TotalReturnAmount,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_TotalReturnAmount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -150,9 +172,9 @@ namespace SmartxAPI.Controllers
             string sqlCommandCount = "";
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2";
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_CreditNoteID not in (select top(" + Count + ") N_CreditNoteID from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_CreditNoteID not in (select top(" + Count + ") N_CreditNoteID from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2)";
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
@@ -164,7 +186,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -190,12 +212,15 @@ namespace SmartxAPI.Controllers
 
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
+            SortedList NewParams = new SortedList();
+             NewParams.Add("@p1", nCompanyId);
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
             DataTable DataTable = new DataTable();
             if (xCreditNoteNo == null) xCreditNoteNo = "";
             if (xInvoiceNo == null) xInvoiceNo = "0";
             string Mastersql = "";
+           
 
             if (bAllBranchData == true)
             {
@@ -232,6 +257,28 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    if (xCreditNoteNo != "")
+                    {
+                     object purchaseID=dLayer.ExecuteScalar("select N_PurchaseID from Inv_PurchaseReturnMaster where N_CompanyID="+nCompanyId+" and N_FnYearID ="+nFnYearId+" and X_CreditNoteNo="+xCreditNoteNo+"",NewParams,connection);
+                     if((purchaseID==null || purchaseID =="")|| myFunctions.getIntVAL(purchaseID.ToString())==0)
+                     {
+                         if (bAllBranchData == true)
+                         {
+                           if (xInvoiceNo == "0")
+                             Mastersql = "[SP_Inv_PurchaseReturnDirect_Display] @p1, 0, @p3,@p2,'PURCHASE',0";
+                        
+                        }
+                        else
+                         {
+                           if (xInvoiceNo == "0")
+                             {
+                              Mastersql = "[SP_Inv_PurchaseReturnDirect_Display] @p1, 0, @p3,@p2,'PURCHASE',@p5";
+
+                              }
+                       }
+                     }
+                    }
+
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
 
                     MasterTable = _api.Format(MasterTable, "Master");
@@ -241,15 +288,30 @@ namespace SmartxAPI.Controllers
                     string DetailSql = "";
                     if (xCreditNoteNo != "")
                     {
-                        if (bAllBranchData == true)
+                            int N_PurchaseID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PurchaseID"].ToString());
+                            if(N_PurchaseID>0)
                         {
-                            DetailSql = "Select vw_InvPurchaseReturnEdit_Disp.*,dbo.SP_Stock(vw_InvPurchaseReturnEdit_Disp.N_ItemID) As N_Stock from vw_InvPurchaseReturnEdit_Disp Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0";
+                                if (bAllBranchData == true)
+                        {
+                            DetailSql = "Select vw_InvPurchaseReturnEdit_Disp.*,dbo.SP_LocationStock(vw_InvPurchaseReturnEdit_Disp.N_ItemID,vw_InvPurchaseReturnEdit_Disp.N_LocationID) As N_Stock from vw_InvPurchaseReturnEdit_Disp Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0";
                         }
                         else
                         {
-                            DetailSql = "Select vw_InvPurchaseReturnEdit_Disp.*,dbo.SP_Stock(vw_InvPurchaseReturnEdit_Disp.N_ItemID) As N_Stock from vw_InvPurchaseReturnEdit_Disp Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0 and N_BranchId=@p5";
+                            DetailSql = "Select vw_InvPurchaseReturnEdit_Disp.*,dbo.SP_LocationStock(vw_InvPurchaseReturnEdit_Disp.N_ItemID,vw_InvPurchaseReturnEdit_Disp.N_LocationID) As N_Stock from vw_InvPurchaseReturnEdit_Disp Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0 and N_BranchId=@p5";
                         }
 
+                        }
+                        else
+                        {
+                        if (bAllBranchData == true)
+                        {
+                            DetailSql = "Select Vw_invpurchasereturnDirect.*,dbo.SP_LocationStock(Vw_invpurchasereturnDirect.N_ItemID,Vw_invpurchasereturnDirect.N_LocationID) As N_Stock from Vw_invpurchasereturnDirect Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0";
+                        }
+                        else
+                        {
+                            DetailSql = "Select Vw_invpurchasereturnDirect.*,dbo.SP_LocationStock(Vw_invpurchasereturnDirect.N_ItemID,Vw_invpurchasereturnDirect.N_LocationID) As N_Stock from Vw_invpurchasereturnDirect Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0 and N_BranchId=@p5";
+                        }
+                        }
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
 
 
@@ -257,9 +319,9 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         if (bAllBranchData == true)
-                            DetailSql = "Select vw_InvPurchaseDetails_Display.*,dbo.SP_Stock(vw_InvPurchaseDetails_Display.N_ItemID) As N_Stock  from vw_InvPurchaseDetails_Display Where N_CompanyID=@p1 and X_InvoiceNo=@p4";
+                            DetailSql = "Select vw_InvPurchaseDetails_Display.*,dbo.SP_LocationStock(vw_InvPurchaseDetails_Display.N_ItemID,vw_InvPurchaseDetails_Display.N_LocationID) As N_Stock  from vw_InvPurchaseDetails_Display Where N_CompanyID=@p1 and X_InvoiceNo=@p4";
                         else
-                            DetailSql = "Select vw_InvPurchaseDetails_Display.*,dbo.SP_Stock(vw_InvPurchaseDetails_Display.N_ItemID) As N_Stock  from vw_InvPurchaseDetails_Display Where N_CompanyID=@p1 and X_InvoiceNo=@p4 and N_BranchID=@p5";
+                            DetailSql = "Select vw_InvPurchaseDetails_Display.*,dbo.SP_LocationStock(vw_InvPurchaseDetails_Display.N_ItemID,vw_InvPurchaseDetails_Display.N_LocationID) As N_Stock  from vw_InvPurchaseDetails_Display Where N_CompanyID=@p1 and X_InvoiceNo=@p4 and N_BranchID=@p5";
 
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                         if (DetailTable.Columns.Contains("RetQty"))
@@ -315,6 +377,22 @@ namespace SmartxAPI.Controllers
                     double N_TotalReceivedF = myFunctions.getVAL(MasterTable.Rows[0]["n_TotalReceivedF"].ToString());
                     MasterTable.Rows[0]["n_TotalReceivedF"] = N_TotalReceivedF;
                     var values = MasterTable.Rows[0]["X_CreditNoteNo"].ToString();
+
+                     if (!myFunctions.CheckActiveYearTransaction(myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString()), Convert.ToDateTime(MasterTable.Rows[0]["D_RetDate"].ToString()), dLayer, connection, transaction))
+                    {
+                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString()) + " and convert(date ,'" + MasterTable.Rows[0]["D_RetDate"].ToString() + "') between D_Start and D_End", Params, connection, transaction);
+                        if (DiffFnYearID != null)
+                        {
+                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                            //nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                        }
+                    }
+
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
@@ -350,14 +428,17 @@ namespace SmartxAPI.Controllers
                     }
 
 
-
-
+                    if(!DetailTable.Columns.Contains("N_QtyDisplay"))
+                    DetailTable= myFunctions.AddNewColumnToDataTable(DetailTable,"N_QtyDisplay",typeof(double),0);
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["N_CreditNoteID"] = N_CreditNoteID;
-                        DetailTable.Rows[j]["n_RetQty"] = (myFunctions.getVAL(DetailTable.Rows[j]["n_RetQty"].ToString())) * (myFunctions.getVAL(DetailTable.Rows[j]["N_UnitQty"].ToString()));
+                        // DetailTable.Rows[j]["n_RetQty"] = (myFunctions.getVAL(DetailTable.Rows[j]["n_RetQty"].ToString())) * (myFunctions.getVAL(DetailTable.Rows[j]["N_UnitQty"].ToString()));
+                        // DetailTable.Rows[j]["N_QtyDisplay"] = DetailTable.Rows[j]["n_RetQty"];
                     }
+                    if(DetailTable.Columns.Contains("N_UnitQty"))
                     DetailTable.Columns.Remove("N_UnitQty");
+
                     int N_QuotationDetailId = dLayer.SaveData("Inv_PurchaseReturnDetails", "n_CreditNoteDetailsID", DetailTable, connection, transaction);
 
 

@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([PRS No] like '%" + xSearchkey + "%')";
+                Searchkey = "and ([PRS No] like '%" + xSearchkey + "%' or X_ProjectName like '%" + xSearchkey + "%' or location like '%" + xSearchkey + "%' or X_DeliveryPlace like '%" + xSearchkey + "%' or  X_Purpose like '%" + xSearchkey + "%' or  [PRS No] like '%" + xSearchkey + "%' or  D_PRSDate like '%" + xSearchkey + "%' )";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_PRSID desc";
@@ -241,7 +241,9 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     dLayer.DeleteData("Inv_PRSDetails", "N_PRSID", nPRSID, "N_CompanyID=" + nCompanyID + " and N_PRSID=" + nPRSID, connection, transaction);
                     Results = dLayer.DeleteData("Inv_PRS", "N_PRSID", nPRSID, "N_CompanyID=" + nCompanyID + " and N_PRSID=" + nPRSID, connection, transaction);
-
+                  object objMDProcessed = dLayer.ExecuteScalar("Select Isnull(N_RSID,0) from Inv_MaterialDispatch where N_CompanyId=" + nCompanyID + " and N_RSID=" +nPRSID  + " ", connection, transaction);
+                    if (objMDProcessed == null)
+                        objMDProcessed = 0;
                     if (nSalesOrderID > 0)
                     {
                         SortedList DeleteParams = new SortedList(){
@@ -251,6 +253,12 @@ namespace SmartxAPI.Controllers
 
                         dLayer.ExecuteNonQueryPro("SP_SalesOrderProcessUpdate", DeleteParams, connection, transaction);
                     }
+
+                       if (myFunctions.getIntVAL(objMDProcessed.ToString()) > 0)
+                       {
+                       return Ok(api.Error(User, "Unable to delete"));
+                       }
+                            
 
                     if (Results > 0)
                     {
@@ -625,7 +633,40 @@ namespace SmartxAPI.Controllers
             }
 
         }
-  
+        
+  [HttpGet("TimeLinelist")]
+        public ActionResult GetList(int nPRSID)
+
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID=myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID",nCompanyID);
+            Params.Add("@nPRSID",nPRSID);
+            string sqlCommandText="Select FORMAT (d_Date, 'dd-MMM-yyyy') as date,type as name,x_DocNo as s,'' as t from vw_PRSTimeLine where P_KeyID=@nPRSID";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
 
     }
-}
+} 
+ 

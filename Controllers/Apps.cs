@@ -35,14 +35,14 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetAllApps(bool showAll)
+        public ActionResult GetAllApps(bool showAll,string AppName)
         {
             DataTable dt = new DataTable();
             int ClientID = myFunctions.GetClientID(User);
             string sqlCommandText = "select * from (SELECT AppMaster.*, ClientApps.N_ClientID FROM AppMaster LEFT OUTER JOIN ClientApps ON AppMaster.N_AppID = ClientApps.N_AppID" +
                                     " WHERE(AppMaster.B_Inactive = 0) and(ClientApps.N_ClientID =" + ClientID + " )" +
                                     " Union all" +
-                                    " SELECT *, null as N_ClientID FROM AppMaster WHERE N_AppID not in (SELECT N_AppID FROM ClientApps WHERE N_ClientID =" + ClientID + " )) a order by N_Order";
+                                    " SELECT *, null as N_ClientID FROM AppMaster WHERE  N_AppID not in (SELECT N_AppID FROM ClientApps WHERE N_ClientID =" + ClientID + " )) a where N_AppID in (SELECT  N_AppID FROM AppConfig where X_BuildType='"+AppName+"')  order by N_Order";
 // showAll=false;
             if (showAll == false)
             {

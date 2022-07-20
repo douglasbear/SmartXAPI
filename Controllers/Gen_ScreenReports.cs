@@ -87,10 +87,19 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult TaskList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nTableViewID, int nMenuID)
+        public ActionResult TaskList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nTableViewID, int nMenuID, int n_UserID,DateTime d_Date)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
-            int nUserID = myFunctions.GetUserID(User);
+            int nUserID;
+            if (n_UserID > 0)
+            {
+                nUserID = n_UserID;
+            }
+            else
+            {
+                nUserID = myFunctions.GetUserID(User);
+            }
+
             DataTable dt = new DataTable();
             SortedList OutPut = new SortedList();
 
@@ -108,7 +117,7 @@ namespace SmartxAPI.Controllers
             // }
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_TaskSummery like '%" + xSearchkey + "%' OR X_TaskDescription like '%" + xSearchkey + "%' OR X_Assignee like '%" + xSearchkey + "%' OR X_Submitter like '%" + xSearchkey + "%' OR X_ClosedUser like '%" + xSearchkey + "%'  OR X_ProjectName like '%" + xSearchkey + "%' )";
+                Searchkey = "and (X_TaskSummery like '%" + xSearchkey + "%' OR X_TaskDescription like '%" + xSearchkey + "%' OR X_Assignee like '%" + xSearchkey + "%' OR X_Submitter like '%" + xSearchkey + "%' OR X_ClosedUser like '%" + xSearchkey + "%'  OR X_ProjectName like '%" + xSearchkey + "%' OR X_CategoryName like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_TaskID desc";
@@ -139,9 +148,23 @@ namespace SmartxAPI.Controllers
                         string PKey = dRow["X_PKey"].ToString();
                         string UserPattern = myFunctions.GetUserPattern(User);
                         string Pattern = "";
+
                         if (UserPattern != "")
                         {
-                            Pattern = " and Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern;
+                            if (nTableViewID == 1)
+                                Pattern = " and ( Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern + " or N_CreatorID=" + myFunctions.GetUserID(User) + ")";
+                            else if (nTableViewID == 6)
+                            {
+                                Pattern = " and ( Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern + " or N_CreaterID=" + myFunctions.GetUserID(User) + ")";
+
+                            }
+                            else
+                                Pattern = " and ( Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern + ")";
+
+                        }
+                        if(nTableViewID ==7 || nTableViewID == 8 ||  nTableViewID ==5)
+                        {
+                            Pattern="";
                         }
 
                         if (Count == 0)
@@ -154,6 +177,8 @@ namespace SmartxAPI.Controllers
                             Params.Add("@cVal", nCompanyId);
                         if (DefaultCriteria.Contains("@uVal"))
                             Params.Add("@uVal", nUserID);
+                        if (DefaultCriteria.Contains("@dVal"))
+                            Params.Add("@dVal", d_Date);
 
 
                         connection.Open();
