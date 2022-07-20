@@ -197,7 +197,7 @@ namespace SmartxAPI.Controllers
 
 
 
-            string sqlCommandText = "select  * from [Sch_FeeType] where N_CompanyID=@p1";
+            string sqlCommandText = "select  * from [Sch_FeeCategory] where N_CompanyID=@p1";
 
             Params.Add("@p1", nCompanyId);
             SortedList OutPut = new SortedList();
