@@ -163,6 +163,17 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_ParentCode"] = Code;
                     }
                     MasterTable.Columns.Remove("n_FnYearId");
+                    string fatherImage = myFunctions.ContainColumn("i_FatherImage", MasterTable) ? MasterTable.Rows[0]["i_FatherImage"].ToString() : "";
+                    Byte[] photoBitmapF = new Byte[fatherImage.Length];
+                    photoBitmapF = Convert.FromBase64String(fatherImage);
+                    if (myFunctions.ContainColumn("i_FatherImage", MasterTable))
+                        MasterTable.Columns.Remove("i_FatherImage");
+
+                    string motherImage = myFunctions.ContainColumn("i_MotherImage", MasterTable) ? MasterTable.Rows[0]["i_MotherImage"].ToString() : "";
+                    Byte[] photoBitmapM = new Byte[motherImage.Length];
+                    photoBitmapM = Convert.FromBase64String(motherImage);
+                    if (myFunctions.ContainColumn("i_MotherImage", MasterTable))
+                        MasterTable.Columns.Remove("i_MotherImage");
 
                     if (nParentID > 0) 
                     {  
@@ -177,6 +188,14 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        if (fatherImage.Length > 0)
+                        {
+                            dLayer.SaveImage("Sch_ParentDetails", "I_FatherImage", photoBitmapF, "N_ParentID",nParentID, connection, transaction);
+                        }
+                        if (motherImage.Length > 0)
+                        {
+                            dLayer.SaveImage("Sch_ParentDetails", "I_MotherImage", photoBitmapM, "N_ParentID",nParentID, connection, transaction);
+                        }
                         transaction.Commit();
                         return Ok(api.Success("Guardian Details Created"));
                     }
