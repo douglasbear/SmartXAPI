@@ -773,14 +773,17 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Unable to generate Invoice Number"));
                         }
                         MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
-
-                        object invoiceCount = dLayer.ExecuteScalar("select count(N_PurchaseID) as Count from inv_purchase where N_CompanyID= " + nCompanyID + " and X_VendorInvoice= " +vendorInvoice +" and N_VendorID = " + N_VendorID, connection, transaction);
+                       // object invoiceCount ;
+                        if(vendorInvoice!="")
+                        {
+                             object invoiceCount = dLayer.ExecuteScalar("select count(N_PurchaseID) as Count from inv_purchase where N_CompanyID= " + nCompanyID + " and X_VendorInvoice= " +vendorInvoice +" and N_VendorID = " + N_VendorID, connection, transaction);
 
                         if (myFunctions.getIntVAL(invoiceCount.ToString()) >0)
                             {
                                 transaction.Rollback();
                                 return Ok(_api.Error(User, "vendor invoice number already exist"));
                             }
+                        }
                     }
 
                     if (N_PurchaseID > 0)

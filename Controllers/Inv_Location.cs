@@ -104,6 +104,72 @@ namespace SmartxAPI.Controllers
         }
 
 
+       
+   [HttpGet("dashboardList")]
+        public ActionResult GetProductUnitList(int nPage ,int nSizeperpage, string xSearchkey, string xSortBy,int nCompanyId)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                     nCompanyId = myFunctions.GetCompanyID(User);
+                    string sqlCommandCount = "", xCriteria = "";
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string criteria = "";
+                    string cndn = "";
+                    string Searchkey = "";
+                    Params.Add("@p1", nCompanyId);
+
+
+                   if (xSearchkey != null && xSearchkey.Trim() != "")
+                    Searchkey = "and (N_LocationID like '%" + xSearchkey + "%' OR X_LocationCode like '%" + xSearchkey + "%')";
+
+                    
+                   
+                   if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by N_LocationID desc";
+                      
+
+
+                   if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_Location where  N_CompanyID=@p1 "+ criteria + cndn + Searchkey + " " + xSortBy;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_Location where  and N_CompanyID=@p1"+ criteria + cndn + Searchkey + " " + xSortBy ;
+
+
+                    SortedList OutPut = new SortedList();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText , Params, connection);
+                   sqlCommandCount = "select count(*) as N_Count  from Inv_Location where N_CompanyID=@p1 ";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+                }
+            }
+              catch (Exception e)
+                {
+                return BadRequest(_api.Error(User, e));
+                }
+            
+
+        }
+
+
+
+
+
         [HttpGet("listdetails")]
         public ActionResult GetLocationDetails(int? nCompanyId, int? nLocationId)
         {
