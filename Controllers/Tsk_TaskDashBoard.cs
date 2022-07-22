@@ -42,7 +42,7 @@ namespace SmartxAPI.Controllers
             string sqlActiveEmployees = "SELECT COUNT(*) as N_ActiveEmloyees FROM pay_employee WHERE N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and  N_Status not in (2,3)";//Active employees
             string sqlScheduledList = "select  COUNT(*) as N_ToDoList from  [vw_TaskCurrentStatus] where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and isnull(B_Closed,0) =0";
             string sqlTodaysTaskList = "select Count(*) as N_TodaysTaskList from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_TaskDate as DATE)<='" + d_Date + "' and  Cast(D_DueDate as DATE) >= '" + d_Date + "'";
-            string sqlCompletedList = "select Count(*) as N_CompletedList from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "and  N_Status>=4 and MONTH(Cast(vw_Tsk_TaskCompletedStatus.D_Entrydate as Datetime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(vw_Tsk_TaskCompletedStatus.D_Entrydate)= YEAR(CURRENT_TIMESTAMP)";
+            string sqlCompletedList = "select Count(*) as N_CompletedList from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "and  N_Status in(5,4,9,10) and MONTH(Cast(vw_Tsk_TaskCompletedStatus.D_Entrydate as Datetime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(vw_Tsk_TaskCompletedStatus.D_Entrydate)= YEAR(CURRENT_TIMESTAMP)";
             string sqlOverDueList = "select Count(*) as N_OverDueTaskList from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + "   and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) < '" + d_Date + "'";
             string sqlTaskStatus = "";
             SortedList Data = new SortedList();
@@ -526,16 +526,16 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     if (Count == 0)
                     {
-                        sqlUpcomingList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "  and N_Status >= 4 and Cast(D_EntryDate as DATE) =  '" + d_Date + "' order by N_TaskID desc";
+                        sqlUpcomingList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "  and N_Status in(5,4,9,10) and Cast(D_EntryDate as DATE) =  '" + d_Date + "' order by N_TaskID desc";
                     }
                     else
                     {
-                        sqlUpcomingList = "select  top(" + nSizeperpage + ") * from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + " and   N_Status >= 4 and Cast(D_EntryDate as DATE) =  '" + d_Date + "'  and N_TaskID not in (select top(" + Count + ") N_TaskID from vw_Tsk_TaskCompletedStatus where  N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "  and  Cast(D_TaskDate as DATE)='" + d_Date + "') order by N_PriorityID asc";
+                        sqlUpcomingList = "select  top(" + nSizeperpage + ") * from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + " and   N_Status in(5,4,9,10) and Cast(D_EntryDate as DATE) =  '" + d_Date + "'  and N_TaskID not in (select top(" + Count + ") N_TaskID from vw_Tsk_TaskCompletedStatus where  N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "  and  Cast(D_TaskDate as DATE)='" + d_Date + "') order by N_PriorityID asc";
                     }
 
                     todayCompletedTasks = dLayer.ExecuteDataTable(sqlUpcomingList, Params, connection);
                     todayCompletedTasks = api.Format(todayCompletedTasks, "todayCompletedTasks");
-                    string sqlCommandCount2 = "select count(*) as N_Count from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + " and  N_Status >= 4 and Cast(D_EntryDate as DATE) =  '" + d_Date + "' ";
+                    string sqlCommandCount2 = "select count(*) as N_Count from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + " and  N_Status in(5,4,9,10) and Cast(D_EntryDate as DATE) =  '" + d_Date + "' ";
                     DataTable Summary2 = dLayer.ExecuteDataTable(sqlCommandCount2, Params, connection);
                     string TotalCount2 = "0";
                     if (Summary2.Rows.Count > 0)

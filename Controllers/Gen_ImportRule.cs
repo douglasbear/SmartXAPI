@@ -22,7 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int nFormID = 1471;
+        private readonly int nFormID = 1175;
 
         public Gen_ImportRule(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {

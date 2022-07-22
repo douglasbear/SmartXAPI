@@ -178,6 +178,7 @@ namespace SmartxAPI.Controllers
                     dParamList.Add("@N_CompanyID", nCompanyId);
                     dParamList.Add("@N_FnYearID", nFnYearID);
                     dParamList.Add("@N_EmpID", Convert.ToUInt32(dtMaster.Rows[0]["n_EmpID"].ToString()));
+                    dParamList.Add("@Date", Convert.ToDateTime(dtMaster.Rows[0]["D_EffectiveDate"].ToString()));
                     dParamList.Add("@N_HistoryID",  Convert.ToUInt32(dtMaster.Rows[0]["n_HistoryID"].ToString()));
 
                     dtSalaryHistory = dLayer.ExecuteDataTablePro("SP_Pay_SalaryHistoryDisp", dParamList, connection);
