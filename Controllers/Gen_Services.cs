@@ -71,6 +71,11 @@ namespace SmartxAPI.Controllers
                         masterTable = "Inv_Purchase";
                         column = "X_InvoiceNo";
                     }
+                     if (formID == 155)
+                    {
+                        masterTable = "Sch_Admission";
+                        column = "X_AdmissionNo";
+                    }
 
 
 
