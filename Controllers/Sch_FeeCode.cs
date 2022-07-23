@@ -79,6 +79,11 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nFeeCodeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FeeCodeID"].ToString());
+                int nLocationID=  myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationID"].ToString());
+                if(MasterTable.Columns.Contains("N_LocationID"))
+                      MasterTable.Columns.Remove("N_LocationID");
+
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -98,7 +103,7 @@ namespace SmartxAPI.Controllers
                     }
                     MasterTable.Columns.Remove("n_FnYearId");
 
-                    if (nFeeCodeID > 0) 
+                    if (nFeeCodeID> 0) 
                     {  
                         dLayer.DeleteData("Sch_FeeCodes", "n_FeeCodeID", nFeeCodeID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
                     }
@@ -109,11 +114,22 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User,"Unable to save"));
                     }
-                    else
-                    {
-                        transaction.Commit();
-                        return Ok(_api.Success("Fee Code Created"));
-                    }
+                    
+                    SortedList ProductParams = new SortedList();
+                    ProductParams.Add("@N_CompanyID", nCompanyID);
+                    ProductParams.Add("@N_FeeCodeID", nFeeCodeID);
+                    ProductParams.Add("@N_LocationID", nLocationID);
+              
+                    dLayer.ExecuteNonQueryPro("SP_ProductCreation", ProductParams, connection, transaction);
+
+                  
+                       transaction.Commit();
+                    SortedList Result = new SortedList();
+
+                    return Ok(_api.Success(Result, "Fee Setup Saved"));
+
+
+              
                 }
             }
             catch (Exception ex)
