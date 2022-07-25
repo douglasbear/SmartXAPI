@@ -56,7 +56,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    QueryParams.Add("@nAdmissionID", nAdmissionID);
+    
                     if (bShowAllBranchData == true)
                        masterSql = "Select * from vw_SchAdmission Where N_CompanyID=@nCompanyID and  N_AcYearID=@nFnYearID and N_AdmissionID=@nAdmissionID"; 
                     else 
@@ -77,6 +77,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Notice("No Results Found"));
                         }
                         ds.Tables.Add(Detail);
+                        ds.Tables.Add(Master);
                         return Ok(_api.Success(ds));
                     }
                 }
