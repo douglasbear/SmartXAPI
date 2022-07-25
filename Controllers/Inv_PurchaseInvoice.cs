@@ -603,7 +603,9 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nFnYearID = myFunctions.getIntVAL(masterRow["n_FnYearId"].ToString());
             int n_POrderID = myFunctions.getIntVAL(masterRow["N_POrderID"].ToString());
-            var vendorInvoice = masterRow["X_VendorInvoice"].ToString();
+             var vendorInvoice="";
+            if(MasterTable.Columns.Contains("X_VendorInvoice"))
+                  vendorInvoice = masterRow["X_VendorInvoice"].ToString();
             int n_MRNID = 0;
             if (MasterTable.Columns.Contains("N_RsID"))
                 n_MRNID = myFunctions.getIntVAL(masterRow["N_RsID"].ToString());
