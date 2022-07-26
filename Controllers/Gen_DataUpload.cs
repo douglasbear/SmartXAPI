@@ -36,6 +36,7 @@ namespace SmartxAPI.Controllers
             {
                 DataTable Mastertable = new DataTable();
                 DataTable Generaltable = new DataTable();
+                DataTable MappingRule = new DataTable();
                 Generaltable = ds.Tables["general"];
                 int nCompanyID = myFunctions.GetCompanyID(User);
                 int nMasterID = 0;
@@ -46,6 +47,10 @@ namespace SmartxAPI.Controllers
                 Params.Add("N_BranchID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_BranchID"].ToString()));
                 Params.Add("N_LocationID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_LocationID"].ToString()));
                 int N_UserID = myFunctions.GetUserID(User);
+                bool isRuleBasedImport = false;
+
+                if (Generaltable.Columns.Contains("N_RuleID")) //Checking if it's rule bases import
+                    isRuleBasedImport = true;
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -53,122 +58,148 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     foreach (DataTable dt in ds.Tables)
                     {
-                        if (dt.Columns.Contains("notes"))
+                        if (dt.Columns.Contains("notes") && !isRuleBasedImport)
                             dt.Columns.Remove("notes");
+
                         Params.Add("X_Type", dt.TableName);
                         Mastertable = ds.Tables[dt.TableName];
-                        foreach (DataColumn col in Mastertable.Columns)
+                        if (!isRuleBasedImport)
                         {
-                            col.ColumnName = col.ColumnName.Replace(" ", "_");
-                            col.ColumnName = col.ColumnName.Replace("*", "");
-                            col.ColumnName = col.ColumnName.Replace("/", "_");
+                            foreach (DataColumn col in Mastertable.Columns)
+                            {
+                                col.ColumnName = col.ColumnName.Replace(" ", "_");
+                                col.ColumnName = col.ColumnName.Replace("*", "");
+                                col.ColumnName = col.ColumnName.Replace("/", "_");
+                            }
                         }
                         Mastertable.Columns.Add("Pkey_Code");
 
-                        if (dt.TableName.ToString().ToLower() == "customer list" || dt.TableName.ToString().ToLower() == "customers" || dt.TableName.ToString().ToLower() == "customer")
-                            xTableName = "Mig_Customers";
-                        if (dt.TableName.ToString().ToLower() == "vendor list" || dt.TableName.ToString().ToLower() == "vendors" || dt.TableName.ToString().ToLower() == "vendor")
-                            xTableName = "Mig_Vendors";
-                        if (dt.TableName.ToString().ToLower() == "lead list")
+
+
+                        switch (dt.TableName.ToString().ToLower())
                         {
-                            xTableName = "Mig_Leads";
-                            Mastertable.Columns.Add("N_UserID");
-                            foreach (DataRow dtRow in Mastertable.Rows)
-                            {
-                                dtRow["N_UserID"] = N_UserID;
-                            }
+                            case "customer list":
+                            case "customers":
+                            case "customer":
+                                xTableName = "Mig_Customers";
+                                break;
+                            case "vendor list":
+                            case "vendors":
+                            case "vendor":
+                                xTableName = "Mig_Vendors";
+                                break;
+                            case "lead list":
+                                xTableName = "Mig_Leads";
+                                Mastertable.Columns.Add("N_UserID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_UserID"] = N_UserID;
+                                }
+                                break;
+                            case "chart of accounts":
+                                xTableName = "Mig_Accounts";
+
+                                break;
+                            case "products stock":
+                                xTableName = "Mig_Stock";
+                                break;
+                            case "employee list":
+                            case "employees":
+                                xTableName = "Mig_Employee";
+                                break;
+                            case "fixedassets list":
+                                xTableName = "_Mig_AssetList";
+                                break;
+                            case "salary history":
+                                xTableName = "Mig_EmployeeSalaryHistory";
+                                break;
+                            case "employee salary":
+                                xTableName = "Mig_EmployeeSalary";
+                                break;
+                            case "leave history":
+                                xTableName = "Mig_EmployeeLeaveHistory";
+                                break;
+                            case "customer balances":
+                                xTableName = "Mig_CustomerOpening";
+                                break;
+                            case "vendor balances":
+                                xTableName = "Mig_VendorOpening";
+                                break;
+                            case "product list":
+                            case "products":
+                            case "customer materials":
+                                xTableName = "Mig_Items";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;
+                            case "category":
+                                xTableName = "Mig_POSCategory";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;
+                            case "delivery notes":
+                                xTableName = "Mig_Deliverynote";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;
+                            case "goods received note":
+                                xTableName = "Mig_Grn";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;
+                            case "package items":
+                                xTableName = "Mig_PackageItem";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;
+                            case "warranty items":
+                                xTableName = "Mig_WarrantyItem";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;
+                            case "sales invoice":
+                                xTableName = "mig_SalesInvoice";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;
+                            default: return Ok("Invalid File");
                         }
-                        if (dt.TableName.ToString().ToLower() == "chart of accounts")
-                            xTableName = "Mig_Accounts";
-                        if (dt.TableName.ToString().ToLower() == "products stock")
-                            xTableName = "Mig_Stock";
-                        if (dt.TableName.ToString().ToLower() == "employee list" || dt.TableName.ToString().ToLower() == "employees")
-                            xTableName = "Mig_Employee";
-                        if (dt.TableName.ToString().ToLower() == "products stock")
-                            xTableName = "Mig_Stock";
-                        if (dt.TableName.ToString().ToLower() == "fixedassets list")
-                            xTableName = "_Mig_AssetList";
-                        if (dt.TableName.ToString().ToLower() == "salary history")
-                            xTableName = "Mig_EmployeeSalaryHistory";
-                        if (dt.TableName.ToString().ToLower() == "employee salary")
-                            xTableName = "Mig_EmployeeSalary";
-                        if (dt.TableName.ToString().ToLower() == "leave history")
-                            xTableName = "Mig_EmployeeLeaveHistory";
-                        if (dt.TableName.ToString().ToLower() == "customer balances")
-                            xTableName = "Mig_CustomerOpening";
-                        if (dt.TableName.ToString().ToLower() == "vendor balances")
-                            xTableName = "Mig_VendorOpening";
-                            
 
-                        if (dt.TableName.ToString().ToLower() == "product list" || dt.TableName.ToString().ToLower() == "products" || dt.TableName.ToString().ToLower() == "customer materials" )
+                        // Mapping Rule Configuration
+                        if (isRuleBasedImport)
                         {
-                            xTableName = "Mig_Items";
-                            Mastertable.Columns.Add("N_CompanyID");
-                            foreach (DataRow dtRow in Mastertable.Rows)
-                            {
-                                dtRow["N_CompanyID"] = nCompanyID;
-                            }
-                        }
-
-
-                        if (dt.TableName.ToString().ToLower() == "category")
-                        {
-                            xTableName = "Mig_POSCategory";
-                            Mastertable.Columns.Add("N_CompanyID");
-                            foreach (DataRow dtRow in Mastertable.Rows)
-                            {
-                                dtRow["N_CompanyID"] = nCompanyID;
-                            }
-                        }
-
-                           if (dt.TableName.ToString().ToLower() == "delivery notes")
-                        {
-                            xTableName = "Mig_Deliverynote";
-                            
-                            Mastertable.Columns.Add("N_CompanyID");
-                            foreach (DataRow dtRow in Mastertable.Rows)
-                            {
-                                dtRow["N_CompanyID"] = nCompanyID;
-                            }
-                        }
-
-                           if (dt.TableName.ToString().ToLower() == "goods received note")
-                        {
-                            xTableName = "Mig_Grn";
-                            
-                            Mastertable.Columns.Add("N_CompanyID");
-                            foreach (DataRow dtRow in Mastertable.Rows)
-                            {
-                                dtRow["N_CompanyID"] = nCompanyID;
-                            }
-                        }
-                        
-
-                        if (dt.TableName.ToString().ToLower() == "package items")
-                        {
-                            xTableName = "Mig_PackageItem";
-                            Mastertable.Columns.Add("N_CompanyID");
-                            foreach (DataRow dtRow in Mastertable.Rows)
-                            {
-                                dtRow["N_CompanyID"] = nCompanyID;
-                            }
-                        }
-
-
-                        if (dt.TableName.ToString().ToLower() == "warranty items")
-                        {
-                            xTableName = "Mig_WarrantyItem";
-                            Mastertable.Columns.Add("N_CompanyID");
-                            foreach (DataRow dtRow in Mastertable.Rows)
-                            {
-                                dtRow["N_CompanyID"] = nCompanyID;
-                            }
+                            int RuleID = myFunctions.getIntVAL(Generaltable.Rows[0]["n_RuleID"].ToString());
+                            SortedList ruleParams = new SortedList();
+                            ruleParams.Add("@nCompanyID", nCompanyID);
+                            ruleParams.Add("@nRuleID", RuleID);
+                            MappingRule = dLayer.ExecuteDataTable("select X_FieldName,X_ColumnRefName from Gen_ImportRuleDetails where N_CompanyID=@nCompanyID and N_RuleID=@nRuleID", ruleParams, connection, transaction);
                         }
 
                         if (Mastertable.Rows.Count > 0)
                         {
 
-                            if (Mastertable.Columns.Contains("Notes"))
+                            if (Mastertable.Columns.Contains("Notes") && !isRuleBasedImport)
                                 Mastertable.Columns.Remove("Notes");
 
                             dLayer.ExecuteNonQuery("delete from " + xTableName, Params, connection, transaction);
@@ -192,19 +223,42 @@ namespace SmartxAPI.Controllers
                                     }
                                     else
                                     {
-                                         if (Mastertable.Rows[j][k] == DBNull.Value) 
-                                         {
-                                        values = "";
+                                        if (Mastertable.Rows[j][k] == DBNull.Value)
+                                        {
+                                            values = "";
 
-                                         }else{
-                                        values = Mastertable.Rows[j][k].ToString();
-                                         }
+                                        }
+                                        else
+                                        {
+                                            values = Mastertable.Rows[j][k].ToString();
+                                        }
                                         values = values.Replace("|", " ");
                                     }
 
-                                    FieldValues = FieldValues + "|" + values;
-                                    if (j == 0)
-                                        FieldList = FieldList + "," + Mastertable.Columns[k].ColumnName.ToString();
+
+                                    if (isRuleBasedImport) // In Case of Mapping Rule
+                                    {
+                                        DataRow[] RuleRow = MappingRule.Select("X_ColumnRefName = '" + Mastertable.Columns[k].ColumnName.ToString() + "'");
+                                        if (RuleRow.Length > 0)
+                                        {
+                                            FieldValues = FieldValues + "|" + values;
+                                            if (j == 0)
+                                                FieldList = FieldList + "," + RuleRow[0]["X_FieldName"].ToString().Replace(" ", "_").Replace("*", "").Replace("/", "_");
+                                        }
+                                        else if (Mastertable.Columns[k].ColumnName.ToString() == "N_CompanyID" || Mastertable.Columns[k].ColumnName.ToString() == "PKey_Code")//System Defined fields exception
+                                        {
+                                            FieldValues = FieldValues + "|" + values;
+                                            if (j == 0)
+                                                FieldList = FieldList + "," + Mastertable.Columns[k].ColumnName.ToString();
+                                        }
+                                    }
+                                    else
+                                    {
+                                        FieldValues = FieldValues + "|" + values;
+                                        if (j == 0)
+                                            FieldList = FieldList + "," + Mastertable.Columns[k].ColumnName.ToString();
+                                    }
+
 
 
                                 }
@@ -222,19 +276,16 @@ namespace SmartxAPI.Controllers
                                     totalCount = totalCount + rowCount;
                                     FieldValuesArray = FieldValuesArray.Substring(1);
                                     string inserStript = "insert into " + xTableName + " (" + FieldList + ") values" + FieldValuesArray;
-                                    dLayer.ExecuteNonQuery(inserStript, connection, transaction); 
+                                    dLayer.ExecuteNonQuery(inserStript, connection, transaction);
                                     FieldValuesArray = "";
                                     rowCount = 0;
                                 }
 
                             }
 
+                            nMasterID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Count(1) from " + xTableName, connection, transaction).ToString());
 
- 
-                            //  nMasterID = dLayer.SaveData(xTableName, "PKey_Code", Mastertable, connection, transaction);
-                            nMasterID= myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Count(1) from "+xTableName, connection, transaction).ToString());
 
-                            object ValFlag;
                             SortedList ValidationParam = new SortedList();
                             ValidationParam.Add("N_CompanyID", nCompanyID);
                             ValidationParam.Add("N_FnYearID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_FnYearID"].ToString()));
@@ -248,9 +299,20 @@ namespace SmartxAPI.Controllers
                                 transaction.Rollback();
                                 return Ok(_api.Error(User, ex));
                             }
-                            // if(ValFlag==null)return Ok(_api.Error(User, "Uploaded Error"));
-                            // if(myFunctions.getIntVAL(ValFlag.ToString())==0)return Ok(_api.Error(User, "Uploaded Error"));
-                            dLayer.ExecuteNonQueryPro("SP_SetupData_cloud", Params, connection, transaction);
+
+                            if (dt.TableName.ToString().ToLower() == "sales invoice")
+                            {
+                                SortedList SalesInvParam = new SortedList();
+                                SalesInvParam.Add("N_CompanyID", nCompanyID);
+                                SalesInvParam.Add("N_FnYearID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_FnYearID"].ToString()));
+                                SalesInvParam.Add("N_UserID", myFunctions.GetUserID(User));
+                                dLayer.ExecuteNonQueryPro("SP_SalesInvoiceImport", SalesInvParam, connection, transaction);
+                            }
+                            else
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_SetupData_cloud", Params, connection, transaction);
+                            }
+
                             if (nMasterID <= 0)
                             {
                                 transaction.Rollback();

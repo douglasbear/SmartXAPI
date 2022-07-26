@@ -642,6 +642,11 @@ namespace SmartxAPI.Controllers
                                 string payRateSql = "SP_Pay_SelAddOrDed_Emp " + nCompanyID + "," +payRunID + "," +nFnYearID + "," + nEmpID;
                                 payRate = dLayer.ExecuteDataTable(payRateSql, Params,connection);
 
+                                if(payRate.Rows.Count==0){
+                                     payRateSql = "select * from Pay_PayMaster where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID;
+                                payRate = dLayer.ExecuteDataTable(payRateSql, Params,connection);
+                                }
+
                                 PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "N_Vacation", typeof(int), 0);
                                 // PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "N_Workhours", typeof(double), null);
                                 PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "Attandance", typeof(string), null);
@@ -853,7 +858,7 @@ namespace SmartxAPI.Controllers
 
                                     if (myFunctions.getDateVAL(Convert.ToDateTime(row["D_Date"].ToString())) == myFunctions.getDateVAL(Date5))
                                     {
-                                        if (row["Attandance"].ToString() != "A")
+                                        if (row["Attandance"].ToString() != "A" && row["Attandance"].ToString() != "" )
                                         {
                                             N_WorkdHrs += HoursToMinutes(myFunctions.getVAL(row["N_Tothours"].ToString()));
                                             N_WorkHours += HoursToMinutes(myFunctions.getVAL(row["N_Workhours"].ToString()));

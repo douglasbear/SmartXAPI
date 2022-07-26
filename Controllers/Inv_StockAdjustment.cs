@@ -338,7 +338,11 @@ namespace SmartxAPI.Controllers
                     }
 
                     transaction.Commit();
-                    return Ok(_api.Success("Saved Successfully"));
+                SortedList Result = new SortedList();
+                Result.Add("n_AdjustmentID", nAdjustmentID);
+                Result.Add("x_RefNo", X_RefNo);
+                return Ok(_api.Success(Result, "Saved Successfully"));
+                    //return Ok(_api.Success("Saved Successfully"));
                 }
             }
             catch (Exception ex)

@@ -621,6 +621,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CompanyId"].ToString());
                 int N_ItemID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString());
                 string XItemName = MasterTableNew.Rows[0]["X_ItemName"].ToString();
+              
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -633,11 +634,8 @@ namespace SmartxAPI.Controllers
                     ItemCode = MasterTableNew.Rows[0]["X_ItemCode"].ToString();
                     ItemType = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CLassID"].ToString());
 
-
-
-
-
-
+                    
+                 
                     if (ItemCode != "@Auto")
                     {
                         object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_ItemMaster Where X_ItemCode ='" + ItemCode + "' and N_CompanyID= " + nCompanyID + " and N_ItemID<>" + N_ItemID, connection, transaction);
@@ -731,6 +729,25 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Unable to save, Product name already exist"));
                         }
+
+              if (MasterTable.Columns.Contains("X_CustomerSKU"))
+                 {
+                int NCustomerID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CustomerID"].ToString());
+                string XCustomerSKU = MasterTableNew.Rows[0]["x_CustomerSKU"].ToString();
+               if(XCustomerSKU!="")
+                    {
+                    object SKUCount = dLayer.ExecuteScalar("Select Count(*) from Inv_ItemMaster Where N_CustomerID =" + NCustomerID + " and N_ItemID <> "+myFunctions.getIntVAL(MasterTable.Rows[k]["N_ItemID"].ToString())+" and X_CustomerSKU='"+XCustomerSKU+"' and N_CompanyID= " + nCompanyID, connection, transaction);
+                       if (myFunctions.getVAL(SKUCount.ToString()) >= 1)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Customer sku already exists"));
+                        }
+
+                    }
+                   }
+                   
+                  
+                    
 
                         string xBarcode = "";
                         if (MasterTable.Rows[k]["X_Barcode"].ToString() == "")
@@ -1244,6 +1261,7 @@ namespace SmartxAPI.Controllers
                         object N_Result = dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID= " + nCompanyID + " and N_FnYearID= " + nFnYearID, connection, transaction);
                         if (myFunctions.getIntVAL(myFunctions.getBoolVAL(N_Result.ToString())) == 1)
                         {
+                            transaction.Rollback();
                             return Ok(_api.Error(User, "Year Closed , Unable to delete product."));
                         }
 

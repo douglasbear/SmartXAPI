@@ -104,6 +104,72 @@ namespace SmartxAPI.Controllers
         }
 
 
+       
+   [HttpGet("dashboardList")]
+        public ActionResult GetProductUnitList(int nPage ,int nSizeperpage, string xSearchkey, string xSortBy,int nCompanyId)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                     nCompanyId = myFunctions.GetCompanyID(User);
+                    string sqlCommandCount = "", xCriteria = "";
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string criteria = "";
+                    string cndn = "";
+                    string Searchkey = "";
+                    Params.Add("@p1", nCompanyId);
+
+
+                   if (xSearchkey != null && xSearchkey.Trim() != "")
+                    Searchkey = "and (N_LocationID like '%" + xSearchkey + "%' OR X_LocationCode like '%" + xSearchkey + "%'  OR X_LocationName like '%" +xSearchkey + "%')";
+
+                    
+                   
+                   if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by N_LocationID desc";
+                      
+
+
+                   if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_location_cloud where  N_CompanyID=@p1 "+ criteria + cndn + Searchkey + " " + xSortBy;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_location_cloud where  and N_CompanyID=@p1"+ criteria + cndn + Searchkey + " " + xSortBy ;
+
+
+                    SortedList OutPut = new SortedList();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText , Params, connection);
+                   sqlCommandCount = "select count(*) as N_Count  from vw_Inv_location_cloud where N_CompanyID=@p1 ";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+                }
+            }
+              catch (Exception e)
+                {
+                return BadRequest(_api.Error(User, e));
+                }
+            
+
+        }
+
+
+
+
+
         [HttpGet("listdetails")]
         public ActionResult GetLocationDetails(int? nCompanyId, int? nLocationId)
         {
@@ -184,6 +250,7 @@ namespace SmartxAPI.Controllers
                     string LocationCode = "";
                     char x_LocationCodePattern;
                     char initialCode;
+                    String DupCriteria=" ";
                     //Limit Validation
                     ValidateParams.Add("@N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
                     string X_Pattern = "10";
@@ -192,6 +259,10 @@ namespace SmartxAPI.Controllers
                     string xTerminalCode ="@Auto";
 
                     int N_LocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationID"].ToString());
+                   // string Barcode =MasterTable.Rows[0]["X_Barcode"].ToString();
+                     string barcode ="";
+                      string x_LocationName = MasterTable.Rows[0]["x_LocationName"].ToString();
+                      int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
 
                     if(N_LocationID>0)
                     xTerminalCode="1";
@@ -290,7 +361,7 @@ namespace SmartxAPI.Controllers
                         if (N_TypeID == 1)
                         {
 
-                            object roomPattern = dLayer.ExecuteScalar("Select isnull(max(X_LocationCode),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_TypeID=1 ", connection, transaction);
+                            object roomPattern = dLayer.ExecuteScalar("Select isnull(max(X_LocationCode),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_MainLocationID=" + N_MainLocationID + " ", connection, transaction);
                             object normalPattern = dLayer.ExecuteScalar("Select isnull(max(X_Pattern),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_TypeID=1 ", connection, transaction);
                            // object mainLocationPattern=dLayer.ExecuteScalar("Select isnull(max(X_Pattern),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_LocationID="+N_MainLocationID+"", connection, transaction);
                             if (roomPattern == null || roomPattern.ToString() == "")
@@ -313,7 +384,23 @@ namespace SmartxAPI.Controllers
                         }
                         else if (N_TypeID != 0)
                         {
-                            object rowPattern = dLayer.ExecuteScalar("Select isnull(max(X_LocationCode),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_TypeID=" + N_TypeID + " and N_MainLocationID=" + N_MainLocationID + " ", connection, transaction);
+                            object rowPattern="";
+                            object parentID= dLayer.ExecuteScalar("Select isnull(N_WareHouseID,0) From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_LocationID=" + N_MainLocationID + " ", connection, transaction);
+                            if(myFunctions.getIntVAL(parentID.ToString())==0)
+                            {
+                                if(N_TypeID==5)
+                                {
+                                    rowPattern = dLayer.ExecuteScalar("Select isnull(max(X_LocationCode),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + "  and N_MainLocationID=" + N_MainLocationID + " ", connection, transaction);
+                                    x_LocationCodePattern = Convert.ToChar(rowPattern);
+                                    x_LocationCodePattern++;
+                                    MasterTable.Rows[0]["X_LocationCode"] = x_LocationCodePattern.ToString();
+
+
+                                }
+                            }
+                            else
+                            {
+                             rowPattern = dLayer.ExecuteScalar("Select isnull(max(X_LocationCode),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_TypeID=" + N_TypeID + " and N_MainLocationID=" + N_MainLocationID + " ", connection, transaction);
                             object parentRomPattern = dLayer.ExecuteScalar("select TOP 1  X_LocationCode from Inv_Location where N_LocationID=" + N_MainLocationID + " and N_CompanyID=" + nCompanyID + " ", connection, transaction);
                             if (rowPattern == null || rowPattern.ToString() == "")
                             {
@@ -330,6 +417,7 @@ namespace SmartxAPI.Controllers
                                 MasterTable.Rows[0]["X_LocationCode"] = parentRomPattern.ToString() + "-" + addingCode;
 
 
+                            }
                             }
                          
 
@@ -350,10 +438,11 @@ namespace SmartxAPI.Controllers
                     // {
                     //     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"B_IsDefault",typeof(bool),true);
                     // }
+                    
                     if(MasterTable.Columns.Contains("X_Barcode"))
                     {
 
-                     string barcode =  MasterTable.Rows[0]["X_BarCode"].ToString();
+                      barcode =  MasterTable.Rows[0]["X_BarCode"].ToString();
                     if(barcode ==null || barcode =="") 
                     {
                        MasterTable.Rows[0]["X_BarCode"]= MasterTable.Rows[0]["X_LocationCode"] ;
@@ -364,11 +453,23 @@ namespace SmartxAPI.Controllers
                          MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"X_BarCode",typeof(string),"");
                         MasterTable.Rows[0]["X_BarCode"]= MasterTable.Rows[0]["X_LocationCode"] ;
                     }
+                     if(barcode!="")
+                      {
+                         object barcodeCount = dLayer.ExecuteScalar("select count(N_LocationID) as Count from Inv_Location where N_CompanyID= " + nCompanyID + " and X_Barcode= '" +barcode+"'", connection, transaction);
+
+                          if (myFunctions.getIntVAL(barcodeCount.ToString()) >0)
+                          {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, "Barcode is already exist"));
+                         }
+                      }
+
+                       DupCriteria = "N_BranchID=" + nBranchID + " and X_LocationName= '" + x_LocationName + "' and N_CompanyID=" + nCompanyID;
              
 
                     MasterTable.Columns.Remove("n_FnYearId");
                     MasterTable.Columns.Remove("b_isSubLocation");
-                    N_LocationID = dLayer.SaveData("Inv_Location", "N_LocationID", MasterTable, connection, transaction);
+                    N_LocationID = dLayer.SaveData("Inv_Location", "N_LocationID", DupCriteria, "", MasterTable, connection, transaction);
                     if (N_LocationID <= 0)
                     {
                         transaction.Rollback();
@@ -392,7 +493,6 @@ namespace SmartxAPI.Controllers
                             {
                                 transaction.Rollback(); return Ok(_api.Error(User, "Unable to Create location"));
                             }
-                            int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                             string xLocationName = MasterTable.Rows[0]["x_LocationName"].ToString();
                             SortedList Params2 = new SortedList();
                             Params2.Add("N_CompanyID", nCompanyID);
@@ -402,12 +502,15 @@ namespace SmartxAPI.Controllers
                             if (xTerminalCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate location Code")); }
                             TerminalTable.Rows[0]["X_TerminalCode"] = xTerminalCode;
                             TerminalTable.AcceptChanges();
-                            String DupCriteria = "N_BranchID=" + nBranchID + " and X_TerminalName= '" + xLocationName + "' and N_CompanyID=" + nCompanyID;
+                             DupCriteria = "N_BranchID=" + nBranchID + " and X_TerminalName= '" + xLocationName + "' and N_CompanyID=" + nCompanyID;
                             int nTerminalID = dLayer.SaveData("Inv_Terminal", "N_TerminalID", DupCriteria, "", TerminalTable, connection, transaction);
                             if (nTerminalID <= 0)
                             {
                                 transaction.Rollback(); return Ok(_api.Error(User, "Unable to Create terminal"));
                             }
+
+                    
+                        
 
                         }
 

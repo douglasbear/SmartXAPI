@@ -119,7 +119,7 @@ namespace SmartxAPI.GeneralFunctions
             ICryptoTransform transform = provider.CreateEncryptor(key, IV);
             CryptoStream cryptoStream = new CryptoStream(memStream, transform, CryptoStreamMode.Write);
             cryptoStream.Write(byteInput, 0, byteInput.Length);
-            cryptoStream.FlushFinalBlock();
+            cryptoStream.FlushFinalBlock();   
 
             return Convert.ToBase64String(memStream.ToArray());
         }
@@ -341,7 +341,7 @@ namespace SmartxAPI.GeneralFunctions
             object obj = dLayer.ExecuteScalar("select " + ColumnReturn + " from " + TableName + " where  " + Condition + "", Params, connection);
             if (obj != null)
                 Result = obj.ToString();
-            return Result;
+            return Result; 
         }
         public DataTable AddNewColumnToDataTable(DataTable MasterDt, string ColName, Type dataType, object Value)
         {
@@ -1846,7 +1846,7 @@ namespace SmartxAPI.GeneralFunctions
 
                         SendApprovalMail(N_NextUser, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User,Subject,body);
 
-                        // myReminders.ReminderSet(dLayer, 24, N_TransID, ReqDate.ToString(), N_FormID,N_NextUser,User, connection, transaction);
+                       // int ReminderId = ReminderSave(dLayer, N_FormID, 0, DateTime.Now.ToString("dd/MMM/yyyy"), 24, User, transaction, connection);
                     }
                 }
             }
@@ -2911,6 +2911,68 @@ namespace SmartxAPI.GeneralFunctions
             }
 
         }
+
+        public int ReminderSave(IDataAccessLayer dLayer, int N_FormID, int partyId, string dateval, int settingsId, ClaimsPrincipal User, SqlTransaction transaction, SqlConnection connection)
+        {
+
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nUserID = this.GetUserID(User);
+            int nCompanyID = this.GetCompanyID(User);
+            string strSub="";
+            int categoryId=0;
+
+            string str="Select X_Subject,N_CategoryID from Gen_ReminderSettings where N_CompanyID="+nCompanyID+" and N_ID="+settingsId;
+
+            dt = dLayer.ExecuteDataTable(str, Params, connection,transaction);
+
+            if (dt.Rows.Count > 0)
+            {
+                strSub = dt.Rows[0]["X_Subject"].ToString();
+                categoryId = this.getIntVAL(dt.Rows[0]["N_CategoryID"].ToString());
+            }
+
+            if(strSub!="" && categoryId>0)
+            {
+                DataTable dtSave = new DataTable();
+                dtSave.Clear();
+                dtSave.Columns.Add("N_CompanyID");
+                dtSave.Columns.Add("N_FormID");
+                dtSave.Columns.Add("N_PartyID");
+                dtSave.Columns.Add("X_Subject");
+                dtSave.Columns.Add("X_Title");
+                dtSave.Columns.Add("D_ExpiryDate");
+                dtSave.Columns.Add("N_RemCategoryID");
+                dtSave.Columns.Add("B_IsAttachment");
+                dtSave.Columns.Add("N_SettingsID");
+                dtSave.Columns.Add("N_UserID");
+                dtSave.Columns.Add("N_ReminderId");
+
+                DataRow row = dtSave.NewRow();
+                row["N_ReminderId"] = 0;
+                row["N_CompanyID"] = this.GetCompanyID(User);
+                row["N_FormID"] = N_FormID;
+                row["N_PartyID"] = partyId;
+                row["X_Subject"] = strSub;
+                row["X_Title"] = strSub;
+                row["D_ExpiryDate"] = dateval;
+                row["N_RemCategoryID"] = categoryId;
+                row["B_IsAttachment"] = 0;
+                row["N_SettingsID"] = settingsId;
+                row["N_UserID"] = nUserID;
+                dtSave.Rows.Add(row);
+
+                object Result = 0;
+                Result=dLayer.SaveData("Gen_Reminder", "N_ReminderId", dtSave, connection, transaction);
+                if (this.getIntVAL(Result.ToString()) > 0)
+                {
+                    return this.getIntVAL(Result.ToString());
+
+                }
+            }
+            return 0;
+        }
+
     }
 
 

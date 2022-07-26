@@ -365,7 +365,7 @@ namespace SmartxAPI.Controllers
             if (EmpStatus == 0)
                 Criteria = Criteria + " and N_Status<>3 and N_Status<>2 ";
             else if (EmpStatus == 1)
-                Criteria = Criteria + " and N_Status =3 or N_Status =2 ";
+                Criteria = Criteria + " and (N_Status =3 or N_Status =2) ";
 
 
 
@@ -1171,6 +1171,8 @@ namespace SmartxAPI.Controllers
                 int nDepartmentID = myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_DepartmentID"].ToString());
                 string xEmpCode = dtMasterTable.Rows[0]["x_EmpCode"].ToString();
                 string xEmpName = dtMasterTable.Rows[0]["x_EmpName"].ToString();
+                string xPhone1= dtMasterTable.Rows[0]["x_Phone1"].ToString();
+                string xEmailID= dtMasterTable.Rows[0]["x_EmailID"].ToString();
                 int nUserID = myFunctions.GetUserID(User);
                 string X_BtnAction = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -1201,6 +1203,36 @@ namespace SmartxAPI.Controllers
 
                     }
 
+                     if (xPhone1 != "")
+                    {
+                        object NPhnCount = dLayer.ExecuteScalar("Select count(*) from pay_Employee Where X_Phone1 ='" + xPhone1 + "' and N_EmpID <> '" + nEmpID + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                        if (NPhnCount == null)
+                        {
+                            NPhnCount = 0;
+                        }
+                        if (myFunctions.getVAL(NPhnCount.ToString()) >= 1)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Phone Number already exist"));
+                        }
+
+
+                    }
+                   if (xEmailID != "")
+                    {
+                        object NEmailCount = dLayer.ExecuteScalar("Select count(*) from pay_Employee Where X_EmailID ='" + xEmailID + "' and N_EmpID <> '" + nEmpID + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                        if (NEmailCount == null)
+                        {
+                            NEmailCount = 0;
+                        }
+                        if (myFunctions.getVAL(NEmailCount.ToString()) >= 1)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Email already exist"));
+                        }
+
+
+                    }
                     // Auto Gen
                     if (xEmpCode == "@Auto")
                     {
