@@ -138,6 +138,40 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nFeeSetupID)
+        {
+            int Results = 0;
+            int nCompanyID=myFunctions.GetCompanyID(User);
+            try
+            {
+                  SortedList Params = new SortedList();
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+
+                    connection.Open();
+                        SqlTransaction transaction = connection.BeginTransaction();
+                    dLayer.DeleteData("Sch_ClassFeeSetupMaster", "N_FeeSetupID", nFeeSetupID,"N_CompanyID =" + nCompanyID , connection,transaction);
+                    Results = dLayer.DeleteData("Sch_ClassFeeSetup", "N_FeeSetupID", nFeeSetupID, "N_CompanyID =" + nCompanyID,connection,transaction);
+                    if (Results > 0)
+                    {
+                      
+                    
+                        transaction.Commit();
+                        return Ok(_api.Success("deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error(User, "Unable to delete"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+        }
+
 
     }
 }

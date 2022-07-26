@@ -181,6 +181,7 @@ namespace SmartxAPI.Controllers
                     int nUserID = myFunctions.GetUserID(User);
                     int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                     int nPurchaseID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PurchaseID"].ToString());
+                    int N_VendorID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_VendorID"].ToString());
                     string X_InvoiceNo = MasterTable.Rows[0]["X_InvoiceNo"].ToString();
                     string xTransType = "FTPURCHASE";
                     DocNo = MasterRow["X_InvoiceNo"].ToString();
@@ -238,6 +239,15 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Unable to generate Invoice Number"));
                         }
                         MasterTable.Rows[0]["x_InvoiceNo"] = X_InvoiceNo;
+                    }
+
+                    if (MasterTable.Columns.Contains("N_ActVendorID"))
+                    {
+                        MasterTable.Rows[0]["N_ActVendorID"] = N_VendorID;
+                    }
+                    else
+                    {
+                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_ActVendorID", typeof(int), N_VendorID);
                     }
                     nPurchaseID = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", MasterTable, connection, transaction);
 
