@@ -43,7 +43,7 @@ namespace SmartxAPI.Controllers
             DataTable MasterTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from Sch_Teacher where N_CompanyID=@p1  and n_TeacherID=@p2";
+            string sqlCommandText = "select * from vw_SchTeacher where N_CompanyID=@p1  and n_TeacherID=@p2";
             Params.Add("@p1", nCompanyId);  
             Params.Add("@p2", n_TeacherID);
             try
@@ -100,8 +100,7 @@ namespace SmartxAPI.Controllers
                         if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Course Code")); }
                         MasterTable.Rows[0]["x_TeacherCode"] = Code;
                     }
-                    MasterTable.Columns.Remove("n_FnYearId");
-
+                    
                     if (nTeacherID > 0) 
                     {  
                         dLayer.DeleteData("Sch_Teacher", "n_TeacherID", nTeacherID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
@@ -134,7 +133,7 @@ namespace SmartxAPI.Controllers
             
             string sqlCommandText="";
 
-            sqlCommandText="select * from Sch_Teacher where N_CompanyID=@p1";
+            sqlCommandText="select * from vw_SchTeacher where N_CompanyID=@p1";
 
             param.Add("@p1", nCompanyID);                 
                 
