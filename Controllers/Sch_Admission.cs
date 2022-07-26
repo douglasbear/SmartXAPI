@@ -155,6 +155,14 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nAcYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AcYearID"].ToString());
                 int nAdmissionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AdmissionID"].ToString());
+                int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
+                int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationID"].ToString());
+                int nUserID = myFunctions.GetUserID(User);
+
+                if (MasterTable.Columns.Contains("N_BranchID"))
+                    MasterTable.Columns.Remove("N_BranchID");
+                if (MasterTable.Columns.Contains("N_LocationID"))
+                    MasterTable.Columns.Remove("N_LocationID");
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -252,8 +260,27 @@ namespace SmartxAPI.Controllers
                             }
                         }
                     }
-                    //--------------------------------------------^^^^^^^^^^^^----------------------------------------------------
-                    
+                    //--------------------------------------------^^^^^^^^^^^^----------------------------------------------------             
+
+                    SortedList SalesParam = new SortedList();
+                    SalesParam.Add("N_CompanyID", nCompanyID);
+                    SalesParam.Add("N_FnYearID", nFnYearId);
+                    SalesParam.Add("N_BranchID", nBranchID);
+                    SalesParam.Add("N_LocationID ", nLocationID);
+                    SalesParam.Add("N_StudentID ", nAdmissionID);
+                    SalesParam.Add("N_CustomerID ", nCustomerID);
+                    SalesParam.Add("D_AdmDate ", Convert.ToDateTime(MasterTable.Rows[0]["D_AdmissionDate"].ToString()));
+                    SalesParam.Add("N_UserID ", nUserID);
+                    try
+                    {
+                        dLayer.ExecuteNonQueryPro("SP_StudentAdmFee_Insert", SalesParam, connection, transaction);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error(User, ex));
+                    }
+
                     transaction.Commit();
                     return Ok(api.Success("Admission Completed"));
 
