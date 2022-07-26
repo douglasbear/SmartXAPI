@@ -23,7 +23,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
 
-        private readonly int N_FormID =744 ;
+        private readonly int N_FormID =1517 ;
 
         public Sch_StudentRegistration(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
@@ -58,7 +58,11 @@ namespace SmartxAPI.Controllers
                          Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         Code = dLayer.GetAutoNumber("Sch_Registration", "X_RegNo", Params, connection, transaction);
-                        if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Course Code")); }
+                        if (Code == "")
+                         { 
+                            transaction.Rollback();
+                            return Ok(api.Error(User,"Unable to generate Course Code")); 
+                            }
                         MasterTable.Rows[0]["X_RegNo"] = Code;
                     }
 
