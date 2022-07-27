@@ -220,54 +220,57 @@ namespace SmartxAPI.Controllers
                         dLayer.SaveImage("Sch_Admission", "I_Photo", photoBitmap, "N_AdmissionID",nAdmissionID, connection, transaction);
                     }
 
-                    if(nAdmID==0)
+                    
+                    //----------------------------------Customer Insert-------------------------------------------------------
+                    string sqlCommandText = "SELECT N_CompanyID,N_CustomerID,'"+CustCode+"' AS X_CustomerCode,X_Name AS X_CustomerName,X_GaurdianName AS X_ContactName,X_StudentMobile AS X_PhoneNo1,0 AS N_CreditLimit,0 AS B_Inactive," +
+                                            " (select N_FieldValue from Acc_AccountDefaults where x_fielddescr='Debtor Account' and N_CompanyID=vw_SchAdmission.N_CompanyID and N_FnYearID=vw_SchAdmission.N_AcYearID) AS N_LedgerID," +
+                                            " N_AcYearID AS N_FnYearID,GETDATE() AS D_EntryDate,D_DOB,2 AS N_TypeID,N_BranchId,"+
+                                            " (select N_CountryID from Acc_Company where N_CompanyID=vw_SchAdmission.N_CompanyID) AS N_CountryID," +
+                                            " (select N_CurrencyID from Acc_Company where N_CompanyID=vw_SchAdmission.N_CompanyID) AS N_CurrencyID" +
+                                            " FROM vw_SchAdmission where N_CompanyID="+nCompanyID+" and N_AcYearID="+nAcYearID+" and N_AdmissionID="+ nAdmissionID;
+
+                    dtCustomer = dLayer.ExecuteDataTable(sqlCommandText, Params,connection,transaction);
+
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_CustomerCode='" + CustCode + "'";
+                    string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
+                    int nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", DupCriteria, X_Criteria, dtCustomer, connection, transaction);
+                    if (nCustomerID <= 0)
                     {
-                        //----------------------------------Customer Insert-------------------------------------------------------
-                        string sqlCommandText = "SELECT N_CompanyID,N_CustomerID,'"+CustCode+"' AS X_CustomerCode,(X_Name+' '+X_MiddleName+' '+X_LastName) AS X_CustomerName,X_GaurdianName AS X_ContactName,X_StudentMobile AS X_PhoneNo1,0 AS N_CreditLimit,0 AS B_Inactive," +
-                                                " (select N_FieldValue from Acc_AccountDefaults where x_fielddescr='Debtor Account' and N_CompanyID=vw_SchAdmission.N_CompanyID and N_FnYearID=vw_SchAdmission.N_AcYearID) AS N_LedgerID," +
-                                                " N_AcYearID AS N_FnYearID,GETDATE() AS D_EntryDate,D_DOB,2 AS N_TypeID,N_BranchId,"+
-                                                " (select N_CountryID from Acc_Company where N_CompanyID=vw_SchAdmission.N_CompanyID) AS N_CountryID," +
-                                                " (select N_CurrencyID from Acc_Company where N_CompanyID=vw_SchAdmission.N_CompanyID) AS N_CurrencyID" +
-                                                " FROM vw_SchAdmission where N_CompanyID="+nCompanyID+" and N_FnYearID="+nAcYearID+" and N_AdmissionID="+ nAdmissionID;
+                        transaction.Rollback();
+                        return Ok(api.Error(User,"Unable to Genrate Customer"));
+                    }
+                        
+                    object N_GroupID = dLayer.ExecuteScalar("Select Isnull(N_FieldValue,0) From Acc_AccountDefaults Where N_CompanyID=" + nCompanyID + " and X_FieldDescr ='Customer Account Group' and N_FnYearID=" + nFnYearId, Params, connection, transaction);
+                    string X_LedgerName = "";
 
-                        dtCustomer = dLayer.ExecuteDataTable(sqlCommandText, Params,connection,transaction);
+                    bool b_AutoGenerate =true;
+                    b_AutoGenerate = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("155", "AutoGenerate_CustomerAccount", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection,transaction)));
 
-                        string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_CustomerCode='" + CustCode + "'";
-                        string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
-                        int nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", DupCriteria, X_Criteria, dtCustomer, connection, transaction);
-                        if (nCustomerID <= 0)
+                    if (b_AutoGenerate)
+                    {
+                        X_LedgerName = MasterTable.Rows[0]["X_Name"].ToString();
+                        if (N_GroupID != null)
                         {
-                            transaction.Rollback();
-                            return Ok(api.Error(User,"Unable to Genrate Customer"));
-                        }
-                            
-                        object N_GroupID = dLayer.ExecuteScalar("Select Isnull(N_FieldValue,0) From Acc_AccountDefaults Where N_CompanyID=" + nCompanyID + " and X_FieldDescr ='Customer Account Group' and N_FnYearID=" + nFnYearId, Params, connection, transaction);
-                        string X_LedgerName = "";
-
-                        bool b_AutoGenerate =true;
-                        b_AutoGenerate = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("155", "AutoGenerate_CustomerAccount", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection,transaction)));
-
-                        if (b_AutoGenerate)
-                        {
-                            X_LedgerName = dtCustomer.Rows[0]["X_CustomerName"].ToString();
-                            if (N_GroupID != null)
+                            object N_LedgerID = dLayer.ExecuteScalar("Select Isnull(N_LedgerID,0) From Acc_MastLedger Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_LedgerName='" + X_LedgerName + "' and N_GroupID=" + myFunctions.getIntVAL(N_GroupID.ToString()), Params, connection, transaction);
+                            if (N_LedgerID != null)
                             {
-                                object N_LedgerID = dLayer.ExecuteScalar("Select Isnull(N_LedgerID,0) From Acc_MastLedger Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_LedgerName='" + X_LedgerName + "' and N_GroupID=" + myFunctions.getIntVAL(N_GroupID.ToString()), Params, connection, transaction);
-                                if (N_LedgerID != null)
-                                {
-                                    dLayer.ExecuteNonQuery("Update Inv_Customer Set N_LedgerID =" + myFunctions.getIntVAL(N_LedgerID.ToString()) + " Where N_CustomerID =" + nCustomerID + " and N_CompanyID=" + nCompanyID + " and N_FnyearID= " + nFnYearId, Params, connection, transaction);
-                                }
-                                else
-                                {
-                                    dLayer.ExecuteNonQuery("SP_Inv_CreateCustomerAccount " + nCompanyID + "," + nCustomerID + ",'" + CustCode + "','" + X_LedgerName + "'," + myFunctions.GetUserID(User) + "," + nFnYearId + "," + "Customer", Params, connection, transaction);
-                                }
+                                dLayer.ExecuteNonQuery("Update Inv_Customer Set N_LedgerID =" + myFunctions.getIntVAL(N_LedgerID.ToString()) + " Where N_CustomerID =" + nCustomerID + " and N_CompanyID=" + nCompanyID + " and N_FnyearID= " + nFnYearId, Params, connection, transaction);
+                            }
+                            else
+                            {
+                                dLayer.ExecuteNonQuery("SP_Inv_CreateCustomerAccount " + nCompanyID + "," + nCustomerID + ",'" + CustCode + "','" + X_LedgerName + "'," + myFunctions.GetUserID(User) + "," + nFnYearId + "," + "Customer", Params, connection, transaction);
                             }
                         }
-                        //--------------------------------------------^^^^^^^^^^^^----------------------------------------------------             
+                    }
+                    //--------------------------------------------^^^^^^^^^^^^---------------------------------------------------- 
+                    dLayer.ExecuteNonQuery("update Sch_Admission set N_CustomerID="+nCustomerID+"  where N_CompanyID="+nCompanyID+" and N_AcYearID="+nAcYearID+" and N_AdmissionID="+nAdmissionID, Params, connection, transaction);
+
+                    if(nAdmID==0)
+                    {
                         //--------------------------------------Sch_Sales - SALES - Posting--------------------------------------
                         SortedList SalesParam = new SortedList();
                         SalesParam.Add("N_CompanyID", nCompanyID);
-                        SalesParam.Add("N_FnYearID", nFnYearId);
+                        SalesParam.Add("N_AcYearID", nFnYearId);
                         SalesParam.Add("N_BranchID", nBranchID);
                         SalesParam.Add("N_LocationID ", nLocationID);
                         SalesParam.Add("N_StudentID ", nAdmissionID);
@@ -283,6 +286,11 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(api.Error(User, ex));
                         }
+
+                        dLayer.ExecuteNonQuery("UPDATE Sch_Sales SET Sch_Sales.N_RefSalesID=Inv_Sales.N_SalesId from Sch_Sales INNER JOIN Mig_SalesInvoice ON Sch_Sales.N_CompanyId=Mig_SalesInvoice.N_CompanyID AND "+
+                                                " Sch_Sales.N_SalesId=Mig_SalesInvoice.SchSalesID INNER JOIN Inv_Sales ON Inv_Sales.N_CompanyId=Mig_SalesInvoice.N_CompanyID AND Inv_Sales.X_CustPONo=Mig_SalesInvoice.Invoice_Number "+
+                                                " where Sch_Sales.N_CompanyID="+nCompanyID+" and N_FnYearId="+nFnYearId+" and N_RefId="+nAdmissionID, Params, connection, transaction);
+
                         //----------------------------------------^^^^^^^^^^^^^^^^^^^^^^^^-------------------------------------
                     }
 
