@@ -252,7 +252,7 @@ namespace SmartxAPI.Controllers
                         string X_LedgerName = "";
                         if (b_AutoGenerate)
                         {
-                            X_LedgerName = x_CustomerName;
+                            X_LedgerName = x_CustomerName; 
                             if (N_GroupID != null)
                             {
                                 object N_LedgerID = dLayer.ExecuteScalar("Select Isnull(N_LedgerID,0) From Acc_MastLedger Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_LedgerName='" + X_LedgerName + "' and N_GroupID=" + myFunctions.getIntVAL(N_GroupID.ToString()), Params, connection, transaction);
@@ -280,6 +280,11 @@ namespace SmartxAPI.Controllers
                             }
                             // else
                             // msg.msgError("No DefaultGroup");
+                        }
+                        else
+                        {
+                            object N_DefLedgerID = dLayer.ExecuteScalar("Select Isnull(N_FieldValue,0) From Acc_AccountDefaults Where N_CompanyID=" + nCompanyID + " and X_FieldDescr ='Debtor Account' and N_FnYearID=" + nFnYearId, Params, connection, transaction);
+                            dLayer.ExecuteNonQuery("Update Inv_Customer Set N_LedgerID =" + myFunctions.getIntVAL(N_DefLedgerID.ToString()) + " Where N_CustomerID =" + nCustomerID + " and N_CompanyID=" + nCompanyID + " and N_FnyearID= " + nFnYearId, Params, connection, transaction);
                         }
 
 
