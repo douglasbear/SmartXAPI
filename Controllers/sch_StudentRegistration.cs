@@ -61,7 +61,7 @@ namespace SmartxAPI.Controllers
                         if (Code == "")
                          { 
                             transaction.Rollback();
-                            return Ok(api.Error(User,"Unable to generate Course Code")); 
+                            return Ok(api.Error(User,"Unable to generate student generation")); 
                             }
                         MasterTable.Rows[0]["X_RegNo"] = Code;
                     }
