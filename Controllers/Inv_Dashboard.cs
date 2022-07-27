@@ -90,7 +90,7 @@ namespace SmartxAPI.Controllers
                         if (bAllBranchData == true)
                         {
                             if (xType == "All")
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_ClassID in (2,3,5)";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) ";
                             else if (xType == "NoStock")
                                 X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock=0 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null)";
                             else if (xType == "MinimumQty")
@@ -101,7 +101,7 @@ namespace SmartxAPI.Controllers
                         else
                         {
                             if (xType == "All")
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_ClassID in (2,3,5)";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) ";
                             else if (xType == "NoStock")
                                 X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and  N_CurrStock = 0 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null)";
                             else if (xType == "MinimumQty")
@@ -128,7 +128,7 @@ namespace SmartxAPI.Controllers
                         if (bAllBranchData == true)
                         {
                             if (xType == "All")
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_ClassID in (2,3,5)";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) ";
                             else if (xType == "NoStock")
                                 X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock = 0 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null)";
                             else if (xType == "MinimumQty")
@@ -139,7 +139,7 @@ namespace SmartxAPI.Controllers
                         else
                         {
                             if (xType == "All")
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_ClassID in (2,3,5)";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) ";
                             else if (xType == "NoStock")
                                 X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and  N_CurrStock=0 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null)";
                             else if (xType == "N_MinQty")
@@ -204,7 +204,7 @@ namespace SmartxAPI.Controllers
                 
             // criteria="N_CompanyID ="+nCompanyID+" and N_LocationID="+nLocationID+" and N_BranchID="+nBranchID;
 
-            sqlAll = "SELECT COUNT(N_ItemID) as N_Count FROM vw_InvItem_WHLink WHERE " + criteria1 + " and B_Inactive=0 and X_ItemCode <> '001' and N_ItemTypeID<>1 and N_ClassID in (2,3,5) ";
+            sqlAll = "SELECT COUNT(N_ItemID) as N_Count FROM vw_InvItem_WHLink WHERE " + criteria1 + " and B_Inactive=0 and X_ItemCode <> '001' and N_ItemTypeID<>1 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) ";
             sqlNoStock = "SELECT COUNT(N_ItemID) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock = 0 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) ";
             sqlMinQty = "SELECT COUNT(N_ItemID) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock <= N_MinQty and N_ClassID in (2,3,5) and N_MinQty is not null ";
             sqlReOrder = "SELECT COUNT(N_ItemID) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock <= N_ReOrderQty and N_ClassID in (2,3,5) and N_ReOrderQty is not null ";
