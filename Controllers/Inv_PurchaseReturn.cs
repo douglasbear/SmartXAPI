@@ -259,7 +259,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     if (xCreditNoteNo != "")
                     {
-                     object purchaseID=dLayer.ExecuteScalar("select N_PurchaseID from Inv_PurchaseReturnMaster where N_CompanyID="+nCompanyId+" and N_FnYearID ="+nFnYearId+" and X_CreditNoteNo="+xCreditNoteNo+"",NewParams,connection);
+                     object purchaseID=dLayer.ExecuteScalar("select N_PurchaseID from Inv_PurchaseReturnMaster where N_CompanyID="+nCompanyId+" and N_FnYearID ="+nFnYearId+" and X_CreditNoteNo='"+xCreditNoteNo+"'",NewParams,connection);
                      if((purchaseID==null || purchaseID =="")|| myFunctions.getIntVAL(purchaseID.ToString())==0)
                      {
                          if (bAllBranchData == true)
