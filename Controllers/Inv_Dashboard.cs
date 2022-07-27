@@ -206,10 +206,10 @@ namespace SmartxAPI.Controllers
                 
             // criteria="N_CompanyID ="+nCompanyID+" and N_LocationID="+nLocationID+" and N_BranchID="+nBranchID;
 
-            sqlAll = "SELECT COUNT(1) as N_Count FROM vw_InvItem_WHLink WHERE " + criteria1 + " and B_Inactive=0 and X_ItemCode <> '001' and N_ItemTypeID<>1";
-            sqlNoStock = "SELECT COUNT(1) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock = 0";
-            sqlMinQty = "SELECT COUNT(1) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock <= N_MinQty";
-            sqlReOrder = "SELECT COUNT(1) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock <= N_ReOrderQty";
+            sqlAll = "SELECT COUNT(1) as N_Count FROM vw_InvItem_WHLink WHERE " + criteria1 + " and B_Inactive=0 and X_ItemCode <> '001' and N_ItemTypeID<>1 group by N_ItemID";
+            sqlNoStock = "SELECT COUNT(1) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock = 0  group by N_ItemID";
+            sqlMinQty = "SELECT COUNT(1) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock <= N_MinQty  group by N_ItemID";
+            sqlReOrder = "SELECT COUNT(1) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock <= N_ReOrderQty  group by N_ItemID";
 
             sqlTopSell = "select Top 5 * from vw_TopSellingItem where N_ItemID in (select N_ItemID from vw_InvItem_WHLink where " + criteria1 + ") and N_CompanyID ="+ nCompanyID+" order by N_Count Desc";
             sqlInvValue = "SELECT vw_InvStock_Status.N_CompanyID, Inv_ItemCategory.X_CategoryCode, Inv_ItemCategory.X_Category,SUM(vw_InvStock_Status.N_Factor*vw_InvStock_Status.N_Cost*vw_InvStock_Status.N_Qty) AS N_Value "
