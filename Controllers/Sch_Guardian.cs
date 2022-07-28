@@ -175,12 +175,15 @@ namespace SmartxAPI.Controllers
                     if (myFunctions.ContainColumn("i_MotherImage", MasterTable))
                         MasterTable.Columns.Remove("i_MotherImage");
 
-                    if (nParentID > 0) 
-                    {  
-                        dLayer.DeleteData("Sch_ParentDetails", "n_ParentID", nParentID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
-                    }
+                    // if (nParentID > 0) 
+                    // {  
+                    //     dLayer.DeleteData("Sch_ParentDetails", "n_ParentID", nParentID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
+                    // }
 
-                    nParentID = dLayer.SaveData("Sch_ParentDetails", "n_ParentID", MasterTable, connection, transaction);
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + "  and X_ParentCode='" + Code + "'";
+                    string X_Criteria = "N_CompanyID=" + nCompanyID ;
+
+                    nParentID = dLayer.SaveData("Sch_ParentDetails", "n_ParentID",DupCriteria,X_Criteria, MasterTable, connection, transaction);
                     if (nParentID <= 0)
                     {
                         transaction.Rollback();
