@@ -813,5 +813,38 @@ namespace SmartxAPI.Controllers
                 return StatusCode(403, _api.Error(User, e));
             }
         }
+
+        // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        // [HttpGet("updateSign")]
+        // public ActionResult GetUserList()
+        // {
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
+        //     int nCompanyId = myFunctions.GetCompanyID(User);
+        //     string sqlCommandText = "Sp_UserList";
+        //     Params.Add("N_CompanyID", nCompanyId);
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dt = dLayer.ExecuteDataTablePro(sqlCommandText, Params, connection);
+        //         }
+        //         dt = _api.Format(dt);
+        //         if (dt.Rows.Count == 0)
+        //             return Ok(_api.Warning("No Results Found"));
+        //         else
+        //         {
+        //             dt.Columns.Remove("X_Password");
+        //             dt.AcceptChanges();
+        //             return Ok(_api.Success(dt));
+        //         }
+
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return StatusCode(403, _api.Error(User, e));
+        //     }
+        // }
     }
 }
