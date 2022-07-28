@@ -779,7 +779,7 @@ namespace SmartxAPI.Controllers
                        // object invoiceCount ;
                         if(vendorInvoice!="")
                         {
-                             object invoiceCount = dLayer.ExecuteScalar("select count(N_PurchaseID) as Count from inv_purchase where N_CompanyID= " + nCompanyID + " and X_VendorInvoice= " +vendorInvoice +" and N_VendorID = " + N_VendorID, connection, transaction);
+                             object invoiceCount = dLayer.ExecuteScalar("select count(N_PurchaseID) as Count from inv_purchase where N_CompanyID= " + nCompanyID + " and X_VendorInvoice= '" +vendorInvoice +"' and N_VendorID = " + N_VendorID, connection, transaction);
 
                         if (myFunctions.getIntVAL(invoiceCount.ToString()) >0)
                             {
