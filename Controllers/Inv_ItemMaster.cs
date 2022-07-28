@@ -628,6 +628,8 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CompanyId"].ToString());
                 int N_ItemID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString());
                 string XItemName = MasterTableNew.Rows[0]["X_ItemName"].ToString();
+                object n_MinQty = MasterTableNew.Rows[0]["n_MinQty"] == System.DBNull.Value ? "":MasterTableNew.Rows[0]["n_MinQty"];
+                object n_ReOrderQty = MasterTableNew.Rows[0]["n_ReOrderQty"] == System.DBNull.Value ? "":MasterTableNew.Rows[0]["n_ReOrderQty"];
               
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -784,7 +786,16 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Unable to save"));
                         }
 
-
+                      if (n_MinQty == null || n_MinQty =="")
+                        {
+                           
+                            dLayer.ExecuteNonQuery("update  Inv_ItemMaster set n_MinQty = null where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
+                        }
+                        if (n_ReOrderQty == null || n_ReOrderQty =="")
+                        {
+                           
+                            dLayer.ExecuteNonQuery("update  Inv_ItemMaster set n_ReOrderQty = null where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
+                        }
                         if (k == 0 && ItemType == 6)
                         {
                             N_VariantGrpType = N_ItemID;
