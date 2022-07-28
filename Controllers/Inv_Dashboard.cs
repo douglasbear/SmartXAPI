@@ -118,11 +118,11 @@ namespace SmartxAPI.Controllers
 
                         if (B_PartNo)
                         {
-                            X_VisibleFieldList = "X_PartNo,X_ItemCode,X_ItemName,X_Category,X_PreferredVendor,X_Rack,N_CurrentStock,X_ItemUnit,X_ItemManufacturer";
+                            X_VisibleFieldList = "X_PartNo,X_LocationName,N_MinQty,N_ReOrderQty,X_ItemCode,X_ItemName,X_Category,X_PreferredVendor,X_Rack,N_CurrentStock,X_ItemUnit,X_ItemManufacturer";
                         }
                         else
                         {
-                            X_VisibleFieldList = "X_ItemCode,X_ItemName,X_Category,X_PreferredVendor,X_Rack,N_CurrentStock,X_ItemUnit";
+                            X_VisibleFieldList = "X_ItemCode,X_LocationName,N_MinQty,N_ReOrderQty,X_ItemName,X_Category,X_PreferredVendor,X_Rack,N_CurrentStock,X_ItemUnit";
                         }
 
                         if (bAllBranchData == true)
@@ -152,7 +152,7 @@ namespace SmartxAPI.Controllers
                     if (Count == 0)
                         sqlCommandText = "Select top(" + nSizeperpage + ") " + X_VisibleFieldList + " from " + X_TableName + " where " + X_Crieteria + " "  + xSortBy + "";
                     else
-                        sqlCommandText = "Select top(" + nSizeperpage + ") " + X_VisibleFieldList + " from " + X_TableName + " where " + X_Crieteria + " " + " and N_ItemID not in (select top(" + Count + ") N_ItemID from" + X_TableName + " where " + X_Crieteria + ") " + xSortBy + "";
+                        sqlCommandText = "Select top(" + nSizeperpage + ") " + X_VisibleFieldList + " from " + X_TableName + " where " + X_Crieteria + " " + " and N_ItemID not in (select top(" + Count + ") N_ItemID from " + X_TableName + " where " + X_Crieteria + ") " + xSortBy + "";
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     sqlCommandCount = "select count(*) as N_Count From " + X_TableName + " where " + X_Crieteria + " " ;
@@ -167,7 +167,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Success(dt));
+                        return Ok(_api.Success(OutPut));
                     }
                 }
 
