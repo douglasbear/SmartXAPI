@@ -286,11 +286,7 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(api.Error(User, ex));
                         }
-
-                        dLayer.ExecuteNonQuery("UPDATE Sch_Sales SET Sch_Sales.N_RefSalesID=Inv_Sales.N_SalesId from Sch_Sales INNER JOIN Mig_SalesInvoice ON Sch_Sales.N_CompanyId=Mig_SalesInvoice.N_CompanyID AND "+
-                                                " Sch_Sales.N_SalesId=Mig_SalesInvoice.SchSalesID INNER JOIN Inv_Sales ON Inv_Sales.N_CompanyId=Mig_SalesInvoice.N_CompanyID AND Inv_Sales.X_CustPONo=Mig_SalesInvoice.Invoice_Number "+
-                                                " where Sch_Sales.N_CompanyID="+nCompanyID+" and N_FnYearId="+nFnYearId+" and N_RefId="+nAdmissionID, Params, connection, transaction);
-
+                      
                         //----------------------------------------^^^^^^^^^^^^^^^^^^^^^^^^-------------------------------------
                     }
 
