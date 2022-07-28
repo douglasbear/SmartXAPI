@@ -115,11 +115,16 @@ namespace SmartxAPI.Controllers
         //                   DateTime DateFrom = Convert.ToDateTime(row["PeriodFrom"].ToString());
         //                   DateTime DateTo = Convert.ToDateTime(row["PeriodTo"].ToString()); 
         //             if (DateTo < DateFrom)
-        //             {
-        //                 msg.msgInformation(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "Period To must greater than Period From"));
-        //                 dba.Rollback();
-        //                 return;
+        //             {   
+        //                    transaction.Rollback();
+        //                 return Ok(_api.Error(User, "Unable To Save"));
         //             }
+        //             if (row["Status"].ToString() == "Not Paid")
+        //             {
+        //                 dLayer.ExecuteNonQuery("Update Sch_Sales set D_SalesDate = '" + row["PeriodFrom"] + "', N_SalesAmt = " + myFunctions.getVAL( row["Fee"].ToString())  + " where N_CompanyID = " +nCompanyID + " and N_FnYearId= " + myFunctions.getVAL(row["N_AcYearID"].ToString()) + " and N_SalesId=" + myFunctions.getIntVAL(row["N_SalesId"].ToString()) + "", "TEXT", new DataTable());
+        //                 dLayer.ExecuteNonQuery("Update Sch_SalesDetails set D_DateFrom = '" + row["PeriodFrom"] + "',D_DateTill = '" +row["PeriodTo"] + "',N_Amount = '" +  myFunctions.getVAL(row["Fee"].ToString()) + "' where N_SalesId=" +  myFunctions.getVAL(["N_SalesId"]).ToString()) + "  and N_ItemID=" + myFunctions.getIntVAL(row["N_ItemID"].ToString()) + "", "TEXT", new DataTable());
+        //             }
+
 
 
 
