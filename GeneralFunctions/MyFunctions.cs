@@ -1734,13 +1734,13 @@ namespace SmartxAPI.GeneralFunctions
             }
             if (Comments == null)
             {
-                Comments = "";
+                Comments = ""; 
             }
 
             string image = this.ContainColumn("sign", Approvals) ? Approvals.Rows[0]["sign"].ToString() : "";
-            string i_Signature = Regex.Replace(image, @"^data:image\/[a-zA-Z]+;base64,", string.Empty);
-            Byte[] I_Sign = new Byte[i_Signature.Length];
-            I_Sign = Convert.FromBase64String(i_Signature);
+            image = Regex.Replace(image, @"^data:image\/[a-zA-Z]+;base64,", string.Empty);
+            Byte[] I_Sign = new Byte[image.Length];
+            I_Sign = Convert.FromBase64String(image);
 
             if (columns.Contains("getSignFromUser"))
             {

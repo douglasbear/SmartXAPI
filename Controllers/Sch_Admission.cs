@@ -383,9 +383,6 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(User,ex));
             }
-
-
-
         }
     }
 }
