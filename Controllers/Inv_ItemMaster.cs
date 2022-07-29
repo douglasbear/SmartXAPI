@@ -630,12 +630,12 @@ namespace SmartxAPI.Controllers
                 string XItemName = MasterTableNew.Rows[0]["X_ItemName"].ToString();
                  object n_MinQty="";
                  object n_ReOrderQty="";
-                if(MasterTable.Columns.Contains("n_MinQty"))
+                if(MasterTableNew.Columns.Contains("n_MinQty"))
                 {
                        n_MinQty = MasterTableNew.Rows[0]["n_MinQty"] == System.DBNull.Value ? "":MasterTableNew.Rows[0]["n_MinQty"];
 
                 }
-                if(MasterTable.Columns.Contains("n_ReOrderQty"))
+                if(MasterTableNew.Columns.Contains("n_ReOrderQty"))
                 {
                       n_ReOrderQty = MasterTableNew.Rows[0]["n_ReOrderQty"] == System.DBNull.Value ? "":MasterTableNew.Rows[0]["n_ReOrderQty"];
                 }
