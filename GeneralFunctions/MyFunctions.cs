@@ -1738,8 +1738,9 @@ namespace SmartxAPI.GeneralFunctions
             }
 
             string image = this.ContainColumn("sign", Approvals) ? Approvals.Rows[0]["sign"].ToString() : "";
-            Byte[] I_Sign = new Byte[image.Length];
-            I_Sign = Convert.FromBase64String(image);
+            string i_Signature = Regex.Replace(image, @"^data:image\/[a-zA-Z]+;base64,", string.Empty);
+            Byte[] I_Sign = new Byte[i_Signature.Length];
+            I_Sign = Convert.FromBase64String(i_Signature);
 
             if (columns.Contains("getSignFromUser"))
             {
