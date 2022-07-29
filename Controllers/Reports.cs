@@ -402,17 +402,17 @@ namespace SmartxAPI.Controllers
                         ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                     };
 
- if (nPreview != 1)
+                    if (nPreview != 1)
                     {
-                    object printAfterSave = dLayer.ExecuteScalar("select B_PrintAfterSave from Gen_PrintTemplates where N_CompanyID= " + nCompanyId+ " and N_FormID="+nFormID + " and  N_UsercategoryID in (" + xUserCategoryList + ")", connection, transaction);
-                         if (printAfterSave != null)
-                         {
-                  if(!myFunctions.getBoolVAL(printAfterSave.ToString()))
-                    {
-                         return Ok(_api.Error(User, "No-Print"));
-                    }
-                         }
-                           
+                        object printAfterSave = dLayer.ExecuteScalar("select B_PrintAfterSave from Gen_PrintTemplates where N_CompanyID= " + nCompanyId + " and N_FormID=" + nFormID + " and  N_UsercategoryID in (" + xUserCategoryList + ")", connection, transaction);
+                        if (printAfterSave != null)
+                        {
+                            if (!myFunctions.getBoolVAL(printAfterSave.ToString()))
+                            {
+                                return Ok(_api.Error(User, "No-Print"));
+                            }
+                        }
+
                     }
                     if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, nPreview, xrptname))
                     {
@@ -833,7 +833,7 @@ namespace SmartxAPI.Controllers
                     int FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["nFnYearID"].ToString());
                     int BranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["nBranchID"].ToString());
                     int ActionID = myFunctions.getIntVAL(MasterTable.Rows[0]["action"].ToString());
-                    
+
                     int SalesmanID = 0;
                     string procParam = "";
                     string xProCode = "";
@@ -900,7 +900,7 @@ namespace SmartxAPI.Controllers
                         string xOperator = dLayer.ExecuteScalar("select isNull(X_Operator,'') from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
                         xProCode = dLayer.ExecuteScalar("select X_ProcCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         string xInstanceCode = dLayer.ExecuteScalar("select isNull(X_DataField,'') from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
-                        FieldName = dLayer.ExecuteScalar("select X_Text from vw_WebReportMenus where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and N_LanguageId="+LanguageID, Params, connection).ToString();
+                        FieldName = dLayer.ExecuteScalar("select X_Text from vw_WebReportMenus where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and N_LanguageId=" + LanguageID, Params, connection).ToString();
                         UserData = dLayer.ExecuteScalar("select X_DataFieldUserID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         FieldName = FieldName + "=";
 
@@ -985,7 +985,8 @@ namespace SmartxAPI.Controllers
                             bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
                             if (mainBranch == false)
                                 Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
-
+                            else if (xProCode == "11")
+                                Criteria = Criteria + " and " + BranchData + "=" + BranchID;
                         }
                     }
                     else if (CompanyData != "")
@@ -998,6 +999,8 @@ namespace SmartxAPI.Controllers
                             bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
                             if (mainBranch == false)
                                 Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
+                            else if (xProCode == "11")
+                                Criteria = Criteria + " and " + BranchData + "=" + BranchID;
                         }
                     }
                     if (UserData != "")
@@ -1017,7 +1020,7 @@ namespace SmartxAPI.Controllers
                             {"X_Code",xProCode},
                             {"X_Parameter", procParam },
                             {"N_UserID",myFunctions.GetUserID(User)},
-                            {"N_BranchID",mainBranch?0:BranchID},
+                            {"N_BranchID",mainBranch ?0:BranchID},
                             // {"N_SalesmanID",SalesmanID},
 
                             // {"X_InstanceCode",random},
@@ -1056,7 +1059,7 @@ namespace SmartxAPI.Controllers
                 //HttpClient client = new HttpClient(clientHandler);
 
                 var rptArray = reportName.Split(@"\");
-                string actReportLocation = reportLocation.Remove(reportLocation.Length - 2, 2)+LanguageID+"/";
+                string actReportLocation = reportLocation.Remove(reportLocation.Length - 2, 2) + LanguageID + "/";
                 if (rptArray.Length > 1)
                 {
                     reportName = rptArray[1].ToString();
