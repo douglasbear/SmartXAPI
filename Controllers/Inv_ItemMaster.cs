@@ -169,8 +169,8 @@ namespace SmartxAPI.Controllers
                     dt = myFunctions.AddNewColumnToDataTable(dt, "SubItems", typeof(DataTable), null);
 
                     foreach (DataRow item in dt.Rows)
-                    {
-                        if (myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 1 || myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 3)
+                    {//
+                        if (myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 1 )//|| myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 3
                         {
 
                             string subItemSql = "SELECT     vw_InvItem_Search_cloud.*, dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID, vw_InvItem_Search_cloud.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, Inv_ItemUnit.X_ItemUnit AS Expr1, Inv_ItemDetails.N_MainItemID, Inv_ItemDetails.N_Qty, Inv_ItemDetails.N_Qty as N_SubItemQty FROM  Inv_ItemUnit RIGHT OUTER JOIN Inv_ItemDetails RIGHT OUTER JOIN vw_InvItem_Search_cloud ON Inv_ItemDetails.N_CompanyID = vw_InvItem_Search_cloud.N_CompanyID AND Inv_ItemDetails.N_ItemID = vw_InvItem_Search_cloud.N_ItemID ON Inv_ItemUnit.N_CompanyID = vw_InvItem_Search_cloud.N_CompanyID AND Inv_ItemUnit.N_ItemID = vw_InvItem_Search_cloud.N_ItemID WHERE(vw_InvItem_Search_cloud.N_CompanyID = " + nCompanyID + ") AND(vw_InvItem_Search_cloud.B_InActive = 0) and Inv_ItemDetails.N_MainItemID =" + myFunctions.getIntVAL(item["N_ItemID"].ToString()) + "";
@@ -628,8 +628,20 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CompanyId"].ToString());
                 int N_ItemID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString());
                 string XItemName = MasterTableNew.Rows[0]["X_ItemName"].ToString();
-                object n_MinQty = MasterTableNew.Rows[0]["n_MinQty"] == System.DBNull.Value ? "":MasterTableNew.Rows[0]["n_MinQty"];
-                object n_ReOrderQty = MasterTableNew.Rows[0]["n_ReOrderQty"] == System.DBNull.Value ? "":MasterTableNew.Rows[0]["n_ReOrderQty"];
+                 object n_MinQty="";
+                 object n_ReOrderQty="";
+                if(MasterTableNew.Columns.Contains("n_MinQty"))
+                {
+                       n_MinQty = MasterTableNew.Rows[0]["n_MinQty"] == System.DBNull.Value ? "":MasterTableNew.Rows[0]["n_MinQty"];
+
+                }
+                if(MasterTableNew.Columns.Contains("n_ReOrderQty"))
+                {
+                      n_ReOrderQty = MasterTableNew.Rows[0]["n_ReOrderQty"] == System.DBNull.Value ? "":MasterTableNew.Rows[0]["n_ReOrderQty"];
+                }
+                
+              
+              
               
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
