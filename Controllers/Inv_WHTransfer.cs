@@ -339,6 +339,9 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("Inv_TransferStock", "N_TransferId", nTransferId, "", connection, transaction);
                     }
+                     
+
+
 
 
 
@@ -414,11 +417,26 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         } 
                          }
+                         object nTypeID= dLayer.ExecuteScalar("select N_TypeID from Inv_Location where N_LocationID="+nLocationIDfrom+"  and N_CompanyID="+nCompanyID+" ", Params, connection,transaction);  
+                         if(myFunctions.getIntVAL(nTypeID.ToString())==6)
+                         {
+                         object stock= dLayer.ExecuteScalar("select sum(N_CurrentStock) from Inv_StockMaster where N_LocationID="+nLocationIDfrom+"  and N_CompanyID="+nCompanyID+" ", Params, connection,transaction);
+                        if(stock==null || myFunctions.getVAL(stock.ToString())==0 )
+                        {
+                             dLayer.ExecuteNonQuery("UPDATE Inv_Location  set B_InActive=1 where  N_CompanyID="+nCompanyID+"  and N_LocationID="+nLocationIDfrom, Params, connection, transaction);
+                        }
+                         }
+
+
+
+
+
+                    
 
                     }
 
                     transaction.Commit();
-                    return Ok(_api.Success("Saved"));
+                    return Ok(_api.Success("Saved")); 
                 }
             }
             catch (Exception ex)
@@ -430,7 +448,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCompanyID, int nTransferId)
+        public ActionResult DeleteData(int nCompanyID, int nTransferId,int nfromLocationID)
         {
             int Results = 0;
             string xTransType = "TRANSFER";
@@ -454,6 +472,21 @@ namespace SmartxAPI.Controllers
                     Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
                     if (Results > 0)
                     {
+
+                         object nTypeID= dLayer.ExecuteScalar("select N_TypeID from Inv_Location where N_LocationID="+nfromLocationID+"  and N_CompanyID="+nCompanyID+" ", connection,transaction);  
+                         if(myFunctions.getIntVAL(nTypeID.ToString())==6)
+                         {
+                         object stock= dLayer.ExecuteScalar("select sum(N_CurrentStock) from Inv_StockMaster where N_LocationID="+nfromLocationID+"  and N_CompanyID="+nCompanyID+" ", connection,transaction);
+                        if(stock!=null || myFunctions.getVAL(stock.ToString())>0 )
+                        {
+                             dLayer.ExecuteNonQuery("UPDATE Inv_Location  set B_InActive=0 where  N_CompanyID="+nCompanyID+"  and N_LocationID="+nfromLocationID, connection, transaction);
+                        }
+                         }
+
+
+
+
+
                         transaction.Commit();
                         return Ok(_api.Success("Deleted"));
                          
@@ -462,6 +495,7 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Error(User, "Unable to delete"));
                     }
+
                 }
             }
             catch (Exception ex)

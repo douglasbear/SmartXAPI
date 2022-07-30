@@ -158,6 +158,7 @@ namespace SmartxAPI.Controllers
                 int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
                 int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationID"].ToString());
                 int nUserID = myFunctions.GetUserID(User);
+                int nAdmID=nAdmissionID;
 
                 if (MasterTable.Columns.Contains("N_BranchID"))
                     MasterTable.Columns.Remove("N_BranchID");
@@ -219,13 +220,14 @@ namespace SmartxAPI.Controllers
                         dLayer.SaveImage("Sch_Admission", "I_Photo", photoBitmap, "N_AdmissionID",nAdmissionID, connection, transaction);
                     }
 
+                    
                     //----------------------------------Customer Insert-------------------------------------------------------
-                    string sqlCommandText = "SELECT N_CompanyID,N_CustomerID,'"+CustCode+"' AS X_CustomerCode,(X_Name+' '+X_MiddleName+' '+X_LastName) AS X_CustomerName,X_GaurdianName AS X_ContactName,X_StudentMobile AS X_PhoneNo1,0 AS N_CreditLimit,0 AS B_Inactive," +
+                    string sqlCommandText = "SELECT N_CompanyID,N_CustomerID,'"+CustCode+"' AS X_CustomerCode,X_Name AS X_CustomerName,X_GaurdianName AS X_ContactName,X_StudentMobile AS X_PhoneNo1,0 AS N_CreditLimit,0 AS B_Inactive," +
                                             " (select N_FieldValue from Acc_AccountDefaults where x_fielddescr='Debtor Account' and N_CompanyID=vw_SchAdmission.N_CompanyID and N_FnYearID=vw_SchAdmission.N_AcYearID) AS N_LedgerID," +
                                             " N_AcYearID AS N_FnYearID,GETDATE() AS D_EntryDate,D_DOB,2 AS N_TypeID,N_BranchId,"+
                                             " (select N_CountryID from Acc_Company where N_CompanyID=vw_SchAdmission.N_CompanyID) AS N_CountryID," +
                                             " (select N_CurrencyID from Acc_Company where N_CompanyID=vw_SchAdmission.N_CompanyID) AS N_CurrencyID" +
-                                            " FROM vw_SchAdmission where N_CompanyID="+nCompanyID+" and N_FnYearID="+nAcYearID+" and N_AdmissionID="+ nAdmissionID;
+                                            " FROM vw_SchAdmission where N_CompanyID="+nCompanyID+" and N_AcYearID="+nAcYearID+" and N_AdmissionID="+ nAdmissionID;
 
                     dtCustomer = dLayer.ExecuteDataTable(sqlCommandText, Params,connection,transaction);
 
@@ -237,7 +239,7 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(api.Error(User,"Unable to Genrate Customer"));
                     }
-                         
+                        
                     object N_GroupID = dLayer.ExecuteScalar("Select Isnull(N_FieldValue,0) From Acc_AccountDefaults Where N_CompanyID=" + nCompanyID + " and X_FieldDescr ='Customer Account Group' and N_FnYearID=" + nFnYearId, Params, connection, transaction);
                     string X_LedgerName = "";
 
@@ -246,7 +248,7 @@ namespace SmartxAPI.Controllers
 
                     if (b_AutoGenerate)
                     {
-                        X_LedgerName = dtCustomer.Rows[0]["X_CustomerName"].ToString();
+                        X_LedgerName = MasterTable.Rows[0]["X_Name"].ToString();
                         if (N_GroupID != null)
                         {
                             object N_LedgerID = dLayer.ExecuteScalar("Select Isnull(N_LedgerID,0) From Acc_MastLedger Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_LedgerName='" + X_LedgerName + "' and N_GroupID=" + myFunctions.getIntVAL(N_GroupID.ToString()), Params, connection, transaction);
@@ -260,25 +262,32 @@ namespace SmartxAPI.Controllers
                             }
                         }
                     }
-                    //--------------------------------------------^^^^^^^^^^^^----------------------------------------------------             
+                    //--------------------------------------------^^^^^^^^^^^^---------------------------------------------------- 
+                    dLayer.ExecuteNonQuery("update Sch_Admission set N_CustomerID="+nCustomerID+"  where N_CompanyID="+nCompanyID+" and N_AcYearID="+nAcYearID+" and N_AdmissionID="+nAdmissionID, Params, connection, transaction);
 
-                    SortedList SalesParam = new SortedList();
-                    SalesParam.Add("N_CompanyID", nCompanyID);
-                    SalesParam.Add("N_FnYearID", nFnYearId);
-                    SalesParam.Add("N_BranchID", nBranchID);
-                    SalesParam.Add("N_LocationID ", nLocationID);
-                    SalesParam.Add("N_StudentID ", nAdmissionID);
-                    SalesParam.Add("N_CustomerID ", nCustomerID);
-                    SalesParam.Add("D_AdmDate ", Convert.ToDateTime(MasterTable.Rows[0]["D_AdmissionDate"].ToString()));
-                    SalesParam.Add("N_UserID ", nUserID);
-                    try
+                    if(nAdmID==0)
                     {
-                        dLayer.ExecuteNonQueryPro("SP_StudentAdmFee_Insert", SalesParam, connection, transaction);
-                    }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        return Ok(api.Error(User, ex));
+                        //--------------------------------------Sch_Sales - SALES - Posting--------------------------------------
+                        SortedList SalesParam = new SortedList();
+                        SalesParam.Add("N_CompanyID", nCompanyID);
+                        SalesParam.Add("N_AcYearID", nFnYearId);
+                        SalesParam.Add("N_BranchID", nBranchID);
+                        SalesParam.Add("N_LocationID ", nLocationID);
+                        SalesParam.Add("N_StudentID ", nAdmissionID);
+                        SalesParam.Add("N_CustomerID ", nCustomerID);
+                        SalesParam.Add("D_AdmDate ", Convert.ToDateTime(MasterTable.Rows[0]["D_AdmissionDate"].ToString()));
+                        SalesParam.Add("N_UserID ", nUserID);
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_StudentAdmFee_Insert", SalesParam, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, ex));
+                        }
+                      
+                        //----------------------------------------^^^^^^^^^^^^^^^^^^^^^^^^-------------------------------------
                     }
 
                     transaction.Commit();
@@ -374,9 +383,6 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(User,ex));
             }
-
-
-
         }
     }
 }

@@ -813,5 +813,34 @@ namespace SmartxAPI.Controllers
                 return StatusCode(403, _api.Error(User, e));
             }
         }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpGet("updateSign")]
+        public ActionResult UpdateSign(DataTable dtSign)
+        {
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            int nUserID=myFunctions.getIntVAL(dtSign.Rows[0]["n_UserID"].ToString());
+
+            DataColumnCollection columns = dtSign.Columns;
+            string image =myFunctions.ContainColumn("I_Sign", dtSign) ? dtSign.Rows[0]["I_Sign"].ToString() : "";
+            Byte[] I_Sign = new Byte[image.Length];
+            I_Sign = Convert.FromBase64String(image);
+
+            Params.Add("N_CompanyID", nCompanyId);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dLayer.ExecuteNonQuery("update sec_user set I_Sign='"+I_Sign+"' where N_CompanyID="+ nCompanyId +" and N_UserID="+nUserID, Params, connection);
+                }
+                return Ok(_api.Success("Sign Updated!"));
+            }
+            catch (Exception e)
+            {
+                return StatusCode(403, _api.Error(User, e));
+            }
+        }
     }
 }

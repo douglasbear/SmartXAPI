@@ -932,6 +932,7 @@ namespace SmartxAPI.GeneralFunctions
             Response.Add("lblText", "");
             Response.Add("approvalID", nApprovalID);
             Response.Add("formID", nFormID);
+            Response.Add("addSign", false);
 
             /* Approval Param Set */
             SortedList ApprovalParams = new SortedList();
@@ -1093,10 +1094,24 @@ namespace SmartxAPI.GeneralFunctions
                     nNextActionLevelID = this.getIntVAL(NextRewChec.ToString());
 
                 object bIsEditable = false;
-                bIsEditable = dLayer.ExecuteScalar("Select Isnull (B_IsEditable,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID", ApprovalParams, connection);//+ " and N_ActionTypeID=110"
+                bIsEditable = dLayer.ExecuteScalar("Select Isnull (B_IsEditable,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID", ApprovalParams, connection);
                 if (bIsEditable == null)
                     bIsEditable = false;
 
+                object bAddSign = false;
+                bAddSign = dLayer.ExecuteScalar("Select Isnull (B_AddSign,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID", ApprovalParams, connection);
+                if (bAddSign == null)
+                    bAddSign = false;
+
+                //Add sign of Approvers
+                if (this.getBoolVAL(bAddSign.ToString()))
+                {
+                    Response["addSign"] = true;
+                }
+                else
+                {
+                    Response["addSign"] = false;
+                }
 
                 if (nTransID > 0)
                 {
@@ -1710,6 +1725,7 @@ namespace SmartxAPI.GeneralFunctions
             int N_ApprovalID = this.getIntVAL(ApprovalRow["approvalID"].ToString());
             int N_FormID = this.getIntVAL(ApprovalRow["formID"].ToString());
             string Comments = "";
+            int N_GetSignFromUser=0;
             string body="",Subject="",Type="";
             DataColumnCollection columns = Approvals.Columns;
             if (columns.Contains("comments"))
@@ -1718,7 +1734,17 @@ namespace SmartxAPI.GeneralFunctions
             }
             if (Comments == null)
             {
-                Comments = "";
+                Comments = ""; 
+            }
+
+            string image = this.ContainColumn("sign", Approvals) ? Approvals.Rows[0]["sign"].ToString() : "";
+            image = Regex.Replace(image, @"^data:image\/[a-zA-Z]+;base64,", string.Empty);
+            Byte[] I_Sign = new Byte[image.Length];
+            I_Sign = Convert.FromBase64String(image);
+
+            if (columns.Contains("getSignFromUser"))
+            {
+                N_GetSignFromUser =this.getIntVAL(ApprovalRow["getSignFromUser"].ToString());
             }
 
             int N_GroupID = 1, N_NxtUserID = 0;
@@ -1759,7 +1785,9 @@ namespace SmartxAPI.GeneralFunctions
                 LogParams.Add("@xComments", Comments);
                 LogParams.Add("@xPartyName", PartyName);
                 LogParams.Add("@nNxtUserID", N_NxtUserID);
-                dLayer.ExecuteNonQuery("SP_Log_Approval_Status @nCompanyID,@nFnYearID,@xTransType,@nTransID,@nFormID,@nApprovalUserID,@nApprovalUserCatID,@xAction,@xSystemName,@xTransCode,@dTransDate,@nApprovalLevelID,@nApprovalUserID,@nProcStatusID,@xComments,@xPartyName,@nNxtUserID", LogParams, connection, transaction);
+                LogParams.Add("@N_GetUserSign", N_GetSignFromUser);
+                LogParams.Add("@I_Sign", I_Sign);
+                dLayer.ExecuteNonQuery("SP_Log_Approval_Status @nCompanyID,@nFnYearID,@xTransType,@nTransID,@nFormID,@nApprovalUserID,@nApprovalUserCatID,@xAction,@xSystemName,@xTransCode,@dTransDate,@nApprovalLevelID,@nApprovalUserID,@nProcStatusID,@xComments,@xPartyName,@nNxtUserID,@N_GetUserSign,@I_Sign", LogParams, connection, transaction);
 
                 if(N_ProcStatusID==0||N_ProcStatusID==6)return 0;
                 int N_NxtAppLeveleID=0;

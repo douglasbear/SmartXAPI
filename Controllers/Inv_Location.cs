@@ -388,7 +388,7 @@ namespace SmartxAPI.Controllers
                             object parentID= dLayer.ExecuteScalar("Select isnull(N_WareHouseID,0) From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_LocationID=" + N_MainLocationID + " ", connection, transaction);
                             if(myFunctions.getIntVAL(parentID.ToString())==0)
                             {
-                                if(N_TypeID==5)
+                                if(N_TypeID==5 || N_TypeID==6)
                                 {
                                     rowPattern = dLayer.ExecuteScalar("Select isnull(max(X_LocationCode),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + "  and N_MainLocationID=" + N_MainLocationID + " ", connection, transaction);
                                     x_LocationCodePattern = Convert.ToChar(rowPattern);
