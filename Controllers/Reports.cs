@@ -401,18 +401,17 @@ namespace SmartxAPI.Controllers
                     {
                         ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                     };
-
                     if (nPreview != 1)
                     {
-                        object printAfterSave = dLayer.ExecuteScalar("select B_PrintAfterSave from Gen_PrintTemplates where N_CompanyID= " + nCompanyId + " and N_FormID=" + nFormID + " and  N_UsercategoryID in (" + xUserCategoryList + ")", connection, transaction);
-                        if (printAfterSave != null)
-                        {
-                            if (!myFunctions.getBoolVAL(printAfterSave.ToString()))
-                            {
-                                return Ok(_api.Error(User, "No-Print"));
-                            }
-                        }
-
+                    object printAfterSave = dLayer.ExecuteScalar("select B_PrintAfterSave from Gen_PrintTemplates where N_CompanyID= " + nCompanyId+ " and N_FormID="+nFormID + " and  N_UsercategoryID in (" + xUserCategoryList + ")", connection, transaction);
+                    if (printAfterSave != null)
+                    {
+                    if(!myFunctions.getBoolVAL(printAfterSave.ToString()))
+                    {
+                         return Ok(_api.Error(User, "No-Print"));
+                    }
+                    }
+                           
                     }
                     if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, nPreview, xrptname))
                     {
@@ -433,7 +432,6 @@ namespace SmartxAPI.Controllers
                             string ZipLocation = this.TempFilesPath + ReportName + ".rpt.zip";
                             if (CopyFiles(fileToCopy, destinationFile, ReportName + ".rpt"))
                                 return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + ".rpt.zip" } }));
-
                         }
 
                         if (partyName == "" || partyName == null)

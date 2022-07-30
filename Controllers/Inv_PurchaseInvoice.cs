@@ -712,6 +712,7 @@ namespace SmartxAPI.Controllers
                                 PostingParam.Add("N_InternalID", N_PurchaseID);
                                 PostingParam.Add("N_UserID", nUserID);
                                 PostingParam.Add("X_SystemName", "ERP Cloud");
+                                PostingParam.Add("MRN_Flag", Dir_Purchase==0 ? "1" : "0");
 
                                 dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
                             }
@@ -1031,7 +1032,7 @@ namespace SmartxAPI.Controllers
                             PostingParam.Add("N_InternalID", N_PurchaseID);
                             PostingParam.Add("N_UserID", nUserID);
                             PostingParam.Add("X_SystemName", "ERP Cloud");
-                            PostingParam.Add("MRN_Flag", (n_MRNID > 0 && B_MRNVisible) ? "1" : "0");
+                            PostingParam.Add("MRN_Flag", Dir_Purchase==0 ? "1" : "0");
 
                             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
                         }
