@@ -837,7 +837,10 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dLayer.ExecuteNonQuery("update sec_user set I_Sign='"+I_Sign+"' where N_CompanyID="+ nCompanyId +" and N_UserID="+nUserID, Params, connection);
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    int a =dLayer.SaveImage("sec_user", "i_sign", I_Sign, "N_UserID", nUserID, connection, transaction);
+                    transaction.Commit();
+                   // dLayer.ExecuteNonQuery("update sec_user set I_Sign='"+I_Sign+"' where N_CompanyID="+ nCompanyId +" and N_UserID="+nUserID, Params, connection);
                 }
                 return Ok(_api.Success("Sign Updated!"));
             }
