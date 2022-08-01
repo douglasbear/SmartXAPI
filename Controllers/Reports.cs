@@ -401,18 +401,17 @@ namespace SmartxAPI.Controllers
                     {
                         ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                     };
-
                     if (nPreview != 1)
                     {
-                        object printAfterSave = dLayer.ExecuteScalar("select B_PrintAfterSave from Gen_PrintTemplates where N_CompanyID= " + nCompanyId + " and N_FormID=" + nFormID + " and  N_UsercategoryID in (" + xUserCategoryList + ")", connection, transaction);
-                        if (printAfterSave != null)
-                        {
-                            if (!myFunctions.getBoolVAL(printAfterSave.ToString()))
-                            {
-                                return Ok(_api.Error(User, "No-Print"));
-                            }
-                        }
-
+                    object printAfterSave = dLayer.ExecuteScalar("select B_PrintAfterSave from Gen_PrintTemplates where N_CompanyID= " + nCompanyId+ " and N_FormID="+nFormID + " and  N_UsercategoryID in (" + xUserCategoryList + ")", connection, transaction);
+                    if (printAfterSave != null)
+                    {
+                    if(!myFunctions.getBoolVAL(printAfterSave.ToString()))
+                    {
+                         return Ok(_api.Error(User, "No-Print"));
+                    }
+                    }
+                           
                     }
                     if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, nPreview, xrptname))
                     {
@@ -984,8 +983,10 @@ namespace SmartxAPI.Controllers
                             bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
                             if (mainBranch == false)
                                 Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
-                            else if (xProCode == "11")
-                                Criteria = Criteria + " and " + BranchData + "=" + BranchID;
+                            // if (mainBranch == false)
+                            //     Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
+                            // else if (xProCode == "11")
+                            //     Criteria = Criteria + " and " + BranchData + "=" + BranchID;
                         }
                     }
                     else if (CompanyData != "")
@@ -998,8 +999,10 @@ namespace SmartxAPI.Controllers
                             bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
                             if (mainBranch == false)
                                 Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
-                            else if (xProCode == "11")
-                                Criteria = Criteria + " and " + BranchData + "=" + BranchID;
+                            // if (mainBranch == false)
+                            //     Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
+                            // else if (xProCode == "11")
+                            //     Criteria = Criteria + " and " + BranchData + "=" + BranchID;
                         }
                     }
                     if (UserData != "")
