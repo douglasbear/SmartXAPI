@@ -73,23 +73,25 @@ namespace SmartxAPI.Controllers
 
             string sqlCommandText = "";
             
-            if(nAnyUserUsed==0)
-            {
-                if(nCategoryID!=0)
-                    sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID in (@p2,-11,-22) and B_Active=1 and N_UserCategoryID<>1";
-                else
-                    sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID >= -24 and B_Active=1 and N_UserCategoryID<>1";
-            }
-            else
-            {
-                if(nCategoryID!=0)
-                    sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and (N_UserCategoryID=@p2 OR N_UserCategoryID<= -22) and B_Active=1 and N_UserCategoryID<>1";
-                else
-                    sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID <>-11 and B_Active=1 and N_UserCategoryID<>1";
-            }
+            // if(nAnyUserUsed==0)
+            // {
+            //     if(nCategoryID!=0)
+            //         sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID in (@p2,-11,-22) and B_Active=1 and N_UserCategoryID<>1";
+            //     else
+            //         sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID >= -24 and B_Active=1 and N_UserCategoryID<>1";
+            // }
+            // else
+            // {
+            //     if(nCategoryID!=0)
+            //         sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and (N_UserCategoryID=@p2 OR N_UserCategoryID<= -22) and B_Active=1 and N_UserCategoryID<>1";
+            //     else
+            //         sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID <>-11 and B_Active=1 and N_UserCategoryID<>1";
+            // }
+
+            sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and B_Active=1 and N_UserCategoryID<>1";
 
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nCategoryID);
+            //Params.Add("@p2", nCategoryID);
 
 
             try
@@ -119,7 +121,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from gen_defaults where n_DefaultId=33 ";
+            string sqlCommandText = "select * from gen_defaults where n_DefaultId=33 order by N_Sort asc";
             //Params.Add("@p1", nDefaultId);
             //Params.Add("@p1", nTypeId);
             try
@@ -192,12 +194,6 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_ApprovalCode"] = X_ApprovalCode;
 
                     }
-                    else
-                    {
-                        
-                        dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID, "", connection, transaction);
-                    }
-
 
                     nApprovalID = dLayer.SaveData("Gen_ApprovalCodes", "N_ApprovalID", MasterTable, connection, transaction);
                     if (nApprovalID <= 0)
@@ -259,7 +255,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nApproovalID", ApproovalID);
 
                     MasterTable = _api.Format(MasterTable, "Master");
-                    DetailSql = "select * from vw_ApprovalCodeDetails where N_CompanyId=@nCompanyID and N_ApprovalID=@nApproovalID ";
+                    DetailSql = "select * from vw_ApprovalCodeDetails where N_CompanyId=@nCompanyID and N_ApprovalID=@nApproovalID order by N_level asc";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(MasterTable);
