@@ -282,6 +282,7 @@ namespace SmartxAPI.Controllers
                                     if (flag == 2)//for confirmation of same ledger creattion 
                                     {
                                         showConformationLedger = true;
+                                        transaction.Rollback();
                                         return Ok(api.Success(showConformationLedger));
                                     }
 
