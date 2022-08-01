@@ -654,7 +654,11 @@ namespace SmartxAPI.Controllers
                     if (N_PurchaseID > 0)
                     {
                         if (CheckProcessed(N_PurchaseID))
-                            return Ok(_api.Error(User, "Transaction Started!"));
+                        {
+                             transaction.Rollback();
+                             return Ok(_api.Error(User, "Transaction Started!"));
+                        }
+                            
 
                         object Dir_PurchaseCount = dLayer.ExecuteScalar("SELECT COUNT(Inv_Purchase.N_PurchaseID) FROM Inv_Purchase INNER JOIN Inv_MRN ON Inv_Purchase.N_CompanyID = Inv_MRN.N_CompanyID AND Inv_Purchase.N_RsID = Inv_MRN.N_MRNID AND Inv_Purchase.N_FnYearID = Inv_MRN.N_FnYearID " +
                                                                         " WHERE Inv_MRN.B_IsDirectMRN=0 and Inv_Purchase.N_CompanyID=" + nCompanyID + " and Inv_Purchase.N_PurchaseID=" + N_PurchaseID, connection, transaction);
