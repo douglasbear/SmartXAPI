@@ -342,7 +342,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("dashboardList")]
-        public ActionResult GetEmployeeDashboardList(int nFnYearID, bool bAllBranchData, int nBranchID, int EmpStatus, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetEmployeeDashboardList(int nFnYearID, bool bAllBranchData, int nBranchID, int EmpStatus, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,string screen)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -361,6 +361,11 @@ namespace SmartxAPI.Controllers
                 Criteria = Criteria + " and N_BranchID=@nBranchID ";
                 Params.Add("@nBranchID", nBranchID);
             }
+
+             if (screen == "Employee Information")
+                        Criteria =Criteria + "and  N_Status<>3 and N_Status<>2 ";
+             if (screen == "Separated Employees")
+                        Criteria =Criteria + "and  (N_Status=3 or N_Status=2) ";
 
             if (EmpStatus == 0)
                 Criteria = Criteria + " and N_Status<>3 and N_Status<>2 ";
