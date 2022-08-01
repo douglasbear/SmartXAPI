@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Security.Cryptography;
 using System.Net.Mail;
+using System.Text.RegularExpressions;
 
 namespace SmartxAPI.Controllers
 {
@@ -826,6 +827,7 @@ namespace SmartxAPI.Controllers
 
             DataColumnCollection columns = DtSign.Columns;
             string image =myFunctions.ContainColumn("I_Sign", DtSign) ? DtSign.Rows[0]["I_Sign"].ToString() : "";
+            image = Regex.Replace(image, @"^data:image\/[a-zA-Z]+;base64,", string.Empty);
             Byte[] I_Sign = new Byte[image.Length];
             I_Sign = Convert.FromBase64String(image);
 
