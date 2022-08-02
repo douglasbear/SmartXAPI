@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Security.Cryptography;
 using System.Net.Mail;
+using System.Text.RegularExpressions;
 
 namespace SmartxAPI.Controllers
 {
@@ -815,15 +816,18 @@ namespace SmartxAPI.Controllers
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        [HttpGet("updateSign")]
-        public ActionResult UpdateSign(DataTable dtSign)
+        [HttpPost("updateSign")]
+        public ActionResult UpdateSign([FromBody] DataSet ds)
         {
+            DataTable DtSign;
+            DtSign = ds.Tables["dtSign"];
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            int nUserID=myFunctions.getIntVAL(dtSign.Rows[0]["n_UserID"].ToString());
+            int nUserID=myFunctions.getIntVAL(DtSign.Rows[0]["n_UserID"].ToString());
 
-            DataColumnCollection columns = dtSign.Columns;
-            string image =myFunctions.ContainColumn("I_Sign", dtSign) ? dtSign.Rows[0]["I_Sign"].ToString() : "";
+            DataColumnCollection columns = DtSign.Columns;
+            string image =myFunctions.ContainColumn("I_Sign", DtSign) ? DtSign.Rows[0]["I_Sign"].ToString() : "";
+            image = Regex.Replace(image, @"^data:image\/[a-zA-Z]+;base64,", string.Empty);
             Byte[] I_Sign = new Byte[image.Length];
             I_Sign = Convert.FromBase64String(image);
 
@@ -833,7 +837,10 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dLayer.ExecuteNonQuery("update sec_user set I_Sign='"+I_Sign+"' where N_CompanyID="+ nCompanyId +" and N_UserID="+nUserID, Params, connection);
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    int a =dLayer.SaveImage("sec_user", "i_sign", I_Sign, "N_UserID", nUserID, connection, transaction);
+                    transaction.Commit();
+                   // dLayer.ExecuteNonQuery("update sec_user set I_Sign='"+I_Sign+"' where N_CompanyID="+ nCompanyId +" and N_UserID="+nUserID, Params, connection);
                 }
                 return Ok(_api.Success("Sign Updated!"));
             }
@@ -842,5 +849,38 @@ namespace SmartxAPI.Controllers
                 return StatusCode(403, _api.Error(User, e));
             }
         }
+
+        [HttpGet("loadSign") ]
+        public ActionResult LoadSign(int nCompanyID, int nUserID)
+        {    
+            SortedList param = new SortedList();           
+            DataTable dt=new DataTable();
+            string sqlCommandText="";
+
+            sqlCommandText="select I_Sign from Sec_User where N_CompanyID=@p1 and N_UserID=@p2";
+            param.Add("@p1", nCompanyID);      
+            param.Add("@p2", nUserID);          
+                
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                }
+                if(dt.Rows.Count==0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch(Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }   
+        }   
     }
 }
