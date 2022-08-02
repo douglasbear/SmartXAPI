@@ -47,15 +47,19 @@ namespace SmartxAPI.Controllers
                     DataTable Details = ds.Tables["details"];
                     SortedList Params = new SortedList();
                     DataRow MasterRow = Master.Rows[0];
-                    int N_FeeSetupID = myFunctions.getIntVAL(MasterRow["n_FeeSetupID"].ToString());
+                    int N_FeeSetupID = myFunctions.getIntVAL(MasterRow["N_FeeSetupID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_AcYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+                    int N_ClassID = myFunctions.getIntVAL(MasterRow["N_ClassID"].ToString());
+                    int N_StudentTypeID = myFunctions.getIntVAL(MasterRow["N_StudentTypeID"].ToString());
                     string x_FeeSetupCode = MasterRow["x_FeeSetupCode"].ToString();
 
                     if (N_FeeSetupID > 0)
                     {
-                        dLayer.DeleteData("Sch_ClassFeeSetupMaster", "N_FeeSetupID", N_FeeSetupID, "N_CompanyID=" + N_CompanyID + " and N_FeeSetupID=" + N_FeeSetupID + "", connection, transaction);
-                        dLayer.DeleteData("Sch_ClassFeeSetup", "N_FeeSetupID", N_FeeSetupID, "N_CompanyID=" + N_CompanyID + "", connection, transaction);
+
+                        dLayer.ExecuteNonQuery("delete from Sch_ClassFeeSetupMaster Where N_CompanyID = "+N_CompanyID+" and N_AcYearID = "+N_FnYearID+" and N_ClassID = "+N_ClassID+" and N_StudentTypeID="+N_StudentTypeID+"", connection, transaction);
+                        dLayer.ExecuteNonQuery("delete from Sch_ClassFeeSetup Where N_CompanyID = "+N_CompanyID+"  and N_ClassID ="+N_ClassID+" and N_StudentTypeID="+N_StudentTypeID+"", connection, transaction);
+
                     }
 
                     if (x_FeeSetupCode == "@Auto")
@@ -83,6 +87,7 @@ namespace SmartxAPI.Controllers
                     for (int i = 0; i < Details.Rows.Count; i++)
                     {
                         Details.Rows[i]["N_FeeSetupID"] = N_FeeSetupID;
+                        //Details.Rows[i]["N_FeeSetupID"] = N_FeeSetupID;
 
                     }
 
