@@ -80,6 +80,7 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nFeeCodeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FeeCodeID"].ToString());
                 int nLocationID=  myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationID"].ToString());
+                int nItemID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ItemID"].ToString());
                 if(MasterTable.Columns.Contains("N_LocationID"))
                       MasterTable.Columns.Remove("N_LocationID");
 
@@ -97,6 +98,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyID);
                          Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.FormID);
+                        Params.Add("nItemID",nItemID);
                         Code = dLayer.GetAutoNumber("Sch_FeeCodes", "X_FeeCode", Params, connection, transaction);
                         if (Code == "") { transaction.Rollback();return Ok(_api.Error(User,"Unable to generate Course Code")); }
                         MasterTable.Rows[0]["X_FeeCode"] = Code;
@@ -105,7 +107,19 @@ namespace SmartxAPI.Controllers
 
                     if (nFeeCodeID> 0) 
                     {  
-                        dLayer.DeleteData("Sch_FeeCodes", "n_FeeCodeID", nFeeCodeID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
+                        object Count = dLayer.ExecuteScalar("select count(*) from Sch_ClassFeeSetup where N_FeeCodeID="+nFeeCodeID+" and N_CompanyID="+nCompanyID+"", Params, connection,transaction); 
+                        if (myFunctions.getIntVAL(Count.ToString()) >0)
+                        {
+                             transaction.Rollback();
+                             return Ok(_api.Error(User, "transaction Started"));
+                        }
+
+
+                         dLayer.DeleteData("inv_itemMaster", "N_ItemID", nItemID,"N_CompanyID =" + nCompanyID,connection,transaction);
+                        dLayer.DeleteData("inv_itemUnit", "N_ItemID", nItemID,"N_CompanyID =" + nCompanyID,connection,transaction);
+                        dLayer.DeleteData("Inv_ItemMasterWHLink", "N_ItemID", nItemID,"N_CompanyID =" + nCompanyID,connection,transaction); 
+                        dLayer.DeleteData("Sch_FeeCodes", "n_FeeCodeID", nFeeCodeID, "N_CompanyID =" + nCompanyID, connection, transaction);   
+                                           
                     }
 
                     nFeeCodeID = dLayer.SaveData("Sch_FeeCodes", "n_FeeCodeID", MasterTable, connection, transaction);
@@ -139,7 +153,7 @@ namespace SmartxAPI.Controllers
         }
         
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nFeeCodeID)
+        public ActionResult DeleteData(int nFeeCodeID,int nItemID)
         {
 
             int Results = 0;
@@ -147,20 +161,49 @@ namespace SmartxAPI.Controllers
             try
             {                        
                 SortedList Params = new SortedList();
+              
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Sch_FeeCodes ", "n_FeeCodeID", nFeeCodeID, "N_CompanyID =" + nCompanyID, connection, transaction);
-                    transaction.Commit();
+
+
+                  Params.Add("@nCompanyID", nCompanyID);  
+                  Params.Add("@nFeeCodeID", nFeeCodeID);
+                  Params.Add("@nItemID",nItemID);
+
+
+                    object Count = dLayer.ExecuteScalar("select count(*) from Sch_ClassFeeSetup where N_FeeCodeID=@nFeeCodeID and N_CompanyID=@nCompanyID", Params, connection,transaction); 
+                      
+                        if (myFunctions.getIntVAL(Count.ToString()) >0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable To Delete"));
+                    }
+
+                    object BusCount = dLayer.ExecuteScalar("select count(*) from Sch_BusRoute where N_FeeCodeID=@nFeeCodeID and N_CompanyID=@nCompanyID", Params, connection,transaction); 
+                    
+                              if (myFunctions.getIntVAL(BusCount.ToString()) >0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable To Delete"));
+                    }
+
+                    Results = dLayer.DeleteData("Sch_FeeCodes", "n_FeeCodeID", nFeeCodeID, "N_CompanyID =" + nCompanyID, connection, transaction);
+        
                 
                     if (Results > 0)
                     {
-                        return Ok(_api.Success("Course deleted"));
+                       dLayer.DeleteData("inv_itemMaster", "N_ItemID", nItemID,"N_CompanyID =" + nCompanyID,connection,transaction);
+                       dLayer.DeleteData("inv_itemUnit", "N_ItemID", nItemID,"N_CompanyID =" + nCompanyID,connection,transaction);
+                       dLayer.DeleteData("Inv_ItemMasterWHLink", "N_ItemID", nItemID,"N_CompanyID =" + nCompanyID,connection,transaction);
+
+                       transaction.Commit();
+                        return Ok(_api.Success("deleted"));
                     }
                     else
                     {
-                        return Ok(_api.Error(User,"Unable to delete Course"));
+                        return Ok(_api.Error(User,"Unable to delete FeeCode"));
                     }
                 }
 
@@ -172,15 +215,15 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult ClassDetails(int nFeeCodeID)
+        public ActionResult ClassDetails(string xFeeCode)
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from VW_SCHFEECODES where N_CompanyID=@p1  and N_FeeCodeID=@p2";
+            string sqlCommandText = "select * from VW_SCHFEECODES where N_CompanyID=@p1  and X_FeeCode=@p2";
             Params.Add("@p1", nCompanyId);  
-            Params.Add("@p2", nFeeCodeID);
+            Params.Add("@p2", xFeeCode);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -269,6 +312,66 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+
+
+          [HttpGet("dashboardList")]
+        public ActionResult GetAssignmentList(int? nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+            
+                Searchkey = "and (N_FeeCodeID like '%" + xSearchkey + "%' OR X_FeeCode like '%" + xSearchkey + "%' OR X_FeeDescription like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_FeeCodeID desc";
+                
+       
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from VW_SCHFEECODES where N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from VW_SCHFEECODES where N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
+
+            Params.Add("@nCompanyID", nCompanyID);
+           
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    SortedList OutPut = new SortedList();
+
+                    sqlCommandCount = "select count(*) as N_Count  from VW_SCHFEECODES where N_CompanyID=@nCompanyID " + Searchkey + " ";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+
+
+
 
 
 

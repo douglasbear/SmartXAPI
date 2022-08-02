@@ -121,7 +121,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from gen_defaults where n_DefaultId=33 ";
+            string sqlCommandText = "select * from gen_defaults where n_DefaultId=33 order by N_Sort asc";
             //Params.Add("@p1", nDefaultId);
             //Params.Add("@p1", nTypeId);
             try
@@ -194,12 +194,6 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_ApprovalCode"] = X_ApprovalCode;
 
                     }
-                    else
-                    {
-                        
-                        dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID, "", connection, transaction);
-                    }
-
 
                     nApprovalID = dLayer.SaveData("Gen_ApprovalCodes", "N_ApprovalID", MasterTable, connection, transaction);
                     if (nApprovalID <= 0)
@@ -261,7 +255,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nApproovalID", ApproovalID);
 
                     MasterTable = _api.Format(MasterTable, "Master");
-                    DetailSql = "select * from vw_ApprovalCodeDetails where N_CompanyId=@nCompanyID and N_ApprovalID=@nApproovalID ";
+                    DetailSql = "select * from vw_ApprovalCodeDetails where N_CompanyId=@nCompanyID and N_ApprovalID=@nApproovalID order by N_level asc";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(MasterTable);
