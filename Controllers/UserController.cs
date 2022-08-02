@@ -815,7 +815,7 @@ namespace SmartxAPI.Controllers
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        [HttpGet("updateSign")]
+        [HttpPost("updateSign")]
         public ActionResult UpdateSign(DataTable dtSign)
         {
             SortedList Params = new SortedList();

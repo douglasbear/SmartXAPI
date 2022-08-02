@@ -662,6 +662,7 @@ namespace SmartxAPI.Controllers
                         if (myFunctions.getIntVAL(Dir_PurchaseCount.ToString()) > 0)
                             Dir_Purchase = 1;
                     }
+
                     SortedList VendParams = new SortedList();
                     VendParams.Add("@nCompanyID", nCompanyID);
                     VendParams.Add("@N_VendorID", N_VendorID);
@@ -712,6 +713,7 @@ namespace SmartxAPI.Controllers
                                 PostingParam.Add("N_InternalID", N_PurchaseID);
                                 PostingParam.Add("N_UserID", nUserID);
                                 PostingParam.Add("X_SystemName", "ERP Cloud");
+                                PostingParam.Add("MRN_Flag", (Dir_Purchase==0) ? "1" : "0");
 
                                 dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
                             }
@@ -1024,14 +1026,13 @@ namespace SmartxAPI.Controllers
 
                             dLayer.ExecuteNonQueryPro("[SP_Inv_MRNprocessing]", PostingMRNParam, connection, transaction);
 
-
                             SortedList PostingParam = new SortedList();
                             PostingParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
                             PostingParam.Add("X_InventoryMode", "PURCHASE");
                             PostingParam.Add("N_InternalID", N_PurchaseID);
                             PostingParam.Add("N_UserID", nUserID);
                             PostingParam.Add("X_SystemName", "ERP Cloud");
-                            PostingParam.Add("MRN_Flag", (n_MRNID > 0 && B_MRNVisible) ? "1" : "0");
+                            PostingParam.Add("MRN_Flag", (Dir_Purchase==0) ? "1" : "0");
 
                             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
                         }
