@@ -131,9 +131,9 @@ namespace SmartxAPI.Controllers
             // Searchkey= Searchkey + " and N_BranchID= "+nBranchID+" ";
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CustomerID,X_CustomerCode,X_CustomerName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_BranchID,X_BranchName,X_ContactName,X_Address,X_PhoneNo1 from vw_InvCustomer where N_CompanyID=@p1 and B_Inactive=@p2 and N_FnYearId=@p3 and ISNULL(N_EnablePopup,0)=0 " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CustomerID,X_CustomerCode,X_CustomerName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_BranchID,X_BranchName,X_ContactName,X_Address,X_PhoneNo1,X_CustomerName_Ar from vw_InvCustomer where N_CompanyID=@p1 and B_Inactive=@p2 and N_FnYearId=@p3 and ISNULL(N_EnablePopup,0)=0 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CustomerID,X_CustomerCode,X_CustomerName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_BranchID,X_BranchName,X_ContactName,X_Address,X_PhoneNo1 from vw_InvCustomer where N_CompanyID=@p1 and B_Inactive=@p2 and N_FnYearId=@p3 and ISNULL(N_EnablePopup,0)=0 " + Searchkey + " and N_CustomerID not in (select top(" + Count + ") N_CustomerID from vw_InvCustomer where N_CompanyID=@p1 and B_Inactive=@p2 and ISNULL(N_EnablePopup,0)=0 " + Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CustomerID,X_CustomerCode,X_CustomerName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_BranchID,X_BranchName,X_ContactName,X_Address,X_PhoneNo1,X_CustomerName_Ar from vw_InvCustomer where N_CompanyID=@p1 and B_Inactive=@p2 and N_FnYearId=@p3 and ISNULL(N_EnablePopup,0)=0 " + Searchkey + " and N_CustomerID not in (select top(" + Count + ") N_CustomerID from vw_InvCustomer where N_CompanyID=@p1 and B_Inactive=@p2 and ISNULL(N_EnablePopup,0)=0 " + Searchkey + xSortBy + " ) " + xSortBy;
 
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", 0);
@@ -187,6 +187,8 @@ namespace SmartxAPI.Controllers
                 int nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerId"].ToString());
                
                 int flag=0;
+                int customerFlag=0;
+                bool showConfirmationCustomer=false;
 
             
                 if(MasterTable.Columns.Contains("b_AutoGenerate"))
@@ -200,6 +202,11 @@ namespace SmartxAPI.Controllers
                 {
                  flag = myFunctions.getIntVAL(MasterTable.Rows[0]["flag"].ToString());
                  MasterTable.Columns.Remove("flag");
+                }
+
+                if(MasterTable.Columns.Contains("customerFlag")){
+                    customerFlag=myFunctions.getIntVAL(MasterTable.Rows[0]["customerFlag"].ToString());
+                    MasterTable.Columns.Remove("customerFlag");
                 }
 
                 bool showConformationLedger = false;
@@ -227,9 +234,23 @@ namespace SmartxAPI.Controllers
                         CustomerCode = dLayer.GetAutoNumber("Inv_Customer", "X_CustomerCode", Params, connection, transaction);
                         if (CustomerCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Customer Code")); }
                         MasterTable.Rows[0]["X_CustomerCode"] = CustomerCode;
+
+                       
+    
+                                    
+
                     }
+                             object CustomerCount = dLayer.ExecuteScalar("select count(N_customerID) from Inv_Customer  Where X_CustomerName ='" + x_CustomerName.Trim() + "' and N_CompanyID=" + nCompanyID, Params, connection,transaction);
 
-
+                             if( myFunctions.getIntVAL(CustomerCount.ToString())>0)
+                                    {
+                                           if (customerFlag == 2)
+                                    {
+                                         showConfirmationCustomer =true;
+                                        transaction.Rollback();
+                                        return Ok(api.Success(2));
+                                    }
+                                    }
 
                     if (!MasterTable.Columns.Contains("b_DirPosting"))
                     {
@@ -261,6 +282,7 @@ namespace SmartxAPI.Controllers
                                     if (flag == 2)//for confirmation of same ledger creattion 
                                     {
                                         showConformationLedger = true;
+                                        transaction.Rollback();
                                         return Ok(api.Success(showConformationLedger));
                                     }
 
