@@ -313,6 +313,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
                     int nFnYearID = myFunctions.getIntVAL(General.Rows[0]["n_FnYearID"].ToString());
+                    int nBranchID = myFunctions.getIntVAL(General.Rows[0]["n_BranchID"].ToString());
                     int nCompanyID = myFunctions.GetCompanyID(User);
 
                     foreach (DataRow var in InvoiceCounter.Rows)
@@ -324,9 +325,9 @@ namespace SmartxAPI.Controllers
                         Reset = 0;
 
                         if (myFunctions.getVAL(var["StartingNo"].ToString()) > myFunctions.getVAL(var["LastUsedNo"].ToString()))
-                            dLayer.ExecuteNonQuery("update Inv_InvoiceCounter set N_StartNo=" + myFunctions.getVAL(var["StartingNo"].ToString()).ToString() + ",N_LastUsedNo=" + (myFunctions.getVAL(var["StartingNo"].ToString()) - 1) + ",X_Prefix='" + var["Prefix"].ToString() + "',X_Suffix='" + var["Suffix"].ToString() + "',N_MinimumLen='" + var["MinLength"].ToString() + "',B_AutoInvoiceEnabled=" + Enabled.ToString() + ",B_ResetYearly=" + Reset.ToString() + " Where N_FormID= " + var["N_FormID"].ToString() + " and N_CompanyId=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                            dLayer.ExecuteNonQuery("update Inv_InvoiceCounter set N_StartNo=" + myFunctions.getVAL(var["StartingNo"].ToString()).ToString() + ",N_LastUsedNo=" + (myFunctions.getVAL(var["StartingNo"].ToString()) - 1) + ",X_Prefix='" + var["Prefix"].ToString() + "',X_Suffix='" + var["Suffix"].ToString() + "',N_MinimumLen='" + var["MinLength"].ToString() + "',B_AutoInvoiceEnabled=" + Enabled.ToString() + ",B_ResetYearly=" + Reset.ToString() + " Where N_FormID= " + var["N_FormID"].ToString() + " and N_CompanyId=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_BranchID="+nBranchID, connection, transaction);
                         else
-                            dLayer.ExecuteNonQuery("update Inv_InvoiceCounter set X_Prefix='" + var["Prefix"].ToString() + "',X_Suffix='" + var["Suffix"].ToString() + "',N_MinimumLen='" + var["MinLength"].ToString() + "',B_AutoInvoiceEnabled=" + Enabled.ToString() + ",B_ResetYearly=" + Reset.ToString() + " Where N_FormID= " + var["N_FormID"].ToString() + " and N_CompanyId=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                            dLayer.ExecuteNonQuery("update Inv_InvoiceCounter set X_Prefix='" + var["Prefix"].ToString() + "',X_Suffix='" + var["Suffix"].ToString() + "',N_MinimumLen='" + var["MinLength"].ToString() + "',B_AutoInvoiceEnabled=" + Enabled.ToString() + ",B_ResetYearly=" + Reset.ToString() + " Where N_FormID= " + var["N_FormID"].ToString() + " and N_CompanyId=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_BranchID="+nBranchID, connection, transaction);
 
                     }
 
