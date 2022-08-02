@@ -104,6 +104,7 @@ namespace SmartxAPI.Controllers
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
             DataTable BusDetails = new DataTable();
+            DataTable FeeDetails = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
             string sqlCommandText = "select * from vw_SchAdmission where N_CompanyID=@p1 and x_AdmissionNo=@p2 and N_AcYearID=@p4";
@@ -133,6 +134,12 @@ namespace SmartxAPI.Controllers
                     BusDetails = dLayer.ExecuteDataTable(BusDetailSql, Params, connection);
                     BusDetails = api.Format(BusDetails, "BusDetails");
                     dt.Tables.Add(BusDetails);
+
+                    string FeeDetailSql = "select N_CompanyID,N_AcYearID,X_FeeDescription,N_Amount,N_DiscountAmt,N_FeeCodeID,N_FrequencyID,N_Frequency,N_Installment from vw_SchStudentFee_view where N_CompanyID=@p1 and N_AcYearID=@p4 and N_RefID=@p3 order by N_Sort ASC";
+
+                    FeeDetails = dLayer.ExecuteDataTable(FeeDetailSql, Params, connection);
+                    FeeDetails = api.Format(FeeDetails, "FeeDetails");
+                    dt.Tables.Add(FeeDetails);
                 }
                 return Ok(api.Success(dt));               
             }
@@ -386,38 +393,34 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("feeDetails")]
-        public ActionResult GetFeeDetails(int nAcYearID,int nClassID,int nStudentTypeID,int nAdmissionID)
+        public ActionResult GetFeeDetails(int nAcYearID,int nClassID,int nStudentTypeID)
         {
             DataSet dt=new DataSet();
-            DataTable MasterTable = new DataTable();
+            DataTable FeeDetailsTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
             
-            if(nAdmissionID==0)
-                sqlCommandText = "select N_CompanyID,N_AcYearID,X_FeeDescription,N_Amount,N_DiscountAmt,N_FeeCodeID,N_FrequencyID,N_Frequency,N_Installment from vw_SchStudentFee where N_CompanyID=@p1 and N_AcYearID=@p2 and N_ClassID=@p3 and N_StudentTypeID=@p4 order by N_Sort ASC";
-            else
-                sqlCommandText = "select N_CompanyID,N_AcYearID,X_FeeDescription,N_Amount,N_DiscountAmt,N_FeeCodeID,N_FrequencyID,N_Frequency,N_Installment from vw_SchStudentFee_view where N_CompanyID=@p1 and N_AcYearID=@p2 and N_RefID=@p5 order by N_Sort ASC";
-
+            sqlCommandText = "select N_CompanyID,N_AcYearID,X_FeeDescription,N_Amount,N_DiscountAmt,N_FeeCodeID,N_FrequencyID,N_Frequency,N_Installment from vw_SchStudentFee where N_CompanyID=@p1 and N_AcYearID=@p2 and N_ClassID=@p3 and N_StudentTypeID=@p4 order by N_Sort ASC";
+            
             Params.Add("@p1", nCompanyId);  
             Params.Add("@p2", nAcYearID);
             Params.Add("@p3", nClassID);
             Params.Add("@p4", nStudentTypeID);
-            Params.Add("@p5", nAdmissionID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    FeeDetailsTable = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    if (MasterTable.Rows.Count == 0)
+                    if (FeeDetailsTable.Rows.Count == 0)
                     {
                         return Ok(api.Warning("No Results Found"));
                     }
                 
-                    MasterTable = api.Format(MasterTable, "Master");
-                    dt.Tables.Add(MasterTable);
+                    FeeDetailsTable = api.Format(FeeDetailsTable, "FeeDetails");
+                    dt.Tables.Add(FeeDetailsTable);
                 }
                 return Ok(api.Success(dt));               
             }
