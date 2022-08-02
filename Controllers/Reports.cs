@@ -983,8 +983,10 @@ namespace SmartxAPI.Controllers
                             bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
                             if (mainBranch == false)
                                 Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
-                            else if (xProCode == "11")
-                                Criteria = Criteria + " and " + BranchData + "=" + BranchID;
+                            // if (mainBranch == false)
+                            //     Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
+                            // else if (xProCode == "11")
+                            //     Criteria = Criteria + " and " + BranchData + "=" + BranchID;
                         }
                     }
                     else if (CompanyData != "")
@@ -997,8 +999,10 @@ namespace SmartxAPI.Controllers
                             bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
                             if (mainBranch == false)
                                 Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
-                            else if (xProCode == "11")
-                                Criteria = Criteria + " and " + BranchData + "=" + BranchID;
+                            // if (mainBranch == false)
+                            //     Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
+                            // else if (xProCode == "11")
+                            //     Criteria = Criteria + " and " + BranchData + "=" + BranchID;
                         }
                     }
                     if (UserData != "")

@@ -51,7 +51,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial,int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID,bool b_Asn,int nPriceListID)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial,int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID,bool b_Asn,int nPriceListID,bool isSalesItems)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -118,7 +118,9 @@ namespace SmartxAPI.Controllers
                   Condition = Condition + " and N_ClassID =4" ;
             if(isCustomerMaterial)
                   itemTypeCondition=itemTypeCondition+ " and N_ItemTypeID=5 " ;
-                  
+            if(isSalesItems)
+                  itemTypeCondition=itemTypeCondition+ " and N_ItemTypeID<>5 " ;
+
             if (nItemUsedFor != 0)
             {
                 if (nItemUsedFor == 1)
