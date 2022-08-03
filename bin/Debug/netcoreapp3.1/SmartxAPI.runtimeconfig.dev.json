@@ -1,71 +1,8 @@
 {
   "runtimeOptions": {
     "additionalProbingPaths": [
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 88034d140b7e99f1130d3b7f8dd3e3133bd616af
-=======
-      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\aswin\\.nuget\\packages"
-=======
-<<<<<<< HEAD
       "C:\\Users\\Aky77\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Aky77\\.nuget\\packages"
-=======
-<<<<<<< HEAD
-      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\aswin\\.nuget\\packages"
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> 6d49f474a17ef4275b25f32fc4356fbab324f054
-      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\rathe\\.nuget\\packages"
-=======
-      "C:\\Users\\Aky77\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Aky77\\.nuget\\packages"
-<<<<<<< HEAD
->>>>>>> 7c5a126fa9c22b36ea19bb26b0e3bcd8ccd53f45
-=======
->>>>>>> 4b68cd36ff03b614508b770d3e7e9e25f63443ee
->>>>>>> ef8ba58d4d3ea645308dd2cb386461cfb8901bac
-<<<<<<< HEAD
-=======
-      "C:\\Users\\Dell\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Dell\\.nuget\\packages"
->>>>>>> c37025d1b5413ba2b23fcba8618130a64b449f89
->>>>>>> 7aa85e8126d26777278ef54f6cf2ebf283664611
-=======
->>>>>>> 22702790b6f8e3af5e55dd173957023c5cb929ee
->>>>>>> 32c243588491b63aa8243dcbf578668178f259a0
->>>>>>> 528d96b6830e635e4e92961797e782ed7dd87b6f
->>>>>>> 6d49f474a17ef4275b25f32fc4356fbab324f054
-=======
-      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\rathe\\.nuget\\packages"
->>>>>>> 65d51687386fce3fac7b1e4296b4319e9c5ca4d8
-=======
-      "C:\\Users\\olivouser2\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\olivouser2\\.nuget\\packages"
->>>>>>> 2e34175a6d1e810e5363e622c4e4212a6af758f6
-<<<<<<< HEAD
-=======
-      "C:\\Users\\Aky77\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Aky77\\.nuget\\packages"
->>>>>>> d658359d69c2c38f7676bb0968e8979624edeee8
-=======
->>>>>>> 88034d140b7e99f1130d3b7f8dd3e3133bd616af
-=======
-      "C:\\Users\\Aky77\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Aky77\\.nuget\\packages"
->>>>>>> 19f01aa1ae3a9cb65fd020e509fb09d0766a9cf3
     ]
   }
 }

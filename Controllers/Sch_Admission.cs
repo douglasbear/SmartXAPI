@@ -106,24 +106,24 @@ namespace SmartxAPI.Controllers
             DataTable MasterTable = new DataTable();
             DataTable BusDetails = new DataTable();
             DataTable FeeDetails = new DataTable();
+            DataTable FeeAmtDetails = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
 
-           if (xAdmissionNo!=null)
-           {
-            Params.Add("@p2", xAdmissionNo);
-             sqlCommandText=" select * from vw_SchAdmission where N_CompanyID=@p1 and x_AdmissionNo=@p2 and N_AcYearID=@p4";
-           }
+            if (xAdmissionNo!=null)
+            {
+                Params.Add("@p2", xAdmissionNo);
+                sqlCommandText=" select * from vw_SchAdmission where N_CompanyID=@p1 and x_AdmissionNo=@p2 and N_AcYearID=@p4";
+            }
 
             if(nRegID>0)
             {
-                 Params.Add("@nRegID", nRegID);
+                Params.Add("@nRegID", nRegID);
                 sqlCommandText=" select * from vw_StudentRegToAdmission where N_CompanyId=@p1 and N_RegID=@nRegID";
             }
             Params.Add("@p1", nCompanyId);  
             Params.Add("@p4", nAcYearID);
-            //  Params.Add("@nRegID", nRegID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -131,18 +131,13 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                       if (MasterTable.Rows.Count == 0)
+                    if (MasterTable.Rows.Count == 0)
                     {
                         return Ok(api.Warning("No Results Found"));
                     }
                 
                     MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
-
-
-             
-
-                 
 
                     int N_AdmissionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AdmissionID"].ToString());
                     Params.Add("@p3", N_AdmissionID);
@@ -158,11 +153,14 @@ namespace SmartxAPI.Controllers
                     FeeDetails = dLayer.ExecuteDataTable(FeeDetailSql, Params, connection);
                     FeeDetails = api.Format(FeeDetails, "FeeDetails");
                     dt.Tables.Add(FeeDetails);
-                }
-                return Ok(api.Success(dt));
 
-                
-                          
+                    string FeeAmtDetailSql = "select * from  vw_SchFeeReceived where N_CompanyID=@p1 and N_FnYearID=@p4 and N_Refid=@p3";
+
+                    FeeAmtDetails = dLayer.ExecuteDataTable(FeeAmtDetailSql, Params, connection);
+                    FeeAmtDetails = api.Format(FeeAmtDetails, "FeeAmtDetails");
+                    dt.Tables.Add(FeeAmtDetails);
+                }
+                return Ok(api.Success(dt));                                       
             }
             catch (Exception e)
             {
