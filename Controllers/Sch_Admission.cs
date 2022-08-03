@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetAdmissionList(int? nCompanyId, int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetAdmissionList(int? nCompanyId, int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nRegID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -61,6 +61,7 @@ namespace SmartxAPI.Controllers
                 }
                 xSortBy = " order by " + xSortBy;
             }
+
 
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchAdmission_Dashboard where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID  " + Searchkey + " " + xSortBy;
@@ -99,17 +100,29 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult AdmissionDetails(string xAdmissionNo, int nAcYearID)
+        public ActionResult AdmissionDetails(string xAdmissionNo, int nAcYearID,int nRegID)
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
             DataTable BusDetails = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_SchAdmission where N_CompanyID=@p1 and x_AdmissionNo=@p2 and N_AcYearID=@p4";
-            Params.Add("@p1", nCompanyId);  
+            string sqlCommandText = "";
+
+           if (xAdmissionNo!=null)
+           {
             Params.Add("@p2", xAdmissionNo);
+             sqlCommandText=" select * from vw_SchAdmission where N_CompanyID=@p1 and x_AdmissionNo=@p2 and N_AcYearID=@p4";
+           }
+
+            if(nRegID>0)
+            {
+                 Params.Add("@nRegID", nRegID);
+                sqlCommandText=" select * from vw_StudentRegToAdmission where N_CompanyId=@p1 and N_RegID=@nRegID";
+            }
+            Params.Add("@p1", nCompanyId);  
             Params.Add("@p4", nAcYearID);
+            //  Params.Add("@nRegID", nRegID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -117,13 +130,18 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    if (MasterTable.Rows.Count == 0)
+                       if (MasterTable.Rows.Count == 0)
                     {
                         return Ok(api.Warning("No Results Found"));
                     }
                 
                     MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
+
+
+             
+
+                 
 
                     int N_AdmissionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AdmissionID"].ToString());
                     Params.Add("@p3", N_AdmissionID);
@@ -134,7 +152,10 @@ namespace SmartxAPI.Controllers
                     BusDetails = api.Format(BusDetails, "BusDetails");
                     dt.Tables.Add(BusDetails);
                 }
-                return Ok(api.Success(dt));               
+                return Ok(api.Success(dt));
+
+                
+                          
             }
             catch (Exception e)
             {
@@ -181,7 +202,9 @@ namespace SmartxAPI.Controllers
                          Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         Code = dLayer.GetAutoNumber("Sch_Admission", "X_AdmissionNo", Params, connection, transaction);
-                        if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Admission No")); }
+                        if (Code == "") {
+                             transaction.Rollback();
+                             return Ok(api.Error(User,"Unable to generate Admission No")); }
                         MasterTable.Rows[0]["X_AdmissionNo"] = Code;
 
                         //Generating Customer Code
@@ -189,7 +212,11 @@ namespace SmartxAPI.Controllers
                         CustParams.Add("N_YearID", nFnYearId);
                         CustParams.Add("N_FormID", 51);
                         CustCode = dLayer.GetAutoNumber("Inv_Customer", "X_CustomerCode", CustParams, connection, transaction);
-                        if (CustCode == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Customer Code")); }
+                        if (CustCode == "") 
+                        { 
+                            transaction.Rollback();
+                        return Ok(api.Error(User,"Unable to generate Customer Code")); 
+                        }
                     }
                     
                      MasterTable.Columns.Remove("n_FnYearId");
