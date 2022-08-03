@@ -89,5 +89,104 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,ex));
             }
         }
+
+        [HttpGet("list")]
+        public ActionResult GetRegistrationList(int? nCompanyId, int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
+
+            // if (xSearchkey != null && xSearchkey.Trim() != "")
+            //     Searchkey = "and (X_AdmissionNo like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or X_PFamilyName like '%" + xSearchkey + "%' or X_PMotherName like '%" + xSearchkey + "%' or X_GaurdianName like '%" + xSearchkey + "%'  or X_RegNo like '%" + xSearchkey + "%')";
+
+            // if (xSortBy == null || xSortBy.Trim() == "")
+            //     xSortBy = " order by X_AdmissionNo desc";
+            // else
+            // {
+            //     switch (xSortBy.Split(" ")[0])
+            //     {
+            //         case "X_AdmissionNo":
+            //             xSortBy = "X_AdmissionNo " + xSortBy.Split(" ")[1];
+            //             break;
+            //         default: break;
+            //     }
+            //     xSortBy = " order by " + xSortBy;
+            // }
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_Registration where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID  " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_Registration where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + Searchkey + " " + xSortBy;
+
+            Params.Add("@nCompanyId", nCompanyID);
+            Params.Add("@nAcYearID", nAcYearID);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    SortedList OutPut = new SortedList();
+
+                    sqlCommandCount = "select count(*) as N_Count  from vw_Sch_Registration  where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+
+
+             [HttpGet("details")]
+        public ActionResult ClassDetails(string xRegNO)
+        {
+            DataSet dt=new DataSet();
+            DataTable MasterTable = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            string sqlCommandText = "select * from vw_Sch_Registration_Disp where N_CompanyID=@p1  and X_RegNo=@p2";
+            Params.Add("@p1", nCompanyId);  
+            Params.Add("@p2", xRegNO);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+
+                    if (MasterTable.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                
+                    MasterTable = api.Format(MasterTable, "Master");
+                    dt.Tables.Add(MasterTable);
+                }
+                return Ok(api.Success(dt));               
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+
     }
     }
