@@ -8,6 +8,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 88034d140b7e99f1130d3b7f8dd3e3133bd616af
 =======
@@ -66,6 +67,10 @@
       "C:\\Users\\Aky77\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Aky77\\.nuget\\packages"
 >>>>>>> 19f01aa1ae3a9cb65fd020e509fb09d0766a9cf3
+=======
+      "C:\\Users\\SANJAY\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\SANJAY\\.nuget\\packages"
+>>>>>>> d35a0f808057107e07db91b9b7b052e7d9b7510e
     ]
   }
 }
