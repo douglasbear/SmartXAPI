@@ -259,7 +259,8 @@ namespace SmartxAPI.Controllers
                 int N_decimalPlace = 2;
                 N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Purchase", "Decimal_Place", "N_Value", nCompanyID, dLayer, connection));
                 N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
-
+                if (nPurchaseNO != null)
+                    nPurchaseNO = nPurchaseNO.Replace("%2F", "/");
 
 
 
