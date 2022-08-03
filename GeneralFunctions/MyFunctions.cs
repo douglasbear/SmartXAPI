@@ -1787,7 +1787,7 @@ namespace SmartxAPI.GeneralFunctions
                 LogParams.Add("@nNxtUserID", N_NxtUserID);
                 LogParams.Add("@N_GetUserSign", N_GetSignFromUser);
                // LogParams.Add("@I_Sign", I_Sign);
-                dLayer.ExecuteNonQuery("SP_Log_Approval_Status @nCompanyID,@nFnYearID,@xTransType,@nTransID,@nFormID,@nApprovalUserID,@nApprovalUserCatID,@xAction,@xSystemName,@xTransCode,@dTransDate,@nApprovalLevelID,@nApprovalUserID,@nProcStatusID,@xComments,@xPartyName,@nNxtUserID,,@N_GetUserSign", LogParams, connection, transaction);//,@I_Sign
+                dLayer.ExecuteNonQuery("SP_Log_Approval_Status @nCompanyID,@nFnYearID,@xTransType,@nTransID,@nFormID,@nApprovalUserID,@nApprovalUserCatID,@xAction,@xSystemName,@xTransCode,@dTransDate,@nApprovalLevelID,@nApprovalUserID,@nProcStatusID,@xComments,@xPartyName,@nNxtUserID,@N_GetUserSign", LogParams, connection, transaction);//,@I_Sign
 
                 int MaxActionID=this.getIntVAL(dLayer.ExecuteScalar("SELECT MAX(N_ActionID) as N_MaxActionID from Log_ApprovalProcess where N_CompanyID=@nCompanyID ", LogParams, connection, transaction).ToString());
 
