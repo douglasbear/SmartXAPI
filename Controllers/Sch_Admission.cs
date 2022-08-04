@@ -152,7 +152,7 @@ namespace SmartxAPI.Controllers
 
                     FeeDetails = dLayer.ExecuteDataTable(FeeDetailSql, Params, connection);
                     FeeDetails = api.Format(FeeDetails, "FeeDetails");
-                    dt.Tables.Add(FeeDetails);
+                    dt.Tables.Add(FeeDetails);  
 
                     string FeeAmtDetailSql = "select * from  vw_SchFeeReceived where N_CompanyID=@p1 and N_FnYearID=@p4 and N_Refid=@p3";
 
