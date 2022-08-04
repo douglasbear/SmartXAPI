@@ -102,12 +102,16 @@ namespace SmartxAPI.Controllers
                     }
                     MasterTable.Columns.Remove("n_FnYearId");
 
-                    if (nClassID > 0) 
-                    {  
-                        dLayer.DeleteData("Sch_Class", "N_ClassID", nClassID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
-                    }
+                    // if (nClassID > 0) 
+                    // {  
+                    //     dLayer.DeleteData("Sch_Class", "N_ClassID", nClassID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
+                    // }
 
-                    nClassID = dLayer.SaveData("Sch_Class", "N_ClassID", MasterTable, connection, transaction);
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_ClassCode='" + Code + "'";
+                    string X_Criteria = "N_CompanyID=" + nCompanyID + "";
+
+                    nClassID = dLayer.SaveData("Sch_Class", "N_ClassID",DupCriteria,X_Criteria, MasterTable, connection, transaction);
+
                     if (nClassID <= 0)
                     {
                         transaction.Rollback();
