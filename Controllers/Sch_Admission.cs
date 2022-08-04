@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and (X_AdmissionNo like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or X_PFamilyName like '%" + xSearchkey + "%' or X_PMotherName like '%" + xSearchkey + "%' or X_GaurdianName like '%" + xSearchkey + "%'  or X_RegNo like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by X_AdmissionNo desc";
+                xSortBy = " order by N_AdmissionID desc";
             else
             {
                 switch (xSortBy.Split(" ")[0])
@@ -185,6 +185,7 @@ namespace SmartxAPI.Controllers
                 int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationID"].ToString());
                 int nUserID = myFunctions.GetUserID(User);
                 int nAdmID=nAdmissionID;
+                string CustCode="";
 
                 if (MasterTable.Columns.Contains("N_BranchID"))
                     MasterTable.Columns.Remove("N_BranchID");
@@ -199,7 +200,7 @@ namespace SmartxAPI.Controllers
                     SortedList CustParams = new SortedList();
 
                     // Auto Gen
-                    string Code = "",CustCode="";
+                    string Code = "";
                     var values = MasterTable.Rows[0]["X_AdmissionNo"].ToString();
                     if (values == "@Auto")
                     {
@@ -232,10 +233,6 @@ namespace SmartxAPI.Controllers
                         MasterTable.Columns.Remove("i_Photo");
                         MasterTable.AcceptChanges();
 
-                    // if (nAdmissionID > 0) 
-                    // {  
-                    //     dLayer.DeleteData("Sch_Admission", "N_AdmissionID", nAdmissionID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
-                    // }
 
                     string DupCriteriaAd = "N_CompanyID=" + nCompanyID + " and N_AcYearID=" + nAcYearID + " and X_AdmissionNo='" + Code + "'";
                     string X_CriteriaAd = "N_CompanyID=" + nCompanyID + " and N_AcYearID=" + nAcYearID;
@@ -251,7 +248,6 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.SaveImage("Sch_Admission", "I_Photo", photoBitmap, "N_AdmissionID",nAdmissionID, connection, transaction);
                     }
-
                     
                     //----------------------------------Customer Insert-------------------------------------------------------
                     string sqlCommandText = "SELECT N_CompanyID,N_CustomerID,'"+CustCode+"' AS X_CustomerCode,X_Name AS X_CustomerName,X_GaurdianName AS X_ContactName,X_StudentMobile AS X_PhoneNo1,0 AS N_CreditLimit,0 AS B_Inactive," +
