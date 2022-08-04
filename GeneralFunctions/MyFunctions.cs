@@ -157,7 +157,7 @@ namespace SmartxAPI.GeneralFunctions
         }
 
 
-        public string EncryptStringForUrl(String input, System.Text.Encoding encoding)
+         public string EncryptStringForUrl(String input, System.Text.Encoding encoding)
         {
             Byte[] stringBytes = encoding.GetBytes(EncryptString(input));
             StringBuilder sbBytes = new StringBuilder(stringBytes.Length * 2);
@@ -167,6 +167,7 @@ namespace SmartxAPI.GeneralFunctions
             }
             return sbBytes.ToString();
         }
+
 
 
         public string DecryptStringFromUrl(String hexInput, System.Text.Encoding encoding)
