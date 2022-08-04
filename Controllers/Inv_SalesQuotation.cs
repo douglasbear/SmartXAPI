@@ -317,6 +317,8 @@ namespace SmartxAPI.Controllers
                     Master = myFunctions.AddNewColumnToDataTable(Master, "X_DeliveryNoteNo", typeof(string), "");
                     Master = myFunctions.AddNewColumnToDataTable(Master, "B_SalesProcessed", typeof(int), 0);
                     Master = myFunctions.AddNewColumnToDataTable(Master, "X_SalesReceiptNo", typeof(string), "");
+                    if(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationId"].ToString()) > 0)
+                    {
 
                     object objxSalesOrder = myFunctions.checkProcessed("Inv_SalesOrder", "X_OrderNo", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
                     if (objxSalesOrder.ToString() != "")
@@ -345,6 +347,8 @@ namespace SmartxAPI.Controllers
                         Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Invoice Processed");
                     }
 
+                    }
+                  
                     int N_ClosingRsnID = myFunctions.getIntVAL(Master.Rows[0]["N_ClosingRsnID"].ToString());
                     object X_ClosingRsn = "", X_ClosingStatus = "";
                     if (N_ClosingRsnID.ToString() != "" && N_ClosingRsnID != 0)
