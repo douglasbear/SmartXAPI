@@ -50,27 +50,33 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
                     // Auto Gen
-                    string Code = "";
+                    string Stud = "";
                     var values = MasterTable.Rows[0]["X_RegNo"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                          Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
-                        Code = dLayer.GetAutoNumber("Sch_Registration", "X_RegNo", Params, connection, transaction);
-                        if (Code == "")
+                        Stud = dLayer.GetAutoNumber("Sch_Registration", "X_RegNo", Params, connection, transaction);
+                        if (Stud == "")
                          { 
                             transaction.Rollback();
                             return Ok(api.Error(User,"Unable to generate student generation")); 
                             }
-                        MasterTable.Rows[0]["X_RegNo"] = Code;
+                        MasterTable.Rows[0]["X_RegNo"] = Stud;
                     }
+                      string image = myFunctions.ContainColumn("i_Photo", MasterTable) ? MasterTable.Rows[0]["i_Photo"].ToString() : "";
+                     Byte[] photoBitmap = new Byte[image.Length];
+                     photoBitmap = Convert.FromBase64String(image);
+                    if (myFunctions.ContainColumn("i_Photo", MasterTable))
+                        MasterTable.Columns.Remove("i_Photo");
+                        MasterTable.AcceptChanges();
 
                     if (nRegID > 0) 
                     {  
                         dLayer.DeleteData("Sch_Registration", "N_RegID", nRegID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
                     }
-
+                  
                     nRegID = dLayer.SaveData("Sch_Registration", "N_RegID", MasterTable, connection, transaction);
                     if (nRegID <= 0)
                     {
@@ -79,6 +85,10 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                            if (image.Length > 0)
+                    {
+                        dLayer.SaveImage("Sch_Registration", "I_Photo", photoBitmap, "N_RegID",nRegID, connection, transaction);
+                    }
                         transaction.Commit();
                         return Ok(api.Success("Student Registration Completed"));
                     }
@@ -101,22 +111,22 @@ namespace SmartxAPI.Controllers
             string sqlCommandCount = "";
             string Searchkey = "";
 
-            // if (xSearchkey != null && xSearchkey.Trim() != "")
-            //     Searchkey = "and (X_AdmissionNo like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or X_PFamilyName like '%" + xSearchkey + "%' or X_PMotherName like '%" + xSearchkey + "%' or X_GaurdianName like '%" + xSearchkey + "%'  or X_RegNo like '%" + xSearchkey + "%')";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_RegNo like '%" + xSearchkey + "%' or X_FullName like '%" + xSearchkey + "%' or X_GuardianName like '%" + xSearchkey + "%' or D_DOB like '%" + xSearchkey + "%' or X_CountryName like '%" + xSearchkey + "%'  or X_MobileNo like '%" + xSearchkey + "%')";
 
-            // if (xSortBy == null || xSortBy.Trim() == "")
-            //     xSortBy = " order by X_AdmissionNo desc";
-            // else
-            // {
-            //     switch (xSortBy.Split(" ")[0])
-            //     {
-            //         case "X_AdmissionNo":
-            //             xSortBy = "X_AdmissionNo " + xSortBy.Split(" ")[1];
-            //             break;
-            //         default: break;
-            //     }
-            //     xSortBy = " order by " + xSortBy;
-            // }
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by X_RegNo desc";
+            else
+            {
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "X_RegNo":
+                        xSortBy = "X_RegNo " + xSortBy.Split(" ")[1];
+                        break;
+                    default: break;
+                }
+                xSortBy = " order by " + xSortBy;
+            }
 
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_Registration where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID  " + Searchkey + " " + xSortBy;
