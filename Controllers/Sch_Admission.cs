@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and (X_AdmissionNo like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or X_PFamilyName like '%" + xSearchkey + "%' or X_PMotherName like '%" + xSearchkey + "%' or X_GaurdianName like '%" + xSearchkey + "%'  or X_RegNo like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by X_AdmissionNo desc";
+                xSortBy = " order by N_AdmissionID desc";
             else
             {
                 switch (xSortBy.Split(" ")[0])
