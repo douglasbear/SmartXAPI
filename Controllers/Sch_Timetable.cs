@@ -444,7 +444,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int N_WeekID, int nFnYearID)
+        public ActionResult DeleteData(int ntimetableid)
         {
             int Results = 0;
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -454,13 +454,13 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    Results = dLayer.DeleteData("Sch_Weekdays", "N_WeekID", N_WeekID, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection);
-                    dLayer.DeleteData("Sch_WeekdaysDetails", "N_WeekID", N_WeekID, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection);
+                    Results = dLayer.DeleteData("Sch_Timetable", "N_TimetableID", ntimetableid, "N_CompanyID=" + nCompanyID +"", connection);
+                    dLayer.DeleteData("Sch_TimetableDetails", "N_TimetableID", ntimetableid, "N_CompanyID=" + nCompanyID + "", connection);
 
                 }
                 if (Results > 0)
                 {
-                    return Ok(api.Success("Week Days deleted"));
+                    return Ok(api.Success("Timetable deleted"));
                 }
                 else
                 {
