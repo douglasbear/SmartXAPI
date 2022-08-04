@@ -125,15 +125,26 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     string Day = "";
                     string Weekname = "";
-
-                    dtSunday = dLayer.ExecuteDataTable(sqlSunday, Params, connection);
-                    dtMonday = dLayer.ExecuteDataTable(sqlMonday, Params, connection);
-                    dtTuesday = dLayer.ExecuteDataTable(sqlTuesday, Params, connection);
-                    dtWednesday = dLayer.ExecuteDataTable(sqlWednesday, Params, connection);
-                    dtThursday = dLayer.ExecuteDataTable(sqlThursday, Params, connection);
-                    dtFriday = dLayer.ExecuteDataTable(sqlFriday, Params, connection);
-                    dtSaturday = dLayer.ExecuteDataTable(sqlSaturday, Params, connection);
-                    dtMain = dLayer.ExecuteDataTable(sqlMain, Params, connection);
+                    object n_ClassID = 0;
+                    object x_Class = "";
+                    object n_ClassDivisionID = 0;
+                    object x_ClassDivision = "";
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    if (type == 1)
+                    {
+                        n_ClassID = dLayer.ExecuteScalar("Select n_ClassID from vw_Timetable where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode", Params, connection, transaction);
+                        x_Class = dLayer.ExecuteScalar("Select x_Class from vw_Timetable where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode", Params, connection, transaction);
+                        n_ClassDivisionID = dLayer.ExecuteScalar("Select n_ClassDivisionID from vw_Timetable where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode", Params, connection, transaction);
+                        x_ClassDivision = dLayer.ExecuteScalar("Select x_ClassDivision from vw_Timetable where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode", Params, connection, transaction);
+                    }
+                    dtSunday = dLayer.ExecuteDataTable(sqlSunday, Params, connection, transaction);
+                    dtMonday = dLayer.ExecuteDataTable(sqlMonday, Params, connection, transaction);
+                    dtTuesday = dLayer.ExecuteDataTable(sqlTuesday, Params, connection, transaction);
+                    dtWednesday = dLayer.ExecuteDataTable(sqlWednesday, Params, connection, transaction);
+                    dtThursday = dLayer.ExecuteDataTable(sqlThursday, Params, connection, transaction);
+                    dtFriday = dLayer.ExecuteDataTable(sqlFriday, Params, connection, transaction);
+                    dtSaturday = dLayer.ExecuteDataTable(sqlSaturday, Params, connection, transaction);
+                    dtMain = dLayer.ExecuteDataTable(sqlMain, Params, connection, transaction);
                     for (int i = 0; i <= 6; i++)
                     {
                         dt.Rows.Add();
@@ -141,10 +152,6 @@ namespace SmartxAPI.Controllers
                         {
                             Day = "Sunday";
                             dt.Rows[i]["weekdata"] = dtSunday;
-                            dt.Rows[i]["n_ClassID"] = dtSunday.Rows[0]["n_ClassID"];
-                            dt.Rows[i]["x_Class"] = dtSunday.Rows[0]["x_Class"];
-                            dt.Rows[i]["n_ClassDivisionID"] = dtSunday.Rows[0]["n_ClassDivisionID"];
-                            dt.Rows[i]["x_ClassDivision"] = dtSunday.Rows[0]["x_ClassDivision"];
                         }
                         if (i == 1)
                         {
@@ -179,6 +186,10 @@ namespace SmartxAPI.Controllers
                         }
                         dt.Rows[i]["Day"] = Day;
                         dt.Rows[i]["x_weekname"] = Weekname;
+                        dt.Rows[i]["n_ClassID"] = n_ClassID;
+                        dt.Rows[i]["x_Class"] = x_Class;
+                        dt.Rows[i]["n_ClassDivisionID"] = n_ClassDivisionID;
+                        dt.Rows[i]["x_ClassDivision"] = x_ClassDivision;
 
 
                     }
