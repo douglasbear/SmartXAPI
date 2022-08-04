@@ -38,7 +38,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
-            string sqlCommandText = "select * from vw_Timetable where N_CompanyID=@nCompanyID";
+            string sqlCommandText = "select * from vw_Timetable where N_CompanyID=@nCompanyID order by n_timetableid desc";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
