@@ -226,7 +226,7 @@ namespace SmartxAPI.Controllers
         }    
       
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nRouteID)
+        public ActionResult DeleteData(int nRouteID,int nFnYearId)
         {
 
             int Results = 0;
@@ -238,11 +238,18 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                                       
+                     if (nRouteID > 0)
+                    {
+                        object RouteCount = dLayer.ExecuteScalar("select COUNT(*) From Sch_BusRegistration where N_PickRoute =" + nRouteID + " and N_CompanyID =" + nCompanyID + " and N_FnYearID=" + nFnYearId , connection, transaction);
+                        RouteCount = RouteCount == null ? 0 : RouteCount;
+                        if (myFunctions.getIntVAL(RouteCount.ToString()) > 0)
+                            return Ok(api.Error(User, "Bus Route Already In Use !!"));
+                    }
                     Results = dLayer.DeleteData("Sch_BusRoute ", "N_RouteID", nRouteID, "N_CompanyID =" + nCompanyID, connection, transaction);
                                   
                     if (Results > 0)
                     {
+
                         dLayer.DeleteData("Sch_BusRouteDetail", "N_RouteID", nRouteID, "N_CompanyID =" + nCompanyID, connection, transaction); 
 
                         transaction.Commit();
