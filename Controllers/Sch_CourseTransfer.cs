@@ -46,7 +46,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_TransferCode like '%" + xSearchkey + "%')";
+                Searchkey = "and (X_TransferCode like '%" + xSearchkey + "%' or X_CourseFrom like '%" + xSearchkey + "%' or X_CourseTo like '%" + xSearchkey + "%' or cast(D_Docdate as VarChar) like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by X_TransferCode desc";
@@ -56,6 +56,9 @@ namespace SmartxAPI.Controllers
                 {
                     case "X_TransferCode":
                         xSortBy = "X_TransferCode " + xSortBy.Split(" ")[1];
+                        break;
+                    case "d_Docdate":
+                        xSortBy = "Cast(D_Docdate as DateTime ) " + xSortBy.Split(" ")[1];
                         break;
                     default: break;
                 }
@@ -135,38 +138,46 @@ namespace SmartxAPI.Controllers
             }   
         }   
 
-        // [HttpGet("details")]
-        // public ActionResult BusRegDetails(string xRegistrationCode)
-        // {
-        //     DataSet dt=new DataSet();
-        //     DataTable MasterTable = new DataTable();
-        //     SortedList Params = new SortedList();
-        //     int nCompanyId=myFunctions.GetCompanyID(User);
-        //     string sqlCommandText = "select * from vw_SchReg_Disp where N_CompanyID=@p1  and X_RegistrationCode=@p2";
-        //     Params.Add("@p1", nCompanyId);  
-        //     Params.Add("@p2", xRegistrationCode);
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+        [HttpGet("details")]
+        public ActionResult CourseTransferDetails(string xTransferCode)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataSet dt = new DataSet();
+                    SortedList Params = new SortedList();
+                    DataTable MasterTable = new DataTable();
+                    DataTable DetailTable = new DataTable();
+                    DataTable DataTable = new DataTable();
 
-        //             if (MasterTable.Rows.Count == 0)
-        //             {
-        //                 return Ok(api.Warning("No Results Found"));
-        //             }
-                
-        //             MasterTable = api.Format(MasterTable, "Master");
-        //             dt.Tables.Add(MasterTable);
-        //         }
-        //         return Ok(api.Success(dt));               
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return Ok(api.Error(User,e));
-        //     }
-        // }
+                    string Mastersql = "";
+                    string DetailSql = "";
+
+                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    Params.Add("@xTransferCode", xTransferCode);
+                    Mastersql = "select * from Vw_Sch_CourseTransfer where N_CompanyID=@nCompanyID and X_TransferCode=@xTransferCode  ";
+                   
+                    MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                    if (MasterTable.Rows.Count == 0) { return Ok(api.Warning("No data found")); }
+                    int nTransferID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TransferID"].ToString());
+                    Params.Add("@nTransferID", nTransferID);
+
+                    MasterTable = api.Format(MasterTable, "Master");
+                    DetailSql = "select * from vw_Sch_CourseTransferStudents where N_CompanyID=@nCompanyID and N_TransferID=@nTransferID ";
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    DetailTable = api.Format(DetailTable, "Details");
+                    dt.Tables.Add(MasterTable);
+                    dt.Tables.Add(DetailTable);
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
 
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
@@ -235,77 +246,41 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,ex));
             }
         }
-
-        // [HttpGet("detailList") ]
-        // public ActionResult BusRegList(int nCompanyID)
-        // {    
-        //     SortedList param = new SortedList();           
-        //     DataTable dt=new DataTable();
-            
-        //     string sqlCommandText="";
-
-        //     sqlCommandText="select * from vw_SchReg_Disp where N_CompanyID=@p1";
-
-        //     param.Add("@p1", nCompanyID);             
-                
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-
-        //             dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
-        //         }
-        //         if(dt.Rows.Count==0)
-        //         {
-        //             return Ok(api.Notice("No Results Found"));
-        //         }
-        //         else
-        //         {
-        //             return Ok(api.Success(dt));
-        //         }              
-        //     }
-        //     catch(Exception e)
-        //     {
-        //         return Ok(api.Error(User,e));
-        //     }   
-        // }   
       
-        // [HttpDelete("delete")]
-        // public ActionResult DeleteData(int nRegistrationID)
-        // {
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nCompanyID, int nAcYearID, int nTransferID)
+        {
+            int Results = 0;
+            try
+            {
+                SortedList QueryParams = new SortedList();
+                QueryParams.Add("@nCompanyID", nCompanyID);
+                QueryParams.Add("@nAcYearID", nAcYearID);
+                QueryParams.Add("@nTransferID", nTransferID);
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
 
-        //     int Results = 0;
-        //     int nCompanyID=myFunctions.GetCompanyID(User);
-        //     try
-        //     {                        
-        //         SortedList Params = new SortedList();
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             SqlTransaction transaction = connection.BeginTransaction();
-        //             Results = dLayer.DeleteData("Sch_BusRegistration", "n_RegistrationID", nRegistrationID, "N_CompanyID =" + nCompanyID, connection, transaction);                   
-                
-        //             if (Results > 0)
-        //             {
-        //                 transaction.Commit();
-        //                 return Ok(api.Success("Bus Registration deleted"));
-        //             }
-        //             else
-        //             {
-        //                 return Ok(api.Error(User,"Unable to delete Bus Registration"));
-        //             }
-        //         }
-
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return Ok(api.Error(User,ex));
-        //     }
+                    Results = dLayer.DeleteData("Sch_CourseTransfer", "N_TransferID", nTransferID, "", connection);
 
 
+                    if (Results > 0)
+                    {
+                        dLayer.DeleteData("Sch_CourseTransferStudents", "N_TransferID", nTransferID, "", connection);
+                        return Ok(api.Success("Course Transfer deleted"));
+                    }
+                    else
+                    {
+                        return Ok(api.Error(User,"Unable to delete"));
+                    }
 
-        // }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(User,ex));
+            }
+        }
     }
 }
 

@@ -1099,7 +1099,10 @@ namespace SmartxAPI.GeneralFunctions
                     bIsEditable = false;
 
                 object bAddSign = false;
-                bAddSign = dLayer.ExecuteScalar("Select Isnull (B_AddSign,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID", ApprovalParams, connection);
+                if (nTransID == 0)
+                    bAddSign = dLayer.ExecuteScalar("SELECT Isnull (B_AddSign,0) from Gen_ApprovalCodesDetails where N_CompanyID=@nCompanyID and N_level=1 and N_ApprovalID=@nApprovalID", ApprovalParams, connection);
+                else
+                    bAddSign = dLayer.ExecuteScalar("Select Isnull (B_AddSign,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID", ApprovalParams, connection);
                 if (bAddSign == null)
                     bAddSign = false;
 
