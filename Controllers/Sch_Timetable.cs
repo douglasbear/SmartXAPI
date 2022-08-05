@@ -91,6 +91,7 @@ namespace SmartxAPI.Controllers
             dt = myFunctions.AddNewColumnToDataTable(dt, "x_Class", typeof(string), null);
             dt = myFunctions.AddNewColumnToDataTable(dt, "n_ClassDivisionID", typeof(string), null);
             dt = myFunctions.AddNewColumnToDataTable(dt, "x_ClassDivision", typeof(string), null);
+            dt = myFunctions.AddNewColumnToDataTable(dt, "n_TimetableID", typeof(string), null);
             if (type == 1)
             {
                 Params.Add("@xTimetableCode", xTimetableCode);
@@ -129,6 +130,7 @@ namespace SmartxAPI.Controllers
                     object x_Class = "";
                     object n_ClassDivisionID = 0;
                     object x_ClassDivision = "";
+                    object n_TimetableID = "";
                     SqlTransaction transaction = connection.BeginTransaction();
                     if (type == 1)
                     {
@@ -136,6 +138,7 @@ namespace SmartxAPI.Controllers
                         x_Class = dLayer.ExecuteScalar("Select x_Class from vw_Timetable where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode", Params, connection, transaction);
                         n_ClassDivisionID = dLayer.ExecuteScalar("Select n_ClassDivisionID from vw_Timetable where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode", Params, connection, transaction);
                         x_ClassDivision = dLayer.ExecuteScalar("Select x_ClassDivision from vw_Timetable where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode", Params, connection, transaction);
+                        n_TimetableID = dLayer.ExecuteScalar("Select n_TimetableID from vw_Timetable where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode", Params, connection, transaction);
                     }
                     dtSunday = dLayer.ExecuteDataTable(sqlSunday, Params, connection, transaction);
                     dtMonday = dLayer.ExecuteDataTable(sqlMonday, Params, connection, transaction);
@@ -190,6 +193,7 @@ namespace SmartxAPI.Controllers
                         dt.Rows[i]["x_Class"] = x_Class;
                         dt.Rows[i]["n_ClassDivisionID"] = n_ClassDivisionID;
                         dt.Rows[i]["x_ClassDivision"] = x_ClassDivision;
+                        dt.Rows[i]["n_timetableID"] = n_TimetableID;
 
 
                     }
