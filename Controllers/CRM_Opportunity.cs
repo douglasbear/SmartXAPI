@@ -140,6 +140,7 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             DataTable dtItem = new DataTable();
+            DataTable dtMaterial = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
@@ -156,10 +157,18 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dtItem = dLayer.ExecuteDataTable(sqlCommandTextItem, Params, connection);
+
+                    int N_OpportunityID = myFunctions.getIntVAL(dt.Rows[0]["N_OpportunityID"].ToString());
+                    Params.Add("@p3", N_OpportunityID);
+
+                    string MaterialSql = "select * from vw_Crm_Materials where N_CompanyID=@p1 and N_OpportunityID=@p3";
+
+                    dtMaterial = dLayer.ExecuteDataTable(MaterialSql, Params, connection);
                 }
                 dt = api.Format(dt);
                 Result.Add("Details", dt);
                 Result.Add("Items", dtItem);
+                Result.Add("Materials", dtMaterial);
                 if (dt.Rows.Count == 0)
                 {
                     return Ok(api.Warning("No Results Found"));
@@ -183,9 +192,10 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, Items, Activity, Participants;
+                DataTable MasterTable, Items, Activity, Participants,Materials;
                 MasterTable = ds.Tables["master"];
                 Items = ds.Tables["Items"];
+                Materials = ds.Tables["Materials"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nOPPOId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_OpportunityID"].ToString());
@@ -301,11 +311,15 @@ namespace SmartxAPI.Controllers
 
                             }
 
-                        }
-                   
-
+                        }                   
 
                         dLayer.SaveData("Crm_Products", "N_CrmItemID", Items, connection, transaction);
+
+                        for (int j = 0; j < Materials.Rows.Count; j++)
+                        {
+                            Materials.Rows[j]["N_OpportunityID"] = nOpportunityID;
+                        }
+                        int N_CrmMaterialID = dLayer.SaveData("Crm_Materials", "N_CrmMaterialID", MasterTable, connection, transaction);
 
                         transaction.Commit();
                         return Ok(api.Success("Oppurtunity Created"));
@@ -361,6 +375,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
                     Results = dLayer.DeleteData("CRM_Opportunity", "N_OpportunityID", nOpportunityID, "", connection, transaction);
+                    dLayer.DeleteData("Crm_Materials", "N_OpportunityID", nOpportunityID, "", connection, transaction);
                     dLayer.DeleteData("Crm_Products", "N_OpportunityID", nOpportunityID, "", connection, transaction);
                     dLayer.DeleteData("CRM_Activity", "N_ReffID", nOpportunityID, "", connection, transaction);
                     transaction.Commit();
