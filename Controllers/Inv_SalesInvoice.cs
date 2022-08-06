@@ -1069,7 +1069,7 @@ namespace SmartxAPI.Controllers
                             PostingParam.Add("N_InternalID", N_SalesID);
                             PostingParam.Add("N_UserID", N_UserID);
                             PostingParam.Add("X_SystemName", "ERP Cloud");
-                            try
+                            try 
                             {
                                 dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
                             }
