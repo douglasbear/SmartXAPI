@@ -111,6 +111,7 @@ namespace SmartxAPI.Controllers
                     string X_Criteria = "N_CompanyID=" + nCompanyID + "";
 
                     nClassID = dLayer.SaveData("Sch_Class", "N_ClassID",DupCriteria,X_Criteria, MasterTable, connection, transaction);
+
                     if (nClassID <= 0)
                     {
                         transaction.Rollback();
