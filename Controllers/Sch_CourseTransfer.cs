@@ -136,6 +136,42 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(User,e));
             }   
+        }
+
+        [HttpGet("studentCount") ]
+        public ActionResult GetStudentCount(int nClassID)
+        {    
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            SortedList param = new SortedList();           
+            DataTable dt=new DataTable();
+            
+            string sqlCommandText="select * from vw_BatchStudentCount where N_CompanyID=@p1 and N_ClassID=@p2";
+
+            param.Add("@p1", nCompanyID);        
+            param.Add("@p2", nClassID);   
+                
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                }
+                if(dt.Rows.Count==0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+                
+            }
+            catch(Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }   
         }   
 
         [HttpGet("details")]
