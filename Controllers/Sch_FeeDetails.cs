@@ -56,7 +56,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    QueryParams.Add("@nAdmissionID", nAdmissionID);
+    
                     if (bShowAllBranchData == true)
                        masterSql = "Select * from vw_SchAdmission Where N_CompanyID=@nCompanyID and  N_AcYearID=@nFnYearID and N_AdmissionID=@nAdmissionID"; 
                     else 
@@ -69,7 +69,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        detailsSql = "SELECT      ROW_NUMBER() over(ORDER BY  N_Type , B_Paid DESC, D_SalesDate) as SlNo,* from vw_Sch_AdmissionFee Where N_CustomerID="+nAdmissionID+" and N_CompanyID = " +nCompanyID + " and N_FnYearId="+nFnYearID+" and B_IsRemoved=0 ORDER By N_Type , B_Paid DESC, D_SalesDate ";
+                        detailsSql = "SELECT      ROW_NUMBER() over(ORDER BY  N_Type , B_Paid DESC, D_SalesDate) as SlNo,* from vw_Sch_AdmissionFee Where N_RefID="+nAdmissionID+" and N_CompanyID = " +nCompanyID + " and N_FnYearId="+nFnYearID+" and B_IsRemoved=0 ORDER By N_Type , B_Paid DESC, D_SalesDate ";
                         Detail = dLayer.ExecuteDataTable(detailsSql, QueryParams, connection);
                         Detail = _api.Format(Detail, "details");
                         if (Detail.Rows.Count == 0)
@@ -77,11 +77,83 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Notice("No Results Found"));
                         }
                         ds.Tables.Add(Detail);
+                        ds.Tables.Add(Master);
                         return Ok(_api.Success(ds));
                     }
                 }
             }
             catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+        [HttpPost("save")]
+        public ActionResult UpdateStatus([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable DetailTable;
+                    DetailTable = ds.Tables["details"];
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    bool flag=false;
+                    int N_AcYearID=myFunctions.getIntVAL(DetailTable.Rows[0]["N_AcYearID"].ToString());
+                    int N_RefSalesID=0;
+                       //GetYearID
+                    //   dLayer.ExecuteScalar("Select * from Sch_AcademicYear Where N_CompanyID=" + nCompanyID + " And X_AcYear ='" + cmbAcademicYear.Text + "'", Params,connection,transaction);
+                    //   if (dsUserCategory.Tables["Sch_AcademicYear"].Rows.Count > 0)
+                    //   {
+                    //      N_AcYearID = myFunctions.getIntVAL(dsUserCategory.Tables["Sch_AcademicYear"].Rows[0]["N_AcYearID"].ToString());
+                    //      D_AcYearDate = Convert.ToDateTime(dsUserCategory.Tables["Sch_AcademicYear"].Rows[0]["D_YearFrom"]);
+                    //   }
+                    foreach (DataRow row in DetailTable.Rows)
+                    {
+                          DateTime DateFrom = Convert.ToDateTime(row["d_DateFrom"].ToString());
+                          DateTime DateTo = Convert.ToDateTime(row["d_DateTill"].ToString()); 
+                    if (DateTo < DateFrom)
+                    {   
+                           transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable To Save"));
+                    }
+                    if (row["Status"].ToString() == "Not Paid")
+                    {
+                        dLayer.ExecuteNonQuery("Update Sch_Sales set D_SalesDate = '" + row["d_DateFrom"] + "', N_SalesAmt = " + myFunctions.getVAL( row["Fee"].ToString())  + " where N_CompanyID = " +nCompanyID + " and N_FnYearId= " + N_AcYearID + " and N_SalesId=" + myFunctions.getIntVAL(row["N_SalesId"].ToString()) + "", Params,connection,transaction);
+                        dLayer.ExecuteNonQuery("Update Sch_SalesDetails set D_DateFrom = '" + row["d_DateFrom"] + "',D_DateTill = '" +row["d_DateTill"] + "',N_Amount = '" +  myFunctions.getVAL(row["Fee"].ToString()) + "' where N_SalesId=" +   myFunctions.getIntVAL(row["N_SalesId"].ToString()) + "  and N_ItemID=" +  myFunctions.getIntVAL(row["N_ItemID"].ToString()) + "",  Params,connection,transaction);
+                    }
+                  
+                    if (row["b_Paid"].ToString() == "False" && row["Status"].ToString() == "Not Paid")//unchecked
+                    {
+                        dLayer.ExecuteNonQuery("Update Sch_Sales set B_IsRemoved=1 where N_CompanyID = " + nCompanyID + " and N_FnYearId= " +  N_AcYearID + " and N_SalesId=" +  myFunctions.getIntVAL(row["N_SalesId"].ToString())  + "",  Params,connection,transaction);
+                        N_RefSalesID= myFunctions.getIntVAL(row["N_RefSalesID"].ToString());
+                          SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"X_TransType","SALES"},
+                                {"N_VoucherID",N_RefSalesID}};
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, ex));
+                        }
+
+
+
+
+                    }
+                 }
+                     transaction.Commit();
+                    return Ok(_api.Success("Saved"));
+                }
+            }
+             catch (Exception e)
             {
                 return Ok(_api.Error(User, e));
             }

@@ -41,7 +41,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
 
             int Count = (nPage - 1) * nSizeperpage;
-            string Searchkey = "";
+
             string sqlCommandText = "", sqlCommandCount = "";
 
             Params.Add("@nCompanyID", nCompanyID);
@@ -58,8 +58,6 @@ namespace SmartxAPI.Controllers
             // else
             //     xType = "NoStock";
             //     xType = "No Stock";
-            if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_ItemCode like'%" + xSearchkey + "%'or [Emp Name] like'%" + xSearchkey + "%'or X_VacType like'%" + xSearchkey + "%' or N_VacDays like'%" + xSearchkey + "%'or X_VacRemarks like'%" + xSearchkey + "%' or cast(D_VacDateTo as VarChar) like'%" + xSearchkey + "%' or cast(d_VacDateFrom as VarChar) like'%" + xSearchkey + "%' or x_CurrentStatus like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by X_ItemCode desc";
@@ -78,86 +76,86 @@ namespace SmartxAPI.Controllers
                     {
                         // X_HideFieldList = "N_CompanyID,N_CategoryID,N_LocationID,N_CurrStock,N_MinQty,N_ReOrderQty";
                         X_OrderByField = "X_ItemCode ASC";
-                        X_TableName = "vw_stockstatusbylocation";
+                        X_TableName = "VW_StockStatusByLocationDashboard";
                         if (B_PartNo)
                         {
-                            X_VisibleFieldList = "X_PartNo,X_ItemCode,X_ItemName,X_Category,X_PreferredVendor,X_LocationName,X_Rack,N_CurrentStock,X_ItemUnit,SOQty,X_ItemManufacturer";
+                            X_VisibleFieldList = "X_PartNo,X_ItemCode,X_ItemName,X_Category,X_PreferredVendor,X_LocationName,X_Rack,N_CurrentStock,X_ItemUnit,X_ItemManufacturer";
                         }
                         else
                         {
-                            X_VisibleFieldList = "X_ItemCode,X_ItemName,X_Category,X_PreferredVendor,X_LocationName,X_Rack,N_CurrentStock,X_ItemUnit,SOQty";
+                            X_VisibleFieldList = "X_ItemCode,X_ItemName,X_Category,X_PreferredVendor,X_LocationName,X_Rack,N_CurrentStock,X_ItemUnit";
                         }
 
 
                         if (bAllBranchData == true)
                         {
                             if (xType == "All")
-                                X_Crieteria = " N_CompanyID=@nCompanyID";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) ";
                             else if (xType == "NoStock")
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock=0 ";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock=0 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null)";
                             else if (xType == "MinimumQty")
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock <= N_MinQty";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock <= N_MinQty and N_ClassID in (2,3,5) and N_MinQty is not null";
                             else
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock <= N_ReOrderQty";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock <= N_ReOrderQty and N_ClassID in (2,3,5) and N_ReOrderQty is not null";
                         }
                         else
                         {
                             if (xType == "All")
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) ";
                             else if (xType == "NoStock")
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and  N_CurrStock = 0 ";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and  N_CurrStock = 0 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null)";
                             else if (xType == "MinimumQty")
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_CurrStock <= N_MinQty";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_CurrStock <= N_MinQty and N_ClassID in (2,3,5) and N_MinQty is not null";
                             else
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_CurrStock <= N_ReOrderQty";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_CurrStock <= N_ReOrderQty and N_ClassID in (2,3,5) and N_ReOrderQty is not null";
                         }
                     }
                     else
                     {
                         //X_HideFieldList = "N_CompanyID,N_CategoryID,N_LocationID,N_CurrStock,N_MinQty,N_ReOrderQty";
                         X_OrderByField = "X_ItemCode ASC";
-                        X_TableName = "vw_stockstatusbylocation";
+                        X_TableName = "VW_StockStatusByLocationDashboard";
 
                         if (B_PartNo)
                         {
-                            X_VisibleFieldList = "X_PartNo,X_ItemCode,X_ItemName,X_Category,X_PreferredVendor,X_Rack,N_CurrentStock,X_ItemUnit,SOQty,X_ItemManufacturer";
+                            X_VisibleFieldList = "X_PartNo,X_LocationName,N_MinQty,N_ReOrderQty,X_ItemCode,X_ItemName,X_Category,X_PreferredVendor,X_Rack,N_CurrentStock,X_ItemUnit,X_ItemManufacturer";
                         }
                         else
                         {
-                            X_VisibleFieldList = "X_ItemCode,X_ItemName,X_Category,X_PreferredVendor,X_Rack,N_CurrentStock,X_ItemUnit,SOQty";
+                            X_VisibleFieldList = "X_ItemCode,X_LocationName,N_MinQty,N_ReOrderQty,X_ItemName,X_Category,X_PreferredVendor,X_Rack,N_CurrentStock,X_ItemUnit";
                         }
 
                         if (bAllBranchData == true)
                         {
                             if (xType == "All")
-                                X_Crieteria = " N_CompanyID=@nCompanyID";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) ";
                             else if (xType == "NoStock")
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock = 0 ";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock = 0 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null)";
                             else if (xType == "MinimumQty")
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock <= N_MinQty";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock <= N_MinQty and N_ClassID in (2,3,5) and N_MinQty is not null";
                             else
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock <= N_ReOrderQty";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock <= N_ReOrderQty and N_ClassID in (2,3,5) and N_ReOrderQty is not null";
                         }
                         else
                         {
                             if (xType == "All")
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) ";
                             else if (xType == "NoStock")
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and  N_CurrStock=0 ";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and  N_CurrStock=0 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null)";
                             else if (xType == "N_MinQty")
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_CurrStock <= N_MinQty";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_CurrStock <= N_MinQty and N_ClassID in (2,3,5) and N_MinQty is not null";
                             else
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_CurrStock <= N_ReOrderQty";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_CurrStock <= N_ReOrderQty and N_ClassID in (2,3,5) and N_ReOrderQty is not null";
                         }
                     }
 
                     if (Count == 0)
-                        sqlCommandText = "Select top(" + nSizeperpage + ") " + X_VisibleFieldList + " from " + X_TableName + " where " + X_Crieteria + " " + Searchkey + " " + xSortBy + "";
+                        sqlCommandText = "Select top(" + nSizeperpage + ") " + X_VisibleFieldList + " from " + X_TableName + " where " + X_Crieteria + " "  + xSortBy + "";
                     else
-                        sqlCommandText = "Select top(" + nSizeperpage + ") " + X_VisibleFieldList + " from " + X_TableName + " where " + X_Crieteria + " " + Searchkey + " and N_ItemID not in (select top(" + Count + ") N_ItemID from" + X_TableName + " where " + X_Crieteria + ") " + xSortBy + "";
+                        sqlCommandText = "Select top(" + nSizeperpage + ") " + X_VisibleFieldList + " from " + X_TableName + " where " + X_Crieteria + " " + " and N_ItemID not in (select top(" + Count + ") N_ItemID from " + X_TableName + " where " + X_Crieteria + ") " + xSortBy + "";
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count From " + X_TableName + " where " + X_Crieteria + " " + Searchkey + " ";
+                    sqlCommandCount = "select count(*) as N_Count From " + X_TableName + " where " + X_Crieteria + " " ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     dt = _api.Format(dt);
                     SortedList OutPut = new SortedList();
@@ -169,7 +167,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Success(dt));
+                        return Ok(_api.Success(OutPut));
                     }
                 }
 
@@ -206,10 +204,10 @@ namespace SmartxAPI.Controllers
                 
             // criteria="N_CompanyID ="+nCompanyID+" and N_LocationID="+nLocationID+" and N_BranchID="+nBranchID;
 
-            sqlAll = "SELECT COUNT(1) as N_Count FROM vw_InvItem_WHLink WHERE " + criteria1 + " and B_Inactive=0 and X_ItemCode <> '001' and N_ItemTypeID<>1";
-            sqlNoStock = "SELECT COUNT(1) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock = 0";
-            sqlMinQty = "SELECT COUNT(1) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock <= N_MinQty";
-            sqlReOrder = "SELECT COUNT(1) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock <= N_ReOrderQty";
+            sqlAll = "SELECT COUNT(N_ItemID) as N_Count FROM vw_InvItem_WHLink WHERE " + criteria1 + " and B_Inactive=0 and X_ItemCode <> '001' and N_ItemTypeID<>1 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) ";
+            sqlNoStock = "SELECT COUNT(N_ItemID) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock = 0 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) ";
+            sqlMinQty = "SELECT COUNT(N_ItemID) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock <= N_MinQty and N_ClassID in (2,3,5) and N_MinQty is not null ";
+            sqlReOrder = "SELECT COUNT(N_ItemID) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock <= N_ReOrderQty and N_ClassID in (2,3,5) and N_ReOrderQty is not null ";
 
             sqlTopSell = "select Top 5 * from vw_TopSellingItem where N_ItemID in (select N_ItemID from vw_InvItem_WHLink where " + criteria1 + ") and N_CompanyID ="+ nCompanyID+" order by N_Count Desc";
             sqlInvValue = "SELECT vw_InvStock_Status.N_CompanyID, Inv_ItemCategory.X_CategoryCode, Inv_ItemCategory.X_Category,SUM(vw_InvStock_Status.N_Factor*vw_InvStock_Status.N_Cost*vw_InvStock_Status.N_Qty) AS N_Value "

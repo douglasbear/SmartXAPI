@@ -1469,7 +1469,7 @@ namespace SmartxAPI.Controllers
                                 }
                                 catch (Exception ex)
                                 {
-                                    transaction.Rollback();
+                                    transaction.Rollback(); 
                                     if (ex.Message == "50") 
                                         return Ok(_api.Error(User, "Day Closed"));
                                     else if (ex.Message == "51")

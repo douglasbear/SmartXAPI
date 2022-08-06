@@ -86,7 +86,9 @@ namespace SmartxAPI.Controllers
 
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([MRN No] like '%" + xSearchkey + "%' or X_VendorName like '%" + xSearchkey + "%')";
+
+            
+                Searchkey = "and ([MRN No] like '%" + xSearchkey + "%' or X_VendorName like '%" + xSearchkey + "%' or x_InvoiceNo like '%" + xSearchkey + "%')";
 
                         if (bAllBranchData == true)
                         {
@@ -111,9 +113,9 @@ namespace SmartxAPI.Controllers
             }
             int Count = (nPage - 1) * nSizeperpage;
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_IsDirectMRN=1 " + Pattern + Searchkey + " " + "Group By  N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No],X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description" + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,x_InvoiceNo from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_IsDirectMRN=1 " + Pattern + Searchkey + " " + "Group By  N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No],X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,x_InvoiceNo" + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_IsDirectMRN=1 "+ Pattern + Searchkey + " and N_MRNID not in (select top(" + Count + ") N_MRNID from Inv_MRN where N_CompanyID=@p1 and N_FnYearID=@p2 and B_IsDirectMRN=1 "+ Pattern + Searchkey + " " + xSortBy + " ) " +  "Group By  N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No],X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description" + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,x_InvoiceNo from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_IsDirectMRN=1 "+ Pattern + Searchkey + " and N_MRNID not in (select top(" + Count + ") N_MRNID from Inv_MRN where N_CompanyID=@p1 and N_FnYearID=@p2 and B_IsDirectMRN=1 "+ Pattern + Searchkey + " " + xSortBy + " ) " +  "Group By  N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No],X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,x_InvoiceNo" + xSortBy;
             // sqlCommandText = "select * from Inv_MRNDetails where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
