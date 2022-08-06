@@ -666,6 +666,7 @@ namespace SmartxAPI.Controllers
                         if (myFunctions.getIntVAL(Dir_PurchaseCount.ToString()) > 0)
                             Dir_Purchase = 1;
                     }
+
                     SortedList VendParams = new SortedList();
                     VendParams.Add("@nCompanyID", nCompanyID);
                     VendParams.Add("@N_VendorID", N_VendorID);
@@ -1028,7 +1029,6 @@ namespace SmartxAPI.Controllers
                             PostingMRNParam.Add("N_MRNID", n_MRNID);
 
                             dLayer.ExecuteNonQueryPro("[SP_Inv_MRNprocessing]", PostingMRNParam, connection, transaction);
-
 
                             SortedList PostingParam = new SortedList();
                             PostingParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
