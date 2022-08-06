@@ -91,6 +91,7 @@ namespace SmartxAPI.Controllers
             dt = myFunctions.AddNewColumnToDataTable(dt, "x_Class", typeof(string), null);
             dt = myFunctions.AddNewColumnToDataTable(dt, "n_ClassDivisionID", typeof(string), null);
             dt = myFunctions.AddNewColumnToDataTable(dt, "x_ClassDivision", typeof(string), null);
+            dt = myFunctions.AddNewColumnToDataTable(dt, "n_TimetableID", typeof(string), null);
             if (type == 1)
             {
                 Params.Add("@xTimetableCode", xTimetableCode);
@@ -125,15 +126,28 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     string Day = "";
                     string Weekname = "";
-
-                    dtSunday = dLayer.ExecuteDataTable(sqlSunday, Params, connection);
-                    dtMonday = dLayer.ExecuteDataTable(sqlMonday, Params, connection);
-                    dtTuesday = dLayer.ExecuteDataTable(sqlTuesday, Params, connection);
-                    dtWednesday = dLayer.ExecuteDataTable(sqlWednesday, Params, connection);
-                    dtThursday = dLayer.ExecuteDataTable(sqlThursday, Params, connection);
-                    dtFriday = dLayer.ExecuteDataTable(sqlFriday, Params, connection);
-                    dtSaturday = dLayer.ExecuteDataTable(sqlSaturday, Params, connection);
-                    dtMain = dLayer.ExecuteDataTable(sqlMain, Params, connection);
+                    object n_ClassID = 0;
+                    object x_Class = "";
+                    object n_ClassDivisionID = 0;
+                    object x_ClassDivision = "";
+                    object n_TimetableID = "";
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    if (type == 1)
+                    {
+                        n_ClassID = dLayer.ExecuteScalar("Select n_ClassID from vw_Timetable where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode", Params, connection, transaction);
+                        x_Class = dLayer.ExecuteScalar("Select x_Class from vw_Timetable where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode", Params, connection, transaction);
+                        n_ClassDivisionID = dLayer.ExecuteScalar("Select n_ClassDivisionID from vw_Timetable where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode", Params, connection, transaction);
+                        x_ClassDivision = dLayer.ExecuteScalar("Select x_ClassDivision from vw_Timetable where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode", Params, connection, transaction);
+                        n_TimetableID = dLayer.ExecuteScalar("Select n_TimetableID from vw_Timetable where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode", Params, connection, transaction);
+                    }
+                    dtSunday = dLayer.ExecuteDataTable(sqlSunday, Params, connection, transaction);
+                    dtMonday = dLayer.ExecuteDataTable(sqlMonday, Params, connection, transaction);
+                    dtTuesday = dLayer.ExecuteDataTable(sqlTuesday, Params, connection, transaction);
+                    dtWednesday = dLayer.ExecuteDataTable(sqlWednesday, Params, connection, transaction);
+                    dtThursday = dLayer.ExecuteDataTable(sqlThursday, Params, connection, transaction);
+                    dtFriday = dLayer.ExecuteDataTable(sqlFriday, Params, connection, transaction);
+                    dtSaturday = dLayer.ExecuteDataTable(sqlSaturday, Params, connection, transaction);
+                    dtMain = dLayer.ExecuteDataTable(sqlMain, Params, connection, transaction);
                     for (int i = 0; i <= 6; i++)
                     {
                         dt.Rows.Add();
@@ -141,10 +155,6 @@ namespace SmartxAPI.Controllers
                         {
                             Day = "Sunday";
                             dt.Rows[i]["weekdata"] = dtSunday;
-                            dt.Rows[i]["n_ClassID"] = dtSunday.Rows[0]["n_ClassID"];
-                            dt.Rows[i]["x_Class"] = dtSunday.Rows[0]["x_Class"];
-                            dt.Rows[i]["n_ClassDivisionID"] = dtSunday.Rows[0]["n_ClassDivisionID"];
-                            dt.Rows[i]["x_ClassDivision"] = dtSunday.Rows[0]["x_ClassDivision"];
                         }
                         if (i == 1)
                         {
@@ -179,6 +189,11 @@ namespace SmartxAPI.Controllers
                         }
                         dt.Rows[i]["Day"] = Day;
                         dt.Rows[i]["x_weekname"] = Weekname;
+                        dt.Rows[i]["n_ClassID"] = n_ClassID;
+                        dt.Rows[i]["x_Class"] = x_Class;
+                        dt.Rows[i]["n_ClassDivisionID"] = n_ClassDivisionID;
+                        dt.Rows[i]["x_ClassDivision"] = x_ClassDivision;
+                        dt.Rows[i]["n_timetableID"] = n_TimetableID;
 
 
                     }
@@ -433,7 +448,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int N_WeekID, int nFnYearID)
+        public ActionResult DeleteData(int ntimetableid)
         {
             int Results = 0;
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -443,13 +458,13 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    Results = dLayer.DeleteData("Sch_Weekdays", "N_WeekID", N_WeekID, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection);
-                    dLayer.DeleteData("Sch_WeekdaysDetails", "N_WeekID", N_WeekID, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection);
+                    Results = dLayer.DeleteData("Sch_Timetable", "N_TimetableID", ntimetableid, "N_CompanyID=" + nCompanyID +"", connection);
+                    dLayer.DeleteData("Sch_TimetableDetails", "N_TimetableID", ntimetableid, "N_CompanyID=" + nCompanyID + "", connection);
 
                 }
                 if (Results > 0)
                 {
-                    return Ok(api.Success("Week Days deleted"));
+                    return Ok(api.Success("Timetable deleted"));
                 }
                 else
                 {
