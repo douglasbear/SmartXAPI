@@ -413,7 +413,7 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(_api.Error(User, ex));
                         } 
-                         }
+                        }
 
                     }
 
