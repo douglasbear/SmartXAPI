@@ -354,6 +354,7 @@ namespace SmartxAPI.Controllers
 
                                 continue;
                             }
+                      
 
                             N_InvoiceDueAmt = myFunctions.getVAL(dr["N_Amount"].ToString()) + myFunctions.getVAL(dr["N_BalanceAmount"].ToString()) + myFunctions.getVAL(dr["N_DiscountAmt"].ToString());
                             N_TotalDueAmt += N_InvoiceDueAmt;
@@ -362,6 +363,13 @@ namespace SmartxAPI.Controllers
                             {
                                 dr.Delete();
                             }
+                            else if (n_PayReceiptId > 0)
+                             {
+                                if(dr["N_PayreceiptID"].ToString()=="")
+                                {
+                                    dr.Delete();
+                                 }
+                             }
                         }
                     }
 
