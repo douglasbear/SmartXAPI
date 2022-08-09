@@ -159,7 +159,7 @@ namespace SmartxAPI.Controllers
         }   
       
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nStudentCatID)
+        public ActionResult DeleteData(int nStudentCatID,int nAcYearID)
         {
 
             int Results = 0;
@@ -171,6 +171,14 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                   if (nStudentCatID > 0)
+                    {
+                        object stuCatCount = dLayer.ExecuteScalar("select COUNT(*) From Sch_Admission where N_StudentCatID =" + nStudentCatID + " and N_CompanyID =" + nCompanyID + " and N_AcYearID=" + nAcYearID , connection, transaction);
+                        stuCatCount = stuCatCount == null ? 0 : stuCatCount;
+                        if (myFunctions.getIntVAL(stuCatCount.ToString()) > 0)
+                            return Ok(api.Error(User, "Student Category Already In Use !!"));
+                    }
+
                     Results = dLayer.DeleteData("Sch_StudentCategory", "N_StudentCatID", nStudentCatID, "N_CompanyID =" + nCompanyID, connection, transaction);
                     transaction.Commit();
                 

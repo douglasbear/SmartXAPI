@@ -433,6 +433,8 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyId);
             Params.Add("@xVendorCode", xVendorCode);
             Params.Add("@nFnYearID", nFnYearID);
+            // Params.Add("@nVendorID",nVendorID);
+           
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -441,6 +443,10 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     dt = _api.Format(dt);
+
+                    int nVendorID = myFunctions.getIntVAL(dt.Rows[0]["N_VendorID"].ToString());
+
+                    Params.Add("@nVendorID", nVendorID);
 
                     object Count = dLayer.ExecuteScalar("select count(*)  from vw_Inv_CheckVendor where N_CompanyID=@p1 and X_VendorCode=@xVendorCode", Params, connection);
                     int NCount = myFunctions.getIntVAL(Count.ToString());
@@ -454,6 +460,14 @@ namespace SmartxAPI.Controllers
                             
                           
                         }
+
+                          object VendorCount = dLayer.ExecuteScalar("select Isnull(Count(N_PurchaseID),0) from Inv_Purchase where N_VendorID=@nVendorID and N_CompanyID=@p1", Params, connection);
+                          object vendorCounts = dLayer.ExecuteScalar("select Isnull(Count(N_PayReceiptId),0) from Inv_PayReceipt where N_PartyID=@nVendorID and N_CompanyID=@p1", Params, connection);
+
+                         if (myFunctions.getIntVAL(VendorCount.ToString()) > 0 || myFunctions.getIntVAL(vendorCounts.ToString()) > 0)
+                         {
+                                myFunctions.AddNewColumnToDataTable(dt, "b_VendorCount", typeof(bool), true);
+                         }
 
 
                     }

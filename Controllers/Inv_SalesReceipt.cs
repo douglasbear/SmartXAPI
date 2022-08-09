@@ -354,6 +354,7 @@ namespace SmartxAPI.Controllers
 
                                 continue;
                             }
+                      
 
                             N_InvoiceDueAmt = myFunctions.getVAL(dr["N_Amount"].ToString()) + myFunctions.getVAL(dr["N_BalanceAmount"].ToString()) + myFunctions.getVAL(dr["N_DiscountAmt"].ToString());
                             N_TotalDueAmt += N_InvoiceDueAmt;
@@ -362,6 +363,13 @@ namespace SmartxAPI.Controllers
                             {
                                 dr.Delete();
                             }
+                            else if (n_PayReceiptId > 0)
+                             {
+                                if(dr["N_PayreceiptID"].ToString()=="")
+                                {
+                                    dr.Delete();
+                                 }
+                             }
                         }
                     }
 
@@ -588,8 +596,28 @@ namespace SmartxAPI.Controllers
                             PostingParams.Add("N_InternalID", PayReceiptId);
                             PostingParams.Add("N_UserID", myFunctions.GetUserID(User));
                             PostingParams.Add("X_SystemName", "ERP Cloud");
-                            object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
-
+                            try
+                            {
+                                object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback(); 
+                                if (ex.Message == "50") 
+                                    return Ok(api.Error(User, "Day Closed"));
+                                else if (ex.Message == "51")
+                                    return Ok(api.Error(User, "Year Closed"));
+                                else if (ex.Message == "52")
+                                    return Ok(api.Error(User, "Year Exists"));
+                                else if (ex.Message == "53")
+                                    return Ok(api.Error(User, "Period Closed"));
+                                else if (ex.Message == "54")
+                                    return Ok(api.Error(User, "Check Transaction Date"));
+                                else if (ex.Message == "55")
+                                    return Ok(api.Error(User, "Quantity exceeds!"));
+                                else
+                                    return Ok(api.Error(User, ex));
+                            }
                         }
 
                        // myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "SALES RECEIPT", xVoucherNo, dLayer, connection, transaction, User);
@@ -748,8 +776,28 @@ namespace SmartxAPI.Controllers
                         PostingParams.Add("N_InternalID", PayReceiptId);
                         PostingParams.Add("N_UserID", myFunctions.GetUserID(User));
                         PostingParams.Add("X_SystemName", "ERP Cloud");
+                        try
+                        {
                         object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
-
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback(); 
+                            if (ex.Message == "50") 
+                                return Ok(api.Error(User, "Day Closed"));
+                            else if (ex.Message == "51")
+                                return Ok(api.Error(User, "Year Closed"));
+                            else if (ex.Message == "52")
+                                return Ok(api.Error(User, "Year Exists"));
+                            else if (ex.Message == "53")
+                                return Ok(api.Error(User, "Period Closed"));
+                            else if (ex.Message == "54")
+                                return Ok(api.Error(User, "Check Transaction Date"));
+                            else if (ex.Message == "55")
+                                return Ok(api.Error(User, "Quantity exceeds!"));
+                            else
+                                return Ok(api.Error(User, ex));
+                        }
                     }
 
                     transaction.Commit();
@@ -785,6 +833,7 @@ namespace SmartxAPI.Controllers
                 }
 
             }
+            
             catch (Exception ex)
             {
                 return Ok(api.Error(User, ex));

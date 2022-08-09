@@ -88,6 +88,8 @@ namespace SmartxAPI.Controllers
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     if (screen == "Invoice")
                         criteria = " and MONTH(Cast(InvoiceDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(InvoiceDate)= YEAR(CURRENT_TIMESTAMP) ";
+                    if (screen == "DraftedInvoice")
+                        criteria = " and MONTH(Cast(InvoiceDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(InvoiceDate)= YEAR(CURRENT_TIMESTAMP) and ISNULL(B_IsSaveDraft,0)=1 and X_TransType='PURCHASE' ";
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
                         Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%' or x_BranchName like '%" + xSearchkey + "%' or x_VendorInvoice like '%"+ xSearchkey + "%' or [Invoice Date] like '%" + xSearchkey + "%' or invoiceNetAmt like '%" + xSearchkey + "%' or x_Description like '%" + xSearchkey + "%' )";
@@ -259,7 +261,8 @@ namespace SmartxAPI.Controllers
                 int N_decimalPlace = 2;
                 N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Purchase", "Decimal_Place", "N_Value", nCompanyID, dLayer, connection));
                 N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
-
+                if (nPurchaseNO != null)
+                    nPurchaseNO = nPurchaseNO.Replace("%2F", "/");
 
 
 

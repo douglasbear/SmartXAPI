@@ -14,19 +14,19 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("schCourse")]
+    [Route("jobvacancy")]
     [ApiController]
-    public class Sch_Class : ControllerBase
+    public class Rec_JobVacancy : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
 
-        private readonly int N_FormID =158 ;
+        private readonly int N_FormID =962 ;
 
 
-        public Sch_Class(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Rec_JobVacancy(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
             dLayer = dl;
@@ -37,15 +37,15 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult ClassDetails(int n_ClassID)
+        public ActionResult VacancyDetails(int n_VacancyID)
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_Sch_Class where N_CompanyID=@p1  and n_ClassID=@p2";
+            string sqlCommandText = "select * from vw_JobVacancy where N_CompanyID=@p1  and n_VacancyID=@p2";
             Params.Add("@p1", nCompanyId);  
-            Params.Add("@p2", n_ClassID);
+            Params.Add("@p2", n_VacancyID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -81,7 +81,7 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
-                int nClassID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ClassID"].ToString());
+                int nVacancyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_VacancyID"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -90,29 +90,28 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string Code = "";
-                    var values = MasterTable.Rows[0]["X_ClassCode"].ToString();
+                    var values = MasterTable.Rows[0]["X_VacancyCode"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                          Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
-                        Code = dLayer.GetAutoNumber("Sch_Class", "X_ClassCode", Params, connection, transaction);
-                        if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Course Code")); }
+                        Code = dLayer.GetAutoNumber("Rec_JobVacancy", "X_VacancyCode", Params, connection, transaction);
+                        if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate JobVacancy Code")); }
                         MasterTable.Rows[0]["X_ClassCode"] = Code;
                     }
-                    MasterTable.Columns.Remove("n_FnYearId");
 
-                    // if (nClassID > 0) 
-                    // {  
-                    //     dLayer.DeleteData("Sch_Class", "N_ClassID", nClassID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
-                    // }
+                    if (nVacancyID > 0) 
+                    {  
+                        dLayer.DeleteData("Rec_JobVacancy", "N_VacancyID", nVacancyID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
+                    }
 
-                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_ClassCode='" + Code + "'";
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_VacancyCode='" + Code + "'";
                     string X_Criteria = "N_CompanyID=" + nCompanyID + "";
 
-                    nClassID = dLayer.SaveData("Sch_Class", "N_ClassID",DupCriteria,X_Criteria, MasterTable, connection, transaction);
+                    nVacancyID = dLayer.SaveData("Rec_JobVacancy", "N_VacancyID",DupCriteria,X_Criteria, MasterTable, connection, transaction);
 
-                    if (nClassID <= 0)
+                    if (nVacancyID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error(User,"Unable to save"));
@@ -120,7 +119,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Course Created"));
+                        return Ok(api.Success("Vacancy Created"));
                     }
                 }
             }
@@ -130,48 +129,64 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("list") ]
-        public ActionResult ClassList(int nCompanyID,int nClassTypeID)
-        {    
-            SortedList param = new SortedList();           
-            DataTable dt=new DataTable();
-            
-            string sqlCommandText="";
+               [HttpGet("list")]
+        public ActionResult VacancyList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string sqlCommandCount = "";
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_VacancyCode like'%" + xSearchkey + "%'or X_PostingTitle like'%" + xSearchkey + "%')";
 
-            if(nClassTypeID>0)
-                sqlCommandText="select * from vw_Sch_Class where N_CompanyID=@p1 and N_ClassTypeID=@p2";
-            else    
-                sqlCommandText="select * from vw_Sch_Class where N_CompanyID=@p1";
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_VacancyID desc";
+            else
+                xSortBy = " order by " + xSortBy;
 
-            param.Add("@p1", nCompanyID);  
-            param.Add("@p2", nClassTypeID);                
-                
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_JobVacancy where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_JobVacancy where N_CompanyID=@p1 " + Searchkey + " and N_VacancyID not in (select top(" + Count + ") N_VacancyID from vw_JobVacancy where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+            Params.Add("@p1", nCompanyId);
+
+            SortedList OutPut = new SortedList();
+
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                    sqlCommandCount = "select count(*) as N_Count  from vw_JobVacancy where N_CompanyID=@p1";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+
                 }
-                if(dt.Rows.Count==0)
-                {
-                    return Ok(api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
-                
+
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                return Ok(api.Error(User,e));
-            }   
-        }   
+                return Ok(api.Error(User, e));
+            }
+        }
       
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nClassID)
+        public ActionResult DeleteData(int nVacancyID)
         {
 
             int Results = 0;
@@ -183,16 +198,16 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Sch_Class ", "N_ClassID", nClassID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                    Results = dLayer.DeleteData("Rec_JobVacancy", "N_VacancyID", nVacancyID, "N_CompanyID =" + nCompanyID, connection, transaction);
                 
                     if (Results > 0)
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Course deleted"));
+                        return Ok(api.Success("Job Vacancy deleted"));
                     }
                     else
                     {
-                        return Ok(api.Error(User,"Unable to delete Course"));
+                        return Ok(api.Error(User,"Unable to delete Job Vacancy"));
                     }
                 }
 

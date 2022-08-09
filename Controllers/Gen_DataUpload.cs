@@ -304,11 +304,11 @@ namespace SmartxAPI.Controllers
                             {
                                 SortedList SalesInvParam = new SortedList();
                                 SalesInvParam.Add("N_CompanyID", nCompanyID);
-                                SalesInvParam.Add("N_FnYearID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_FnYearID"].ToString()));
+                                SalesInvParam.Add("N_FnyearID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_FnYearID"].ToString()));
                                 SalesInvParam.Add("N_UserID", myFunctions.GetUserID(User));
                                 SalesInvParam.Add("N_BranchID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_BranchID"].ToString()));
                                 SalesInvParam.Add("N_LocationID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_LocationID"].ToString()));
-                                // dLayer.ExecuteNonQueryPro("SP_SalesInvoiceImport", SalesInvParam, connection, transaction);
+                                dLayer.ExecuteNonQueryPro("SP_SalesInvoiceImport", SalesInvParam, connection, transaction);
                             }
                             else
                             {
