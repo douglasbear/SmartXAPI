@@ -827,7 +827,7 @@ namespace SmartxAPI.Controllers
 
             DataColumnCollection columns = DtSign.Columns;
             string image =myFunctions.ContainColumn("I_Sign", DtSign) ? DtSign.Rows[0]["I_Sign"].ToString() : "";
-            image = Regex.Replace(image, @"^data:image\/[a-zA-Z]+;base64,", string.Empty);
+            image = Regex.Replace(image, @"^data:image\/[a-z]+;base64,", "");
             Byte[] I_Sign = new Byte[image.Length];
             I_Sign = Convert.FromBase64String(image);
 
