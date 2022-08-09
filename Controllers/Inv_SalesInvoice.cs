@@ -320,12 +320,15 @@ namespace SmartxAPI.Controllers
                     Con.Open();
                     DataSet dsSalesInvoice = new DataSet();
                     SortedList QueryParamsList = new SortedList();
+                     DataTable DelDetails = new DataTable();
                     QueryParamsList.Add("@nCompanyID", nCompanyId);
                     QueryParamsList.Add("@nFnYearID", nFnYearId);
                     QueryParamsList.Add("@nBranchId", nBranchId);
                     QueryParamsList.Add("@xTransType", "SALES");
                     object N_QuotationID = 0;
                     object N_SalesOrderID = 0;
+                    string DetailGetSql = "";
+                      string x_DeliveryNoteNo="";
                     //CRM Quotation Checking
                     if (n_OpportunityID > 0)
                     {
@@ -341,8 +344,10 @@ namespace SmartxAPI.Controllers
                     if (nDeliveryNoteId > 0 || (xDeliveryNoteID != "" && xDeliveryNoteID != null))
                     {
                         DataTable MasterTable = new DataTable();
+                         DataTable DeliveryNoteNumber = new DataTable();
                         int N_salesOrderID = 0;
                         string Mastersql = "";
+                        // string xDeliveryNo="";
 
                         if (nDeliveryNoteId > 0)
                         {
@@ -359,7 +364,10 @@ namespace SmartxAPI.Controllers
                             QueryParamsList.Add("@nDeliveryNoteID", nDeliveryNoteId);
                             string[] X_Delivery = xDeliveryNoteID.Split(",");
                             int N_DeliveryNote = myFunctions.getIntVAL(X_Delivery[0].ToString());
-                            Mastersql = "select N_CompanyId,N_FnYearId,n_SalesId,x_ReceiptNo,N_CustomerID,X_CustPONo from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId=" + N_DeliveryNote + "";
+                            
+                            //  MasterTable = dLayer.ExecuteDataTable(xDeliveryNo, QueryParamsList, Con);
+                             
+                            Mastersql = "select N_CompanyId,N_FnYearId,n_SalesId,x_ReceiptNo,N_CustomerID,X_CustPONo,X_DeliveryNoteNo from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId=" + N_DeliveryNote + "";
                             MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                             if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                             MasterTable = _api.Format(MasterTable, "Master");
@@ -609,6 +617,26 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = masterTable.Rows[0];
                     int nSalesID = myFunctions.getIntVAL(MasterRow["N_SalesID"].ToString());
                     QueryParamsList.Add("@nSalesID", nSalesID);
+
+
+
+
+                   
+
+                     DetailGetSql = "select X_ReceiptNo from Inv_DeliveryNote where N_DeliveryNoteID in ( select N_DeliveryNoteID from Inv_SalesDetails where  N_SalesID=@nSalesID)";
+                     DelDetails = dLayer.ExecuteDataTable(DetailGetSql, QueryParamsList,Con);
+                    if(DelDetails.Rows.Count>0)
+                    {
+                     x_DeliveryNoteNo =  DelDetails.Rows[0]["X_ReceiptNo"].ToString();
+                     for (int j = 1; j < DelDetails.Rows.Count; j++)
+                    {
+                            x_DeliveryNoteNo = x_DeliveryNoteNo + "," + DelDetails.Rows[j]["X_ReceiptNo"].ToString();
+                    }
+                    }
+                     myFunctions.AddNewColumnToDataTable(masterTable, "X_DeliveryNoteNo", typeof(string), x_DeliveryNoteNo);
+                     masterTable.AcceptChanges();
+                      
+
                     int N_TruckID = myFunctions.getIntVAL(MasterRow["N_TruckID"].ToString());
                     object objPlateNo = null;
                     if (N_TruckID > 0)
