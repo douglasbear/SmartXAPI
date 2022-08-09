@@ -424,8 +424,8 @@ namespace SmartxAPI.Controllers
             }   
         }   
       
-        [HttpDelete("delete")]
-        public ActionResult DeleteData(int nAdmissionID)
+    [HttpDelete("delete")]
+        public ActionResult DeleteData(int nAdmissionID ,int nFnYearId)
         {
 
             int Results = 0;
@@ -437,7 +437,13 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-
+                    if ( nAdmissionID > 0)
+                    {
+                        object admCount = dLayer.ExecuteScalar("select COUNT(*) From Sch_BusRegistration where N_AdmissionID =" + nAdmissionID + " and N_CompanyID =" + nCompanyID + " and N_FnYearID=" + nFnYearId , connection, transaction);
+                        admCount = admCount == null ? 0 : admCount;
+                        if (myFunctions.getIntVAL(admCount.ToString()) > 0)
+                            return Ok(api.Error(User, "Already In Use !!"));
+                    }
                     object PayCount = dLayer.ExecuteScalar("select COUNT(Inv_PayReceiptDetails.N_InventoryID) from Inv_PayReceiptDetails INNER JOIN Sch_Sales ON Sch_Sales.N_CompanyID=Inv_PayReceiptDetails.n_companyid and Sch_Sales.N_RefSalesID=Inv_PayReceiptDetails.N_InventoryID where Inv_PayReceiptDetails.N_CompanyID="+ nCompanyID +" and Inv_PayReceiptDetails.X_TransType='SALES' and Sch_Sales.N_RefId="+ nAdmissionID, Params, connection, transaction);
                     if (PayCount != null)
                     {
@@ -485,6 +491,7 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Error(User,"Unable to delete Student"));
                     }                                                
                 }
+
 
             }
             catch (Exception ex)
