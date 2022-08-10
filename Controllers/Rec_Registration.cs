@@ -66,13 +66,15 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Warning("No Results Found"));
                     }
                     N_RecruitmentID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_RecruitmentID"].ToString());
+                    Params.Add("@p3", N_RecruitmentID);
+
                     CandidateEducation = dLayer.ExecuteDataTable(sqlCommandEducation, Params, connection);
                     EmploymentHistory = dLayer.ExecuteDataTable(sqlCommandPaymentHistory, Params, connection);
 
 
                     MasterTable = api.Format(MasterTable, "Master");
-                    CandidateEducation = api.Format(MasterTable, "Rec_CandidateEducation");
-                    EmploymentHistory = api.Format(MasterTable, "Rec_EmploymentHistory");
+                    CandidateEducation = api.Format(CandidateEducation, "Rec_CandidateEducation");
+                    EmploymentHistory = api.Format(EmploymentHistory, "Rec_EmploymentHistory");
                     dt.Tables.Add(MasterTable);
                     dt.Tables.Add(CandidateEducation);
                     dt.Tables.Add(EmploymentHistory);
@@ -96,7 +98,7 @@ namespace SmartxAPI.Controllers
                 DataTable MasterTable, dtRec_CandidateEducation, dtRec_CandidateHistory;
                 MasterTable = ds.Tables["master"];
                 dtRec_CandidateEducation = ds.Tables["Rec_CandidateEducation"];
-                dtRec_CandidateHistory = ds.Tables["Rec_CandidateHistory"];
+                dtRec_CandidateHistory = ds.Tables["rec_EmploymentHistory"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nRecruitmentID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_RecruitmentID"].ToString());
