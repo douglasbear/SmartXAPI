@@ -962,14 +962,14 @@ namespace SmartxAPI.Controllers
                                     }
                                     else
                                     {
-                                        if (bRange)
+                                        if (bRange && valueTo!="")
                                             Criteria = Criteria == "" ? xFeild + " " + ">= '" + value + "' and " + xFeild + " " + "<= '" + valueTo + "'" : Criteria + " and " + xFeild + " " + ">= '" + value + "' and " + xFeild + " " + "<= '" + valueTo + "'";
                                         else
                                             Criteria = Criteria == "" ? xFeild + " " + xOperator + " '" + value + "' " : Criteria + " and " + xFeild + " " + xOperator + " '" + value + "' ";
                                     }
                                 }
                             }
-                            if (bRange)
+                            if (bRange && valueTo!="")
                                 x_Reporttitle = x_Reporttitle + FieldName + value + '-' + valueTo;
                             else
                                 x_Reporttitle = x_Reporttitle + FieldName + value;
