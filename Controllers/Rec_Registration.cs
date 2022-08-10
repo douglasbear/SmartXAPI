@@ -41,25 +41,41 @@ namespace SmartxAPI.Controllers
         {
             DataSet dt = new DataSet();
             DataTable MasterTable = new DataTable();
+            DataTable CandidateEducation = new DataTable();
+            DataTable EmploymentHistory = new DataTable();
             SortedList Params = new SortedList();
+            int N_RecruitmentID=0;
+            
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "select * from vw_RecRegistrartion where N_CompanyID=@p1  and x_RecruitmentCode=@p2";
+            string sqlCommandEducation = "select * from Rec_CandidateEducation where N_CompanyID=@p1  and N_RecruitmentID=@p3";
+            string sqlCommandPaymentHistory = "select * from Rec_EmploymentHistory where N_CompanyID=@p1  and N_RecruitmentID=@p3";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", x_RecruitmentCode);
+            
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                   
 
                     if (MasterTable.Rows.Count == 0)
                     {
                         return Ok(api.Warning("No Results Found"));
                     }
+                    N_RecruitmentID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_RecruitmentID"].ToString());
+                    CandidateEducation = dLayer.ExecuteDataTable(sqlCommandEducation, Params, connection);
+                    EmploymentHistory = dLayer.ExecuteDataTable(sqlCommandPaymentHistory, Params, connection);
+
 
                     MasterTable = api.Format(MasterTable, "Master");
+                    CandidateEducation = api.Format(MasterTable, "Rec_CandidateEducation");
+                    EmploymentHistory = api.Format(MasterTable, "Rec_EmploymentHistory");
                     dt.Tables.Add(MasterTable);
+                    dt.Tables.Add(CandidateEducation);
+                    dt.Tables.Add(EmploymentHistory);
                 }
                 return Ok(api.Success(dt));
             }
