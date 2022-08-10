@@ -139,7 +139,7 @@ namespace SmartxAPI.Controllers
                 DataTable MasterTable, dtRec_CandidateEducation, dtRec_CandidateHistory;
                 MasterTable = ds.Tables["master"];
                 dtRec_CandidateEducation = ds.Tables["Rec_CandidateEducation"];
-                dtRec_CandidateHistory = ds.Tables["Rec_CandidateHistory"];
+                dtRec_CandidateHistory = ds.Tables["rec_EmploymentHistory"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nRecruitmentID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_RecruitmentID"].ToString());
