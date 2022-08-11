@@ -147,6 +147,8 @@ namespace SmartxAPI.Controllers
         [HttpGet("listDetails")]
         public ActionResult GetBalanceListDetails(int N_PartyType, string N_TransType, int nFnYearId, string X_ReceiptNo, bool bAllBranchData, int nBranchID)
         {
+              if (X_ReceiptNo != null)
+                X_ReceiptNo = X_ReceiptNo.Replace("%2F", "/");
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();

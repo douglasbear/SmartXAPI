@@ -382,7 +382,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("getscreenprint")]
-        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, int nPreview, string xrptname, string docNumber, string partyName)
+        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, int nPreview, string xrptname, string docNumber, string partyName,bool printSave)
         {
             SortedList QueryParams = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -404,7 +404,7 @@ namespace SmartxAPI.Controllers
                     if (nPreview != 1)
                     {
                         object printAfterSave = dLayer.ExecuteScalar("select B_PrintAfterSave from Gen_PrintTemplates where N_CompanyID= " + nCompanyId + " and N_FormID=" + nFormID + " and  N_UsercategoryID in (" + xUserCategoryList + ")", connection, transaction);
-                        if (printAfterSave != null)
+                        if (printAfterSave != null && printSave)
                         {
                             if (!myFunctions.getBoolVAL(printAfterSave.ToString()))
                             {
