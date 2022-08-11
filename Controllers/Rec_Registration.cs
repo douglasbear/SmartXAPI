@@ -43,13 +43,16 @@ namespace SmartxAPI.Controllers
             DataTable MasterTable = new DataTable();
             DataTable CandidateEducation = new DataTable();
             DataTable EmploymentHistory = new DataTable();
+            DataTable Actions = new DataTable();
             SortedList Params = new SortedList();
             int N_RecruitmentID=0;
+            int N_ActionID=0;
             
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "select * from vw_RecRegistrartion where N_CompanyID=@p1  and x_RecruitmentCode=@p2";
             string sqlCommandEducation = "select * from Rec_CandidateEducation where N_CompanyID=@p1  and N_RecruitmentID=@p3";
             string sqlCommandPaymentHistory = "select * from Rec_EmploymentHistory where N_CompanyID=@p1  and N_RecruitmentID=@p3";
+            string sqlCommandOptions = "select * from vw_GenStatusDetails where N_CompanyID=@p1  and N_ActionID=@p4";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", x_RecruitmentCode);
             
@@ -66,16 +69,20 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Warning("No Results Found"));
                     }
                     N_RecruitmentID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_RecruitmentID"].ToString());
+                    N_ActionID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_ActionID"].ToString());
                     CandidateEducation = dLayer.ExecuteDataTable(sqlCommandEducation, Params, connection);
                     EmploymentHistory = dLayer.ExecuteDataTable(sqlCommandPaymentHistory, Params, connection);
+                    Actions = dLayer.ExecuteDataTable(sqlCommandOptions, Params, connection);
 
 
                     MasterTable = api.Format(MasterTable, "Master");
-                    CandidateEducation = api.Format(MasterTable, "Rec_CandidateEducation");
-                    EmploymentHistory = api.Format(MasterTable, "Rec_EmploymentHistory");
+                    CandidateEducation = api.Format(CandidateEducation, "Rec_CandidateEducation");
+                    EmploymentHistory = api.Format(EmploymentHistory, "Rec_EmploymentHistory");
+                    Actions = api.Format(Actions, "Actions");
                     dt.Tables.Add(MasterTable);
                     dt.Tables.Add(CandidateEducation);
                     dt.Tables.Add(EmploymentHistory);
+                    dt.Tables.Add(Actions);
                 }
                 return Ok(api.Success(dt));
             }
@@ -84,6 +91,42 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, e));
             }
         }
+        [HttpGet("listvacancy")]
+        public ActionResult VacancyList()
+        {
+            DataSet dt = new DataSet();
+            DataTable MasterTable = new DataTable();
+            SortedList Params = new SortedList();
+
+            
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "select * from vw_JobVacancy where N_CompanyID=@p1";
+            Params.Add("@p1", nCompanyId);
+            
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                   
+
+                    if (MasterTable.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+    
+                    MasterTable = api.Format(MasterTable, "Master");
+                    dt.Tables.Add(MasterTable);
+                }
+                return Ok(api.Success(dt));
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+        
 
 
 
