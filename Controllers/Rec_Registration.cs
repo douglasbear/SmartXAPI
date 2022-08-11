@@ -70,6 +70,8 @@ namespace SmartxAPI.Controllers
                     }
                     N_RecruitmentID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_RecruitmentID"].ToString());
                     N_ActionID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_ActionID"].ToString());
+                    Params.Add("@p3", N_RecruitmentID);
+                    Params.Add("@p4", N_ActionID);
                     CandidateEducation = dLayer.ExecuteDataTable(sqlCommandEducation, Params, connection);
                     EmploymentHistory = dLayer.ExecuteDataTable(sqlCommandPaymentHistory, Params, connection);
                     Actions = dLayer.ExecuteDataTable(sqlCommandOptions, Params, connection);
@@ -94,7 +96,7 @@ namespace SmartxAPI.Controllers
         [HttpGet("listvacancy")]
         public ActionResult VacancyList()
         {
-            DataSet dt = new DataSet();
+             DataTable dt = new DataTable();
             DataTable MasterTable = new DataTable();
             SortedList Params = new SortedList();
 
@@ -103,23 +105,23 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "select * from vw_JobVacancy where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
             
-            try
+          try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                   
 
-                    if (MasterTable.Rows.Count == 0)
-                    {
-                        return Ok(api.Warning("No Results Found"));
-                    }
-    
-                    MasterTable = api.Format(MasterTable, "Master");
-                    dt.Tables.Add(MasterTable);
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
                 }
-                return Ok(api.Success(dt));
+                if(dt.Rows.Count==0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+                
             }
             catch (Exception e)
             {
@@ -165,6 +167,8 @@ namespace SmartxAPI.Controllers
                     if (nRecruitmentID > 0)
                     {
                         dLayer.DeleteData("Rec_Registration", "N_RecruitmentID", nRecruitmentID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Rec_CandidateEducation", "N_RecruitmentID", nRecruitmentID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Rec_EmploymentHistory", "N_RecruitmentID", nRecruitmentID, "N_CompanyID =" + nCompanyID, connection, transaction);
                     }
 
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_RecruitmentCode='" + Code + "'";
