@@ -319,7 +319,7 @@ namespace SmartxAPI.Controllers
                         {
                             Materials.Rows[j]["N_OpportunityID"] = nOpportunityID;
                         }
-                        int N_CrmMaterialID = dLayer.SaveData("Crm_Materials", "N_CrmMaterialID", MasterTable, connection, transaction);
+                        int N_CrmMaterialID = dLayer.SaveData("Crm_Materials", "N_CrmMaterialID", Materials, connection, transaction);
 
                         transaction.Commit();
                         return Ok(api.Success("Oppurtunity Created"));
