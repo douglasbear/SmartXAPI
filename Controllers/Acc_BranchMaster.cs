@@ -180,8 +180,18 @@ namespace SmartxAPI.Controllers
                                 return Ok(_api.Error(User, "Branch Limit exceeded!!!"));
                             }
                         }
-                       
-                   
+                      if(bDefaultBranch==true)
+                       {
+                       object headoffcCount = dLayer.ExecuteScalar("select count(B_DefaultBranch) from Acc_BranchMaster where N_CompanyID=" + nCompanyID,connection, transaction);
+                          if (headoffcCount != null )
+                        {
+                            if (myFunctions.getIntVAL(headoffcCount.ToString()) >= 1)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, "Head Office Limit exceeded!!!"));
+                            }
+                        }
+                       }
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
@@ -194,18 +204,7 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("Acc_BranchMaster", "N_BranchID", nBranchID, "", connection, transaction);
                     }
-                     if(bDefaultBranch==true)
-                    {
-                       object headoffcCount = dLayer.ExecuteScalar("select count(B_DefaultBranch) from Acc_BranchMaster where N_CompanyID=" + nCompanyID,connection, transaction);
-                          if (headoffcCount != null )
-                        {
-                            if (myFunctions.getIntVAL(headoffcCount.ToString()) >= 1)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, "Head Office Limit exceeded!!!"));
-                            }
-                        }
-                    }
+                
                     nBranchID = dLayer.SaveData("Acc_BranchMaster", "N_BranchID", MasterTable, connection, transaction);
                     if (nBranchID <= 0)
                     {
