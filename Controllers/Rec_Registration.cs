@@ -45,9 +45,9 @@ namespace SmartxAPI.Controllers
             DataTable EmploymentHistory = new DataTable();
             DataTable Actions = new DataTable();
             SortedList Params = new SortedList();
-            int N_RecruitmentID=0;
-            int N_ActionID=0;
-            
+            int N_RecruitmentID = 0;
+            int N_ActionID = 0;
+
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "select * from vw_RecRegistrartion where N_CompanyID=@p1  and x_RecruitmentCode=@p2";
             string sqlCommandEducation = "select * from Rec_CandidateEducation where N_CompanyID=@p1  and N_RecruitmentID=@p3";
@@ -55,21 +55,21 @@ namespace SmartxAPI.Controllers
             string sqlCommandOptions = "select * from vw_GenStatusDetails where N_CompanyID=@p1  and N_ActionID=@p4";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", x_RecruitmentCode);
-            
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                   
+
 
                     if (MasterTable.Rows.Count == 0)
                     {
                         return Ok(api.Warning("No Results Found"));
                     }
-                    N_RecruitmentID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_RecruitmentID"].ToString());
-                    N_ActionID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_ActionID"].ToString());
+                    N_RecruitmentID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RecruitmentID"].ToString());
+                    N_ActionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ActionID"].ToString());
                     CandidateEducation = dLayer.ExecuteDataTable(sqlCommandEducation, Params, connection);
                     EmploymentHistory = dLayer.ExecuteDataTable(sqlCommandPaymentHistory, Params, connection);
                     Actions = dLayer.ExecuteDataTable(sqlCommandOptions, Params, connection);
@@ -98,24 +98,24 @@ namespace SmartxAPI.Controllers
             DataTable MasterTable = new DataTable();
             SortedList Params = new SortedList();
 
-            
+
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "select * from vw_JobVacancy where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
-            
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                   
+
 
                     if (MasterTable.Rows.Count == 0)
                     {
                         return Ok(api.Warning("No Results Found"));
                     }
-    
+
                     MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
                 }
@@ -126,7 +126,36 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, e));
             }
         }
-        
+        [HttpGet("listaction")]
+        public ActionResult GetActionDetails(int nActionID, int nFormID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nActionID", nActionID);
+            Params.Add("@nFormID", nFormID);
+            string sqlCommandText = "select * from vw_GenStatusDetails where N_CompanyID=@nCompanyID and N_ActionID=@nActionID and N_FormID=@nFormID";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                    return Ok(api.Notice("No Results Found"));
+                else
+                    return Ok(api.Success(dt));
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+
 
 
 
