@@ -101,6 +101,9 @@ namespace SmartxAPI.Controllers
                     case 81:
                         sql = "Update Inv_SalesOrder set N_ClosingStatusID=@ClosingID where N_SalesOrderId=@nPkey and n_CompanyId=@nCompanyID"; 
                         break;   
+                    case 82:
+                        sql = "Update Inv_PurchaseOrder set N_ClosingStatusID=@ClosingID where N_POrderID=@nPkey and N_CompanyID=@nCompanyID"; 
+                        break;
                     default: return Ok(api.Warning("Invalid Form"));
                 }
                 using (SqlConnection connection = new SqlConnection(connectionString))

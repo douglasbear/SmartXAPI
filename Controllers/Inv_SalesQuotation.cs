@@ -317,6 +317,8 @@ namespace SmartxAPI.Controllers
                     Master = myFunctions.AddNewColumnToDataTable(Master, "X_DeliveryNoteNo", typeof(string), "");
                     Master = myFunctions.AddNewColumnToDataTable(Master, "B_SalesProcessed", typeof(int), 0);
                     Master = myFunctions.AddNewColumnToDataTable(Master, "X_SalesReceiptNo", typeof(string), "");
+                    if(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationId"].ToString()) > 0)
+                    {
 
                     object objxSalesOrder = myFunctions.checkProcessed("Inv_SalesOrder", "X_OrderNo", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
                     if (objxSalesOrder.ToString() != "")
@@ -345,6 +347,8 @@ namespace SmartxAPI.Controllers
                         Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Invoice Processed");
                     }
 
+                    }
+                  
                     int N_ClosingRsnID = myFunctions.getIntVAL(Master.Rows[0]["N_ClosingRsnID"].ToString());
                     object X_ClosingRsn = "", X_ClosingStatus = "";
                     if (N_ClosingRsnID.ToString() != "" && N_ClosingRsnID != 0)
@@ -366,7 +370,7 @@ namespace SmartxAPI.Controllers
 
                     Params.Add("@nDefSPriceID", N_DefSPriceID);
                     Params.Add("@dQuotationDate", myFunctions.getDateVAL(quotationDate));
-                    string sqlCommandText2 = "Select *,dbo.SP_GenGetStock(vw_InvQuotationDetails.N_ItemID,@nLocationID,'','location') As N_Stock ,dbo.[SP_Stock](vw_InvQuotationDetails.N_ItemID) As N_StockAll ,dbo.SP_Cost(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID,'') As N_LPrice,dbo.SP_SellingPrice(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID) As N_SPrice,dbo.SP_SellingPrice_Select(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID,@nDefSPriceID,@nBranchID) As N_UnitSPrice,dbo.SP_GetQuotationCount(@nCompanyID,vw_InvQuotationDetails.N_ItemID,@dQuotationDate) As QuotedQty  from vw_InvQuotationDetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nQuotationID";
+                    string sqlCommandText2 = "Select *,dbo.SP_GenGetStock(vw_InvQuotationDetails.N_ItemID,@nLocationID,'','location') As N_Stock ,dbo.[SP_Stock](vw_InvQuotationDetails.N_ItemID) As N_StockAll ,dbo.SP_Cost(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID,'') As N_LPrice,dbo.SP_SellingPrice(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID) As N_SPrice,dbo.SP_SellingPrice_Select(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID,@nDefSPriceID,@nBranchID) As N_UnitSPrice,dbo.SP_GetQuotationCount(@nCompanyID,vw_InvQuotationDetails.N_ItemID,@dQuotationDate) As QuotedQty  from . Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nQuotationID";
                     if (n_OpportunityID > 0)
                         sqlCommandText2 = "select * from vw_OpportunityToQuotationDetails Where N_CompanyID=@nCompanyID and n_OpportunityID=" + n_OpportunityID;
                     DataTable Details = new DataTable();

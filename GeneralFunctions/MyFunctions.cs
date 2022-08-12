@@ -1099,7 +1099,6 @@ namespace SmartxAPI.GeneralFunctions
                 if (bIsEditable == null)
                     bIsEditable = false;
 
-
                 object bAddSign = false;
                 if (nTransID == 0)
                     bAddSign = dLayer.ExecuteScalar("SELECT Isnull (B_AddSign,0) from Gen_ApprovalCodesDetails where N_CompanyID=@nCompanyID and N_level=1 and N_ApprovalID=@nApprovalID", ApprovalParams, connection);
@@ -1790,7 +1789,6 @@ namespace SmartxAPI.GeneralFunctions
                 LogParams.Add("@xComments", Comments);
                 LogParams.Add("@xPartyName", PartyName);
                 LogParams.Add("@nNxtUserID", N_NxtUserID);
-
                 LogParams.Add("@N_GetUserSign", N_GetSignFromUser);
                // LogParams.Add("@I_Sign", I_Sign);
                 dLayer.ExecuteNonQuery("SP_Log_Approval_Status @nCompanyID,@nFnYearID,@xTransType,@nTransID,@nFormID,@nApprovalUserID,@nApprovalUserCatID,@xAction,@xSystemName,@xTransCode,@dTransDate,@nApprovalLevelID,@nApprovalUserID,@nProcStatusID,@xComments,@xPartyName,@nNxtUserID,@N_GetUserSign", LogParams, connection, transaction);//,@I_Sign
@@ -1802,7 +1800,6 @@ namespace SmartxAPI.GeneralFunctions
                     if (image.Length > 0)
                         dLayer.SaveImage("Log_ApprovalProcess", "I_Sign", I_Sign, "N_ActionID", MaxActionID, connection, transaction);
                 }
-
 
                 if(N_ProcStatusID==0||N_ProcStatusID==6)return 0;
                 int N_NxtAppLeveleID=0;

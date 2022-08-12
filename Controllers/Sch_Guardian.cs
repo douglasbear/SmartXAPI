@@ -50,13 +50,13 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and (X_ParentCode like '%" + xSearchkey + "%' or X_GaurdianName like '%" + xSearchkey + "%' or X_GaurdianName_Ar like '%" + xSearchkey + "%' or X_PFatherName like '%" + xSearchkey + "%' or X_PMotherName like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by X_ParentCode desc";
+                xSortBy = " order by N_ParentID desc";
             else
             {
                 switch (xSortBy.Split(" ")[0])
                 {
-                    case "X_ParentCode":
-                        xSortBy = "X_ParentCode " + xSortBy.Split(" ")[1];
+                    case "N_ParentID":
+                        xSortBy = "N_ParentID " + xSortBy.Split(" ")[1];
                         break;
                     default: break;
                 }

@@ -37,15 +37,15 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult VacancyDetails(int n_VacancyID)
+        public ActionResult VacancyDetails(string x_VacancyCode)
         {
             DataSet dt = new DataSet();
             DataTable MasterTable = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_JobVacancy where N_CompanyID=@p1  and n_VacancyID=@p2";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", n_VacancyID);
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            string sqlCommandText = "select * from vw_JobVacancy where N_CompanyID=@p1  and x_VacancyCode=@p2";
+            Params.Add("@p1", nCompanyId);  
+            Params.Add("@p2", x_VacancyCode);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -97,8 +97,8 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         Code = dLayer.GetAutoNumber("Rec_JobVacancy", "X_VacancyCode", Params, connection, transaction);
-                        if (Code == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate JobVacancy Code")); }
-                        MasterTable.Rows[0]["X_ClassCode"] = Code;
+                        if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate JobVacancy Code")); }
+                        MasterTable.Rows[0]["X_VacancyCode"] = Code;
                     }
 
                     if (nVacancyID > 0)

@@ -611,6 +611,8 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
+            object customerCount = null;
+            object customerCounts = null;
             if (crmcustomerID > 0)
             {
                 sqlCommandText = "select   X_Customer as X_CustomerName,X_Phone as X_PhoneNo1,* from vw_CRMCustomer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=" + crmcustomerID + "";
@@ -668,9 +670,29 @@ namespace SmartxAPI.Controllers
                                    dt.Rows[0]["portalURL"] = xURL;
                         }
                         dt.AcceptChanges();
+
+                        // myFunctions.AddNewColumnToDataTable(dt, "b_CustomerCount", typeof(bool), false);
+
+                         customerCount = dLayer.ExecuteScalar("select Isnull(Count(N_SalesId),0) from inv_sales where N_CustomerID=@nCustomerID and N_CompanyID=@nCompanyID", Params, connection);
+                         customerCounts = dLayer.ExecuteScalar("select Isnull(Count(N_PayReceiptId),0) from Inv_PayReceipt where N_PartyID=@nCustomerID and N_CompanyID=@nCompanyID", Params, connection);
+
+                         if (myFunctions.getIntVAL(customerCount.ToString()) > 0 || myFunctions.getIntVAL(customerCounts.ToString()) > 0)
+                         {
+                                myFunctions.AddNewColumnToDataTable(dt, "b_CustomerCount", typeof(bool), true);
+                         }
+                        //  myFunctions.AddNewColumnToDataTable(dt, "b_CustomerCount", typeof(bool), customerCount);
+                         dt.AcceptChanges();
                     
                         DataTable Attachments = myAttachments.ViewAttachment(dLayer, nCustomerID, 0, 51, nFnYearID, User, connection);
                         Attachments = api.Format(Attachments, "attachments");
+
+                         
+                     
+
+
+
+
+
                         dt = api.Format(dt, "master");
                         ds.Tables.Add(dt);
                         ds.Tables.Add(Attachments);
