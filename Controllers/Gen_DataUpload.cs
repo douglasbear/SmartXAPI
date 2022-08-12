@@ -176,7 +176,7 @@ namespace SmartxAPI.Controllers
                                 }
                                 break;
                             case "sales invoice":
-                                xTableName = "mig_SalesInvoice";
+                                xTableName = "Mig_SalesInvoice";
                                 Mastertable.Columns.Add("N_CompanyID");
                                 foreach (DataRow dtRow in Mastertable.Rows)
                                 {
@@ -322,19 +322,24 @@ namespace SmartxAPI.Controllers
                             }
                             Mastertable.Clear();
                             Params.Remove("X_Type");
+
+                            SortedList Result = new SortedList();
+                            if (xTableName == "Mig_SalesInvoice")
+                            {
+                                string sqlSkipInfo = "select X_SkippingRemark,isnull(B_Skipped,0) as B_Skipped from " + xTableName + " where X_SkippingRemark is not null group by X_SkippingRemark,B_Skipped";
+                                string sqlImportSummery = "select ";
+
+                                DataTable skippedRows = dLayer.ExecuteDataTable(sqlSkipInfo, Params, connection, transaction);
+                                Result.Add("skippedRows", _api.Format(skippedRows, "skippedRows"));
+                            }
                             transaction.Commit();
-                            return Ok(_api.Success(dt.TableName + " Uploaded"));
+                            return Ok(_api.Success(Result, dt.TableName + " Uploaded"));
                         }
                     }
-                    if (Mastertable.Rows.Count > 0)
-                    {
-                        transaction.Commit();
-                        return Ok(_api.Success("Uploaded Completed"));
-                    }
-                    else
-                    {
-                        return Ok(_api.Error(User, "Uploaded Error"));
-                    }
+
+                    transaction.Rollback();
+                    return Ok(_api.Error(User, "Uploaded Error"));
+
                 }
 
             }
