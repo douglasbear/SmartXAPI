@@ -361,7 +361,7 @@ namespace SmartxAPI.Controllers
                         if(myFunctions.getIntVAL(objDecisionDone.ToString())!=0)
                             Master.Rows[0]["n_IsDecisionDone"]=1;
 
-                        object objInwardsDone = dLayer.ExecuteScalar("select COUNT(N_QuotationID) from Inv_RFQVendorListMaster where N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID and ISNULL(B_IsUpdated,0)=1", QueryParams, connection);
+                        object objInwardsDone = dLayer.ExecuteScalar("select COUNT(N_QuotationID) from Inv_RFQVendorListMaster where N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID ", QueryParams, connection);//and ISNULL(B_IsUpdated,0)=1
                         if(myFunctions.getIntVAL(objInwardsDone.ToString())!=0)
                             Master.Rows[0]["n_IsInwardsDone"]=1;
 
