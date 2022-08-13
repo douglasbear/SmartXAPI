@@ -632,7 +632,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "portalURL", typeof(string), "");
-
+                    if(nCustomerID>0){
                     object Count = dLayer.ExecuteScalar("select count(*)  from vw_Inv_CheckCustomer where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID", Params, connection);
                     int NCount = myFunctions.getIntVAL(Count.ToString());
                     if (NCount > 0)
@@ -647,6 +647,7 @@ namespace SmartxAPI.Controllers
                         }
 
 
+                    }
                     }
 
                     if (dt.Rows.Count == 0)
@@ -672,7 +673,8 @@ namespace SmartxAPI.Controllers
                         dt.AcceptChanges();
 
                         // myFunctions.AddNewColumnToDataTable(dt, "b_CustomerCount", typeof(bool), false);
-
+                          if(nCustomerID>0)
+                          {
                          customerCount = dLayer.ExecuteScalar("select Isnull(Count(N_SalesId),0) from inv_sales where N_CustomerID=@nCustomerID and N_CompanyID=@nCompanyID", Params, connection);
                          customerCounts = dLayer.ExecuteScalar("select Isnull(Count(N_PayReceiptId),0) from Inv_PayReceipt where N_PartyID=@nCustomerID and N_CompanyID=@nCompanyID", Params, connection);
 
@@ -680,12 +682,16 @@ namespace SmartxAPI.Controllers
                          {
                                 myFunctions.AddNewColumnToDataTable(dt, "b_CustomerCount", typeof(bool), true);
                          }
+                          DataTable Attachments = myAttachments.ViewAttachment(dLayer, nCustomerID, 0, 51, nFnYearID, User, connection);
+                        Attachments = api.Format(Attachments, "attachments");
+                            ds.Tables.Add(Attachments);
+
+
+                          }
                         //  myFunctions.AddNewColumnToDataTable(dt, "b_CustomerCount", typeof(bool), customerCount);
                          dt.AcceptChanges();
                     
-                        DataTable Attachments = myAttachments.ViewAttachment(dLayer, nCustomerID, 0, 51, nFnYearID, User, connection);
-                        Attachments = api.Format(Attachments, "attachments");
-
+                       
                          
                      
 
@@ -695,8 +701,7 @@ namespace SmartxAPI.Controllers
 
                         dt = api.Format(dt, "master");
                         ds.Tables.Add(dt);
-                        ds.Tables.Add(Attachments);
-
+                    
                         return Ok(api.Success(ds));
                     }
                 }
@@ -739,28 +744,71 @@ namespace SmartxAPI.Controllers
         } 
 
         [HttpGet("totalInvoiceAmount")]
-        public ActionResult GetCustomerDetail(int nCustomerID, int nFnYearID)
+        public ActionResult GetCustomerDetail(int nCustomerID, int nFnYearID,bool isQuotation)
         {
             DataTable dt = new DataTable();
             int nCompanyID = myFunctions.GetCompanyID(User);
             string sqlCommmand = "";
             SortedList Params = new SortedList();
             Params.Add("@nCompanyID", nCompanyID);
-            Params.Add("@nCustomerID", nCustomerID);
+     
             Params.Add("@nFnYearID", nFnYearID);
-            sqlCommmand = "select sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalInvoiceAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID";
+            sqlCommmand = "select sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalInvoiceAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID="+nCustomerID+"";
             SortedList OutPut = new SortedList();
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
+
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommmand, Params, connection);
+                    
+                    //checking Quotaton--crm Customer 
+                    object customerID=null;
+                    object creditLimit=null;
+                    if(isQuotation)
+                    {
+                        
+                       
+                         customerID = dLayer.ExecuteScalar("select N_CustomerID from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CrmCompanyID="+nCustomerID+" ", Params, connection);
+                         nCustomerID=myFunctions.getIntVAL(customerID.ToString());
+                         creditLimit = dLayer.ExecuteScalar("select N_CreditLimit from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID="+nCustomerID+" ", Params, connection);
+                        if(creditLimit==null)
+                             dt = myFunctions.AddNewColumnToDataTable(dt, "n_CreditLimit",typeof(double), 0.00);
+                        else 
+                          dt = myFunctions.AddNewColumnToDataTable(dt, "n_CreditLimit",typeof(double), myFunctions.getVAL(creditLimit.ToString()));
+                        dt.AcceptChanges();
+                    }
+                         
+                    if(isQuotation && (customerID==null || myFunctions.getIntVAL(customerID.ToString())==0 ))
+                    {
+                            dt = myFunctions.AddNewColumnToDataTable(dt, "isDirectQuotationEnabled",typeof(bool), true);
+                              dt.AcceptChanges();
+                    }
+
+                   double quotationAmt=0.0;
+
+                   if(!isQuotation || myFunctions.getIntVAL(customerID.ToString())>0)
+                   {
+                    //crm customer from Customer for SQ 
+
+                    object sqCustomerID= dLayer.ExecuteScalar("select N_CrmCompanyID from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID="+nCustomerID+" ", Params, connection);
+                    if(myFunctions.getIntVAL(sqCustomerID.ToString())>0)
+                    {
+
+                        object pendingSQAmt=dLayer.ExecuteScalar("select sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as pendingSQAmt from VW_PendingSalesQuotation where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CrmCompanyID="+myFunctions.getIntVAL(sqCustomerID.ToString())+" ", Params, connection);
+                        if(pendingSQAmt!=null)
+                           quotationAmt=myFunctions.getVAL(pendingSQAmt.ToString());
+                    }
+                  Params.Add("@nCustomerID", nCustomerID);
                     object invoiceamt = dLayer.ExecuteScalar("select sum(Cast(REPLACE(N_BalanceAmount,',','') as Numeric(10,2)) ) as TotalInvoiceAmount from Vw_InvReceivables where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID AND X_Type='SALES'", Params, connection);
+                    object pendingSOAmt=dLayer.ExecuteScalar("select sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as pendingSOAmt from vw_pendingSO where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID and isnull(N_QuotationID,0)=0 ", Params, connection);
                     //object paidAmount =dLayer.ExecuteScalar("select sum(Cast(REPLACE(Amount,',','') as Numeric(10,2)) ) as PaidAmount from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and (X_type='SR') ", Params, connection);
                     object returnamt = dLayer.ExecuteScalar("select sum(Cast(REPLACE(N_TotalPaidAmount,',','') as Numeric(10,2)) ) as TotalReturnAmount from vw_InvDebitNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", Params, connection);
                     double  currentBalance=  myFunctions.getVAL(dLayer.ExecuteScalar("SELECT  Sum(n_Amount)  as N_BalanceAmount from  vw_InvCustomerStatement Where N_AccType=2 and N_AccID=" + nCustomerID + " and N_CompanyID=" + nCompanyID,Params,connection).ToString());
                     object invoiceDate=dLayer.ExecuteScalar("select Min(D_SalesDate) from Vw_SalesInvoice_DateSearch  where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID and N_TypeID<>1 and N_SalesID NOt in (Select N_SalesID from Vw_InvReceivables where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+" and N_CustomerID="+nCustomerID+" and N_BalanceAmount=0 )", Params, connection);
+                  
+                  
                     {
                         returnamt = "0";
                     }
@@ -768,13 +816,14 @@ namespace SmartxAPI.Controllers
                     {
                         invoiceamt = "0";
                     }
-                    double amount = myFunctions.getVAL(invoiceamt.ToString()) - myFunctions.getVAL(returnamt.ToString());
+                    double amount = (myFunctions.getVAL(invoiceamt.ToString()) + myFunctions.getVAL(pendingSOAmt.ToString()) + quotationAmt) - myFunctions.getVAL(returnamt.ToString());
                     dt.Rows[0]["TotalInvoiceAmount"] = amount.ToString();
                     dt = myFunctions.AddNewColumnToDataTable(dt, "currentBalance", typeof(double), currentBalance);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "d_invDate",typeof(string), invoiceDate);
-                    dt.AcceptChanges();
+                    dt.AcceptChanges();   
+                   }
                     
-
+                    
                     return Ok(api.Success(dt));
 
                 }

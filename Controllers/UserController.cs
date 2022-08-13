@@ -784,11 +784,11 @@ namespace SmartxAPI.Controllers
             int nUserID = myFunctions.GetUserID(User);
             string Pattern = "";
 
-            if (UserPattern != "")
-                {
-                Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
-                Params.Add("@UserPattern", UserPattern);
-                }
+            // if (UserPattern != "")
+            //     {
+            //     Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
+            //     Params.Add("@UserPattern", UserPattern);
+            //     }
             string sqlCommandText = "select * from vw_UserList where N_CompanyID="+nCompanyId+"  "+Pattern+"";
             Params.Add("N_CompanyID", nCompanyId);
             // Params.Add("N_UserId", userid);
@@ -827,7 +827,7 @@ namespace SmartxAPI.Controllers
 
             DataColumnCollection columns = DtSign.Columns;
             string image =myFunctions.ContainColumn("I_Sign", DtSign) ? DtSign.Rows[0]["I_Sign"].ToString() : "";
-            image = Regex.Replace(image, @"^data:image\/[a-zA-Z]+;base64,", string.Empty);
+            image = Regex.Replace(image, @"^data:image\/[a-z]+;base64,", "");
             Byte[] I_Sign = new Byte[image.Length];
             I_Sign = Convert.FromBase64String(image);
 

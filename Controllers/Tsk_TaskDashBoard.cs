@@ -468,18 +468,20 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+
+                    string sqlParentFilte = " and N_TaskID in (select N_ParentID from Tsk_TaskMaster where N_CompanyID="+nCompanyID+") ";
                     if (Count == 0)
                     {
-                        sqlFollowUp = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskStatus where  N_CompanyID=" + nCompanyID + " and N_Status <> 1 and N_CreaterID=" + nUserID + " and ISNULL(B_Closed,0)=0  and N_TaskStatusID in (select Max(N_TaskStatusID) from vw_Tsk_TaskStatus  where N_CompanyID=" + nCompanyID + " and N_Status <> 1 and N_CreaterID="+nUserID+" and ISNULL(B_Closed,0)=0   group by N_TaskID,N_CompanyID) order by N_TaskStatusID desc " ;
+                        sqlFollowUp = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskStatus where  N_CompanyID=" + nCompanyID + " and N_Status <> 1 and N_CreaterID=" + nUserID + " and ISNULL(B_Closed,0)=0 "+sqlParentFilte+" and  N_TaskStatusID in (select Max(N_TaskStatusID) from vw_Tsk_TaskStatus  where N_CompanyID=" + nCompanyID + " and N_Status <> 1 and N_CreaterID="+nUserID+" and ISNULL(B_Closed,0)=0  "+sqlParentFilte+"  group by N_TaskID,N_CompanyID) order by N_TaskStatusID desc " ;
                     }
                     else
                     {
-                        sqlFollowUp = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskStatus where  N_CompanyID=" + nCompanyID + " and N_Status <> 1 and N_CreaterID=" + nUserID + " and ISNULL(B_Closed,0)=0  and  N_TaskStatusID in (select Max(N_TaskStatusID) from vw_Tsk_TaskStatus  where  N_CompanyID=" + nCompanyID + " and N_Status <> 1 and N_CreaterID="+nUserID+" and ISNULL(B_Closed,0)=0   group by N_TaskID,N_CompanyID) and  N_TaskID not in (select top(" + Count + ") N_TaskID from vw_Tsk_TaskStatus where  N_CompanyID=" + nCompanyID + " and N_Status <> 1 and N_CreaterID=" + nUserID + " and ISNULL(B_Closed,0)=0  and N_TaskStatusID in (select Max(N_TaskStatusID) from vw_Tsk_TaskStatus  where  N_CompanyID=" + nCompanyID + " and N_Status <> 1 and N_CreaterID="+nUserID+" and ISNULL(B_Closed,0)=0   group by N_TaskID,N_CompanyID)) order By N_TaskStatusID desc";
+                        sqlFollowUp = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskStatus where  N_CompanyID=" + nCompanyID + " and N_Status <> 1 and N_CreaterID=" + nUserID + " and ISNULL(B_Closed,0)=0 "+sqlParentFilte+"  and  N_TaskStatusID in (select Max(N_TaskStatusID) from vw_Tsk_TaskStatus  where  N_CompanyID=" + nCompanyID + " and N_Status <> 1 and N_CreaterID="+nUserID+" and ISNULL(B_Closed,0)=0  "+sqlParentFilte+"  group by N_TaskID,N_CompanyID) and  N_TaskID not in (select top(" + Count + ") N_TaskID from vw_Tsk_TaskStatus where  N_CompanyID=" + nCompanyID + " and N_Status <> 1 and N_CreaterID=" + nUserID + " and ISNULL(B_Closed,0)=0  "+sqlParentFilte+"   and N_TaskStatusID in (select Max(N_TaskStatusID) from vw_Tsk_TaskStatus  where  N_CompanyID=" + nCompanyID + " and N_Status <> 1 and N_CreaterID="+nUserID+" and ISNULL(B_Closed,0)=0  "+sqlParentFilte+"    group by N_TaskID,N_CompanyID) order By N_TaskStatusID desc ) order By N_TaskStatusID desc";
                     }
 
                     FollowupTasks = dLayer.ExecuteDataTable(sqlFollowUp, Params, connection);
                     FollowupTasks = api.Format(FollowupTasks, "FollowUpTasks");
-                    string sqlCommandCount3 = "select count(*) as N_Count from vw_Tsk_TaskStatus where  N_CompanyID=" + nCompanyID + " and N_Status <> 1 and N_CreaterID=" + nUserID + " and ISNULL(B_Closed,0)=0 and N_TaskStatusID in (select Max(N_TaskStatusID) from vw_Tsk_TaskStatus  group by N_TaskID,N_CompanyID)";
+                    string sqlCommandCount3 = "select count(*) as N_Count from vw_Tsk_TaskStatus where  N_CompanyID=" + nCompanyID + " and N_Status <> 1 and N_CreaterID=" + nUserID + " and ISNULL(B_Closed,0)=0  "+sqlParentFilte+" and N_TaskStatusID in (select Max(N_TaskStatusID) from vw_Tsk_TaskStatus  where N_CompanyID=" + nCompanyID + " and N_Status <> 1 and N_CreaterID="+nUserID+" and ISNULL(B_Closed,0)=0  "+sqlParentFilte+"  group by N_TaskID,N_CompanyID)";
                     DataTable Summary3 = dLayer.ExecuteDataTable(sqlCommandCount3, Params, connection);
                     string TotalCount3 = "0";
                     if (Summary3.Rows.Count > 0)

@@ -880,7 +880,10 @@ namespace SmartxAPI.Controllers
                     CustParams.Add("@N_CustomerID", N_CustomerID);
                     CustParams.Add("@nFnYearID", nFnYearID);
                     object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection);
-                    // string CustName = TransRow["X_CustomerName"].ToString();
+                     string CustName ="";
+                     if(objCustName!=null)
+                        CustName=objCustName.ToString();
+
 
                     DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, N_QuotationID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
                     Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
@@ -903,7 +906,7 @@ namespace SmartxAPI.Controllers
                         string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                         int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
 
-                        string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Sales Quotation", N_QuotationID, TransRow["X_QuotationNo"].ToString(), ProcStatus, "Inv_SalesQuotation", X_Criteria, objCustName.ToString(), User, dLayer, connection, transaction);
+                        string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Sales Quotation", N_QuotationID, TransRow["X_QuotationNo"].ToString(), ProcStatus, "Inv_SalesQuotation", X_Criteria, CustName.ToString(), User, dLayer, connection, transaction);
                         if (status != "Error")
                         {
                             if (ButtonTag == "6" || ButtonTag == "0")
