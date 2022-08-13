@@ -469,12 +469,12 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             if(inactive)
             {
-            sqlCommandText = "select N_CompanyID,N_FnYearID,N_BranchID,[Customer Name] as X_CustomerName,[Customer Code] as X_CustomerCode,N_CustomerID,N_ServiceCharge,N_ServiceChargeLimit,N_LedgerID,X_LedgerCode,X_LedgerName,N_TaxCategoryID,X_CategoryName,0 as N_Amount,X_TypeName,N_PaymentMethodID as N_TypeID,I_Image,B_Inactive from vw_PaymentType_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and (N_BranchID=@p3 or N_BranchID = @p4)  and N_EnablePopup=1";
+            sqlCommandText = "select N_CompanyID,N_FnYearID,N_BranchID,[Customer Name] as X_CustomerName,[Customer Code] as X_CustomerCode,N_CustomerID,N_ServiceCharge,N_ServiceChargeLimit,N_LedgerID,X_LedgerCode,X_LedgerName,N_TaxCategoryID,X_CategoryName,0 as N_Amount,X_TypeName,N_PaymentMethodID as N_TypeID,I_Image,B_Inactive,B_DefaultPay from vw_PaymentType_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and (N_BranchID=@p3 or N_BranchID = @p4)  and N_EnablePopup=1";
            
             }
             else
             {
-             sqlCommandText = "select N_CompanyID,N_FnYearID,N_BranchID,[Customer Name] as X_CustomerName,[Customer Code] as X_CustomerCode,N_CustomerID,N_ServiceCharge,N_ServiceChargeLimit,N_LedgerID,X_LedgerCode,X_LedgerName,N_TaxCategoryID,X_CategoryName,0 as N_Amount,X_TypeName,N_PaymentMethodID as N_TypeID,I_Image,B_Inactive from vw_PaymentType_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and (N_BranchID=@p3 or N_BranchID = @p4)  and N_EnablePopup=1 and ISNULL(B_Inactive,0)=0 ";
+             sqlCommandText = "select N_CompanyID,N_FnYearID,N_BranchID,[Customer Name] as X_CustomerName,[Customer Code] as X_CustomerCode,N_CustomerID,N_ServiceCharge,N_ServiceChargeLimit,N_LedgerID,X_LedgerCode,X_LedgerName,N_TaxCategoryID,X_CategoryName,0 as N_Amount,X_TypeName,N_PaymentMethodID as N_TypeID,I_Image,B_Inactive,B_DefaultPay from vw_PaymentType_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and (N_BranchID=@p3 or N_BranchID = @p4)  and N_EnablePopup=1 and ISNULL(B_Inactive,0)=0 ";
              
             }
              Params.Add("@p1", nCompanyID);
@@ -802,7 +802,7 @@ namespace SmartxAPI.Controllers
                     }
                   Params.Add("@nCustomerID", nCustomerID);
                     object invoiceamt = dLayer.ExecuteScalar("select sum(Cast(REPLACE(N_BalanceAmount,',','') as Numeric(10,2)) ) as TotalInvoiceAmount from Vw_InvReceivables where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID AND X_Type='SALES'", Params, connection);
-                    object pendingSOAmt=dLayer.ExecuteScalar("select sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as pendingSOAmt from vw_pendingSO where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID and isnull(N_QuotationsID,0)=0 ", Params, connection);
+                    object pendingSOAmt=dLayer.ExecuteScalar("select sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as pendingSOAmt from vw_pendingSO where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID and isnull(N_QuotationID,0)=0 ", Params, connection);
                     //object paidAmount =dLayer.ExecuteScalar("select sum(Cast(REPLACE(Amount,',','') as Numeric(10,2)) ) as PaidAmount from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and (X_type='SR') ", Params, connection);
                     object returnamt = dLayer.ExecuteScalar("select sum(Cast(REPLACE(N_TotalPaidAmount,',','') as Numeric(10,2)) ) as TotalReturnAmount from vw_InvDebitNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", Params, connection);
                     double  currentBalance=  myFunctions.getVAL(dLayer.ExecuteScalar("SELECT  Sum(n_Amount)  as N_BalanceAmount from  vw_InvCustomerStatement Where N_AccType=2 and N_AccID=" + nCustomerID + " and N_CompanyID=" + nCompanyID,Params,connection).ToString());

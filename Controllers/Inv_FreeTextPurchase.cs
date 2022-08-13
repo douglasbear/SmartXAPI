@@ -62,9 +62,9 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         if (b_AllBranchData)
-                            xCriteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyID=@p1";
+                            xCriteria = " N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyID=@p1";
                         else
-                            xCriteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_BranchID=@p3 and N_CompanyID=@p1";
+                            xCriteria = " N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_BranchID=@p3 and N_CompanyID=@p1";
                     }
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")

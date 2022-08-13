@@ -85,7 +85,7 @@ namespace SmartxAPI.Controllers
 
         [HttpGet("productInformation")]
 
-        public ActionResult GetAllItems(string query, int nCompanyID, int nLocationIDFrom, int nLocationIDTo, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, DateTime dtpInvDate,string xBarcode)
+        public ActionResult GetAllItems(string query, int nCompanyID, int nLocationIDFrom, int nLocationIDTo, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, DateTime dtpInvDate, string xBarcode)
         {
 
             DataTable dt = new DataTable();
@@ -101,18 +101,18 @@ namespace SmartxAPI.Controllers
                 qry = " and (Description like @query or [Item Code] like @query or  X_BarCode like @query ) ";
                 Params.Add("@query", "%" + query + "%");
             }
-            if(xBarcode!="" && xBarcode!=null)
+            if (xBarcode != "" && xBarcode != null)
             {
-                qry = qry + " and X_barcode='"+ xBarcode +"'";
+                qry = qry + " and X_barcode='" + xBarcode + "'";
 
             }
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search.N_ItemID) RowNo,";
             string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) ";
             string sqlComandText = "";
             if (dtpInvDate == null || dtpInvDate.ToString() == "")
-                sqlComandText = "Select *,dbo.[SP_GenGetStockByDate](vw_InvItem_Search.N_ItemID," + nLocationIDFrom + ",'','location','" + myFunctions.getDateVAL(dtpInvDate.Date) + "') As N_Stock ,dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_StockUnit) As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where N_CompanyID=" + nCompanyID + " and (N_ClassID<>1 AND N_ClassID<>4" + qry ;
+                sqlComandText = "Select *,dbo.[SP_GenGetStockByDate](vw_InvItem_Search.N_ItemID," + nLocationIDFrom + ",'','location','" + myFunctions.getDateVAL(dtpInvDate.Date) + "') As N_Stock ,dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_StockUnit) As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where N_CompanyID=" + nCompanyID + " and (N_ClassID<>1 AND N_ClassID<>4" + qry;
             else
-                sqlComandText = " vw_InvItem_Search.*,dbo.[SP_LocationStock](vw_InvItem_Search.N_ItemID," + nLocationIDFrom + ") As N_Stock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit," + nLocationIDFrom + ")  As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where [Item Code]<>'001' and N_CompanyID=" + nCompanyID + " and N_ClassID<>4 and N_ItemID in  (select N_ItemID from vw_InvItem_Search_WHLink where N_CompanyID=" + nCompanyID + " and N_WareHouseID=" + nLocationIDTo + ") " + qry ;
+                sqlComandText = " vw_InvItem_Search.*,dbo.[SP_LocationStock](vw_InvItem_Search.N_ItemID," + nLocationIDFrom + ") As N_Stock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit," + nLocationIDFrom + ")  As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where [Item Code]<>'001' and N_CompanyID=" + nCompanyID + " and N_ClassID<>4 and N_ItemID in  (select N_ItemID from vw_InvItem_Search_WHLink where N_CompanyID=" + nCompanyID + " and N_WareHouseID=" + nLocationIDTo + ") " + qry;
             // Select *,dbo.[SP_GenGetStockByDate](vw_InvItem_Search.N_ItemID," + N_LocationID + ",'','location','" + myFunctions.getDateVAL(dtpInvDate.Value.Date) + "') As N_Stock ,dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_StockUnit) As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where " + ItemCondition + " and N_CompanyID=" + myCompanyID._CompanyID + "and (N_ClassID<>1 AND N_ClassID<>4)
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", 0);
@@ -128,7 +128,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     string sql = pageQry + sqlComandText + pageQryEnd;
                     dt = dLayer.ExecuteDataTable(sql, Params, connection);
-                   
+
                     dt.AcceptChanges();
                     dt = myFunctions.AddNewColumnToDataTable(dt, "SubItems", typeof(DataTable), null);
 
@@ -193,16 +193,16 @@ namespace SmartxAPI.Controllers
                     if (!CheckClosedYear)
                     {
                         if (bAllBranchData)
-                            Criteria = "and B_YearEndProcess=0 and N_Type=1 and ( N_LocationFrom=" + nLocationID + " or N_LocationFrom in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID="+nLocationID+"))";
+                            Criteria = "and B_YearEndProcess=0 and N_Type=1 and ( N_LocationFrom=" + nLocationID + " or N_LocationFrom in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID=" + nLocationID + "))";
                         else
-                            Criteria = "and B_YearEndProcess=0 and N_Type=1 and ( N_LocationFrom=" + nLocationID + " or N_LocationFrom in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID="+nLocationID+"))";
+                            Criteria = "and B_YearEndProcess=0 and N_Type=1 and ( N_LocationFrom=" + nLocationID + " or N_LocationFrom in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID=" + nLocationID + "))";
                     }
                     else
                     {
                         if (bAllBranchData)
-                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4  and ( N_LocationFrom=" + nLocationID + " or N_LocationFrom in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID="+nLocationID+"))";
+                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4  and ( N_LocationFrom=" + nLocationID + " or N_LocationFrom in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID=" + nLocationID + "))";
                         else
-                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4  and ( N_LocationFrom=" + nLocationID + " or N_LocationFrom in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID="+nLocationID+"))";
+                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4  and ( N_LocationFrom=" + nLocationID + " or N_LocationFrom in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID=" + nLocationID + "))";
                     }
 
 
@@ -213,22 +213,22 @@ namespace SmartxAPI.Controllers
                         xSortBy = " order by N_TransferID desc";
                     else
                     {
-                     switch (xSortBy.Split(" ")[0])
+                        switch (xSortBy.Split(" ")[0])
                         {
                             case "referenceNo":
                                 xSortBy = "[Reference No]" + xSortBy.Split(" ")[1];
                                 break;
                             case "siteFrom":
-                                 xSortBy = "[Site From]" + xSortBy.Split(" ")[1];
+                                xSortBy = "[Site From]" + xSortBy.Split(" ")[1];
                                 break;
                             case "siteTo":
-                                  xSortBy = "[Site To]" + xSortBy.Split(" ")[1];
+                                xSortBy = "[Site To]" + xSortBy.Split(" ")[1];
                                 break;
-                           
+
                             default: break;
                         }
                         xSortBy = " order by " + xSortBy;
-                    } 
+                    }
 
                     if (Count == 0)
                     {
@@ -238,7 +238,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvTransfer_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_TransferID not in (select top(" + Count + ") N_TransferID from vw_InvTransfer_Search where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
-                    
+
                     Params.Add("@nCompanyId", nCompanyId);
 
                     SortedList OutPut = new SortedList();
@@ -251,9 +251,9 @@ namespace SmartxAPI.Controllers
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
-                    
-                        return Ok(_api.Success(OutPut));
-        
+
+                    return Ok(_api.Success(OutPut));
+
 
                 }
 
@@ -279,7 +279,7 @@ namespace SmartxAPI.Controllers
                     DataTable MasterTable;
                     DataTable DetailTable;
                     string DocNo = "";
-                    bool bAutoReceive=false;
+                    bool bAutoReceive = false;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
                     DataRow MasterRow = MasterTable.Rows[0];
@@ -291,8 +291,8 @@ namespace SmartxAPI.Controllers
                     int nLocationIDfrom = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationIDFrom"].ToString());
                     int nLocationIDto = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationIDTo"].ToString());
                     string X_ReferenceNo = MasterTable.Rows[0]["X_ReferenceNo"].ToString();
-                    
-        
+
+
                     string X_TransType = "TRANSFER";
 
                     // int nUsercategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserCategoryID"].ToString());
@@ -328,18 +328,18 @@ namespace SmartxAPI.Controllers
                         if (X_ReferenceNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate")); }
                         MasterTable.Rows[0]["X_ReferenceNo"] = X_ReferenceNo;
 
-                    //     if(Processed)
-                    //        {
-                    //     transaction.Rollback();
-                    //     return Ok(_api.Error(User,"Unable To Save"));
-                    // }
+                        //     if(Processed)
+                        //        {
+                        //     transaction.Rollback();
+                        //     return Ok(_api.Error(User,"Unable To Save"));
+                        // }
 
                     }
                     else
                     {
                         dLayer.DeleteData("Inv_TransferStock", "N_TransferId", nTransferId, "", connection, transaction);
                     }
-                     
+
 
 
 
@@ -363,7 +363,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable To Save"));
                     }
 
-                 
+
                     else
                     {
 
@@ -400,43 +400,43 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         }
 
-                         bAutoReceive = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_AutoReceive From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_LocationID = " + nLocationIDto ,StockParam, connection,transaction));
-                         if (bAutoReceive)
-                         {
-                           
-                        SortedList AutoReceiveParam = new SortedList();
-                        AutoReceiveParam.Add("N_CompanyID", nCompanyID);
-                        AutoReceiveParam.Add("N_TransferID", nTransferId);
-                        try
+                        bAutoReceive = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_AutoReceive From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_LocationID = " + nLocationIDto, StockParam, connection, transaction));
+                        if (bAutoReceive)
                         {
-                            dLayer.ExecuteNonQueryPro("SP_AutoTransferReceive ", AutoReceiveParam, connection, transaction).ToString();
+
+                            SortedList AutoReceiveParam = new SortedList();
+                            AutoReceiveParam.Add("N_CompanyID", nCompanyID);
+                            AutoReceiveParam.Add("N_TransferID", nTransferId);
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_AutoTransferReceive ", AutoReceiveParam, connection, transaction).ToString();
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
                         }
-                        catch (Exception ex)
+                        object nTypeID = dLayer.ExecuteScalar("select N_TypeID from Inv_Location where N_LocationID=" + nLocationIDfrom + "  and N_CompanyID=" + nCompanyID + " ", Params, connection, transaction);
+                        if (myFunctions.getIntVAL(nTypeID.ToString()) == 6)
                         {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, ex));
-                        } 
-                         }
-                         object nTypeID= dLayer.ExecuteScalar("select N_TypeID from Inv_Location where N_LocationID="+nLocationIDfrom+"  and N_CompanyID="+nCompanyID+" ", Params, connection,transaction);  
-                         if(myFunctions.getIntVAL(nTypeID.ToString())==6)
-                         {
-                         object stock= dLayer.ExecuteScalar("select sum(N_CurrentStock) from Inv_StockMaster where N_LocationID="+nLocationIDfrom+"  and N_CompanyID="+nCompanyID+" ", Params, connection,transaction);
-                        if(stock==null || myFunctions.getVAL(stock.ToString())==0 )
-                        {
-                             dLayer.ExecuteNonQuery("UPDATE Inv_Location  set B_InActive=1 where  N_CompanyID="+nCompanyID+"  and N_LocationID="+nLocationIDfrom, Params, connection, transaction);
+                            object stock = dLayer.ExecuteScalar("select sum(N_CurrentStock) from Inv_StockMaster where N_LocationID=" + nLocationIDfrom + "  and N_CompanyID=" + nCompanyID + " ", Params, connection, transaction);
+                            if (stock == null || myFunctions.getVAL(stock.ToString()) == 0)
+                            {
+                                dLayer.ExecuteNonQuery("UPDATE Inv_Location  set B_InActive=1 where  N_CompanyID=" + nCompanyID + "  and N_LocationID=" + nLocationIDfrom, Params, connection, transaction);
+                            }
                         }
-                         }
 
 
 
 
 
-                    
+
 
                     }
 
                     transaction.Commit();
-                    return Ok(_api.Success("Saved")); 
+                    return Ok(_api.Success("Saved"));
                 }
             }
             catch (Exception ex)
@@ -448,7 +448,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCompanyID, int nTransferId,int nfromLocationID)
+        public ActionResult DeleteData(int nCompanyID, int nTransferId, int nfromLocationID)
         {
             int Results = 0;
             string xTransType = "TRANSFER";
@@ -473,15 +473,15 @@ namespace SmartxAPI.Controllers
                     if (Results > 0)
                     {
 
-                         object nTypeID= dLayer.ExecuteScalar("select N_TypeID from Inv_Location where N_LocationID="+nfromLocationID+"  and N_CompanyID="+nCompanyID+" ", connection,transaction);  
-                         if(myFunctions.getIntVAL(nTypeID.ToString())==6)
-                         {
-                         object stock= dLayer.ExecuteScalar("select sum(N_CurrentStock) from Inv_StockMaster where N_LocationID="+nfromLocationID+"  and N_CompanyID="+nCompanyID+" ", connection,transaction);
-                        if(stock!=null || myFunctions.getVAL(stock.ToString())>0 )
+                        object nTypeID = dLayer.ExecuteScalar("select N_TypeID from Inv_Location where N_LocationID=" + nfromLocationID + "  and N_CompanyID=" + nCompanyID + " ", connection, transaction);
+                        if (myFunctions.getIntVAL(nTypeID.ToString()) == 6)
                         {
-                             dLayer.ExecuteNonQuery("UPDATE Inv_Location  set B_InActive=0 where  N_CompanyID="+nCompanyID+"  and N_LocationID="+nfromLocationID, connection, transaction);
+                            object stock = dLayer.ExecuteScalar("select sum(N_CurrentStock) from Inv_StockMaster where N_LocationID=" + nfromLocationID + "  and N_CompanyID=" + nCompanyID + " ", connection, transaction);
+                            if (stock != null || myFunctions.getVAL(stock.ToString()) > 0)
+                            {
+                                dLayer.ExecuteNonQuery("UPDATE Inv_Location  set B_InActive=0 where  N_CompanyID=" + nCompanyID + "  and N_LocationID=" + nfromLocationID, connection, transaction);
+                            }
                         }
-                         }
 
 
 
@@ -489,7 +489,7 @@ namespace SmartxAPI.Controllers
 
                         transaction.Commit();
                         return Ok(_api.Success("Deleted"));
-                         
+
                     }
                     else
                     {

@@ -382,7 +382,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("getscreenprint")]
-        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, int nPreview, string xrptname, string docNumber, string partyName)
+        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, int nPreview, string xrptname, string docNumber, string partyName,bool printSave)
         {
             SortedList QueryParams = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -404,7 +404,7 @@ namespace SmartxAPI.Controllers
                     if (nPreview != 1)
                     {
                         object printAfterSave = dLayer.ExecuteScalar("select B_PrintAfterSave from Gen_PrintTemplates where N_CompanyID= " + nCompanyId + " and N_FormID=" + nFormID + " and  N_UsercategoryID in (" + xUserCategoryList + ")", connection, transaction);
-                        if (printAfterSave != null)
+                        if (printAfterSave != null && printSave)
                         {
                             if (!myFunctions.getBoolVAL(printAfterSave.ToString()))
                             {
@@ -439,12 +439,14 @@ namespace SmartxAPI.Controllers
                         if (docNumber == "" || docNumber == null)
                             docNumber = "DocNo";
                         partyName = partyName.Replace("&", "");
+                        partyName = partyName.Replace(":", "");
                         partyName = partyName.ToString().Substring(0, Math.Min(12, partyName.ToString().Length));
                         if (docNumber == null)
-                            docNumber = "";
+                            docNumber = "";        
                         docNumber = Regex.Replace(docNumber, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
                         if (!Regex.IsMatch(partyName, @"\p{IsArabic}"))
                             partyName = Regex.Replace(partyName, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
+                        partyName = Regex.Replace(partyName, ":", "", RegexOptions.Compiled);
 
                         if (docNumber.Contains("/"))
                             docNumber = docNumber.ToString().Substring(0, Math.Min(3, docNumber.ToString().Length));
@@ -962,14 +964,14 @@ namespace SmartxAPI.Controllers
                                     }
                                     else
                                     {
-                                        if (bRange)
+                                        if (bRange && valueTo!="")
                                             Criteria = Criteria == "" ? xFeild + " " + ">= '" + value + "' and " + xFeild + " " + "<= '" + valueTo + "'" : Criteria + " and " + xFeild + " " + ">= '" + value + "' and " + xFeild + " " + "<= '" + valueTo + "'";
                                         else
                                             Criteria = Criteria == "" ? xFeild + " " + xOperator + " '" + value + "' " : Criteria + " and " + xFeild + " " + xOperator + " '" + value + "' ";
                                     }
                                 }
                             }
-                            if (bRange)
+                            if (bRange && valueTo!="")
                                 x_Reporttitle = x_Reporttitle + FieldName + value + '-' + valueTo;
                             else
                                 x_Reporttitle = x_Reporttitle + FieldName + value;
@@ -1495,28 +1497,31 @@ namespace SmartxAPI.Controllers
                 SqlTransaction transaction;
                 transaction = connection.BeginTransaction();
                 object Currency = dLayer.ExecuteScalar("select x_currency from acc_company  where n_companyid=" + nCompanyId, QueryParams, connection, transaction);
-                if (columns.Contains("n_SalesId"))
+                if (columns.Contains("n_ServiceID"))
                 {
-                    object x_mobilenumber = dLayer.ExecuteScalar("select X_PhoneNo1 from Inv_Customer where n_companyid=" + nCompanyId + " and n_fnyearid=" + dt.Rows[0]["n_fnyearid"].ToString() + " and N_CustomerID=" + dt.Rows[0]["n_CustomerID"].ToString(), QueryParams, connection, transaction);
-                    double TotalAmt = myFunctions.getVAL(dt.Rows[0]["n_BillAmtF"].ToString()) - myFunctions.getVAL(dt.Rows[0]["n_DiscountDisplay"].ToString()) + myFunctions.getVAL(dt.Rows[0]["n_TaxAmtF"].ToString()) - myFunctions.getVAL(dt.Rows[0]["n_DiscountAmtF"].ToString());
-                    x_Mobile = "+" + x_mobilenumber.ToString();
-                    body = "Dear " + dt.Rows[0]["x_CustomerName"].ToString() + ",%0A%0A*_Thank you for your purchase._*%0A%0ADoc No : " + dt.Rows[0]["x_ReceiptNo"].ToString() + "%0ATotal Amount : " + dt.Rows[0]["n_BillAmtF"].ToString() + "%0ADiscount : " + dt.Rows[0]["n_DiscountDisplay"].ToString() + "%0AVAT Amount : " + dt.Rows[0]["n_TaxAmtF"].ToString() + "%0ARound Off : " + dt.Rows[0]["n_DiscountAmtF"].ToString() + "%0ANet Amount : " + TotalAmt + " " + Currency + " %0A%0ARegards, %0A" + Company;
-                    URL = "https://api.textmebot.com/send.php?recipient=" + x_Mobile + "&apikey=KjFdsG2hRjfK&text=" + body;
-                    var path = client.GetAsync(URL);
-                    path.Wait();
-                    //content = client.DownloadString("https://api.textmebot.com/send.php?recipient=" + x_Mobile + "&apikey=KjFdsG2hRjfK&text=" + body);
-                    return Ok(_api.Success("Message Sent"));
+                    x_Mobile = "+" + dt.Rows[0]["x_MobileNo"].ToString();
+                    DateTime deldate = Convert.ToDateTime(dt.Rows[0]["d_Deliverydate"].ToString());
+                    body = "Dear " + dt.Rows[0]["x_CustomerName"].ToString() + ",%0A%0AThe *Repair Order* for your Device is *" + dt.Rows[0]["x_ServiceCode"].ToString() + "* opened on " + dt.Rows[0]["d_Entrydate"].ToString() + ".%0A%0AEstimated time of delivery (ETD) is " + deldate.ToString("dd/MM/yyyy") + " and estimated amount is " + dt.Rows[0]["n_BillAmountF"].ToString() + " " + Currency + " %0A%0ARegards, %0A" + dt.Rows[0]["x_UserName"].ToString();
+                    URL = "https://api.textmebot.com/send.php?recipient=" + x_Mobile + "&apikey=wnmyMLo9QV2K&text=" + body;
+                    var path1 = client.GetAsync(URL);
+                    path1.Wait();
 
                 }
-                x_Mobile = "+" + dt.Rows[0]["x_MobileNo"].ToString();
-                DateTime deldate = Convert.ToDateTime(dt.Rows[0]["d_Deliverydate"].ToString());
-                body = "Dear " + dt.Rows[0]["x_CustomerName"].ToString() + ",%0A%0AThe *Repair Order* for your Device is *" + dt.Rows[0]["x_ServiceCode"].ToString() + "* opened on " + dt.Rows[0]["d_Entrydate"].ToString() + ".%0A%0AEstimated time of delivery (ETD) is " + deldate.ToString("dd/MM/yyyy") + " and estimated amount is " + dt.Rows[0]["n_BillAmountF"].ToString() + " " + Currency + " %0A%0ARegards, %0A" + dt.Rows[0]["x_UserName"].ToString();
-                URL = "https://api.textmebot.com/send.php?recipient=" + x_Mobile + "&apikey=wnmyMLo9QV2K&text=" + body;
-                var path1 = client.GetAsync(URL);
-                path1.Wait();
+                object x_mobilenumber = dLayer.ExecuteScalar("select X_PhoneNo1 from Inv_Customer where n_companyid=" + nCompanyId + " and n_fnyearid=" + dt.Rows[0]["n_fnyearid"].ToString() + " and N_CustomerID=" + dt.Rows[0]["n_CustomerID"].ToString(), QueryParams, connection, transaction);
+                double TotalAmt = myFunctions.getVAL(dt.Rows[0]["n_BillAmtF"].ToString()) - myFunctions.getVAL(dt.Rows[0]["n_DiscountDisplay"].ToString()) + myFunctions.getVAL(dt.Rows[0]["n_TaxAmtF"].ToString()) - myFunctions.getVAL(dt.Rows[0]["n_DiscountAmtF"].ToString());
+                x_Mobile = "+" + x_mobilenumber.ToString();
+                body = "Dear " + dt.Rows[0]["x_CustomerName"].ToString() + ",%0A%0A*_Thank you for your purchase._*%0A%0ADoc No : " + dt.Rows[0]["x_ReceiptNo"].ToString() + "%0ATotal Amount : " + dt.Rows[0]["n_BillAmtF"].ToString() + "%0ADiscount : " + dt.Rows[0]["n_DiscountDisplay"].ToString() + "%0AVAT Amount : " + dt.Rows[0]["n_TaxAmtF"].ToString() + "%0ARound Off : " + dt.Rows[0]["n_DiscountAmtF"].ToString() + "%0ANet Amount : " + TotalAmt + " " + Currency + " %0A%0ARegards, %0A" + Company;
+                URL = "https://api.textmebot.com/send.php?recipient=" + x_Mobile + "&apikey=KjFdsG2hRjfK&text=" + body;
+                var path = client.GetAsync(URL);
+                path.Wait();
+                //content = client.DownloadString("https://api.textmebot.com/send.php?recipient=" + x_Mobile + "&apikey=KjFdsG2hRjfK&text=" + body);
+                return Ok(_api.Success("Message Sent"));
+
+
                 //content = client.DownloadString("https://api.textmebot.com/send.php?recipient=" + x_Mobile + "&apikey=wnmyMLo9QV2K&text=" + body);
 
             }
+
             return Ok(_api.Success("Message Sent"));
 
         }
