@@ -190,6 +190,8 @@ namespace SmartxAPI.Controllers
         [HttpGet("details")]
         public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID, int nQuotationID, int n_OpportunityID)
         {
+              if (xOrderNo != null)
+                xOrderNo = xOrderNo.Replace("%2F", "/");
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
             DataTable MasterTable = new DataTable();

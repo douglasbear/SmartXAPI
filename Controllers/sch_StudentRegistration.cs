@@ -65,7 +65,7 @@ namespace SmartxAPI.Controllers
                             }
                         MasterTable.Rows[0]["X_RegNo"] = Stud;
                     }
-                      string image = myFunctions.ContainColumn("i_Photo", MasterTable) ? MasterTable.Rows[0]["i_Photo"].ToString() : "";
+                    string image = myFunctions.ContainColumn("i_Photo", MasterTable) ? MasterTable.Rows[0]["i_Photo"].ToString() : "";
                      Byte[] photoBitmap = new Byte[image.Length];
                      photoBitmap = Convert.FromBase64String(image);
                     if (myFunctions.ContainColumn("i_Photo", MasterTable))
