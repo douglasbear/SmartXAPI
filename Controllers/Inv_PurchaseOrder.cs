@@ -221,6 +221,8 @@ namespace SmartxAPI.Controllers
         [HttpGet("listDetails")]
         public ActionResult GetPurchaseOrderDetails(int nCompanyId, string xPOrderId, int nFnYearId, string nLocationID, string xPRSNo, bool bAllBranchData, int nBranchID,int nQuotationID,int nVendorID)
         {
+              if (xPOrderId != null)
+                xPOrderId = xPOrderId.Replace("%2F", "/");
             bool B_PRSVisible = false;
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();

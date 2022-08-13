@@ -209,7 +209,8 @@ namespace SmartxAPI.Controllers
         [HttpGet("listDetails")]
         public ActionResult GetPurchaseReturnDetails(int nCompanyId, string xCreditNoteNo, string xInvoiceNo, int nFnYearId, bool bAllBranchData, int nBranchID)
         {
-
+              if (xCreditNoteNo != null)
+                xCreditNoteNo = xCreditNoteNo.Replace("%2F", "/");
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
             SortedList NewParams = new SortedList();
