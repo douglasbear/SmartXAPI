@@ -135,7 +135,11 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nActionID", nActionID);
             Params.Add("@nFormID", nFormID);
-            string sqlCommandText = "select * from vw_GenStatusDetails where N_CompanyID=@nCompanyID and N_ActionID=@nActionID and N_FormID=@nFormID";
+            string sqlCommandText = "";
+            if (nActionID > 0)
+                sqlCommandText = "select * from vw_GenStatusDetails where N_CompanyID=@nCompanyID and N_ActionID=@nActionID and N_FormID=@nFormID";
+            else
+                sqlCommandText = "select * from vw_GenStatusDetails where N_CompanyID=@nCompanyID  and N_FormID=@nFormID and B_IsDefault=1";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
