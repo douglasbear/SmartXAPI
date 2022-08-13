@@ -270,8 +270,8 @@ namespace SmartxAPI.Controllers
 
 
                     string DetailSql = "";
-                    bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", "X_UserCategory", dLayer, connection);
-                    bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Administrator", "X_UserCategory", dLayer, connection);
+                    bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Admin", "X_UserCategory", dLayer, connection);
+                    bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Admin", "X_UserCategory", dLayer, connection);
                     if (MaterailRequestVisible || PurchaseRequestVisible)
                     {
                         B_PRSVisible = true;
@@ -334,21 +334,29 @@ namespace SmartxAPI.Controllers
                     DetailTable = api.Format(DetailTable, "Details");
 
                     bool InvoiceProcessed=false;
-                    if(myFunctions.getBoolVAL(MasterTable.Rows[0]["N_Processed"].ToString()))
+                    if (MasterTable.Rows.Count > 0)
                     {
-                        object InvoiceNotProcessed=false;
-                        for(int i=0;i<DetailTable.Rows.Count;i++)
+                        if(myFunctions.getBoolVAL(MasterTable.Rows[0]["N_Processed"].ToString()))
                         {
-                            Object POQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseOrderdetails where n_porderid="+N_POrderID+" and N_PorderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
-                            Object InvQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseDetails where n_porderid="+N_POrderID+" and N_POrderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
-                            if(POQty!=null && InvQty!=null)
+                            object InvoiceNotProcessed=false;
+                            for(int i=0;i<DetailTable.Rows.Count;i++)
                             {
-                                if(myFunctions.getVAL(POQty.ToString())!= myFunctions.getVAL(InvQty.ToString()))
+                                Object POQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseOrderdetails where n_porderid="+N_POrderID+" and N_PorderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
+                                Object InvQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseDetails where n_porderid="+N_POrderID+" and N_POrderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
+                                if(POQty!=null && InvQty!=null)
                                 {
-                                // InvoiceNotProcessed = true;
-                                    MasterTable.Rows[0]["N_Processed"]=0;
-                                    InvoiceProcessed=false;
-                                    break;
+                                    if(myFunctions.getVAL(POQty.ToString())!= myFunctions.getVAL(InvQty.ToString()))
+                                    {
+                                    // InvoiceNotProcessed = true;
+                                        MasterTable.Rows[0]["N_Processed"]=0;
+                                        InvoiceProcessed=false;
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        MasterTable.Rows[0]["N_Processed"]=1;
+                                        InvoiceProcessed=true;
+                                    }
                                 }
                                 else
                                 {
@@ -356,37 +364,32 @@ namespace SmartxAPI.Controllers
                                     InvoiceProcessed=true;
                                 }
                             }
-                            else
-                            {
-                                MasterTable.Rows[0]["N_Processed"]=1;
-                                InvoiceProcessed=true;
-                            }
                         }
-                    }
 
-                    if(!InvoiceProcessed)
-                    {
-                        object GRNNotProcessed=false;
-                        for(int i=0;i<DetailTable.Rows.Count;i++)
+                        if(!InvoiceProcessed)
                         {
-                            Object POQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseOrderdetails where n_porderid="+N_POrderID+" and N_PorderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
-                            Object GRNQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_MRNDetails where N_PONo="+N_POrderID+" and N_PorderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
-                            if(POQty!=null && GRNQty!=null)
+                            object GRNNotProcessed=false;
+                            for(int i=0;i<DetailTable.Rows.Count;i++)
                             {
-                                if(myFunctions.getVAL(POQty.ToString())!= myFunctions.getVAL(GRNQty.ToString()))
+                                Object POQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseOrderdetails where n_porderid="+N_POrderID+" and N_PorderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
+                                Object GRNQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_MRNDetails where N_PONo="+N_POrderID+" and N_PorderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
+                                if(POQty!=null && GRNQty!=null)
                                 {
-                                    //GRNNotProcessed = true;
-                                    MasterTable.Rows[0]["N_Processed"]=0;
-                                    break;
+                                    if(myFunctions.getVAL(POQty.ToString())!= myFunctions.getVAL(GRNQty.ToString()))
+                                    {
+                                        //GRNNotProcessed = true;
+                                        MasterTable.Rows[0]["N_Processed"]=0;
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        MasterTable.Rows[0]["N_Processed"]=1;
+                                    }
                                 }
                                 else
                                 {
                                     MasterTable.Rows[0]["N_Processed"]=1;
                                 }
-                            }
-                            else
-                            {
-                                MasterTable.Rows[0]["N_Processed"]=1;
                             }
                         }
                     }
