@@ -225,6 +225,9 @@ namespace SmartxAPI.Controllers
         [HttpGet("payDetails")]
         public ActionResult GetVendorPayDetails(int nVendorID, int nFnYearId, string dTransDate, int nBranchID, bool bShowAllbranch, string xInvoiceNo, string xTransType)
         {
+                if (xInvoiceNo != null)
+                xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
+                
             SortedList OutPut = new SortedList();
             DataTable PayReceipt = new DataTable();
             DataTable PayInfo = new DataTable();

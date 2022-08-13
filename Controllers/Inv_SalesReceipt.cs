@@ -177,6 +177,8 @@ namespace SmartxAPI.Controllers
         [HttpGet("details")]
         public ActionResult GetSalesReceiptDetails(int nCustomerId, int nFnYearId, int nBranchId, string xInvoiceNo, bool bShowAllbranch, string dTransDate, string xTransType)
         {
+                if (xInvoiceNo != null)
+                xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
             DataTable Attachments = new DataTable();

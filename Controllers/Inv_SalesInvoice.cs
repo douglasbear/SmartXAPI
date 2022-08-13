@@ -1603,6 +1603,79 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
         }
+             //Delete....Draft
+        [HttpDelete("deleteDraft")]
+        public ActionResult DeleteData(int nFnYearID)
+        {
+               int Results = 0;
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                      connection.Open();
+                      DataTable Details = new DataTable();
+                      SortedList ParamList = new SortedList();
+                      int nCompanyID=myFunctions.GetCompanyID(User);
+                      ParamList.Add("@nCompanyID", nCompanyID);
+                      ParamList.Add("@nFnYearID", nFnYearID);
+                      string Sql="select * from Inv_Sales where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_IsSaveDraft=1 ";
+                      string sqlQuotation="";
+                      Details = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                      SqlTransaction transaction = connection.BeginTransaction();
+                      int N_SalesID=0;
+                      int N_CustomerId=0;
+                      int N_FormID=64;
+                      object nQuotationID;
+                      if(Details.Rows.Count>0)
+                      {
+                          foreach (DataRow item in Details.Rows)
+                           {
+
+                            N_SalesID=myFunctions.getIntVAL(item["N_SalesID"].ToString());
+                            N_CustomerId=myFunctions.getIntVAL(item["N_CustomerId"].ToString());
+                           
+                            
+                            SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"X_TransType","SALES"},
+                                {"N_VoucherID",N_SalesID}};
+                            try
+                            {
+                              Results= dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                            }
+                            catch (Exception ex)
+                             {
+                               transaction.Rollback();
+                               return Ok(_api.Error(User, ex));
+                             }
+                             if(Results>0)
+                             {
+                             sqlQuotation="select N_QuotationID from Inv_Sales where N_SalesID="+N_SalesID+" and N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+"";
+                             nQuotationID=dLayer.ExecuteScalar(sqlQuotation,ParamList,connection,transaction);
+                             
+                             dLayer.ExecuteNonQuery("delete from Inv_DeliveryDispatch where n_InvoiceID="+N_SalesID+" and n_CompanyID=@nCompanyID", ParamList, connection, transaction);                                             
+                             dLayer.ExecuteNonQuery("delete from Inv_SaleAmountDetails where n_SalesID="+N_SalesID+" and  n_CompanyID=@nCompanyID", ParamList, connection, transaction);
+                             dLayer.ExecuteNonQuery("delete from Inv_ServiceContract where n_SalesID="+N_SalesID+" and n_FnYearID=@nFnYearID and n_CompanyID=@nCompanyID", ParamList, connection, transaction);                               
+                             myAttachments.DeleteAttachment(dLayer, 1, N_SalesID, N_CustomerId, nFnYearID, N_FormID, User, transaction, connection);
+                            if (nQuotationID!=null)
+                                dLayer.ExecuteNonQuery("update Inv_SalesQuotation set N_Processed=0 where N_QuotationId="+myFunctions.getIntVAL(nQuotationID.ToString())+" and N_CompanyId="+nCompanyID+" and N_FnYearId= @nFnYearID", ParamList, connection, transaction);
+                             }
+
+                           }
+                      }
+                    transaction.Commit();
+                    return Ok(_api.Success("Sales invoice deleted"));
+                }
+            }
+             catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            } 
+
+        }
+          
+
         //Delete....
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nInvoiceID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID, int nQuotationID, string comments)

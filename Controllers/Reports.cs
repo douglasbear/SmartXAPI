@@ -384,7 +384,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("getscreenprint")]
-        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, int nPreview, string xrptname, string docNumber, string partyName)
+        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, int nPreview, string xrptname, string docNumber, string partyName,bool printSave)
         {
             SortedList QueryParams = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -406,7 +406,7 @@ namespace SmartxAPI.Controllers
                     if (nPreview != 1)
                     {
                         object printAfterSave = dLayer.ExecuteScalar("select B_PrintAfterSave from Gen_PrintTemplates where N_CompanyID= " + nCompanyId + " and N_FormID=" + nFormID + " and  N_UsercategoryID in (" + xUserCategoryList + ")", connection, transaction);
-                        if (printAfterSave != null)
+                        if (printAfterSave != null && printSave)
                         {
                             if (!myFunctions.getBoolVAL(printAfterSave.ToString()))
                             {
@@ -442,6 +442,7 @@ namespace SmartxAPI.Controllers
                         if (docNumber == "" || docNumber == null)
                             docNumber = "DocNo";
                         partyName = partyName.Replace("&", "");
+                        partyName = partyName.Replace(":", "");
                         partyName = partyName.ToString().Substring(0, Math.Min(12, partyName.ToString().Length));
                         if (docNumber == null)
                             docNumber = "";
@@ -1013,14 +1014,14 @@ namespace SmartxAPI.Controllers
                                     }
                                     else
                                     {
-                                        if (bRange)
+                                        if (bRange && valueTo!="")
                                             Criteria = Criteria == "" ? xFeild + " " + ">= '" + value + "' and " + xFeild + " " + "<= '" + valueTo + "'" : Criteria + " and " + xFeild + " " + ">= '" + value + "' and " + xFeild + " " + "<= '" + valueTo + "'";
                                         else
                                             Criteria = Criteria == "" ? xFeild + " " + xOperator + " '" + value + "' " : Criteria + " and " + xFeild + " " + xOperator + " '" + value + "' ";
                                     }
                                 }
                             }
-                            if (bRange)
+                            if (bRange && valueTo!="")
                                 x_Reporttitle = x_Reporttitle + FieldName + value + '-' + valueTo;
                             else
                                 x_Reporttitle = x_Reporttitle + FieldName + value;

@@ -163,6 +163,8 @@ namespace SmartxAPI.Controllers
         [HttpGet("listdetails")]
         public ActionResult GetSalesReturnDetails(int nCompanyId, string xDebitNoteNo, string xReceiptNo, int nFnYearId, bool bAllBranchData, int nBranchId, bool bDeliveryNote = false)
         {
+             if (xDebitNoteNo != null)
+                xDebitNoteNo = xDebitNoteNo.Replace("%2F", "/");
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
             string sqlCommandText = "";
@@ -199,7 +201,7 @@ namespace SmartxAPI.Controllers
                     object Res = true;
                     if (xDebitNoteNo != "" && xDebitNoteNo != null)
                     {
-                        Res = dLayer.ExecuteScalar("Select B_Invoice from Inv_SalesReturnMaster where X_DebitNoteNo=" + xDebitNoteNo + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, Params, connection);
+                        Res = dLayer.ExecuteScalar("Select B_Invoice from Inv_SalesReturnMaster where X_DebitNoteNo='" + xDebitNoteNo + "' and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, Params, connection);
                         if (myFunctions.getBoolVAL(Res.ToString()) == false)
                         {
                             if (bAllBranchData == true)
