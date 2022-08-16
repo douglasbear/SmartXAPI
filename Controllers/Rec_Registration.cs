@@ -48,11 +48,11 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             DataTable Attachments = new DataTable();
             DataTable Master = new DataTable();
-     
+
             MasterTable = api.Format(MasterTable, "Master");
-            int N_RecruitmentID=0;
-            int N_ActionID=0;
-            
+            int N_RecruitmentID = 0;
+            int N_ActionID = 0;
+
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "select * from vw_RecRegistrartion where N_CompanyID=@p1  and x_RecruitmentCode=@p2";
             string sqlCommandEducation = "select * from Rec_CandidateEducation where N_CompanyID=@p1  and N_RecruitmentID=@p3";
@@ -60,8 +60,8 @@ namespace SmartxAPI.Controllers
             string sqlCommandOptions = "select * from vw_GenStatusDetails where N_CompanyID=@p1  and N_ActionID=@p4";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", x_RecruitmentCode);
-            
-            
+
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -74,8 +74,8 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(api.Warning("No Results Found"));
                     }
-                    N_RecruitmentID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_RecruitmentID"].ToString());
-                    N_ActionID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_ActionID"].ToString());
+                    N_RecruitmentID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RecruitmentID"].ToString());
+                    N_ActionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ActionID"].ToString());
                     Params.Add("@p3", N_RecruitmentID);
                     Params.Add("@p4", N_ActionID);
                     CandidateEducation = dLayer.ExecuteDataTable(sqlCommandEducation, Params, connection);
@@ -89,21 +89,21 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(CandidateEducation);
                     dt.Tables.Add(EmploymentHistory);
                     dt.Tables.Add(Actions);
-                   //  object Count = dLayer.ExecuteScalar("select count(*)  from vw_RecRegistrartion where N_CompanyID=@p1 and x_RecruitmentCode=@xRecruitmentCode", Params, connection);
-                       if (dt.Tables.Count == 0)
+                    //  object Count = dLayer.ExecuteScalar("select count(*)  from vw_RecRegistrartion where N_CompanyID=@p1 and x_RecruitmentCode=@xRecruitmentCode", Params, connection);
+                    if (dt.Tables.Count == 0)
                     {
                         return Ok(api.Warning("No Results Found"));
                     }
                     else
                     {
-                     Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_RecruitmentID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_RecruitmentID"].ToString()), this.N_FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()),User,connection);
+                        Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_RecruitmentID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_RecruitmentID"].ToString()), this.N_FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
                         Attachments = api.Format(Attachments, "attachments");
                         dt.Tables.Add(Attachments);
+                    }
                 }
-                }
-                
+
                 return Ok(api.Success(dt));
-                  }
+            }
             catch (Exception e)
             {
                 return Ok(api.Error(User, e));
@@ -112,7 +112,7 @@ namespace SmartxAPI.Controllers
         [HttpGet("listvacancy")]
         public ActionResult VacancyList()
         {
-             DataTable dt = new DataTable();
+            DataTable dt = new DataTable();
             DataTable MasterTable = new DataTable();
             SortedList Params = new SortedList();
 
@@ -120,16 +120,16 @@ namespace SmartxAPI.Controllers
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "select * from vw_JobVacancy where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
-            
-          try
+
+            try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
 
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
-                if(dt.Rows.Count==0)
+                if (dt.Rows.Count == 0)
                 {
                     return Ok(api.Notice("No Results Found"));
                 }
@@ -137,7 +137,7 @@ namespace SmartxAPI.Controllers
                 {
                     return Ok(api.Success(dt));
                 }
-                
+
             }
             catch (Exception e)
             {
@@ -197,7 +197,7 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nRecruitmentID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_RecruitmentID"].ToString());
                 int N_RecruitmentID = myFunctions.getIntVAL(MasterRow["N_RecruitmentID"].ToString());
-                 string X_RecruitmentCode = "";
+                string X_RecruitmentCode = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -215,12 +215,12 @@ namespace SmartxAPI.Controllers
                         if (Code == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Registration Code")); }
                         MasterTable.Rows[0]["X_RecruitmentCode"] = Code;
                     }
-                     string image = myFunctions.ContainColumn("i_Photo", MasterTable) ? MasterTable.Rows[0]["i_Photo"].ToString() : "";
-                     Byte[] photoBitmap = new Byte[image.Length];
-                     photoBitmap = Convert.FromBase64String(image);
+                    string image = myFunctions.ContainColumn("i_Photo", MasterTable) ? MasterTable.Rows[0]["i_Photo"].ToString() : "";
+                    Byte[] photoBitmap = new Byte[image.Length];
+                    photoBitmap = Convert.FromBase64String(image);
                     if (myFunctions.ContainColumn("i_Photo", MasterTable))
                         MasterTable.Columns.Remove("i_Photo");
-                        MasterTable.AcceptChanges();
+                    MasterTable.AcceptChanges();
 
                     if (nRecruitmentID > 0)
                     {
@@ -252,7 +252,7 @@ namespace SmartxAPI.Controllers
                     Rec_CandidateHistoryRes = dLayer.SaveData("Rec_EmploymentHistory", "N_JobID", dtRec_CandidateHistory, connection, transaction);
                     SortedList RecruitmentParams = new SortedList();
                     RecruitmentParams.Add("@nRecruitmentID", N_RecruitmentID);
-                     DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_RecruitmentCode,X_Name from Rec_Registration where N_RecruitmentID=@nRecruitmentID", RecruitmentParams, connection, transaction);
+                    DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_RecruitmentCode,X_Name from Rec_Registration where N_RecruitmentID=@nRecruitmentID", RecruitmentParams, connection, transaction);
                     if (CustomerInfo.Rows.Count > 0)
                     {
                         try
@@ -266,21 +266,21 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error(User, ex));
                         }
                     }
-                    
-               
+
+
                     if (nRecruitmentID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error(User, "Unable to save"));
                     }
                     else
-                    
+
                     {
-                            if (image.Length > 0)
-                    {
-                        dLayer.SaveImage("Rec_Registration", "I_Photo", photoBitmap, "N_RecruitmentID",nRecruitmentID, connection, transaction);
-                    }
-                    
+                        if (image.Length > 0)
+                        {
+                            dLayer.SaveImage("Rec_Registration", "I_Photo", photoBitmap, "N_RecruitmentID", nRecruitmentID, connection, transaction);
+                        }
+
                         transaction.Commit();
                         return Ok(api.Success("Candidate Registered"));
                     }

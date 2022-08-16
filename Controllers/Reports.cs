@@ -35,6 +35,7 @@ namespace SmartxAPI.Controllers
         private readonly string reportApi;
         private readonly string TempFilesPath;
         private readonly string reportLocation;
+        private readonly string AppURL;
         private readonly IWebHostEnvironment env;
         string RPTLocation = "";
         string ReportName = "";
@@ -53,6 +54,7 @@ namespace SmartxAPI.Controllers
             reportApi = conf.GetConnectionString("ReportAPI");
             TempFilesPath = conf.GetConnectionString("TempFilesPath");
             reportLocation = conf.GetConnectionString("ReportLocation");
+            AppURL = conf.GetConnectionString("AppURL");
             env = envn;
         }
         [HttpGet("list")]
@@ -426,6 +428,7 @@ namespace SmartxAPI.Controllers
                     {
 
                         var client = new HttpClient(handler);
+                        var clientFile = new HttpClient(handler);
                         var dbName = connection.Database;
                         var random = RandomString();
                         if (TableName != "" && critiria != "")
@@ -451,7 +454,7 @@ namespace SmartxAPI.Controllers
                         partyName = partyName.Replace(":", "");
                         partyName = partyName.ToString().Substring(0, Math.Min(12, partyName.ToString().Length));
                         if (docNumber == null)
-                            docNumber = "";        
+                            docNumber = "";
                         docNumber = Regex.Replace(docNumber, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
                         if (!Regex.IsMatch(partyName, @"\p{IsArabic}"))
                             partyName = Regex.Replace(partyName, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
@@ -489,6 +492,33 @@ namespace SmartxAPI.Controllers
 
                         string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
                         var path = client.GetAsync(URL);
+                        
+                        //WHATSAPP MODE
+                        if (nFormID == 64 || nFormID == 894)
+                        {
+                            object N_WhatsappMSG = dLayer.ExecuteScalar("select N_Value from Gen_Settings where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_Group='64' and X_Description='Whatsapp Message'", QueryParams, connection, transaction);
+                            if (N_WhatsappMSG != null)
+                            {
+                                if (N_WhatsappMSG.ToString() == "1")
+                                {
+                                    string Company = myFunctions.GetCompanyName(User);
+                                    string FILEPATH = AppURL + "/temp/" + FormName + "_" + docNumber + "_" + partyName.Trim() + "_" + random + ".pdf";
+                                    object WhatsappAPI = dLayer.ExecuteScalar("select X_Value from Gen_Settings where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_Group='64' and X_Description='Whatsapp Message'", QueryParams, connection, transaction);
+                                    object Currency = dLayer.ExecuteScalar("select x_currency from acc_company  where n_companyid=" + nCompanyId, QueryParams, connection, transaction);
+                                    DataTable dt = dLayer.ExecuteDataTable("select * from vw_InvSalesInvoiceNo_Search_Cloud where n_salesid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                    string body = "Dear " + dt.Rows[0]["Customer"].ToString() + ",%0A%0A*_Thank you for your purchase._*%0A%0ADoc No : " + dt.Rows[0]["Invoice No"].ToString() + "%0ATotal Amount : " + dt.Rows[0]["n_BillAmtF"].ToString() + "%0ADiscount : " + dt.Rows[0]["n_DiscountDisplay"].ToString() + "%0AVAT Amount : " + dt.Rows[0]["n_TaxAmtF"].ToString() + "%0ARound Off : " + dt.Rows[0]["n_DiscountAmtF"].ToString() + "%0ANet Amount : " + dt.Rows[0]["x_BillAmt"].ToString() + " " + Currency + " %0A%0ARegards, %0A" + Company;
+                                    string URLAPI = "https://api.textmebot.com/send.php?recipient=" + dt.Rows[0]["x_Phoneno1"].ToString() + "&apikey=" + WhatsappAPI + "&text=" + body;
+                                    string URLFILE = "https://api.textmebot.com/send.php?recipient=" + dt.Rows[0]["x_Phoneno1"].ToString() + "&apikey=" + WhatsappAPI + "&document=" + FILEPATH;                              
+                                    var MSGFile = clientFile.GetAsync(URLFILE);
+                                    MSGFile.Wait();
+                                    var MSG = client.GetAsync(URLAPI);
+                                    MSG.Wait();
+
+                                }
+                            }
+
+
+                        }
                         if (nFormID == 80)
                         {
                             SortedList Params = new SortedList();
@@ -513,13 +543,16 @@ namespace SmartxAPI.Controllers
                             }
 
                         }
+
                         // ReportName = FormName + "_" + docNumber + "_" + partyName.Trim()+".pdf";
                         ReportName = FormName + "_" + docNumber + "_" + partyName.Trim() + "_" + random + ".pdf";
                         path.Wait();
+
                         if (env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName))
                             return Ok(_api.Error(User, "Report Generation Failed"));
                         else
                             return Ok(_api.Success(new SortedList() { { "FileName", ReportName } }));
+
                     }
                     else
                     {
