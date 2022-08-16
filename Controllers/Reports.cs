@@ -483,6 +483,8 @@ namespace SmartxAPI.Controllers
 
                         string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
                         var path = client.GetAsync(URL);
+                        
+                        //WHATSAPP MODE
                         if (nFormID == 64 || nFormID == 894)
                         {
                             object N_WhatsappMSG = dLayer.ExecuteScalar("select N_Value from Gen_Settings where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_Group='64' and X_Description='Whatsapp Message'", QueryParams, connection, transaction);
@@ -497,26 +499,7 @@ namespace SmartxAPI.Controllers
                                     DataTable dt = dLayer.ExecuteDataTable("select * from vw_InvSalesInvoiceNo_Search_Cloud where n_salesid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
                                     string body = "Dear " + dt.Rows[0]["Customer"].ToString() + ",%0A%0A*_Thank you for your purchase._*%0A%0ADoc No : " + dt.Rows[0]["Invoice No"].ToString() + "%0ATotal Amount : " + dt.Rows[0]["n_BillAmtF"].ToString() + "%0ADiscount : " + dt.Rows[0]["n_DiscountDisplay"].ToString() + "%0AVAT Amount : " + dt.Rows[0]["n_TaxAmtF"].ToString() + "%0ARound Off : " + dt.Rows[0]["n_DiscountAmtF"].ToString() + "%0ANet Amount : " + dt.Rows[0]["x_BillAmt"].ToString() + " " + Currency + " %0A%0ARegards, %0A" + Company;
                                     string URLAPI = "https://api.textmebot.com/send.php?recipient=" + dt.Rows[0]["x_Phoneno1"].ToString() + "&apikey=" + WhatsappAPI + "&text=" + body;
-                                    string URLFILE = "https://api.textmebot.com/send.php?recipient=" + dt.Rows[0]["x_Phoneno1"].ToString() + "&apikey=" + WhatsappAPI + "&document=" + FILEPATH;
-                                    for (var i = 1; i <= 2; i++)
-                                    {
-                                        if (i == 1)
-                                        {
-                                            using (var httpClient = new HttpClient())
-                                            {
-                                                var result = httpClient.GetAsync(new Uri(URLAPI)).Result;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            using (var httpClient = new HttpClient())
-                                            {
-                                                var result = httpClient.GetAsync(new Uri(URLFILE)).Result;
-                                            }
-                                        }
-                                    }
-
-
+                                    string URLFILE = "https://api.textmebot.com/send.php?recipient=" + dt.Rows[0]["x_Phoneno1"].ToString() + "&apikey=" + WhatsappAPI + "&document=" + FILEPATH;                              
                                     var MSGFile = clientFile.GetAsync(URLFILE);
                                     MSGFile.Wait();
                                     var MSG = client.GetAsync(URLAPI);
