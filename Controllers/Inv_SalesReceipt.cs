@@ -177,6 +177,8 @@ namespace SmartxAPI.Controllers
         [HttpGet("details")]
         public ActionResult GetSalesReceiptDetails(int nCustomerId, int nFnYearId, int nBranchId, string xInvoiceNo, bool bShowAllbranch, string dTransDate, string xTransType)
         {
+                if (xInvoiceNo != null)
+                xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
             DataTable Attachments = new DataTable();
@@ -354,6 +356,7 @@ namespace SmartxAPI.Controllers
 
                                 continue;
                             }
+                      
 
                             N_InvoiceDueAmt = myFunctions.getVAL(dr["N_Amount"].ToString()) + myFunctions.getVAL(dr["N_BalanceAmount"].ToString()) + myFunctions.getVAL(dr["N_DiscountAmt"].ToString());
                             N_TotalDueAmt += N_InvoiceDueAmt;
@@ -362,6 +365,13 @@ namespace SmartxAPI.Controllers
                             {
                                 dr.Delete();
                             }
+                            else if (n_PayReceiptId > 0)
+                             {
+                                if(dr["N_PayreceiptID"].ToString()=="")
+                                {
+                                    dr.Delete();
+                                 }
+                             }
                         }
                     }
 

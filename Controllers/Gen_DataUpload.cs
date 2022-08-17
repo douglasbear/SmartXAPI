@@ -176,7 +176,7 @@ namespace SmartxAPI.Controllers
                                 }
                                 break;
                             case "sales invoice":
-                                xTableName = "mig_SalesInvoice";
+                                xTableName = "Mig_SalesInvoice";
                                 Mastertable.Columns.Add("N_CompanyID");
                                 foreach (DataRow dtRow in Mastertable.Rows)
                                 {
@@ -304,11 +304,11 @@ namespace SmartxAPI.Controllers
                             {
                                 SortedList SalesInvParam = new SortedList();
                                 SalesInvParam.Add("N_CompanyID", nCompanyID);
-                                SalesInvParam.Add("N_FnYearID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_FnYearID"].ToString()));
+                                SalesInvParam.Add("N_FnyearID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_FnYearID"].ToString()));
                                 SalesInvParam.Add("N_UserID", myFunctions.GetUserID(User));
                                 SalesInvParam.Add("N_BranchID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_BranchID"].ToString()));
                                 SalesInvParam.Add("N_LocationID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_LocationID"].ToString()));
-                                // dLayer.ExecuteNonQueryPro("SP_SalesInvoiceImport", SalesInvParam, connection, transaction);
+                                dLayer.ExecuteNonQueryPro("SP_SalesInvoiceImport", SalesInvParam, connection, transaction);
                             }
                             else
                             {
@@ -322,19 +322,35 @@ namespace SmartxAPI.Controllers
                             }
                             Mastertable.Clear();
                             Params.Remove("X_Type");
+                            int TotalRecords = 0, TotalSkippedRecords = 0, TotalDraftedRecords = 0;
+                            DataTable skippedRows = new DataTable();
+                            SortedList Result = new SortedList();
+                            if (xTableName == "Mig_SalesInvoice")
+                            {
+                                string sqlSkipInfo = "select 'Invoice Number  |  Invoice Date  |  Reson  ' as X_SkippingRemark,1 as B_Skipped union all select X_SkippingRemark,isnull(B_Skipped,0) as B_Skipped from " + xTableName + " where X_SkippingRemark is not null group by X_SkippingRemark,B_Skipped";
+                                string sqlTotalRecords = "select count(distinct Invoice_Number) as TotalRecords from Mig_SalesInvoice";
+                                string sqlSkippedRecords = "select count(distinct Invoice_Number) as SkippedRecords from Mig_SalesInvoice where isnull(B_Skipped,0)=1";
+                                string sqlDraftedRecords = "SELECT  Count(distinct Invoice_Number) as DraftedInvoices FROM Mig_SalesInvoice LEFT OUTER JOIN Inv_Sales ON Mig_SalesInvoice.Invoice_Number = Inv_Sales.X_CustPONo AND Mig_SalesInvoice.N_CompanyID = Inv_Sales.N_CompanyId where isnull(Inv_Sales.B_IsSaveDraft,0)=1 and isnull(Mig_SalesInvoice.B_Skipped,0)=0 and Inv_Sales.N_CompanyId=" + nCompanyID;
+
+                                skippedRows = dLayer.ExecuteDataTable(sqlSkipInfo, Params, connection, transaction);
+                                TotalRecords = myFunctions.getIntVAL(dLayer.ExecuteScalar(sqlTotalRecords, connection, transaction).ToString());
+                                TotalSkippedRecords = myFunctions.getIntVAL(dLayer.ExecuteScalar(sqlSkippedRecords, connection, transaction).ToString());
+                                TotalDraftedRecords = myFunctions.getIntVAL(dLayer.ExecuteScalar(sqlDraftedRecords, connection, transaction).ToString());
+
+                            }
+
+                            Result.Add("skippedRows", _api.Format(skippedRows, "skippedRows"));
+                            Result.Add("totalRecords", TotalRecords);
+                            Result.Add("totalSkippedRecords", TotalSkippedRecords);
+                            Result.Add("totalDraftedRecords", TotalDraftedRecords);
                             transaction.Commit();
-                            return Ok(_api.Success(dt.TableName + " Uploaded"));
+                            return Ok(_api.Success(Result, dt.TableName + " Uploaded"));
                         }
                     }
-                    if (Mastertable.Rows.Count > 0)
-                    {
-                        transaction.Commit();
-                        return Ok(_api.Success("Uploaded Completed"));
-                    }
-                    else
-                    {
-                        return Ok(_api.Error(User, "Uploaded Error"));
-                    }
+
+                    transaction.Rollback();
+                    return Ok(_api.Error(User, "Uploaded Error"));
+
                 }
 
             }
