@@ -191,8 +191,13 @@ namespace SmartxAPI.Controllers
                         string pricelistAll = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_ItemID=0 and N_ItemUnitID=0 " + Condition + "";
                         dtPriceList = dLayer.ExecuteDataTable(pricelistAll, Params, connection);
                     }
+                    dtPriceList = myFunctions.AddNewColumnToDataTable(dtPriceList, "N_MinimumPrice", typeof(double), 0.0);
+
+                    dtPriceList = myFunctions.AddNewColumnToDataTable(dtPriceList, "N_MinAmount", typeof(double), 0.0);
+                    dtPriceList.AcceptChanges();
                      if(dtPriceList.Rows.Count>0)
                     {
+                                            
                     foreach (DataRow row in dtPriceList.Rows)
                     {
                         string xItemUnit = "select X_ItemUnit from Inv_ItemUnit where N_ItemUnitID="+nItemUnitID+" and N_CompanyID="+nCompanyId+"";
@@ -206,16 +211,34 @@ namespace SmartxAPI.Controllers
                                 lastcost=lastcost+percentageCost;
                                 
                                 row["X_Price"]=lastcost;
-                            }
-                            dtPriceList.AcceptChanges();
+
+                        }
+                        dtPriceList.AcceptChanges();
+                        if(myFunctions.getVAL(row["N_MinMargin"].ToString()) >0)
+                        {
+                              
+                                object cost= dLayer.ExecuteScalar("select dbo.SP_Cost_Loc("+nItemID+","+nCompanyId+",'"+unitName.ToString()+"'," + nLocationID + ")", Params, connection);  
+                                double finalCost=myFunctions.getVAL(cost.ToString());
+                                double minPercentageCost =((finalCost*myFunctions.getVAL(row["N_MinMargin"].ToString()))/100);
+                                finalCost=finalCost+minPercentageCost;
+                                
+                                row["N_MinimumPrice"]=finalCost;
+
+                        }
+                                if(myFunctions.getVAL(row["N_MinMarkup"].ToString()) >0)
+                        {
+                              
+                                object cost= dLayer.ExecuteScalar("select dbo.SP_Cost_Loc("+nItemID+","+nCompanyId+",'"+unitName.ToString()+"'," + nLocationID + ")", Params, connection);  
+                                double finalCost=myFunctions.getVAL(cost.ToString());
+                                
+                                row["N_MinAmount"]=finalCost + myFunctions.getVAL(row["N_MinMarkup"].ToString());
+
+                        }
+
                         }
 
                     
                 }
-
-                }
-         
-
                 if (dtPriceList.Rows.Count == 0)
                 {
                     return Ok(api.Success(dtPriceList));
@@ -231,6 +254,7 @@ namespace SmartxAPI.Controllers
 
 
                 return Ok(api.Success(dtPriceList));
+                }
 
             }
             catch (Exception e)

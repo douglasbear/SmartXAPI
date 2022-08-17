@@ -88,7 +88,7 @@ namespace SmartxAPI.Controllers
             }
         }
       [HttpGet("assignmentList")]
-        public ActionResult AssignmentList(int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nBranchID,bool bAllBranchData)
+        public ActionResult AssignmentList(int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nBranchID,bool bAllBranchData,int nStudentID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -118,9 +118,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
  
             if (Count == 0)
-                sqlCommandText = "select top(10) * from vw_Sch_Assignment where  YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_AcYearID="+nAcYearID + crieteria + Searchkey + " " + xSortBy ;
+                sqlCommandText = "select top(10) * from vw_Sch_AssignmentStudents where  YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_StudentID=" + nStudentID + " and N_CompanyID = " + nCompanyId + " and N_AcYearID="+nAcYearID + crieteria + Searchkey + " " + xSortBy ;
             else
-                sqlCommandText = "select top(10) * from vw_Sch_Assignment where YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_AcYearID="+nAcYearID + crieteria + "  " + Searchkey + " and N_AssignmentID not in (select top(" + Count + ") N_AssignmentID from vw_Sch_Assignment where N_CompanyID=@p1 " + crieteria + xSortBy + " )" + xSortBy;
+                sqlCommandText = "select top(10) * from vw_Sch_AssignmentStudents where YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nStudentID + " and N_AcYearID="+nAcYearID + crieteria + "  " + Searchkey + " and N_AssignmentID not in (select top(" + Count + ") N_AssignmentID from vw_Sch_Assignment where N_CompanyID=@p1 " + crieteria + xSortBy + " )" + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -133,7 +133,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "Select  count(*) from vw_Sch_Assignment Where YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_AcYearID="+nAcYearID + crieteria ;
+                    sqlCommandCount = "Select  count(*) from vw_Sch_AssignmentStudents Where YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_AcYearID="+nAcYearID + crieteria ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

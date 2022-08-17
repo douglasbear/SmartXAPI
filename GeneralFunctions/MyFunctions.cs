@@ -1748,7 +1748,12 @@ namespace SmartxAPI.GeneralFunctions
 
             if (columns.Contains("getSignFromUser"))
             {
-                N_GetSignFromUser =this.getIntVAL(ApprovalRow["getSignFromUser"].ToString());
+                if(ApprovalRow["getSignFromUser"].ToString() =="False")
+                    N_GetSignFromUser=0;
+                else if(ApprovalRow["getSignFromUser"].ToString() =="True")
+                   N_GetSignFromUser=1;
+                else
+                   N_GetSignFromUser =this.getIntVAL(ApprovalRow["getSignFromUser"].ToString());
             }
 
             int N_GroupID = 1, N_NxtUserID = 0;

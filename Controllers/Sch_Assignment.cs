@@ -140,6 +140,37 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,e));
             }
         }
+        [HttpPost("update")]
+        public ActionResult ChangeData([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable MasterTable;
+                    DataTable DetailTable;
+                    MasterTable = ds.Tables["master"];
+                    DetailTable = ds.Tables["details"];
+                    SortedList Params = new SortedList();
+
+                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                    int nAssignmentID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_AssignmentID"].ToString());
+                    int nStudentID = myFunctions.getIntVAL(DetailTable.Rows[0]["n_StudentID"].ToString());
+                    string xStudentNotes = DetailTable.Rows[0]["x_StudentNotes"].ToString();
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@nAssignmentID", nAssignmentID);
+
+                    dLayer.ExecuteNonQuery("update Sch_AssignmentStudents set N_Status=1, X_StudentNotes='"+xStudentNotes+"' where  N_CompanyID=@nCompanyID and N_AssignmentID=@nAssignmentID and N_StudentID ="+nStudentID, Params, connection);
+                   
+                    return Ok(api.Success("updated sucessfully"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(User, ex));
+            }
+        }
 
         //Save....
         [HttpPost("save")]
