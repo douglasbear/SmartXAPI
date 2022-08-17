@@ -192,6 +192,8 @@ namespace SmartxAPI.Controllers
                         dtPriceList = dLayer.ExecuteDataTable(pricelistAll, Params, connection);
                     }
                     dtPriceList = myFunctions.AddNewColumnToDataTable(dtPriceList, "N_MinimumPrice", typeof(double), 0.0);
+
+                    dtPriceList = myFunctions.AddNewColumnToDataTable(dtPriceList, "N_MinAmount", typeof(double), 0.0);
                     dtPriceList.AcceptChanges();
                      if(dtPriceList.Rows.Count>0)
                     {
@@ -209,6 +211,7 @@ namespace SmartxAPI.Controllers
                                 lastcost=lastcost+percentageCost;
                                 
                                 row["X_Price"]=lastcost;
+
                         }
                         dtPriceList.AcceptChanges();
                         if(myFunctions.getVAL(row["N_MinMargin"].ToString()) >0)
@@ -222,14 +225,20 @@ namespace SmartxAPI.Controllers
                                 row["N_MinimumPrice"]=finalCost;
 
                         }
+                                if(myFunctions.getVAL(row["N_MinMarkup"].ToString()) >0)
+                        {
+                              
+                                object cost= dLayer.ExecuteScalar("select dbo.SP_Cost_Loc("+nItemID+","+nCompanyId+",'"+unitName.ToString()+"'," + nLocationID + ")", Params, connection);  
+                                double finalCost=myFunctions.getVAL(cost.ToString());
+                                
+                                row["N_MinAmount"]=finalCost + myFunctions.getVAL(row["N_MinMarkup"].ToString());
+
+                        }
+
                         }
 
                     
                 }
-
-                }
-         
-
                 if (dtPriceList.Rows.Count == 0)
                 {
                     return Ok(api.Success(dtPriceList));
@@ -245,6 +254,7 @@ namespace SmartxAPI.Controllers
 
 
                 return Ok(api.Success(dtPriceList));
+                }
 
             }
             catch (Exception e)
