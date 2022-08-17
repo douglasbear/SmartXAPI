@@ -23,7 +23,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
 
-        private readonly int N_FormID =962 ;
+        private readonly int N_FormID = 962;
 
 
         public Rec_JobVacancy(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
@@ -31,41 +31,41 @@ namespace SmartxAPI.Controllers
             api = apifun;
             dLayer = dl;
             myFunctions = myFun;
-            connectionString = 
+            connectionString =
             conf.GetConnectionString("SmartxConnection");
         }
 
 
         [HttpGet("details")]
-        public ActionResult VacancyDetails(int n_VacancyID)
+        public ActionResult VacancyDetails(string x_VacancyCode)
         {
-            DataSet dt=new DataSet();
+            DataSet dt = new DataSet();
             DataTable MasterTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_JobVacancy where N_CompanyID=@p1  and n_VacancyID=@p2";
+            string sqlCommandText = "select * from vw_JobVacancy where N_CompanyID=@p1  and x_VacancyCode=@p2";
             Params.Add("@p1", nCompanyId);  
-            Params.Add("@p2", n_VacancyID);
+            Params.Add("@p2", x_VacancyCode);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     if (MasterTable.Rows.Count == 0)
                     {
                         return Ok(api.Warning("No Results Found"));
                     }
-                
+
                     MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
                 }
-                return Ok(api.Success(dt));               
+                return Ok(api.Success(dt));
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -94,27 +94,27 @@ namespace SmartxAPI.Controllers
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
-                         Params.Add("N_YearID", nFnYearId);
+                        Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         Code = dLayer.GetAutoNumber("Rec_JobVacancy", "X_VacancyCode", Params, connection, transaction);
                         if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate JobVacancy Code")); }
-                        MasterTable.Rows[0]["X_ClassCode"] = Code;
+                        MasterTable.Rows[0]["X_VacancyCode"] = Code;
                     }
 
-                    if (nVacancyID > 0) 
-                    {  
-                        dLayer.DeleteData("Rec_JobVacancy", "N_VacancyID", nVacancyID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
+                    if (nVacancyID > 0)
+                    {
+                        dLayer.DeleteData("Rec_JobVacancy", "N_VacancyID", nVacancyID, "N_CompanyID =" + nCompanyID, connection, transaction);
                     }
 
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_VacancyCode='" + Code + "'";
                     string X_Criteria = "N_CompanyID=" + nCompanyID + "";
 
-                    nVacancyID = dLayer.SaveData("Rec_JobVacancy", "N_VacancyID",DupCriteria,X_Criteria, MasterTable, connection, transaction);
+                    nVacancyID = dLayer.SaveData("Rec_JobVacancy", "N_VacancyID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
 
                     if (nVacancyID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User,"Unable to save"));
+                        return Ok(api.Error(User, "Unable to save"));
                     }
                     else
                     {
@@ -125,11 +125,11 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
         }
 
-               [HttpGet("list")]
+        [HttpGet("list")]
         public ActionResult VacancyList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
@@ -184,22 +184,22 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, e));
             }
         }
-      
+
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nVacancyID)
         {
 
             int Results = 0;
-            int nCompanyID=myFunctions.GetCompanyID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
             try
-            {                        
+            {
                 SortedList Params = new SortedList();
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Rec_JobVacancy", "N_VacancyID", nVacancyID, "N_CompanyID =" + nCompanyID, connection, transaction);
-                
+
                     if (Results > 0)
                     {
                         transaction.Commit();
@@ -207,14 +207,14 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(api.Error(User,"Unable to delete Job Vacancy"));
+                        return Ok(api.Error(User, "Unable to delete Job Vacancy"));
                     }
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
 
 

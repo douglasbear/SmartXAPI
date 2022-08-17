@@ -178,6 +178,9 @@ namespace SmartxAPI.Controllers
         [HttpGet("details")]
         public ActionResult GetQuotationDetails(string xQuotationNo, int nFnYearId, bool bAllBranchData, int nBranchID, int n_OpportunityID)
         {
+
+            if (xQuotationNo != null)
+                xQuotationNo = xQuotationNo.Replace("%2F", "/");
             DataSet dsQuotation = new DataSet();
             DataTable dtProcess = new DataTable();
             SortedList Params = new SortedList();
