@@ -1627,8 +1627,10 @@ namespace SmartxAPI.Controllers
                       int N_CustomerId=0;
                       int N_FormID=64;
                       object nQuotationID;
+                      int count=0;
                       if(Details.Rows.Count>0)
                       {
+                          count=Details.Rows.Count;
                           foreach (DataRow item in Details.Rows)
                            {
 
@@ -1665,7 +1667,7 @@ namespace SmartxAPI.Controllers
                            }
                       }
                     transaction.Commit();
-                    return Ok(_api.Success("Sales invoice deleted"));
+                    return Ok(_api.Success(" "+count+" Draft  invoices deleted"));
                 }
             }
              catch (Exception ex)
