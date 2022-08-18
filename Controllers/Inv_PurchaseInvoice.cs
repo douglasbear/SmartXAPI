@@ -390,9 +390,9 @@ namespace SmartxAPI.Controllers
                         }
                         object N_Qty = dLayer.ExecuteScalar("select Sum(N_Qty) from vw_InvPurchaseDetails_Display where N_CompanyID=" + nCompanyId + " and N_PurchaseID=" + N_PurchaseID + " ", Params, connection);
                         object N_RetQty = dLayer.ExecuteScalar("select Sum(RetQty) from vw_InvPurchaseDetails_Display where N_CompanyID=" + nCompanyId + " and N_PurchaseID=" + N_PurchaseID + " ", Params, connection);
-                        if (N_RetQty != null && myFunctions.getIntVAL(N_RetQty.ToString()) > 0)
+                        if (N_RetQty != null && myFunctions.getVAL(N_RetQty.ToString()) > 0)
                         {
-                            if (myFunctions.getIntVAL(N_Qty.ToString()) > (myFunctions.getIntVAL(N_RetQty.ToString())))
+                            if (myFunctions.getVAL(N_Qty.ToString()) > (myFunctions.getVAL(N_RetQty.ToString())))
                             {
                                 dtPurchaseInvoice.Rows[0]["IsReturnDone"] = false;
                                 dtPurchaseInvoice.Rows[0]["X_ReturnCode"] = "";
