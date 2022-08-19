@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
-        [HttpPost("save")]
+        [HttpPost("unauthstdregsave")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
@@ -98,6 +98,199 @@ namespace SmartxAPI.Controllers
             catch (Exception ex)
             {
                 return Ok(api.Error(User,ex));
+            }
+        }
+
+        [HttpGet("unauthnationalitylist")]
+        public ActionResult GetNationality()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string sqlCommandText = "select N_NationalityID, X_Nationality, X_NationalityLocale, X_NationalityCode, D_Entrydate, X_Country, B_Default, X_Currency, N_CountryID from Pay_Nationality";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+
+        [HttpGet("unauthguardianlist") ]
+        public ActionResult GuardianList(int nCompanyID)
+        {    
+            SortedList param = new SortedList();           
+            DataTable dt=new DataTable();
+            
+            string sqlCommandText="";
+
+            sqlCommandText="select * from vw_Sch_ParentDetails_Disp where N_CompanyID=@p1";
+
+            param.Add("@p1", nCompanyID);              
+                
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                }
+                if(dt.Rows.Count==0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+                
+            }
+            catch(Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }   
+        }   
+
+        [HttpGet("unauthrelationlist")]
+        public ActionResult GetRelationList(int nCompanyID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            Params.Add("@nCompanyID", nCompanyID);
+            string sqlCommandText = "Select n_RelationID,x_Relation from Pay_Relation Where N_CompanyID=@nCompanyID order by n_RelationID";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+
+        [HttpGet("unauthcountrylist")]
+        public ActionResult GetCountryList(int nCompanyID,int N_AllowCompany)
+        {
+            DataTable dt = new DataTable(); 
+            SortedList Params = new SortedList();
+            string sqlCommandText ="";
+
+            if(N_AllowCompany!=0)
+                sqlCommandText = "select X_CountryCode,X_CountryName,x_Currency,N_CompanyID,N_CountryID,B_TaxImplement from Acc_Country where N_CompanyID=@p1 and ISNULL(B_AllowCompany,0)=1 order by N_CountryID";
+            else
+                sqlCommandText = "select X_CountryCode,X_CountryName,x_Currency,N_CompanyID,N_CountryID,B_TaxImplement from Acc_Country where N_CompanyID=@p1  order by N_CountryID";
+            Params.Add("@p1", nCompanyID);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok( api.Error(User,e));
+            }
+        }
+
+        [HttpGet("unauthstdreglist")]
+        public ActionResult GetRegistrationList(int? nCompanyID, int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_RegNo like '%" + xSearchkey + "%' or X_FullName like '%" + xSearchkey + "%' or X_GuardianName like '%" + xSearchkey + "%' or D_DOB like '%" + xSearchkey + "%' or X_CountryName like '%" + xSearchkey + "%'  or X_MobileNo like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by X_RegNo desc";
+            else
+            {
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "X_RegNo":
+                        xSortBy = "X_RegNo " + xSortBy.Split(" ")[1];
+                        break;
+                    default: break;
+                }
+                xSortBy = " order by " + xSortBy;
+            }
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_Registration where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID  " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_Registration where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + Searchkey + " " + xSortBy;
+
+            Params.Add("@nCompanyId", nCompanyID);
+            Params.Add("@nAcYearID", nAcYearID);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    SortedList OutPut = new SortedList();
+
+                    sqlCommandCount = "select count(*) as N_Count  from vw_Sch_Registration  where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
             }
         }
 
