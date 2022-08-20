@@ -178,7 +178,8 @@ namespace SmartxAPI.Controllers
                   
                     if (Master.Rows.Count == 0)
                     {
-                        return Ok(api.Notice("No Results Found"));
+                     ds.Tables.Add(Master);
+                    return Ok(api.Success(ds));
                     }
                     else
                     {
@@ -189,16 +190,13 @@ namespace SmartxAPI.Controllers
                   
                        if (Detail.Rows.Count == 0)
                         {
-                            return Ok(api.Notice("No Results Found"));
+                             ds.Tables.Add(Detail);
                         }
                              Detail = api.Format(Detail, "Detail");
                         ds.Tables.Add(Detail);
                       
 
-                    }
-                 
-
-                
+                    }    
               
                 }
                  return Ok(api.Success(ds));
