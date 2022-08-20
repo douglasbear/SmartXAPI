@@ -61,7 +61,16 @@ namespace SmartxAPI.Dtos.SP
         public int N_CustomerID { get; set; }
         public string X_CustomerCode { get; set; }
         public string X_CustomerName { get; set; }
-
+        public int N_ParentID { get; set; }
+        public string X_ParentCode { get; set; }
+        public string X_ParentName { get; set; }
+        public int N_StudentID { get; set; }
+        public string X_StudentCode { get; set; }
+        public string X_StudentName { get; set; }
+        public int N_TeacherID { get; set; }
+        public string X_TeacherCode { get; set; }
+        public string X_TeacherName { get; set; }
+public int N_DefaultStudentID { get; set; }
         [NotMapped]
         public string Token { get; set; }
         [NotMapped]
