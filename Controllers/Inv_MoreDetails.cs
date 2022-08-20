@@ -66,7 +66,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_FormID", nFormID);
                           Params.Add("N_YearID", nFnYearID);
-                        Params.Add("N_UserID", N_UserID);
+                        // Params.Add("N_UserID", N_UserID);
                         X_DeviceInfoCode = dLayer.GetAutoNumber("Inv_DeviceInfo", "X_DeviceInfoCode", Params, connection, transaction);
                         if (X_DeviceInfoCode == "")
                         {

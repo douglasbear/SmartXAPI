@@ -244,7 +244,15 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             
             string sqlCommandText="";
-
+            string crieteria="";
+            // if(nStudentID>0)
+            // {
+            //    crieteria=" and n_StudentID="+nStudentID;
+            // }
+            // else
+            // {
+            //    crieteria=" ";
+            // }
             if(nSubjectID!=0) 
             { 
                 if(nBatchID!=0)
@@ -255,9 +263,9 @@ namespace SmartxAPI.Controllers
             else
             {
                 if(nBatchID!=0)
-                    sqlCommandText="select * from vw_Sch_Assignment where N_CompanyID=@p1 and n_BatchID=@p3";
+                    sqlCommandText="select * from vw_Sch_Assignment where N_CompanyID=@p1 and n_BatchID=@p3"+crieteria;
                 else
-                    sqlCommandText="select * from vw_Sch_Assignment where N_CompanyID=@p1";
+                    sqlCommandText="select * from vw_Sch_Assignment where N_CompanyID=@p1"+crieteria;
             }
 
             param.Add("@p1", nCompanyID);             

@@ -123,7 +123,15 @@ namespace SmartxAPI.Data
                                         N_CustomerID = myFunctions.getIntVAL(dr["N_CustomerID"].ToString()),
                                         X_CustomerCode = dr["X_CustomerCode"].ToString(),
                                         X_CustomerName = dr["X_CustomerName"].ToString(),
-
+                                        N_ParentID = myFunctions.getIntVAL(dr["N_ParentID"].ToString()),
+                                        X_ParentCode = dr["X_ParentCode"].ToString(),
+                                        X_ParentName = dr["X_ParentName"].ToString(),
+                                        N_StudentID = myFunctions.getIntVAL(dr["N_StudentID"].ToString()),
+                                        X_StudentCode = dr["X_StudentCode"].ToString(),
+                                        X_StudentName = dr["X_StudentName"].ToString(),
+                                        N_TeacherID = myFunctions.getIntVAL(dr["N_TeacherID"].ToString()),
+                                        X_TeacherCode = dr["X_TeacherCode"].ToString(),
+                                        X_TeacherName = dr["X_TeacherName"].ToString(),
 
                                     }).ToList()
                             .FirstOrDefault();
