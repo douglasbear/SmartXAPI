@@ -744,7 +744,7 @@ namespace SmartxAPI.Controllers
         } 
 
         [HttpGet("totalInvoiceAmount")]
-        public ActionResult GetCustomerDetail(int nCustomerID, int nFnYearID,bool isQuotation,int nSaleOrderID, int nsalesQuotationID)
+        public ActionResult GetCustomerDetail(int nCustomerID, int nFnYearID,bool isQuotation,int nSaleOrderID, int nsalesQuotationID )
         {
             DataTable dt = new DataTable();
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -793,7 +793,7 @@ namespace SmartxAPI.Controllers
                     //crm customer from Customer for SQ 
 
                     object sqCustomerID= dLayer.ExecuteScalar("select N_CrmCompanyID from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID="+nCustomerID+" ", Params, connection);
-                    if(myFunctions.getIntVAL(sqCustomerID.ToString())>0)
+                    if(myFunctions.getIntVAL(sqCustomerID.ToString())>0 && isQuotation )
                     {
 
                         object pendingSQAmt=dLayer.ExecuteScalar("select sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as pendingSQAmt from VW_PendingSalesQuotation where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CrmCompanyID="+myFunctions.getIntVAL(sqCustomerID.ToString())+" and N_QuotationID not in ("+nsalesQuotationID+")", Params, connection);

@@ -393,7 +393,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("getscreenprint")]
-        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, int nPreview, string xrptname, string docNumber, string partyName,bool printSave)
+        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, int nPreview, string xrptname, string docNumber, string partyName,bool printSave,bool sendWtsapMessage)
         {
             SortedList QueryParams = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -494,7 +494,7 @@ namespace SmartxAPI.Controllers
                         var path = client.GetAsync(URL);
                         
                         //WHATSAPP MODE
-                        if (nFormID == 64 || nFormID == 894)
+                        if (nFormID == 64 || nFormID == 894 && sendWtsapMessage)
                         {
                             object N_WhatsappMSG = dLayer.ExecuteScalar("select N_Value from Gen_Settings where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_Group='64' and X_Description='Whatsapp Message'", QueryParams, connection, transaction);
                             if (N_WhatsappMSG != null)
