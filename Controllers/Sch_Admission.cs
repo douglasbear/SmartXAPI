@@ -457,7 +457,7 @@ namespace SmartxAPI.Controllers
                     {
                         if(myFunctions.getIntVAL(PayCount.ToString())==0)
                         {
-                            DataTable dtSch_Sales=dLayer.ExecuteDataTable("select N_CompanyId,N_FnYearId,N_RefSalesID from Sch_Sales where N_CompanyId="+ nCompanyID +" and N_RefId="+nAdmissionID,Params,connection,transaction);
+                            DataTable dtSch_Sales=dLayer.ExecuteDataTable("select N_CompanyId,N_FnYearId,N_RefSalesID,N_SalesID from Sch_Sales where N_CompanyId="+ nCompanyID +" and N_RefId="+nAdmissionID,Params,connection,transaction);
 
                             for (int j = 0; j < dtSch_Sales.Rows.Count; j++)
                             {
@@ -475,7 +475,7 @@ namespace SmartxAPI.Controllers
                                     return Ok(api.Error(User, ex));
                                 }
 
-                                dLayer.DeleteData("Sch_SalesDetails", "N_SalesID", myFunctions.getIntVAL(dtSch_Sales.Rows[j]["N_RefSalesID"].ToString()), "N_CompanyID =" + nCompanyID, connection, transaction);                   
+                                dLayer.DeleteData("Sch_SalesDetails", "N_SalesID", myFunctions.getIntVAL(dtSch_Sales.Rows[j]["N_SalesID"].ToString()), "N_CompanyID =" + nCompanyID, connection, transaction);                   
                             }
                             dLayer.DeleteData("Sch_Sales", "N_RefId", nAdmissionID, "N_CompanyID =" + nCompanyID , connection, transaction);                                                  
                             dLayer.ExecuteNonQuery("delete from Inv_Customer where N_CompanyID="+nCompanyID+" and N_CustomerID = (select N_CustomerID from Sch_Admission where N_CompanyID="+nCompanyID+" and N_AdmissionID= "+nAdmissionID+")", Params, connection, transaction);
