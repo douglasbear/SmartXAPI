@@ -132,6 +132,7 @@ namespace SmartxAPI.Data
                                         N_TeacherID = myFunctions.getIntVAL(dr["N_TeacherID"].ToString()),
                                         X_TeacherCode = dr["X_TeacherCode"].ToString(),
                                         X_TeacherName = dr["X_TeacherName"].ToString(),
+                                        N_DefaultStudentID = myFunctions.getIntVAL(dr["N_DefaultStudentID"].ToString()),
 
                                     }).ToList()
                             .FirstOrDefault();
