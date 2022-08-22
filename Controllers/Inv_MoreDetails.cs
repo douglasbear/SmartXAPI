@@ -45,15 +45,17 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
 
-                    DataTable ServiceDetailsTable;
+                  
                     DataTable Master = ds.Tables["master"];
                     DataTable Details = ds.Tables["details"];
-                    DataTable ServiceDetailsTable = ds.Tables[servicedetails];
+                  
 
                      DataTable MasterTable;
+                     DataTable ServiceConditionTable;
                       MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
                     DataRow MasterRow = Master.Rows[0];
+                    ServiceConditionTable = ds.Tables["servicecondition"];
                      // DataRow MasterRow = MasterTable.Rows[0];
                     int N_ServiceInfoID = myFunctions.getIntVAL(MasterRow["N_ServiceInfoID"].ToString());
                      int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
@@ -105,12 +107,12 @@ namespace SmartxAPI.Controllers
 
                     dLayer.SaveData("Inv_ServiceMaterials", "n_MaterialID", Details, connection, transaction);
 
-                   for (int i = 0; i < ServiceDetails.Rows.Count; i++)
+                   for (int i = 0; i < ServiceConditionTable.Rows.Count; i++)
                     {
-                        ServiceDetails.Rows[i]["N_ServiceInfoID"] = N_ServiceInfoID;
+                        ServiceConditionTable.Rows[i]["N_ServiceInfoID"] = N_ServiceInfoID;
 
                     }
-                    dLayer.SaveData("Inv_ServiceCondition", "N_ServiceInfoID", ServiceDetails, connection, transaction);
+                  N_ServiceInfoID = dLayer.SaveData("Inv_ServiceCondition", "N_ServiceInfoID", ServiceConditionTable, connection, transaction);
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
@@ -178,11 +180,11 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
 
-                    sqlCommandText = "select * from Vw_Inv_ServiceInfo Where N_CompanyID = @p1 and x_SerialNo = @p3";
+                    sqlCommandText = "select * from vw_Service_Info Where N_CompanyID = @p1 and x_SerialNo = @p3";
                  
                    if(list)
                     {
-                        sqlCommandText= "select * from Vw_Inv_ServiceInfo Where N_CompanyID = @p1 ";
+                        sqlCommandText= "select * from vw_Service_Info Where N_CompanyID = @p1 ";
                     }
                     Master = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     Master = api.Format(Master, "master");
@@ -196,7 +198,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("@nServiceInfoID", Master.Rows[0]["nServiceInfoID"].ToString());
                        ds.Tables.Add(Master);
-                        sqlCommandText = "Select * from Vw_Inv_ServiceInfo Where N_CompanyID=@p1 and n_ServiceInfoID=@n_ServiceInfoID";
+                        sqlCommandText = "Select * from vw_Service_Info Where N_CompanyID=@p1 and n_ServiceInfoID=@n_ServiceInfoID";
                         Detail = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                   
                        if (Detail.Rows.Count == 0)
@@ -251,11 +253,7 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(User, e));
             }
-        }
-
-        
-         
-        
+        }  
     }
 }
     
