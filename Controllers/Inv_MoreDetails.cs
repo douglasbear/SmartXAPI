@@ -45,10 +45,10 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
 
-
+                    DataTable ServiceDetailsTable;
                     DataTable Master = ds.Tables["master"];
                     DataTable Details = ds.Tables["details"];
-                   // DataTable ServiceDetails = ds.Tables[ServiceDetails];
+                    DataTable ServiceDetailsTable = ds.Tables[servicedetails];
 
                      DataTable MasterTable;
                       MasterTable = ds.Tables["master"];
@@ -105,12 +105,12 @@ namespace SmartxAPI.Controllers
 
                     dLayer.SaveData("Inv_ServiceMaterials", "n_MaterialID", Details, connection, transaction);
 
-                //    for (int i = 0; i < ServiceDetails.Rows.Count; i++)
-                //     {
-                //         ServiceDetails.Rows[i]["N_ServiceInfoID"] = N_ServiceInfoID;
+                   for (int i = 0; i < ServiceDetails.Rows.Count; i++)
+                    {
+                        ServiceDetails.Rows[i]["N_ServiceInfoID"] = N_ServiceInfoID;
 
-                //     }
-                //     dLayer.SaveData("Inv_ServiceCondition", "N_ServiceInfoID", ServiceDetails, connection, transaction);
+                    }
+                    dLayer.SaveData("Inv_ServiceCondition", "N_ServiceInfoID", ServiceDetails, connection, transaction);
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
