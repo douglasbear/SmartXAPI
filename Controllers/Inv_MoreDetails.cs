@@ -48,32 +48,34 @@ namespace SmartxAPI.Controllers
 
                     DataTable Master = ds.Tables["master"];
                     DataTable Details = ds.Tables["details"];
+                   // DataTable ServiceDetails = ds.Tables[ServiceDetails];
+
                      DataTable MasterTable;
                       MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
                     DataRow MasterRow = Master.Rows[0];
                      // DataRow MasterRow = MasterTable.Rows[0];
-                    int N_DeviceInfoID = myFunctions.getIntVAL(MasterRow["N_DeviceInfoID"].ToString());
+                    int N_ServiceInfoID = myFunctions.getIntVAL(MasterRow["N_ServiceInfoID"].ToString());
                      int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["N_CompanyID"].ToString());
                     int N_UserID = myFunctions.getIntVAL(MasterRow["n_UserID"].ToString());
-                    string X_DeviceInfoCode = MasterRow["X_DeviceInfoCode"].ToString();
+                    string X_ServiceInfoCode = MasterRow["X_ServiceInfoCode"].ToString();
 
                     
                
-                    if (X_DeviceInfoCode == "@Auto")
+                    if (X_ServiceInfoCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_FormID", nFormID);
                           Params.Add("N_YearID", nFnYearID);
                         // Params.Add("N_UserID", N_UserID);
-                        X_DeviceInfoCode = dLayer.GetAutoNumber("Inv_DeviceInfo", "X_DeviceInfoCode", Params, connection, transaction);
-                        if (X_DeviceInfoCode == "")
+                        X_ServiceInfoCode = dLayer.GetAutoNumber("Inv_ServiceInfo", "X_ServiceInfoCode", Params, connection, transaction);
+                        if (X_ServiceInfoCode == "")
                         {
                             transaction.Rollback();
                             return Ok("Unable to generate Device Number");
                         }
-                        Master.Rows[0]["X_DeviceInfoCode"] = X_DeviceInfoCode;
+                        Master.Rows[0]["X_ServiceInfoCode"] = X_ServiceInfoCode;
                     }
                      if (MasterTable.Columns.Contains("n_FnYearID"))
                     {
@@ -81,31 +83,39 @@ namespace SmartxAPI.Controllers
                         MasterTable.Columns.Remove("n_FnYearID");
 
                     }
-                      if (N_DeviceInfoID > 0)
+                      if (N_ServiceInfoID > 0)
                     {
-                        dLayer.DeleteData("Inv_DeviceInfoDetails", "N_DeviceInfoID", N_DeviceInfoID, "N_CompanyID=" + N_CompanyID + " and N_DeviceInfoID=" + N_DeviceInfoID, connection, transaction);
-                        dLayer.DeleteData("Inv_DeviceInfo", "N_DeviceInfoID", N_DeviceInfoID, "N_CompanyID=" + N_CompanyID + " and N_DeviceInfoID=" + N_DeviceInfoID, connection, transaction);
+                        dLayer.DeleteData("Inv_ServiceCondition", "N_ServiceInfoID", N_ServiceInfoID, "N_CompanyID=" + N_CompanyID + " and N_ServiceInfoID=" + N_ServiceInfoID, connection, transaction);
+                        dLayer.DeleteData("Inv_ServiceInfo", "N_ServiceInfoID", N_ServiceInfoID, "N_CompanyID=" + N_CompanyID + " and N_ServiceInfoID=" + N_ServiceInfoID, connection, transaction);
                     }
                     // string DupCriteria = "";
 
 
-                     N_DeviceInfoID = dLayer.SaveData("Inv_DeviceInfo", "N_DeviceInfoID","","", Master, connection, transaction);
-                    if (N_DeviceInfoID <= 0)
+                     N_ServiceInfoID = dLayer.SaveData("Inv_ServiceInfo", "N_ServiceInfoID","","", Master, connection, transaction);
+                    if (N_ServiceInfoID <= 0)
                     {
                         transaction.Rollback();
                         return Ok("Unable to save");
                     }
                     for (int i = 0; i < Details.Rows.Count; i++)
                     {
-                        Details.Rows[i]["N_DeviceInfoID"] = N_DeviceInfoID;
+                        Details.Rows[i]["N_MaterialID"] = N_ServiceInfoID;
 
                     }
 
-                    dLayer.SaveData("Inv_DeviceInfoDetails", "N_DeviceDetailsID", Details, connection, transaction);
+                    dLayer.SaveData("Inv_ServiceMaterials", "n_MaterialID", Details, connection, transaction);
+
+                //    for (int i = 0; i < ServiceDetails.Rows.Count; i++)
+                //     {
+                //         ServiceDetails.Rows[i]["N_ServiceInfoID"] = N_ServiceInfoID;
+
+                //     }
+                //     dLayer.SaveData("Inv_ServiceCondition", "N_ServiceInfoID", ServiceDetails, connection, transaction);
+
                     transaction.Commit();
                     SortedList Result = new SortedList();
 
-                    return Ok(api.Success(Result, "Device Saved"));
+                    return Ok(api.Success(Result, "Service Info Saved"));
                 }
             }
             catch (Exception ex)
@@ -115,7 +125,7 @@ namespace SmartxAPI.Controllers
         }
 
                 [HttpDelete("delete")]
-        public ActionResult DeleteData(int nDeviceInfoID, int nCompanyID)
+        public ActionResult DeleteData(int nServiceInfoID, int nCompanyID)
         {
             int Results = 0;
              nCompanyID = myFunctions.GetCompanyID(User);
@@ -125,8 +135,8 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    Results = dLayer.DeleteData("Inv_DeviceInfo", "nDeviceInfoID", nDeviceInfoID, "N_CompanyID=" + nCompanyID  + "", connection);
-                    dLayer.DeleteData("Inv_DeviceInfoDetails", "nDeviceInfoID", nDeviceInfoID, "N_CompanyID=" + nCompanyID + "", connection);
+                    Results = dLayer.DeleteData("Inv_ServiceInfo", "nServiceInfoID", nServiceInfoID, "N_CompanyID=" + nCompanyID  + "", connection);
+                    dLayer.DeleteData("Inv_ServiceCondition", "nServiceInfoID", nServiceInfoID, "N_CompanyID=" + nCompanyID + "", connection);
 
                 }
                 if (Results > 0)
@@ -147,7 +157,7 @@ namespace SmartxAPI.Controllers
         }
 
            [HttpGet("details")]
-        public ActionResult device(int nDeviceInfoID, int nCompanyID,string x_SerialNo, bool list)
+        public ActionResult device(int nServiceInfoID, int nCompanyID,string x_SerialNo, bool list)
         {
              DataTable Master = new DataTable();
               DataTable Detail = new DataTable();
@@ -157,7 +167,7 @@ namespace SmartxAPI.Controllers
             string xCriteria = "", 
             sqlCommandText = "";
             Params.Add("@p1", nCompanyID);
-            Params.Add("@p2", nDeviceInfoID);
+            Params.Add("@p2", nServiceInfoID);
            
             Params.Add("@p3",x_SerialNo);
            
@@ -168,11 +178,11 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
 
-                    sqlCommandText = "select * from Vw_Inv_DeviceInfo Where N_CompanyID = @p1 and x_SerialNo = @p3";
+                    sqlCommandText = "select * from Vw_Inv_ServiceInfo Where N_CompanyID = @p1 and x_SerialNo = @p3";
                  
                    if(list)
                     {
-                        sqlCommandText= "select * from Vw_Inv_DeviceInfo Where N_CompanyID = @p1 ";
+                        sqlCommandText= "select * from Vw_Inv_ServiceInfo Where N_CompanyID = @p1 ";
                     }
                     Master = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     Master = api.Format(Master, "master");
@@ -184,9 +194,9 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        Params.Add("@nDeviceInfoID", Master.Rows[0]["nDeviceInfoID"].ToString());
+                        Params.Add("@nServiceInfoID", Master.Rows[0]["nServiceInfoID"].ToString());
                        ds.Tables.Add(Master);
-                        sqlCommandText = "Select * from Vw_Inv_DeviceDetails Where N_CompanyID=@p1 and n_DeviceInfoID=@n_DeviceInfoID";
+                        sqlCommandText = "Select * from Vw_Inv_ServiceInfo Where N_CompanyID=@p1 and n_ServiceInfoID=@n_ServiceInfoID";
                         Detail = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                   
                        if (Detail.Rows.Count == 0)
@@ -196,11 +206,7 @@ namespace SmartxAPI.Controllers
                              Detail = api.Format(Detail, "Detail");
                         ds.Tables.Add(Detail);
                       
-
                     }
-                 
-
-                
               
                 }
                  return Ok(api.Success(ds));
@@ -211,6 +217,41 @@ namespace SmartxAPI.Controllers
             }
 
         }   
+
+
+          [HttpGet("list")]
+        public ActionResult List()
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+
+
+            string sqlCommandText = "select  * from [Inv_ServiceInfo] where N_CompanyID=@p1";
+
+            Params.Add("@p1", nCompanyId);
+            SortedList OutPut = new SortedList();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    return Ok(api.Success(dt));
+
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
 
         
          
