@@ -218,6 +218,41 @@ namespace SmartxAPI.Controllers
 
         }   
 
+
+          [HttpGet("list")]
+        public ActionResult List()
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+
+
+            string sqlCommandText = "select  * from [Inv_ServiceInfo] where N_CompanyID=@p1";
+
+            Params.Add("@p1", nCompanyId);
+            SortedList OutPut = new SortedList();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    return Ok(api.Success(dt));
+
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+
         
          
         

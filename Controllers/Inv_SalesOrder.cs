@@ -37,7 +37,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetSalesOrderotationList(int? nCompanyId, int nFnYearId, bool bAllBranchData, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string screen,int nCustomerID,bool salesOrder)
+        public ActionResult GetSalesOrderotationList(int? nCompanyId, int nFnYearId, bool bAllBranchData, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string screen,int nCustomerID,bool salesOrder , int nFormID )
         {
             try
             {
@@ -51,11 +51,17 @@ namespace SmartxAPI.Controllers
                     string sqlCommandCount = "";
                     string Searchkey = "";
                     string criteria = "";
+                    string serviceOrderCriteria = "";
                      int nCompanyID = myFunctions.GetCompanyID(User);
                     int N_decimalPlace = 2;
                     string custPortalOrder="";
                     N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Sales", "Decimal_Place", "N_Value", nCompanyID, dLayer, connection));
                     N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
+                    if(nFormID ==1544)
+                    {
+                        serviceOrderCriteria="and N_FormID=1544 ";
+                    }
+                    
 
 
            string UserPattern = myFunctions.GetUserPattern(User);
@@ -135,19 +141,19 @@ namespace SmartxAPI.Controllers
                     if(salesOrder==false)
                     {
                       if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_pendingSO where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_pendingSO where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria +Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_pendingSO where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + Searchkey + " and N_SalesOrderId not in (select top(" + Count + ") N_SalesOrderId from vw_pendingSO where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_pendingSO where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria + Searchkey + " and N_SalesOrderId not in (select top(" + Count + ") N_SalesOrderId from vw_pendingSO where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + xSortBy + " ) " + xSortBy;
                     }
 
                     if(salesOrder==true)
                     {
                        if (Count==0)
                        {
-                         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + Searchkey + " " + xSortBy;
+                         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria + Searchkey + " " + xSortBy;
                        }
                        else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + Searchkey + " and N_SalesOrderId not in (select top(" + Count + ") N_SalesOrderId from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria + Searchkey + " and N_SalesOrderId not in (select top(" + Count + ") N_SalesOrderId from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + xSortBy + " ) " + xSortBy;
                     }
                     
 
@@ -158,7 +164,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria +Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
