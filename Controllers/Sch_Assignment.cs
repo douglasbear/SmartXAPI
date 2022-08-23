@@ -50,7 +50,7 @@ namespace SmartxAPI.Controllers
               if (nStudentID >0)
             {
            
-           crieteria=" and N_AssignmentID in (select N_AssignmentID from Sch_AssignmentStudents where N_StudentID="+nStudentID+" and N_CompanyID=@nCompanyId ) ";
+           crieteria=" and N_AssignmentID in (select N_AssignmentID from Sch_AssignmentStudents where N_StudentID="+nStudentID+" and N_CompanyID=@nCompanyId ) and isnull(B_IsSaveDraft,0)=0 ";
             }
             else
             {
