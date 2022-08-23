@@ -384,7 +384,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("getscreenprint")]
-        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, int nPreview, string xrptname, string docNumber, string partyName,bool printSave)
+        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, int nPreview, string xrptname, string docNumber, string partyName, bool printSave)
         {
             SortedList QueryParams = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -480,10 +480,25 @@ namespace SmartxAPI.Controllers
                             CreateBarcode(PICKList.ToString());
 
                         }
+                        if (nFormID == 1454)
+                        {
+                            DataTable dt = dLayer.ExecuteDataTable("select i_sign,N_ActionID from Log_ApprovalProcess where n_transid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                            foreach (DataRow var in dt.Rows)
+                            {
+                                SqlCommand cmd = new SqlCommand("Select i_sign from Log_ApprovalProcess where N_ActionID=" + var["N_ActionID"].ToString(), connection,transaction);
+                                byte[] content = (byte[])cmd.ExecuteScalar();
+                                MemoryStream stream = new MemoryStream(content);
+                                Image Sign = Image.FromStream(stream);
+                                Sign.Save("C://OLIVOSERVER2020/Images/"+ var["N_ActionID"].ToString() +".png");
+
+
+
+                            }
+                        }
 
                         string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
                         var path = client.GetAsync(URL);
-                        
+
                         //WHATSAPP MODE
                         if (nFormID == 64 || nFormID == 894)
                         {
@@ -499,7 +514,7 @@ namespace SmartxAPI.Controllers
                                     DataTable dt = dLayer.ExecuteDataTable("select * from vw_InvSalesInvoiceNo_Search_Cloud where n_salesid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
                                     string body = "Dear " + dt.Rows[0]["Customer"].ToString() + ",%0A%0A*_Thank you for your purchase._*%0A%0ADoc No : " + dt.Rows[0]["Invoice No"].ToString() + "%0ATotal Amount : " + dt.Rows[0]["n_BillAmtF"].ToString() + "%0ADiscount : " + dt.Rows[0]["n_DiscountDisplay"].ToString() + "%0AVAT Amount : " + dt.Rows[0]["n_TaxAmtF"].ToString() + "%0ARound Off : " + dt.Rows[0]["n_DiscountAmtF"].ToString() + "%0ANet Amount : " + dt.Rows[0]["x_BillAmt"].ToString() + " " + Currency + " %0A%0ARegards, %0A" + Company;
                                     string URLAPI = "https://api.textmebot.com/send.php?recipient=" + dt.Rows[0]["x_Phoneno1"].ToString() + "&apikey=" + WhatsappAPI + "&text=" + body;
-                                    string URLFILE = "https://api.textmebot.com/send.php?recipient=" + dt.Rows[0]["x_Phoneno1"].ToString() + "&apikey=" + WhatsappAPI + "&document=" + FILEPATH;                              
+                                    string URLFILE = "https://api.textmebot.com/send.php?recipient=" + dt.Rows[0]["x_Phoneno1"].ToString() + "&apikey=" + WhatsappAPI + "&document=" + FILEPATH;
                                     var MSGFile = clientFile.GetAsync(URLFILE);
                                     MSGFile.Wait();
                                     var MSG = client.GetAsync(URLAPI);
@@ -997,14 +1012,14 @@ namespace SmartxAPI.Controllers
                                     }
                                     else
                                     {
-                                        if (bRange && valueTo!="")
+                                        if (bRange && valueTo != "")
                                             Criteria = Criteria == "" ? xFeild + " " + ">= '" + value + "' and " + xFeild + " " + "<= '" + valueTo + "'" : Criteria + " and " + xFeild + " " + ">= '" + value + "' and " + xFeild + " " + "<= '" + valueTo + "'";
                                         else
                                             Criteria = Criteria == "" ? xFeild + " " + xOperator + " '" + value + "' " : Criteria + " and " + xFeild + " " + xOperator + " '" + value + "' ";
                                     }
                                 }
                             }
-                            if (bRange && valueTo!="")
+                            if (bRange && valueTo != "")
                                 x_Reporttitle = x_Reporttitle + FieldName + value + '-' + valueTo;
                             else
                                 x_Reporttitle = x_Reporttitle + FieldName + value;
