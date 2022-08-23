@@ -352,7 +352,7 @@ namespace SmartxAPI.Controllers
 
                         SalesReturnDetails = new DataTable();
                         SalesReturnDetails = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
-                         SalesReturnDetails = myFunctions.AddNewColumnToDataTable(SalesReturnDetails, "n_UnitQty", typeof(int), 1);
+                         SalesReturnDetails = myFunctions.AddNewColumnToDataTable(SalesReturnDetails, "n_UnitQty", typeof(double), 1);
                        
                         foreach (DataRow var1 in SalesReturnDetails.Rows)
                         {

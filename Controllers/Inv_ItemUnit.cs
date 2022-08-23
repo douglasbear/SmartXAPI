@@ -210,7 +210,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nComapnyID", nCompanyID);
             SortedList OutPut = new SortedList();
-            string sqlCommandText = "select * from Inv_ItemUnit where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@nComapnyID and ISNULL(N_ItemID,0)=0 and isnull(B_BaseUnit,0)=1";
+            string sqlCommandText = "select * from Inv_ItemUnit where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@nComapnyID and ISNULL(N_ItemID,0)=0 and isnull(B_BaseUnit,0)=1 order by N_ItemUnitID desc";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
