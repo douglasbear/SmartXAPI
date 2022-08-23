@@ -210,7 +210,7 @@ namespace SmartxAPI.Controllers
 
                     DetailSql = " SELECT        Inv_WarrantyContractDetails.N_CompanyID, Inv_WarrantyContractDetails.N_WarrantyID, Inv_WarrantyContractDetails.N_WarrantyDetailsID, Inv_WarrantyContractDetails.N_ItemID, Inv_WarrantyContractDetails.N_MainItemID, " +
                          " isNull(Inv_WarrantyContractDetails.N_Qty,0) as N_Qty, Inv_WarrantyContractDetails.N_BranchID, Inv_WarrantyContractDetails.N_LocationID, Inv_WarrantyContractDetails.N_ItemUnitID, Inv_WarrantyContractDetails.X_ItemRemarks,  " +
-                         " Inv_ItemUnit.X_ItemUnit, Inv_ItemMaster.X_ItemCode, Inv_ItemMaster.X_ItemName, isnull(Inv_WarrantyContractDetails.N_Qty,0)-isnull(vw_WarrantyItemSummery.N_UsedQty,0) as N_AvlQty,Inv_ItemMaster.N_ClassID " +
+                         " Inv_ItemUnit.X_ItemUnit, Inv_ItemMaster.X_ItemCode, Inv_ItemMaster.X_ItemName, isnull(Inv_WarrantyContractDetails.N_Qty,0)-isnull(vw_WarrantyItemSummery.N_UsedQty,0) as N_AvlQty,Inv_ItemMaster.N_ClassID, Inv_WarrantyContractDetails.N_ServiceItemID " +
 " FROM            Inv_WarrantyContractDetails LEFT OUTER JOIN " +
       "                   vw_WarrantyItemSummery ON Inv_WarrantyContractDetails.N_ItemID = vw_WarrantyItemSummery.N_ItemID AND Inv_WarrantyContractDetails.N_CompanyID = vw_WarrantyItemSummery.N_CompanyID AND " +
      "                    Inv_WarrantyContractDetails.N_WarrantyID = vw_WarrantyItemSummery.N_WarrantyID LEFT OUTER JOIN " +
