@@ -247,7 +247,7 @@ namespace SmartxAPI.Controllers
                         {
                             if(myFunctions.getIntVAL(PayCount.ToString())==0)
                             {
-                                DataTable dtSch_Sales=dLayer.ExecuteDataTable("select N_CompanyId,N_FnYearId,N_RefSalesID from Sch_Sales where N_CompanyId="+ nCompanyID +" and N_FnYearId="+nAcYearID+" and N_RefId="+nAdmissionID,Params,connection,transaction);
+                                DataTable dtSch_Sales=dLayer.ExecuteDataTable("select N_CompanyId,N_FnYearId,N_RefSalesID,N_SalesID from Sch_Sales where N_CompanyId="+ nCompanyID +" and N_FnYearId="+nAcYearID+" and N_RefId="+nAdmissionID,Params,connection,transaction);
 
                                 for (int j = 0; j < dtSch_Sales.Rows.Count; j++)
                                 {
@@ -265,7 +265,7 @@ namespace SmartxAPI.Controllers
                                         return Ok(api.Error(User, ex));
                                     }
 
-                                    dLayer.DeleteData("Sch_SalesDetails", "N_SalesID", myFunctions.getIntVAL(dtSch_Sales.Rows[j]["N_RefSalesID"].ToString()), "N_CompanyID =" + nCompanyID, connection, transaction);                   
+                                    dLayer.DeleteData("Sch_SalesDetails", "N_SalesID", myFunctions.getIntVAL(dtSch_Sales.Rows[j]["N_SalesID"].ToString()), "N_CompanyID =" + nCompanyID, connection, transaction);                   
                                 }
                                 dLayer.DeleteData("Sch_Sales", "N_RefId", nAdmissionID, "N_CompanyID =" + nCompanyID+" and N_FnYearId="+nAcYearID, connection, transaction);                                                  
                             }
@@ -340,27 +340,35 @@ namespace SmartxAPI.Controllers
                     //--------------------------------------------^^^^^^^^^^^^---------------------------------------------------- 
                     dLayer.ExecuteNonQuery("update Sch_Admission set N_CustomerID="+nCustomerID+"  where N_CompanyID="+nCompanyID+" and N_AcYearID="+nAcYearID+" and N_AdmissionID="+nAdmissionID, Params, connection, transaction);
 
-                    //--------------------------------------Sch_Sales - SALES - Posting--------------------------------------
-                    SortedList SalesParam = new SortedList();
-                    SalesParam.Add("N_CompanyID", nCompanyID);
-                    SalesParam.Add("N_AcYearID", nAcYearID);
-                    SalesParam.Add("N_BranchID", nBranchID);
-                    SalesParam.Add("N_LocationID ", nLocationID);
-                    SalesParam.Add("N_StudentID ", nAdmissionID);
-                    SalesParam.Add("N_CustomerID ", nCustomerID);
-                    SalesParam.Add("D_AdmDate ", Convert.ToDateTime(MasterTable.Rows[0]["D_AdmissionDate"].ToString()));
-                    SalesParam.Add("N_UserID ", nUserID);
-                    try
+                    object PayCount1 = dLayer.ExecuteScalar("select COUNT(Inv_PayReceiptDetails.N_InventoryID) from Inv_PayReceiptDetails INNER JOIN Sch_Sales ON Sch_Sales.N_CompanyID=Inv_PayReceiptDetails.n_companyid and Sch_Sales.N_RefSalesID=Inv_PayReceiptDetails.N_InventoryID where Inv_PayReceiptDetails.N_CompanyID="+ nCompanyID +" and Inv_PayReceiptDetails.X_TransType='SALES' and Sch_Sales.N_RefId="+ nAdmissionID, Params, connection, transaction);
+                    if (PayCount1 != null)
                     {
-                        dLayer.ExecuteNonQueryPro("SP_StudentAdmFee_Insert", SalesParam, connection, transaction);
+                        if(myFunctions.getIntVAL(PayCount1.ToString())==0)
+                        {
+
+                            //--------------------------------------Sch_Sales - SALES - Posting--------------------------------------
+                            SortedList SalesParam = new SortedList();
+                            SalesParam.Add("N_CompanyID", nCompanyID);
+                            SalesParam.Add("N_AcYearID", nAcYearID);
+                            SalesParam.Add("N_BranchID", nBranchID);
+                            SalesParam.Add("N_LocationID ", nLocationID);
+                            SalesParam.Add("N_StudentID ", nAdmissionID);
+                            SalesParam.Add("N_CustomerID ", nCustomerID);
+                            SalesParam.Add("D_AdmDate ", Convert.ToDateTime(MasterTable.Rows[0]["D_AdmissionDate"].ToString()));
+                            SalesParam.Add("N_UserID ", nUserID);
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_StudentAdmFee_Insert", SalesParam, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error(User, ex));
+                            }
+                            
+                            //----------------------------------------^^^^^^^^^^^^^^^^^^^^^^^^-------------------------------------
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        return Ok(api.Error(User, ex));
-                    }
-                    
-                    //----------------------------------------^^^^^^^^^^^^^^^^^^^^^^^^-------------------------------------
 
                     transaction.Commit();
                     return Ok(api.Success("Admission Completed"));
@@ -411,7 +419,7 @@ namespace SmartxAPI.Controllers
                 }
                 if(dt.Rows.Count==0)
                 {
-                    return Ok(api.Notice("No Results Found"));
+                   return Ok(api.Success(dt));
                 }
                 else
                 {
@@ -449,7 +457,7 @@ namespace SmartxAPI.Controllers
                     {
                         if(myFunctions.getIntVAL(PayCount.ToString())==0)
                         {
-                            DataTable dtSch_Sales=dLayer.ExecuteDataTable("select N_CompanyId,N_FnYearId,N_RefSalesID from Sch_Sales where N_CompanyId="+ nCompanyID +" and N_RefId="+nAdmissionID,Params,connection,transaction);
+                            DataTable dtSch_Sales=dLayer.ExecuteDataTable("select N_CompanyId,N_FnYearId,N_RefSalesID,N_SalesID from Sch_Sales where N_CompanyId="+ nCompanyID +" and N_RefId="+nAdmissionID,Params,connection,transaction);
 
                             for (int j = 0; j < dtSch_Sales.Rows.Count; j++)
                             {
@@ -467,9 +475,10 @@ namespace SmartxAPI.Controllers
                                     return Ok(api.Error(User, ex));
                                 }
 
-                                dLayer.DeleteData("Sch_SalesDetails", "N_SalesID", myFunctions.getIntVAL(dtSch_Sales.Rows[j]["N_RefSalesID"].ToString()), "N_CompanyID =" + nCompanyID, connection, transaction);                   
+                                dLayer.DeleteData("Sch_SalesDetails", "N_SalesID", myFunctions.getIntVAL(dtSch_Sales.Rows[j]["N_SalesID"].ToString()), "N_CompanyID =" + nCompanyID, connection, transaction);                   
                             }
                             dLayer.DeleteData("Sch_Sales", "N_RefId", nAdmissionID, "N_CompanyID =" + nCompanyID , connection, transaction);                                                  
+                            dLayer.ExecuteNonQuery("delete from Inv_Customer where N_CompanyID="+nCompanyID+" and N_CustomerID = (select N_CustomerID from Sch_Admission where N_CompanyID="+nCompanyID+" and N_AdmissionID= "+nAdmissionID+")", Params, connection, transaction);
                             Results = dLayer.DeleteData("Sch_Admission", "n_AdmissionID", nAdmissionID, "N_CompanyID =" + nCompanyID, connection, transaction);                   
                             if (Results > 0)
                             {
