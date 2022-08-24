@@ -47,33 +47,35 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
             object nBatchID = dLayer.ExecuteScalar("select n_AdmittedDivisionID from vw_schAdmission where N_AdmissionID= "+StudentID+" and  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID,Params, connection) ;
-            string sqlAssignment = "SELECT COUNT(*) as N_Count FROM vw_Sch_Assignment WHERE MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID  ;
+            string sqlAssignment = "SELECT COUNT(*) as N_Count FROM vw_Sch_Assignment WHERE MONTH(D_AssignedDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_AssignedDate) = YEAR(CURRENT_TIMESTAMP) and isnull(B_IsSaveDraft,0)=0 and  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID  ;
             string sqlAssignmentTotal = "SELECT COUNT(*) as N_Count FROM vw_Sch_Assignment WHERE N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID  ;
-            string sqlExam = "SELECT COUNT(*) as N_Count FROM vw_Sch_ExamTimeMaster WHERE N_BatchID= "+nBatchID+" and  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
+            string sqlExam = "SELECT COUNT(*) as N_Count FROM vw_Sch_Assignment WHERE N_FormID=1547 and isnull(B_IsSaveDraft,0)=0 and  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
+            string sqlPubResults = "SELECT COUNT(*) as N_Count FROM vw_Sch_Assignment WHERE N_FormID=1547 and isnull(b_PublishMark,0)=1 and  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
+           
            //string sqlAbsent = "SELECT COUNT(*) as N_Count FROM vw_SchAdmission WHERE x_Gender='FeMale' and N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
            
             SortedList Data = new SortedList();
             DataTable Assignment = new DataTable();
             DataTable AssignmentTotal = new DataTable();
             DataTable Exam = new DataTable();
-            //DataTable Absent = new DataTable();
-         
+            DataTable ExamResult = new DataTable();
+            
                      //bool B_customer = myFunctions.CheckPermission(nCompanyID, 1302, "Administrator", "X_UserCategory", dLayer, connection);
                     Assignment = dLayer.ExecuteDataTable(sqlAssignment, Params, connection);
                     AssignmentTotal = dLayer.ExecuteDataTable(sqlAssignmentTotal, Params, connection);
                     Exam = dLayer.ExecuteDataTable(sqlExam, Params, connection);
-                    //Absent = dLayer.ExecuteDataTable(sqlAbsent, Params, connection);
+                    ExamResult = dLayer.ExecuteDataTable(sqlPubResults, Params, connection);
 
 
                    Assignment.AcceptChanges();
                 AssignmentTotal.AcceptChanges();
                 Exam.AcceptChanges();
-                //Absent.AcceptChanges();
+                ExamResult.AcceptChanges();
             
                 if (Assignment.Rows.Count > 0) Data.Add("assignment", Assignment);
                 if (AssignmentTotal.Rows.Count > 0) Data.Add("assignmentTotal", AssignmentTotal);
                 if (Exam.Rows.Count > 0) Data.Add("exam", Exam);
-               // if (Absent.Rows.Count > 0) Data.Add("absent", Absent);
+                if (ExamResult.Rows.Count > 0) Data.Add("examResult", ExamResult);
            
                 return Ok(api.Success(Data));  
                 }
@@ -118,9 +120,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
  
             if (Count == 0)
-                sqlCommandText = "select top(10) * from vw_Sch_AssignmentStudents where  YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_FormID=1485 and isnull(B_IsSaveDraft,0)=0 and N_StudentID=" + nStudentID + " and N_CompanyID = " + nCompanyId + " and N_AcYearID="+nAcYearID + crieteria + Searchkey + " " + xSortBy ;
+                sqlCommandText = "select top(10) * from vw_Sch_AssignmentStudents where D_AssignedDate BETWEEN  DATEADD(DAY, -7, GETDATE())and GETDATE()  and N_FormID=1485 and isnull(B_IsSaveDraft,0)=0 and N_StudentID=" + nStudentID + " and N_CompanyID = " + nCompanyId + " and N_AcYearID="+nAcYearID + crieteria + Searchkey + " " + xSortBy ;
             else
-                sqlCommandText = "select top(10) * from vw_Sch_AssignmentStudents where YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_FormID=1485 and  isnull(B_IsSaveDraft,0)=0 and N_CompanyID = " + nStudentID + " and N_AcYearID="+nAcYearID + crieteria + "  " + Searchkey + " and N_AssignmentID not in (select top(" + Count + ") N_AssignmentID from vw_Sch_Assignment where N_CompanyID=@p1 " + crieteria + xSortBy + " )" + xSortBy;
+                sqlCommandText = "select top(10) * from vw_Sch_AssignmentStudents where D_AssignedDate BETWEEN  DATEADD(DAY, -7, GETDATE())and GETDATE() and N_FormID=1485 and  isnull(B_IsSaveDraft,0)=0 and N_CompanyID = " + nStudentID + " and N_AcYearID="+nAcYearID + crieteria + "  " + Searchkey + " and N_AssignmentID not in (select top(" + Count + ") N_AssignmentID from vw_Sch_Assignment where N_CompanyID=@p1 " + crieteria + xSortBy + " )" + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -133,7 +135,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "Select  count(*) from vw_Sch_AssignmentStudents Where YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_FormID=1485 and isnull(B_IsSaveDraft,0)=0 and N_CompanyID = " + nCompanyId + " and N_AcYearID="+nAcYearID + crieteria ;
+                    sqlCommandCount = "Select  count(*) from vw_Sch_AssignmentStudents Where D_AssignedDate BETWEEN  DATEADD(DAY, -7, GETDATE())and GETDATE() and N_FormID=1485 and isnull(B_IsSaveDraft,0)=0 and N_CompanyID = " + nCompanyId + " and N_AcYearID="+nAcYearID + crieteria ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

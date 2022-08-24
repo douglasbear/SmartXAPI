@@ -46,17 +46,14 @@ namespace SmartxAPI.Controllers
             string sqlCommandCount = "";
             string Searchkey = "";
             string crieteria="";
-
+            string condn="";
+            string vwname="vw_Sch_Assignment";
               if (nStudentID >0)
             {
-           
-           crieteria=" and N_AssignmentID in (select N_AssignmentID from Sch_AssignmentStudents where N_StudentID="+nStudentID+" and N_CompanyID=@nCompanyId ) and isnull(B_IsSaveDraft,0)=0 ";
+            vwname="vw_Sch_AssignmentDetails";
+            crieteria=" and N_StudentID="+nStudentID+" and isnull(B_IsSaveDraft,0)=0 ";
             }
-            else
-            {
-             crieteria="";
-          
-            }
+         
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (X_AssignmentCode like '%" + xSearchkey + "%' or X_Title like '%" + xSearchkey + "%' or X_Subject like '%" + xSearchkey + "%' or X_ClassDivision like '%" + xSearchkey + "%')";
 
@@ -75,9 +72,9 @@ namespace SmartxAPI.Controllers
             }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_Assignment where N_CompanyID=@nCompanyId and N_FormID=@nFormID and N_AcYearID=@nAcYearID  " + Searchkey + crieteria+" " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from "+vwname+" where N_CompanyID=@nCompanyId and N_FormID=@nFormID and N_AcYearID=@nAcYearID  " + Searchkey + crieteria+condn+" " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_Assignment where N_CompanyID=@nCompanyId and N_FormID=@nFormID and N_AcYearID=@nAcYearID " + Searchkey + crieteria+" and N_AssignmentID not in (select top(" + Count + ") N_AssignmentID from vw_Sch_Assignment where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + xSortBy + " ) " + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from "+vwname+" where N_CompanyID=@nCompanyId and N_FormID=@nFormID and N_AcYearID=@nAcYearID " + Searchkey + crieteria+condn+" and N_AssignmentID not in (select top(" + Count + ") N_AssignmentID from "+vwname+" where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID " + xSortBy + " ) " + " " + xSortBy;
 
             Params.Add("@nCompanyId", nCompanyID);
             Params.Add("@nAcYearID", nAcYearID);
@@ -90,7 +87,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_Sch_Assignment where N_CompanyID=@nCompanyId and N_FormID=@nFormID and N_AcYearID=@nAcYearID " + Searchkey + crieteria+"";
+                    sqlCommandCount = "select count(*) as N_Count  from "+vwname+" where N_CompanyID=@nCompanyId and N_FormID=@nFormID and N_AcYearID=@nAcYearID " + Searchkey + crieteria+condn+"";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
