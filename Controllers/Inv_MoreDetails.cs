@@ -159,7 +159,7 @@ namespace SmartxAPI.Controllers
         }
 
            [HttpGet("details")]
-        public ActionResult device(int nServiceInfoID, int nCompanyID, bool list)
+        public ActionResult device(int nServiceInfoID, int nCompanyID)
         {
              DataTable Master = new DataTable();
              DataTable DeviceDetails = new DataTable();
@@ -195,7 +195,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        Params.Add("@nServiceInfoID", Master.Rows[0]["nServiceInfoID"].ToString());
+                        // Params.Add("@nServiceInfoID", Master.Rows[0]["nServiceInfoID"].ToString());
                        ds.Tables.Add(Master);
 
                         string DeviceDetailsSql = "select * from vw_Inv_ServiceCondition where N_CompanyID=" + nCompanyID + " and N_ServiceInfoID=" + nServiceInfoID;
@@ -204,9 +204,9 @@ namespace SmartxAPI.Controllers
                     DeviceDetails = api.Format(DeviceDetails, "DeviceDetails");
                     ds.Tables.Add(DeviceDetails);
 
-                     int N_MaterialID = myFunctions.getIntVAL(ReqMaterials.Rows[0]["N_MaterialID"].ToString());
+                    //  int N_MaterialID = myFunctions.getIntVAL(ReqMaterials.Rows[0]["N_MaterialID"].ToString());
 
-                    string ReqMaterialsSql = "select * from vw_Inv_ServiceMaterials where N_CompanyID=" + nCompanyID + " and N_MaterialID=" + N_MaterialID;
+                    string ReqMaterialsSql = "select * from vw_Inv_ServiceMaterials where N_CompanyID=" + nCompanyID + " and N_MaterialID=" + nServiceInfoID;
 
                     ReqMaterials = dLayer.ExecuteDataTable(ReqMaterialsSql, Params, connection);
                     ReqMaterials = api.Format(ReqMaterials, "ReqMaterials");
