@@ -159,10 +159,11 @@ namespace SmartxAPI.Controllers
         }
 
            [HttpGet("details")]
-        public ActionResult device(int nServiceInfoID, int nCompanyID,string x_SerialNo, bool list)
+        public ActionResult device(int nServiceInfoID, int nCompanyID, bool list)
         {
              DataTable Master = new DataTable();
-              DataTable Detail = new DataTable();
+             DataTable DeviceDetails = new DataTable();
+               DataTable ReqMaterials = new DataTable();
             DataSet ds = new DataSet();
             SortedList Params = new SortedList();
             nCompanyID = myFunctions.GetCompanyID(User);
@@ -171,7 +172,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nServiceInfoID);
            
-            Params.Add("@p3",x_SerialNo);
+            // Params.Add("@p3",x_SerialNo);
            
          try
             {
@@ -180,14 +181,12 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
 
-                    sqlCommandText = "select * from vw_Service_Info Where N_CompanyID = @p1 and x_SerialNo = @p3";
+
+                    sqlCommandText = "select * from vw_Service_Info Where N_CompanyID = @p1 and N_ServiceInfoID=@p2";
                  
-                   if(list)
-                    {
-                        sqlCommandText= "select * from vw_Service_Info Where N_CompanyID = @p1 ";
-                    }
+
                     Master = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    Master = api.Format(Master, "master");
+                    Master = api.Format(Master, "Master");
 
                   
                     if (Master.Rows.Count == 0)
@@ -198,15 +197,21 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("@nServiceInfoID", Master.Rows[0]["nServiceInfoID"].ToString());
                        ds.Tables.Add(Master);
-                        sqlCommandText = "Select * from vw_Service_Info Where N_CompanyID=@p1 and n_ServiceInfoID=@n_ServiceInfoID";
-                        Detail = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                  
-                       if (Detail.Rows.Count == 0)
-                        {
-                            return Ok(api.Notice("No Results Found"));
-                        }
-                             Detail = api.Format(Detail, "Detail");
-                        ds.Tables.Add(Detail);
+
+                        string DeviceDetailsSql = "select * from vw_Inv_ServiceCondition where N_CompanyID=" + nCompanyID + " and N_ServiceInfoID=" + nServiceInfoID;
+
+                    DeviceDetails = dLayer.ExecuteDataTable(DeviceDetailsSql, Params, connection);
+                    DeviceDetails = api.Format(DeviceDetails, "DeviceDetails");
+                    ds.Tables.Add(DeviceDetails);
+
+                     int N_MaterialID = myFunctions.getIntVAL(ReqMaterials.Rows[0]["N_MaterialID"].ToString());
+
+                    string ReqMaterialsSql = "select * from vw_Inv_ServiceMaterials where N_CompanyID=" + nCompanyID + " and N_MaterialID=" + N_MaterialID;
+
+                    ReqMaterials = dLayer.ExecuteDataTable(ReqMaterialsSql, Params, connection);
+                    ReqMaterials = api.Format(ReqMaterials, "ReqMaterials");
+                    ds.Tables.Add(ReqMaterials);
+
                       
                     }
               
