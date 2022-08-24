@@ -154,14 +154,14 @@ namespace SmartxAPI.Controllers
 
                     dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
                 }
-                if(dt.Rows.Count==0)
-                {
-                    return Ok(api.Notice("No Results Found"));
-                }
-                else
-                {
+                // if(dt.Rows.Count==0)
+                // {
+                //     return Ok(api.Notice("No Results Found"));
+                // }
+                // else
+                // {
                     return Ok(api.Success(dt));
-                }
+                //}
                 
             }
             catch(Exception e)
