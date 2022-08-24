@@ -22,15 +22,16 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-
+        private readonly IMyAttachments myAttachments;
         private readonly int N_FormID =1485 ;
 
 
-        public Sch_Assignment(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Sch_Assignment(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf,IMyAttachments myAtt)
         {
             api = apifun;
             dLayer = dl;
             myFunctions = myFun;
+            myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
@@ -49,7 +50,7 @@ namespace SmartxAPI.Controllers
               if (nStudentID >0)
             {
            
-           crieteria=" and N_AssignmentID in (select N_AssignmentID from Sch_AssignmentStudents where N_StudentID="+nStudentID+" and N_CompanyID=@nCompanyId ) ";
+           crieteria=" and N_AssignmentID in (select N_AssignmentID from Sch_AssignmentStudents where N_StudentID="+nStudentID+" and N_CompanyID=@nCompanyId ) and isnull(B_IsSaveDraft,0)=0 ";
             }
             else
             {
@@ -110,7 +111,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult BusRegDetails(string xAssignmentCode)
+        public ActionResult BusRegDetails(string xAssignmentCode,int nFnYearID)
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
@@ -120,6 +121,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "select * from vw_Sch_Assignment where N_CompanyID=@p1  and x_AssignmentCode=@p2";
             Params.Add("@p1", nCompanyId);  
             Params.Add("@p2", xAssignmentCode);
+             Params.Add("@nFnYearID", nFnYearID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -143,6 +145,11 @@ namespace SmartxAPI.Controllers
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = api.Format(DetailTable, "Details");
                     dt.Tables.Add(DetailTable);
+
+                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_AssignmentID"].ToString()), 0, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FormID"].ToString()), nFnYearID, User, connection);
+                     Attachments = api.Format(Attachments, "attachments");
+                     dt.Tables.Add(Attachments);
+
                 }
                 return Ok(api.Success(dt));               
             }
@@ -159,8 +166,10 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
                     DataTable DetailTable;
+                    DataTable Attachment = ds.Tables["attachments"];
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
                     SortedList Params = new SortedList();
@@ -172,8 +181,12 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@nAssignmentID", nAssignmentID);
 
-                    dLayer.ExecuteNonQuery("update Sch_AssignmentStudents set N_Status=1, X_StudentNotes='"+xStudentNotes+"' where  N_CompanyID=@nCompanyID and N_AssignmentID=@nAssignmentID and N_StudentID ="+nStudentID, Params, connection);
-                   
+                    dLayer.ExecuteNonQuery("update Sch_AssignmentStudents set N_Status=1, X_StudentNotes='"+xStudentNotes+"' where  N_CompanyID=@nCompanyID and N_AssignmentID=@nAssignmentID and N_StudentID ="+nStudentID, Params, connection,transaction);
+                    if (Attachment.Rows.Count > 0)
+                    {
+                    myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["X_AssignmentCode"].ToString() + "-" + MasterTable.Rows[0]["X_Title"].ToString(), 0, MasterTable.Rows[0]["X_Title"].ToString(), MasterTable.Rows[0]["X_AssignmentCode"].ToString(), nAssignmentID, "Assignment Document", User, connection, transaction);
+                    }
+                    transaction.Commit();
                     return Ok(api.Success("updated sucessfully"));
                 }
             }
@@ -191,6 +204,7 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 DataTable DetailTable;
+                DataTable Attachment = ds.Tables["attachments"];
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
@@ -234,9 +248,13 @@ namespace SmartxAPI.Controllers
                     int nAssignStudentID = dLayer.SaveData("Sch_AssignmentStudents", "N_AssignStudentID", DetailTable, connection, transaction);
                     if (nAssignStudentID <= 0)
                     {
+                      
+                              
                         transaction.Rollback();
                         return Ok("Unable to save ");
+                               
                     }
+                    myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["X_AssignmentCode"].ToString() + "-" + MasterTable.Rows[0]["X_Title"].ToString(), 0, MasterTable.Rows[0]["X_Title"].ToString(), MasterTable.Rows[0]["X_AssignmentCode"].ToString(), nAssignmentID, "Assignment Document", User, connection, transaction);
                     transaction.Commit();
                     return Ok(api.Success("Assignment Created"));
 
