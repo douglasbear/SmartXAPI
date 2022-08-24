@@ -112,7 +112,7 @@ namespace SmartxAPI.Controllers
                         ServiceConditionTable.Rows[i]["N_ServiceInfoID"] = N_ServiceInfoID;
 
                     }
-                  N_ServiceInfoID = dLayer.SaveData("Inv_ServiceCondition", "N_ServiceInfoID", ServiceConditionTable, connection, transaction);
+                  N_ServiceInfoID = dLayer.SaveData("Inv_ServiceCondition", "N_ServiceConditionID", ServiceConditionTable, connection, transaction);
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
