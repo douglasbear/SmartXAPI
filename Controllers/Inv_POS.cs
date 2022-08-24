@@ -712,7 +712,7 @@ namespace SmartxAPI.Controllers
 
                                     if (WarrantyID <= 0) { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Warranty")); }
 
-                                    string WarrantyDetailSql = "select N_CompanyID," + WarrantyID + " as N_WarrantyID,0 as N_WarrantyDetailsID,N_ItemID,N_MainItemID,N_Qty," + MasterTable.Rows[0]["N_BranchID"].ToString() + " as N_BranchID," + MasterTable.Rows[0]["N_LocationID"].ToString() + " as N_LocationID,N_ItemUnitID,X_ItemRemarks from Inv_ItemWarranty where N_MainItemID =@nItemID and N_CompanyID=@nCompanyID";
+                                    string WarrantyDetailSql = "select N_CompanyID," + WarrantyID + " as N_WarrantyID,0 as N_WarrantyDetailsID,N_ItemID,N_MainItemID,N_Qty," + MasterTable.Rows[0]["N_BranchID"].ToString() + " as N_BranchID," + MasterTable.Rows[0]["N_LocationID"].ToString() + " as N_LocationID,N_ItemUnitID,X_ItemRemarks,N_ServiceItemID from Inv_ItemWarranty where N_MainItemID =@nItemID and N_CompanyID=@nCompanyID";
                                     DataTable WarrantyDetails = dLayer.ExecuteDataTable(WarrantyDetailSql, warrantyParams, connection, transaction);
 
                                     if (WarrantyDetails.Rows.Count > 0)
