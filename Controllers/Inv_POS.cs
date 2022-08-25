@@ -554,6 +554,7 @@ namespace SmartxAPI.Controllers
                     int N_PaymentMethodID = myFunctions.getIntVAL(MasterRow["n_PaymentMethodID"].ToString());
                     double N_MainDiscount = myFunctions.getVAL(MasterRow["N_MainDiscount"].ToString());
                     double N_DiscountAmtMaster = myFunctions.getVAL(MasterRow["N_DiscountAmt"].ToString());
+
                     int N_UserID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
                     int UserCategoryID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
                     int N_AmtSplit = 0;
@@ -775,24 +776,28 @@ namespace SmartxAPI.Controllers
                             }
                             }
                                 //Generate SalesOrder
-                           
+                                 int nPackageItemID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_ItemID"].ToString());
                                 DataTable SalesOrderMaster = dLayer.ExecuteDataTable(
                                 " select N_CompanyID,N_FnYearId,0 as N_SalesOrderId,'@Auto' as X_OrderNo,1544 as N_FormID,"
-                                + "N_BranchID,N_LocationID,N_CustomerId,D_EntryDate,D_SalesDate as D_OrderDate,N_BillAmt,N_BillAmtF,"+N_DiscountAmtMaster+" as N_DiscountAmt,N_DiscountAmtF,x_Notes,"
-                                + "N_UserID,0 as N_QuotationID,1 as N_Processed,N_ProjectID,N_SalesmanID ,N_SalesID,N_TaxAmt,N_TaxAmtF,"
-                                + "N_TaxCategoryID,N_TaxPercentage,"+N_MainDiscount+" as N_MainDiscount,N_MainDiscountF,N_CurrencyID,N_ExchangeRate,N_DiscountDisplay,N_CreatedUser,D_CreatedDate"
+                                + "N_BranchID,N_LocationID,N_CustomerId,D_EntryDate,D_SalesDate as D_OrderDate,N_BillAmt,N_BillAmtF,0 as N_DiscountAmt,0 as N_DiscountAmtF,x_Notes,"
+                                + "N_UserID,0 as N_QuotationID,1 as N_Processed,N_ProjectID,N_SalesmanID ,N_SalesID,"
+                                + "N_CurrencyID,N_ExchangeRate,N_CreatedUser,D_CreatedDate"
                                 + " from Inv_Sales where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID ", warrantyParams, connection, transaction);
                              
 
-                
-                             DataTable SalesOrderDetails = dLayer.ExecuteDataTable(
-                             "  select N_CompanyID,0 as N_SalesOrderID,0 as N_SalesOrderDetailsID,N_BranchId,N_LocationID,N_ItemID,N_Qty,N_ItemUnitID,N_MainSPrice,X_ItemRemarks,N_QtyDisplay,"
-                             + "N_ItemDiscAmt,N_MainQty,N_MainItemID,N_Sprice,N_SpriceF,N_ClassID,D_Entrydate,X_FreeDescription,N_TaxCategoryID1,N_TaxPercentage1,N_TaxAmt1,N_TaxCategoryID2,"
-                             + "N_TaxPercentage2,N_TaxAmt2,0 as N_QuotationID,N_Cost,N_ItemDiscAmtF,N_MainSpriceF,N_TaxAmt1F,N_TaxAmt2F,N_AWTSPrice,N_AWTSPriceF,N_AWTDisc,"
-                             + "N_AWTDiscF,N_PriceListID,N_PriceListAmount  from Inv_SalesDetails  where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID",   warrantyParams, connection, transaction);
+              
+              
+                                  DataTable SalesOrderDetails = dLayer.ExecuteDataTable(
+                                    "select Inv_ItemWarranty.N_CompanyID,0 as N_SalesOrderID,0 as N_SalesOrderDetailsID,Inv_ItemWarranty.N_ItemID,Inv_ItemWarranty.N_MainItemID,Inv_ItemWarranty.N_Qty,Inv_ItemWarranty.N_Qty as N_QtyDisplay,"
+                                    + "" + MasterTable.Rows[0]["N_BranchID"].ToString() + " as N_BranchID," + MasterTable.Rows[0]["N_LocationID"].ToString() + " as N_LocationID,Inv_ItemMaster.N_ClassID,"
+                                    + "Inv_ItemWarranty.N_ItemUnitID from Inv_ItemWarranty " 
+                                    + " LEFT OUTER JOIN " 
+                                     + " Inv_ItemMaster ON Inv_ItemWarranty.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemWarranty.N_ItemID = Inv_ItemMaster.N_ItemID where Inv_ItemWarranty.N_MainItemID = "+nPackageItemID+" and Inv_ItemWarranty.N_CompanyID=@nCompanyID", warrantyParams, connection, transaction);
+
+                             
                              if (SalesOrderMaster.Rows.Count > 0 && SalesOrderDetails.Rows.Count > 0)
                              {
-                                
+                
                                 Params["N_FormID"] = 1544;
                                  while (true)
                                 {
