@@ -209,7 +209,7 @@ namespace SmartxAPI.Controllers
                     // + "                         Inv_ItemUnit ON Inv_ItemMaster.N_CompanyID = Inv_ItemUnit.N_CompanyID AND Inv_ItemMaster.N_ItemUnitID = Inv_ItemUnit.N_ItemUnitID where Inv_WarrantyContractDetails.N_CompanyID=@nCompanyID and Inv_WarrantyContractDetails.N_WarrantyID=@nWarrantyID";
 
                     DetailSql = "SELECT Inv_WarrantyContractDetails.N_CompanyID, Inv_WarrantyContractDetails.N_WarrantyID, Inv_WarrantyContractDetails.N_WarrantyDetailsID, Inv_WarrantyContractDetails.N_ItemID, Inv_WarrantyContractDetails.N_MainItemID, " +
-              "ISNULL(Inv_WarrantyContractDetails.N_Qty, 0) AS N_Qty, Inv_WarrantyContractDetails.N_BranchID, Inv_WarrantyContractDetails.N_LocationID, Inv_WarrantyContractDetails.N_ItemUnitID, " +
+              "ISNULL(Inv_WarrantyContractDetails.N_Qty, 0) AS N_QtyUsed, Inv_WarrantyContractDetails.N_BranchID, Inv_WarrantyContractDetails.N_LocationID, Inv_WarrantyContractDetails.N_ItemUnitID, " +
               "Inv_WarrantyContractDetails.X_ItemRemarks, Inv_ItemUnit.X_ItemUnit, Inv_ItemMaster_1.X_ItemCode, Inv_ItemMaster_1.X_ItemName, ISNULL(Inv_WarrantyContractDetails.N_Qty, 0) " +
               "- ISNULL(vw_WarrantyItemSummery.N_UsedQty, 0) AS N_AvlQty, Inv_ItemMaster_1.N_ClassID, Inv_WarrantyContractDetails.N_ServiceItemID, Inv_ItemMaster.X_ItemCode AS X_ServiceItemCode, " +
               "Inv_ItemMaster.X_ItemName AS X_ServiceItem " +
@@ -244,7 +244,7 @@ namespace SmartxAPI.Controllers
                             if (balance == null)
                                 balance = 0;
 
-                            int qty = myFunctions.getIntVAL(DRows["N_Qty"].ToString());
+                            int qty = myFunctions.getIntVAL(DRows["N_QtyUsed"].ToString());
                             DRows["N_AvlQty"] = qty - myFunctions.getIntVAL(balance.ToString());
 
 
