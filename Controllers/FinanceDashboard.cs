@@ -123,7 +123,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("trialBalancelist")]
-        public ActionResult TrialBalanceList(int nFnYearID, int nPage, int nSizeperpage, bool b_AllBranchData, string xSearchkey, string xSortBy)
+        public ActionResult TrialBalanceList(int nComapanyID,int nFnYearID,int nBranchID,int nPage, int nSizeperpage, bool b_AllBranchData,DateTime d_Start,DateTime d_end, string xSearchkey, string xSortBy)
         {
             try
             {
@@ -131,15 +131,21 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     DataTable dt = new DataTable();
+                    DataTable tb = new DataTable();
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     int nUserID = myFunctions.GetUserID(User);
                     int Count = (nPage - 1) * nSizeperpage;
                     string sqlCommandText = "";
                     string Searchkey = "";
+                    string d_Date =d_Start.ToString("dd-MMM-yyyy") + "|" + d_end.ToString("dd-MMM-yyyy")  + "|";
+
                     Params.Add("@p1", nCompanyID);
                     Params.Add("@p2", nFnYearID);
                     Params.Add("@p3", nUserID);
+                    Params.Add("@p4",nBranchID);
+                    Params.Add("@p5",d_Date);
+                    
          
                     if (xSearchkey != null && xSearchkey.Trim() != "")
                         Searchkey = "and ( X_LedgerName like '%" + xSearchkey + "%' or X_LedgerCode like '%" + xSearchkey + "%' or N_Opening like '%" + xSearchkey + "%' or N_Debit like '%" + xSearchkey + "%' or N_Credit like '%" + xSearchkey + "%' or N_Balance like '%" + xSearchkey + "%' ) ";
@@ -148,11 +154,23 @@ namespace SmartxAPI.Controllers
                         xSortBy = " order by N_LedgerID desc";
                     else
                         xSortBy = " order by " + xSortBy;
-
+                       if (b_AllBranchData == true)
+                            {
+                                sqlCommandText = "SP_OpeningBalanceGenerate @p1,@p2,0,11,@p5,@p3,0";
+                             
+                            }
+                            else
+                            {
+                                sqlCommandText = "SP_OpeningBalanceGenerate @p1,@p2,0,11,@p5,@p3,@p4";
+                                
+                            }
+                    tb = dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                    tb = api.Format(tb,"Master");
+                    
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey ;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_FnYearID,N_LedgerID,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_UserID=@p3 " + Searchkey + " group by N_FnYearID,N_LedgerID,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance " ;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "and N_LedgerID not in (select top(" + Count + ") N_LedgerID from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2  " + Searchkey+ " ) ";
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_FnYearID,N_LedgerID,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_UserID=@p3 " + Searchkey + "and N_LedgerID not in (select top(" + Count + ") N_LedgerID from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2  " + Searchkey+ " ) group by N_FnYearID,N_LedgerID,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance " +xSortBy;
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
