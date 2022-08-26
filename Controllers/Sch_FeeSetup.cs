@@ -143,6 +143,55 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+
+
+        
+        // [HttpGet("details")]
+        // public ActionResult GradeListDetails(string xFeeSetupCode,int nFnYearID)
+        // {
+        //     DataSet dt=new DataSet();
+        //     SortedList Params=new SortedList();
+        //     int nCompanyID = myFunctions.GetCompanyID(User);
+        //     DataTable MasterTable = new DataTable();
+        //     DataTable DetailTable = new DataTable();
+  
+        //     string Mastersql = "select * from vw_Sch_FeeSetup where N_CompanyID=@p1 and x_FeeSetupCode=@p2 and N_AcYearID = @p3";
+        //     Params.Add("@p1", nCompanyID);
+        //     Params.Add("@p2", xFeeSetupCode);
+        //      Params.Add("@p3", nFnYearID);
+
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             MasterTable=dLayer.ExecuteDataTable(Mastersql,Params,connection); 
+
+        //             if (MasterTable.Rows.Count == 0)
+        //             {
+        //                 return Ok(_api.Warning("No Data Found !!"));
+        //             }
+
+        //             MasterTable = _api.Format(MasterTable, "Master");
+        //             dt.Tables.Add(MasterTable);
+
+        //             int x_FeeSetupCode = myFunctions.getIntVAL(MasterTable.Rows[0]["x_FeeSetupCode"].ToString());
+
+        //             string DetailSql = "select * from VW_CLASSFEESETUP where N_CompanyID=" + nCompanyID + " and x_FeeSetupCode=" + x_FeeSetupCode ;
+
+        //             DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+        //             DetailTable = _api.Format(DetailTable, "Details");
+        //             dt.Tables.Add(DetailTable);
+        //         }
+        //         return Ok(_api.Success(dt));
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(User,e));
+        //     }
+        // }
+
+
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nFeeSetupID)
         {
@@ -174,6 +223,63 @@ namespace SmartxAPI.Controllers
             catch (Exception ex)
             {
                 return Ok(_api.Error(User, ex));
+            }
+        }
+
+
+
+                  [HttpGet("dashboardList")]
+        public ActionResult GetAssignmentList(int nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
+
+            // if (xSearchkey != null && xSearchkey.Trim() != "")
+            
+            //     Searchkey = "and (N_FeeCodeID like '%" + xSearchkey + "%' OR X_FeeCode like '%" + xSearchkey + "%' OR X_FeeDescription like '%" + xSearchkey + "%')";
+
+            // if (xSortBy == null || xSortBy.Trim() == "")
+            //     xSortBy = " order by N_FeeCodeID desc";
+                
+       
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_FeeSetup where N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_FeeSetup where N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
+
+            Params.Add("@nCompanyID", nCompanyID);
+           
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    SortedList OutPut = new SortedList();
+
+                    sqlCommandCount = "select count(*) as N_Count  from vw_Sch_FeeSetup where N_CompanyID=@nCompanyID " + Searchkey + " ";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
             }
         }
 
