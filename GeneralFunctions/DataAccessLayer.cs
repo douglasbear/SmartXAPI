@@ -740,6 +740,8 @@ namespace SmartxAPI.GeneralFunctions
             }
             return true;
         }
+       
+
 
 
 
@@ -783,6 +785,7 @@ namespace SmartxAPI.GeneralFunctions
 
         public bool SaveFiles(DataTable FilesTable, string TableName, string PkeyName, int PkeyVal, string PrependStr, int CompanyID, SqlConnection connection, SqlTransaction transaction);
         public int SaveImage(string TableName,string FieldName,byte[] image,string keyFeild,int KeyValue,  SqlConnection connection,SqlTransaction transaction);
+        
 
 
     }
