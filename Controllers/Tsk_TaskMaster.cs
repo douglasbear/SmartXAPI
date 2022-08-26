@@ -1078,6 +1078,6 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
         }
-
     }
+
 }

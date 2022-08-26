@@ -22,6 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly IMyAttachments myAttachments;
+        private readonly ITaskController taskController;
         private readonly string connectionString;
         private readonly int FormID;
 
@@ -496,6 +497,12 @@ namespace SmartxAPI.Controllers
                     string x_OrderNo = MasterRow["x_OrderNo"].ToString();
                     int N_CustomerId = myFunctions.getIntVAL(MasterRow["n_CustomerId"].ToString());
                     bool B_IsService = true;
+                    int N_FormID=0;
+                    if(MasterTable.Columns.Contains("N_FormID"))
+                    {
+                        N_FormID=myFunctions.getIntVAL(MasterRow["N_FormID"].ToString());
+                    }
+
 
                     if (x_OrderNo == "@Auto")
                     {
@@ -566,6 +573,55 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        if(N_FormID==1546)
+                             {
+                                int N_AssigneeID=0;
+                                int N_CreatorID=0 ;
+                      
+                                string X_TaskSummary="";
+                                string X_TaskSummarySql="";
+                                string X_TaskDescription="";
+                                string X_TaskDescriptionSql="";
+              
+                                int N_SubmitterID=0;
+                                int N_ClosedUserID=0;
+                                DateTime D_DueDate;
+                                DateTime D_StartDate;
+                                DateTime D_EntryDate;
+                                int N_Status=0;
+                                string assigneeSql="";
+                                string creatorstring="";
+                                string dueDateSql="";
+                                bool Status=false;
+
+                                                 
+                                 foreach (DataRow var in DetailTable.Rows)
+                                {
+                                    assigneeSql="select N_AssignedTo from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
+                                    creatorstring="select N_UserID from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
+                                     X_TaskDescriptionSql="select X_ServiceDescription from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
+                                    X_TaskSummarySql="select X_ItemName from Inv_ItemMaster where N_ItemID="+myFunctions.getIntVAL(var["N_ItemID"].ToString())+" and N_CompamyID="+N_CompanyID+" ";
+                                    dueDateSql="select D_DeliveryDate from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
+
+                                    
+                                    N_AssigneeID =myFunctions.getIntVAL(dLayer.ExecuteScalar(assigneeSql,Params,connection,transaction).ToString());
+                                    N_CreatorID =myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring,Params,connection,transaction).ToString());
+                                    N_ClosedUserID =myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring,Params,connection,transaction).ToString());
+                                    N_SubmitterID =myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring,Params,connection,transaction).ToString());
+                                    X_TaskDescription =(dLayer.ExecuteScalar(X_TaskDescriptionSql,Params,connection,transaction).ToString());
+                                    X_TaskSummary =(dLayer.ExecuteScalar(X_TaskSummarySql,Params,connection,transaction).ToString());
+                                    D_DueDate =Convert.ToDateTime(dLayer.ExecuteScalar(dueDateSql,Params,connection,transaction).ToString());
+                                    D_StartDate =Convert.ToDateTime(var["D_EntryDate"].ToString());
+                                    D_EntryDate =Convert.ToDateTime(var["D_EntryDate"].ToString());
+                                    N_Status=2;
+                                    Status=taskController.SaveGeneralTask(N_CompanyID,X_TaskSummary, X_TaskDescription, N_AssigneeID,N_CreatorID,N_SubmitterID,N_ClosedUserID,D_DueDate,D_StartDate,D_EntryDate,N_Status, connection, transaction);
+                                    if(Status==false)
+                                    {   
+                                        transaction.Rollback();
+                                          return Ok("Unable to save sales order");
+                                    }
+                                 }
+                             }
                         SortedList CustomerParams = new SortedList();
                         CustomerParams.Add("@nCustomerID", N_CustomerId);
                         DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID=@nCustomerID", CustomerParams, connection, transaction);

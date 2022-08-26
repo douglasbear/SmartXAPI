@@ -145,7 +145,6 @@ namespace SmartxAPI.Controllers
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
 
-          
             string sqlCommandText = "Select * from Acc_VoucherMaster left outer join Acc_MastLedger on Acc_VoucherMaster.N_DefLedgerID = Acc_MastLedger.N_LedgerID "+
                                     "  and Acc_VoucherMaster.N_FnYearID=Acc_MastLedger.N_FnYearID and Acc_VoucherMaster.N_CompanyID=Acc_MastLedger.N_CompanyID  "+
                                     "  left outer join Inv_CustomerProjects  on Acc_VoucherMaster.N_ProjectID = Inv_CustomerProjects.N_ProjectID"+
