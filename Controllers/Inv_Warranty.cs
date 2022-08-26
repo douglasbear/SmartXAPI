@@ -326,7 +326,6 @@ DetailTable.AcceptChanges();
                         }
                         MasterTable.Rows[0]["X_ClaimCode"] = xClaimCode;
                     }
-                    MasterTable.Columns.Remove("n_FnYearID");
 
                     nClaimID = dLayer.SaveData("Inv_WarrantyClaim", "N_ClaimID", "", "", MasterTable, connection, transaction);
                     if (nClaimID <= 0)
