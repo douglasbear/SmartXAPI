@@ -293,7 +293,7 @@ namespace SmartxAPI.Controllers
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable = _api.Format(MasterTable, "Master");
                         DetailSql = "";
-                        DetailSql = "select * from vw_WarrantyToSODetails where N_CompanyId=@nCompanyID and N_ClaimID=@nClaimID";
+                        DetailSql = "select * from vw_WarrantyToSODetails where N_CompanyId=@nCompanyID and N_ClaimID=@nClaimID and N_ClassID=4";
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                         DetailTable = _api.Format(DetailTable, "Details");
                         dt.Tables.Add(MasterTable);
