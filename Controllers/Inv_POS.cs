@@ -776,6 +776,7 @@ namespace SmartxAPI.Controllers
                             }
                                 //Generate SalesOrder
                            
+
                         //         DataTable SalesOrderMaster = dLayer.ExecuteDataTable(
                         //         " select N_CompanyID,N_FnYearId,0 as N_SalesOrderId,'@Auto' as X_OrderNo,1544 as N_FormID,"
                         //         + "N_BranchID,N_LocationID,N_CustomerId,D_EntryDate,D_SalesDate as D_OrderDate,N_BillAmt,N_BillAmtF,"+N_DiscountAmtMaster+" as N_DiscountAmt,N_DiscountAmtF,x_Notes,"
@@ -805,9 +806,7 @@ namespace SmartxAPI.Controllers
                         //         if (X_ServiceCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Order entry")); }
                         //         SalesOrderMaster.Rows[0]["X_OrderNo"] = X_ServiceCode;
 
-
-
-
+                     
                         //         int nOrderID = dLayer.SaveData("Inv_SalesOrder", "N_SalesOrderId", SalesOrderMaster, connection, transaction);
                         //         if (nOrderID <= 0)
                         //         {
@@ -827,7 +826,7 @@ namespace SmartxAPI.Controllers
 
 
                         //      }
-                        
+
                         
                         
                         }
