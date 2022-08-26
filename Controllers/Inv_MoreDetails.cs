@@ -45,15 +45,17 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
 
-
+                  
                     DataTable Master = ds.Tables["master"];
                     DataTable Details = ds.Tables["details"];
-                   // DataTable ServiceDetails = ds.Tables[ServiceDetails];
+                  
 
                      DataTable MasterTable;
+                     DataTable ServiceConditionTable;
                       MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
                     DataRow MasterRow = Master.Rows[0];
+                    ServiceConditionTable = ds.Tables["servicecondition"];
                      // DataRow MasterRow = MasterTable.Rows[0];
                     int N_ServiceInfoID = myFunctions.getIntVAL(MasterRow["N_ServiceInfoID"].ToString());
                      int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
@@ -105,12 +107,12 @@ namespace SmartxAPI.Controllers
 
                     dLayer.SaveData("Inv_ServiceMaterials", "n_MaterialID", Details, connection, transaction);
 
-                //    for (int i = 0; i < ServiceDetails.Rows.Count; i++)
-                //     {
-                //         ServiceDetails.Rows[i]["N_ServiceInfoID"] = N_ServiceInfoID;
+                   for (int i = 0; i < ServiceConditionTable.Rows.Count; i++)
+                    {
+                        ServiceConditionTable.Rows[i]["N_ServiceInfoID"] = N_ServiceInfoID;
 
-                //     }
-                //     dLayer.SaveData("Inv_ServiceCondition", "N_ServiceInfoID", ServiceDetails, connection, transaction);
+                    }
+                  N_ServiceInfoID = dLayer.SaveData("Inv_ServiceCondition", "N_ServiceConditionID", ServiceConditionTable, connection, transaction);
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
@@ -157,7 +159,7 @@ namespace SmartxAPI.Controllers
         }
 
            [HttpGet("details")]
-        public ActionResult device(int nServiceInfoID, int nCompanyID, bool list)
+        public ActionResult device(int nServiceInfoID, int nCompanyID)
         {
              DataTable Master = new DataTable();
              DataTable DeviceDetails = new DataTable();
@@ -179,8 +181,10 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
 
+
                     sqlCommandText = "select * from vw_Service_Info Where N_CompanyID = @p1 and N_ServiceInfoID=@p2";
                  
+
                     Master = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     Master = api.Format(Master, "Master");
 
@@ -191,21 +195,23 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        Params.Add("@nServiceInfoID", Master.Rows[0]["nServiceInfoID"].ToString());
+                        // Params.Add("@nServiceInfoID", Master.Rows[0]["nServiceInfoID"].ToString());
                        ds.Tables.Add(Master);
+
                         string DeviceDetailsSql = "select * from vw_Inv_ServiceCondition where N_CompanyID=" + nCompanyID + " and N_ServiceInfoID=" + nServiceInfoID;
 
                     DeviceDetails = dLayer.ExecuteDataTable(DeviceDetailsSql, Params, connection);
                     DeviceDetails = api.Format(DeviceDetails, "DeviceDetails");
                     ds.Tables.Add(DeviceDetails);
 
-                     int N_MaterialID = myFunctions.getIntVAL(ReqMaterials.Rows[0]["N_MaterialID"].ToString());
+                    //  int N_MaterialID = myFunctions.getIntVAL(ReqMaterials.Rows[0]["N_MaterialID"].ToString());
 
-                    string ReqMaterialsSql = "select * from vw_Inv_ServiceMaterials where N_CompanyID=" + nCompanyID + " and N_MaterialID=" + N_MaterialID;
+                    string ReqMaterialsSql = "select * from vw_Inv_ServiceMaterials where N_CompanyID=" + nCompanyID + " and N_MaterialID=" + nServiceInfoID;
 
                     ReqMaterials = dLayer.ExecuteDataTable(ReqMaterialsSql, Params, connection);
                     ReqMaterials = api.Format(ReqMaterials, "ReqMaterials");
                     ds.Tables.Add(ReqMaterials);
+
                       
                     }
               
@@ -252,11 +258,7 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(User, e));
             }
-        }
-
-        
-         
-        
+        }  
     }
 }
     

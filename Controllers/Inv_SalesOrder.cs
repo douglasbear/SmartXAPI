@@ -57,9 +57,9 @@ namespace SmartxAPI.Controllers
                     string custPortalOrder="";
                     N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Sales", "Decimal_Place", "N_Value", nCompanyID, dLayer, connection));
                     N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
-                    if(nFormID ==1544)
+                    if(nFormID ==1546)
                     {
-                        serviceOrderCriteria="and N_FormID=1544 ";
+                        serviceOrderCriteria="and N_FormID=1546 ";
                     }
                     
 
@@ -194,7 +194,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID, int nQuotationID, int n_OpportunityID)
+        public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID, int nQuotationID, int n_OpportunityID,int nClaimID)
         {
               if (xOrderNo != null)
                 xOrderNo = xOrderNo.Replace("%2F", "/");
