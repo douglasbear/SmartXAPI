@@ -55,8 +55,9 @@ namespace SmartxAPI.Controllers
                     int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["N_CompanyID"].ToString());
                     int N_UserID = myFunctions.getIntVAL(MasterRow["n_UserID"].ToString());
+                    string x_SerialNo =MasterRow["X_SerialNo"].ToString();
                     string x_DeviceCode = MasterRow["X_DeviceCode"].ToString();
-
+                        
 
 
                     if (x_DeviceCode == "@Auto")
@@ -72,6 +73,13 @@ namespace SmartxAPI.Controllers
                             return Ok("Unable to generate Device Number");
                         }
                         Master.Rows[0]["X_DeviceCode"] = x_DeviceCode;
+
+
+            object serialNoCount = dLayer.ExecuteScalar("select count(N_DeviceID) from Inv_Device  Where X_SerialNo ='" + x_SerialNo.Trim() + "' and N_CompanyID=" + N_CompanyID, Params, connection,transaction);
+                         if( myFunctions.getIntVAL(serialNoCount.ToString())>0){
+                              transaction.Rollback();
+                             return Ok(api.Error(User, "Serial Number Already Exist"));
+                         }
                     }
                     if (MasterTable.Columns.Contains("n_FnYearID"))
                     {
