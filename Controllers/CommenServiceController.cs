@@ -206,8 +206,8 @@ namespace SmartxAPI.Controllers
                                 //     }
                             }
                             connectionString = cofig.GetConnectionString(activeDbUri);
-                            // if(companyid>0)
-                            // {
+                            if(companyid>0)
+                            {
                             using (SqlConnection cnn = new SqlConnection(connectionString))
                             {
                                 cnn.Open();
@@ -284,9 +284,9 @@ namespace SmartxAPI.Controllers
                                 }
 
                             }
-                            // }else{
-                            //     return Ok(_api.Error(User,"CompanyNotFound"));
-                            // }
+                            }else{
+                                return Ok(_api.Error(User,"CompanyNotFound"));
+                            }
                         }
                     }
                     catch (Exception ex)
