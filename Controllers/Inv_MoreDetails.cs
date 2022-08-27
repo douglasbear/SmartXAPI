@@ -116,7 +116,7 @@ namespace SmartxAPI.Controllers
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
-
+                    Result.Add("N_ServiceInfoID",N_ServiceInfoID);
                     return Ok(api.Success(Result, "Service Info Saved"));
                 }
             }

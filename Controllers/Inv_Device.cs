@@ -32,6 +32,43 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
+
+        [HttpGet("list")]
+        public ActionResult invDeviceTypeList()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            
+           
+            string sqlCommandText = "select  * from Inv_Device where N_CompanyID=@p1 order by X_DeviceCode desc";
+            Params.Add("@p1", nCompanyId);
+           
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(dt));
+                    }
+
+                }
+                
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+
         [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
