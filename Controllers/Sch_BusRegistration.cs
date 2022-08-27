@@ -142,6 +142,14 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nRegistrationID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RegistrationID"].ToString());
+                int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
+                int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationID"].ToString());
+                int nUserID = myFunctions.GetUserID(User);
+
+                if (MasterTable.Columns.Contains("N_BranchID"))
+                    MasterTable.Columns.Remove("N_BranchID");
+                if (MasterTable.Columns.Contains("N_LocationID"))
+                    MasterTable.Columns.Remove("N_LocationID");
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -161,10 +169,41 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_RegistrationCode"] = Code;
                     }
 
-                    if (nRegistrationID > 0) 
-                    {  
-                        dLayer.DeleteData("Sch_BusRegistration", "n_RegistrationID", nRegistrationID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
+                    if(nRegistrationID>0)
+                    {
+                        object PayCount = dLayer.ExecuteScalar("select COUNT(Inv_PayReceiptDetails.N_InventoryID) from Inv_PayReceiptDetails INNER JOIN Sch_Sales ON Sch_Sales.N_CompanyID=Inv_PayReceiptDetails.n_companyid and Sch_Sales.N_RefSalesID=Inv_PayReceiptDetails.N_InventoryID where Inv_PayReceiptDetails.N_CompanyID="+ nCompanyID +" and Inv_PayReceiptDetails.X_TransType='SALES' and Sch_Sales.N_Type=2 and Sch_Sales.N_RefId="+ nRegistrationID, Params, connection, transaction);
+                        if (PayCount != null)
+                        {
+                            if(myFunctions.getIntVAL(PayCount.ToString())==0)
+                            {
+                                DataTable dtSch_Sales=dLayer.ExecuteDataTable("select N_CompanyId,N_FnYearId,N_RefSalesID,N_SalesID from Sch_Sales where N_CompanyId="+ nCompanyID +" and N_FnYearId="+nFnYearId+" and N_RefId="+nRegistrationID+" and N_Type=2",Params,connection,transaction);
+
+                                for (int j = 0; j < dtSch_Sales.Rows.Count; j++)
+                                {
+                                    SortedList DeleteParams = new SortedList(){
+                                    {"N_CompanyID",nCompanyID},
+                                    {"X_TransType","SALES"},
+                                    {"N_VoucherID",myFunctions.getIntVAL(dtSch_Sales.Rows[j]["N_RefSalesID"].ToString())}};
+                                    try
+                                    {
+                                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(api.Error(User, ex));
+                                    }
+
+                                    dLayer.DeleteData("Sch_SalesDetails", "N_SalesID", myFunctions.getIntVAL(dtSch_Sales.Rows[j]["N_SalesID"].ToString()), "N_CompanyID =" + nCompanyID, connection, transaction);                   
+                                }
+                                dLayer.DeleteData("Sch_Sales", "N_RefId", nRegistrationID, "N_CompanyID =" + nCompanyID+" and N_FnYearId="+nFnYearId+" and N_Type=2", connection, transaction);                                                  
+                            }
+                        }
+
                     }
+
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_RegistrationCode='" + MasterTable.Rows[0]["X_RegistrationCode"]  + "'";
+                    string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
 
                     nRegistrationID = dLayer.SaveData("Sch_BusRegistration", "n_RegistrationID", MasterTable, connection, transaction);
                     if (nRegistrationID <= 0)
@@ -172,11 +211,42 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(api.Error(User,"Unable to save"));
                     }
-                    else
+
+                    //Bus Fee Payment
+                    object PayCount1 = dLayer.ExecuteScalar("select COUNT(Inv_PayReceiptDetails.N_InventoryID) from Inv_PayReceiptDetails INNER JOIN Sch_Sales ON Sch_Sales.N_CompanyID=Inv_PayReceiptDetails.n_companyid and Sch_Sales.N_RefSalesID=Inv_PayReceiptDetails.N_InventoryID where Inv_PayReceiptDetails.N_CompanyID="+ nCompanyID +" and Inv_PayReceiptDetails.X_TransType='SALES'  and Sch_Sales.N_Type=2 and Sch_Sales.N_RefId="+ myFunctions.getIntVAL(MasterTable.Rows[0]["N_AdmissionID"].ToString()), Params, connection, transaction);
+                    if (PayCount1 != null)
                     {
-                        transaction.Commit();
-                        return Ok(api.Success("Bus Registration Completed"));
+                        if(myFunctions.getIntVAL(PayCount1.ToString())==0)
+                        {
+
+                            //--------------------------------------FEES - Posting--------------------------------------
+                            SortedList SalesParam = new SortedList();
+                            SalesParam.Add("N_CompanyID", nCompanyID);
+                            SalesParam.Add("N_AcYearID", nFnYearId);
+                            SalesParam.Add("N_BranchID", nBranchID);
+                            SalesParam.Add("N_LocationID ", nLocationID);
+                            SalesParam.Add("N_StudentID ", myFunctions.getIntVAL(MasterTable.Rows[0]["N_AdmissionID"].ToString()));
+                            SalesParam.Add("D_AdmDate ", "");
+                            SalesParam.Add("N_UserID ", nUserID);
+                            SalesParam.Add("N_Type ", 2);
+                            SalesParam.Add("N_BusRegID ", nRegistrationID);
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_StudentAdmFee_Insert", SalesParam, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error(User, ex));
+                            }
+                            
+                            //----------------------------------------^^^^^^^^^^^^^^^^^^^^^^^^-------------------------------------
+                        }
                     }
+
+                    transaction.Commit();
+                    return Ok(api.Success("Bus Registration Completed"));
+
                 }
             }
             catch (Exception ex)
@@ -233,6 +303,40 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+
+                    if(nRegistrationID>0)
+                    {
+                        object PayCount = dLayer.ExecuteScalar("select COUNT(Inv_PayReceiptDetails.N_InventoryID) from Inv_PayReceiptDetails INNER JOIN Sch_Sales ON Sch_Sales.N_CompanyID=Inv_PayReceiptDetails.n_companyid and Sch_Sales.N_RefSalesID=Inv_PayReceiptDetails.N_InventoryID where Inv_PayReceiptDetails.N_CompanyID="+ nCompanyID +" and Inv_PayReceiptDetails.X_TransType='SALES' and Sch_Sales.N_Type=2 and Sch_Sales.N_RefId="+ nRegistrationID, Params, connection, transaction);
+                        if (PayCount != null)
+                        {
+                            if(myFunctions.getIntVAL(PayCount.ToString())==0)
+                            {
+                                DataTable dtSch_Sales=dLayer.ExecuteDataTable("select N_CompanyId,N_FnYearId,N_RefSalesID,N_SalesID from Sch_Sales where N_CompanyId="+ nCompanyID +" and N_RefId="+nRegistrationID+" and N_Type=2",Params,connection,transaction);
+
+                                for (int j = 0; j < dtSch_Sales.Rows.Count; j++)
+                                {
+                                    SortedList DeleteParams = new SortedList(){
+                                    {"N_CompanyID",nCompanyID},
+                                    {"X_TransType","SALES"},
+                                    {"N_VoucherID",myFunctions.getIntVAL(dtSch_Sales.Rows[j]["N_RefSalesID"].ToString())}};
+                                    try
+                                    {
+                                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(api.Error(User, ex));
+                                    }
+
+                                    dLayer.DeleteData("Sch_SalesDetails", "N_SalesID", myFunctions.getIntVAL(dtSch_Sales.Rows[j]["N_SalesID"].ToString()), "N_CompanyID =" + nCompanyID, connection, transaction);                   
+                                }
+                                dLayer.DeleteData("Sch_Sales", "N_RefId", nRegistrationID, "N_CompanyID =" + nCompanyID+" and N_Type=2", connection, transaction);                                                  
+                            }
+                        }
+
+                    }
+
                     Results = dLayer.DeleteData("Sch_BusRegistration", "n_RegistrationID", nRegistrationID, "N_CompanyID =" + nCompanyID, connection, transaction);                   
                 
                     if (Results > 0)
