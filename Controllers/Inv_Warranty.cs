@@ -359,6 +359,110 @@ DetailTable.AcceptChanges();
             }
         }
 
+        [HttpGet("list")]
+        public ActionResult GetGuardianList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_ClaimCode like '%" + xSearchkey + "%' or X_CustomerName like '%" + xSearchkey + "%' or X_WarrantyNo like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_ClaimID desc";
+            else
+            {
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "N_ClaimID":
+                        xSortBy = "N_ClaimID " + xSortBy.Split(" ")[1];
+                        break;
+                    default: break;
+                }
+                xSortBy = " order by " + xSortBy;
+            }
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_WarrantyClaim where N_CompanyID=@nCompanyID  " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_WarrantyClaim where N_CompanyID=@nCompanyID  " + Searchkey + " and N_ClaimID not in (select top(" + Count + ") N_ClaimID from vw_Inv_WarrantyClaim where N_CompanyID=@nCompanyID " + xSortBy + " ) " + " " + xSortBy;
+
+            Params.Add("@nCompanyID", nCompanyID);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    SortedList OutPut = new SortedList();
+
+                    sqlCommandCount = "select count(*) as N_Count  from vw_Inv_WarrantyClaim where N_CompanyID=@nCompanyID " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+        [HttpGet("warrantydetails")]
+        public ActionResult ExamTimeTableDetails(string xClaimCode)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataSet dt = new DataSet();
+                    SortedList Params = new SortedList();
+                    DataTable MasterTable = new DataTable();
+                    DataTable DetailTable = new DataTable();
+                    DataTable DataTable = new DataTable();
+
+                    string Mastersql = "";
+                    string DetailSql = "";
+
+                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    Params.Add("@xClaimCode", xClaimCode);
+                    Mastersql = "select * from vw_Inv_WarrantyClaim where N_CompanyID=@nCompanyID and X_ClaimCode=@xClaimCode ";
+                   
+                    MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                    if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                    int nClaimID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ClaimID"].ToString());
+                    Params.Add("@nClaimID", nClaimID);
+
+                    MasterTable = _api.Format(MasterTable, "Master");
+                    DetailSql = "select * from vw_Inv_WarrantyClaimDetails where N_CompanyID=@nCompanyID and N_ClaimID=@nClaimID ";
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    DetailTable = _api.Format(DetailTable, "Details");
+                    dt.Tables.Add(MasterTable);
+                    dt.Tables.Add(DetailTable);
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
+
 
 
 
