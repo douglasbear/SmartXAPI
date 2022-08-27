@@ -34,7 +34,7 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
-             [HttpPost("Save")]
+        [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
@@ -45,31 +45,31 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
 
-                  
+
                     DataTable Master = ds.Tables["master"];
                     DataTable Details = ds.Tables["details"];
-                  
 
-                     DataTable MasterTable;
-                     DataTable ServiceConditionTable;
-                      MasterTable = ds.Tables["master"];
+
+                    DataTable MasterTable;
+                    DataTable ServiceConditionTable;
+                    MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
                     DataRow MasterRow = Master.Rows[0];
                     ServiceConditionTable = ds.Tables["servicecondition"];
-                     // DataRow MasterRow = MasterTable.Rows[0];
+                    // DataRow MasterRow = MasterTable.Rows[0];
                     int N_ServiceInfoID = myFunctions.getIntVAL(MasterRow["N_ServiceInfoID"].ToString());
-                     int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["N_CompanyID"].ToString());
                     int N_UserID = myFunctions.getIntVAL(MasterRow["n_UserID"].ToString());
                     string X_ServiceInfoCode = MasterRow["X_ServiceInfoCode"].ToString();
 
-                    
-               
+
+
                     if (X_ServiceInfoCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_FormID", nFormID);
-                          Params.Add("N_YearID", nFnYearID);
+                        Params.Add("N_YearID", nFnYearID);
                         // Params.Add("N_UserID", N_UserID);
                         X_ServiceInfoCode = dLayer.GetAutoNumber("Inv_ServiceInfo", "X_ServiceInfoCode", Params, connection, transaction);
                         if (X_ServiceInfoCode == "")
@@ -79,13 +79,13 @@ namespace SmartxAPI.Controllers
                         }
                         Master.Rows[0]["X_ServiceInfoCode"] = X_ServiceInfoCode;
                     }
-                     if (MasterTable.Columns.Contains("n_FnYearID"))
+                    if (MasterTable.Columns.Contains("n_FnYearID"))
                     {
 
                         MasterTable.Columns.Remove("n_FnYearID");
 
                     }
-                      if (N_ServiceInfoID > 0)
+                    if (N_ServiceInfoID > 0)
                     {
                         dLayer.DeleteData("Inv_ServiceCondition", "N_ServiceInfoID", N_ServiceInfoID, "N_CompanyID=" + N_CompanyID + " and N_ServiceInfoID=" + N_ServiceInfoID, connection, transaction);
                         dLayer.DeleteData("Inv_ServiceInfo", "N_ServiceInfoID", N_ServiceInfoID, "N_CompanyID=" + N_CompanyID + " and N_ServiceInfoID=" + N_ServiceInfoID, connection, transaction);
@@ -93,7 +93,7 @@ namespace SmartxAPI.Controllers
                     // string DupCriteria = "";
 
 
-                     N_ServiceInfoID = dLayer.SaveData("Inv_ServiceInfo", "N_ServiceInfoID","","", Master, connection, transaction);
+                    N_ServiceInfoID = dLayer.SaveData("Inv_ServiceInfo", "N_ServiceInfoID", "", "", Master, connection, transaction);
                     if (N_ServiceInfoID <= 0)
                     {
                         transaction.Rollback();
@@ -107,16 +107,16 @@ namespace SmartxAPI.Controllers
 
                     dLayer.SaveData("Inv_ServiceMaterials", "n_MaterialID", Details, connection, transaction);
 
-                   for (int i = 0; i < ServiceConditionTable.Rows.Count; i++)
+                    for (int i = 0; i < ServiceConditionTable.Rows.Count; i++)
                     {
                         ServiceConditionTable.Rows[i]["N_ServiceInfoID"] = N_ServiceInfoID;
 
                     }
-                  N_ServiceInfoID = dLayer.SaveData("Inv_ServiceCondition", "N_ServiceConditionID", ServiceConditionTable, connection, transaction);
+                    N_ServiceInfoID = dLayer.SaveData("Inv_ServiceCondition", "N_ServiceConditionID", ServiceConditionTable, connection, transaction);
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
-                    Result.Add("N_ServiceInfoID",N_ServiceInfoID);
+                    Result.Add("N_ServiceInfoID", N_ServiceInfoID);
                     return Ok(api.Success(Result, "Service Info Saved"));
                 }
             }
@@ -126,18 +126,18 @@ namespace SmartxAPI.Controllers
             }
         }
 
-                [HttpDelete("delete")]
+        [HttpDelete("delete")]
         public ActionResult DeleteData(int nServiceInfoID, int nCompanyID)
         {
             int Results = 0;
-             nCompanyID = myFunctions.GetCompanyID(User);
+            nCompanyID = myFunctions.GetCompanyID(User);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
 
-                    Results = dLayer.DeleteData("Inv_ServiceInfo", "nServiceInfoID", nServiceInfoID, "N_CompanyID=" + nCompanyID  + "", connection);
+                    Results = dLayer.DeleteData("Inv_ServiceInfo", "nServiceInfoID", nServiceInfoID, "N_CompanyID=" + nCompanyID + "", connection);
                     dLayer.DeleteData("Inv_ServiceCondition", "nServiceInfoID", nServiceInfoID, "N_CompanyID=" + nCompanyID + "", connection);
 
                 }
@@ -158,23 +158,23 @@ namespace SmartxAPI.Controllers
 
         }
 
-           [HttpGet("details")]
+        [HttpGet("details")]
         public ActionResult device(int nServiceInfoID, int nCompanyID)
         {
-             DataTable Master = new DataTable();
-             DataTable DeviceDetails = new DataTable();
-               DataTable ReqMaterials = new DataTable();
+            DataTable Master = new DataTable();
+            DataTable DeviceDetails = new DataTable();
+            DataTable ReqMaterials = new DataTable();
             DataSet ds = new DataSet();
             SortedList Params = new SortedList();
             nCompanyID = myFunctions.GetCompanyID(User);
-            string xCriteria = "", 
+            string xCriteria = "",
             sqlCommandText = "";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nServiceInfoID);
-           
+
             // Params.Add("@p3",x_SerialNo);
-           
-         try
+
+            try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -183,12 +183,12 @@ namespace SmartxAPI.Controllers
 
 
                     sqlCommandText = "select * from vw_Service_Info Where N_CompanyID = @p1 and N_ServiceInfoID=@p2";
-                 
+
 
                     Master = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     Master = api.Format(Master, "Master");
 
-                  
+
                     if (Master.Rows.Count == 0)
                     {
                         return Ok(api.Notice("No Results Found"));
@@ -196,37 +196,37 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         // Params.Add("@nServiceInfoID", Master.Rows[0]["nServiceInfoID"].ToString());
-                       ds.Tables.Add(Master);
+                        ds.Tables.Add(Master);
 
                         string DeviceDetailsSql = "select * from vw_Inv_ServiceCondition where N_CompanyID=" + nCompanyID + " and N_ServiceInfoID=" + nServiceInfoID;
 
-                    DeviceDetails = dLayer.ExecuteDataTable(DeviceDetailsSql, Params, connection);
-                    DeviceDetails = api.Format(DeviceDetails, "DeviceDetails");
-                    ds.Tables.Add(DeviceDetails);
+                        DeviceDetails = dLayer.ExecuteDataTable(DeviceDetailsSql, Params, connection);
+                        DeviceDetails = api.Format(DeviceDetails, "DeviceDetails");
+                        ds.Tables.Add(DeviceDetails);
 
-                    //  int N_MaterialID = myFunctions.getIntVAL(ReqMaterials.Rows[0]["N_MaterialID"].ToString());
+                        //  int N_MaterialID = myFunctions.getIntVAL(ReqMaterials.Rows[0]["N_MaterialID"].ToString());
 
-                    string ReqMaterialsSql = "select * from vw_Inv_ServiceMaterials where N_CompanyID=" + nCompanyID + " and N_MaterialID=" + nServiceInfoID;
+                        string ReqMaterialsSql = "select * from vw_Inv_ServiceMaterials where N_CompanyID=" + nCompanyID + " and N_MaterialID=" + nServiceInfoID;
 
-                    ReqMaterials = dLayer.ExecuteDataTable(ReqMaterialsSql, Params, connection);
-                    ReqMaterials = api.Format(ReqMaterials, "ReqMaterials");
-                    ds.Tables.Add(ReqMaterials);
+                        ReqMaterials = dLayer.ExecuteDataTable(ReqMaterialsSql, Params, connection);
+                        ReqMaterials = api.Format(ReqMaterials, "ReqMaterials");
+                        ds.Tables.Add(ReqMaterials);
 
-                      
+
                     }
-              
+
                 }
-                 return Ok(api.Success(ds));
+                return Ok(api.Success(ds));
             }
             catch (Exception e)
-            { 
+            {
                 return Ok(api.Error(User, e));
             }
 
-        }   
+        }
 
 
-          [HttpGet("list")]
+        [HttpGet("list")]
         public ActionResult List()
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -258,7 +258,6 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(User, e));
             }
-        }  
+        }
     }
 }
-    
