@@ -732,49 +732,49 @@ namespace SmartxAPI.Controllers
 
                             // GENERATE Maintanance Entry
 
-                            DataTable MaintananceMaster = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,'@Auto' as X_ServiceCode," + WarrantyID + " as N_WarrantyID,N_FnYearID,N_BranchId,N_LocationID,N_CustomerID,D_EntryDate,0 as N_BillAmountF,0 as N_BillAmount,x_Notes as X_Remarks,0 as N_Status," + N_UserID + " as N_UserID,'' as X_ClosedRemarks,X_Barcode,N_SalesID  from Inv_Sales where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID and X_Barcode is not null ", warrantyParams, connection, transaction);
+                            // DataTable MaintananceMaster = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,'@Auto' as X_ServiceCode," + WarrantyID + " as N_WarrantyID,N_FnYearID,N_BranchId,N_LocationID,N_CustomerID,D_EntryDate,0 as N_BillAmountF,0 as N_BillAmount,x_Notes as X_Remarks,0 as N_Status," + N_UserID + " as N_UserID,'' as X_ClosedRemarks,X_Barcode,N_SalesID  from Inv_Sales where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID and X_Barcode is not null ", warrantyParams, connection, transaction);
 
-                            DataTable MaintananceDetails = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,0 as N_ServiceDetailsID,N_BranchId,N_LocationID,N_ItemID,N_Qty,N_ItemUnitID,N_Cost,N_Sprice,N_SpriceF,X_ItemRemarks,D_Entrydate from Inv_SalesDetails  where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID", warrantyParams, connection, transaction);
+                            // DataTable MaintananceDetails = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,0 as N_ServiceDetailsID,N_BranchId,N_LocationID,N_ItemID,N_Qty,N_ItemUnitID,N_Cost,N_Sprice,N_SpriceF,X_ItemRemarks,D_Entrydate from Inv_SalesDetails  where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID", warrantyParams, connection, transaction);
 
-                            if (MaintananceMaster.Rows.Count > 0 && MaintananceDetails.Rows.Count > 0)
-                            {
-
-
-
-                                Params["N_FormID"] = 1394;
-
-                                while (true)
-                                {
-
-                                    X_ServiceCode = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
-                                    break;
-                                }
-
-
-                                if (X_ServiceCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate maintanance entry")); }
-                                MaintananceMaster.Rows[0]["X_ServiceCode"] = X_ServiceCode;
+                            // if (MaintananceMaster.Rows.Count > 0 && MaintananceDetails.Rows.Count > 0)
+                            // {
 
 
 
+                            //     Params["N_FormID"] = 1394;
 
-                                int nServiceID = dLayer.SaveData("Inv_ServiceMaster", "N_ServiceID", MaintananceMaster, connection, transaction);
-                                if (nServiceID <= 0)
-                                {
-                                    transaction.Rollback();
-                                    return Ok(_api.Error(User, "Unable to generate maintanance entry."));
-                                }
-                                for (int i = 0; i < MaintananceDetails.Rows.Count; i++)
-                                {
-                                    MaintananceDetails.Rows[i]["N_ServiceID"] = nServiceID;
+                            //     while (true)
+                            //     {
+
+                            //         X_ServiceCode = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                            //         break;
+                            //     }
+
+
+                            //     if (X_ServiceCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate maintanance entry")); }
+                            //     MaintananceMaster.Rows[0]["X_ServiceCode"] = X_ServiceCode;
+
+
+
+
+                            //     int nServiceID = dLayer.SaveData("Inv_ServiceMaster", "N_ServiceID", MaintananceMaster, connection, transaction);
+                            //     if (nServiceID <= 0)
+                            //     {
+                            //         transaction.Rollback();
+                            //         return Ok(_api.Error(User, "Unable to generate maintanance entry."));
+                            //     }
+                            //     for (int i = 0; i < MaintananceDetails.Rows.Count; i++)
+                            //     {
+                            //         MaintananceDetails.Rows[i]["N_ServiceID"] = nServiceID;
                             
-                                int nServiceDetailsID = dLayer.SaveData("Inv_ServiceDetails", "N_ServiceDetailsID", MaintananceDetails, connection, transaction);
-                                if (nServiceDetailsID <= 0)
-                                {
-                                    transaction.Rollback();
-                                    return Ok(_api.Error(User, "Unable to generate maintanance entry.."));
-                                }
-                            }
-                            }
+                            //     int nServiceDetailsID = dLayer.SaveData("Inv_ServiceDetails", "N_ServiceDetailsID", MaintananceDetails, connection, transaction);
+                            //     if (nServiceDetailsID <= 0)
+                            //     {
+                            //         transaction.Rollback();
+                            //         return Ok(_api.Error(User, "Unable to generate maintanance entry.."));
+                            //     }
+                            // }
+                            // }
                                 //Generate SalesOrder
                                  int nPackageItemID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_ItemID"].ToString());
                                 DataTable SalesOrderMaster = dLayer.ExecuteDataTable(
@@ -808,7 +808,7 @@ namespace SmartxAPI.Controllers
 
 
                                 if (X_ServiceCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Order entry")); }
-                                SalesOrderMaster.Rows[0]["X_OrderNo"] = X_ServiceCode;
+                                SalesOrderMaster.Rows[0]["X_OrderNo"] = x_OrderNo;
 
 
 
