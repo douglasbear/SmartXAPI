@@ -1025,7 +1025,7 @@ namespace SmartxAPI.Controllers
                     SortedList Result = new SortedList();
                     Result.Add("n_InvoiceID", N_SalesID);
                     Result.Add("x_InvoiceNo", InvoiceNo);
-                    Result.Add("x_ServiceCode", X_ServiceCode);
+                    Result.Add("x_OrderNo", x_OrderNo);
 
                     return Ok(_api.Success(Result, "Sales invoice saved" + ":" + InvoiceNo));
                 }
