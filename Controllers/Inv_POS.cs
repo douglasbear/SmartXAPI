@@ -778,7 +778,7 @@ namespace SmartxAPI.Controllers
                                 //Generate SalesOrder
                                  int nPackageItemID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_ItemID"].ToString());
                                 DataTable SalesOrderMaster = dLayer.ExecuteDataTable(
-                                " select N_CompanyID,N_FnYearId,0 as N_SalesOrderId,'@Auto' as X_OrderNo,1544 as N_FormID,"
+                                " select N_CompanyID,N_FnYearId,0 as N_SalesOrderId,'@Auto' as X_OrderNo,1546 as N_FormID,"
                                 + "N_BranchID,N_LocationID,N_CustomerId,D_EntryDate,D_SalesDate as D_OrderDate,N_BillAmt,N_BillAmtF,0 as N_DiscountAmt,0 as N_DiscountAmtF,x_Notes,"
                                 + "N_UserID,0 as N_QuotationID,1 as N_Processed,N_ProjectID,N_SalesmanID ,N_SalesID,"
                                 + "N_CurrencyID,N_ExchangeRate,N_CreatedUser,D_CreatedDate"
@@ -792,7 +792,7 @@ namespace SmartxAPI.Controllers
                                     + "" + MasterTable.Rows[0]["N_BranchID"].ToString() + " as N_BranchID," + MasterTable.Rows[0]["N_LocationID"].ToString() + " as N_LocationID,Inv_ItemMaster.N_ClassID,"
                                     + "Inv_ItemWarranty.N_ItemUnitID from Inv_ItemWarranty " 
                                     + " LEFT OUTER JOIN " 
-                                     + " Inv_ItemMaster ON Inv_ItemWarranty.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemWarranty.N_ItemID = Inv_ItemMaster.N_ItemID where Inv_ItemWarranty.N_MainItemID = "+nPackageItemID+" and Inv_ItemWarranty.N_CompanyID=@nCompanyID", warrantyParams, connection, transaction);
+                                     + " Inv_ItemMaster ON Inv_ItemWarranty.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemWarranty.N_ItemID = Inv_ItemMaster.N_ItemID where Inv_ItemWarranty.N_MainItemID = "+nPackageItemID+" and Inv_ItemWarranty.N_CompanyID=@nCompanyID and Inv_ItemMaster.B_InstallationRequired = 1", warrantyParams, connection, transaction);
 
                              
                              if (SalesOrderMaster.Rows.Count > 0 && SalesOrderDetails.Rows.Count > 0)

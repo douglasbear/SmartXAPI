@@ -22,31 +22,53 @@ namespace SmartxAPI.GeneralFunctions
         private readonly IMyFunctions myFunctions;
         private readonly string logPath;
         private readonly IDataAccessLayer dLayer;
-        public TaskController(IMapper mapper, IWebHostEnvironment envn, IMyFunctions myFun, IConfiguration conf)
+        public TaskController(IMapper mapper, IWebHostEnvironment envn, IMyFunctions myFun,IDataAccessLayer dl, IConfiguration conf)
         {
             _mapper = mapper;
             env = envn;
             myFunctions = myFun;
             logPath = conf.GetConnectionString("LogPath");
+                        dLayer = dl;
         }
-          public bool SaveGeneralTask(int nCompanyID,string taskSummary, string taskDescription, int assigneeID,int creatorID, int submitterid,int closeduserid, DateTime dueDate,DateTime startDate,DateTime entryDate,int status,   SqlConnection connection, SqlTransaction transaction)
+          public bool SaveGeneralTask(int nCompanyID,string taskSummary, string taskDescription, int assigneeID,int creatorID, int submitterid,int closeduserid, DateTime dueDate,DateTime startDate,DateTime entryDate,int status,int  salesOrderDetailsID,  SqlConnection connection, SqlTransaction transaction)
         {
 
            try
             {
               SortedList Params = new SortedList();
+              SortedList ParamsAdd = new SortedList();
               Params.Add("@nCompanyID", nCompanyID);
+              string due="";
+              string start="";
+              string entry="";
+              string X_TaskCode="";
+              string DocNo="";
+               due=myFunctions.getDateVAL(dueDate);
+               start= myFunctions.getDateVAL(startDate);
+               entry= myFunctions.getDateVAL(entryDate);
 
 
+
+                       ParamsAdd.Add("N_CompanyID", nCompanyID);
+                        ParamsAdd.Add("N_FormID", 1056);
+                        while (true)
+                        {
+
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Tsk_TaskMaster Where X_TaskCode ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                            if (N_Result == null) DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", ParamsAdd, connection, transaction).ToString();
+                            break;
+                        }
+                        X_TaskCode = DocNo;
+                   
               DataTable TaskMaster = dLayer.ExecuteDataTable(
-                        " select "+nCompanyID+" as N_CompanyID,0 as N_TaskID,'@Auto' as X_TaskCode,'"+taskSummary+"' as X_TaskSummery,'"+taskDescription+"' as X_TaskDescription,"
-                        + "'"+startDate+"' as D_TaskDate,"+dueDate+" as D_DueDate,"+creatorID+" as N_CreatorID,0 as B_Closed,"+status+" as N_StatusID,"+assigneeID+" as N_AssigneeID,"+submitterid+" as N_SubmitterID,"
-                        + ""+closeduserid+" as N_ClosedUserID, "+entryDate+" as D_EntryDate,"+assigneeID+" as N_CurrentAssigneeID ",Params, connection, transaction);
+                        " select "+nCompanyID+" as N_CompanyID,0 as N_TaskID,"+X_TaskCode+" as X_TaskCode,'"+taskSummary+"' as X_TaskSummery,'"+taskDescription+"' as X_TaskDescription,"
+                        + "'"+start+"' as D_TaskDate,'"+due+"' as D_DueDate,"+creatorID+" as N_CreatorID,0 as B_Closed,"+status+" as N_StatusID,"+assigneeID+" as N_AssigneeID,"+submitterid+" as N_SubmitterID,"
+                        + ""+closeduserid+" as N_ClosedUserID, '"+entry+"' as D_EntryDate,"+assigneeID+" as N_CurrentAssigneeID ,"+salesOrderDetailsID+" as N_ServiceDetailsID" ,Params, connection, transaction);
 
               DataTable TaskDetails =dLayer.ExecuteDataTable(
-                        " select "+nCompanyID+" as N_CompanyID,0 as N_TaskID,0 as N_TaskStatusID ,"+status+" as  N_Status, "+entryDate+" as D_EntryDate,"
-                        + " "+assigneeID+" as N_AssigneeID,"+submitterid+" as N_SubmitterID, "+creatorID+" as N_CreaterID ,"+closeduserid+" as N_ClosedUserID "
-                        + ""+closeduserid+" as N_ClosedUserID, "+entryDate+" as D_EntryDate",Params, connection, transaction);
+                        " select "+nCompanyID+" as N_CompanyID,0 as N_TaskID,0 as N_TaskStatusID ,"+status+" as  N_Status,'"+entry+"' as D_EntryDate,"
+                        + " "+assigneeID+" as N_AssigneeID,"+submitterid+" as N_SubmitterID, "+creatorID+" as N_CreaterID , "
+                        + ""+closeduserid+" as N_ClosedUserID",Params, connection, transaction);
                              
                         DataRow row = TaskDetails.NewRow();
                         row["N_TaskID"] = 0;
@@ -86,7 +108,7 @@ namespace SmartxAPI.GeneralFunctions
         }
            catch (Exception ex)
             {
-                return true;
+                return false;
             }
 
     }
@@ -100,6 +122,6 @@ namespace SmartxAPI.GeneralFunctions
     {
         /* Deprecated Method Don't Use */
         [Obsolete("IApiFunctions.Response is deprecated \n please use IApiFunctions.Success/ Error/ Warning/ Notice instead. \n\n Deprecate note added by Ratheesh KS-\n\n")]
-        public bool SaveGeneralTask(int nCompanyID,string taskSummary, string taskDescription, int assigneeID,int creatorID, int submitterid,int closeduserid, DateTime dueDate,DateTime startDate,DateTime entryDate,int status,   SqlConnection connection, SqlTransaction transaction);
+        public bool SaveGeneralTask(int nCompanyID,string taskSummary, string taskDescription, int assigneeID,int creatorID, int submitterid,int closeduserid, DateTime dueDate,DateTime startDate,DateTime entryDate,int status,int salesOrderDetailsID,   SqlConnection connection, SqlTransaction transaction);
     }
 }

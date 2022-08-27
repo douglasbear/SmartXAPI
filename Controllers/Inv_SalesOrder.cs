@@ -26,12 +26,13 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly int FormID;
 
-        public Inv_SalesOrderController(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
+        public Inv_SalesOrderController(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt,ITaskController task)
         {
             _api = api;
             dLayer = dl;
             myFunctions = myFun;
             myAttachments = myAtt;
+            taskController = task;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 81;
         }
@@ -495,6 +496,7 @@ namespace SmartxAPI.Controllers
                     int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
                     int N_QuotationID = myFunctions.getIntVAL(MasterRow["n_QuotationID"].ToString());
                     string x_OrderNo = MasterRow["x_OrderNo"].ToString();
+                    string isAuto = MasterRow["x_OrderNo"].ToString();
                     int N_CustomerId = myFunctions.getIntVAL(MasterRow["n_CustomerId"].ToString());
                     bool B_IsService = true;
                     int N_FormID=0;
@@ -573,7 +575,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        if(N_FormID==1546)
+                        if(N_FormID==1546 )
                              {
                                 int N_AssigneeID=0;
                                 int N_CreatorID=0 ;
@@ -592,16 +594,18 @@ namespace SmartxAPI.Controllers
                                 string assigneeSql="";
                                 string creatorstring="";
                                 string dueDateSql="";
+                                int salesOrderDetailsID=0;
                                 bool Status=false;
+
 
                                                  
                                  foreach (DataRow var in DetailTable.Rows)
                                 {
-                                    assigneeSql="select N_AssignedTo from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
-                                    creatorstring="select N_UserID from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
-                                     X_TaskDescriptionSql="select X_ServiceDescription from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
-                                    X_TaskSummarySql="select X_ItemName from Inv_ItemMaster where N_ItemID="+myFunctions.getIntVAL(var["N_ItemID"].ToString())+" and N_CompamyID="+N_CompanyID+" ";
-                                    dueDateSql="select D_DeliveryDate from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
+                                    assigneeSql="select N_AssignedTo from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
+                                    creatorstring="select N_UserID from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
+                                     X_TaskDescriptionSql="select X_ServiceDescription from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
+                                    X_TaskSummarySql="select X_ItemName from Inv_ItemMaster where N_ItemID="+myFunctions.getIntVAL(var["N_ItemID"].ToString())+" and N_CompanyID="+N_CompanyID+" ";
+                                    dueDateSql="select D_DeliveryDate from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
 
                                     
                                     N_AssigneeID =myFunctions.getIntVAL(dLayer.ExecuteScalar(assigneeSql,Params,connection,transaction).ToString());
@@ -611,10 +615,11 @@ namespace SmartxAPI.Controllers
                                     X_TaskDescription =(dLayer.ExecuteScalar(X_TaskDescriptionSql,Params,connection,transaction).ToString());
                                     X_TaskSummary =(dLayer.ExecuteScalar(X_TaskSummarySql,Params,connection,transaction).ToString());
                                     D_DueDate =Convert.ToDateTime(dLayer.ExecuteScalar(dueDateSql,Params,connection,transaction).ToString());
-                                    D_StartDate =Convert.ToDateTime(var["D_EntryDate"].ToString());
-                                    D_EntryDate =Convert.ToDateTime(var["D_EntryDate"].ToString());
+                                    D_StartDate =Convert.ToDateTime(MasterTable.Rows[0]["D_EntryDate"].ToString());
+                                    D_EntryDate =Convert.ToDateTime(MasterTable.Rows[0]["D_EntryDate"].ToString());
+                                    salesOrderDetailsID=myFunctions.getIntVAL(var["N_SalesOrderDetailsID"].ToString());
                                     N_Status=2;
-                                    Status=taskController.SaveGeneralTask(N_CompanyID,X_TaskSummary, X_TaskDescription, N_AssigneeID,N_CreatorID,N_SubmitterID,N_ClosedUserID,D_DueDate,D_StartDate,D_EntryDate,N_Status, connection, transaction);
+                                    Status=taskController.SaveGeneralTask(N_CompanyID,X_TaskSummary, X_TaskDescription, N_AssigneeID,N_CreatorID,N_SubmitterID,N_ClosedUserID,D_DueDate,D_StartDate,D_EntryDate,N_Status,salesOrderDetailsID, connection, transaction);
                                     if(Status==false)
                                     {   
                                         transaction.Rollback();
