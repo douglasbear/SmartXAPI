@@ -776,58 +776,57 @@ namespace SmartxAPI.Controllers
                             }
                                 //Generate SalesOrder
                            
-                            //     DataTable SalesOrderMaster = dLayer.ExecuteDataTable(
-                            //     " select N_CompanyID,N_FnYearId,0 as N_SalesOrderId,'@Auto' as X_OrderNo,1544 as N_FormID,"
-                            //     + "N_BranchID,N_LocationID,N_CustomerId,D_EntryDate,D_SalesDate as D_OrderDate,N_BillAmt,N_BillAmtF,"+N_DiscountAmtMaster+" as N_DiscountAmt,N_DiscountAmtF,x_Notes,"
-                            //     + "N_UserID,0 as N_QuotationID,1 as N_Processed,N_ProjectID,N_SalesmanID ,N_SalesID,N_TaxAmt,N_TaxAmtF,"
-                            //     + "N_TaxCategoryID,N_TaxPercentage,"+N_MainDiscount+" as N_MainDiscount,N_MainDiscountF,N_CurrencyID,N_ExchangeRate,N_DiscountDisplay,N_CreatedUser,D_CreatedDate"
-                            //     + " from Inv_Sales where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID ", warrantyParams, connection, transaction);
+
+                        //         DataTable SalesOrderMaster = dLayer.ExecuteDataTable(
+                        //         " select N_CompanyID,N_FnYearId,0 as N_SalesOrderId,'@Auto' as X_OrderNo,1544 as N_FormID,"
+                        //         + "N_BranchID,N_LocationID,N_CustomerId,D_EntryDate,D_SalesDate as D_OrderDate,N_BillAmt,N_BillAmtF,"+N_DiscountAmtMaster+" as N_DiscountAmt,N_DiscountAmtF,x_Notes,"
+                        //         + "N_UserID,0 as N_QuotationID,1 as N_Processed,N_ProjectID,N_SalesmanID ,N_SalesID,N_TaxAmt,N_TaxAmtF,"
+                        //         + "N_TaxCategoryID,N_TaxPercentage,"+N_MainDiscount+" as N_MainDiscount,N_MainDiscountF,N_CurrencyID,N_ExchangeRate,N_DiscountDisplay,N_CreatedUser,D_CreatedDate"
+                        //         + " from Inv_Sales where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID ", warrantyParams, connection, transaction);
                              
 
                 
-                            //  DataTable SalesOrderDetails = dLayer.ExecuteDataTable(
-                            //  "  select N_CompanyID,0 as N_SalesOrderID,0 as N_SalesOrderDetailsID,N_BranchId,N_LocationID,N_ItemID,N_Qty,N_ItemUnitID,N_MainSPrice,X_ItemRemarks,N_QtyDisplay,"
-                            //  + "N_ItemDiscAmt,N_MainQty,N_MainItemID,N_Sprice,N_SpriceF,N_ClassID,D_Entrydate,X_FreeDescription,N_TaxCategoryID1,N_TaxPercentage1,N_TaxAmt1,N_TaxCategoryID2,"
-                            //  + "N_TaxPercentage2,N_TaxAmt2,0 as N_QuotationID,N_Cost,N_ItemDiscAmtF,N_MainSpriceF,N_TaxAmt1F,N_TaxAmt2F,N_AWTSPrice,N_AWTSPriceF,N_AWTDisc,"
-                            //  + "N_AWTDiscF,N_PriceListID,N_PriceListAmount  from Inv_SalesDetails  where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID",   warrantyParams, connection, transaction);
-                            //  if (SalesOrderMaster.Rows.Count > 0 && SalesOrderDetails.Rows.Count > 0)
-                            //  {
+                        //      DataTable SalesOrderDetails = dLayer.ExecuteDataTable(
+                        //      "  select N_CompanyID,0 as N_SalesOrderID,0 as N_SalesOrderDetailsID,N_BranchId,N_LocationID,N_ItemID,N_Qty,N_ItemUnitID,N_MainSPrice,X_ItemRemarks,N_QtyDisplay,"
+                        //      + "N_ItemDiscAmt,N_MainQty,N_MainItemID,N_Sprice,N_SpriceF,N_ClassID,D_Entrydate,X_FreeDescription,N_TaxCategoryID1,N_TaxPercentage1,N_TaxAmt1,N_TaxCategoryID2,"
+                        //      + "N_TaxPercentage2,N_TaxAmt2,0 as N_QuotationID,N_Cost,N_ItemDiscAmtF,N_MainSpriceF,N_TaxAmt1F,N_TaxAmt2F,N_AWTSPrice,N_AWTSPriceF,N_AWTDisc,"
+                        //      + "N_AWTDiscF,N_PriceListID,N_PriceListAmount  from Inv_SalesDetails  where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID",   warrantyParams, connection, transaction);
+                        //      if (SalesOrderMaster.Rows.Count > 0 && SalesOrderDetails.Rows.Count > 0)
+                        //      {
                                 
-                            //     Params["N_FormID"] = 1544;
-                            //      while (true)
-                            //     {
+                        //         Params["N_FormID"] = 1544;
+                        //          while (true)
+                        //         {
 
-                            //         x_OrderNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
-                            //         break;
-                            //     }
-
-
-                            //     if (X_ServiceCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Order entry")); }
-                            //     SalesOrderMaster.Rows[0]["X_OrderNo"] = X_ServiceCode;
+                        //             x_OrderNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                        //             break;
+                        //         }
 
 
+                        //         if (X_ServiceCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Order entry")); }
+                        //         SalesOrderMaster.Rows[0]["X_OrderNo"] = X_ServiceCode;
+
+                     
+                        //         int nOrderID = dLayer.SaveData("Inv_SalesOrder", "N_SalesOrderId", SalesOrderMaster, connection, transaction);
+                        //         if (nOrderID <= 0)
+                        //         {
+                        //             transaction.Rollback();
+                        //             return Ok(_api.Error(User, "Unable to generate Order entry."));
+                        //         }
+                        //         for (int i = 0; i < SalesOrderDetails.Rows.Count; i++)
+                        //         {
+                        //             SalesOrderDetails.Rows[i]["N_SalesOrderID"] = nOrderID;
+                        //         }
+                        //         int nOrderDetailsID = dLayer.SaveData("Inv_SalesOrderDetails", "N_SalesOrderDetailsID", SalesOrderDetails, connection, transaction);
+                        //         if (nOrderDetailsID <= 0)
+                        //         {
+                        //             transaction.Rollback();
+                        //             return Ok(_api.Error(User, "Unable to generate Order entry.."));
+                        //         }
 
 
-                            //     int nOrderID = dLayer.SaveData("Inv_SalesOrder", "N_SalesOrderId", SalesOrderMaster, connection, transaction);
-                            //     if (nOrderID <= 0)
-                            //     {
-                            //         transaction.Rollback();
-                            //         return Ok(_api.Error(User, "Unable to generate Order entry."));
-                            //     }
-                            //     for (int i = 0; i < SalesOrderDetails.Rows.Count; i++)
-                            //     {
-                            //         SalesOrderDetails.Rows[i]["N_SalesOrderID"] = nOrderID;
-                            //     }
-                            //     int nOrderDetailsID = dLayer.SaveData("Inv_SalesOrderDetails", "N_SalesOrderDetailsID", SalesOrderDetails, connection, transaction);
-                            //     if (nOrderDetailsID <= 0)
-                            //     {
-                            //         transaction.Rollback();
-                            //         return Ok(_api.Error(User, "Unable to generate Order entry.."));
-                            //     }
+                        //      }
 
-
-                            //  }
-                        
                         
                         
                         }
