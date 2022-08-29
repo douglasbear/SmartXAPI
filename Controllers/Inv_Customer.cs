@@ -185,12 +185,14 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchId"].ToString());
                 int nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerId"].ToString());
-               
+                int nCrmCustomerID = 0;
                 int flag=0;
                 int customerFlag=0;
                 bool showConfirmationCustomer=false;
 
-            
+              
+
+
                 if(MasterTable.Columns.Contains("b_AutoGenerate"))
                 {
                        b_AutoGenerate = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_AutoGenerate"].ToString());
@@ -261,7 +263,56 @@ namespace SmartxAPI.Controllers
                     string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
                     nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
               
+              if(MasterTable.Columns.Contains("N_CrmCompanyID"))
+              {
+                nCrmCustomerID=myFunctions.getIntVAL(MasterTable.Rows[0]["N_CrmCompanyID"].ToString());
+              }
                   
+             //if( myFunctions.getIntVAL(MasterTable.Rows[0]["N_CrmCompanyID"].ToString())<=0)
+           if( nCrmCustomerID==0)
+                {    
+                       SortedList customerParams = new SortedList();
+                        customerParams.Add("@nCompanyID", nCompanyID);
+                        customerParams.Add("@nFnYearId", nFnYearId);
+                        customerParams.Add("@nCustomerID", nCustomerID);
+                        customerParams.Add("@nFormID", 1306);
+                        
+                         DataTable CustomerMaster = dLayer.ExecuteDataTable(
+                                " select N_CompanyID,N_FnYearId,0 as N_CustomerId,'@Auto' as X_CustomerCode,X_CustomerName as X_Customer,"
+                                + "X_PhoneNo1 as X_Phone,X_FaxNo as X_Fax,X_WebSite,D_EntryDate,X_Address,X_Email, N_CurrencyID"
+                                + " from Inv_Customer where  N_CustomerID =@nCustomerID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID ", customerParams, connection, transaction);
+
+
+                             if(CustomerMaster.Rows.Count > 0 )
+                             {
+                                string X_CrmCustomerCode = "";
+                              
+                                 while (true)
+                                {   SortedList crmParams = new SortedList();
+                                     crmParams.Add("N_CompanyID", nCompanyID);
+                                     //crmParams.Add("N_FnYearID", nFnYearId);
+                                     crmParams.Add("N_FormID", 1306);
+                                    X_CrmCustomerCode = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", crmParams, connection, transaction).ToString();
+                                    break;
+                                }
+
+
+                                if (X_CrmCustomerCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate crm Customer")); }
+                                CustomerMaster.Rows[0]["X_CustomerCode"] = X_CrmCustomerCode;
+
+                     
+                                int ncrmCustomerID = dLayer.SaveData("CRM_Customer", "N_CustomerId", CustomerMaster, connection, transaction);
+                                dLayer.ExecuteNonQuery("Update Inv_Customer Set n_CrmCompanyID =" + ncrmCustomerID + " Where N_CustomerID =" + nCustomerID + " and N_CompanyID=" + nCompanyID + " and N_FnyearID= " + nFnYearId, Params, connection, transaction);
+                                if (ncrmCustomerID <= 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(api.Error(User, "Unable to generate CRM Customer entry."));
+                                }
+
+                             }
+
+                }
+
                     if (nCustomerID <= 0)
                     {
                         transaction.Rollback();
