@@ -22,11 +22,13 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int N_FormID;
-        public Inv_POS(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        private readonly ITaskController taskController;
+        public Inv_POS(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf,ITaskController task)
         {
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
+            taskController = task;
             connectionString = conf.GetConnectionString("SmartxConnection");
             N_FormID = 64;
         }
@@ -788,7 +790,7 @@ namespace SmartxAPI.Controllers
 
 
                             DataTable SalesOrderDetails = dLayer.ExecuteDataTable(
-                              "select Inv_ItemDetails.N_CompanyID,0 as N_SalesOrderID,0 as N_SalesOrderDetailsID,Inv_ItemDetails.N_ItemID,Inv_ItemDetails.N_MainItemID,Inv_ItemDetails.N_Qty,Inv_ItemDetails.N_Qty as N_QtyDisplay,"
+                              "select Inv_ItemDetails.N_CompanyID,0 as N_SalesOrderID,0 as N_SalesOrderDetailsID,0 as N_ServiceID,Inv_ItemDetails.N_ItemID,Inv_ItemDetails.N_MainItemID,Inv_ItemDetails.N_Qty,Inv_ItemDetails.N_Qty as N_QtyDisplay,"
                               + "" + MasterTable.Rows[0]["N_BranchID"].ToString() + " as N_BranchID," + MasterTable.Rows[0]["N_LocationID"].ToString() + " as N_LocationID,Inv_ItemMaster.N_ClassID,"
                               + "Inv_ItemDetails.N_ItemUnitID from Inv_ItemDetails "
                               + " LEFT OUTER JOIN "
@@ -838,7 +840,68 @@ namespace SmartxAPI.Controllers
                                     if(serviceID>0){
                                         dLayer.ExecuteNonQuery("Update Inv_SalesOrderDetails set N_ServiceID="+serviceID + " where N_CompanyID=@nCompanyID and N_SalesOrderID="+nOrderID+" and N_ClassID=4", warrantyParams, connection, transaction);
                                     }
+
+
+
+
+                                    DataTable SalesMaster=  dLayer.ExecuteDataTable("select * from Inv_SalesOrder where N_CompanyID="+N_CompanyID+" and N_FnYearID="+N_FnYearID+" and N_SalesOrderID="+nOrderID+"", warrantyParams, connection, transaction);
+                                    DataTable SalesDetails= dLayer.ExecuteDataTable("select * from Inv_SalesOrderDetails where N_CompanyID="+N_CompanyID+"  and N_SalesOrderID="+nOrderID+"", warrantyParams, connection, transaction);
+                                      int N_AssigneeID=0;
+                                int N_CreatorID=0 ;
+                      
+                                string X_TaskSummary="";
+                                string X_TaskSummarySql="";
+                                string X_TaskDescription="";
+                                string X_TaskDescriptionSql="";
+              
+                                int N_SubmitterID=0;
+                                int N_ClosedUserID=0;
+                                DateTime D_DueDate;
+                                DateTime D_StartDate;
+                                DateTime D_EntryDate;
+                                int N_Status=0;
+                                string assigneeSql="";
+                                string creatorstring="";
+                                string dueDateSql="";
+                                int salesOrderDetailsID=0;
+                                bool Status=false;
+
+
+                                                 
+                                 foreach (DataRow var in SalesDetails.Rows)
+                                {
+                                
+                                    assigneeSql="select N_AssignedTo from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+serviceID+"";
+                                    creatorstring="select N_UserID from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+serviceID+"";
+                                     X_TaskDescriptionSql="select X_ServiceDescription from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+serviceID+"";
+                                    X_TaskSummarySql="select X_ItemName from Inv_ItemMaster where N_ItemID="+myFunctions.getIntVAL(var["N_ItemID"].ToString())+" and N_CompanyID="+N_CompanyID+" ";
+                                    dueDateSql="select D_DeliveryDate from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+serviceID+"";
+
+                                    
+                                    N_AssigneeID =myFunctions.getIntVAL(dLayer.ExecuteScalar(assigneeSql,Params,connection,transaction).ToString());
+                                    N_CreatorID =myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring,Params,connection,transaction).ToString());
+                                    N_ClosedUserID =myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring,Params,connection,transaction).ToString());
+                                    N_SubmitterID =myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring,Params,connection,transaction).ToString());
+                                    X_TaskDescription =(dLayer.ExecuteScalar(X_TaskDescriptionSql,Params,connection,transaction).ToString());
+                                    X_TaskSummary =(dLayer.ExecuteScalar(X_TaskSummarySql,Params,connection,transaction).ToString());
+                                    D_DueDate =Convert.ToDateTime(dLayer.ExecuteScalar(dueDateSql,Params,connection,transaction).ToString());
+                                    D_StartDate =Convert.ToDateTime(SalesMaster.Rows[0]["D_EntryDate"].ToString());
+                                    D_EntryDate =Convert.ToDateTime(SalesMaster.Rows[0]["D_EntryDate"].ToString());
+                                    salesOrderDetailsID=myFunctions.getIntVAL(var["N_SalesOrderDetailsID"].ToString());
+                                    N_Status=2;
+                                    Status=taskController.SaveGeneralTask(N_CompanyID,X_TaskSummary, X_TaskDescription, N_AssigneeID,N_CreatorID,N_SubmitterID,N_ClosedUserID,D_DueDate,D_StartDate,D_EntryDate,N_Status,salesOrderDetailsID, connection, transaction);
+                                    if(Status==false)
+                                    {   
+                                        transaction.Rollback();
+                                          return Ok("Unable to save Task");
+                                    }
+                                 }
+                             
                                 }
+                                
+                             
+                              
+
 
 
                             }
