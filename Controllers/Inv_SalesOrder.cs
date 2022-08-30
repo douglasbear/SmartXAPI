@@ -601,6 +601,7 @@ namespace SmartxAPI.Controllers
                                                  
                                  foreach (DataRow var in DetailTable.Rows)
                                 {
+                                    if(myFunctions.getIntVAL(var["N_ServiceID"].ToString())==0){ continue;}
                                     assigneeSql="select N_AssignedTo from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
                                     creatorstring="select N_UserID from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
                                      X_TaskDescriptionSql="select X_ServiceDescription from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
