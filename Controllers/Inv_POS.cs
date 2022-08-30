@@ -798,20 +798,10 @@ namespace SmartxAPI.Controllers
                             if (SalesOrderMaster.Rows.Count > 0 && SalesOrderDetails.Rows.Count > 0)
                             {
 
-                                Params["N_FormID"] = 1544;
-                                while (true)
-                                {
-
-                                    x_OrderNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
-                                    break;
-                                }
-
-
-                                if (x_OrderNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Order entry")); }
+                                Params["N_FormID"] = 1546;
+                                x_OrderNo = dLayer.GetAutoNumber("Inv_SalesOrder", "X_OrderNo", Params, connection, transaction);
+                                    if (x_OrderNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable To Generate Service Order")); }
                                 SalesOrderMaster.Rows[0]["X_OrderNo"] = x_OrderNo;
-
-
-
 
                                 int nOrderID = dLayer.SaveData("Inv_SalesOrder", "N_SalesOrderId", SalesOrderMaster, connection, transaction);
                                 if (nOrderID <= 0)
@@ -846,7 +836,7 @@ namespace SmartxAPI.Controllers
 
                                     int serviceID = dLayer.SaveData("Inv_ServiceInfo", "N_ServiceInfoID", ServiceInfo, connection, transaction);
                                     if(serviceID>0){
-
+                                        dLayer.ExecuteNonQuery("Update Inv_SalesOrderDetails set N_ServiceID="+serviceID + " where N_CompanyID=@nCompanyID and N_SalesOrderID="+nOrderID+" and N_ClassID=4", warrantyParams, connection, transaction);
                                     }
                                 }
 
