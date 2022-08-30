@@ -142,7 +142,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetDeliveryNoteDetails(int nFnYearId,bool bAllBranchData, int nBranchId, string xInvoiceNo, int nSalesOrderID,int nProformaID,int nPickListID)
+        public ActionResult GetDeliveryNoteDetails(int nFnYearId,bool bAllBranchData, int nBranchId, string xInvoiceNo, int nSalesOrderID,int nProformaID,int nPickListID,string xSalesOrderID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             try
@@ -727,6 +727,50 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(_api.Error(User, e));
             }
+        }
+
+
+
+             [HttpGet("multipleSalesOrder")]
+        public ActionResult ProductList(int nFnYearID, int nCustomerID, bool bAllbranchData, int nBranchID)
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@nCustomerID", nCustomerID);
+
+
+            string sqlCommandText = "";
+            if (bAllbranchData)
+                sqlCommandText = "Select * from vw_pendingSO Where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID";
+            else
+                sqlCommandText = "Select * from vw_pendingSO Where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+
         }
     }
 }
