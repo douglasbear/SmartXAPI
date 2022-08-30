@@ -113,7 +113,7 @@ namespace SmartxAPI.Controllers
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_AppraisalTemplate where " + sqlCondition + " " + Searchkey +" "+ xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_AppraisalTemplate where " + sqlCondition + " " + Searchkey +" "+ " and  N_TemplateID not in (select top(" + Count + ") N_TemplateID from Pay_AppraisalTemplate where N_CompanyID=@p1 )" + Searchkey +" "+ xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_AppraisalTemplate where " + sqlCondition + " " + Searchkey +" "+ " and  N_TemplateID not in (select top(" + Count + ") N_TemplateID from Pay_AppraisalTemplate where N_CompanyID=@p1 " + Searchkey +" "+ xSortBy+" )" + " " + xSortBy;
            
             SortedList OutPut = new SortedList();
 
