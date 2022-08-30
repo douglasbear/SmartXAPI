@@ -103,7 +103,7 @@ namespace SmartxAPI.Controllers
                 string xTransType = PartyListTable.Rows[0]["x_TransType"].ToString();
                 int nUserID = myFunctions.GetUserID(User);
                 int nBranchID = myFunctions.getIntVAL(PartyListTable.Rows[0]["n_BranchID"].ToString());
-
+                int nFlag=myFunctions.getIntVAL(PartyListTable.Rows[0]["nFlag"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -131,14 +131,32 @@ namespace SmartxAPI.Controllers
                     // }
 
                     // SaveDataTable.Columns.Remove("b_DeleteStatus");
-                    int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesID", SaveDataTable, connection, transaction);
+                   if(nFlag==0){
+                     
+                        int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesID", SaveDataTable, connection, transaction);
 
-                    if (nSalesID <= 0)
+                         if (nSalesID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to save"));
                     }
 
+
+                   }
+                   else
+                   {
+                     int npurchaseID = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", SaveDataTable, connection, transaction);
+
+                     if (npurchaseID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable to save"));
+                    }
+
+                   }
+                  
+
+                   
                     for (int j = 0; j < PartyListTable.Rows.Count; j++)
                     {
                         int nPartyID = myFunctions.getIntVAL(PartyListTable.Rows[j]["n_PartyID"].ToString());
