@@ -58,6 +58,7 @@ namespace SmartxAPI.Controllers
                     ServiceConditionTable = ds.Tables["servicecondition"];
                     // DataRow MasterRow = MasterTable.Rows[0];
                     int N_ServiceInfoID = myFunctions.getIntVAL(MasterRow["N_ServiceInfoID"].ToString());
+                    int N_ServiceConditionID=0;
                     int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["N_CompanyID"].ToString());
                     int N_UserID = myFunctions.getIntVAL(MasterRow["n_UserID"].ToString());
@@ -112,7 +113,7 @@ namespace SmartxAPI.Controllers
                         ServiceConditionTable.Rows[i]["N_ServiceInfoID"] = N_ServiceInfoID;
 
                     }
-                    N_ServiceInfoID = dLayer.SaveData("Inv_ServiceCondition", "N_ServiceConditionID", ServiceConditionTable, connection, transaction);
+                    N_ServiceConditionID = dLayer.SaveData("Inv_ServiceCondition", "N_ServiceConditionID", ServiceConditionTable, connection, transaction);
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
