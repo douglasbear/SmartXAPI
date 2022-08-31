@@ -102,7 +102,7 @@ namespace SmartxAPI.Controllers
                     }
                     for (int i = 0; i < Details.Rows.Count; i++)
                     {
-                        Details.Rows[i]["N_MaterialID"] = N_ServiceInfoID;
+                        Details.Rows[i]["N_ServiceInfoID"] = N_ServiceInfoID;
 
                     }
 
@@ -207,7 +207,7 @@ namespace SmartxAPI.Controllers
 
                         //  int N_MaterialID = myFunctions.getIntVAL(ReqMaterials.Rows[0]["N_MaterialID"].ToString());
 
-                        string ReqMaterialsSql = "select * from vw_Inv_ServiceMaterials where N_CompanyID=" + nCompanyID + " and N_MaterialID=" + nServiceInfoID;
+                        string ReqMaterialsSql = "select * from vw_Inv_ServiceMaterials where N_CompanyID=" + nCompanyID + " and N_ServiceInfoID=" + nServiceInfoID;
 
                         ReqMaterials = dLayer.ExecuteDataTable(ReqMaterialsSql, Params, connection);
                         ReqMaterials = api.Format(ReqMaterials, "ReqMaterials");
