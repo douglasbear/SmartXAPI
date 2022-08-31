@@ -840,6 +840,19 @@ namespace SmartxAPI.Controllers
                                     if(serviceID>0){
                                         dLayer.ExecuteNonQuery("Update Inv_SalesOrderDetails set N_ServiceID="+serviceID + " where N_CompanyID=@nCompanyID and N_SalesOrderID="+nOrderID+" and N_ClassID=4", warrantyParams, connection, transaction);
                                     }
+                                      DataTable MaterialDetails = dLayer.ExecuteDataTable(
+                                      "SELECT        Inv_SalesDetails.N_CompanyID, 0 AS N_MaterialID,0 as N_ServiceInfoID,Inv_SalesDetails.N_ItemID,Inv_SalesDetails.N_ItemUnitID,Inv_SalesDetails.N_Qty,Inv_SalesDetails.N_QtyDisplay as N_DisplayQty" +
+                                      " FROM            Inv_SalesDetails INNER JOIN " +
+                                      "                       Inv_Sales ON Inv_SalesDetails.N_SalesID = Inv_Sales.N_SalesId AND Inv_SalesDetails.N_SalesID = Inv_Sales.N_SalesId AND Inv_SalesDetails.N_CompanyID = Inv_Sales.N_CompanyId INNER JOIN "+
+                                      "                        Inv_Device ON Inv_Sales.X_Barcode = Inv_Device.X_SerialNo AND Inv_Sales.N_CompanyId = Inv_Device.N_CompanyID "+ 
+                                      " WHERE        (Inv_SalesDetails.N_ClassID <> 4) and Inv_SalesDetails.N_CompanyID=@nCompanyID and Inv_SalesDetails.N_SalesID=@nSalesID", warrantyParams, connection, transaction);
+
+                                     for (int i = 0; i < MaterialDetails.Rows.Count; i++)
+                                     {
+                                        MaterialDetails.Rows[i]["N_ServiceInfoID"] = serviceID;
+
+                                     }
+                                     dLayer.SaveData("Inv_ServiceMaterials", "n_MaterialID", MaterialDetails, connection, transaction);
 
 
 
