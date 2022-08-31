@@ -62,9 +62,8 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetWeekdaysDetails(int N_WeekID, int nFnYearID)
+        public ActionResult GetWeekdaysDetails(int nFnYearID,int nClassID,int nClassDivisionID)
         {
-            DataTable dtWeekdaysMaster = new DataTable();
             DataTable dtWeekdaysDetails = new DataTable();
 
             DataSet DS = new DataSet();
@@ -72,35 +71,31 @@ namespace SmartxAPI.Controllers
             SortedList dParamList = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
-            string MasterWeek = "Select * from vw_sch_class Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_WeekID = @p3";
-            string DetailsWeek = "Select * from vw_Sch_WeekdaysDetails Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_WeekID = @p3";
+           string DetailsWeek = "Select * from vw_Sch_WeekdaysDetails Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_ClassID = @p3 and N_ClassDivisionID=@p4";
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearID);
-            Params.Add("@p3", N_WeekID);
+            Params.Add("@p3", nClassID);
+            Params.Add("@p4", nClassDivisionID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dtWeekdaysMaster = dLayer.ExecuteDataTable(MasterWeek, Params, connection);
                     dtWeekdaysDetails = dLayer.ExecuteDataTable(DetailsWeek, Params, connection);
 
                 }
-                dtWeekdaysMaster = api.Format(dtWeekdaysMaster, "Master");
                 dtWeekdaysDetails = api.Format(dtWeekdaysDetails, "Details");
-
                 SortedList Data = new SortedList();
-                Data.Add("Master", dtWeekdaysMaster);
                 Data.Add("Details", dtWeekdaysDetails);
 
-                if (dtWeekdaysMaster.Rows.Count == 0)
+                if (dtWeekdaysDetails.Rows.Count == 0)
                 {
                     return Ok(api.Warning("No Results Found"));
                 }
                 else
                 {
-                    return Ok(api.Success(Data));
+                    return Ok(api.Success(dtWeekdaysDetails));
                 }
             }
             catch (Exception e)
