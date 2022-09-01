@@ -100,7 +100,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult AdmissionDetails(string xAdmissionNo, int nAcYearID,int nRegID)
+        public ActionResult AdmissionDetails(string xAdmissionNo, int nAcYearID,int nRegID,int nStudentID)
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
@@ -110,11 +110,17 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
-
-            if (xAdmissionNo!=null)
+           
+            
+            if(nStudentID>0)
+            {
+                Params.Add("@p5", nStudentID);
+                sqlCommandText=" select * from vw_SchAdmission where N_CompanyID=@p1 and N_AdmissionID=@p5 and N_AcYearID=@p4";  
+            }
+            else  if (xAdmissionNo!=null)
             {
                 Params.Add("@p2", xAdmissionNo);
-                sqlCommandText=" select * from vw_SchAdmission where N_CompanyID=@p1 and x_AdmissionNo=@p2 and N_AcYearID=@p4";
+                sqlCommandText=" select * from vw_SchAdmission where N_CompanyID=@p1 and X_AdmissionNo=@p2 and N_AcYearID=@p4";
             }
 
             if(nRegID>0)

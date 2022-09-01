@@ -95,6 +95,9 @@ namespace SmartxAPI.Controllers
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["N_SubMappingID"] = nSubMappingID;
+                        DetailTable.Rows[j]["X_SubMappingCode"] = Code;
+                       
+                       
                     }
                     int nRouteDetailID = dLayer.SaveData("Sch_SubjectMappingDetails", "N_SubMappingDetailsID", DetailTable, connection, transaction);
                     if (nRouteDetailID <= 0)
