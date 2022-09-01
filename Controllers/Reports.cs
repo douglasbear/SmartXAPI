@@ -319,55 +319,32 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    if (nFormID == 64 || nFormID == 894 || nFormID == 372)
+                    if (nFormID == 64 || nFormID == 894 || nFormID == 372 || nFormID == 55 || nFormID == 504)
                     {
                         //QR Code Generate For Invoice
-
-                        object Total = dLayer.ExecuteScalar("select n_BillAmt+N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
-                        object TaxAmount = dLayer.ExecuteScalar("select N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
+                        object Total = "";
+                        object TaxAmount = "";
                         object VatNumber = dLayer.ExecuteScalar("select x_taxregistrationNo from acc_company where N_CompanyID=@nCompanyId", QueryParams, connection, transaction);
-                        object SalesDate = dLayer.ExecuteScalar("select D_SalesDate from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
+                        object SalesDate = "";
+                        if (nFormID == 64 || nFormID == 894 || nFormID == 372)
+                        {
+                            Total = dLayer.ExecuteScalar("select n_BillAmt+N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
+                            TaxAmount = dLayer.ExecuteScalar("select N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
+                            SalesDate = dLayer.ExecuteScalar("select D_SalesDate from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
+                        }
+                        else if (nFormID == 504)
+                        {
+                            Total = dLayer.ExecuteScalar("select N_AmountF+isnull(N_TaxAmtF,0) from Inv_BalanceAdjustmentMaster where N_CompanyID=@nCompanyId and N_AdjustmentId=" + nPkeyID, QueryParams, connection, transaction);
+                            TaxAmount = dLayer.ExecuteScalar("select N_TaxAmtF from Inv_BalanceAdjustmentMaster where N_CompanyID=@nCompanyId and N_AdjustmentId=" + nPkeyID, QueryParams, connection, transaction);
+                            SalesDate = dLayer.ExecuteScalar("select D_AdjustmentDate from Inv_BalanceAdjustmentMaster where N_CompanyID=@nCompanyId and N_AdjustmentId=" + nPkeyID, QueryParams, connection, transaction);
+                        }
                         DateTime dt = DateTime.Parse(SalesDate.ToString());
                         string Amount = Convert.ToDecimal(Total).ToString("0.00");
                         string VatAmount = Convert.ToDecimal(TaxAmount.ToString()).ToString("0.00");
                         string Company = myFunctions.GetCompanyName(User);
                         TLVCls tlv = new TLVCls(Company, VatNumber.ToString(), dt, Convert.ToDouble(Amount), Convert.ToDouble(VatAmount));
                         var plainTextBytes = tlv.ToBase64();
-
                         QRurl = string.Format(plainTextBytes);
-                        // var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", plainTextBytes.Replace("&", "%26"), "500", "500");
-                        // WebResponse response = default(WebResponse);
-                        // Stream remoteStream = default(Stream);
-                        // StreamReader readStream = default(StreamReader);
-                        // WebRequest request = WebRequest.Create(url);
-                        // response = request.GetResponse();
-                        // remoteStream = response.GetResponseStream();
-                        // readStream = new StreamReader(remoteStream);
-                        // string path = "C://OLIVOSERVER2020/QR/";
-                        // DirectoryInfo info = new DirectoryInfo(path);
-                        // if (!info.Exists)
-                        // {
-                        //     info.Create();
-                        // }
-                        // string pathfile = Path.Combine(path, "QR.png");
-                        // using (FileStream outputFileStream = new FileStream(pathfile, FileMode.Create))
-                        // {
-                        //     remoteStream.CopyTo(outputFileStream);
-                        // }
-                        //QR End Here
-
-                        // bool SaveDraft = false;
-                        // object ObjSaveDraft = dLayer.ExecuteScalar("select b_issavedraft from inv_sales WHERE N_CompanyID =@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
-                        // if (ObjSaveDraft != null)
-                        // {
-                        //     SaveDraft = myFunctions.getBoolVAL(ObjSaveDraft.ToString());
-                        //     if (SaveDraft == true)
-                        //     {
-                        //         ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=644", QueryParams, connection, transaction);
-                        //         ReportName = ObjReportName.ToString();
-                        //         ReportName = ReportName.Remove(ReportName.Length - 4);
-                        //     }
-                        // }
 
                     }
 
