@@ -338,6 +338,12 @@ namespace SmartxAPI.Controllers
                             TaxAmount = dLayer.ExecuteScalar("select N_TaxAmtF from Inv_BalanceAdjustmentMaster where N_CompanyID=@nCompanyId and N_AdjustmentId=" + nPkeyID, QueryParams, connection, transaction);
                             SalesDate = dLayer.ExecuteScalar("select D_AdjustmentDate from Inv_BalanceAdjustmentMaster where N_CompanyID=@nCompanyId and N_AdjustmentId=" + nPkeyID, QueryParams, connection, transaction);
                         }
+                        else if (nFormID == 55)
+                        {
+                            Total = dLayer.ExecuteScalar("select N_TotalReturnAmountF+isnull(N_TaxAmtF,0) from Inv_SalesReturnMaster where N_CompanyID=@nCompanyId and N_DebitNoteId=" + nPkeyID, QueryParams, connection, transaction);
+                            TaxAmount = dLayer.ExecuteScalar("select isnull(N_TaxAmtF,0) as N_TaxAmtF from Inv_SalesReturnMaster where N_CompanyID=@nCompanyId and N_DebitNoteId=" + nPkeyID, QueryParams, connection, transaction);
+                            SalesDate = dLayer.ExecuteScalar("select D_ReturnDate from Inv_SalesReturnMaster where N_CompanyID=@nCompanyId and N_DebitNoteId=" + nPkeyID, QueryParams, connection, transaction);
+                        }
                         DateTime dt = DateTime.Parse(SalesDate.ToString());
                         string Amount = Convert.ToDecimal(Total).ToString("0.00");
                         string VatAmount = Convert.ToDecimal(TaxAmount.ToString()).ToString("0.00");
