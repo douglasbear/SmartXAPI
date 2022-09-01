@@ -36,72 +36,56 @@ namespace SmartxAPI.Controllers
         }
 
 
-        [HttpGet("list")]
-        public ActionResult GetInvOnlineStockAllocation(int nComapanyId, int nFnYearId, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, bool bAllBranchData)
+          [HttpGet("list")]
+        public ActionResult GetInvOnlineStockAllocation(int? nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
-
-            int nCompanyId = myFunctions.GetCompanyID(User);
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-
-            int Count = (nPage - 1) * nSizeperpage;
-            string sqlCommandText = "";
-            string sqlCommandCount = "";
-            string sqlCondition = "";
-            string Searchkey = "";
-
-            if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_AsnDocNo like '%" + xSearchkey + "%' OR N_AsnID like '%" + xSearchkey + "%')";
-
-            if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_AsnID desc";
-            else
-            {
-                switch (xSortBy.Split(" ")[0])
-                {
-                    case "X_AsnDocNo":
-                        xSortBy = "X_AsnDocNo " + xSortBy.Split(" ")[1];
-                        break;
-                    case "N_AsnID":
-                        xSortBy = "N_AsnID " + xSortBy.Split(" ")[1];
-                        break;
-                    default: break;
-                }
-                xSortBy = " order by " + xSortBy;
-            }
-
-            Params.Add("@nCompanyId", nCompanyId);
-            Params.Add("@nFnYearId", nFnYearId);
-            Params.Add("@FormID", FormID);
-            Params.Add("@nBranchID", nBranchID);
-
-            SortedList OutPut = new SortedList();
-
-
-
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable dt = new DataTable();
+                    DataTable CountTable = new DataTable();
+                    SortedList Params = new SortedList();
+                    DataSet dataSet = new DataSet();
+                    string sqlCommandText = "";
+                    string sqlCommandCount = "";
+                    string Searchkey = "";
 
-                    // if (bAllBranchData)
-                    sqlCondition = "N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId";
-                    // else
-                    //     sqlCondition = "N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and N_BranchID=@nBranchID";
+                    int nUserID = myFunctions.GetUserID(User);
+                      if (xSearchkey != null && xSearchkey.Trim() != "")
+                      Searchkey = "and (X_StoreCode like'%" + xSearchkey + "%'or X_StoreName like'%" + xSearchkey + "%')";
 
+                       if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by N_StoreID desc";
+                       else
+                        xSortBy = " order by " + xSortBy;
 
+                    
+                    int Count = (nPage - 1) * nSizeperpage;
                     if (Count == 0)
-                        sqlCommandText = "select  top(" + nSizeperpage + ") * from Inv_OnlineStore where " + sqlCondition + " " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [X_StoreCode] AS X_StoreCode,* from Inv_OnlineStore where N_CompanyID=@p1" + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select  top(" + nSizeperpage + ") * from Inv_OnlineStore where " + sqlCondition + " " + Searchkey + " and N_AsnID not in (select top(" + Count + ") N_AsnID from vw_Wh_AsnMaster_Disp where " + sqlCondition + " " + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [X_StoreCode] AS X_StoreCode,* from Inv_OnlineStore where N_CompanyID=@p1" + Searchkey + " and N_StoreID not in (select top(" + Count + ") N_StoreID from Inv_OnlineStore where N_CompanyID=@p1" + xSortBy + " ) " + xSortBy;
+
+                    // sqlCommandText = "select * from Inv_MRNDetails where N_CompanyID=@p1";
+                    Params.Add("@p1", nCompanyId);
+                  //  Params.Add("@p2", nFnYearId);
+                    SortedList OutPut = new SortedList();
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from Inv_OnlineStore where " + sqlCondition + " " + Searchkey + "";
-                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    sqlCommandCount = "select count(*) as N_Count from Inv_OnlineStore where N_CompanyID=@p1 " + Searchkey + "";
+                    DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                    string TotalCount = "0";
+                    if (Summary.Rows.Count > 0)
+                    {
+                        DataRow drow = Summary.Rows[0];
+                        TotalCount = drow["N_Count"].ToString();
+                    }
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
+
                     if (dt.Rows.Count == 0)
                     {
                         return Ok(_api.Warning("No Results Found"));
@@ -110,7 +94,6 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Success(OutPut));
                     }
-
                 }
             }
             catch (Exception e)
@@ -118,7 +101,8 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-     
+
+
 
             [HttpPost("save")]
           public ActionResult SaveData([FromBody] DataSet ds)
@@ -197,43 +181,97 @@ namespace SmartxAPI.Controllers
             }
         }
 
-          [HttpGet("details")]
-        public ActionResult EmployeeEvaluation(string xStoreCode)
+    
+
+         [HttpGet("details")]
+        public ActionResult GetDetails(string xStoreCode,int nCompanyID, int nBranchID, bool bShowAllBranchData)
         {
+            DataTable Master = new DataTable();
+            DataTable Detail = new DataTable();
+            DataSet ds = new DataSet();
+            SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
+            DataTable Attachments = new DataTable();
+            int companyid = myFunctions.GetCompanyID(User);
+
+            QueryParams.Add("@nCompanyID", nCompanyID);
+
+            QueryParams.Add("@nBranchID", nBranchID);
+           // QueryParams.Add("@nFnYearID", nFnYearID);
+            string Condition = "";
+            string _sqlQuery = "";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    DataSet dt = new DataSet();
-                    SortedList Params = new SortedList();
-                    DataTable MasterTable = new DataTable();
-                    DataTable DetailTable = new DataTable();
-                    DataTable DataTable = new DataTable();
-                    string Mastersql = "";
-                    string DetailSql = "";
 
-                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    Params.Add("@xStoreCode", xStoreCode);
-                    Mastersql = "select * from Inv_OnlineStore where N_CompanyID=@nCompanyID and X_StoreCode=@xStoreCode ";
-                   
-                    MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
-                    if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                    int nStoreID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_StoreID"].ToString());
-                    Params.Add("@nStoreID", nStoreID);
 
-                    MasterTable = _api.Format(MasterTable, "Master");
-                    DetailSql = "select * from vw_Inv_OnlineStoreDetail where N_CompanyID=@nCompanyID and N_StoreID=@nStoreID ";
-                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
-                    DetailTable = _api.Format(DetailTable, "Details");
-                    dt.Tables.Add(MasterTable);
-                    dt.Tables.Add(DetailTable);
-                    return Ok(_api.Success(dt));
+                    if (xStoreCode != "" && xStoreCode != null)
+                    {
+                        QueryParams.Add("@xStoreCode", xStoreCode);
+                        _sqlQuery = "Select * from Inv_OnlineStore Where n_Companyid=@nCompanyID and X_StoreCode =@xStoreCode";
+                    }
+                    else
+                    {
+                        QueryParams.Add("@xStoreCode", xStoreCode);
+                        if (bShowAllBranchData == true)
+                            Condition = " n_Companyid=@nCompanyID and X_StoreCode =@xStoreCode";
+                        else
+                            Condition = " n_Companyid=@nCompanyID and X_StoreCode =@xStoreCode and N_BranchID=@nBranchID";
+
+                        _sqlQuery = "Select * from Inv_OnlineStore Where " + Condition + "";
+                    }
+
+
+                    Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+                    
+
+                    Master = _api.Format(Master, "master");
+
+                    if (Master.Rows.Count == 0)
+                    {
+                        return Ok(_api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+
+                        ds.Tables.Add(Master);
+                        if (xStoreCode != null)
+                        {
+                            QueryParams.Add("@nStoreID", Master.Rows[0]["N_StoreID"].ToString());
+
+                            _sqlQuery = "Select * from vw_Inv_OnlineStoreDetail Where N_CompanyID=@nCompanyID and N_StoreID=@nStoreID";
+
+                        }
+                        else
+                        {
+                            QueryParams.Add("@N_StoreID", Master.Rows[0]["N_StoreID"].ToString());
+
+                            _sqlQuery = "Select * from vw_Inv_OnlineStoreDetail Where N_CompanyID=@nCompanyID and N_StoreID=@nStoreID";
+                        }
+
+                        Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                        Detail = _api.Format(Detail, "details");
+                        if (Detail.Rows.Count == 0)
+                        {
+                            return Ok(_api.Notice("No Results Found"));
+                        }
+                        ds.Tables.Add(Detail);
+
+
+                        return Ok(_api.Success(ds));
+                    }
+
+
                 }
+
+
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
