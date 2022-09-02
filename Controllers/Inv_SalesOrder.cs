@@ -196,7 +196,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID, int nQuotationID, int n_OpportunityID,int nClaimID)
+        public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID, int nQuotationID, int n_OpportunityID,int nClaimID,string x_WarrantyNo)
         {
               if (xOrderNo != null)
                 xOrderNo = xOrderNo.Replace("%2F", "/");
@@ -293,13 +293,29 @@ namespace SmartxAPI.Controllers
                         Mastersql = "select * from vw_WarrantyToSO where N_CompanyId=@nCompanyID and N_ClaimID=@nClaimID";
                         MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_WarrantyNo", typeof(string), x_WarrantyNo);
+                         MasterTable.AcceptChanges();
                         MasterTable = _api.Format(MasterTable, "Master");
                         DetailSql = "";
                         DetailSql = "select * from vw_WarrantyToSODetails where N_CompanyId=@nCompanyID and N_ClaimID=@nClaimID and N_ClassID=4";
+                        string MaterialDetailssql = "select * from vw_WarrantyToSODetails where N_CompanyId=@nCompanyID and N_ClaimID=@nClaimID and N_ClassID<>4";
+                         DataTable  MaterialDetails = dLayer.ExecuteDataTable(MaterialDetailssql, Params, connection);
+
+                     
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                         DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "N_MaterialMainItemID", typeof(int), 0);
+                        foreach (DataRow kvar in DetailTable.Rows)
+                        {
+                            kvar["N_MaterialMainItemID"]=myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ItemID from Inv_WarrantyClaimDetails where N_ClaimID="+nClaimID+" and N_CompanyID="+nCompanyID+" and N_ServiceItemID="+myFunctions.getIntVAL(kvar["N_ItemID"].ToString())+"" , Params, connection).ToString());
+
+
+                        }
+                        DetailTable.AcceptChanges();
                         DetailTable = _api.Format(DetailTable, "Details");
+                        MaterialDetails = _api.Format(MaterialDetails, "MaterialDetails");
                         dt.Tables.Add(MasterTable);
                         dt.Tables.Add(DetailTable);
+                        dt.Tables.Add(MaterialDetails);
                         return Ok(_api.Success(dt));
                     }
 
@@ -596,12 +612,21 @@ namespace SmartxAPI.Controllers
                                 string dueDateSql="";
                                 int salesOrderDetailsID=0;
                                 bool Status=false;
+                                string taskCountsql="";
+                                object taskCount;
 
 
-                                                 
-                                 foreach (DataRow var in DetailTable.Rows)
+
+                                   DataTable Details=dLayer.ExecuteDataTable("select * from Inv_SalesOrderDetails where N_CompanyID="+N_CompanyID+" and N_SalesOrderID="+n_SalesOrderId+"",Params,connection,transaction);              
+                                 foreach (DataRow var in Details.Rows)
                                 {
                                     if(myFunctions.getIntVAL(var["N_ServiceID"].ToString())==0){ continue;}
+                                    taskCountsql="select COUNT(*) from Tsk_TaskMaster  where N_CompanyID="+N_CompanyID+" and N_ServiceDetailsID="+myFunctions.getIntVAL(var["N_SalesOrderDetailsID"].ToString())+"";
+                                    taskCount=dLayer.ExecuteScalar(taskCountsql,Params,connection,transaction);
+                                    if( myFunctions.getIntVAL(taskCount.ToString())>0)
+                                    {
+                                        continue;
+                                    }
                                     assigneeSql="select N_AssignedTo from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
                                     creatorstring="select N_UserID from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
                                      X_TaskDescriptionSql="select X_ServiceDescription from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
@@ -610,6 +635,8 @@ namespace SmartxAPI.Controllers
 
                                     
                                     N_AssigneeID =myFunctions.getIntVAL(dLayer.ExecuteScalar(assigneeSql,Params,connection,transaction).ToString());
+                                    if(N_AssigneeID<=0){ transaction.Rollback();
+                                          return Ok("Select an Assignee for Service");}
                                     N_CreatorID =myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring,Params,connection,transaction).ToString());
                                     N_ClosedUserID =myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring,Params,connection,transaction).ToString());
                                     N_SubmitterID =myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring,Params,connection,transaction).ToString());
