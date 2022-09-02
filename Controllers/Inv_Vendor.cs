@@ -185,9 +185,9 @@ namespace SmartxAPI.Controllers
             }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") N_VendorID,X_VendorCode,X_VendorName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_CurrencyID,X_CurrencyName,X_ContactName,X_Address,X_PhoneNo1,X_VendorType,X_VendorName_Ar from vw_InvVendor where N_CompanyID=@p1 and B_Inactive=@p2 and N_FnYearID=@nFnYearId " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_VendorID,X_VendorCode,X_VendorName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_CurrencyID,X_CurrencyName,X_ContactName,X_Address,X_PhoneNo1,X_VendorType,X_VendorName_Ar from vw_InvVendor where N_CompanyID=@p1  and N_FnYearID=@nFnYearId " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") N_VendorID,X_VendorCode,X_VendorName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_CurrencyID,X_CurrencyName,X_ContactName,X_Address,X_PhoneNo1,X_VendorType,X_VendorName_Ar from vw_InvVendor where N_CompanyID=@p1 and B_Inactive=@p2  and N_FnYearID=@nFnYearId " + Searchkey + " and N_VendorID not in (select top(" + Count + ") N_VendorID from vw_InvVendor where N_CompanyID=@p1 and B_Inactive=@p2  and N_FnYearID=@nFnYearId " + Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_VendorID,X_VendorCode,X_VendorName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_CurrencyID,X_CurrencyName,X_ContactName,X_Address,X_PhoneNo1,X_VendorType,X_VendorName_Ar from vw_InvVendor where N_CompanyID=@p1  and N_FnYearID=@nFnYearId " + Searchkey + " and N_VendorID not in (select top(" + Count + ") N_VendorID from vw_InvVendor where N_CompanyID=@p1  and N_FnYearID=@nFnYearId " + Searchkey + xSortBy + " ) " + xSortBy;
 
             Params.Add("@p1", nCompanyID);
             Params.Add("@nFnYearId", nFnYearId);
