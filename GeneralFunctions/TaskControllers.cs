@@ -63,7 +63,7 @@ namespace SmartxAPI.GeneralFunctions
               DataTable TaskMaster = dLayer.ExecuteDataTable(
                         " select "+nCompanyID+" as N_CompanyID,0 as N_TaskID,"+X_TaskCode+" as X_TaskCode,'"+taskSummary+"' as X_TaskSummery,'"+taskDescription+"' as X_TaskDescription,"
                         + "'"+start+"' as D_TaskDate,'"+due+"' as D_DueDate,"+creatorID+" as N_CreatorID,0 as B_Closed,"+status+" as N_StatusID,"+assigneeID+" as N_AssigneeID,"+submitterid+" as N_SubmitterID,"
-                        + ""+closeduserid+" as N_ClosedUserID, '"+entry+"' as D_EntryDate,"+assigneeID+" as N_CurrentAssigneeID ,"+salesOrderDetailsID+" as N_ServiceDetailsID" ,Params, connection, transaction);
+                        + ""+closeduserid+" as N_ClosedUserID, '"+entry+"' as D_EntryDate,"+assigneeID+" as N_CurrentAssigneeID ,"+salesOrderDetailsID+" as N_ServiceDetailsID,0 as N_CompletedPercentage" ,Params, connection, transaction);
 
               DataTable TaskDetails =dLayer.ExecuteDataTable(
                         " select "+nCompanyID+" as N_CompanyID,0 as N_TaskID,0 as N_TaskStatusID ,"+status+" as  N_Status,'"+entry+"' as D_EntryDate,"

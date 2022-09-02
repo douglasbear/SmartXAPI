@@ -311,6 +311,8 @@ DetailTable.AcceptChanges();
                     int nClaimID = myFunctions.getIntVAL(MasterRow["n_ClaimID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+                    string x_WarrantyNo=(MasterRow["x_WarrantyNo"].ToString());
+                    MasterTable.Columns.Remove("x_WarrantyNo");
                     string xClaimCode = MasterRow["x_ClaimCode"].ToString();
 
                     if (xClaimCode == "@Auto")
@@ -349,6 +351,8 @@ DetailTable.AcceptChanges();
                     Result.Add("n_ClaimID", nClaimID);
                     Result.Add("x_ClaimCode", xClaimCode);
                     Result.Add("n_ClaimDetailID", nClaimDetailID);
+                    Result.Add("x_WarrantyNo", x_WarrantyNo);
+
 
                     return Ok(_api.Success(Result, "Warranty Process saved"));
                 }
