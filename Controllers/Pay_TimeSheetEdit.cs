@@ -325,9 +325,14 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_TimesheetEntryEmp", "N_TimesheetID", nTimesheetID, "N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Pay_TimeSheetEntry", "N_TimesheetID", nTimesheetID, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearId, connection, transaction);
                     }
-                    for (int l = 0; l < EmpTable.Rows.Count; l++)
+                    int tempEMP=0;
+                    for (int l = 0; l < DetailTable.Rows.Count; l++)
                     {
-                        dLayer.ExecuteNonQuery("delete from Pay_TimeSheetImport where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and  D_Date >= '" + myFunctions.getDateVAL(dFromDate) + "' and D_Date<=' " + myFunctions.getDateVAL(dToDate) + "' and N_EmpID=" + myFunctions.getIntVAL(EmpTable.Rows[l]["N_EmpID"].ToString()), connection, transaction);
+                        int EmpID=myFunctions.getIntVAL(DetailTable.Rows[l]["N_EmpID"].ToString());
+                        if(EmpID==tempEMP)
+                        continue;
+                        dLayer.ExecuteNonQuery("delete from Pay_TimeSheetImport where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and  D_Date >= '" + myFunctions.getDateVAL(dFromDate) + "' and D_Date<=' " + myFunctions.getDateVAL(dToDate) + "' and N_EmpID=" + EmpID, connection, transaction);
+                        tempEMP=EmpID;
                     }
 
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_BatchCode='" + X_BatchCode + "' and N_FnyearID=" + nFnYearId;

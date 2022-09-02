@@ -235,12 +235,36 @@ namespace SmartxAPI.Controllers
                 QueryParams.Add("@nFormID", 1305);
                 QueryParams.Add("@nCustomerID", nCustomerID);
 
+
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("CRM_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
-                    transaction.Commit();
+
+                    object NCustomerID = dLayer.ExecuteScalar("select N_CrmCompanyID from Inv_Customer where N_CrmCompanyID=@nCustomerID", QueryParams, connection, transaction);
+                    NCustomerID = NCustomerID == null ? 0 : NCustomerID;
+                     if (myFunctions.getIntVAL(NCustomerID.ToString()) > 0)
+                  
+                  
+                    {
+                     return Ok(api.Error(User, "Unable to delete Customer"));
+                    }
+
+                     object NSOCustomerID = dLayer.ExecuteScalar("select N_CrmCompanyID from Inv_SalesQuotation where N_CrmCompanyID=@nCustomerID", QueryParams, connection, transaction);
+                     NSOCustomerID = NSOCustomerID == null ? 0 : NSOCustomerID;
+                     if (myFunctions.getIntVAL(NSOCustomerID.ToString()) > 0)
+                     {
+                     return Ok(api.Error(User, "Unable to delete Customer"));
+                    }
+                    
+                    else
+                     {
+                 Results = dLayer.DeleteData("CRM_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
+                 transaction.Commit();
+                     }
+                  
                 }
                 if (Results > 0)
                 {

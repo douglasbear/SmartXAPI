@@ -823,8 +823,8 @@ namespace SmartxAPI.Controllers
                                 }
 
                                 DataTable ServiceInfo = dLayer.ExecuteDataTable(
-                                "SELECT        Inv_SalesDetails.N_CompanyID, 0 AS N_ServiceInfoID, '' AS X_ServiceInfoCode, 0 AS N_TemplateID, '' AS X_Accessories, 'Installation' AS X_ServiceDescription, 0 AS N_AssignedTo, GETDATE() AS D_DeliveryDate, " +
-                                " 0 AS N_UserID, GETDATE() AS D_EntryDate,Inv_Device.N_DeviceID " +
+                                "SELECT        Inv_SalesDetails.N_CompanyID, 0 AS N_ServiceInfoID, "+myFunctions.GetUserID(User)+" as N_UserID, '' AS X_ServiceInfoCode, 0 AS N_TemplateID, '' AS X_Accessories, 'Installation' AS X_ServiceDescription, 0 AS N_AssignedTo, GETDATE() AS D_DeliveryDate, " +
+                                "  GETDATE() AS D_EntryDate,Inv_Device.N_DeviceID " +
                                 " FROM            Inv_SalesDetails INNER JOIN " +
                                 "                       Inv_Sales ON Inv_SalesDetails.N_SalesID = Inv_Sales.N_SalesId AND Inv_SalesDetails.N_SalesID = Inv_Sales.N_SalesId AND Inv_SalesDetails.N_CompanyID = Inv_Sales.N_CompanyId INNER JOIN "+
                                 "                        Inv_Device ON Inv_Sales.X_Barcode = Inv_Device.X_SerialNo AND Inv_Sales.N_CompanyId = Inv_Device.N_CompanyID "+ 
@@ -902,12 +902,12 @@ namespace SmartxAPI.Controllers
                                     D_EntryDate =Convert.ToDateTime(SalesMaster.Rows[0]["D_EntryDate"].ToString());
                                     salesOrderDetailsID=myFunctions.getIntVAL(var["N_SalesOrderDetailsID"].ToString());
                                     N_Status=2;
-                                    Status=taskController.SaveGeneralTask(N_CompanyID,X_TaskSummary, X_TaskDescription, N_AssigneeID,N_CreatorID,N_SubmitterID,N_ClosedUserID,D_DueDate,D_StartDate,D_EntryDate,N_Status,salesOrderDetailsID, connection, transaction);
-                                    if(Status==false)
-                                    {   
-                                        transaction.Rollback();
-                                          return Ok("Unable to save Task");
-                                    }
+                                    // Status=taskController.SaveGeneralTask(N_CompanyID,X_TaskSummary, X_TaskDescription, N_AssigneeID,N_CreatorID,N_SubmitterID,N_ClosedUserID,D_DueDate,D_StartDate,D_EntryDate,N_Status,salesOrderDetailsID, connection, transaction);
+                                    // if(Status==false)
+                                    // {   
+                                    //     transaction.Rollback();
+                                    //       return Ok("Unable to save Task");
+                                    // }
                                  }
                              
                                 }

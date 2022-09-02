@@ -196,12 +196,12 @@ namespace SmartxAPI.Controllers
             if (bAllBranchData == true)
             {
                 Params.Add("@xQuotationNo", xQuotationNo);
-                sqlCommandText = "SELECT Inv_SalesQuotation.*, Gen_LookupTable.X_Name as X_SubSource ,Acc_CurrencyMaster.N_CurrencyID, Acc_CurrencyMaster.X_CurrencyName, CRM_Customer.X_Customer as x_CrmCustomer, CRM_Contact.N_ContactID,CRM_Contact.X_Contact FROM  CRM_Contact RIGHT OUTER JOIN Inv_SalesQuotation ON CRM_Contact.N_ContactID = Inv_SalesQuotation.N_ContactID AND CRM_Contact.N_CompanyId = Inv_SalesQuotation.N_CompanyId LEFT OUTER JOIN CRM_Customer ON Inv_SalesQuotation.N_CrmCompanyID = CRM_Customer.N_CustomerID AND Inv_SalesQuotation.N_CompanyId = CRM_Customer.N_CompanyId LEFT OUTER JOIN Gen_LookupTable ON Inv_SalesQuotation.n_SubSourceID = Gen_LookupTable.N_PkeyId LEFT OUTER JOIN Acc_CurrencyMaster RIGHT OUTER JOIN Inv_Customer ON Acc_CurrencyMaster.N_CompanyID = Inv_Customer.N_CompanyID AND Acc_CurrencyMaster.N_CurrencyID = Inv_Customer.N_CurrencyID ON Inv_SalesQuotation.N_CompanyId = Inv_Customer.N_CompanyID AND Inv_SalesQuotation.N_CustomerId = Inv_Customer.N_CustomerID Where Inv_SalesQuotation.N_CompanyID=@nCompanyID and Inv_SalesQuotation.N_FnYearID=@nFnYearID and Inv_SalesQuotation.X_QuotationNo=@xQuotationNo";
+                sqlCommandText = "SELECT * from VW_InvSalesQuotationMaster  Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_QuotationNo=@xQuotationNo";
             }
             else
             {
                 Params.Add("@xQuotationNo", xQuotationNo);
-                sqlCommandText = "SELECT Inv_SalesQuotation.*, Gen_LookupTable.X_Name as X_SubSource  ,Acc_CurrencyMaster.N_CurrencyID, Acc_CurrencyMaster.X_CurrencyName, CRM_Customer.X_Customer as x_CrmCustomer, CRM_Contact.N_ContactID,CRM_Contact.X_Contact FROM  CRM_Contact RIGHT OUTER JOIN Inv_SalesQuotation ON CRM_Contact.N_ContactID = Inv_SalesQuotation.N_ContactID AND CRM_Contact.N_CompanyId = Inv_SalesQuotation.N_CompanyId LEFT OUTER JOIN Gen_LookupTable ON Inv_SalesQuotation.n_SubSourceID = Gen_LookupTable.N_PkeyId LEFT OUTER JOIN CRM_Customer ON Inv_SalesQuotation.N_CrmCompanyID = CRM_Customer.N_CustomerID AND Inv_SalesQuotation.N_CompanyId = CRM_Customer.N_CompanyId LEFT OUTER JOIN Acc_CurrencyMaster RIGHT OUTER JOIN Inv_Customer ON Acc_CurrencyMaster.N_CompanyID = Inv_Customer.N_CompanyID AND Acc_CurrencyMaster.N_CurrencyID = Inv_Customer.N_CurrencyID ON Inv_SalesQuotation.N_CompanyId = Inv_Customer.N_CompanyID AND Inv_SalesQuotation.N_CustomerId = Inv_Customer.N_CustomerID Where Inv_SalesQuotation.N_CompanyID=@nCompanyID and Inv_SalesQuotation.N_FnYearID=@nFnYearID and Inv_SalesQuotation.X_QuotationNo=@xQuotationNo and Inv_SalesQuotation.N_BranchID=@nBranchID";
+                sqlCommandText = "SELECT * from  VW_InvSalesQuotationMaster Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_QuotationNo=@xQuotationNo and N_BranchID=@nBranchID";
             }
 
             try
@@ -269,18 +269,18 @@ namespace SmartxAPI.Controllers
 
                     int nCustomerID = myFunctions.getIntVAL(Master.Rows[0]["N_CustomerId"].ToString());
                     Params.Add("@nCustomerID", nCustomerID);
-                    if (nCustomerID > 0)
-                    {
-                        string sql = "select X_CustomerCode from Inv_Customer where N_CustomerID=@nCustomerID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID) and B_Inactive = 0";
-                        if (bAllBranchData)
-                            sql = "select X_CustomerCode from Inv_Customer where N_CustomerID=@nCustomerID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_Inactive = 0";
-                        object xCustomerCode = dLayer.ExecuteScalar(sql, Params, connection);
-                        Master = myFunctions.AddNewColumnToDataTable(Master, "X_CustomerCode", typeof(string), xCustomerCode.ToString());
-                    }
-                    else
-                    {
-                        Master = myFunctions.AddNewColumnToDataTable(Master, "X_CustomerCode", typeof(string), "");
-                    }
+                    // if (nCustomerID > 0)
+                    // {
+                    //     string sql = "select X_CustomerCode from Inv_Customer where N_CustomerID=@nCustomerID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID) and B_Inactive = 0";
+                    //     if (bAllBranchData)
+                    //         sql = "select X_CustomerCode from Inv_Customer where N_CustomerID=@nCustomerID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_Inactive = 0";
+                    //     object xCustomerCode = dLayer.ExecuteScalar(sql, Params, connection);
+                    //     Master = myFunctions.AddNewColumnToDataTable(Master, "X_CustomerCode", typeof(string), xCustomerCode.ToString());
+                    // }
+                    // else
+                    // {
+                    //     Master = myFunctions.AddNewColumnToDataTable(Master, "X_CustomerCode", typeof(string), "");
+                    // }
 
                     int nTaxCategoryID = myFunctions.getIntVAL(Master.Rows[0]["N_TaxCategoryID"].ToString());
                     Params.Add("@nTaxCategoryID", nTaxCategoryID);
