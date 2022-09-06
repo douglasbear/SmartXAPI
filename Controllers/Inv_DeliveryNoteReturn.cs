@@ -43,16 +43,33 @@ namespace SmartxAPI.Controllers
             string sqlCommandCount = "";
             string Searchkey = "";
 
+           
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_ReturnNo like '%" + xSearchkey + "%')";
+                      Searchkey = "and (X_ReturnNo like'%" + xSearchkey + "%'or X_CustomerName like'%" + xSearchkey + "%')";
 
-            if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by X_ReturnNo desc";
+         
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_DeliveryNoteRtnID desc";
+            else
+            {
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "X_ReturnNo":
+                        xSortBy = "[X_ReturnNo] " + xSortBy.Split(" ")[1];
+                        break;
+                    case "d_ReturnDate":
+                        xSortBy = "Cast([D_ReturnDate] as DateTime )" + xSortBy.Split(" ")[1];
+                        break;
+               
+                    default: break;
+                }
+                xSortBy = " order by " + xSortBy;
+            }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_DeliveryNoteReturnMaster where N_CompanyID=@nCompanyID  " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_DeliveryNoteReturn where N_CompanyID=@nCompanyID  " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_DeliveryNoteReturnMaster where N_CompanyID=@nCompanyID  " + Searchkey + " and N_DeliveryNoteRtnID not in (select top(" + Count + ") N_DeliveryNoteRtnID from vw_DeliveryNoteReturnMaster where N_CompanyID=@nCompanyID " + xSortBy + " ) " + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_DeliveryNoteReturn where N_CompanyID=@nCompanyID  " + Searchkey + " and N_DeliveryNoteRtnID not in (select top(" + Count + ") N_DeliveryNoteRtnID from vw_DeliveryNoteReturnMaster where N_CompanyID=@nCompanyID " + xSortBy + " ) " + " " + xSortBy;
 
             Params.Add("@nCompanyID", nCompanyID);
 
@@ -64,7 +81,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_DeliveryNoteReturnMaster where N_CompanyID=@nCompanyID " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_Inv_DeliveryNoteReturn where N_CompanyID=@nCompanyID " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
