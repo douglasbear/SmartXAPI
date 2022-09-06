@@ -1027,10 +1027,10 @@ namespace SmartxAPI.Controllers
                     DateTime D_EntryDate = DateTime.Today;
                     DataTable DetailTable;
 
-                    if (nStatus.ToString() == "4")
-                    {
-                        nStatus = 5;
-                    }
+                    // if (nStatus.ToString() == "4")
+                    // {
+                    //     nStatus = 5;
+                    // }
 
 
 
@@ -1078,6 +1078,6 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
         }
-
     }
+
 }

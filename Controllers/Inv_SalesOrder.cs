@@ -22,15 +22,17 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly IMyAttachments myAttachments;
+        private readonly ITaskController taskController;
         private readonly string connectionString;
         private readonly int FormID;
 
-        public Inv_SalesOrderController(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
+        public Inv_SalesOrderController(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt,ITaskController task)
         {
             _api = api;
             dLayer = dl;
             myFunctions = myFun;
             myAttachments = myAtt;
+            taskController = task;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 81;
         }
@@ -55,11 +57,16 @@ namespace SmartxAPI.Controllers
                      int nCompanyID = myFunctions.GetCompanyID(User);
                     int N_decimalPlace = 2;
                     string custPortalOrder="";
+                    string RentalOrderCriteria="";
                     N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Sales", "Decimal_Place", "N_Value", nCompanyID, dLayer, connection));
                     N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
-                    if(nFormID ==1544)
+                    if(nFormID ==1546)
                     {
-                        serviceOrderCriteria="and N_FormID=1544 ";
+                        serviceOrderCriteria="and N_FormID=1546 ";
+                    }
+                     if(nFormID ==1571)
+                    {
+                        RentalOrderCriteria="and N_FormID=1571 ";
                     }
                     
 
@@ -141,19 +148,19 @@ namespace SmartxAPI.Controllers
                     if(salesOrder==false)
                     {
                       if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_pendingSO where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria +Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_pendingSO where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria + RentalOrderCriteria + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_pendingSO where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria + Searchkey + " and N_SalesOrderId not in (select top(" + Count + ") N_SalesOrderId from vw_pendingSO where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_pendingSO where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria + RentalOrderCriteria + Searchkey + " and N_SalesOrderId not in (select top(" + Count + ") N_SalesOrderId from vw_pendingSO where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + xSortBy + " ) " + xSortBy;
                     }
 
                     if(salesOrder==true)
                     {
                        if (Count==0)
                        {
-                         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria + Searchkey + " " + xSortBy;
+                         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria + RentalOrderCriteria + Searchkey + " " + xSortBy;
                        }
                        else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria + Searchkey + " and N_SalesOrderId not in (select top(" + Count + ") N_SalesOrderId from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria + RentalOrderCriteria + Searchkey + " and N_SalesOrderId not in (select top(" + Count + ") N_SalesOrderId from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + xSortBy + " ) " + xSortBy;
                     }
                     
 
@@ -164,7 +171,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria +Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria + RentalOrderCriteria + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -194,7 +201,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID, int nQuotationID, int n_OpportunityID)
+        public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID, int nQuotationID, int n_OpportunityID,int nClaimID,string x_WarrantyNo)
         {
               if (xOrderNo != null)
                 xOrderNo = xOrderNo.Replace("%2F", "/");
@@ -285,6 +292,36 @@ namespace SmartxAPI.Controllers
                         dt.Tables.Add(DetailTable);
                         return Ok(_api.Success(dt));
 
+                    }
+                    if(nClaimID>0){
+                        Params.Add("@nClaimID", nClaimID);
+                        Mastersql = "select * from vw_WarrantyToSO where N_CompanyId=@nCompanyID and N_ClaimID=@nClaimID";
+                        MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_WarrantyNo", typeof(string), x_WarrantyNo);
+                         MasterTable.AcceptChanges();
+                        MasterTable = _api.Format(MasterTable, "Master");
+                        DetailSql = "";
+                        DetailSql = "select * from vw_WarrantyToSODetails where N_CompanyId=@nCompanyID and N_ClaimID=@nClaimID and N_ClassID=4";
+                        string MaterialDetailssql = "select * from vw_WarrantyToSODetails where N_CompanyId=@nCompanyID and N_ClaimID=@nClaimID and N_ClassID<>4";
+                         DataTable  MaterialDetails = dLayer.ExecuteDataTable(MaterialDetailssql, Params, connection);
+
+                     
+                        DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                         DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "N_MaterialMainItemID", typeof(int), 0);
+                        foreach (DataRow kvar in DetailTable.Rows)
+                        {
+                            kvar["N_MaterialMainItemID"]=myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ItemID from Inv_WarrantyClaimDetails where N_ClaimID="+nClaimID+" and N_CompanyID="+nCompanyID+" and N_ServiceItemID="+myFunctions.getIntVAL(kvar["N_ItemID"].ToString())+"" , Params, connection).ToString());
+
+
+                        }
+                        DetailTable.AcceptChanges();
+                        DetailTable = _api.Format(DetailTable, "Details");
+                        MaterialDetails = _api.Format(MaterialDetails, "MaterialDetails");
+                        dt.Tables.Add(MasterTable);
+                        dt.Tables.Add(DetailTable);
+                        dt.Tables.Add(MaterialDetails);
+                        return Ok(_api.Success(dt));
                     }
 
 
@@ -480,8 +517,15 @@ namespace SmartxAPI.Controllers
                     int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
                     int N_QuotationID = myFunctions.getIntVAL(MasterRow["n_QuotationID"].ToString());
                     string x_OrderNo = MasterRow["x_OrderNo"].ToString();
+                    string isAuto = MasterRow["x_OrderNo"].ToString();
                     int N_CustomerId = myFunctions.getIntVAL(MasterRow["n_CustomerId"].ToString());
                     bool B_IsService = true;
+                    int N_FormID=0;
+                    if(MasterTable.Columns.Contains("N_FormID"))
+                    {
+                        N_FormID=myFunctions.getIntVAL(MasterRow["N_FormID"].ToString());
+                    }
+
 
                     if (x_OrderNo == "@Auto")
                     {
@@ -552,6 +596,70 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        if(N_FormID==1546 )
+                             {
+                                int N_AssigneeID=0;
+                                int N_CreatorID=0 ;
+                      
+                                string X_TaskSummary="";
+                                string X_TaskSummarySql="";
+                                string X_TaskDescription="";
+                                string X_TaskDescriptionSql="";
+              
+                                int N_SubmitterID=0;
+                                int N_ClosedUserID=0;
+                                DateTime D_DueDate;
+                                DateTime D_StartDate;
+                                DateTime D_EntryDate;
+                                int N_Status=0;
+                                string assigneeSql="";
+                                string creatorstring="";
+                                string dueDateSql="";
+                                int salesOrderDetailsID=0;
+                                bool Status=false;
+                                string taskCountsql="";
+                                object taskCount;
+
+
+
+                                   DataTable Details=dLayer.ExecuteDataTable("select * from Inv_SalesOrderDetails where N_CompanyID="+N_CompanyID+" and N_SalesOrderID="+n_SalesOrderId+"",Params,connection,transaction);              
+                                 foreach (DataRow var in Details.Rows)
+                                {
+                                    if(myFunctions.getIntVAL(var["N_ServiceID"].ToString())==0){ continue;}
+                                    taskCountsql="select COUNT(*) from Tsk_TaskMaster  where N_CompanyID="+N_CompanyID+" and N_ServiceDetailsID="+myFunctions.getIntVAL(var["N_SalesOrderDetailsID"].ToString())+"";
+                                    taskCount=dLayer.ExecuteScalar(taskCountsql,Params,connection,transaction);
+                                    if( myFunctions.getIntVAL(taskCount.ToString())>0)
+                                    {
+                                        continue;
+                                    }
+                                    assigneeSql="select N_AssignedTo from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
+                                    creatorstring="select N_UserID from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
+                                     X_TaskDescriptionSql="select X_ServiceDescription from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
+                                    X_TaskSummarySql="select X_ItemName from Inv_ItemMaster where N_ItemID="+myFunctions.getIntVAL(var["N_ItemID"].ToString())+" and N_CompanyID="+N_CompanyID+" ";
+                                    dueDateSql="select D_DeliveryDate from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+myFunctions.getIntVAL(var["N_ServiceID"].ToString())+"";
+
+                                    
+                                    N_AssigneeID =myFunctions.getIntVAL(dLayer.ExecuteScalar(assigneeSql,Params,connection,transaction).ToString());
+                                    if(N_AssigneeID<=0){ transaction.Rollback();
+                                          return Ok("Select an Assignee for Service");}
+                                    N_CreatorID =myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring,Params,connection,transaction).ToString());
+                                    N_ClosedUserID =myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring,Params,connection,transaction).ToString());
+                                    N_SubmitterID =myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring,Params,connection,transaction).ToString());
+                                    X_TaskDescription =(dLayer.ExecuteScalar(X_TaskDescriptionSql,Params,connection,transaction).ToString());
+                                    X_TaskSummary =(dLayer.ExecuteScalar(X_TaskSummarySql,Params,connection,transaction).ToString());
+                                    D_DueDate =Convert.ToDateTime(dLayer.ExecuteScalar(dueDateSql,Params,connection,transaction).ToString());
+                                    D_StartDate =Convert.ToDateTime(MasterTable.Rows[0]["D_EntryDate"].ToString());
+                                    D_EntryDate =Convert.ToDateTime(MasterTable.Rows[0]["D_EntryDate"].ToString());
+                                    salesOrderDetailsID=myFunctions.getIntVAL(var["N_SalesOrderDetailsID"].ToString());
+                                    N_Status=2;
+                                    Status=taskController.SaveGeneralTask(N_CompanyID,X_TaskSummary, X_TaskDescription, N_AssigneeID,N_CreatorID,N_SubmitterID,N_ClosedUserID,D_DueDate,D_StartDate,D_EntryDate,N_Status,salesOrderDetailsID, connection, transaction);
+                                    if(Status==false)
+                                    {   
+                                        transaction.Rollback();
+                                          return Ok("Unable to save sales order");
+                                    }
+                                 }
+                             }
                         SortedList CustomerParams = new SortedList();
                         CustomerParams.Add("@nCustomerID", N_CustomerId);
                         DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID=@nCustomerID", CustomerParams, connection, transaction);

@@ -3018,109 +3018,115 @@ namespace SmartxAPI.GeneralFunctions
             return 0;
         }
 
-        //public bool UserCreate(int nCompanyID, int nBranchID, string xPartyName, string emailID, string type, string partyCode, int partyID, bool active, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
-        // {
-        //     int UserID = 0, UserCatID = 0;
-        //     string Pwd = this.EncryptString(emailID);
-
-        //     int nAppID = 0;
-
-        //     if (type.ToLower() == "customer")
-        //     {
-        //         nAppID = 13;
-        //     }
-        //     else if (type.ToLower() == "vendor")
-        //     {
-        //         nAppID = 14;
-        //     }
-
-        //     if (active)
-        //     {
-        //         object objUser = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_CustomerID=" + partyID, connection, transaction);
-        //         if (objUser != null)
+        //public bool UserCreate(int nCompanyID, int nBranchID,int nLocationID, string xPartyName, int N_ActiveAppID,int N_UserType, string type, string partyCode, int partyID, bool active,string xEmail,int nLoginFlag,ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, SqlConnection olivoCon, SqlTransaction olivoTxn)
+        // {            
+        //         string Pwd = this.EncryptString(xEmail);
+        //         int nClientID = this.GetClientID(User);
+        //         object glogalUserID = dLayer.ExecuteScalar("SELECT N_UserID FROM Users where x_EmailID='" + xEmail.ToString() + "' and N_ClientID=" + nClientID, olivoCon, olivoTxn);
+        //         if (glogalUserID == null)
         //         {
-        //             UserID = this.getIntVAL(objUser.ToString());
-        //         }
-        //         else
-        //         {
-        //             object objCustUser = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + " and X_UserID='" + emailID + "'", connection, transaction);
-        //             if (objUser != null)
+        //             DataTable dtGobal = new DataTable();
+        //             dtGobal.Clear();
+        //             dtGobal.Columns.Add("X_EmailID");
+        //             dtGobal.Columns.Add("N_UserID");
+        //             dtGobal.Columns.Add("X_UserName");
+        //             dtGobal.Columns.Add("N_ClientID");
+        //             dtGobal.Columns.Add("N_ActiveAppID");
+        //             dtGobal.Columns.Add("X_Password");
+        //             dtGobal.Columns.Add("B_Inactive");
+        //             dtGobal.Columns.Add("X_UserID");
+        //             dtGobal.Columns.Add("B_EmailVerified");
+        //             dtGobal.Columns.Add("N_UserType");
+
+        //             DataRow rowGb = dtGobal.NewRow();
+        //             rowGb["X_EmailID"] = xEmail;
+        //             rowGb["X_UserName"] = xPartyName;
+        //             rowGb["N_ClientID"] = nClientID;
+        //             rowGb["N_ActiveAppID"] = N_ActiveAppID;
+        //             rowGb["X_Password"] = Pwd;
+        //             rowGb["B_Inactive"] = 0;
+        //             rowGb["X_UserID"] = xEmail;
+        //             rowGb["B_EmailVerified"] = 1;
+        //             rowGb["N_UserType"] = N_UserType;
+        //             dtGobal.Rows.Add(rowGb);
+
+        //             int GlobalUserID = dLayer.SaveData("Users", "N_UserID", dtGobal, olivoCon, olivoTxn);
+        //             if (GlobalUserID > 0)
         //             {
-        //                 UserID = this.getIntVAL(objCustUser.ToString());
+        //                 olivoTxn.Commit();
         //             }
         //         }
+        //         object objUserID =null;
 
-        //         object objUserCat = dLayer.ExecuteScalar("select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + " and N_AppID=" + nAppID, connection, transaction);
-        //         if (objUserCat != null)
+        //         if(nLoginFlag==1)
+        //             objUserID= dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_LoginFlag=" + nLoginFlag + " and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
+        //         else if(nLoginFlag==2)
+        //             objUserID= dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_LoginFlag=" + nLoginFlag + " and N_EmpID="+partyID+" and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
+        //         else if(nLoginFlag==3)
+        //             objUserID= dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_LoginFlag=" + nLoginFlag + " and N_TeacherID="+partyID+" and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
+        //         else if(nLoginFlag==4)
+        //             objUserID= dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_LoginFlag=" + nLoginFlag + " and N_ParentID="+partyID+" and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
+        //         else if(nLoginFlag==5)
+        //             objUserID= dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_LoginFlag=" + nLoginFlag + " and N_StudentID="+partyID+" and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
+
+        //         if (objUserID == null)
         //         {
-        //             UserCatID = this.getIntVAL(objUserCat.ToString());
-        //         }
-        //         else
-        //         {
-        //             int nUserCat = dLayer.ExecuteNonQuery("insert into Sec_UserCategory SELECT " + nCompanyID + ", MAX(N_UserCategoryID)+1, (select X_UserCategory from Sec_UserCategory where N_CompanyID=-1 and N_AppID=" + nAppID + "), MAX(N_UserCategoryID)+1, 365, " + nAppID + " FROM Sec_UserCategory ", connection, transaction);
-        //             if (nUserCat <= 0)
+        //             object objUserCat =null;
+        //             if(nLoginFlag==3 || nLoginFlag==4 || nLoginFlag==5)
+        //                 objUserCat= dLayer.ExecuteScalar("Select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + "  and N_AppID=19", connection, transaction);
+        //             if (objUserCat != null)
         //             {
-        //                 return false;
+        //                 object objUserCheck = dLayer.ExecuteScalar("Select X_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and X_UserID='" + xEmail.ToString() + "' and N_EmpID=" + nEmpID + " and N_UserCategoryID=" + myFunctions.getIntVAL(objUserCat.ToString()), connection, transaction);
+        //                 if (objUserCheck == null)
+        //                 {
+        //                     object objUserCheckng = dLayer.ExecuteScalar("Select X_UserID from Sec_User where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID, connection, transaction);
+        //                     if (objUserCheckng == null)
+        //                     {
+        //                         object objUser = dLayer.ExecuteScalar("Select X_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
+        //                         if (objUser != null)
+        //                         {
+        //                             dLayer.ExecuteNonQuery("update  Sec_User set N_EmpID=" + nEmpID + ",B_Active= 1,N_UserCategoryID=" + myFunctions.getIntVAL(objUserCat.ToString()) + ",X_UserCategoryList=" + objUserCat.ToString() + " where X_UserID='" + xEmail.ToString() + "' and N_CompanyID= " + nCompanyID, Params, connection, transaction);
+        //                         }
+        //                         else
+        //                         {
+        //                             DataTable dt = new DataTable();
+        //                             dt.Clear();
+        //                             dt.Columns.Add("N_CompanyID");
+        //                             dt.Columns.Add("N_UserID");
+        //                             dt.Columns.Add("X_UserID");
+        //                             dt.Columns.Add("X_Password");
+        //                             dt.Columns.Add("N_UserCategoryID");
+        //                             dt.Columns.Add("B_Active");
+        //                             dt.Columns.Add("N_BranchID");
+        //                             dt.Columns.Add("N_LocationID");
+        //                             dt.Columns.Add("X_UserName");
+        //                             dt.Columns.Add("N_EmpID");
+        //                             dt.Columns.Add("N_LoginFlag");
+        //                             dt.Columns.Add("X_UserCategoryList");
+        //                             dt.Columns.Add("X_Email");
+
+        //                             DataRow row = dt.NewRow();
+        //                             row["N_CompanyID"] = nCompanyID;
+        //                             row["X_UserID"] = xEmail;
+        //                             row["X_Password"] = Pwd;
+        //                             row["N_UserCategoryID"] = this.getIntVAL(objUserCat.ToString());
+        //                             row["B_Active"] = 1;
+        //                             row["N_BranchID"] = nBranchID;
+        //                             row["N_LocationID"] = nLocationID;
+        //                             row["X_UserName"] = xPartyName;
+        //                             row["N_EmpID"] = nEmpID;
+        //                             row["N_LoginFlag"] = 2;
+        //                             row["X_UserCategoryList"] = objUserCat.ToString();
+        //                             row["X_Email"] = xEmail;
+        //                             dt.Rows.Add(row);
+
+        //                             int UserID = dLayer.SaveData("Sec_User", "N_UserID", dt, connection, transaction);
+        //                         }
+        //                     }
+        //                 }
         //             }
-        //             object CatID = dLayer.ExecuteScalar("select MAX(N_UserCategoryID) from Sec_UserCategory", connection, transaction);
-        //             if (CatID != null)
-        //             {
-        //                 UserCatID = this.getIntVAL(CatID.ToString());
-        //             }
-        //             if (UserCatID > 0)
-        //             {
-        //                 int Prevrows = dLayer.ExecuteNonQuery("Insert into Sec_UserPrevileges (N_InternalID,N_UserCategoryID,N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View)" +
-        //                                                             "Select ROW_NUMBER() over(order by N_InternalID)+(select MAX(N_InternalID) from Sec_UserPrevileges)," + UserCatID + ",N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View " +
-        //                                                             "from Sec_UserPrevileges inner join Sec_UserCategory on Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID where Sec_UserPrevileges.N_UserCategoryID = (-1*" + nAppID + ") and N_CompanyID = -1", connection, transaction);
-
-        //             }
         //         }
-
-        //         if (UserID == 0)
-        //         {
-        //             DataTable dt = new DataTable();
-        //             dt.Clear();
-        //             dt.Columns.Add("N_CompanyID");
-        //             dt.Columns.Add("N_UserID");
-        //             dt.Columns.Add("X_UserID");
-        //             dt.Columns.Add("X_Password");
-        //             dt.Columns.Add("N_UserCategoryID");
-        //             dt.Columns.Add("B_Active");
-        //             dt.Columns.Add("N_BranchID");
-        //             dt.Columns.Add("X_UserName");
-        //             dt.Columns.Add("N_CustomerID");
-        //             dt.Columns.Add("N_LoginFlag");
-        //             dt.Columns.Add("X_UserCategoryList");
-
-        //             DataRow row = dt.NewRow();
-        //             row["N_CompanyID"] = nCompanyID;
-        //             row["X_UserID"] = emailID;
-        //             row["X_Password"] = Pwd;
-        //             row["N_UserCategoryID"] = UserCatID;
-        //             row["B_Active"] = 1;
-        //             row["N_BranchID"] = nBranchID;
-        //             row["X_UserName"] = xPartyName;
-        //             row["N_CustomerID"] = partyID;
-        //             row["N_LoginFlag"] = nAppID;
-        //             row["X_UserCategoryList"] = UserCatID.ToString();
-        //             dt.Rows.Add(row);
-
-        //             int nUserID = dLayer.SaveData("Sec_User", "N_UserID", dt, connection, transaction);
-        //         }
-        //         else
-        //         {
-        //             dLayer.ExecuteNonQuery("update Sec_User set N_CustomerID=" + partyID + ",B_Active=1,N_LoginFlag=" + nAppID + " where N_CompanyID=" + nCompanyID + "  and N_UserID=" + UserID, connection, transaction);
-        //         }
-        //     }
-        //     else
-        //     {
-        //         object objUser = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_CustomerID=" + partyID, connection, transaction);
-        //         if (objUser != null)
-        //         {
-        //             UserID = this.getIntVAL(objUser.ToString());
-        //             dLayer.ExecuteNonQuery("update Sec_User set B_Active=0,N_LoginFlag=5  where N_CompanyID=" + nCompanyID + "  and N_CustomerID=" + partyID, connection, transaction);
-        //         }
-        //     }
+        //     //}
         //     return true;
         // }
 

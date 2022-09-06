@@ -23,7 +23,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
 
-        private readonly int N_FormID =1429 ;
+        private readonly int N_FormID =1556 ;
 
 
         public sch_subjectMapping(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
@@ -95,6 +95,9 @@ namespace SmartxAPI.Controllers
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["N_SubMappingID"] = nSubMappingID;
+                        DetailTable.Rows[j]["X_SubMappingCode"] = Code;
+                       
+                       
                     }
                     int nRouteDetailID = dLayer.SaveData("Sch_SubjectMappingDetails", "N_SubMappingDetailsID", DetailTable, connection, transaction);
                     if (nRouteDetailID <= 0)

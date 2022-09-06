@@ -100,7 +100,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult AdmissionDetails(string xAdmissionNo, int nAcYearID,int nRegID)
+        public ActionResult AdmissionDetails(string xAdmissionNo, int nAcYearID,int nRegID,int nStudentID)
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
@@ -110,11 +110,17 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
-
-            if (xAdmissionNo!=null)
+           
+            
+            if(nStudentID>0)
+            {
+                Params.Add("@p5", nStudentID);
+                sqlCommandText=" select * from vw_SchAdmission where N_CompanyID=@p1 and N_AdmissionID=@p5 and N_AcYearID=@p4";  
+            }
+            else  if (xAdmissionNo!=null)
             {
                 Params.Add("@p2", xAdmissionNo);
-                sqlCommandText=" select * from vw_SchAdmission where N_CompanyID=@p1 and x_AdmissionNo=@p2 and N_AcYearID=@p4";
+                sqlCommandText=" select * from vw_SchAdmission where N_CompanyID=@p1 and X_AdmissionNo=@p2 and N_AcYearID=@p4";
             }
 
             if(nRegID>0)
@@ -242,12 +248,12 @@ namespace SmartxAPI.Controllers
 
                     if(nAdmissionID>0)
                     {
-                        object PayCount = dLayer.ExecuteScalar("select COUNT(Inv_PayReceiptDetails.N_InventoryID) from Inv_PayReceiptDetails INNER JOIN Sch_Sales ON Sch_Sales.N_CompanyID=Inv_PayReceiptDetails.n_companyid and Sch_Sales.N_RefSalesID=Inv_PayReceiptDetails.N_InventoryID where Inv_PayReceiptDetails.N_CompanyID="+ nCompanyID +" and Inv_PayReceiptDetails.X_TransType='SALES' and Sch_Sales.N_RefId="+ nAdmissionID, Params, connection, transaction);
+                        object PayCount = dLayer.ExecuteScalar("select COUNT(Inv_PayReceiptDetails.N_InventoryID) from Inv_PayReceiptDetails INNER JOIN Sch_Sales ON Sch_Sales.N_CompanyID=Inv_PayReceiptDetails.n_companyid and Sch_Sales.N_RefSalesID=Inv_PayReceiptDetails.N_InventoryID where Inv_PayReceiptDetails.N_CompanyID="+ nCompanyID +" and Inv_PayReceiptDetails.X_TransType='SALES' and Sch_Sales.N_Type=1 and Sch_Sales.N_RefId="+ nAdmissionID, Params, connection, transaction);
                         if (PayCount != null)
                         {
                             if(myFunctions.getIntVAL(PayCount.ToString())==0)
                             {
-                                DataTable dtSch_Sales=dLayer.ExecuteDataTable("select N_CompanyId,N_FnYearId,N_RefSalesID,N_SalesID from Sch_Sales where N_CompanyId="+ nCompanyID +" and N_FnYearId="+nAcYearID+" and N_RefId="+nAdmissionID,Params,connection,transaction);
+                                DataTable dtSch_Sales=dLayer.ExecuteDataTable("select N_CompanyId,N_FnYearId,N_RefSalesID,N_SalesID from Sch_Sales where N_CompanyId="+ nCompanyID +" and N_FnYearId="+nAcYearID+" and N_RefId="+nAdmissionID+" and N_Type=1",Params,connection,transaction);
 
                                 for (int j = 0; j < dtSch_Sales.Rows.Count; j++)
                                 {
@@ -267,7 +273,7 @@ namespace SmartxAPI.Controllers
 
                                     dLayer.DeleteData("Sch_SalesDetails", "N_SalesID", myFunctions.getIntVAL(dtSch_Sales.Rows[j]["N_SalesID"].ToString()), "N_CompanyID =" + nCompanyID, connection, transaction);                   
                                 }
-                                dLayer.DeleteData("Sch_Sales", "N_RefId", nAdmissionID, "N_CompanyID =" + nCompanyID+" and N_FnYearId="+nAcYearID, connection, transaction);                                                  
+                                dLayer.DeleteData("Sch_Sales", "N_RefId", nAdmissionID, "N_CompanyID =" + nCompanyID+" and N_FnYearId="+nAcYearID+" and N_Type=1", connection, transaction);                                                  
                             }
                         }
 
@@ -340,7 +346,7 @@ namespace SmartxAPI.Controllers
                     //--------------------------------------------^^^^^^^^^^^^---------------------------------------------------- 
                     dLayer.ExecuteNonQuery("update Sch_Admission set N_CustomerID="+nCustomerID+"  where N_CompanyID="+nCompanyID+" and N_AcYearID="+nAcYearID+" and N_AdmissionID="+nAdmissionID, Params, connection, transaction);
 
-                    object PayCount1 = dLayer.ExecuteScalar("select COUNT(Inv_PayReceiptDetails.N_InventoryID) from Inv_PayReceiptDetails INNER JOIN Sch_Sales ON Sch_Sales.N_CompanyID=Inv_PayReceiptDetails.n_companyid and Sch_Sales.N_RefSalesID=Inv_PayReceiptDetails.N_InventoryID where Inv_PayReceiptDetails.N_CompanyID="+ nCompanyID +" and Inv_PayReceiptDetails.X_TransType='SALES' and Sch_Sales.N_RefId="+ nAdmissionID, Params, connection, transaction);
+                    object PayCount1 = dLayer.ExecuteScalar("select COUNT(Inv_PayReceiptDetails.N_InventoryID) from Inv_PayReceiptDetails INNER JOIN Sch_Sales ON Sch_Sales.N_CompanyID=Inv_PayReceiptDetails.n_companyid and Sch_Sales.N_RefSalesID=Inv_PayReceiptDetails.N_InventoryID where Inv_PayReceiptDetails.N_CompanyID="+ nCompanyID +" and Inv_PayReceiptDetails.X_TransType='SALES'  and Sch_Sales.N_Type=1 and Sch_Sales.N_RefId="+ nAdmissionID, Params, connection, transaction);
                     if (PayCount1 != null)
                     {
                         if(myFunctions.getIntVAL(PayCount1.ToString())==0)
@@ -353,9 +359,11 @@ namespace SmartxAPI.Controllers
                             SalesParam.Add("N_BranchID", nBranchID);
                             SalesParam.Add("N_LocationID ", nLocationID);
                             SalesParam.Add("N_StudentID ", nAdmissionID);
-                            SalesParam.Add("N_CustomerID ", nCustomerID);
+                            //SalesParam.Add("N_CustomerID ", nCustomerID);
                             SalesParam.Add("D_AdmDate ", Convert.ToDateTime(MasterTable.Rows[0]["D_AdmissionDate"].ToString()));
                             SalesParam.Add("N_UserID ", nUserID);
+                            SalesParam.Add("N_Type ", 1);
+                            SalesParam.Add("N_BusRegID ", 0);
                             try
                             {
                                 dLayer.ExecuteNonQueryPro("SP_StudentAdmFee_Insert", SalesParam, connection, transaction);

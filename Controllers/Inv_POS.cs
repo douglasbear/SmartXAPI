@@ -22,11 +22,13 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int N_FormID;
-        public Inv_POS(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        private readonly ITaskController taskController;
+        public Inv_POS(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf,ITaskController task)
         {
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
+            taskController = task;
             connectionString = conf.GetConnectionString("SmartxConnection");
             N_FormID = 64;
         }
@@ -262,17 +264,17 @@ namespace SmartxAPI.Controllers
                         " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID FULL OUTER JOIN" +
                         " vw_UC_Item ON vw_InvItem_Search.N_CompanyID = vw_UC_Item.N_CompanyID AND vw_InvItem_Search.N_ItemID = vw_UC_Item.N_ItemID " +
                         " where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4  and vw_InvItem_Search.N_ItemID=Inv_ItemUnit.N_ItemID " + BranchandLocation + categorySql + parentItemFilterSql + Searchkey;
-            
+
             if (mainItemID > 0)
-            sqlCommandText = " vw_InvItem_Search.*, "+
-                         " dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID, vw_InvItem_Search.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, '' AS i_Image, Inv_DisplayImages.X_ImageName, "+
-                         " vw_UC_Item.N_LocationID, vw_UC_Item.N_BranchID, vw_InvItemDetails.X_ItemUnit AS X_SubItemUnit, vw_InvItemDetails.N_ItemUnitID AS N_SubItemUnitID, vw_InvItemDetails.N_Qty AS N_SubItemQty "+
-" FROM            vw_InvItem_Search LEFT OUTER JOIN "+
-                         " vw_InvItemDetails ON vw_InvItem_Search.N_ItemID = vw_InvItemDetails.N_ItemID AND vw_InvItem_Search.N_CompanyID = vw_InvItemDetails.N_CompanyID LEFT OUTER JOIN "+
-                         " Inv_DisplayImages ON vw_InvItem_Search.N_CompanyID = Inv_DisplayImages.N_CompanyID AND vw_InvItem_Search.N_ItemID = Inv_DisplayImages.N_ItemID LEFT OUTER JOIN "+
-                         " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID LEFT OUTER JOIN "+
-                         " vw_UC_Item ON vw_InvItem_Search.N_CompanyID = vw_UC_Item.N_CompanyID AND vw_InvItem_Search.N_ItemID = vw_UC_Item.N_ItemID " + 
-                                    " where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4  and vw_InvItem_Search.N_ItemID=Inv_ItemUnit.N_ItemID " + BranchandLocation + categorySql + parentItemFilterSql + Searchkey;
+                sqlCommandText = " vw_InvItem_Search.*, " +
+                             " dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID, vw_InvItem_Search.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, '' AS i_Image, Inv_DisplayImages.X_ImageName, " +
+                             " vw_UC_Item.N_LocationID, vw_UC_Item.N_BranchID, vw_InvItemDetails.X_ItemUnit AS X_SubItemUnit, vw_InvItemDetails.N_ItemUnitID AS N_SubItemUnitID, vw_InvItemDetails.N_Qty AS N_SubItemQty " +
+    " FROM            vw_InvItem_Search LEFT OUTER JOIN " +
+                             " vw_InvItemDetails ON vw_InvItem_Search.N_ItemID = vw_InvItemDetails.N_ItemID AND vw_InvItem_Search.N_CompanyID = vw_InvItemDetails.N_CompanyID LEFT OUTER JOIN " +
+                             " Inv_DisplayImages ON vw_InvItem_Search.N_CompanyID = Inv_DisplayImages.N_CompanyID AND vw_InvItem_Search.N_ItemID = Inv_DisplayImages.N_ItemID LEFT OUTER JOIN " +
+                             " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID LEFT OUTER JOIN " +
+                             " vw_UC_Item ON vw_InvItem_Search.N_CompanyID = vw_UC_Item.N_CompanyID AND vw_InvItem_Search.N_ItemID = vw_UC_Item.N_ItemID " +
+                                        " where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4  and vw_InvItem_Search.N_ItemID=Inv_ItemUnit.N_ItemID " + BranchandLocation + categorySql + parentItemFilterSql + Searchkey;
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nCategoryID);
@@ -554,6 +556,7 @@ namespace SmartxAPI.Controllers
                     int N_PaymentMethodID = myFunctions.getIntVAL(MasterRow["n_PaymentMethodID"].ToString());
                     double N_MainDiscount = myFunctions.getVAL(MasterRow["N_MainDiscount"].ToString());
                     double N_DiscountAmtMaster = myFunctions.getVAL(MasterRow["N_DiscountAmt"].ToString());
+
                     int N_UserID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
                     int UserCategoryID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
                     int N_AmtSplit = 0;
@@ -715,7 +718,7 @@ namespace SmartxAPI.Controllers
 
                                     if (WarrantyID <= 0) { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Warranty")); }
 
-                                    string WarrantyDetailSql = "select N_CompanyID," + WarrantyID + " as N_WarrantyID,0 as N_WarrantyDetailsID,N_ItemID,N_MainItemID,N_Qty," + MasterTable.Rows[0]["N_BranchID"].ToString() + " as N_BranchID," + MasterTable.Rows[0]["N_LocationID"].ToString() + " as N_LocationID,N_ItemUnitID,X_ItemRemarks from Inv_ItemWarranty where N_MainItemID =@nItemID and N_CompanyID=@nCompanyID";
+                                    string WarrantyDetailSql = "select N_CompanyID," + WarrantyID + " as N_WarrantyID,0 as N_WarrantyDetailsID,N_ItemID,N_MainItemID,N_Qty," + MasterTable.Rows[0]["N_BranchID"].ToString() + " as N_BranchID," + MasterTable.Rows[0]["N_LocationID"].ToString() + " as N_LocationID,N_ItemUnitID,X_ItemRemarks,N_ServiceItemID from Inv_ItemWarranty where N_MainItemID =@nItemID and N_CompanyID=@nCompanyID";
                                     DataTable WarrantyDetails = dLayer.ExecuteDataTable(WarrantyDetailSql, warrantyParams, connection, transaction);
 
                                     if (WarrantyDetails.Rows.Count > 0)
@@ -731,82 +734,76 @@ namespace SmartxAPI.Controllers
 
                             // GENERATE Maintanance Entry
 
-                            DataTable MaintananceMaster = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,'@Auto' as X_ServiceCode," + WarrantyID + " as N_WarrantyID,N_FnYearID,N_BranchId,N_LocationID,N_CustomerID,D_EntryDate,0 as N_BillAmountF,0 as N_BillAmount,x_Notes as X_Remarks,0 as N_Status," + N_UserID + " as N_UserID,'' as X_ClosedRemarks,X_Barcode,N_SalesID  from Inv_Sales where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID and X_Barcode is not null ", warrantyParams, connection, transaction);
+                            // DataTable MaintananceMaster = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,'@Auto' as X_ServiceCode," + WarrantyID + " as N_WarrantyID,N_FnYearID,N_BranchId,N_LocationID,N_CustomerID,D_EntryDate,0 as N_BillAmountF,0 as N_BillAmount,x_Notes as X_Remarks,0 as N_Status," + N_UserID + " as N_UserID,'' as X_ClosedRemarks,X_Barcode,N_SalesID  from Inv_Sales where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID and X_Barcode is not null ", warrantyParams, connection, transaction);
 
-                            DataTable MaintananceDetails = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,0 as N_ServiceDetailsID,N_BranchId,N_LocationID,N_ItemID,N_Qty,N_ItemUnitID,N_Cost,N_Sprice,N_SpriceF,X_ItemRemarks,D_Entrydate from Inv_SalesDetails  where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID", warrantyParams, connection, transaction);
+                            // DataTable MaintananceDetails = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,0 as N_ServiceDetailsID,N_BranchId,N_LocationID,N_ItemID,N_Qty,N_ItemUnitID,N_Cost,N_Sprice,N_SpriceF,X_ItemRemarks,D_Entrydate from Inv_SalesDetails  where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID", warrantyParams, connection, transaction);
 
-                            if (MaintananceMaster.Rows.Count > 0 && MaintananceDetails.Rows.Count > 0)
+                            // if (MaintananceMaster.Rows.Count > 0 && MaintananceDetails.Rows.Count > 0)
+                            // {
+
+
+
+                            //     Params["N_FormID"] = 1394;
+
+                            //     while (true)
+                            //     {
+
+                            //         X_ServiceCode = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                            //         break;
+                            //     }
+
+
+                            //     if (X_ServiceCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate maintanance entry")); }
+                            //     MaintananceMaster.Rows[0]["X_ServiceCode"] = X_ServiceCode;
+
+
+
+
+                            //     int nServiceID = dLayer.SaveData("Inv_ServiceMaster", "N_ServiceID", MaintananceMaster, connection, transaction);
+                            //     if (nServiceID <= 0)
+                            //     {
+                            //         transaction.Rollback();
+                            //         return Ok(_api.Error(User, "Unable to generate maintanance entry."));
+                            //     }
+                            //     for (int i = 0; i < MaintananceDetails.Rows.Count; i++)
+                            //     {
+                            //         MaintananceDetails.Rows[i]["N_ServiceID"] = nServiceID;
+
+                            //     int nServiceDetailsID = dLayer.SaveData("Inv_ServiceDetails", "N_ServiceDetailsID", MaintananceDetails, connection, transaction);
+                            //     if (nServiceDetailsID <= 0)
+                            //     {
+                            //         transaction.Rollback();
+                            //         return Ok(_api.Error(User, "Unable to generate maintanance entry.."));
+                            //     }
+                            // }
+                            // }
+                            //Generate SalesOrder
+                            int nPackageItemID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_ItemID"].ToString());
+                            DataTable SalesOrderMaster = dLayer.ExecuteDataTable(
+                            " select N_CompanyID,N_FnYearId,0 as N_SalesOrderId,'@Auto' as X_OrderNo,1546 as N_FormID,"
+                            + "N_BranchID,N_LocationID,N_CustomerId,D_EntryDate,D_SalesDate as D_OrderDate,N_BillAmt,N_BillAmtF,0 as N_DiscountAmt,0 as N_DiscountAmtF,x_Notes,"
+                            + "N_UserID,0 as N_QuotationID,1 as N_Processed,N_ProjectID,N_SalesmanID ,N_SalesID,"
+                            + "N_CurrencyID,N_ExchangeRate,N_CreatedUser,D_CreatedDate"
+                            + " from Inv_Sales where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID ", warrantyParams, connection, transaction);
+
+
+
+
+                            DataTable SalesOrderDetails = dLayer.ExecuteDataTable(
+                              "select Inv_ItemDetails.N_CompanyID,0 as N_SalesOrderID,0 as N_SalesOrderDetailsID,0 as N_ServiceID,Inv_ItemDetails.N_ItemID,Inv_ItemDetails.N_MainItemID,Inv_ItemDetails.N_Qty,Inv_ItemDetails.N_Qty as N_QtyDisplay,"
+                              + "" + MasterTable.Rows[0]["N_BranchID"].ToString() + " as N_BranchID," + MasterTable.Rows[0]["N_LocationID"].ToString() + " as N_LocationID,Inv_ItemMaster.N_ClassID,"
+                              + "Inv_ItemDetails.N_ItemUnitID from Inv_ItemDetails "
+                              + " LEFT OUTER JOIN "
+                               + " Inv_ItemMaster ON Inv_ItemDetails.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemDetails.N_ItemID = Inv_ItemMaster.N_ItemID where Inv_ItemDetails.N_MainItemID = " + nPackageItemID + " and Inv_ItemDetails.N_CompanyID=@nCompanyID and Inv_ItemMaster.B_InstallationRequired = 1", warrantyParams, connection, transaction);
+
+
+                            if (SalesOrderMaster.Rows.Count > 0 && SalesOrderDetails.Rows.Count > 0)
                             {
 
-
-
-                                Params["N_FormID"] = 1394;
-
-                                while (true)
-                                {
-
-                                    X_ServiceCode = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
-                                    break;
-                                }
-
-
-                                if (X_ServiceCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate maintanance entry")); }
-                                MaintananceMaster.Rows[0]["X_ServiceCode"] = X_ServiceCode;
-
-
-
-
-                                int nServiceID = dLayer.SaveData("Inv_ServiceMaster", "N_ServiceID", MaintananceMaster, connection, transaction);
-                                if (nServiceID <= 0)
-                                {
-                                    transaction.Rollback();
-                                    return Ok(_api.Error(User, "Unable to generate maintanance entry."));
-                                }
-                                for (int i = 0; i < MaintananceDetails.Rows.Count; i++)
-                                {
-                                    MaintananceDetails.Rows[i]["N_ServiceID"] = nServiceID;
-                            
-                                int nServiceDetailsID = dLayer.SaveData("Inv_ServiceDetails", "N_ServiceDetailsID", MaintananceDetails, connection, transaction);
-                                if (nServiceDetailsID <= 0)
-                                {
-                                    transaction.Rollback();
-                                    return Ok(_api.Error(User, "Unable to generate maintanance entry.."));
-                                }
-                            }
-                            }
-                                //Generate SalesOrder
-                           
-                                DataTable SalesOrderMaster = dLayer.ExecuteDataTable(
-                                " select N_CompanyID,N_FnYearId,0 as N_SalesOrderId,'@Auto' as X_OrderNo,1544 as N_FormID,"
-                                + "N_BranchID,N_LocationID,N_CustomerId,D_EntryDate,D_SalesDate as D_OrderDate,N_BillAmt,N_BillAmtF,"+N_DiscountAmtMaster+" as N_DiscountAmt,N_DiscountAmtF,x_Notes,"
-                                + "N_UserID,0 as N_QuotationID,1 as N_Processed,N_ProjectID,N_SalesmanID ,N_SalesID,N_TaxAmt,N_TaxAmtF,"
-                                + "N_TaxCategoryID,N_TaxPercentage,"+N_MainDiscount+" as N_MainDiscount,N_MainDiscountF,N_CurrencyID,N_ExchangeRate,N_DiscountDisplay,N_CreatedUser,D_CreatedDate"
-                                + " from Inv_Sales where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID ", warrantyParams, connection, transaction);
-                             
-
-                
-                             DataTable SalesOrderDetails = dLayer.ExecuteDataTable(
-                             "  select N_CompanyID,0 as N_SalesOrderID,0 as N_SalesOrderDetailsID,N_BranchId,N_LocationID,N_ItemID,N_Qty,N_ItemUnitID,N_MainSPrice,X_ItemRemarks,N_QtyDisplay,"
-                             + "N_ItemDiscAmt,N_MainQty,N_MainItemID,N_Sprice,N_SpriceF,N_ClassID,D_Entrydate,X_FreeDescription,N_TaxCategoryID1,N_TaxPercentage1,N_TaxAmt1,N_TaxCategoryID2,"
-                             + "N_TaxPercentage2,N_TaxAmt2,0 as N_QuotationID,N_Cost,N_ItemDiscAmtF,N_MainSpriceF,N_TaxAmt1F,N_TaxAmt2F,N_AWTSPrice,N_AWTSPriceF,N_AWTDisc,"
-                             + "N_AWTDiscF,N_PriceListID,N_PriceListAmount  from Inv_SalesDetails  where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID",   warrantyParams, connection, transaction);
-                             if (SalesOrderMaster.Rows.Count > 0 && SalesOrderDetails.Rows.Count > 0)
-                             {
-                                
-                                Params["N_FormID"] = 1544;
-                                 while (true)
-                                {
-
-                                    x_OrderNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
-                                    break;
-                                }
-
-
-                                if (X_ServiceCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Order entry")); }
-                                SalesOrderMaster.Rows[0]["X_OrderNo"] = X_ServiceCode;
-
-
-
+                                Params["N_FormID"] = 1546;
+                                x_OrderNo = dLayer.GetAutoNumber("Inv_SalesOrder", "X_OrderNo", Params, connection, transaction);
+                                    if (x_OrderNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable To Generate Service Order")); }
+                                SalesOrderMaster.Rows[0]["X_OrderNo"] = x_OrderNo;
 
                                 int nOrderID = dLayer.SaveData("Inv_SalesOrder", "N_SalesOrderId", SalesOrderMaster, connection, transaction);
                                 if (nOrderID <= 0)
@@ -825,11 +822,105 @@ namespace SmartxAPI.Controllers
                                     return Ok(_api.Error(User, "Unable to generate Order entry.."));
                                 }
 
+                                DataTable ServiceInfo = dLayer.ExecuteDataTable(
+                                "SELECT        Inv_SalesDetails.N_CompanyID, 0 AS N_ServiceInfoID, "+myFunctions.GetUserID(User)+" as N_UserID, '' AS X_ServiceInfoCode, 0 AS N_TemplateID, '' AS X_Accessories, 'Installation' AS X_ServiceDescription, 0 AS N_AssignedTo, GETDATE() AS D_DeliveryDate, " +
+                                "  GETDATE() AS D_EntryDate,Inv_Device.N_DeviceID " +
+                                " FROM            Inv_SalesDetails INNER JOIN " +
+                                "                       Inv_Sales ON Inv_SalesDetails.N_SalesID = Inv_Sales.N_SalesId AND Inv_SalesDetails.N_SalesID = Inv_Sales.N_SalesId AND Inv_SalesDetails.N_CompanyID = Inv_Sales.N_CompanyId INNER JOIN "+
+                                "                        Inv_Device ON Inv_Sales.X_Barcode = Inv_Device.X_SerialNo AND Inv_Sales.N_CompanyId = Inv_Device.N_CompanyID "+ 
+                                " WHERE        (Inv_SalesDetails.N_ClassID = 4) and Inv_SalesDetails.N_CompanyID=@nCompanyID and Inv_SalesDetails.N_SalesID=@nSalesID", warrantyParams, connection, transaction);
+                                if (ServiceInfo.Rows.Count > 0)
+                                {
+                                    string x_ServiceCode = "";
+                                    Params["N_FormID"] = 1545;
+                                    x_ServiceCode = dLayer.GetAutoNumber("Inv_ServiceInfo", "x_ServiceInfoCode", Params, connection, transaction);
+                                    if (x_ServiceCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable To Generate Service Code")); }
 
-                             }
-                        
-                        
-                        
+                                    int serviceID = dLayer.SaveData("Inv_ServiceInfo", "N_ServiceInfoID", ServiceInfo, connection, transaction);
+                                    if(serviceID>0){
+                                        dLayer.ExecuteNonQuery("Update Inv_SalesOrderDetails set N_ServiceID="+serviceID + " where N_CompanyID=@nCompanyID and N_SalesOrderID="+nOrderID+" and N_ClassID=4", warrantyParams, connection, transaction);
+                                    }
+                                      DataTable MaterialDetails = dLayer.ExecuteDataTable(
+                                      "SELECT        Inv_SalesDetails.N_CompanyID, 0 AS N_MaterialID,0 as N_ServiceInfoID,Inv_SalesDetails.N_ItemID,Inv_SalesDetails.N_ItemUnitID,Inv_SalesDetails.N_Qty,Inv_SalesDetails.N_QtyDisplay as N_DisplayQty" +
+                                      " FROM            Inv_SalesDetails INNER JOIN " +
+                                      "                       Inv_Sales ON Inv_SalesDetails.N_SalesID = Inv_Sales.N_SalesId AND Inv_SalesDetails.N_SalesID = Inv_Sales.N_SalesId AND Inv_SalesDetails.N_CompanyID = Inv_Sales.N_CompanyId INNER JOIN "+
+                                      "                        Inv_Device ON Inv_Sales.X_Barcode = Inv_Device.X_SerialNo AND Inv_Sales.N_CompanyId = Inv_Device.N_CompanyID "+ 
+                                      " WHERE        (Inv_SalesDetails.N_ClassID <> 4) and Inv_SalesDetails.N_CompanyID=@nCompanyID and Inv_SalesDetails.N_SalesID=@nSalesID", warrantyParams, connection, transaction);
+
+                                     for (int i = 0; i < MaterialDetails.Rows.Count; i++)
+                                     {
+                                        MaterialDetails.Rows[i]["N_ServiceInfoID"] = serviceID;
+
+                                     }
+                                     dLayer.SaveData("Inv_ServiceMaterials", "n_MaterialID", MaterialDetails, connection, transaction);
+
+
+
+
+                                    DataTable SalesMaster=  dLayer.ExecuteDataTable("select * from Inv_SalesOrder where N_CompanyID="+N_CompanyID+" and N_FnYearID="+N_FnYearID+" and N_SalesOrderID="+nOrderID+"", warrantyParams, connection, transaction);
+                                    DataTable SalesDetails= dLayer.ExecuteDataTable("select * from Inv_SalesOrderDetails where N_CompanyID="+N_CompanyID+"  and N_SalesOrderID="+nOrderID+"", warrantyParams, connection, transaction);
+                                      int N_AssigneeID=0;
+                                int N_CreatorID=0 ;
+                      
+                                string X_TaskSummary="";
+                                string X_TaskSummarySql="";
+                                string X_TaskDescription="";
+                                string X_TaskDescriptionSql="";
+              
+                                int N_SubmitterID=0;
+                                int N_ClosedUserID=0;
+                                DateTime D_DueDate;
+                                DateTime D_StartDate;
+                                DateTime D_EntryDate;
+                                int N_Status=0;
+                                string assigneeSql="";
+                                string creatorstring="";
+                                string dueDateSql="";
+                                int salesOrderDetailsID=0;
+                                bool Status=false;
+
+
+                                                 
+                                 foreach (DataRow var in SalesDetails.Rows)
+                                {
+                                
+                                    assigneeSql="select N_AssignedTo from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+serviceID+"";
+                                    creatorstring="select N_UserID from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+serviceID+"";
+                                     X_TaskDescriptionSql="select X_ServiceDescription from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+serviceID+"";
+                                    X_TaskSummarySql="select X_ItemName from Inv_ItemMaster where N_ItemID="+myFunctions.getIntVAL(var["N_ItemID"].ToString())+" and N_CompanyID="+N_CompanyID+" ";
+                                    dueDateSql="select D_DeliveryDate from Inv_ServiceInfo where N_CompanyID="+N_CompanyID+" and N_ServiceInfoID ="+serviceID+"";
+
+                                    
+                                    N_AssigneeID =myFunctions.getIntVAL(dLayer.ExecuteScalar(assigneeSql,Params,connection,transaction).ToString());
+                                    N_CreatorID =myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring,Params,connection,transaction).ToString());
+                                    N_ClosedUserID =myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring,Params,connection,transaction).ToString());
+                                    N_SubmitterID =myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring,Params,connection,transaction).ToString());
+                                    X_TaskDescription =(dLayer.ExecuteScalar(X_TaskDescriptionSql,Params,connection,transaction).ToString());
+                                    X_TaskSummary =(dLayer.ExecuteScalar(X_TaskSummarySql,Params,connection,transaction).ToString());
+                                    D_DueDate =Convert.ToDateTime(dLayer.ExecuteScalar(dueDateSql,Params,connection,transaction).ToString());
+                                    D_StartDate =Convert.ToDateTime(SalesMaster.Rows[0]["D_EntryDate"].ToString());
+                                    D_EntryDate =Convert.ToDateTime(SalesMaster.Rows[0]["D_EntryDate"].ToString());
+                                    salesOrderDetailsID=myFunctions.getIntVAL(var["N_SalesOrderDetailsID"].ToString());
+                                    N_Status=2;
+                                    // Status=taskController.SaveGeneralTask(N_CompanyID,X_TaskSummary, X_TaskDescription, N_AssigneeID,N_CreatorID,N_SubmitterID,N_ClosedUserID,D_DueDate,D_StartDate,D_EntryDate,N_Status,salesOrderDetailsID, connection, transaction);
+                                    // if(Status==false)
+                                    // {   
+                                    //     transaction.Rollback();
+                                    //       return Ok("Unable to save Task");
+                                    // }
+                                 }
+                             
+                                }
+                                
+                             
+                              
+
+
+
+                            }
+
+
+
                         }
 
                         // End of Warranty info
@@ -1020,7 +1111,7 @@ namespace SmartxAPI.Controllers
                     SortedList Result = new SortedList();
                     Result.Add("n_InvoiceID", N_SalesID);
                     Result.Add("x_InvoiceNo", InvoiceNo);
-                    Result.Add("x_ServiceCode", X_ServiceCode);
+                    Result.Add("x_OrderNo", x_OrderNo);
 
                     return Ok(_api.Success(Result, "Sales invoice saved" + ":" + InvoiceNo));
                 }

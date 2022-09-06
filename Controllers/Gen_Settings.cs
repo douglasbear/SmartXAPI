@@ -315,6 +315,7 @@ namespace SmartxAPI.Controllers
                     int nFnYearID = myFunctions.getIntVAL(General.Rows[0]["n_FnYearID"].ToString());
                     int nBranchID = myFunctions.getIntVAL(General.Rows[0]["n_BranchID"].ToString());
                     int nCompanyID = myFunctions.GetCompanyID(User);
+                   // int nOffID = myFunctions.getIntVAL(General.Rows[0]["n_OffID"].ToString());
 
                     foreach (DataRow var in InvoiceCounter.Rows)
                     {
@@ -351,8 +352,8 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                    // object N_OffID = 0;
-                    // N_OffID = dLayer.SaveData("pay_YearlyOffDays", "N_OffID", OffDays, connection, transaction);
+                    object N_OffID = 0;
+                    N_OffID = dLayer.SaveData("pay_YearlyOffDays", "N_OffID", OffDays, connection, transaction);
     
                     transaction.Commit();
                     return Ok(_api.Success("Settings Saved"));
