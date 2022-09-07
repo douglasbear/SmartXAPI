@@ -209,18 +209,23 @@ namespace SmartxAPI.Controllers
                     // + "                         Inv_ItemUnit ON Inv_ItemMaster.N_CompanyID = Inv_ItemUnit.N_CompanyID AND Inv_ItemMaster.N_ItemUnitID = Inv_ItemUnit.N_ItemUnitID where Inv_WarrantyContractDetails.N_CompanyID=@nCompanyID and Inv_WarrantyContractDetails.N_WarrantyID=@nWarrantyID";
 
                     DetailSql = "SELECT Inv_WarrantyContractDetails.N_CompanyID, Inv_WarrantyContractDetails.N_WarrantyID, Inv_WarrantyContractDetails.N_WarrantyDetailsID, Inv_WarrantyContractDetails.N_ItemID, Inv_WarrantyContractDetails.N_MainItemID, " +
-              "ISNULL(Inv_WarrantyContractDetails.N_Qty, 0) AS N_QtyUsed, Inv_WarrantyContractDetails.N_BranchID, Inv_WarrantyContractDetails.N_LocationID, Inv_WarrantyContractDetails.N_ItemUnitID, " +
-              "Inv_WarrantyContractDetails.X_ItemRemarks, Inv_ItemUnit.X_ItemUnit, Inv_ItemMaster_1.X_ItemCode, Inv_ItemMaster_1.X_ItemName, ISNULL(Inv_WarrantyContractDetails.N_Qty, 0) " +
-              "- ISNULL(vw_WarrantyItemSummery.N_UsedQty, 0) AS N_AvlQty, Inv_ItemMaster_1.N_ClassID, Inv_WarrantyContractDetails.N_ServiceItemID, Inv_ItemMaster.X_ItemCode AS X_ServiceItemCode, " +
-              "Inv_ItemMaster.X_ItemName AS X_ServiceItem " +
-              "FROM vw_WarrantyItemSummery RIGHT OUTER JOIN Inv_WarrantyContractDetails LEFT OUTER JOIN " +
-              "Inv_ItemMaster ON Inv_WarrantyContractDetails.N_ServiceItemID = Inv_ItemMaster.N_ItemID AND Inv_WarrantyContractDetails.N_CompanyID = Inv_ItemMaster.N_CompanyID ON " +
-              "vw_WarrantyItemSummery.N_ItemID = Inv_WarrantyContractDetails.N_ItemID AND vw_WarrantyItemSummery.N_CompanyID = Inv_WarrantyContractDetails.N_CompanyID AND " +
-              "vw_WarrantyItemSummery.N_WarrantyID = Inv_WarrantyContractDetails.N_WarrantyID LEFT OUTER JOIN " +
-              "Inv_ItemUnit RIGHT OUTER JOIN " +
-              "Inv_ItemMaster AS Inv_ItemMaster_1 ON Inv_ItemUnit.N_CompanyID = Inv_ItemMaster_1.N_CompanyID AND Inv_ItemUnit.N_ItemUnitID = Inv_ItemMaster_1.N_ItemUnitID ON " +
-              "Inv_WarrantyContractDetails.N_ItemID = Inv_ItemMaster_1.N_ItemID AND Inv_WarrantyContractDetails.N_CompanyID = Inv_ItemMaster_1.N_CompanyID " +
-              " where Inv_WarrantyContractDetails.N_CompanyID=@nCompanyID and Inv_WarrantyContractDetails.N_WarrantyID=@nWarrantyID";
+                         " Inv_WarrantyContractDetails.N_BranchID, Inv_WarrantyContractDetails.N_LocationID, Inv_WarrantyContractDetails.N_ItemUnitID, Inv_WarrantyContractDetails.X_ItemRemarks, Inv_ItemUnit.X_ItemUnit, " +
+                         " Inv_ItemMaster_1.X_ItemCode, Inv_ItemMaster_1.X_ItemName, Inv_ItemMaster_1.N_ClassID, Inv_WarrantyContractDetails.N_ServiceItemID, Inv_ItemMaster.X_ItemCode AS X_ServiceItemCode, " +
+                         " Inv_ItemMaster.X_ItemName AS X_ServiceItem, ISNULL(Inv_WarrantyContractDetails.N_Qty, 0) - ISNULL(vw_Inv_WarrantyQtyDetails.N_UsedQty, 0) " +
+                         " AS N_AvlQty, Inv_WarrantyContractDetails.N_Qty, ISNULL(vw_Inv_WarrantyQtyDetails.N_UsedQty, 0) AS N_UsedQty " +
+                        " FROM Inv_ItemMaster RIGHT OUTER JOIN " +
+                         " Inv_WarrantyContractDetails LEFT OUTER JOIN " +
+                         " vw_Inv_WarrantyQtyDetails ON Inv_WarrantyContractDetails.N_ItemID = vw_Inv_WarrantyQtyDetails.N_ItemID AND Inv_WarrantyContractDetails.N_CompanyID = vw_Inv_WarrantyQtyDetails.N_CompanyID AND " +
+                         " Inv_WarrantyContractDetails.N_WarrantyID = vw_Inv_WarrantyQtyDetails.N_WarrantyID ON Inv_ItemMaster.N_ItemID = Inv_WarrantyContractDetails.N_ServiceItemID AND " +
+                         " Inv_ItemMaster.N_CompanyID = Inv_WarrantyContractDetails.N_CompanyID LEFT OUTER JOIN " +
+                         " Inv_ItemUnit RIGHT OUTER JOIN " +
+                         " Inv_ItemMaster AS Inv_ItemMaster_1 ON Inv_ItemUnit.N_CompanyID = Inv_ItemMaster_1.N_CompanyID AND Inv_ItemUnit.N_ItemUnitID = Inv_ItemMaster_1.N_ItemUnitID ON " +
+                         " Inv_WarrantyContractDetails.N_ItemID = Inv_ItemMaster_1.N_ItemID AND Inv_WarrantyContractDetails.N_CompanyID = Inv_ItemMaster_1.N_CompanyID " +
+                        " where Inv_WarrantyContractDetails.N_CompanyID=@nCompanyID and Inv_WarrantyContractDetails.N_WarrantyID=@nWarrantyID " +
+                        " GROUP BY Inv_WarrantyContractDetails.N_CompanyID, Inv_WarrantyContractDetails.N_WarrantyID, Inv_WarrantyContractDetails.N_WarrantyDetailsID, Inv_WarrantyContractDetails.N_ItemID, Inv_WarrantyContractDetails.N_MainItemID, " +
+                         " Inv_WarrantyContractDetails.N_BranchID, Inv_WarrantyContractDetails.N_LocationID, Inv_WarrantyContractDetails.N_ItemUnitID, Inv_WarrantyContractDetails.X_ItemRemarks, Inv_ItemUnit.X_ItemUnit, " +
+                         " Inv_ItemMaster_1.X_ItemCode, Inv_ItemMaster_1.X_ItemName, Inv_ItemMaster_1.N_ClassID, Inv_WarrantyContractDetails.N_ServiceItemID, Inv_ItemMaster.X_ItemCode, " +
+                         " Inv_ItemMaster.X_ItemName, Inv_WarrantyContractDetails.N_Qty, vw_Inv_WarrantyQtyDetails.N_UsedQty ";
 
 
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
@@ -244,7 +249,7 @@ namespace SmartxAPI.Controllers
                             if (balance == null)
                                 balance = 0;
 
-                            int qty = myFunctions.getIntVAL(DRows["N_QtyUsed"].ToString());
+                            int qty = myFunctions.getIntVAL(DRows["N_UsedQty"].ToString());
                             DRows["N_AvlQty"] = qty - myFunctions.getIntVAL(balance.ToString());
 
 
@@ -311,6 +316,8 @@ DetailTable.AcceptChanges();
                     int nClaimID = myFunctions.getIntVAL(MasterRow["n_ClaimID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+                    string x_WarrantyNo=(MasterRow["x_WarrantyNo"].ToString());
+                    MasterTable.Columns.Remove("x_WarrantyNo");
                     string xClaimCode = MasterRow["x_ClaimCode"].ToString();
 
                     if (xClaimCode == "@Auto")
@@ -349,6 +356,8 @@ DetailTable.AcceptChanges();
                     Result.Add("n_ClaimID", nClaimID);
                     Result.Add("x_ClaimCode", xClaimCode);
                     Result.Add("n_ClaimDetailID", nClaimDetailID);
+                    Result.Add("x_WarrantyNo", x_WarrantyNo);
+
 
                     return Ok(_api.Success(Result, "Warranty Process saved"));
                 }
@@ -360,7 +369,7 @@ DetailTable.AcceptChanges();
         }
 
         [HttpGet("list")]
-        public ActionResult GetGuardianList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult WarrantyList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -423,7 +432,7 @@ DetailTable.AcceptChanges();
         }
 
         [HttpGet("warrantydetails")]
-        public ActionResult ExamTimeTableDetails(string xClaimCode)
+        public ActionResult WarrantyListDetails(string xClaimCode)
         {
             try
             {

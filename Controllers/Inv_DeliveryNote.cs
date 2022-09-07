@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetDeliveryNoteList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,bool bAllBranchData,int nBranchID)
+        public ActionResult GetDeliveryNoteList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,bool bAllBranchData,int nBranchID,int nFormID)
         {
 
              try
@@ -109,18 +109,30 @@ namespace SmartxAPI.Controllers
                 }
                 xSortBy = " order by " + xSortBy;
             }
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + Searchkey + " " + " group by [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID" + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + Searchkey + " and N_DeliveryNoteID not in (select top(" + Count + ") N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + "Group By [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID" + xSortBy;
+            if (nFormID == 1572) {
+                if (Count == 0)
+                    sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p3 " + Pattern + Searchkey + " " + " group by [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID" + xSortBy;
+                else
+                    sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p3 " + Pattern + Searchkey + " and N_DeliveryNoteID not in (select top(" + Count + ") N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p3 " + xSortBy + " ) " + "Group By [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID" + xSortBy;
+            } else {
+                if (Count == 0)
+                    sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + Searchkey + " " + " group by [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID" + xSortBy;
+                else
+                    sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + Searchkey + " and N_DeliveryNoteID not in (select top(" + Count + ") N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + "Group By [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID" + xSortBy;
+            };
+
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
+            Params.Add("@p3", nFormID);
             SortedList OutPut = new SortedList();
 
 
            
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
+                    if (nFormID == 1572)
+                        sqlCommandCount = "select count(*) as N_Count  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p3 " + Searchkey + "";
+                    else
+                        sqlCommandCount = "select count(*) as N_Count  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -175,26 +187,28 @@ namespace SmartxAPI.Controllers
                     {
                         mParamsList.Add("N_BranchId", 0);
                     }
-                    if (nSalesOrderID > 0)
+                    if (nSalesOrderID > 0  || (xSalesOrderID != "" && xSalesOrderID != null))
                     {
+                         string Mastersql ="";
+                         DataTable MasterTable = new DataTable();
+                         DataTable DetailTable = new DataTable();
+                         string DetailSql = "";
+                        if(nSalesOrderID>0)
+                        {
                         QueryParamsList.Add("@nSalesorderID", nSalesOrderID);
-                        string Mastersql = "select * from vw_SalesOrdertoDeliveryNote where N_CompanyId=@nCompanyID and N_SalesOrderId=@nSalesorderID";
-                        DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
+                        Mastersql = "select * from vw_SalesOrdertoDeliveryNote where N_CompanyId=@nCompanyID and N_SalesOrderId=@nSalesorderID";
+                        MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable = _api.Format(MasterTable, "Master");
-                        string DetailSql = "";
                         DetailSql = "select * from vw_SalesOrdertoDeliveryNoteDetails where N_CompanyId=@nCompanyID and N_SalesOrderId=@nSalesorderID";
-                        DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
-
-
-
-
-                        SortedList DelParams = new SortedList();
+                        DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+                       
+                          SortedList DelParams = new SortedList();
                         DelParams.Add("N_CompanyID", nCompanyId);
                         DelParams.Add("N_SalesOrderID", nSalesOrderID);
                         DelParams.Add("FnYearID", nFnYearId);
                         DelParams.Add("@N_Type", 0);
-                        DataTable OrderToDel = dLayer.ExecuteDataTablePro("SP_InvSalesOrderDtlsInDelNot_Disp", DelParams, Con);
+                         DataTable OrderToDel = dLayer.ExecuteDataTablePro("SP_InvSalesOrderDtlsInDelNot_Disp", DelParams, Con);
                         foreach (DataRow Avar in OrderToDel.Rows)
                         {
                             foreach (DataRow Kvar in DetailTable.Rows)
@@ -219,9 +233,51 @@ namespace SmartxAPI.Controllers
                              DetailTable.AcceptChanges();
 
 
+                        }
+                        else
+                        {
+                            string[] X_SalesOrderID = xSalesOrderID.Split(",");
+                            int N_SOID = myFunctions.getIntVAL(X_SalesOrderID[0].ToString());
+                        Mastersql = "select * from vw_SalesOrdertoDeliveryNote where N_CompanyId=@nCompanyID and N_SalesOrderId ="+N_SOID+"";
+                        MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
+                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                        MasterTable = _api.Format(MasterTable, "Master");
+                        DetailSql = "select * from vw_SalesOrdertoDeliveryNoteDetails where N_CompanyId=@nCompanyID and N_SalesOrderId in("+xSalesOrderID+")";
+                        DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+                        
+
+                        SortedList MultiParams = new SortedList();
+                        MultiParams.Add("N_CompanyID", nCompanyId);
+                        MultiParams.Add("N_SalesOrderID", N_SOID);
+                        MultiParams.Add("X_SalesOrderID",xSalesOrderID);
+                        MultiParams.Add("FnYearID", nFnYearId);
+                        MultiParams.Add("@N_Type", 0);
+                         DataTable OrderToDel = dLayer.ExecuteDataTablePro("SP_InvSalesOrderDtlsInMultiDelNot_Disp", MultiParams, Con);
+                        foreach (DataRow Avar in OrderToDel.Rows)
+                        {
+                            foreach (DataRow Kvar in DetailTable.Rows)
+                            {
+                                if (myFunctions.getIntVAL(Avar["N_SalesOrderDetailsID"].ToString()) == myFunctions.getIntVAL(Kvar["N_SalesOrderDetailsID"].ToString()))
+                                {
+                                    Kvar["N_QtyDisplay"] = Avar["N_QtyDisplay"];
+                                    Kvar["N_Qty"] = Avar["N_Qty"];
+
+                                }
+                            }
+                        }
+                        DetailTable.AcceptChanges();
+                        foreach (DataRow Kvar in DetailTable.Rows)
+                            {
+                               if(myFunctions.getVAL(Kvar["N_QtyDisplay"].ToString())==0 )
+                               {
+                                     Kvar.Delete();
+                                     continue;
+                               }
+                            }
+                             DetailTable.AcceptChanges();
 
 
-
+                        }
                         DetailTable = _api.Format(DetailTable, "Details");
                         dsSalesInvoice.Tables.Add(MasterTable);
                         dsSalesInvoice.Tables.Add(DetailTable);

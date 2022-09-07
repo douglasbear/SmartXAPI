@@ -88,32 +88,32 @@ namespace SmartxAPI.Controllers
                 Params.Add("@p1", nCompanyID);
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_Code like '%" + xSearchkey + "%' OR X_TemplateName like '%" + xSearchkey + "%')";
+                Searchkey = " and (X_Code like '%" + xSearchkey + "%' OR X_TemplateName like '%" + xSearchkey + "%') ";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = "order by X_Code desc";
+                xSortBy = " order by X_Code desc";
            else
             {
                 switch (xSortBy.Split(" ")[0])
                 {
                     case "X_Code":
-                        xSortBy = "X_Code" + xSortBy.Split(" ")[1];
+                        xSortBy = "X_Code " + xSortBy.Split(" ")[1];
                         break;
                     case "d_EntryDate":
-                xSortBy = "Cast([D_EntryDate] as DateTime )" + xSortBy.Split(" ")[1];
+                xSortBy = "Cast([D_EntryDate] as DateTime ) " + xSortBy.Split(" ")[1];
                         break;
                     case "x_TemplateName":
-                        xSortBy = "x_TemplateName" + xSortBy.Split(" ")[1];
+                        xSortBy = "x_TemplateName " + xSortBy.Split(" ")[1];
                         break;
                     default: break;
                 }
                  xSortBy = " order by " + xSortBy;
             }
-             sqlCondition = "N_CompanyID=@p1";
+             sqlCondition = " N_CompanyID=@p1 ";
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_AppraisalTemplate where " + sqlCondition + " " + Searchkey +" "+ xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_AppraisalTemplate where " + sqlCondition + " " + Searchkey +" "+ " and  N_TemplateID not in (select top(" + Count + ") N_TemplateID from Pay_AppraisalTemplate where N_CompanyID=@p1 " + Searchkey +" "+ xSortBy+" )" + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_AppraisalTemplate where " + sqlCondition + " " + Searchkey +" "+ " and  N_TemplateID not in (select top(" + Count + ") N_TemplateID from Pay_AppraisalTemplate where " + sqlCondition + " " + Searchkey +" "+xSortBy+")" + Searchkey +" "+ xSortBy;
            
             SortedList OutPut = new SortedList();
 
