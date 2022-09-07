@@ -481,10 +481,37 @@ namespace SmartxAPI.Controllers
                                 byte[] content = (byte[])cmd.ExecuteScalar();
                                 MemoryStream stream = new MemoryStream(content);
                                 Image Sign = Image.FromStream(stream);
-                                Sign.Save("C://OLIVOSERVER2020/Images/" + var["N_ActionID"].ToString() + ".png");
+                                using (var b = new Bitmap(Sign.Width, Sign.Height))
+                                {
+                                    b.SetResolution(Sign.HorizontalResolution, Sign.VerticalResolution);
 
+                                    using (var g = Graphics.FromImage(b))
+                                    {
+                                        g.Clear(Color.White);
+                                        g.DrawImageUnscaled(Sign, 0, 0);
+                                    }
+                                    b.Save("C://OLIVOSERVER2020/Images/" + var["N_ActionID"].ToString()  + ".png");
+                                }
+                            }
+                        }
+                        if (nFormID == 1407)
+                        {
+                            SqlCommand cmd = new SqlCommand("select i_signature from Wh_GRN where N_GRNID=" + nPkeyID, connection, transaction);
+                            byte[] content = (byte[])cmd.ExecuteScalar();
+                            MemoryStream stream = new MemoryStream(content);
+                            Image Sign = Image.FromStream(stream);
 
+                            using (var b = new Bitmap(Sign.Width, Sign.Height))
+                            {
+                                b.SetResolution(Sign.HorizontalResolution, Sign.VerticalResolution);
 
+                                using (var g = Graphics.FromImage(b))
+                                {
+                                    g.Clear(Color.White);
+                                    g.DrawImageUnscaled(Sign, 0, 0);
+                                }
+                                //b = resizeImage(Sign, new Size(400, 300));
+                                b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + ".png");
                             }
                         }
 
@@ -563,6 +590,10 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
 
+        }
+        public static Image resizeImage(Image imgToResize, Size size)
+        {
+            return (Image)(new Bitmap(imgToResize, size));
         }
         public bool CreateBarcode(string Data)
         {
