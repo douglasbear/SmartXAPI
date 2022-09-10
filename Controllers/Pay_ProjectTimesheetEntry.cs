@@ -151,11 +151,11 @@ namespace SmartxAPI.Controllers
                         // }
                         // AdnMaster.Rows[0]["x_Batch"] = x_Batch;
                     }
-                    //  if (nTimeSheetID > 0)
-                    // {
-                    // dLayer.DeleteData("Prj_TimeSheetEntry", "n_PrjTimeSheetID", nTimeSheetID, "n_CompanyID=" + nCompanyID + " and n_PrjTimeSheetID=" + nTimeSheetID, connection, transaction);
-                    // dLayer.DeleteData("Prj_TimeSheetEntryMaster", "n_PrjTimeSheetID", nTimeSheetID, "n_CompanyID=" + nCompanyID + " and n_PrjTimeSheetID=" + nTimeSheetID, connection, transaction);
-                    // }
+                     if (nTimeSheetID > 0)
+                    {
+                    dLayer.DeleteData("Prj_TimeSheetEntry", "n_PrjTimeSheetID", nTimeSheetID, "n_CompanyID=" + nCompanyID + " and n_PrjTimeSheetID=" + nTimeSheetID, connection, transaction);
+                    dLayer.DeleteData("Prj_TimeSheetEntryMaster", "n_PrjTimeSheetID", nTimeSheetID, "n_CompanyID=" + nCompanyID + " and n_PrjTimeSheetID=" + nTimeSheetID, connection, transaction);
+                    }
 
                     nTimeSheetID = dLayer.SaveData("Prj_TimeSheetEntryMaster", "N_PrjTimeSheetID", MasterTable, connection, transaction);
 
