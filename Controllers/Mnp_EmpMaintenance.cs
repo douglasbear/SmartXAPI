@@ -35,9 +35,9 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult EmpMaintenanceList(int nCompanyId,int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult EmpMaintenanceList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
-            //int nCompanyId = myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -55,9 +55,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Man_EmployeeMaintenance where N_CompanyID=@nCompanyId " + Searchkey + Criteria + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Mnp_EmployeeMaintenance_Cloud where N_CompanyID=@nCompanyId " + Searchkey + Criteria + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Man_EmployeeMaintenance where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_MaintenanceID not in (select top(" + Count + ") N_MaintenanceID from vw_Man_EmployeeMaintenance where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Mnp_EmployeeMaintenance_Cloud where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_MaintenanceID not in (select top(" + Count + ") N_MaintenanceID from vw_Man_EmployeeMaintenance where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
             Params.Add("@nCompanyId", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -70,7 +70,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_Man_EmployeeMaintenance where N_CompanyID=@nCompanyId " + Searchkey + Criteria ;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_Mnp_EmployeeMaintenance_Cloud where N_CompanyID=@nCompanyId " + Searchkey + Criteria ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -103,9 +103,9 @@ namespace SmartxAPI.Controllers
             Params.Add("@nBranchID", nBranchID);
             string sqlCommandText = "";
             if (bAllBranchData == true)
-                sqlCommandText = "Select N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,X_Nationality,N_PositionID,X_Position,X_Phone1,N_FnYearID from vw_PayEmployee Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  N_EmpID not in (select N_EmpID from Mnp_EmployeeMaintenance where N_CompanyID=@nCompanyID)";
+                sqlCommandText = "Select N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,X_Nationality,N_PositionID,X_Position,X_Phone1,N_FnYearID,D_HireDate,X_IqamaNo,D_IqamaExpiry from vw_PayEmployee Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  N_EmpID not in (select N_EmpID from Mnp_EmployeeMaintenance where N_CompanyID=@nCompanyID)";
             else
-                sqlCommandText = "Select N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,X_Nationality,N_PositionID,X_Position,X_Phone1,N_FnYearID from vw_PayEmployee Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID) and  N_EmpID not in (select N_EmpID from Mnp_EmployeeMaintenance where N_CompanyID=@nCompanyID and (N_BranchID=0 or N_BranchID=@nBranchID))";
+                sqlCommandText = "Select N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,X_Nationality,N_PositionID,X_Position,X_Phone1,N_FnYearID,D_HireDate,X_IqamaNo,D_IqamaExpiry from vw_PayEmployee Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID) and  N_EmpID not in (select N_EmpID from Mnp_EmployeeMaintenance where N_CompanyID=@nCompanyID and (N_BranchID=0 or N_BranchID=@nBranchID))";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -130,12 +130,12 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult EmpMaintenanceListDetails(int nCompanyId,string xMaintenanceCode)
+        public ActionResult EmpMaintenanceListDetails(string xMaintenanceCode)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            //int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_Man_EmployeeMaintenance where N_CompanyID=@nCompanyId and X_MaintenanceCode=@xMaintenanceCode";
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "select * from vw_Mnp_EmployeeMaintenance_Cloud where N_CompanyID=@nCompanyId and X_MaintenanceCode=@xMaintenanceCode";
             Params.Add("@nCompanyId", nCompanyId);
             Params.Add("@xMaintenanceCode", xMaintenanceCode);
 
@@ -206,7 +206,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Manpower Maintenance Created"));
+                        return Ok(api.Success("Project Employees Created"));
                     }
                 }
             }
