@@ -216,7 +216,7 @@ namespace SmartxAPI.Controllers
                     {
                         if (xLocationCode == "@Auto")
                         {
-                            String sql = "select N_CompanyID,0 as N_LocationID,'' as X_LocationCode,X_BranchName as X_LocationName,N_BranchID,0 as B_IsCurrent,1 as N_typeId,1 as B_IsDefault,X_Address,X_PhoneNo,0 as B_PhysicalSite,0 as N_MainLocationID from Acc_BranchMaster where N_CompanyID=@nCompanyID and N_branchID=@nBranchID";
+                            String sql = "select N_CompanyID,0 as N_LocationID,'' as X_LocationCode,X_BranchName as X_LocationName,N_BranchID,0 as B_IsCurrent,0 as N_typeId,0 as N_WarehouseID,1 as B_IsDefault,X_Address,X_PhoneNo,0 as B_PhysicalSite,0 as N_MainLocationID from Acc_BranchMaster where N_CompanyID=@nCompanyID and N_branchID=@nBranchID";
                             SortedList BranchParams = new SortedList();
                             BranchParams.Add("@nCompanyID", nCompanyID);
                             BranchParams.Add("@nBranchID", nBranchID);

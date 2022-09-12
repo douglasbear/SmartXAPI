@@ -115,18 +115,29 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
                     DataTable DetailTable;
+                    DataTable DetailsToImport;
+                    DataTable Generaltable;
+                    DataTable MappingRule = new DataTable();
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
+                    Generaltable = ds.Tables["general"];
                     DataRow MasterRow = MasterTable.Rows[0];
-                     DataRow DetailRow = DetailTable.Rows[0];
+                    //DataRow DetailRow = DetailTable.Rows[0];
                     SortedList Params = new SortedList();
+                     DetailsToImport = ds.Tables["detailsImport"];
+                     bool B_isImport = false;
 
+                    if (ds.Tables.Contains("detailsImport") && DetailsToImport.Rows.Count > 0)
+                    B_isImport = true;
                     int nStoreID = myFunctions.getIntVAL(MasterRow["N_StoreID"].ToString());
-                    int nStoreDetailID = myFunctions.getIntVAL(DetailRow["N_StoreDetailID"].ToString());
+                    // int nStoreDetailID = myFunctions.getIntVAL(DetailRow["N_StoreDetailID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     string xStoreCode = MasterRow["x_StoreCode"].ToString();
+                    bool isRuleBasedImport = false;
 
+                    if (Generaltable.Columns.Contains("N_RuleID")) //Checking if it's rule bases import
+                    isRuleBasedImport = true;
                     string x_StoreCode = "";
                     if (xStoreCode == "@Auto")
                     {
@@ -141,35 +152,177 @@ namespace SmartxAPI.Controllers
                         }
                         MasterTable.Rows[0]["x_StoreCode"] = x_StoreCode;
                     }
+                    
                     else
                     {
+                          if (!isRuleBasedImport)
+                        {
                          dLayer.DeleteData("Inv_OnlineStore", "N_StoreID", nStoreID, "", connection,transaction);
-                          dLayer.DeleteData("Inv_OnlineStoreDetail", "N_StoreID", nStoreID, "", connection,transaction);
+                         dLayer.DeleteData("Inv_OnlineStoreDetail", "N_StoreID", nStoreID, "", connection,transaction);
+                        }
                     }
-                    MasterTable.Columns.Remove("n_FnYearID");
-
+                       
+                     if (isRuleBasedImport)
+                        {
+                            int RuleID = myFunctions.getIntVAL(Generaltable.Rows[0]["n_RuleID"].ToString());
+                            SortedList ruleParams = new SortedList();
+                            ruleParams.Add("@nCompanyID", nCompanyID);
+                            ruleParams.Add("@nRuleID", RuleID);
+                            MappingRule = dLayer.ExecuteDataTable("select X_FieldName,X_ColumnRefName from Gen_ImportRuleDetails where N_CompanyID=@nCompanyID and N_RuleID=@nRuleID", ruleParams, connection, transaction);
+                      
+                    MasterTable.Columns.Remove("x_EntryFrom");
+                    MasterTable.Columns.Remove("x_TransType"); }
+                     MasterTable.Columns.Remove("n_FnYearID");
                     int n_StoreID = dLayer.SaveData("Inv_OnlineStore", "N_StoreID", "", "", MasterTable, connection, transaction);
                     if (n_StoreID <= 0)
                     {
                         transaction.Rollback();
                         return Ok("Unable to save online stock ");
                     }
+
+                    if (B_isImport)
+                        {
+                            // foreach (DataColumn col in DetailsToImport.Columns)
+                            // {
+                            //     col.ColumnName = col.ColumnName.Replace(" ", "_");
+                            //     col.ColumnName = col.ColumnName.Replace("*", "");
+                            //     col.ColumnName = col.ColumnName.Replace("/", "_");
+                            // }
+
+                          
+                         
+                              // Mapping Rule Configuration
+                       
+                        if (DetailsToImport.Rows.Count > 0)
+                        {
+
+                          string FieldList = "";
+                            string FieldValuesArray = "";
+                            string IDFieldName = "PKey_Code";
+                            int rowCount = 0;
+                            int totalCount = 0;
+                            DetailsToImport.Columns.Add("N_CompanyID");
+                            DetailsToImport.Columns.Add("Pkey_Code");
+                            DetailsToImport.Columns.Add("N_StoreID");
+                            foreach (DataRow dtRow in DetailsToImport.Rows)
+                            {
+                                
+                                dtRow["N_CompanyID"] = nCompanyID;
+                                dtRow["N_StoreID"] = nStoreID;
+                                dtRow["Pkey_Code"] = 0;
+
+
+                            }
+                                 for (int j = 0; j < DetailsToImport.Rows.Count; j++)
+                            {
+                                rowCount = rowCount + 1;
+                                string FieldValues = "";
+                                for (int k = 0; k < DetailsToImport.Columns.Count; k++)
+                                {
+                                    var values = "";
+                                    if (DetailsToImport.Columns[k].ColumnName.ToString().ToLower() == IDFieldName.ToLower())
+                                    {
+                                        values = (j + 1).ToString();
+                                    }
+                                    else
+                                    {
+                                        if (DetailsToImport.Rows[j][k] == DBNull.Value)
+                                        {
+                                            values = "";
+
+                                        }
+                                        else
+                                        {
+                                            values = DetailsToImport.Rows[j][k].ToString();
+                                        }
+                                        values = values.Replace("|", " ");
+                                    }
+
+
+                                    if (isRuleBasedImport) // In Case of Mapping Rule
+                                    {
+                                        DataRow[] RuleRow = MappingRule.Select("X_ColumnRefName = '" + DetailsToImport.Columns[k].ColumnName.ToString() + "'");
+                                        if (RuleRow.Length > 0)
+                                        {
+                                            FieldValues = FieldValues + "|" + values;
+                                            if (j == 0)
+                                                FieldList = FieldList + "," + RuleRow[0]["X_FieldName"].ToString().Replace(" ", "_").Replace("*", "").Replace("/", "_");
+                                        }
+                                        else if (DetailsToImport.Columns[k].ColumnName.ToString() == "N_CompanyID" || DetailsToImport.Columns[k].ColumnName.ToString() == "PKey_Code" || DetailsToImport.Columns[k].ColumnName.ToString() == "N_StoreID")//System Defined fields exception
+                                        {
+                                            FieldValues = FieldValues + "|" + values;
+                                            if (j == 0)
+                                                FieldList = FieldList + "," + DetailsToImport.Columns[k].ColumnName.ToString();
+                                        }
+                                    }
+                                    else
+                                    {
+                                        FieldValues = FieldValues + "|" + values;
+                                        if (j == 0)
+                                            FieldList = FieldList + "," + DetailsToImport.Columns[k].ColumnName.ToString();
+                                    }
+
+                                }
+
+                                 if (j == 0)
+                                {
+                                    FieldList = FieldList.Substring(1);
+                                }
+
+                                FieldValues = ValidateString(FieldValues.Substring(1));
+
+                                FieldValuesArray = FieldValuesArray + ",(" + FieldValues + ")";
+                                if (rowCount == 1000 || DetailsToImport.Rows.Count == (totalCount + rowCount))
+                                {
+                                    totalCount = totalCount + rowCount;
+                                    FieldValuesArray = FieldValuesArray.Substring(1);
+                                    string inserStript = "insert into Mig_OnlineStore (" + FieldList + ") values" + FieldValuesArray;
+                                    dLayer.ExecuteNonQuery(inserStript, connection, transaction);
+                                    FieldValuesArray = "";
+                                    rowCount = 0;
+                                }
+                            }
+                        }
+                           
+
+                            //dLayer.SaveData("Mig_OnlineStore", "Pkey_Code", "", "", DetailsToImport, connection, transaction);
+
+                            SortedList ProParam = new SortedList();
+                            ProParam.Add("N_CompanyID", nCompanyID);
+                            ProParam.Add("n_PkeyID", n_StoreID);
+                         
+                            ProParam.Add("X_Type", "Online Stock Allocation");
+                            DetailTable = dLayer.ExecuteDataTablePro("SP_ScreenDataImport", ProParam, connection,transaction);
+
+
+
+                        }
+
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["n_StoreID"] = n_StoreID;
                     }
-                    int n_StoreDetailID = dLayer.SaveData("Inv_OnlineStoreDetail", "N_StoreDetailID", DetailTable, connection, transaction);
-                    if (n_StoreDetailID <= 0)
-                    {
+                     if(DetailTable.Rows.Count>0)
+                     {
+                     int n_StoreDetailID = dLayer.SaveData("Inv_OnlineStoreDetail", "N_StoreDetailID", DetailTable, connection, transaction);
+                     if (n_StoreDetailID <= 0)
+                     {
                         transaction.Rollback();
                         return Ok("Unable to save online stock");
-                    }
+                     }
+
+
+                     }
+                   
+
+
+
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
                     Result.Add("n_StoreID", n_StoreID);
                     Result.Add("x_StoreCode", x_StoreCode);
-                    Result.Add("n_StoreDetailID", n_StoreDetailID);
+                    // Result.Add("n_StoreDetailID", n_StoreDetailID);
 
                     return Ok(_api.Success(Result, "Online Stock Allocation Created"));
                 }
@@ -181,7 +334,98 @@ namespace SmartxAPI.Controllers
             }
         }
 
-    
+     public string ValidateString(string InputString)
+        {
+            string OutputString = InputString.Replace("'", "''");
+            OutputString = OutputString.Replace("|", "','");
+            OutputString = "'" + OutputString + "'";
+            return OutputString;
+        }
+//    [HttpGet("exportData")]
+//         public ActionResult GetExportDetails(string nStoreID,int nCompanyID, int nRuleID)
+//         {
+//             DataTable Master = new DataTable();
+//             DataTable Detail = new DataTable();
+//             DataSet ds = new DataSet();
+//             SortedList Params = new SortedList();
+//             SortedList QueryParams = new SortedList();
+//             DataTable Attachments = new DataTable();
+//             int companyid = myFunctions.GetCompanyID(User);
+
+//             QueryParams.Add("@nCompanyID", nCompanyID);
+
+           
+//             string Condition = "";
+//             string _sqlQuery = "";
+//             try
+//             {
+//                 using (SqlConnection connection = new SqlConnection(connectionString))
+//                 {
+//                     connection.Open();
+
+
+
+//                      if (isRuleBasedExport)
+//                         {
+                          
+//                             SortedList ruleParams = new SortedList();
+//                             ruleParams.Add("@nCompanyID", nCompanyID);
+//                             ruleParams.Add("@nRuleID", RuleID);
+//                             MappingRule = dLayer.ExecuteDataTable("select X_FieldName,X_ColumnRefName from Gen_ImportRuleDetails where N_CompanyID=@nCompanyID and N_RuleID=@nRuleID", ruleParams, connection, transaction);
+//                         }
+
+//                             //string FieldList = "";
+//                             // string FieldValuesArray = "";
+//                             // string IDFieldName = "PKey_Code";
+//                             // int rowCount = 0;
+//                             // int totalCount = 0;
+//                                         //DataRow[] RuleRow = MappingRule.Select("X_ColumnRefName = '" + DetailsToImport.Columns[k].ColumnName.ToString() + "'");
+//                                         // if (RuleRow.Length > 0)
+//                                         // {
+//                                         //     FieldValues = FieldValues + "|" + values;
+//                                         //     if (j == 0)
+//                                         //         FieldList = FieldList + "," + RuleRow[0]["X_FieldName"].ToString().Replace(" ", "_").Replace("*", "").Replace("/", "_");
+//                                         // }
+//                                         // else if (DetailsToImport.Columns[k].ColumnName.ToString() == "N_CompanyID" || DetailsToImport.Columns[k].ColumnName.ToString() == "PKey_Code" || DetailsToImport.Columns[k].ColumnName.ToString() == "N_StoreID")//System Defined fields exception
+//                                         // {
+//                                         //     FieldValues = FieldValues + "|" + values;
+//                                         //     if (j == 0)
+//                                         //         FieldList = FieldList + "," + DetailsToImport.Columns[k].ColumnName.ToString();
+//                                         // }
+                                    
+//                                     // else
+//                                     // {
+//                                     //     FieldValues = FieldValues + "|" + values;
+//                                     //     if (j == 0)
+//                                     //         FieldList = FieldList + "," + DetailsToImport.Columns[k].ColumnName.ToString();
+//                                     // }
+
+                     
+//                          _sqlQuery = "Select * from vw_Inv_OnlineStoreDetail Where N_CompanyID=@nCompanyID and N_StoreID=@nStoreID";
+                        
+//                         Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+//                         Detail = _api.Format(Detail, "details");
+//                         if (Detail.Rows.Count == 0)
+//                         {
+//                             return Ok(_api.Notice("No Results Found"));
+//                         }
+//                         ds.Tables.Add(Detail);
+
+
+//                         return Ok(_api.Success(ds));
+//                     }
+
+
+//                 }
+
+
+//             }
+//             catch (Exception e)
+//             {
+//                 return Ok(_api.Error(User, e));
+//             }
+//         }
 
          [HttpGet("details")]
         public ActionResult GetDetails(string xStoreCode,int nCompanyID, int nBranchID, bool bShowAllBranchData)

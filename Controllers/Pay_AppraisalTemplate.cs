@@ -87,8 +87,8 @@ namespace SmartxAPI.Controllers
 
                 Params.Add("@p1", nCompanyID);
 
-            if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = " and (X_Code like '%" + xSearchkey + "%' OR X_TemplateName like '%" + xSearchkey + "%') ";
+                   if (xSearchkey != null && xSearchkey.Trim() != "")
+                      Searchkey = "and (X_Code like'%" + xSearchkey + "%'or X_TemplateName like'%" + xSearchkey + "%' or d_EntryDate like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by X_Code desc";
@@ -103,7 +103,7 @@ namespace SmartxAPI.Controllers
                 xSortBy = "Cast([D_EntryDate] as DateTime ) " + xSortBy.Split(" ")[1];
                         break;
                     case "x_TemplateName":
-                        xSortBy = "x_TemplateName " + xSortBy.Split(" ")[1];
+                        xSortBy = "X_TemplateName " + xSortBy.Split(" ")[1];
                         break;
                     default: break;
                 }
