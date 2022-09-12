@@ -743,8 +743,18 @@ namespace SmartxAPI.Controllers
                     var xUserCategory = myFunctions.GetUserCategory(User);// User.FindFirst(ClaimTypes.GroupSid)?.Value;
                     var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-                    object objProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesID,0) from Inv_Sales where N_CompanyID=" + nCompanyID + " and N_SalesOrderId=" + nSalesOrderID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                    object objProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesID,0) from Inv_SalesDetails where N_CompanyID=" + nCompanyID + " and N_SalesOrderId=" + nSalesOrderID + "", connection, transaction);
                     if (objProcessed == null) objProcessed = 0;
+
+                    object objDelProcessed = dLayer.ExecuteScalar("Select Isnull(N_DeliveryNoteID,0) from Inv_DeliveryNoteDetails where N_CompanyID=" + nCompanyID + " and N_SalesOrderId=" + nSalesOrderID + "", connection, transaction);
+                    if (objDelProcessed == null) objProcessed = 0;
+                    if (myFunctions.getIntVAL(objDelProcessed.ToString()) > 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Delivery Note processed! Unable to delete Sales Order"));
+                    }
+
+
                     if (myFunctions.getIntVAL(objProcessed.ToString()) == 0)
                     {
                         SortedList DeleteParams = new SortedList(){
