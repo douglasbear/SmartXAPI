@@ -589,7 +589,7 @@ namespace SmartxAPI.Controllers
                         return Ok("Unable to save sales order");
                     }
                     if (N_QuotationID > 0)
-                        dLayer.ExecuteNonQuery("Update Inv_SalesQuotation Set  N_Processed=1 Where N_QuotationID=" + N_QuotationID + " and N_FnYearID=" + N_FnYearID + " and N_CompanyID=" + N_CompanyID.ToString(), connection, transaction);
+                        dLayer.ExecuteNonQuery("Update Inv_SalesQuotation Set  N_Processed=1, N_StatusID=1 Where N_QuotationID=" + N_QuotationID + " and N_FnYearID=" + N_FnYearID + " and N_CompanyID=" + N_CompanyID.ToString(), connection, transaction);
 
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
