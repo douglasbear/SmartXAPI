@@ -790,7 +790,7 @@ namespace SmartxAPI.Controllers
 
 
                             DataTable SalesOrderDetails = dLayer.ExecuteDataTable(
-                              "select Inv_ItemDetails.N_CompanyID,0 as N_SalesOrderID,0 as N_SalesOrderDetailsID,0 as N_ServiceID,Inv_ItemDetails.N_ItemID,Inv_ItemDetails.N_MainItemID,Inv_ItemDetails.N_Qty,Inv_ItemDetails.N_Qty as N_QtyDisplay,"
+                              "select Inv_ItemDetails.N_CompanyID,0 as N_SalesOrderID,0 as N_SalesOrderDetailsID,0 as N_ServiceID,Inv_ItemDetails.N_ItemID,Inv_ItemDetails.N_ItemID as N_MainItemID,Inv_ItemDetails.N_Qty,Inv_ItemDetails.N_Qty as N_QtyDisplay,"
                               + "" + MasterTable.Rows[0]["N_BranchID"].ToString() + " as N_BranchID," + MasterTable.Rows[0]["N_LocationID"].ToString() + " as N_LocationID,Inv_ItemMaster.N_ClassID,"
                               + "Inv_ItemDetails.N_ItemUnitID from Inv_ItemDetails "
                               + " LEFT OUTER JOIN "
