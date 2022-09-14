@@ -90,6 +90,8 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("Inv_ServiceCondition", "N_ServiceInfoID", N_ServiceInfoID, "N_CompanyID=" + N_CompanyID + " and N_ServiceInfoID=" + N_ServiceInfoID, connection, transaction);
                         dLayer.DeleteData("Inv_ServiceInfo", "N_ServiceInfoID", N_ServiceInfoID, "N_CompanyID=" + N_CompanyID + " and N_ServiceInfoID=" + N_ServiceInfoID, connection, transaction);
+                        dLayer.DeleteData("Inv_ServiceMaterials", "N_ServiceInfoID", N_ServiceInfoID, "N_CompanyID=" + N_CompanyID + " and N_ServiceInfoID=" + N_ServiceInfoID, connection, transaction);
+                         
                     }
                     // string DupCriteria = "";
 
