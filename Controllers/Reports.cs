@@ -466,7 +466,7 @@ namespace SmartxAPI.Controllers
                                 CreateBarcode(var["X_Barcode"].ToString());
                             }
                         }
-                        if (nFormID == 1411)
+                        if (nFormID == 1463 || nFormID == 1461)
                         {
                             object PICKList = dLayer.ExecuteScalar("select X_PickListCode from vw_WhPickListMaster where n_companyid=" + nCompanyId + " and N_PickListID=" + nPkeyID, connection, transaction);
                             CreateBarcode(PICKList.ToString());
