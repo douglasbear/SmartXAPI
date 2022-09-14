@@ -207,7 +207,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@xEmpCode", xEmpCode);
 
             string branchSql = bAllBranchData == false ? " and (vw_PayEmployee.N_BranchID=0 or vw_PayEmployee.N_BranchID=@nBranchID ) " : "";
-            string EmployeeSql = "Select X_LedgerName_Ar As X_LedgerName,[Loan Ledger Name_Ar] As [Loan Ledger Name],[Loan Ledger Name_Ar] AS X_LoanLedgerName_Ar,[Loan Ledger Code] AS X_LoanLedgerCode,[Loan Ledger Name] AS X_LoanLedgerName, *,Pay_Employee.X_EmpName AS X_ReportTo,CASE WHEN dbo.Pay_VacationDetails.D_VacDateFrom<=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.D_VacDateTo>=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.N_VacDays<0 and dbo.Pay_VacationDetails.B_IsSaveDraft=0 Then '1' Else vw_PayEmployee.N_Status end AS [Status] ,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_PayEmployee.N_CompanyID AND N_EmpID = vw_PayEmployee.N_EmpID and ISNULL(B_BeginingBalEntry,0) = 0 and N_FormID = 190 ) AS N_NoEdit from vw_PayEmployee Left Outer Join Pay_Supervisor On vw_PayEmployee.N_ReportToID= Pay_Supervisor.N_SupervisorID and vw_PayEmployee.N_CompanyID= Pay_Supervisor.N_CompanyID  Left Outer Join Pay_Employee On Pay_Supervisor.N_EmpID=Pay_Employee.N_EmpID and Pay_employee.N_FnYearID=@nFnYearID Left Outer Join  dbo.Pay_VacationDetails ON vw_PayEmployee.N_EmpID = dbo.Pay_VacationDetails.N_EmpID AND dbo.Pay_VacationDetails.D_VacDateFrom <= CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.D_VacDateTo >=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.N_VacDays<0  Where vw_PayEmployee.N_CompanyID=@nCompanyID and vw_PayEmployee.N_FnYearID=@nFnYearID and vw_PayEmployee.X_EmpCode=@xEmpCode " + branchSql;
+            string EmployeeSql = "Select X_LedgerName_Ar As X_LedgerName,[Loan Ledger Name_Ar] As [Loan Ledger Name],[Loan Ledger Name_Ar] AS X_LoanLedgerName_Ar,[Loan Ledger Code] AS X_LoanLedgerCode,[Loan Ledger Name] AS X_LoanLedgerName, *,CASE WHEN dbo.Pay_VacationDetails.D_VacDateFrom<=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.D_VacDateTo>=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.N_VacDays<0 and dbo.Pay_VacationDetails.B_IsSaveDraft=0 Then '1' Else vw_PayEmployee.N_Status end AS [Status] ,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_PayEmployee.N_CompanyID AND N_EmpID = vw_PayEmployee.N_EmpID and ISNULL(B_BeginingBalEntry,0) = 0 and N_FormID = 190 ) AS N_NoEdit from vw_PayEmployee Left Outer Join Pay_Supervisor On vw_PayEmployee.N_ReportToID= Pay_Supervisor.N_SupervisorID and vw_PayEmployee.N_CompanyID= Pay_Supervisor.N_CompanyID  Left Outer Join Pay_Employee On Pay_Supervisor.N_EmpID=Pay_Employee.N_EmpID and Pay_employee.N_FnYearID=@nFnYearID Left Outer Join  dbo.Pay_VacationDetails ON vw_PayEmployee.N_EmpID = dbo.Pay_VacationDetails.N_EmpID AND dbo.Pay_VacationDetails.D_VacDateFrom <= CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.D_VacDateTo >=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.N_VacDays<0  Where vw_PayEmployee.N_CompanyID=@nCompanyID and vw_PayEmployee.N_FnYearID=@nFnYearID and vw_PayEmployee.X_EmpCode=@xEmpCode " + branchSql;
             string contactSql = "Select * from vw_ContactDetails where N_CompanyID =@nCompanyID and N_EmpID=@nEmpID order by N_ContactDetailsID desc";
             string salarySql = "Select *,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformation.N_CompanyID AND N_EmpID = vw_EmpPayInformation.N_EmpID AND N_PayID = vw_EmpPayInformation.N_PayID AND N_Value = vw_EmpPayInformation.N_value ) AS N_NoEdit from vw_EmpPayInformation Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpID=@nEmpID and D_EffectiveDate= (select max(D_EffectiveDate) from vw_EmpPayInformation where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpID=@nEmpID ) order by vw_EmpPayInformation.N_PaySetupID,vw_EmpPayInformation.N_Value";
             string accrualSql = "Select *,(Select COUNT(*) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@nCompanyID  and N_EmpID=@nEmpID";
@@ -1178,6 +1178,7 @@ namespace SmartxAPI.Controllers
                 string xEmpName = dtMasterTable.Rows[0]["x_EmpName"].ToString();
                 string xPhone1= dtMasterTable.Rows[0]["x_Phone1"].ToString();
                 string xEmailID= dtMasterTable.Rows[0]["x_EmailID"].ToString();
+                int nPositionID= myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_PositionID"].ToString());
                 int nUserID = myFunctions.GetUserID(User);
                 string X_BtnAction = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -1205,7 +1206,13 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Employee Code already exist"));
                         }
 
-
+                        object N_TitleCount=dLayer.ExecuteScalar("select count(*) from Pay_Position where N_CompanyID= " + nCompanyID + " and N_PositionID= " + nPositionID + " and B_IsSupervisor = 1",connection, transaction);
+                    
+                         if (myFunctions.getVAL(N_TitleCount.ToString()) > 0)
+                         {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "job title already Exixt"));
+                         }
                     }
 
                      if (xPhone1 != "")
@@ -1670,7 +1677,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             if (byDeptManager != null && byDeptManager != "")
             {
-                sqlCommandText = "Select N_CompanyID,N_FnYearID,B_InActive,N_EmpID,X_EmpCode as [Employee Code],X_EmpName as [Employee Name] from Pay_Employee Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  B_inactive <> 1 order by X_EmpCode";
+                sqlCommandText = "Select N_CompanyID,N_FnYearID,B_InActive,N_EmpID,X_EmpCode as [Employee Code],X_EmpName as [Employee Name] from vw_Manager_List Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  B_inactive <> 1 order by X_EmpCode";
             }
             else
             {
