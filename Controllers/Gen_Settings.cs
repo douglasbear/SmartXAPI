@@ -353,12 +353,9 @@ namespace SmartxAPI.Controllers
                     }
 if(OffDays!=null )
 {
-
-      
                     object N_OffID = 0;
                     N_OffID = dLayer.SaveData("pay_YearlyOffDays", "N_OffID", OffDays, connection, transaction);
-                }
-    
+}
                     transaction.Commit();
                     return Ok(_api.Success("Settings Saved"));
                 }
