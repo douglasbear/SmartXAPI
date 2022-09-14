@@ -39,59 +39,56 @@ namespace SmartxAPI.Controllers
             string sqlCommandCount = "";
             string Searchkey = "";
             string criteria="";
-            string X_UserCategory= "";
 
-          try
+            try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-              connection.Open();
+                    connection.Open();
               
-            SortedList OutPut = new SortedList();
-            Params.Add("@nCompanyID", nCompanyID);
-             Params.Add("@nUserID", nUserID);
+                    SortedList OutPut = new SortedList();
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@nUserID", nUserID);
 
-            string userCategoryID = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User Where N_CompanyID =" + nCompanyID + " and N_UserID=" + myFunctions.GetUserID(User) + "", Params, connection).ToString();
-            object x_UserCategory = dLayer.ExecuteScalar("Select Count(*) from Sec_UserCategory Where N_UserCategoryID in  (" + userCategoryID + ") and X_UserCategory='Admin'", Params, connection);
+                    string userCategoryID = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User Where N_CompanyID =" + nCompanyID + " and N_UserID=" + myFunctions.GetUserID(User) + "", Params, connection).ToString();
+                    object UserCategory = dLayer.ExecuteScalar("Select Count(*) from Sec_UserCategory Where N_UserCategoryID in  (" + userCategoryID + ") and X_UserCategory='Admin'", Params, connection);
 
-            if (myFunctions.getIntVAL(X_UserCategory.ToString()) >0)
-                criteria=" and isnull(B_IsSaveDraft,0)=0";
-            else 
-                criteria=" and (N_EntryUserID=@nUserID or N_UserID=@nUserID or N_EvalUserID=@nUserID or N_EmpUserID=@nUserID) and isnull(B_IsSaveDraft,0)=0 ";
-            
+                    if (myFunctions.getIntVAL(UserCategory.ToString()) >0)
+                        criteria=" ";
+                    else 
+                        criteria=" and (N_EntryUserID=@nUserID or N_UserID=@nUserID or N_EvalUserID=@nUserID or N_EmpUserID=@nUserID)  ";
+                    
 
-            if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_AppraisalCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%' or X_Position like '%" + xSearchkey + "%' or X_Department like '%" + xSearchkey + "%' or X_TemplateName like '%" + xSearchkey + "%')";
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and (X_AppraisalCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%' or X_Position like '%" + xSearchkey + "%' or X_Department like '%" + xSearchkey + "%' or X_TemplateName like '%" + xSearchkey + "%')";
 
-            if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by X_AppraisalCode desc";
-            else
-            {
-                switch (xSortBy.Split(" ")[0])
-                {
-                    case "X_AppraisalCode":
-                        xSortBy = "X_AppraisalCode " + xSortBy.Split(" ")[1];
-                        break;
-                    case "D_DocDate":
-                        xSortBy = "Cast(D_DocDate as DateTime )" + xSortBy.Split(" ")[1];
-                        break;
-                    case "D_PeriodTo":
-                        xSortBy = "X_EmpName" + xSortBy.Split(" ")[1];
-                        break;
-                    default: break;
-                }
-                xSortBy = " order by " + xSortBy;
-            }
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by X_AppraisalCode desc";
+                    else
+                    {
+                        switch (xSortBy.Split(" ")[0])
+                        {
+                            case "X_AppraisalCode":
+                                xSortBy = "X_AppraisalCode " + xSortBy.Split(" ")[1];
+                                break;
+                            case "D_DocDate":
+                                xSortBy = "Cast(D_DocDate as DateTime )" + xSortBy.Split(" ")[1];
+                                break;
+                            case "D_PeriodTo":
+                                xSortBy = "X_EmpName" + xSortBy.Split(" ")[1];
+                                break;
+                            default: break;
+                        }
+                        xSortBy = " order by " + xSortBy;
+                    }
 
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType  " + Searchkey + criteria + " " + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType  " + Searchkey + criteria +" and N_AppraisalID not in (select top(" + Count + ") N_AppraisalID from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType "+criteria + xSortBy + " ) " + " " + xSortBy;
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType  " + Searchkey + criteria + " " + xSortBy;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType  " + Searchkey + criteria +" and N_AppraisalID not in (select top(" + Count + ") N_AppraisalID from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType "+criteria + xSortBy + " ) " + " " + xSortBy;
 
-           // Params.Add("@nCompanyId", nCompanyID);
-            Params.Add("@nFnYearID", nFnYearID);
-            Params.Add("@nType", nType);
-             //Params.Add("@nUserID", nUserID);
+                    Params.Add("@nFnYearID", nFnYearID);
+                    Params.Add("@nType", nType);
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
