@@ -367,7 +367,7 @@ namespace SmartxAPI.Controllers
                             
                             //  MasterTable = dLayer.ExecuteDataTable(xDeliveryNo, QueryParamsList, Con);
                              
-                            Mastersql = "select N_CompanyId,N_FnYearId,n_SalesId,x_ReceiptNo,N_CustomerID,X_CustPONo,X_DeliveryNoteNo from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId=" + N_DeliveryNote + "";
+                            Mastersql = "select N_CompanyId,N_FnYearId,n_SalesId,x_ReceiptNo,N_CustomerID,X_CustPONo,X_DeliveryNoteNo,N_ProjectID,X_ProjectName,X_ProjectCode from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId=" + N_DeliveryNote + "";
                             MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                             if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                             MasterTable = _api.Format(MasterTable, "Master");
