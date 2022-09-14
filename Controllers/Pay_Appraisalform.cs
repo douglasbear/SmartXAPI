@@ -28,8 +28,8 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
-        [HttpGet("list")]
-        public ActionResult GetAppraisalList(int? nCompanyId, int nFnYearID, int nType, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nUserID)
+[HttpGet("list")]
+        public ActionResult GetAppraisalList(int? nCompanyId, int nFnYearID, int nType, int nPage, int nSizeperpage, string xSearchkey,string xUserCategory,string xSortBy,int nUserID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -38,6 +38,27 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string sqlCommandCount = "";
             string Searchkey = "";
+            string criteria="";
+            string X_UserCategory= "";
+
+          try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+              connection.Open();
+              
+            SortedList OutPut = new SortedList();
+            Params.Add("@nCompanyID", nCompanyID);
+             Params.Add("@nUserID", nUserID);
+
+            string userCategoryID = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User Where N_CompanyID =" + nCompanyID + " and N_UserID=" + myFunctions.GetUserID(User) + "", Params, connection).ToString();
+            object x_UserCategory = dLayer.ExecuteScalar("Select Count(*) from Sec_UserCategory Where N_UserCategoryID in  (" + userCategoryID + ") and X_UserCategory='Admin'", Params, connection);
+
+            if (myFunctions.getIntVAL(X_UserCategory.ToString()) >0)
+                criteria=" and isnull(B_IsSaveDraft,0)=0";
+            else 
+                criteria=" and (N_EntryUserID=@nUserID or N_UserID=@nUserID or N_EvalUserID=@nUserID or N_EmpUserID=@nUserID) and isnull(B_IsSaveDraft,0)=0 ";
+            
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (X_AppraisalCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%' or X_Position like '%" + xSearchkey + "%' or X_Department like '%" + xSearchkey + "%' or X_TemplateName like '%" + xSearchkey + "%')";
@@ -63,24 +84,18 @@ namespace SmartxAPI.Controllers
             }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType and (N_EntryUserID=@nUserID or N_UserID=@nUserID or N_EvalUserID=@nUserID or N_EmpUserID=@nUserID) " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType  " + Searchkey + criteria + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType and (N_EntryUserID=@nUserID or N_UserID=@nUserID or N_EvalUserID=@nUserID or N_EmpUserID=@nUserID) " + Searchkey + " and N_AppraisalID not in (select top(" + Count + ") N_AppraisalID from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType " + xSortBy + " ) " + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType  " + Searchkey + criteria +" and N_AppraisalID not in (select top(" + Count + ") N_AppraisalID from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType "+criteria + xSortBy + " ) " + " " + xSortBy;
 
-            Params.Add("@nCompanyId", nCompanyID);
+           // Params.Add("@nCompanyId", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
             Params.Add("@nType", nType);
-             Params.Add("@nUserID", nUserID);
+             //Params.Add("@nUserID", nUserID);
 
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    SortedList OutPut = new SortedList();
 
-                    sqlCommandCount = "select count(*) as N_Count  from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType and (N_EntryUserID=@nUserID or N_UserID=@nUserID or N_EvalUserID=@nUserID or N_EmpUserID=@nUserID)" + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count  from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType " + criteria + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -107,7 +122,6 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-
         [HttpGet("details")]
         public ActionResult GetAppraisalDetails(string xAppraisalCode, int nFnYearID)
         {
