@@ -76,6 +76,11 @@ namespace SmartxAPI.Controllers
                         masterTable = "Sch_Admission";
                         column = "X_AdmissionNo";
                     }
+                   if (formID == 74)
+                    {
+                        masterTable = "inv_CustomerProjects";
+                        column = "X_ProjectCode";
+                    }
 
 
 
