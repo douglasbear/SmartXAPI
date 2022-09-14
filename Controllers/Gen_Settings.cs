@@ -351,10 +351,11 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQuery("update Acc_PaymentMethodMaster set B_IsDefault=1 where N_CompanyID=" + nCompanyID + " and N_TypeID= " + var["n_TypeID"].ToString() +"and N_PaymentMethodID="+ var["n_PaymentMethodID"].ToString() + "",connection, transaction);
                         }
                     }
-
+if(OffDays!=null )
+{
                     object N_OffID = 0;
                     N_OffID = dLayer.SaveData("pay_YearlyOffDays", "N_OffID", OffDays, connection, transaction);
-    
+}
                     transaction.Commit();
                     return Ok(_api.Success("Settings Saved"));
                 }
