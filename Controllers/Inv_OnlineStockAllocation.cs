@@ -7,7 +7,10 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
-
+using System.Net.Mail;
+using System.Text;
+using System.IO;
+using System.Threading.Tasks;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -22,7 +25,8 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly int FormID;
          private readonly IMyAttachments myAttachments;
-
+         StringBuilder message = new StringBuilder();
+        private readonly string TempFilesPath;
 
         public Inv_OnlineStockAllocation(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf,IMyAttachments myAtt)
         {
@@ -341,91 +345,120 @@ namespace SmartxAPI.Controllers
             OutputString = "'" + OutputString + "'";
             return OutputString;
         }
-//    [HttpGet("exportData")]
-//         public ActionResult GetExportDetails(string nStoreID,int nCompanyID, int nRuleID)
-//         {
-//             DataTable Master = new DataTable();
-//             DataTable Detail = new DataTable();
-//             DataSet ds = new DataSet();
-//             SortedList Params = new SortedList();
-//             SortedList QueryParams = new SortedList();
-//             DataTable Attachments = new DataTable();
-//             int companyid = myFunctions.GetCompanyID(User);
+        [HttpGet("exportData")]
+        public ActionResult GetExportDetails(int nStoreID,int nRuleID)
+        {
+            DataTable Master = new DataTable();
+            DataTable Detail = new DataTable();
+            DataSet ds = new DataSet();
+            SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
+            DataTable Attachments = new DataTable();
+            int companyid = myFunctions.GetCompanyID(User);
 
-//             QueryParams.Add("@nCompanyID", nCompanyID);
+            QueryParams.Add("@nCompanyID", companyid);
 
            
-//             string Condition = "";
-//             string _sqlQuery = "";
-//             try
-//             {
-//                 using (SqlConnection connection = new SqlConnection(connectionString))
-//                 {
-//                     connection.Open();
+            string Condition = "";
+            string _sqlQuery = "";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
 
 
+             BanqueSaudiFransi( nStoreID,nRuleID);
 
-//                      if (isRuleBasedExport)
-//                         {
-                          
-//                             SortedList ruleParams = new SortedList();
-//                             ruleParams.Add("@nCompanyID", nCompanyID);
-//                             ruleParams.Add("@nRuleID", RuleID);
-//                             MappingRule = dLayer.ExecuteDataTable("select X_FieldName,X_ColumnRefName from Gen_ImportRuleDetails where N_CompanyID=@nCompanyID and N_RuleID=@nRuleID", ruleParams, connection, transaction);
-//                         }
+                         
 
-//                             //string FieldList = "";
-//                             // string FieldValuesArray = "";
-//                             // string IDFieldName = "PKey_Code";
-//                             // int rowCount = 0;
-//                             // int totalCount = 0;
-//                                         //DataRow[] RuleRow = MappingRule.Select("X_ColumnRefName = '" + DetailsToImport.Columns[k].ColumnName.ToString() + "'");
-//                                         // if (RuleRow.Length > 0)
-//                                         // {
-//                                         //     FieldValues = FieldValues + "|" + values;
-//                                         //     if (j == 0)
-//                                         //         FieldList = FieldList + "," + RuleRow[0]["X_FieldName"].ToString().Replace(" ", "_").Replace("*", "").Replace("/", "_");
-//                                         // }
-//                                         // else if (DetailsToImport.Columns[k].ColumnName.ToString() == "N_CompanyID" || DetailsToImport.Columns[k].ColumnName.ToString() == "PKey_Code" || DetailsToImport.Columns[k].ColumnName.ToString() == "N_StoreID")//System Defined fields exception
-//                                         // {
-//                                         //     FieldValues = FieldValues + "|" + values;
-//                                         //     if (j == 0)
-//                                         //         FieldList = FieldList + "," + DetailsToImport.Columns[k].ColumnName.ToString();
-//                                         // }
-                                    
-//                                     // else
-//                                     // {
-//                                     //     FieldValues = FieldValues + "|" + values;
-//                                     //     if (j == 0)
-//                                     //         FieldList = FieldList + "," + DetailsToImport.Columns[k].ColumnName.ToString();
-//                                     // }
+                }  
+                 return Ok(_api.Warning("No Results Found"));
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
 
-                     
-//                          _sqlQuery = "Select * from vw_Inv_OnlineStoreDetail Where N_CompanyID=@nCompanyID and N_StoreID=@nStoreID";
-                        
-//                         Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+        
+                  public int BanqueSaudiFransi(int nStoreID, int nRuleID)
+        {
 
-//                         Detail = _api.Format(Detail, "details");
-//                         if (Detail.Rows.Count == 0)
-//                         {
-//                             return Ok(_api.Notice("No Results Found"));
-//                         }
-//                         ds.Tables.Add(Detail);
+            try
+            {
+             
+                DataTable CSVData = new DataTable();
+                string FileCreateDate = "";
+                string FileCreateTime = "";
+                string SalaryProcessCode = "";
+                double TotalAmount = 0.0;
+                int TotlRecords = 0;
+                int nCompanyID = myFunctions.GetCompanyID(User);
+                FileCreateDate = DateTime.Now.ToString("yyyyMMdd");
+                FileCreateTime = DateTime.Now.ToString("HHmm");
+              
+                //X_WpsFileName = X_WpsPath + FileCreateDate + "-" + FileCreateTime + ".txt";
+                string X_WpsFileName = this.TempFilesPath +myFunctions.GetCompanyID(User)+"-"+ nStoreID + ".csv";
+                StringBuilder sb = new StringBuilder();
+                SortedList Params = new SortedList();
+                Params.Add("@p1", nCompanyID);
+               
 
 
-//                         return Ok(_api.Success(ds));
-//                     }
+                if (!System.IO.File.Exists(X_WpsFileName))
+                {
+                    System.IO.File.Create(X_WpsFileName).Close();
+                }
+                else
+                {
+                    System.IO.File.WriteAllText(X_WpsFileName, String.Empty);
+                }
 
+                //int days = DateTime.DaysInMonth(dtPayrun.Year, dtPayrun.Month);
+                string MOLNo = "1-1933106";
+                string delimiter = "\t";
+                int length;
+                string Address = "", Address1 = "", Address2 = "";
+               
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                   
+                    string CSVDatasql = "Select * from Vw_Inv_OnlineStoreDetail_Export where N_StoreID='" + nStoreID ;
+                    CSVData = dLayer.ExecuteDataTable(CSVDatasql, Params, connection);
 
-//                 }
+                    int row = 1;
+                    foreach (DataRow drow in CSVData.Rows)
+                    {
 
+                        string[][] output = new string[][]
+                        {
+                        new string[]{myFunctions.getVAL( drow["N_Payrate"].ToString()).ToString("0.00").Replace(".",","),drow["X_BankAccountNo"].ToString(),(drow["X_EmpName"].ToString()+drow["X_Address"].ToString()+drow["X_Address1"].ToString()+drow["X_Address2"].ToString()).PadRight(150,' '), drow["X_BankName"].ToString(),"Salary","", myFunctions.getVAL(drow["N_BasicSalary"].ToString()).ToString("0.00").Replace(".",","),myFunctions.getVAL(drow["N_HA"].ToString()).ToString("0.00").Replace(".",","),myFunctions.getVAL(drow["N_OtherEarnings"].ToString()).ToString("0.00").Replace(".",","),myFunctions.getVAL(drow["N_OtherDeductions"].ToString()).ToString("0.00").Replace(".",","),drow["X_IqamaNo"].ToString()}
+                        };
+                        length = output.GetLength(0);
+                        for (int index = 0; index < length; index++)
+                            sb.AppendLine(string.Join(delimiter, output[index]));
 
-//             }
-//             catch (Exception e)
-//             {
-//                 return Ok(_api.Error(User, e));
-//             }
-//         }
+                        row = row + 1;
+                    }
+                }
+
+                System.IO.File.AppendAllText(X_WpsFileName, sb.ToString());
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                if (ex is DirectoryNotFoundException)
+                {
+                    return 0;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+        }
 
          [HttpGet("details")]
         public ActionResult GetDetails(string xStoreCode,int nCompanyID, int nBranchID, bool bShowAllBranchData)
