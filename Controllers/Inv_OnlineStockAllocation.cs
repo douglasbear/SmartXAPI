@@ -7,7 +7,10 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
-
+using System.Net.Mail;
+using System.Text;
+using System.IO;
+using System.Threading.Tasks;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -21,22 +24,24 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int FormID;
-         private readonly IMyAttachments myAttachments;
+        private readonly IMyAttachments myAttachments;
+        StringBuilder message = new StringBuilder();
+        private readonly string TempFilesPath;
 
-
-        public Inv_OnlineStockAllocation(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf,IMyAttachments myAtt)
+        public Inv_OnlineStockAllocation(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 1563;
-             myAttachments = myAtt;
+            myAttachments = myAtt;
+            TempFilesPath = conf.GetConnectionString("TempFilesPath");
 
         }
 
 
-          [HttpGet("list")]
+        [HttpGet("list")]
         public ActionResult GetInvOnlineStockAllocation(int? nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             try
@@ -53,15 +58,15 @@ namespace SmartxAPI.Controllers
                     string Searchkey = "";
 
                     int nUserID = myFunctions.GetUserID(User);
-                      if (xSearchkey != null && xSearchkey.Trim() != "")
-                      Searchkey = "and (X_StoreCode like'%" + xSearchkey + "%'or X_StoreName like'%" + xSearchkey + "%')";
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and (X_StoreCode like'%" + xSearchkey + "%'or X_StoreName like'%" + xSearchkey + "%')";
 
-                       if (xSortBy == null || xSortBy.Trim() == "")
+                    if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_StoreID desc";
-                       else
+                    else
                         xSortBy = " order by " + xSortBy;
 
-                    
+
                     int Count = (nPage - 1) * nSizeperpage;
                     if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ") [X_StoreCode] AS X_StoreCode,* from Inv_OnlineStore where N_CompanyID=@p1" + Searchkey + " " + xSortBy;
@@ -70,7 +75,7 @@ namespace SmartxAPI.Controllers
 
                     // sqlCommandText = "select * from Inv_MRNDetails where N_CompanyID=@p1";
                     Params.Add("@p1", nCompanyId);
-                  //  Params.Add("@p2", nFnYearId);
+                    //  Params.Add("@p2", nFnYearId);
                     SortedList OutPut = new SortedList();
 
 
@@ -104,8 +109,8 @@ namespace SmartxAPI.Controllers
 
 
 
-            [HttpPost("save")]
-          public ActionResult SaveData([FromBody] DataSet ds)
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
             {
@@ -124,11 +129,11 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     //DataRow DetailRow = DetailTable.Rows[0];
                     SortedList Params = new SortedList();
-                     DetailsToImport = ds.Tables["detailsImport"];
-                     bool B_isImport = false;
+                    DetailsToImport = ds.Tables["detailsImport"];
+                    bool B_isImport = false;
 
                     if (ds.Tables.Contains("detailsImport") && DetailsToImport.Rows.Count > 0)
-                    B_isImport = true;
+                        B_isImport = true;
                     int nStoreID = myFunctions.getIntVAL(MasterRow["N_StoreID"].ToString());
                     // int nStoreDetailID = myFunctions.getIntVAL(DetailRow["N_StoreDetailID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
@@ -137,7 +142,7 @@ namespace SmartxAPI.Controllers
                     bool isRuleBasedImport = false;
 
                     if (Generaltable.Columns.Contains("N_RuleID")) //Checking if it's rule bases import
-                    isRuleBasedImport = true;
+                        isRuleBasedImport = true;
                     string x_StoreCode = "";
                     if (xStoreCode == "@Auto")
                     {
@@ -152,27 +157,28 @@ namespace SmartxAPI.Controllers
                         }
                         MasterTable.Rows[0]["x_StoreCode"] = x_StoreCode;
                     }
-                    
+
                     else
                     {
-                          if (!isRuleBasedImport)
+                        if (!isRuleBasedImport)
                         {
-                         dLayer.DeleteData("Inv_OnlineStore", "N_StoreID", nStoreID, "", connection,transaction);
-                         dLayer.DeleteData("Inv_OnlineStoreDetail", "N_StoreID", nStoreID, "", connection,transaction);
+                            dLayer.DeleteData("Inv_OnlineStore", "N_StoreID", nStoreID, "", connection, transaction);
+                            dLayer.DeleteData("Inv_OnlineStoreDetail", "N_StoreID", nStoreID, "", connection, transaction);
                         }
                     }
-                       
-                     if (isRuleBasedImport)
-                        {
-                            int RuleID = myFunctions.getIntVAL(Generaltable.Rows[0]["n_RuleID"].ToString());
-                            SortedList ruleParams = new SortedList();
-                            ruleParams.Add("@nCompanyID", nCompanyID);
-                            ruleParams.Add("@nRuleID", RuleID);
-                            MappingRule = dLayer.ExecuteDataTable("select X_FieldName,X_ColumnRefName from Gen_ImportRuleDetails where N_CompanyID=@nCompanyID and N_RuleID=@nRuleID", ruleParams, connection, transaction);
-                      
-                    MasterTable.Columns.Remove("x_EntryFrom");
-                    MasterTable.Columns.Remove("x_TransType"); }
-                     MasterTable.Columns.Remove("n_FnYearID");
+
+                    if (isRuleBasedImport)
+                    {
+                        int RuleID = myFunctions.getIntVAL(Generaltable.Rows[0]["n_RuleID"].ToString());
+                        SortedList ruleParams = new SortedList();
+                        ruleParams.Add("@nCompanyID", nCompanyID);
+                        ruleParams.Add("@nRuleID", RuleID);
+                        MappingRule = dLayer.ExecuteDataTable("select X_FieldName,X_ColumnRefName from Gen_ImportRuleDetails where N_CompanyID=@nCompanyID and N_RuleID=@nRuleID", ruleParams, connection, transaction);
+
+                        MasterTable.Columns.Remove("x_EntryFrom");
+                        MasterTable.Columns.Remove("x_TransType");
+                    }
+                    MasterTable.Columns.Remove("n_FnYearID");
                     int n_StoreID = dLayer.SaveData("Inv_OnlineStore", "N_StoreID", "", "", MasterTable, connection, transaction);
                     if (n_StoreID <= 0)
                     {
@@ -181,22 +187,22 @@ namespace SmartxAPI.Controllers
                     }
 
                     if (B_isImport)
-                        {
-                            // foreach (DataColumn col in DetailsToImport.Columns)
-                            // {
-                            //     col.ColumnName = col.ColumnName.Replace(" ", "_");
-                            //     col.ColumnName = col.ColumnName.Replace("*", "");
-                            //     col.ColumnName = col.ColumnName.Replace("/", "_");
-                            // }
+                    {
+                        // foreach (DataColumn col in DetailsToImport.Columns)
+                        // {
+                        //     col.ColumnName = col.ColumnName.Replace(" ", "_");
+                        //     col.ColumnName = col.ColumnName.Replace("*", "");
+                        //     col.ColumnName = col.ColumnName.Replace("/", "_");
+                        // }
 
-                          
-                         
-                              // Mapping Rule Configuration
-                       
+
+
+                        // Mapping Rule Configuration
+
                         if (DetailsToImport.Rows.Count > 0)
                         {
 
-                          string FieldList = "";
+                            string FieldList = "";
                             string FieldValuesArray = "";
                             string IDFieldName = "PKey_Code";
                             int rowCount = 0;
@@ -206,14 +212,14 @@ namespace SmartxAPI.Controllers
                             DetailsToImport.Columns.Add("N_StoreID");
                             foreach (DataRow dtRow in DetailsToImport.Rows)
                             {
-                                
+
                                 dtRow["N_CompanyID"] = nCompanyID;
                                 dtRow["N_StoreID"] = nStoreID;
                                 dtRow["Pkey_Code"] = 0;
 
 
                             }
-                                 for (int j = 0; j < DetailsToImport.Rows.Count; j++)
+                            for (int j = 0; j < DetailsToImport.Rows.Count; j++)
                             {
                                 rowCount = rowCount + 1;
                                 string FieldValues = "";
@@ -264,7 +270,7 @@ namespace SmartxAPI.Controllers
 
                                 }
 
-                                 if (j == 0)
+                                if (j == 0)
                                 {
                                     FieldList = FieldList.Substring(1);
                                 }
@@ -283,37 +289,37 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                         }
-                           
-
-                            //dLayer.SaveData("Mig_OnlineStore", "Pkey_Code", "", "", DetailsToImport, connection, transaction);
-
-                            SortedList ProParam = new SortedList();
-                            ProParam.Add("N_CompanyID", nCompanyID);
-                            ProParam.Add("n_PkeyID", n_StoreID);
-                         
-                            ProParam.Add("X_Type", "Online Stock Allocation");
-                            DetailTable = dLayer.ExecuteDataTablePro("SP_ScreenDataImport", ProParam, connection,transaction);
 
 
+                        //dLayer.SaveData("Mig_OnlineStore", "Pkey_Code", "", "", DetailsToImport, connection, transaction);
 
-                        }
+                        SortedList ProParam = new SortedList();
+                        ProParam.Add("N_CompanyID", nCompanyID);
+                        ProParam.Add("n_PkeyID", n_StoreID);
+
+                        ProParam.Add("X_Type", "Online Stock Allocation");
+                        DetailTable = dLayer.ExecuteDataTablePro("SP_ScreenDataImport", ProParam, connection, transaction);
+
+
+
+                    }
 
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["n_StoreID"] = n_StoreID;
                     }
-                     if(DetailTable.Rows.Count>0)
-                     {
-                     int n_StoreDetailID = dLayer.SaveData("Inv_OnlineStoreDetail", "N_StoreDetailID", DetailTable, connection, transaction);
-                     if (n_StoreDetailID <= 0)
-                     {
-                        transaction.Rollback();
-                        return Ok("Unable to save online stock");
-                     }
+                    if (DetailTable.Rows.Count > 0)
+                    {
+                        int n_StoreDetailID = dLayer.SaveData("Inv_OnlineStoreDetail", "N_StoreDetailID", DetailTable, connection, transaction);
+                        if (n_StoreDetailID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok("Unable to save online stock");
+                        }
 
 
-                     }
-                   
+                    }
+
 
 
 
@@ -327,108 +333,202 @@ namespace SmartxAPI.Controllers
                     return Ok(_api.Success(Result, "Online Stock Allocation Created"));
                 }
             }
-            
+
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
-     public string ValidateString(string InputString)
+        public string ValidateString(string InputString)
         {
             string OutputString = InputString.Replace("'", "''");
             OutputString = OutputString.Replace("|", "','");
             OutputString = "'" + OutputString + "'";
             return OutputString;
         }
-//    [HttpGet("exportData")]
-//         public ActionResult GetExportDetails(string nStoreID,int nCompanyID, int nRuleID)
-//         {
-//             DataTable Master = new DataTable();
-//             DataTable Detail = new DataTable();
-//             DataSet ds = new DataSet();
-//             SortedList Params = new SortedList();
-//             SortedList QueryParams = new SortedList();
-//             DataTable Attachments = new DataTable();
-//             int companyid = myFunctions.GetCompanyID(User);
+        [HttpGet("exportData")]
+        public ActionResult GetExportDetails(int nStoreID, int nRuleID)
+        {
+            DataTable Master = new DataTable();
+            DataTable Detail = new DataTable();
+            DataSet ds = new DataSet();
+            SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
+            DataTable Attachments = new DataTable();
+            int companyid = myFunctions.GetCompanyID(User);
 
-//             QueryParams.Add("@nCompanyID", nCompanyID);
-
-           
-//             string Condition = "";
-//             string _sqlQuery = "";
-//             try
-//             {
-//                 using (SqlConnection connection = new SqlConnection(connectionString))
-//                 {
-//                     connection.Open();
+            QueryParams.Add("@nCompanyID", companyid);
 
 
-
-//                      if (isRuleBasedExport)
-//                         {
-                          
-//                             SortedList ruleParams = new SortedList();
-//                             ruleParams.Add("@nCompanyID", nCompanyID);
-//                             ruleParams.Add("@nRuleID", RuleID);
-//                             MappingRule = dLayer.ExecuteDataTable("select X_FieldName,X_ColumnRefName from Gen_ImportRuleDetails where N_CompanyID=@nCompanyID and N_RuleID=@nRuleID", ruleParams, connection, transaction);
-//                         }
-
-//                             //string FieldList = "";
-//                             // string FieldValuesArray = "";
-//                             // string IDFieldName = "PKey_Code";
-//                             // int rowCount = 0;
-//                             // int totalCount = 0;
-//                                         //DataRow[] RuleRow = MappingRule.Select("X_ColumnRefName = '" + DetailsToImport.Columns[k].ColumnName.ToString() + "'");
-//                                         // if (RuleRow.Length > 0)
-//                                         // {
-//                                         //     FieldValues = FieldValues + "|" + values;
-//                                         //     if (j == 0)
-//                                         //         FieldList = FieldList + "," + RuleRow[0]["X_FieldName"].ToString().Replace(" ", "_").Replace("*", "").Replace("/", "_");
-//                                         // }
-//                                         // else if (DetailsToImport.Columns[k].ColumnName.ToString() == "N_CompanyID" || DetailsToImport.Columns[k].ColumnName.ToString() == "PKey_Code" || DetailsToImport.Columns[k].ColumnName.ToString() == "N_StoreID")//System Defined fields exception
-//                                         // {
-//                                         //     FieldValues = FieldValues + "|" + values;
-//                                         //     if (j == 0)
-//                                         //         FieldList = FieldList + "," + DetailsToImport.Columns[k].ColumnName.ToString();
-//                                         // }
-                                    
-//                                     // else
-//                                     // {
-//                                     //     FieldValues = FieldValues + "|" + values;
-//                                     //     if (j == 0)
-//                                     //         FieldList = FieldList + "," + DetailsToImport.Columns[k].ColumnName.ToString();
-//                                     // }
-
-                     
-//                          _sqlQuery = "Select * from vw_Inv_OnlineStoreDetail Where N_CompanyID=@nCompanyID and N_StoreID=@nStoreID";
-                        
-//                         Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
-
-//                         Detail = _api.Format(Detail, "details");
-//                         if (Detail.Rows.Count == 0)
-//                         {
-//                             return Ok(_api.Notice("No Results Found"));
-//                         }
-//                         ds.Tables.Add(Detail);
+            string Condition = "";
+            string _sqlQuery = "";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
 
 
-//                         return Ok(_api.Success(ds));
-//                     }
+                    string x_filelocation=GenerateCSV(nStoreID, nRuleID);
 
 
-//                 }
+
+                }
+                return Ok(_api.Warning("No Results Found"));
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
 
 
-//             }
-//             catch (Exception e)
-//             {
-//                 return Ok(_api.Error(User, e));
-//             }
-//         }
+        public int BanqueSaudiFransi(int nStoreID, int nRuleID)
+        {
 
-         [HttpGet("details")]
-        public ActionResult GetDetails(string xStoreCode,int nCompanyID, int nBranchID, bool bShowAllBranchData)
+            try
+            {
+
+                DataTable CSVData = new DataTable();
+                string FileCreateDate = "";
+                string FileCreateTime = "";
+                int nCompanyID = myFunctions.GetCompanyID(User);
+                FileCreateDate = DateTime.Now.ToString("yyyyMMdd");
+                FileCreateTime = DateTime.Now.ToString("HHmm");
+
+                string X_WpsFileName = this.TempFilesPath + myFunctions.GetCompanyID(User) + "-" + nStoreID + ".csv";
+                StringBuilder sb = new StringBuilder();
+                SortedList Params = new SortedList();
+                Params.Add("@p1", nCompanyID);
+
+
+
+                if (!System.IO.File.Exists(X_WpsFileName))
+                {
+                    System.IO.File.Create(X_WpsFileName).Close();
+                }
+                else
+                {
+                    System.IO.File.WriteAllText(X_WpsFileName, String.Empty);
+                }
+
+                string delimiter = "\t";
+                int length;
+
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    string CSVDatasql = "Select * from Vw_Inv_OnlineStoreDetail_Export"; //where N_StoreID='" + nStoreID;
+                    CSVData = dLayer.ExecuteDataTable(CSVDatasql, Params, connection);
+
+                    int row = 1;
+                    foreach (DataRow drow in CSVData.Rows)
+                    {
+
+                        string[][] output = new string[][]
+                        {
+                        new string[]{myFunctions.getVAL( drow["N_Payrate"].ToString()).ToString("0.00").Replace(".",","),drow["X_BankAccountNo"].ToString(),(drow["X_EmpName"].ToString()+drow["X_Address"].ToString()+drow["X_Address1"].ToString()+drow["X_Address2"].ToString()).PadRight(150,' '), drow["X_BankName"].ToString(),"Salary","", myFunctions.getVAL(drow["N_BasicSalary"].ToString()).ToString("0.00").Replace(".",","),myFunctions.getVAL(drow["N_HA"].ToString()).ToString("0.00").Replace(".",","),myFunctions.getVAL(drow["N_OtherEarnings"].ToString()).ToString("0.00").Replace(".",","),myFunctions.getVAL(drow["N_OtherDeductions"].ToString()).ToString("0.00").Replace(".",","),drow["X_IqamaNo"].ToString()}
+                        };
+                        length = output.GetLength(0);
+                        for (int index = 0; index < length; index++)
+                            sb.AppendLine(string.Join(delimiter, output[index]));
+
+                        row = row + 1;
+                    }
+                }
+
+                System.IO.File.AppendAllText(X_WpsFileName, sb.ToString());
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                if (ex is DirectoryNotFoundException)
+                {
+                    return 0;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+        }
+        public string GenerateCSV(int nStoreID, int nRuleID)
+        {
+
+            try
+            {
+
+                string X_WpsFileName = this.TempFilesPath + myFunctions.GetCompanyID(User) + "-" + nStoreID + ".csv";
+
+                StringBuilder sb = new StringBuilder();
+                DataTable CSVData = new DataTable();
+                SortedList Params = new SortedList();
+                int nCompanyID = myFunctions.GetCompanyID(User);
+                Params.Add("@p1", nCompanyID);
+                Params.Add("@p2", nStoreID);
+                string CSVDatasql = "Select * from Vw_Inv_OnlineStoreDetail_Export"; //where N_StoreID='" + nStoreID;
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    CSVData = dLayer.ExecuteDataTable(CSVDatasql, Params, connection);
+                    object headerval = dLayer.ExecuteScalar(@"SELECT (STUFF((SELECT ', ' + X_ColumnRefName +'' FROM gen_importruledetails WHERE n_ruleid= 6 FOR XML PATH('')), 1, 2, '')) AS StringValue", connection);
+                    string headervalModified = headerval.ToString();
+                    headervalModified = headervalModified.Replace(@"\","");
+                    headervalModified = headervalModified.Substring(1, headervalModified.Length - 2);
+                    int index = 0;
+                    foreach (DataRow drow in CSVData.Rows)
+                    {
+
+
+                        if (!System.IO.File.Exists(X_WpsFileName))
+                        {
+                            System.IO.File.Create(X_WpsFileName).Close();
+                        }
+                        else
+                        {
+                            System.IO.File.WriteAllText(X_WpsFileName, String.Empty);
+                        }
+                        string delimiter = ",";
+
+                        string[][] header = new string[][]
+                        {new string[]{headerval.ToString()}
+                        };
+                        string[][] output = new string[][]
+                        {
+                        new string[]{drow["Item Code"].ToString(),""+ drow["Item Name"].ToString(),drow["Available Qty"].ToString(),drow["Allocated Qty"].ToString(),drow["Allocation Percentage"].ToString(),""+ drow["Minimum Qty"].ToString(),drow["Online Code"].ToString()}
+                       };
+
+                        int length = output.GetLength(0);
+
+
+                        if (index == 0)
+                        {
+                            sb.AppendLine(string.Join(delimiter, header[0]));
+                        }
+                        for (index = 0; index < length; index++)
+                            sb.AppendLine(string.Join(delimiter, output[index]));
+
+                    }
+                }
+
+                System.IO.File.AppendAllText(X_WpsFileName, sb.ToString());
+
+                return X_WpsFileName;
+            }
+            catch (Exception ex)
+            {
+
+
+                return "";
+
+            }
+        }
+
+        [HttpGet("details")]
+        public ActionResult GetDetails(string xStoreCode, int nCompanyID, int nBranchID, bool bShowAllBranchData)
         {
             DataTable Master = new DataTable();
             DataTable Detail = new DataTable();
@@ -441,7 +541,7 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@nCompanyID", nCompanyID);
 
             QueryParams.Add("@nBranchID", nBranchID);
-           // QueryParams.Add("@nFnYearID", nFnYearID);
+            // QueryParams.Add("@nFnYearID", nFnYearID);
             string Condition = "";
             string _sqlQuery = "";
             try
@@ -469,7 +569,7 @@ namespace SmartxAPI.Controllers
 
 
                     Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
-                    
+
 
                     Master = _api.Format(Master, "master");
 
@@ -519,7 +619,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-          [HttpDelete("delete")]
+        [HttpDelete("delete")]
         public ActionResult DeleteData(int nStoreID, int nCompanyID, int nFnYearID)
         {
             int Results = 0;
@@ -541,13 +641,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error(User,"Unable to delete"));
+                        return Ok(_api.Error(User, "Unable to delete"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
     }

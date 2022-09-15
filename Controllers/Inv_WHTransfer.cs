@@ -289,7 +289,13 @@ namespace SmartxAPI.Controllers
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
                     int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString());
                     int nLocationIDfrom = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationIDFrom"].ToString());
-                    int nLocationIDto = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationIDTo"].ToString());
+                     int nLocationIDto =0;
+                    if(MasterTable.Columns.Contains("n_LocationIDTo"))
+                    {
+                       nLocationIDto=myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationIDTo"].ToString());
+                    }
+                   
+                    int nLocationIDtoInGrid = myFunctions.getIntVAL(DetailTable.Rows[0]["n_LocationIDTo"].ToString());
                     string X_ReferenceNo = MasterTable.Rows[0]["X_ReferenceNo"].ToString();
 
 
@@ -400,7 +406,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         }
 
-                        bAutoReceive = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_AutoReceive From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_LocationID = " + nLocationIDto, StockParam, connection, transaction));
+                        bAutoReceive = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_AutoReceive From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_LocationID = " + nLocationIDtoInGrid, StockParam, connection, transaction));
                         if (bAutoReceive)
                         {
 
