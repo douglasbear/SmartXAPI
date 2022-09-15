@@ -198,9 +198,9 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            // Params.Add("@nCompanyID",nCompanyID);
+             Params.Add("@nCompanyID",nCompanyID);
             // Params.Add("@nFnYearID",nFnYearID);
-            string sqlCommandText = "Select * from Vw_AssetDashboard";
+            string sqlCommandText = "Select * from Vw_AssetDashboard Where N_CompanyID=@nCompanyID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

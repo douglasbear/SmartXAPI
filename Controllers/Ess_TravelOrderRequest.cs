@@ -237,9 +237,10 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        if(MasterTable.Columns.Contains("B_ExitReEntryRequired")){
                         if(MasterTable.Rows[0]["B_ExitReEntryRequired"].ToString()=="True")
                             myReminders.ReminderSet(dLayer, 22, nRequestID, MasterTable.Rows[0]["D_DateFrom"].ToString(), this.FormID,N_UserID,User, connection, transaction);
-                            
+                        }
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Travel Order Request", nRequestID, x_RequestCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
                         DataTable Files = ds.Tables["files"];
                         if (Files.Rows.Count > 0)

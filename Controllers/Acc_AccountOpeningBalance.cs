@@ -266,6 +266,15 @@ namespace SmartxAPI.Controllers
                     DetailTable.AcceptChanges();
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
+                        if( myFunctions.getIntVAL(DetailTable.Rows[j]["N_LedgerID"].ToString())>0)
+                        {
+
+                        }
+                        else
+                        {
+                            string asscs="";
+                        }
+
                         SortedList DeleteParams = new SortedList(){
                                     {"N_LedgerID",myFunctions.getIntVAL(DetailTable.Rows[j]["N_LedgerID"].ToString())},
                                     {"N_VoucherID",myFunctions.getIntVAL(MasterTable.Rows[0]["n_VoucherID"].ToString())},

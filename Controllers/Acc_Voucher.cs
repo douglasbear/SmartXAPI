@@ -73,7 +73,7 @@ namespace SmartxAPI.Controllers
 
                     Pattern = "";
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([Voucher No] like '%" + xSearchkey + "%' or Account like '%" + xSearchkey + "%' or X_Remarks like '%" + xSearchkey + "%' or [Voucher Date] like '%" + xSearchkey + "%' or n_Amount like '%" + xSearchkey + "%' )";
+                        Searchkey = "and ([Voucher No] like '%" + xSearchkey + "%' or Account like '%" + xSearchkey + "%' or X_Remarks like '%" + xSearchkey + "%' or [Voucher Date] like '%" + xSearchkey + "%' or n_Amount like '%" + xSearchkey + "%' or x_ProjectCode like '%" + xSearchkey + "%' )";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_VoucherID desc";
