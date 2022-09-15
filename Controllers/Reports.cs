@@ -472,54 +472,31 @@ namespace SmartxAPI.Controllers
                             CreateBarcode(PICKList.ToString());
 
                         }
-                        if (nFormID == 1454)
-                        {
-                            DataTable dt = dLayer.ExecuteDataTable("select i_sign,N_ActionID from Log_ApprovalProcess where n_transid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
-                            foreach (DataRow var in dt.Rows)
-                            {
-                                SqlCommand cmd = new SqlCommand("Select i_sign from Log_ApprovalProcess where N_ActionID=" + var["N_ActionID"].ToString(), connection, transaction);
-                                byte[] content = (byte[])cmd.ExecuteScalar();
-                                MemoryStream stream = new MemoryStream(content);
-                                Image Sign = Image.FromStream(stream);
-                                using (var b = new Bitmap(Sign.Width, Sign.Height))
-                                {
-                                    b.SetResolution(Sign.HorizontalResolution, Sign.VerticalResolution);
-
-                                    using (var g = Graphics.FromImage(b))
-                                    {
-                                        g.Clear(Color.White);
-                                        g.DrawImageUnscaled(Sign, 0, 0);
-                                    }
-                                    b.Save("D://OLIVOSERVER2020/Images/" + var["N_ActionID"].ToString()  + ".png");
-                                }
-                            }
-                        }
-                        if (nFormID == 1454)
-                        {
-                            DataTable dt = dLayer.ExecuteDataTable("select i_sign,N_ActionID from Log_ApprovalProcess where n_transid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
-                            foreach (DataRow var in dt.Rows)
-                            {
-                                SqlCommand cmd = new SqlCommand("Select i_sign from Log_ApprovalProcess where N_ActionID=" + var["N_ActionID"].ToString(), connection, transaction);
-                                byte[] content = (byte[])cmd.ExecuteScalar();
-                                MemoryStream stream = new MemoryStream(content);
-                                Image Sign = Image.FromStream(stream);
-                                using (var b = new Bitmap(Sign.Width, Sign.Height))
-                                {
-                                    b.SetResolution(Sign.HorizontalResolution, Sign.VerticalResolution);
-
-                                    using (var g = Graphics.FromImage(b))
-                                    {
-                                        g.Clear(Color.White);
-                                        g.DrawImageUnscaled(Sign, 0, 0);
-                                    }
-                                    b.Save("C://OLIVOSERVER2020/Images/" + var["N_ActionID"].ToString()  + ".png");
-                                }
-                            }
-                        }
+                        
 
                         if (nFormID == 1407)
                         {
                             SqlCommand cmd = new SqlCommand("select i_signature from Wh_GRN where N_GRNID=" + nPkeyID, connection, transaction);
+                            byte[] content = (byte[])cmd.ExecuteScalar();
+                            MemoryStream stream = new MemoryStream(content);
+                            Image Sign = Image.FromStream(stream);
+
+                            using (var b = new Bitmap(Sign.Width, Sign.Height))
+                            {
+                                b.SetResolution(Sign.HorizontalResolution, Sign.VerticalResolution);
+
+                                using (var g = Graphics.FromImage(b))
+                                {
+                                    g.Clear(Color.White);
+                                    g.DrawImageUnscaled(Sign, 0, 0);
+                                }
+                                //b = resizeImage(Sign, new Size(400, 300));
+                                b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + ".png");
+                            }
+                        }
+                         if (nFormID == 1426)
+                        {
+                            SqlCommand cmd = new SqlCommand("select i_signature from Inv_Deliverynote where N_DeliveryNoteID=" + nPkeyID, connection, transaction);
                             byte[] content = (byte[])cmd.ExecuteScalar();
                             MemoryStream stream = new MemoryStream(content);
                             Image Sign = Image.FromStream(stream);
