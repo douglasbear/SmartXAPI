@@ -33,7 +33,7 @@ namespace SmartxAPI.Controllers
         }
 
 
- [HttpGet("defaultDetails")]
+        [HttpGet("defaultImportDetails")]
         public ActionResult GetImportListDetails(int nFormID)
         {
             DataTable dt = new DataTable();
