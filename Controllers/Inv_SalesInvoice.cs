@@ -1433,9 +1433,10 @@ namespace SmartxAPI.Controllers
                             {
                                 int nQuotationID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_SalesQuotationID"].ToString());
                                 if (nQuotationID > 0)
-                                    dLayer.ExecuteNonQuery("Update Inv_SalesQuotation Set N_SalesID=" + N_SalesID + ", N_Processed=1,N_StatusID=1 Where N_QuotationID=" + nQuotationID + " and N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                                    dLayer.ExecuteNonQuery("Update Inv_SalesQuotation Set N_SalesID=" + N_SalesID + ", N_Processed=1 Where N_QuotationID=" + nQuotationID + " and N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID", QueryParams, connection);
                             }
                         }
+
                         // Warranty Save Code here
                         //optical prescription saving here
                         for (int j = 0; j < DetailTable.Rows.Count; j++)
@@ -1558,6 +1559,28 @@ namespace SmartxAPI.Controllers
                                 }
 
                             }
+                            for (int j = 0; j < DetailTable.Rows.Count; j++)
+                            {
+                                int nSalesOrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
+
+                                if (nSalesOrderID > 0)
+                                {
+                                //Status Update
+                                    SortedList statusParams = new SortedList();
+                                    statusParams.Add("@N_CompanyID", N_CompanyID);
+                                    statusParams.Add("@N_TransID", nSalesOrderID);
+                                    statusParams.Add("@N_FormID", 81);
+                                    try
+                                    {
+                                        dLayer.ExecuteNonQueryPro("SP_TxtStatusUpdate", statusParams, connection, transaction);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, ex));
+                                    }
+                                }
+                            };
                         }
                         SortedList CustomerParams = new SortedList();
                         CustomerParams.Add("@nCustomerID", N_CustomerID);
