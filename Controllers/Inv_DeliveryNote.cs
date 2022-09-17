@@ -424,7 +424,11 @@ namespace SmartxAPI.Controllers
                     //int N_AmtSplit = 0;
                     int N_SaveDraft = myFunctions.getIntVAL(MasterRow["b_IsSaveDraft"].ToString());
                     bool B_AllBranchData = false, B_AllowCashPay = false;
-                    bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator", "X_UserCategory", dLayer, connection, transaction);
+                    // bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator", "X_UserCategory", dLayer, connection, transaction);
+                    object SalesOrderCount = dLayer.ExecuteScalar("select count(*) from vw_userPrevileges where N_CompanyID="+ N_CompanyID +" and N_MenuID=81", QueryParams, connection, transaction);
+                    bool B_SalesOrder = false;
+                    if (myFunctions.getIntVAL(SalesOrderCount.ToString()) > 0 ) B_SalesOrder = true;
+
                     bool B_SRS = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("729", "SRSinDeliveryNote", "N_Value", N_CompanyID, dLayer, connection, transaction)));
                      string i_Signature = "";
                       bool SigEnable=false;
@@ -546,8 +550,9 @@ namespace SmartxAPI.Controllers
                                     dLayer.ExecuteNonQuery("update  Inv_PRS set N_DeliveryNoteID=" + N_DeliveryNoteID + ", N_Processed=3 where N_PRSID=" + N_PRSID + " and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
                             }
                             if (N_SalesOrderID > 0)
+                            {
                                 dLayer.ExecuteNonQuery("update  Inv_SalesOrder set N_SalesID=" + N_DeliveryNoteID + ", N_Processed=1 where N_SalesOrderID=" + N_SalesOrderID + " and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
-
+                            }
                         }
 
                         else
@@ -615,6 +620,29 @@ namespace SmartxAPI.Controllers
                                     return Ok(_api.Error(User, ex));
                                 }
                             }
+
+                            //StatusUpdate
+                            for (int j = 0; j < DetailTable.Rows.Count; j++)
+                            {
+                                N_SalesOrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
+
+                                if (N_SalesOrderID > 0)
+                                {
+                                    SortedList statusParams = new SortedList();
+                                    statusParams.Add("@N_CompanyID", N_CompanyID);
+                                    statusParams.Add("@N_TransID", N_SalesOrderID);
+                                    statusParams.Add("@N_FormID", 81);
+                                    try
+                                    {
+                                        dLayer.ExecuteNonQueryPro("SP_TxtStatusUpdate", statusParams, connection, transaction);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, ex));
+                                    }
+                                }
+                            };
                         }
                         SortedList Result = new SortedList();
                         Result.Add("n_DeliveryNoteID", N_DeliveryNoteID);
