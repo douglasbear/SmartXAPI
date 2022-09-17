@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
             DataTable DetailTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from Vw_RentalItems where N_CompanyID=@p1  and n_RentalItemID=@p2";
+            string sqlCommandText = "select * from vw_RentalItemsList where N_CompanyID=@p1  and n_ItemID=@p2";
             Params.Add("@p1", nCompanyId);  
             Params.Add("@p2", nItemID);
             try
