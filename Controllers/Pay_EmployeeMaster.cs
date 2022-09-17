@@ -1181,6 +1181,7 @@ namespace SmartxAPI.Controllers
                 int nPositionID= myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_PositionID"].ToString());
                 int nUserID = myFunctions.GetUserID(User);
                 string X_BtnAction = "";
+                
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -1281,6 +1282,34 @@ namespace SmartxAPI.Controllers
                     string n_LoanAmountLimit = dtMasterTable.Rows[0]["n_LoanAmountLimit"].ToString();
                     string n_LoanCountLimit = dtMasterTable.Rows[0]["n_LoanCountLimit"].ToString();
                     string n_LoanEligible = dtMasterTable.Rows[0]["n_LoanEligible"].ToString();
+
+
+                    //RentalProductcreation
+                    bool b_RentalProduct = false;
+                    if (dtMasterTable.Columns.Contains("b_RentalProduct"))
+                    {
+                        b_RentalProduct = myFunctions.getBoolVAL(dtMasterTable.Rows[0]["b_RentalProduct"].ToString());
+                      
+                    }
+                         
+
+                        if (b_RentalProduct)
+                        {
+                           SortedList ProductParams = new SortedList();
+                    ProductParams.Add("N_CompanyID", nCompanyID);
+                  
+                    ProductParams.Add("N_FnYearID",nFnYearID);
+                    ProductParams.Add("N_TransID",nEmpID);
+                     ProductParams.Add("N_LocationID",  myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LocationID"].ToString()));
+                    ProductParams.Add("N_ItemTypeID",9);
+                   
+                    ProductParams.Add("X_ItemName",  xEmpName);
+                    dLayer.ExecuteScalarPro("SP_CreateProduct", ProductParams, connection, transaction);
+
+                        
+                        }
+                         if (myFunctions.ContainColumn("b_RentalProduct", dtMasterTable))
+                         dtMasterTable.Columns.Remove("b_RentalProduct");
                     nEmpID = dLayer.SaveData("pay_Employee", "n_EmpID", DupCriteria, X_Crieteria, dtMasterTable, connection, transaction);
                     if (nEmpID <= 0)
                     {
@@ -1363,6 +1392,8 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQuery("Update Pay_SuperVisor Set N_EmpID = 0 Where N_CompanyID =@nCompanyID And N_EmpID =@nPositionID", QueryParams, connection, transaction);
                         else
                             dLayer.ExecuteNonQuery("Update Pay_SuperVisor Set N_EmpID = @nSavedEmpID Where N_CompanyID =@nCompanyID And N_PositionID =@nPositionID", QueryParams, connection, transaction);
+
+                        
 
                         //SAving EMPLOYEE SALARY/BENEFITS
                         int NewEmp = 0, n_NoEdit = 0;
