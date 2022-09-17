@@ -1559,17 +1559,35 @@ namespace SmartxAPI.Controllers
                                 }
 
                             }
+                            //StatusUpdate
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
                             {
                                 int nSalesOrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
+                                int nQuotationID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_SalesQuotationID"].ToString());
 
                                 if (nSalesOrderID > 0)
                                 {
-                                //Status Update
                                     SortedList statusParams = new SortedList();
                                     statusParams.Add("@N_CompanyID", N_CompanyID);
                                     statusParams.Add("@N_TransID", nSalesOrderID);
                                     statusParams.Add("@N_FormID", 81);
+                                    try
+                                    {
+                                        dLayer.ExecuteNonQueryPro("SP_TxtStatusUpdate", statusParams, connection, transaction);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, ex));
+                                    }
+                                }
+
+                                if (nQuotationID > 0)
+                                {
+                                    SortedList statusParams = new SortedList();
+                                    statusParams.Add("@N_CompanyID", N_CompanyID);
+                                    statusParams.Add("@N_TransID", nQuotationID);
+                                    statusParams.Add("@N_FormID", 80);
                                     try
                                     {
                                         dLayer.ExecuteNonQueryPro("SP_TxtStatusUpdate", statusParams, connection, transaction);

@@ -621,13 +621,13 @@ namespace SmartxAPI.Controllers
                                 }
                             }
 
+                            //StatusUpdate
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
                             {
                                 N_SalesOrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
 
                                 if (N_SalesOrderID > 0)
                                 {
-                                //Status Update
                                     SortedList statusParams = new SortedList();
                                     statusParams.Add("@N_CompanyID", N_CompanyID);
                                     statusParams.Add("@N_TransID", N_SalesOrderID);

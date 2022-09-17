@@ -669,6 +669,27 @@ namespace SmartxAPI.Controllers
                                     }
                                  }
                              }
+                            //StatusUpdate
+                            for (int j = 0; j < DetailTable.Rows.Count; j++)
+                            {
+                                if (N_QuotationID > 0)
+                                {
+                                    SortedList statusParams = new SortedList();
+                                    statusParams.Add("@N_CompanyID", N_CompanyID);
+                                    statusParams.Add("@N_TransID", N_QuotationID);
+                                    statusParams.Add("@N_FormID", 80);
+                                    try
+                                    {
+                                        dLayer.ExecuteNonQueryPro("SP_TxtStatusUpdate", statusParams, connection, transaction);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, ex));
+                                    }
+                                }
+                            };
+
                         SortedList CustomerParams = new SortedList();
                         CustomerParams.Add("@nCustomerID", N_CustomerId);
                         DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID=@nCustomerID", CustomerParams, connection, transaction);
