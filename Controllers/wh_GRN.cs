@@ -184,14 +184,15 @@ namespace SmartxAPI.Controllers
                         Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
                         Detail = _api.Format(Detail, "details");
+                        DataTable Attachements = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_GRNID"].ToString()), this.N_FormID, myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                        Attachements = _api.Format(Attachements, "attachments");
                         if (Detail.Rows.Count == 0)
                         {
                             return Ok(_api.Notice("No Results Found"));
                         }
                         ds.Tables.Add(Detail);
-                        // DataTable Attachements = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_GRNID"].ToString()), this.N_FormID, myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()), User, connection);
-                        // Attachements = _api.Format(Attachements, "attachments");
-                        // ds.Tables.Add(Attachements);
+                      
+                         ds.Tables.Add(Attachements);
 
 
                         return Ok(_api.Success(ds));

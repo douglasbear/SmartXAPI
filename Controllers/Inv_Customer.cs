@@ -185,6 +185,12 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchId"].ToString());
                 int nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerId"].ToString());
+                int nLedgerID=0;
+                if(MasterTable.Columns.Contains("N_LedgerID"))
+                {
+                    nLedgerID=myFunctions.getIntVAL(MasterTable.Rows[0]["N_LedgerID"].ToString());
+
+                }
                 int nCrmCustomerID = 0;
                 int flag=0;
                 int customerFlag=0;
@@ -356,8 +362,11 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
+                            if(nLedgerID==0)
+                            {
                             object N_DefLedgerID = dLayer.ExecuteScalar("Select Isnull(N_FieldValue,0) From Acc_AccountDefaults Where N_CompanyID=" + nCompanyID + " and X_FieldDescr ='Debtor Account' and N_FnYearID=" + nFnYearId, Params, connection, transaction);
                             dLayer.ExecuteNonQuery("Update Inv_Customer Set N_LedgerID =" + myFunctions.getIntVAL(N_DefLedgerID.ToString()) + " Where N_CustomerID =" + nCustomerID + " and N_CompanyID=" + nCompanyID + " and N_FnyearID= " + nFnYearId, Params, connection, transaction);
+                            }
                         }
 
 

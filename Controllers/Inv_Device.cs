@@ -124,6 +124,13 @@ namespace SmartxAPI.Controllers
                         MasterTable.Columns.Remove("n_FnYearID");
 
                     }
+                    if (Details.Columns.Contains("n_FormID"))
+                    {
+
+                        Details.Columns.Remove("n_FormID");
+
+                    }
+
                     if (N_DeviceID > 0)
                     {
                         dLayer.DeleteData("Inv_DeviceDetails", "N_DeviceID", N_DeviceID, "N_CompanyID=" + N_CompanyID + " and N_DeviceID=" + N_DeviceID, connection, transaction);
