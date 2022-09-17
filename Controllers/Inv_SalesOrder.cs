@@ -747,7 +747,7 @@ namespace SmartxAPI.Controllers
                     if (objProcessed == null) objProcessed = 0;
 
                     object objDelProcessed = dLayer.ExecuteScalar("Select Isnull(N_DeliveryNoteID,0) from Inv_DeliveryNoteDetails where N_CompanyID=" + nCompanyID + " and N_SalesOrderId=" + nSalesOrderID + "", connection, transaction);
-                    if (objDelProcessed == null) objProcessed = 0;
+                    if (objDelProcessed == null) objDelProcessed = 0;
                     if (myFunctions.getIntVAL(objDelProcessed.ToString()) > 0)
                     {
                         transaction.Rollback();
