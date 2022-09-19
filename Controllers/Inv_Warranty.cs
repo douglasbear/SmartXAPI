@@ -192,9 +192,30 @@ namespace SmartxAPI.Controllers
                     + "SELECT   Top(1)     Inv_WarrantyContract.*, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName "
                     + "FROM            Inv_WarrantyContract LEFT OUTER JOIN "
                     + "                         Inv_Customer ON Inv_WarrantyContract.N_FnYearID = Inv_Customer.N_FnYearID AND Inv_WarrantyContract.N_CompanyID = Inv_Customer.N_CompanyID AND "
-                    + "                         Inv_WarrantyContract.N_CustomerID = Inv_Customer.N_CustomerID where Inv_WarrantyContract.X_WarrantyNo=@xWarrantyRefCode and Inv_WarrantyContract.N_CompanyID=@nCompanyID  order by N_WarrantyID desc";
+                    + "                         Inv_WarrantyContract.N_CustomerID = Inv_Customer.N_CustomerID where Inv_WarrantyContract.X_WarrantyNo=@xWarrantyRefCode and Inv_WarrantyContract.N_CompanyID=@nCompanyID and isnull(Inv_WarrantyContract.B_InActive,0)=0  order by N_WarrantyID desc";
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                    if(MasterTable.Rows.Count==1)
+                    {
+                        int N_SalesID=myFunctions.getIntVAL(dLayer.ExecuteScalar("select Top 1 N_SalesID from Inv_Sales where  N_CompanyID="+myFunctions.GetCompanyID(User)+" and X_Barcode='"+MasterTable.Rows[0]["X_WarrantyNo"]+"' order By N_SalesID desc",Params, connection).ToString());
+                        int nCount =myFunctions.getIntVAL(dLayer.ExecuteScalar(" select COUNT(*)  from Inv_SaleAmountDetails where  N_CompanyID="+myFunctions.GetCompanyID(User)+" and N_SalesID="+N_SalesID+" ",Params, connection).ToString());
+                        string x_PayMode="";
+                        if(nCount==1)
+                            x_PayMode=dLayer.ExecuteScalar("SELECT Inv_Customer.X_CustomerName FROM  Inv_SaleAmountDetails INNER JOIN Inv_Customer ON Inv_SaleAmountDetails.N_CompanyID = Inv_Customer.N_CompanyID AND Inv_SaleAmountDetails.N_CustomerID = Inv_Customer.N_CustomerID where  Inv_SaleAmountDetails.N_CompanyID="+myFunctions.GetCompanyID(User)+" and Inv_SaleAmountDetails.N_SalesID="+N_SalesID+"",Params, connection).ToString();
+                        else if(nCount >  1)
+                           x_PayMode="Multiple PayMode";
+                        string X_ReceiptNo=dLayer.ExecuteScalar("select Top 1 X_ReceiptNo from Inv_Sales where  N_CompanyID="+myFunctions.GetCompanyID(User)+" and X_Barcode='"+MasterTable.Rows[0]["X_WarrantyNo"]+"' order By N_SalesID desc",Params, connection).ToString();
+                        string D_SalesDate=dLayer.ExecuteScalar("select Top 1 D_SalesDate from Inv_Sales where  N_CompanyID="+myFunctions.GetCompanyID(User)+" and X_Barcode='"+MasterTable.Rows[0]["X_WarrantyNo"]+"' order By N_SalesID desc",Params, connection).ToString();
+                        string x_Balance=dLayer.ExecuteScalar("select Top 1 isnull(N_BalanceAmt,0) from [vw_InvSalesInvoiceNo_Search_Cloud] where  N_CompanyID="+myFunctions.GetCompanyID(User)+" and N_SalesID="+N_SalesID+" order By N_SalesID desc",Params, connection).ToString();
+                       
+                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_ReceiptNo", typeof(string), X_ReceiptNo);
+                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "D_SalesDate", typeof(string), D_SalesDate);
+                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_Balance", typeof(string), x_Balance);
+                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_PayMode", typeof(string), x_PayMode);
+                        
+
+                    }
+                                      
                     int N_WarrantyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_WarrantyID"].ToString());
                     MasterTable.AcceptChanges();
                     Params.Add("@nWarrantyID", N_WarrantyID);
@@ -471,10 +492,32 @@ DetailTable.AcceptChanges();
                 return Ok(_api.Error(User,e));
             }
         }
+        [HttpGet("cancelWarranty")]
+        public ActionResult CancelWarranty(int nWarrantyID )
+        {
+             SortedList Params = new SortedList();
+             DataTable dt = new DataTable();
+             int nCompanyID=myFunctions.GetCompanyID(User);
+             Params.Add("@nCompanyID",nCompanyID);
+            
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                   dLayer.ExecuteNonQuery("Update Inv_WarrantyContract set B_InActive=1 where N_CompanyID=@nCompanyID and N_WarrantyID="+nWarrantyID+" ", Params, connection);
+                }
+     
+                return Ok(_api.Success( "Warranty Process Canceled"));
 
-
-
-
+             
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
+        
     }
-}
+    }
 
