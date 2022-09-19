@@ -1564,7 +1564,7 @@ namespace SmartxAPI.Controllers
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
                             {
                                 int nSalesOrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
-                                int nQuotationID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_SalesQuotationID"].ToString());
+                                int nQuotationID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesQuotationID"].ToString());
 
                                 if (nSalesOrderID > 0)
                                 {
