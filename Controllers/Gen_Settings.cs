@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
 
                     if(nFormID==1584)
                     {
-                      payrollSql="select * from vw_Pay_PaymasterAccounts where N_companyID=@nCompanyID and N_FnYearID=@nFnYearID";
+                      payrollSql="select *,N_Payable_LedgerID as N_PayableDefAccountID from vw_Pay_PaymasterAccounts where N_companyID=@nCompanyID and N_FnYearID=@nFnYearID";
                       payrollDetails = dLayer.ExecuteDataTable(payrollSql, Params, connection);
                     }
 
@@ -371,7 +371,7 @@ if(OffDays!=null )
 if(SalaryExpense!=null){
      foreach (DataRow var in SalaryExpense.Rows)
                     {
-     dLayer.ExecuteNonQuery("Update Pay_Paymaster  Set N_ExpenseDefAccountID = " + myFunctions.getIntVAL(var["N_ExpenseDefAccountID"].ToString()) + " ,  N_PayableDefAccountID = " + myFunctions.getIntVAL(var["N_PayableDefAccountID"].ToString()) + "Where N_PayID=" + myFunctions.getIntVAL(var["N_PayID"].ToString()) + " and N_CompanyID=" + myFunctions.getIntVAL(var["N_CompanyID"].ToString()) + " and N_FnYearID=" + myFunctions.getIntVAL(var["N_FnYearID"].ToString()),connection);
+     dLayer.ExecuteNonQuery("Update Pay_Paymaster  Set N_ExpenseDefAccountID = " + myFunctions.getIntVAL(var["N_ExpenseDefAccountID"].ToString()) + " ,  N_PayableDefAccountID = " + myFunctions.getIntVAL(var["N_PayableDefAccountID"].ToString()) + "Where N_PayID=" + myFunctions.getIntVAL(var["N_PayID"].ToString()) + " and N_CompanyID=" + myFunctions.getIntVAL(var["N_CompanyID"].ToString()) + " and N_FnYearID=" + myFunctions.getIntVAL(var["N_FnYearID"].ToString()),connection,transaction);
 }
 }
                     transaction.Commit();
