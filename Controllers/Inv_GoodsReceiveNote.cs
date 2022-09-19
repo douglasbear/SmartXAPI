@@ -418,6 +418,26 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(_api.Error(User,ex));
                         }
+
+                        for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        {
+                            if (n_POrderID > 0)
+                            {
+                                SortedList statusParams = new SortedList();
+                                statusParams.Add("@N_CompanyID", masterRow["n_CompanyId"].ToString());
+                                statusParams.Add("@N_TransID", n_POrderID);
+                                statusParams.Add("@N_FormID", 82);
+                                try
+                                {
+                                    dLayer.ExecuteNonQueryPro("SP_TxtStatusUpdate", statusParams, connection, transaction);
+                                }
+                                catch (Exception ex)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, ex));
+                                }
+                                }
+                            };
                     }
                     SortedList VendorParams = new SortedList();
                     VendorParams.Add("@nVendorID", N_VendorID);

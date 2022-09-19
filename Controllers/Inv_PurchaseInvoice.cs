@@ -1060,6 +1060,27 @@ namespace SmartxAPI.Controllers
                                 return Ok(_api.Error(User, "Transaction Started"));
                             return Ok(_api.Error(User, ex.Message));
                         }
+
+                            //StatusUpdate
+                            for (int j = 0; j < DetailTable.Rows.Count; j++)
+                            {
+                                if (n_POrderID > 0)
+                                {
+                                    SortedList statusParams = new SortedList();
+                                    statusParams.Add("@N_CompanyID", nCompanyID);
+                                    statusParams.Add("@N_TransID", n_POrderID);
+                                    statusParams.Add("@N_FormID", 82);
+                                    try
+                                    {
+                                        dLayer.ExecuteNonQueryPro("SP_TxtStatusUpdate", statusParams, connection, transaction);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, ex));
+                                    }
+                                }
+                            };
                     }
                     SortedList VendorParams = new SortedList();
                     VendorParams.Add("@nVendorID", N_VendorID);

@@ -212,7 +212,7 @@ namespace SmartxAPI.Controllers
                          " Inv_WarrantyContractDetails.N_BranchID, Inv_WarrantyContractDetails.N_LocationID, Inv_WarrantyContractDetails.N_ItemUnitID, Inv_WarrantyContractDetails.X_ItemRemarks, Inv_ItemUnit.X_ItemUnit, " +
                          " Inv_ItemMaster_1.X_ItemCode, Inv_ItemMaster_1.X_ItemName, Inv_ItemMaster_1.N_ClassID, Inv_WarrantyContractDetails.N_ServiceItemID, Inv_ItemMaster.X_ItemCode AS X_ServiceItemCode, " +
                          " Inv_ItemMaster.X_ItemName AS X_ServiceItem, ISNULL(Inv_WarrantyContractDetails.N_Qty, 0) - ISNULL(vw_Inv_WarrantyQtyDetails.N_UsedQty, 0) " +
-                         " AS N_AvlQty, Inv_WarrantyContractDetails.N_Qty, ISNULL(vw_Inv_WarrantyQtyDetails.N_UsedQty, 0) AS N_UsedQty " +
+                         " AS N_AvlQty, 0 as N_Qty, ISNULL(vw_Inv_WarrantyQtyDetails.N_UsedQty, 0) AS N_UsedQty " +
                         " FROM Inv_ItemMaster RIGHT OUTER JOIN " +
                          " Inv_WarrantyContractDetails LEFT OUTER JOIN " +
                          " vw_Inv_WarrantyQtyDetails ON Inv_WarrantyContractDetails.N_ItemID = vw_Inv_WarrantyQtyDetails.N_ItemID AND Inv_WarrantyContractDetails.N_CompanyID = vw_Inv_WarrantyQtyDetails.N_CompanyID AND " +
@@ -232,30 +232,30 @@ namespace SmartxAPI.Controllers
                     DetailTable = _api.Format(DetailTable, "Details");
 
 
-                    foreach (DataRow DRows in DetailTable.Rows)
-                    {
-                        if (myFunctions.getIntVAL(DRows["N_ClassID"].ToString()) == 1)
-                        {
+//                     foreach (DataRow DRows in DetailTable.Rows)
+//                     {
+//                         if (myFunctions.getIntVAL(DRows["N_ClassID"].ToString()) == 1)
+//                         {
 
-                            string balanceSql = " SELECT        SUM(ISNULL(Inv_ServiceDetails.N_Qty, 0)) AS N_UsedQty FROM            Inv_ItemDetails RIGHT OUTER JOIN "+
-                         " Inv_ItemMaster ON Inv_ItemDetails.N_MainItemID = Inv_ItemMaster.N_ItemID AND Inv_ItemDetails.N_CompanyID = Inv_ItemMaster.N_CompanyID RIGHT OUTER JOIN "+
-                         " Inv_ServiceDetails ON Inv_ItemDetails.N_ItemID = Inv_ServiceDetails.N_ItemID AND Inv_ItemMaster.N_CompanyID = Inv_ServiceDetails.N_CompanyID AND  "+
-                         " Inv_ItemDetails.N_CompanyID = Inv_ServiceDetails.N_CompanyID RIGHT OUTER JOIN "+
-                         " Inv_ServiceMaster ON Inv_ServiceDetails.N_CompanyID = Inv_ServiceMaster.N_CompanyID AND Inv_ServiceDetails.N_ServiceID = Inv_ServiceMaster.N_ServiceID " +
-"where Inv_ItemMaster.N_ClassID=1 and  Inv_ServiceDetails.N_ItemID=" + DRows["N_ItemID"].ToString() + " and Inv_ServiceMaster.N_CompanyID=" + myFunctions.GetCompanyID(User) + " and Inv_ServiceMaster.N_WarrantyID=" + N_WarrantyID +
-" GROUP BY Inv_ServiceMaster.N_CompanyID, Inv_ServiceMaster.N_WarrantyID ";
+//                             string balanceSql = " SELECT        SUM(ISNULL(Inv_ServiceDetails.N_Qty, 0)) AS N_UsedQty FROM            Inv_ItemDetails RIGHT OUTER JOIN "+
+//                          " Inv_ItemMaster ON Inv_ItemDetails.N_MainItemID = Inv_ItemMaster.N_ItemID AND Inv_ItemDetails.N_CompanyID = Inv_ItemMaster.N_CompanyID RIGHT OUTER JOIN "+
+//                          " Inv_ServiceDetails ON Inv_ItemDetails.N_ItemID = Inv_ServiceDetails.N_ItemID AND Inv_ItemMaster.N_CompanyID = Inv_ServiceDetails.N_CompanyID AND  "+
+//                          " Inv_ItemDetails.N_CompanyID = Inv_ServiceDetails.N_CompanyID RIGHT OUTER JOIN "+
+//                          " Inv_ServiceMaster ON Inv_ServiceDetails.N_CompanyID = Inv_ServiceMaster.N_CompanyID AND Inv_ServiceDetails.N_ServiceID = Inv_ServiceMaster.N_ServiceID " +
+// "where Inv_ItemMaster.N_ClassID=1 and  Inv_ServiceDetails.N_ItemID=" + DRows["N_ItemID"].ToString() + " and Inv_ServiceMaster.N_CompanyID=" + myFunctions.GetCompanyID(User) + " and Inv_ServiceMaster.N_WarrantyID=" + N_WarrantyID +
+// " GROUP BY Inv_ServiceMaster.N_CompanyID, Inv_ServiceMaster.N_WarrantyID ";
 
-                            object balance = dLayer.ExecuteScalar(balanceSql, Params, connection);
-                            if (balance == null)
-                                balance = 0;
+//                             object balance = dLayer.ExecuteScalar(balanceSql, Params, connection);
+//                             if (balance == null)
+//                                 balance = 0;
 
-                            int qty = myFunctions.getIntVAL(DRows["N_UsedQty"].ToString());
-                            DRows["N_AvlQty"] = qty - myFunctions.getIntVAL(balance.ToString());
+//                             int qty = myFunctions.getIntVAL(DRows["N_UsedQty"].ToString());
+//                             DRows["N_AvlQty"] = qty - myFunctions.getIntVAL(balance.ToString());
 
 
-                        }
+//                         }
 
-                    }
+//                     }
 DetailTable.AcceptChanges();
 
                     //Product Information 
