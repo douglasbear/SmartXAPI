@@ -103,7 +103,11 @@ namespace SmartxAPI.Controllers
                 DataTable ExpiryTable;
                 ExpiryTable = ds.Tables["expiry"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
+                int nFnyearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                 int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationID"].ToString());
+                 string xItemName = MasterTable.Rows[0]["x_ItemName"].ToString();
                 string xItemCode = MasterTable.Rows[0]["X_ItemCode"].ToString();
+                bool bAssetItem= myFunctions.getBoolVAL(MasterTable.Rows[0]["b_AssetItem"].ToString());
                 int nAddlInfoID=0;
                 if(ExpiryTable.Rows.Count>0)
                     nAddlInfoID = myFunctions.getIntVAL(ExpiryTable.Rows[0]["N_AddlInfoID"].ToString());
@@ -114,6 +118,21 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+
+                       if (MasterTable.Columns.Contains("n_FnYearID"))
+                        MasterTable.Columns.Remove("n_FnYearID");
+
+                        if (MasterTable.Columns.Contains("n_LocationID"))
+                        MasterTable.Columns.Remove("n_LocationID");
+
+                        
+                        if (MasterTable.Columns.Contains("x_ItemName"))
+                        MasterTable.Columns.Remove("x_ItemName");
+
+                        
+                        if (MasterTable.Columns.Contains("b_AssetItem"))
+                        MasterTable.Columns.Remove("b_AssetItem");
+
 
                     String DupCriteria = "X_ItemCode= '" + xItemCode + "' and N_CompanyID=" + nCompanyID;
                     nItemID = dLayer.SaveData("Ass_AssetMaster", "N_ItemID", DupCriteria, "", MasterTable, connection, transaction);
@@ -137,6 +156,28 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error(User, "Unable to save"));
                         }
                     }
+
+                    if(bAssetItem==true){
+                           SortedList ProcParam = new SortedList();
+                        ProcParam.Add("N_CompanyID", nCompanyID);
+                        ProcParam.Add("N_FnYearID", nFnyearID);
+                        ProcParam.Add("N_TransID", nItemID);
+                        ProcParam.Add("N_LocationID", nLocationID);
+                        ProcParam.Add("N_ItemTypeID", 7);
+                        ProcParam.Add("X_ItemName",xItemName);
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_CreateProduct", ProcParam, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, ex));
+                        }
+                    }
+
+                    
+                    
   
                     transaction.Commit();
                     return Ok(api.Success(" Saved Successfully"));

@@ -595,6 +595,39 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,e));
             }
         }
+
+
+          [HttpGet("teamEmployee")]
+        public ActionResult GetcompletedDetails(int nUserID )
+        {
+             SortedList Params = new SortedList();
+             DataTable dt = new DataTable();
+             int nCompanyID=myFunctions.GetCompanyID(User);
+             Params.Add("@nCompanyID",nCompanyID);
+             string sqlCommandText="Select * from vw_tsk_TeamEmployee Where N_CompanyID=@nCompanyID and N_UserID="+nUserID+"" ;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    //return Ok(api.Notice("No Results Found"));
+                    return Ok(api.Success(dt));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
         
     }
 }
