@@ -304,6 +304,7 @@ namespace SmartxAPI.Controllers
             DataTable AccountMaps = ds.Tables["accountMaps"];
             DataTable General = ds.Tables["general"];
             DataTable OffDays = ds.Tables["offdays"];
+            DataTable SalaryExpense = ds.Tables["salaryExpense"];
 
             try
             {
@@ -355,6 +356,12 @@ if(OffDays!=null )
 {
                     object N_OffID = 0;
                     N_OffID = dLayer.SaveData("pay_YearlyOffDays", "N_OffID", OffDays, connection, transaction);
+}
+if(SalaryExpense!=null){
+     foreach (DataRow var in SalaryExpense.Rows)
+                    {
+     dLayer.ExecuteNonQuery("Update Pay_Paymaster  Set N_ExpenseDefAccountID = " + myFunctions.getIntVAL(var["N_ExpenseDefAccountID"].ToString()) + " ,  N_PayableDefAccountID = " + myFunctions.getIntVAL(var["N_PayableDefAccountID"].ToString()) + "Where N_PayID=" + myFunctions.getIntVAL(var["N_PayID"].ToString()) + " and N_CompanyID=" + myFunctions.getIntVAL(var["N_CompanyID"].ToString()) + " and N_FnYearID=" + myFunctions.getIntVAL(var["N_FnYearID"].ToString()),connection);
+}
 }
                     transaction.Commit();
                     return Ok(_api.Success("Settings Saved"));
