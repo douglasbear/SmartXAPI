@@ -1350,7 +1350,7 @@ namespace SmartxAPI.GeneralFunctions
                     {
                         if (nTransStatus != 918 && nTransStatus != 919 && nTransStatus != 920 )//&& nTransStatus != 929)
                         {
-                            if (nTransStatus == 913 || nTransStatus == 7)
+                            if (nTransStatus == 913 || nTransStatus == 7 || nTransStatus == 929)
                             {
                                 nTransStatus = 916;
                                 ApprovalParams["@nTransStatus"] = nTransStatus;
