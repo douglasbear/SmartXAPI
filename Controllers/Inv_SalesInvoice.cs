@@ -852,7 +852,7 @@ namespace SmartxAPI.Controllers
         private SortedList StatusSetup(int nSalesID, int nFnYearID, int isDraft, SqlConnection connection)
         {
 
-            object objInvoiceRecievable = null, objBal = null;
+            object objInvoiceRecievable = null, objBal = null,objPayMode=null;
             double InvoiceRecievable = 0, BalanceAmt = 0;
             SortedList TxnStatus = new SortedList();
             TxnStatus.Add("Label", "");
@@ -882,7 +882,9 @@ namespace SmartxAPI.Controllers
 
             objBal = dLayer.ExecuteScalar(balanceSql, connection);
 
-            
+            string payModeSql = "select X_PayMode from Vw_InvSalesPayMode where N_SalesId = "+nSalesID+" and N_CompanyId ="+nCompanyID;
+
+            objPayMode=dLayer.ExecuteScalar(payModeSql, connection);
 
             object RetQty = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =" + nSalesID + " and Isnull(B_IsSaveDraft,0) =0 and N_CompanyID=" + nCompanyID , connection);
             object RetQtyDrft = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =" + nSalesID + " and Isnull(B_IsSaveDraft,0)=1 and N_CompanyID=" + nCompanyID , connection);
@@ -895,7 +897,7 @@ namespace SmartxAPI.Controllers
 
             if ((Math.Round(InvoiceRecievable, 2) == Math.Round(BalanceAmt, 2)) && (Math.Round(InvoiceRecievable, 2) > 0 && Math.Round(BalanceAmt, 2) > 0))
             {
-                TxnStatus["Label"] = "Not Paid";
+                TxnStatus["Label"] = "Not Paid ("+objPayMode.ToString()+")";
                 TxnStatus["LabelColor"] = "Red";
                 TxnStatus["Alert"] = "";
             }
@@ -904,7 +906,7 @@ namespace SmartxAPI.Controllers
                 if (BalanceAmt == 0)
                 {
                     //IF PAYMENT DONE
-                    TxnStatus["Label"] = "Paid";
+                    TxnStatus["Label"] = "Paid ("+objPayMode.ToString()+")";
                     TxnStatus["LabelColor"] = "Green";
                     TxnStatus["Alert"] = "Customer Receipt is Processed for this Invoice.";
 
@@ -915,7 +917,7 @@ namespace SmartxAPI.Controllers
                         TxnStatus["SaveEnabled"] = false;
                         TxnStatus["DeleteEnabled"] = false;
                         TxnStatus["Alert"] = "Sales Return Processed for this invoice.";
-                        TxnStatus["Label"] = "Paid(Return)";
+                        TxnStatus["Label"] = "Paid ("+objPayMode.ToString()+") (Return)";
                         TxnStatus["LabelColor"] = "Green";
                     }
                     else if (RetQtyDrft != null && myFunctions.getIntVAL(RetQtyDrft.ToString()) > 0)
@@ -923,7 +925,7 @@ namespace SmartxAPI.Controllers
                         TxnStatus["SaveEnabled"] = true;
                         TxnStatus["DeleteEnabled"] = false;
                         TxnStatus["Alert"] = "Sales Return Processed for this invoice.";
-                        TxnStatus["Label"] = "Paid(Return)";
+                        TxnStatus["Label"] = "Paid ("+objPayMode.ToString()+") (Return)";
                         TxnStatus["LabelColor"] = "Green";
                     }
                 }
@@ -931,7 +933,7 @@ namespace SmartxAPI.Controllers
                 {
                     //IF HAVING BALANCE AMOUNT
                     TxnStatus["Alert"] = "Customer Receipt is Processed for this Invoice.";
-                    TxnStatus["Label"] = "Partially Paid";
+                    TxnStatus["Label"] = "Partially Paid ("+objPayMode.ToString()+")";
                     TxnStatus["LabelColor"] = "Green";
 
                     //IF HAVING BALANCE AMOUNT AND HAVING RETURN
@@ -940,7 +942,7 @@ namespace SmartxAPI.Controllers
                         TxnStatus["SaveEnabled"] = false;
                         TxnStatus["DeleteEnabled"] = false;
                         TxnStatus["Alert"] = "Sales Return Processed for this invoice.";
-                        TxnStatus["Label"] = "Partially Paid(Return)";
+                        TxnStatus["Label"] = "Partially Paid ("+objPayMode.ToString()+") (Return)";
                         TxnStatus["LabelColor"] = "Green";
                     }
                     else if (RetQtyDrft != null && myFunctions.getIntVAL(RetQtyDrft.ToString()) > 0)
@@ -948,7 +950,7 @@ namespace SmartxAPI.Controllers
                         TxnStatus["SaveEnabled"] = true;
                         TxnStatus["DeleteEnabled"] = false;
                         TxnStatus["Alert"] = "Sales Return Processed for this invoice.";
-                        TxnStatus["Label"] = "Partially Paid(Return)";
+                        TxnStatus["Label"] = "Partially Paid ("+objPayMode.ToString()+") (Return)";
                         TxnStatus["LabelColor"] = "Green";
                     }
                 }
