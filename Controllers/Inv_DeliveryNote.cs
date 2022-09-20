@@ -209,8 +209,14 @@ namespace SmartxAPI.Controllers
                             {
                                 if (myFunctions.getIntVAL(Avar["N_SalesOrderDetailsID"].ToString()) == myFunctions.getIntVAL(Kvar["N_SalesOrderDetailsID"].ToString()))
                                 {
-                                    Kvar["N_QtyDisplay"] = Avar["N_QtyDisplay"];
-                                    Kvar["N_Qty"] = Avar["N_Qty"];
+                                    if(myFunctions.getVAL(Avar["N_QtyDisplay"].ToString())<=0)
+                                         Kvar["N_QtyDisplay"] = 0;
+                                    else
+                                         Kvar["N_QtyDisplay"] = Avar["N_QtyDisplay"];
+                                    if(myFunctions.getVAL(Avar["N_QtyDisplay"].ToString())<=0)
+                                         Kvar["N_QtyDisplay"] = 0;
+                                    else  
+                                         Kvar["N_Qty"] = Avar["N_Qty"];
 
                                 }
                             }
@@ -253,9 +259,15 @@ namespace SmartxAPI.Controllers
                             {
                                 if (myFunctions.getIntVAL(Avar["N_SalesOrderDetailsID"].ToString()) == myFunctions.getIntVAL(Kvar["N_SalesOrderDetailsID"].ToString()))
                                 {
-                                    Kvar["N_QtyDisplay"] = Avar["N_QtyDisplay"];
-                                    Kvar["N_Qty"] = Avar["N_Qty"];
-
+                                    if(myFunctions.getVAL(Avar["N_QtyDisplay"].ToString())<=0)
+                                         Kvar["N_QtyDisplay"] = 0;
+                                    else
+                                         Kvar["N_QtyDisplay"] = Avar["N_QtyDisplay"];
+                                    if(myFunctions.getVAL(Avar["N_QtyDisplay"].ToString())<=0)
+                                         Kvar["N_QtyDisplay"] = 0;
+                                    else  
+                                         Kvar["N_Qty"] = Avar["N_Qty"];
+                                        
                                 }
                             }
                         }

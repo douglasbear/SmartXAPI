@@ -37,16 +37,16 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult RentalScheduleDetails(int nItemID)
+        public ActionResult RentalScheduleDetails(int nMainItemID)
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from Vw_RentalItems where N_CompanyID=@p1  and n_RentalItemID=@p2";
+            string sqlCommandText = "select * from vw_RentalItemsList where N_CompanyID=@p1  and n_MainItemID=@p2";
             Params.Add("@p1", nCompanyId);  
-            Params.Add("@p2", nItemID);
+            Params.Add("@p2", nMainItemID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
