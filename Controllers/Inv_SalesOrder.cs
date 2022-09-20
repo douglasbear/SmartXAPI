@@ -39,7 +39,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetSalesOrderotationList(int? nCompanyId, int nFnYearId, bool bAllBranchData, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string screen,int nCustomerID,bool salesOrder , int nFormID )
+        public ActionResult GetSalesOrderotationList(int? nCompanyId, int nFnYearId, bool bAllBranchData, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string screen,int nCustomerID,bool salesOrder , int nFormID , string xImeiNo )
         {
             try
             {
@@ -60,6 +60,8 @@ namespace SmartxAPI.Controllers
                     string RentalOrderCriteria="";
                     N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Sales", "Decimal_Place", "N_Value", nCompanyID, dLayer, connection));
                     N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
+                    string historyOrder="";
+                    object serviceID="";
                     if(nFormID ==1546)
                     {
                         serviceOrderCriteria="and N_FormID=1546 ";
@@ -68,7 +70,18 @@ namespace SmartxAPI.Controllers
                     {
                         RentalOrderCriteria="and N_FormID=1571 ";
                     }
-                    
+
+                    if(xImeiNo!="")
+                    {
+                        object nDeviceID= dLayer.ExecuteScalar("select N_DeviceID From Inv_Device where X_SerialNo='"+xImeiNo+"' and N_CompanyID="+nCompanyID+" ",Params,connection);
+                        if(nDeviceID!=null)
+                        {
+                            serviceID= dLayer.ExecuteScalar("select N_ServiceInfoID from Inv_ServiceInfo where N_DeviceID="+nDeviceID+" and N_CompanyID="+nCompanyID+"",Params,connection);
+                        }
+                        historyOrder=" and N_SalesOrderID in (select N_SalesOrderID from Inv_SalesOrderDetails where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearId+" and N_ServiceID="+myFunctions.getIntVAL(serviceID.ToString())+")";
+
+
+                    }
 
 
            string UserPattern = myFunctions.GetUserPattern(User);
@@ -161,7 +174,7 @@ namespace SmartxAPI.Controllers
                     {
                        if (Count==0)
                        {
-                         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria + RentalOrderCriteria + Searchkey + " " + xSortBy;
+                         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria +  RentalOrderCriteria + Searchkey +historyOrder + " " + xSortBy;
                        }
                        else
                         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria + RentalOrderCriteria + Searchkey + " and N_SalesOrderId not in (select top(" + Count + ") N_SalesOrderId from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + xSortBy + " ) " + xSortBy;
