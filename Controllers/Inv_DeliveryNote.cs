@@ -385,12 +385,14 @@ namespace SmartxAPI.Controllers
                     detailTable = _api.Format(detailTable, "Details");
                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(masterTable.Rows[0]["n_DeliveryNoteId"].ToString()), this.FormID, myFunctions.getIntVAL(masterTable.Rows[0]["N_FnYearID"].ToString()), User, Con);
                     Attachments = _api.Format(Attachments, "attachments");
-
+                    string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=N_CompanyID and N_SalesOrderID=" + masterTable.Rows[0]["N_DeliveryNoteId"].ToString();
+                    DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, QueryParamsList, Con);
+                    RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
                     if (detailTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     dsSalesInvoice.Tables.Add(masterTable);
                     dsSalesInvoice.Tables.Add(detailTable);
                     dsSalesInvoice.Tables.Add(Attachments);
-
+                    dsSalesInvoice.Tables.Add(RentalSchedule);
                     return Ok(_api.Success(dsSalesInvoice));
 
                 }
@@ -413,6 +415,7 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
                 DataTable Attachment = ds.Tables["attachments"];
+                DataTable rentalItem = ds.Tables["segmentTable"];
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
                 // Auto Gen 
@@ -548,6 +551,7 @@ namespace SmartxAPI.Controllers
                     int N_PRSID = 0;
                     int N_SalesOrderID = 0;
                     int N_SalesQuotationID = 0;
+                    int N_DeliveryNoteDetailsID =0;
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["N_DeliveryNoteID"] = N_DeliveryNoteID;
@@ -572,8 +576,44 @@ namespace SmartxAPI.Controllers
                             if (N_SalesQuotationID > 0)
                                 dLayer.ExecuteNonQuery("update  Inv_SalesQuotation set N_SalesID=" + N_DeliveryNoteID + ", N_Processed=1 where N_QuotationID=" + N_SalesQuotationID + " and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
                         }
+
+
+                          N_DeliveryNoteDetailsID = dLayer.SaveDataWithIndex("Inv_DeliveryNoteDetails", "n_DeliveryNoteDetailsID", "", "", j, DetailTable, connection, transaction);
+                                   if (N_DeliveryNoteDetailsID > 0)
+                            {
+                                for (int k = 0; k < rentalItem.Rows.Count; k++)
+                                {
+                                    
+                                    if (myFunctions.getIntVAL(rentalItem.Rows[k]["rowID"].ToString()) == j)
+                                    {
+                                     
+                                       rentalItem.Rows[k]["n_SalesOrderId"] = N_DeliveryNoteID;
+                                       rentalItem.Rows[k]["n_SalesOrderDetailsID"] = N_DeliveryNoteDetailsID;
+                                        
+                                         
+                                        rentalItem.AcceptChanges();
+                                    }
+                                    rentalItem.AcceptChanges();
+                                }
+
+                               
+
+                                rentalItem.AcceptChanges();
+                            }
+                            DetailTable.AcceptChanges();
                     }
-                    int N_DeliveryNoteDetailsID = dLayer.SaveData("Inv_DeliveryNoteDetails", "n_DeliveryNoteDetailsID", DetailTable, connection, transaction);
+                      rentalItem.AcceptChanges();
+                    if (rentalItem.Columns.Contains("rowID"))
+                            rentalItem.Columns.Remove("rowID");
+                            if (N_DeliveryNoteID > 0)
+                    {
+                        
+                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_SalesOrderId=" + N_DeliveryNoteID.ToString() + " and N_CompanyID=" + N_CompanyID, connection, transaction);
+                       
+                    }
+                         dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
+
+                    //int N_DeliveryNoteDetailsID = dLayer.SaveData("Inv_DeliveryNoteDetails", "n_DeliveryNoteDetailsID", DetailTable, connection, transaction);
                     if (N_DeliveryNoteDetailsID <= 0)
                     {
                         transaction.Rollback();
