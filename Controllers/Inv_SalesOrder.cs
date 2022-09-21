@@ -497,7 +497,7 @@ namespace SmartxAPI.Controllers
                     string TermsSql = "SELECT     Inv_Terms.N_CompanyId, Inv_Terms.N_TermsID, Inv_Terms.N_ReferanceID, Inv_Terms.X_Terms, Inv_Terms.N_Percentage, Inv_Terms.N_Duration, Inv_Terms.X_Type, Inv_Terms.N_Amount, isnull(Inv_Sales.N_BillAmt,0)+isnull(Inv_Sales.N_TaxAmtF,0) as N_Paidamt FROM  Inv_Terms LEFT OUTER JOIN Inv_Sales ON Inv_Terms.N_CompanyId = Inv_Sales.N_CompanyId AND Inv_Terms.N_TermsID = Inv_Sales.N_TermsID Where Inv_Terms.N_CompanyID=@nCompanyID and Inv_Terms.N_ReferanceID=" + N_SOrderID + " and Inv_Terms.X_Type='SO'";
                     DataTable Terms = dLayer.ExecuteDataTable(TermsSql, Params, connection);
                     Terms = _api.Format(Terms, "Terms");
-                    string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_SalesOrderID=" + N_SOrderID ;
+                    string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=" + N_SOrderID ;
                     DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
                     RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
 
@@ -632,8 +632,8 @@ namespace SmartxAPI.Controllers
                                     if (myFunctions.getIntVAL(rentalItem.Rows[k]["rowID"].ToString()) == j)
                                     {
                                      
-                                       rentalItem.Rows[k]["n_SalesOrderId"] = n_SalesOrderId;
-                                       rentalItem.Rows[k]["n_SalesOrderDetailsID"] = N_QuotationDetailId;
+                                       rentalItem.Rows[k]["n_TransID"] = n_SalesOrderId;
+                                       rentalItem.Rows[k]["n_TransDetailsID"] = N_QuotationDetailId;
                                         
                                          
                                         rentalItem.AcceptChanges();
@@ -686,7 +686,7 @@ namespace SmartxAPI.Controllers
                             if (n_SalesOrderId > 0)
                     {
                         
-                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_SalesOrderId=" + n_SalesOrderId.ToString() + " and N_CompanyID=" + N_CompanyID, connection, transaction);
+                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + n_SalesOrderId.ToString() + " and N_CompanyID=" + N_CompanyID, connection, transaction);
                        
                     }
                          dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
