@@ -117,6 +117,11 @@ namespace SmartxAPI.Controllers
                               transaction.Rollback();
                              return Ok(api.Error(User, "Serial Number Already Exist"));
                          }
+
+
+                         if(MasterRow["X_DeviceName"]==null||MasterRow["X_DeviceName"]==""){
+                            MasterRow["X_DeviceName"]=MasterRow["X_SerialNo"];
+                         }
                     }
                     if (MasterTable.Columns.Contains("n_FnYearID"))
                     {
