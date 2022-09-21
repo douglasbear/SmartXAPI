@@ -22,7 +22,6 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly IMyFunctions myFunctions;
         private readonly IApiFunctions _api;
-        private readonly int N_FormID = 1570;
         public InvDeliveryNoteReturn(IDataAccessLayer dl,IMyFunctions myFun, IApiFunctions apiFun, IConfiguration conf)
         {
             dLayer = dl;
@@ -121,13 +120,14 @@ namespace SmartxAPI.Controllers
                     int nDeliveryNoteRtnID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteRtnID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+                    int nFormID = myFunctions.getIntVAL(MasterRow["n_FormID"].ToString());
                     string xReturnNo = MasterRow["x_ReturnNo"].ToString();
 
                     if (xReturnNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
-                        Params.Add("N_FormID", N_FormID);
+                        Params.Add("N_FormID", nFormID);
                         xReturnNo = dLayer.GetAutoNumber("Inv_DeliveryNoteReturn", "X_ReturnNo", Params, connection, transaction);
                         if (xReturnNo == "")
                         {
