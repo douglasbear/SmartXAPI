@@ -913,8 +913,7 @@ namespace SmartxAPI.GeneralFunctions
             string xLastUserName = "", xEntryTime = "";
             int nTempStatusID = 0;
 
-            int loggedInUserID = this.GetUserID(User);
-
+            int loggedInUserID = this.GetUserID(User);            
 
             /* Approval Response Set */
             SortedList Response = new SortedList();
@@ -996,6 +995,28 @@ namespace SmartxAPI.GeneralFunctions
                 nIsApprovalSystem = 1;
                 Response["isApprovalSystem"] = nIsApprovalSystem;
             }
+            if(nTransID>0)
+            {
+                object objApprovalPresent = dLayer.ExecuteScalar("select COUNT(*) from Gen_ApprovalCodesTrans where N_FormID="+nFormID+" and N_CompanyID="+nCompanyID+" and N_TransID="+nTransID , ApprovalParams, connection);
+                if(this.getIntVAL(objApprovalPresent.ToString())==0)
+                {
+                    Response["btnSaveText"] = "Save";
+                    Response["btnDeleteText"] = "Delete";
+                    Response["saveEnabled"] = true;
+                    if (nTransID == 0)
+                    { Response["deleteEnabled"] = false; }
+                    else
+                    { Response["deleteEnabled"] = true; }
+
+                    Response["saveTag"] = 0;
+                    Response["deleteTag"] = 0;
+                    Response["isApprovalSystem"] = 0;
+                    Response["ApprovalID"] = nApprovalID;
+                    Response["isEditable"] = true;
+                    return Response;
+                }
+            }
+
             if(nTransID>0)
             {
                 object objApprovalPresent = dLayer.ExecuteScalar("select COUNT(*) from Gen_ApprovalCodesTrans where N_FormID="+nFormID+" and N_CompanyID="+nCompanyID+" and N_TransID="+nTransID , ApprovalParams, connection);
@@ -1124,7 +1145,8 @@ namespace SmartxAPI.GeneralFunctions
                 if (nTransID == 0)
                     bAddSign = dLayer.ExecuteScalar("SELECT Isnull (B_AddSign,0) from Gen_ApprovalCodesDetails where N_CompanyID=@nCompanyID and N_level=1 and N_ApprovalID=@nApprovalID", ApprovalParams, connection);
                 else
-                    bAddSign = dLayer.ExecuteScalar("Select Isnull (B_AddSign,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID  and N_LevelID=@nNextApprovalID", ApprovalParams, connection);
+                    bAddSign = dLayer.ExecuteScalar("Select Isnull (B_AddSign,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID and N_LevelID=@nNextApprovalID", ApprovalParams, connection);
+
                 if (bAddSign == null)
                     bAddSign = false;
 
@@ -1350,7 +1372,7 @@ namespace SmartxAPI.GeneralFunctions
                     {
                         if (nTransStatus != 918 && nTransStatus != 919 && nTransStatus != 920 )//&& nTransStatus != 929)
                         {
-                            if (nTransStatus == 913 || nTransStatus == 7)
+                            if (nTransStatus == 913 || nTransStatus == 7 || nTransStatus == 929)
                             {
                                 nTransStatus = 916;
                                 ApprovalParams["@nTransStatus"] = nTransStatus;
