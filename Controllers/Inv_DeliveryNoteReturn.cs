@@ -33,7 +33,7 @@ namespace SmartxAPI.Controllers
         }
            
         [HttpGet("dashboardList")]
-        public ActionResult GetDeliveryNoteReturnDashboardList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetDeliveryNoteReturnDashboardList(int nFormID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -67,11 +67,12 @@ namespace SmartxAPI.Controllers
             }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_DeliveryNoteReturn where N_CompanyID=@nCompanyID  " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_DeliveryNoteReturn where N_CompanyID=@nCompanyID and N_FormID=@nFormID " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_DeliveryNoteReturn where N_CompanyID=@nCompanyID  " + Searchkey + " and N_DeliveryNoteRtnID not in (select top(" + Count + ") N_DeliveryNoteRtnID from vw_DeliveryNoteReturnMaster where N_CompanyID=@nCompanyID " + xSortBy + " ) " + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_DeliveryNoteReturn where N_CompanyID=@nCompanyID and N_FormID=@nFormID " + Searchkey + " and N_DeliveryNoteRtnID not in (select top(" + Count + ") N_DeliveryNoteRtnID from vw_DeliveryNoteReturnMaster where N_CompanyID=@nCompanyID and N_FormID=@nFormID " + xSortBy + " ) " + " " + xSortBy;
 
             Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFormID", nFormID);
 
             try
             {
@@ -81,7 +82,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_Inv_DeliveryNoteReturn where N_CompanyID=@nCompanyID " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_Inv_DeliveryNoteReturn where N_CompanyID=@nCompanyID and N_FormID=@nFormID " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
