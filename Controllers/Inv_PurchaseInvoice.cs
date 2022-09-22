@@ -995,6 +995,9 @@ namespace SmartxAPI.Controllers
                         }
                         dLayer.SaveData("Inv_PurchaseFreights", "N_PurchaseFreightID", PurchaseFreight, connection, transaction);
                     }
+
+                   
+
                     if (b_FreightAmountDirect == 0)
                     {
                         SortedList ProcParams = new SortedList(){
@@ -1105,7 +1108,12 @@ namespace SmartxAPI.Controllers
                 Result.Add("n_InvoiceID", N_PurchaseID);
                 Result.Add("x_InvoiceNo", InvoiceNo);
                 return Ok(_api.Success(Result, "Purchase Invoice Saved"));
+
+
             }
+
+            
+                  
             catch (Exception ex)
             {
                 return Ok(_api.Error(User, ex));
