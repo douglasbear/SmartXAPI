@@ -589,8 +589,10 @@ namespace SmartxAPI.Controllers
             DataTable MasterTable;
             DataTable DetailTable;
             DataTable DetailsToImport;
+            DataTable WarrantyInfo;
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
+            WarrantyInfo = ds.Tables["warrantyInformation"];
             DataTable Approvals;
             Approvals = ds.Tables["approval"];
             DataRow ApprovalRow = Approvals.Rows[0];
@@ -856,6 +858,7 @@ namespace SmartxAPI.Controllers
 
                         dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + nCompanyID + " and X_VoucherNo='" + values + "' and N_FnYearID=" + nFnYearID + " and X_TransType = 'PURCHASE'", connection, transaction);
                         dLayer.ExecuteNonQuery("Delete FROM Inv_PurchaseFreights WHERE N_PurchaseID = " + N_PurchaseID + " and N_CompanyID = " + nCompanyID, connection, transaction);
+                        dLayer.ExecuteNonQuery("Delete from Inv_PurchaseWarranty where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.ExecuteNonQuery("Delete from Inv_PurchaseDetails where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.ExecuteNonQuery(" Delete From Inv_Purchase Where (N_PurchaseID = " + N_PurchaseID + " OR (N_PurchaseType =4 and N_PurchaseRefID =  " + N_PurchaseID + ")) and N_CompanyID = " + nCompanyID, connection, transaction);
                         dLayer.ExecuteNonQuery("Delete From Inv_Purchase Where (N_PurchaseID = " + N_PurchaseID + " OR (N_PurchaseType =5 and N_PurchaseRefID =  " + N_PurchaseID + ")) and N_CompanyID = " + nCompanyID, connection, transaction);
@@ -972,6 +975,22 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQueryPro("[SP_UpdateStock_MRN]", UpdateStockParam, connection, transaction);
 
                         }
+                        if(WarrantyInfo!=null)
+                        foreach (DataRow dtWarranty in WarrantyInfo.Rows)
+                        {
+                            if(myFunctions.getIntVAL(dtWarranty["rowID"].ToString())==j)
+                            dtWarranty["N_PurchaseID"] = N_PurchaseID;
+                            dtWarranty["N_PurchaseDetailID"] = N_InvoiceDetailId;
+                        }
+
+
+                    }
+
+                    if(WarrantyInfo!=null && WarrantyInfo.Rows.Count>0){
+                    if (WarrantyInfo.Columns.Contains("rowID"))
+                        WarrantyInfo.Columns.Remove("rowID");
+
+                    dLayer.SaveData("Inv_PurchaseWarranty", "N_WarrantyID", WarrantyInfo, connection, transaction);
                     }
 
                     if (N_PurchaseID > 0)
