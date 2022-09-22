@@ -71,7 +71,7 @@ namespace SmartxAPI.Controllers
                         RentalOrderCriteria="and N_FormID=1571 ";
                     }
 
-                    if(xImeiNo!="")
+                    if(xImeiNo!=""&& xImeiNo!=null)
                     {
                         object nDeviceID= dLayer.ExecuteScalar("select N_DeviceID From Inv_Device where X_SerialNo='"+xImeiNo+"' and N_CompanyID="+nCompanyID+" ",Params,connection);
                         if(nDeviceID!=null)
