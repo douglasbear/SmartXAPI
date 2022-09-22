@@ -1305,6 +1305,91 @@ namespace SmartxAPI.Controllers
         }
 
 
+         [HttpGet("warrantyDashboardList")]
+        public ActionResult WarrantyDashboardList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable dt = new DataTable();
+                    DataTable CountTable = new DataTable();
+                    SortedList Params = new SortedList();
+                    DataSet dataSet = new DataSet();
+                    string sqlCommandText = "";
+                    string sqlCommandCount = "";
+                    string Searchkey = "";
+                    string criteria = "";
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    int nUserID = myFunctions.GetUserID(User);
+
+
+
+
+
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%' or x_BranchName like '%" + xSearchkey + "%' or x_VendorInvoice like '%"+ xSearchkey + "%' or [Invoice Date] like '%" + xSearchkey + "%' or invoiceNetAmt like '%" + xSearchkey + "%' or x_Description like '%" + xSearchkey + "%' )";
+                       
+                   
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by N_PurchaseID desc";
+                    else
+                    {
+                        switch (xSortBy.Split(" ")[0])
+                        {
+                            case "x_InvoiceNo":
+                                xSortBy = "N_PurchaseID " + xSortBy.Split(" ")[1];
+                                break;
+                            case "d_WarrantyFrom":
+                                xSortBy = "Cast([d_WarrantyFrom] as DateTime ) " + xSortBy.Split(" ")[1];
+                                break;
+                            default: break;
+                        }
+                        xSortBy = " order by " + xSortBy;
+                    }
+
+
+                    int Count = (nPage - 1) * nSizeperpage;
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Inv_PurchaseWarranty where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId " + criteria + Searchkey + " " + xSortBy;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Inv_PurchaseWarranty where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId " + criteria + Searchkey + " and  N_WarrantyId not in (select top(" + Count + ") N_WarrantyId from Vw_Inv_PurchaseWarranty where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId " + criteria + Searchkey + xSortBy + " ) " + xSortBy;
+
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@nFnYearId", nFnYearId);
+                    SortedList OutPut = new SortedList();
+
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                   
+
+
+                    sqlCommandCount = "select count(*) as N_Count,0 as TotalAmount from Vw_Inv_PurchaseWarranty where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId " + criteria + " " + Searchkey + "";
+                    DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                    string TotalCount = "0";
+                    string TotalSum = "0";
+                    if (Summary.Rows.Count > 0)
+                    {
+                        DataRow drow = Summary.Rows[0];
+                        TotalCount = drow["N_Count"].ToString();
+                        TotalSum = drow["TotalAmount"].ToString();
+                    }
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    OutPut.Add("TotalSum", TotalSum);
+
+
+                        return Ok(_api.Success(OutPut));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+
 
     }
 }
