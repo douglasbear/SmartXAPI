@@ -697,7 +697,8 @@ namespace SmartxAPI.Controllers
 
                             DataTable WarrantyItemsTable = dLayer.ExecuteDataTable(warrantyItems, warrantyParams, connection, transaction);
                             warrantyParams.Add("@nItemID", 0);
-                            string X_Barcode=MasterTable.Rows[0]["X_BarcOde"].ToString();
+                            string X_Barcode=MasterTable.Columns.Contains("X_BarcOde")?MasterTable.Rows[0]["X_BarcOde"].ToString():"";
+                            if(X_Barcode!=""&& X_Barcode!=null)
                              dLayer.ExecuteNonQuery("Update Inv_WarrantyContract set B_InActive=1 where N_CompanyID=@nCompanyID and X_WarrantyNo='"+X_Barcode+"' ", warrantyParams, connection, transaction);
 
 
