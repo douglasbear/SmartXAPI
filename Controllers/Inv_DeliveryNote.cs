@@ -197,14 +197,26 @@ namespace SmartxAPI.Controllers
                         DelParams.Add("FnYearID", nFnYearId);
                         DelParams.Add("@N_Type", 0);
                          DataTable OrderToDel = dLayer.ExecuteDataTablePro("SP_InvSalesOrderDtlsInDelNot_Disp", DelParams, Con);
+                                   DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "N_SOQty", typeof(string), "");
                         foreach (DataRow Avar in OrderToDel.Rows)
                         {
                             foreach (DataRow Kvar in DetailTable.Rows)
                             {
                                 if (myFunctions.getIntVAL(Avar["N_SalesOrderDetailsID"].ToString()) == myFunctions.getIntVAL(Kvar["N_SalesOrderDetailsID"].ToString()))
                                 {
-                                    Kvar["N_QtyDisplay"] = Avar["N_QtyDisplay"];
-                                    Kvar["N_Qty"] = Avar["N_Qty"];
+                                    if(myFunctions.getVAL(Avar["N_QtyDisplay"].ToString())<=0)
+                                         Kvar["N_QtyDisplay"] = 0;
+                                    else
+                                    {
+                                        Kvar["N_QtyDisplay"] = Avar["N_QtyDisplay"];
+                                        Kvar["N_SOQty"] = Avar["N_QtyDisplay"];
+
+                                    }
+                                         
+                                    if(myFunctions.getVAL(Avar["N_Qty"].ToString())<=0)
+                                         Kvar["N_Qty"] = 0;
+                                    else  
+                                         Kvar["N_Qty"] = Avar["N_Qty"];
 
                                 }
                             }
@@ -241,14 +253,25 @@ namespace SmartxAPI.Controllers
                         MultiParams.Add("FnYearID", nFnYearId);
                         MultiParams.Add("@N_Type", 0);
                          DataTable OrderToDel = dLayer.ExecuteDataTablePro("SP_InvSalesOrderDtlsInMultiDelNot_Disp", MultiParams, Con);
+                           DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "N_SOQty", typeof(string), "");
                         foreach (DataRow Avar in OrderToDel.Rows)
                         {
                             foreach (DataRow Kvar in DetailTable.Rows)
                             {
                                 if (myFunctions.getIntVAL(Avar["N_SalesOrderDetailsID"].ToString()) == myFunctions.getIntVAL(Kvar["N_SalesOrderDetailsID"].ToString()))
                                 {
-                                    Kvar["N_QtyDisplay"] = Avar["N_QtyDisplay"];
-                                    Kvar["N_Qty"] = Avar["N_Qty"];
+                                   if(myFunctions.getVAL(Avar["N_QtyDisplay"].ToString())<=0)
+                                         Kvar["N_QtyDisplay"] = 0;
+                                    else
+                                       {
+                                        Kvar["N_QtyDisplay"] = Avar["N_QtyDisplay"];
+                                        Kvar["N_SOQty"] = Avar["N_QtyDisplay"];
+
+                                       }
+                                    if(myFunctions.getVAL(Avar["N_Qty"].ToString())<=0)
+                                         Kvar["N_Qty"] = 0;
+                                    else  
+                                         Kvar["N_Qty"] = Avar["N_Qty"];
 
                                 }
                             }
