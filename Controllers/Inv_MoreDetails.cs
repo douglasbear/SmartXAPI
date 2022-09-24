@@ -71,7 +71,6 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_FormID", nFormID);
                         Params.Add("N_YearID", nFnYearID);
-                        // Params.Add("N_UserID", N_UserID);
                         X_ServiceInfoCode = dLayer.GetAutoNumber("Inv_ServiceInfo", "X_ServiceInfoCode", Params, connection, transaction);
                         if (X_ServiceInfoCode == "")
                         {

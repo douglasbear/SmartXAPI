@@ -831,6 +831,9 @@ namespace SmartxAPI.Controllers
                         
                        
                          customerID = dLayer.ExecuteScalar("select N_CustomerID from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CrmCompanyID="+nCustomerID+" ", Params, connection);
+                         if(customerID==null)
+                         customerID=0;
+
                          nCustomerID=myFunctions.getIntVAL(customerID.ToString());
                          creditLimit = dLayer.ExecuteScalar("select N_CreditLimit from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID="+nCustomerID+" ", Params, connection);
                         if(creditLimit==null)
