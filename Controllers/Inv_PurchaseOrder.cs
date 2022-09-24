@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetPurchaseOrderList(int? nCompanyId, int nFnYearId, bool bAllBranchData, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,string screen)
+        public ActionResult GetPurchaseOrderList(int? nCompanyId, int nFnYearId, bool bAllBranchData, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,string screen,int nFormID)
         {
             try
             {
@@ -49,8 +49,8 @@ namespace SmartxAPI.Controllers
                     string sqlCommandText = "";
                     string sqlCommandCount = "";
                     string Searchkey = "";
-                     string criteria = "";
-                       int nCompanyID = myFunctions.GetCompanyID(User);
+                    string criteria = "";
+                    int nCompanyID = myFunctions.GetCompanyID(User);
                     int N_decimalPlace = 2;
                     // string UserPattern = myFunctions.GetUserPattern(User);
                     int nUserID = myFunctions.GetUserID(User);
@@ -70,7 +70,6 @@ namespace SmartxAPI.Controllers
                 //     if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
                 //     Pattern = " and N_CreatedUser=" + nUserID;
                 // }
-
 
 
 
@@ -127,16 +126,18 @@ namespace SmartxAPI.Controllers
                     }
 
                     if (Count == 0)
-                        sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 "  + criteria+ Searchkey + " " + xSortBy;
+                        sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p7 "  + criteria+ Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 "  + criteria+ Searchkey + " and N_POrderID not in(select top(" + Count + ") N_POrderID from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " +criteria+ xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p7 "  + criteria+ Searchkey + " and N_POrderID not in(select top(" + Count + ") N_POrderID from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p7  " +criteria+ xSortBy + " ) " + xSortBy;
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
+                    Params.Add("@p7", nFormID);
+                 
                     SortedList OutPut = new SortedList();
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " +criteria+ Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p7 " +criteria+ Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -219,7 +220,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listDetails")]
-        public ActionResult GetPurchaseOrderDetails(int nCompanyId, string xPOrderId, int nFnYearId, string nLocationID, string xPRSNo, bool bAllBranchData, int nBranchID,int nQuotationID,int nVendorID)
+        public ActionResult GetPurchaseOrderDetails(int nCompanyId, string xPOrderId, int nFnYearId, string nLocationID, string xPRSNo, bool bAllBranchData, int nBranchID,int nQuotationID,int nVendorID,int nSalesOrderId)
         {
               if (xPOrderId != null)
                 xPOrderId = xPOrderId.Replace("%2F", "/");
@@ -233,12 +234,31 @@ namespace SmartxAPI.Controllers
             if (xPOrderId == null) xPOrderId = "";
             string Mastersql = "";
 
+         
+
+
+           
            if (bAllBranchData == true)
             {
-                Mastersql = "SELECT * from vw_Inv_PurchaseOrderMaster Where N_CompanyID=@p1 and N_FnYearID=@p2 and X_POrderNo=@p3";
+               
+            if(nSalesOrderId>0)
+            {
+            Mastersql = "SELECT * from vw_RentalOrderMasterToPurchaseRO Where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SalesOrderId=@p8";
+
+            }
+            else
+             Mastersql = "SELECT * from vw_Inv_PurchaseOrderMaster Where N_CompanyID=@p1 and N_FnYearID=@p2 and X_POrderNo=@p3";
             }
             else
             {
+                  if(nSalesOrderId>0)
+            {
+                   Mastersql = "SELECT * from vw_RentalOrderMasterToPurchaseRO Where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SalesOrderId=@p8 and N_BranchID=@nBranchID";
+
+            }
+
+            else
+
                 Mastersql = "SELECT * from vw_Inv_PurchaseOrderMaster Where N_CompanyID=@p1 and X_POrderNo=@p3 and N_BranchID=@nBranchID and N_FnYearID=@p2";
                 Params.Add("@nBranchID", nBranchID);
             }
@@ -246,7 +266,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             Params.Add("@p3", xPOrderId);   
-
+            Params.Add("@p8", nSalesOrderId); 
 
             try
             {
@@ -270,6 +290,8 @@ namespace SmartxAPI.Controllers
 
 
                     string DetailSql = "";
+
+
                     bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Admin", "X_UserCategory", dLayer, connection);
                     bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Admin", "X_UserCategory", dLayer, connection);
                     if (MaterailRequestVisible || PurchaseRequestVisible)
@@ -279,6 +301,17 @@ namespace SmartxAPI.Controllers
                         prsCol.DefaultValue = B_PRSVisible;
                         DataTable.Columns.Add(prsCol);
                     }
+
+                    if(nSalesOrderId>0)
+                    {
+
+                     DetailSql = "select * from vw_RentalOrderDetailsToRPO where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SalesOrderId=@p8 and N_ItemTypeID in (8,10)";
+
+                    }
+                    else
+                    {
+
+                   
                     if (B_PRSVisible)
                         if (xPRSNo != "")
                         {
@@ -313,6 +346,7 @@ namespace SmartxAPI.Controllers
                     {
 
                         if (bAllBranchData == true)
+
                         {
                             DetailSql = "Select *,dbo.SP_GenGetStock(vw_InvPurchaseOrderDetails.N_ItemID,@p4,'','Location') As N_Stock,dbo.SP_Cost(vw_InvPurchaseOrderDetails.N_ItemID,vw_InvPurchaseOrderDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseOrderDetails.N_ItemID,vw_InvPurchaseOrderDetails.N_CompanyID) As N_UnitSPrice from vw_InvPurchaseOrderDetails Where N_CompanyID=@p1 and N_POrderID=@p5";
                             Params.Add("@p4", nLocationID);
@@ -327,7 +361,7 @@ namespace SmartxAPI.Controllers
                         }
                     }
                     //DetailSql="Select * from Inv_PurchaseOrderDetails Where N_CompanyID=@p1 and N_POrderID=@p5";
-
+                    }
 
 
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);

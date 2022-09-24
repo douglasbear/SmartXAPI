@@ -649,40 +649,12 @@ namespace SmartxAPI.Controllers
 
 
                         }
-                          if (rentalItem.Columns.Contains("x_Type"))
-                             rentalItem.Columns.Remove("x_Type");
-                               if (rentalItem.Columns.Contains("x_ItemCode"))
-                             rentalItem.Columns.Remove("x_ItemCode");
-                               if (rentalItem.Columns.Contains("x_ItemName"))
-                             rentalItem.Columns.Remove("x_ItemName");
-                                 if (rentalItem.Columns.Contains("n_ProjectID"))
-                             rentalItem.Columns.Remove("n_ProjectID");
-                               if (rentalItem.Columns.Contains("n_AssItemID"))
-                             rentalItem.Columns.Remove("n_AssItemID");
-                              if (rentalItem.Columns.Contains("n_ItemTypeID"))
-                             rentalItem.Columns.Remove("n_ItemTypeID");
-                              if (rentalItem.Columns.Contains("x_CurrentStatus"))
-                             rentalItem.Columns.Remove("x_CurrentStatus");
-                          
-                               if (rentalItem.Columns.Contains("x_Project"))
-                             rentalItem.Columns.Remove("x_Project");
-                              
+                         
                            if (rentalItem.Columns.Contains("rowID"))
                             rentalItem.Columns.Remove("rowID");
-                          if (rentalItem.Columns.Contains("ItemCode"))
-                            rentalItem.Columns.Remove("ItemCode");
-                              if (rentalItem.Columns.Contains("itemName"))
-                            rentalItem.Columns.Remove("itemName");
-                              if (rentalItem.Columns.Contains("customerId"))
-                            rentalItem.Columns.Remove("customerId");
-                         if (rentalItem.Columns.Contains("customerId"))
-                            rentalItem.Columns.Remove("customerId");
-                        if (rentalItem.Columns.Contains("itemID"))
-                            rentalItem.Columns.Remove("itemID");
-
+                        
                         rentalItem.AcceptChanges();
-                        // DupCriteria = "N_CompanyID = " + nCompanyId + " and N_VoucherID = '" + N_VoucherID + "' and N_FnYearID=" + nFnYearId;
-                        DupCriteria = "";
+                      
                             if (n_SalesOrderId > 0)
                     {
                         
