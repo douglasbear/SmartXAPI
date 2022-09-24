@@ -1306,7 +1306,51 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Success(_api.Format(ItemDetails)));
             }
         }
+        
 
+
+        [HttpGet("invScheduledOrder")]
+        public ActionResult GetInvScheduledOrder( int nCompanyID,int nItemID,DateTime dPeriodFrom,DateTime dPeriodTo )
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                   // int nCompanyID = myFunctions.GetCompanyID(User);
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                   
+                    string sqlCommandText = "";
+                    string sqlCommandCount = "";
+                    string Searchkey = "";
+
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nItemID);
+                   // Params.Add("@p3",nFnYearID);
+                    Params.Add("@p4", dPeriodFrom);
+                    Params.Add("@p5",dPeriodTo);
+              
+                       
+                     sqlCommandText = "select * from vw_ScheduledRentalOrders where N_CompanyID=@p1 and N_ItemID=@p2 and ((D_PeriodFrom<=@p4 and D_PeriodTo>=@p4) OR (D_PeriodFrom<=@p5 and D_PeriodTo>=@p5) OR(D_PeriodFrom>=@p4 and D_PeriodFrom<=@p5))";
+                                            
+
+                    SortedList OutPut = new SortedList();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount = "select count(*) as N_Count from vw_ScheduledRentalOrders  where N_CompanyID=@p1 and N_ItemID=@p2 and ((D_PeriodFrom<=@p4 and D_PeriodTo>=@p4) OR (D_PeriodFrom<=@p5 and D_PeriodTo>=@p5) OR(D_PeriodFrom>=@p4 and D_PeriodFrom<=@p5))";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    return Ok(_api.Success(OutPut));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
 
     }
 }
