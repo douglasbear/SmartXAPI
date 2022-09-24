@@ -126,7 +126,7 @@ namespace SmartxAPI.Controllers
             if(isRentalItem)
               ownAssent=ownAssent+ " and N_ItemTypeID=7 ";
                if(RentalItems)
-              RentalItem=RentalItem+ " and N_ItemTypeID=7 or N_ItemTypeID=8 or N_ItemTypeID=9 or N_ItemTypeID=10 or N_ItemTypeID=11";
+              RentalItem=RentalItem+ " and (N_ItemTypeID=7 or N_ItemTypeID=8 or N_ItemTypeID=9 or N_ItemTypeID=10 or N_ItemTypeID=11)";
             if(purchaseRentalItems)
               RentalPOItem=RentalPOItem+ " and (N_ItemTypeID=8 or N_ItemTypeID=10 )";
 
