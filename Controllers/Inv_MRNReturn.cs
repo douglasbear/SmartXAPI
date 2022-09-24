@@ -188,20 +188,20 @@ namespace SmartxAPI.Controllers
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
 
-                    // if (nMRNID > 0)
-                    // {
-                    //     Params.Add("@nMRNID", nMRNID);
-                    //     Mastersql = "select * from vw_DeliveryNoteDisptoReturn where N_CompanyId=@nCompanyID and N_MRNID=@nMRNID";
-                    //     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
-                    //     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                    //     MasterTable = _api.Format(MasterTable, "Master");
-                    //     DetailSql = "select * from vw_DeliveryNoteDispDetailstoReturn where N_CompanyId=@nCompanyID and N_MRNID=@nMRNID";
-                    //     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
-                    //     DetailTable = _api.Format(DetailTable, "Details");
-                    //     dt.Tables.Add(MasterTable);
-                    //     dt.Tables.Add(DetailTable);
-                    //     return Ok(_api.Success(dt));
-                    // } else {
+                    if (nMRNID > 0)
+                    {
+                        Params.Add("@nMRNID", nMRNID);
+                        Mastersql = "select * from vw_MRNtoReturn where N_CompanyId=@nCompanyID and N_MRNID=@nMRNID";
+                        MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                        MasterTable = _api.Format(MasterTable, "Master");
+                        DetailSql = "select * from vw_MRNtoReturnDetails where N_CompanyId=@nCompanyID and N_MRNID=@nMRNID";
+                        DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                        DetailTable = _api.Format(DetailTable, "Details");
+                        dt.Tables.Add(MasterTable);
+                        dt.Tables.Add(DetailTable);
+                        return Ok(_api.Success(dt));
+                    } else {
                         Params.Add("@xReturnNo", xReturnNo);
                         Mastersql = "select * from vw_Inv_MRNReturn where N_CompanyID=@nCompanyID and X_ReturnNo=@xReturnNo  ";
                    
@@ -217,7 +217,7 @@ namespace SmartxAPI.Controllers
                         dt.Tables.Add(MasterTable);
                         dt.Tables.Add(DetailTable);
                         return Ok(_api.Success(dt));
-                    // };
+                    };
                 }
             }
             catch (Exception e)
