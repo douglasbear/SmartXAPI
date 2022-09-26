@@ -137,7 +137,7 @@ namespace SmartxAPI.Controllers
                     SortedList TviewParams = new SortedList();
                     TviewParams.Add("@nMenuID", nMenuID);
                     TviewParams.Add("@nTableViewID", nTableViewID);
-                    TviewParams.Add("@nCompanyID", nCompanyID);
+                    TviewParams.Add("@nCompanyID", nCompanyId);
 
                     DataTable tableViewResult = dLayer.ExecuteDataTable(tableViewSql, TviewParams, connection);
 
