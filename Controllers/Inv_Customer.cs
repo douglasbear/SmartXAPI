@@ -831,8 +831,10 @@ namespace SmartxAPI.Controllers
                         
                        
                          customerID = dLayer.ExecuteScalar("select N_CustomerID from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CrmCompanyID="+nCustomerID+" ", Params, connection);
+                         if(customerID!=null){
                          nCustomerID=myFunctions.getIntVAL(customerID.ToString());
                          creditLimit = dLayer.ExecuteScalar("select N_CreditLimit from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID="+nCustomerID+" ", Params, connection);
+                         }
                         if(creditLimit==null)
                              dt = myFunctions.AddNewColumnToDataTable(dt, "n_CreditLimit",typeof(double), 0.00);
                         else 
@@ -848,7 +850,7 @@ namespace SmartxAPI.Controllers
 
                    double quotationAmt=0.0;
 
-                   if(!isQuotation || myFunctions.getIntVAL(customerID.ToString())>0)
+                   if(!isQuotation || (customerID!=null && myFunctions.getIntVAL(customerID.ToString())>0))
                    {
                     //crm customer from Customer for SQ 
 

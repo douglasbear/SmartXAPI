@@ -71,7 +71,7 @@ namespace SmartxAPI.Controllers
                         RentalOrderCriteria="and N_FormID=1571 ";
                     }
 
-                    if(xImeiNo!="")
+                    if(xImeiNo!=""&& xImeiNo!=null)
                     {
                         object nDeviceID= dLayer.ExecuteScalar("select N_DeviceID From Inv_Device where X_SerialNo='"+xImeiNo+"' and N_CompanyID="+nCompanyID+" ",Params,connection);
                         if(nDeviceID!=null)
@@ -537,6 +537,7 @@ namespace SmartxAPI.Controllers
 
 
                     int n_SalesOrderId = myFunctions.getIntVAL(MasterRow["n_SalesOrderId"].ToString());
+                    int n_SOId = myFunctions.getIntVAL(MasterRow["n_SalesOrderId"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
@@ -655,7 +656,7 @@ namespace SmartxAPI.Controllers
                         
                         rentalItem.AcceptChanges();
                       
-                            if (n_SalesOrderId > 0)
+                            if (n_SOId > 0)
                     {
                         
                             dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + n_SalesOrderId.ToString() + " and N_CompanyID=" + N_CompanyID, connection, transaction);
@@ -1278,7 +1279,51 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Success(_api.Format(ItemDetails)));
             }
         }
+        
 
+
+        [HttpGet("invScheduledOrder")]
+        public ActionResult GetInvScheduledOrder( int nCompanyID,int nItemID,DateTime dPeriodFrom,DateTime dPeriodTo )
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                   // int nCompanyID = myFunctions.GetCompanyID(User);
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                   
+                    string sqlCommandText = "";
+                    string sqlCommandCount = "";
+                    string Searchkey = "";
+
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nItemID);
+                   // Params.Add("@p3",nFnYearID);
+                    Params.Add("@p4", dPeriodFrom);
+                    Params.Add("@p5",dPeriodTo);
+              
+                       
+                     sqlCommandText = "select * from vw_ScheduledRentalOrders where N_CompanyID=@p1 and N_ItemID=@p2 and ((D_PeriodFrom<=@p4 and D_PeriodTo>=@p4) OR (D_PeriodFrom<=@p5 and D_PeriodTo>=@p5) OR(D_PeriodFrom>=@p4 and D_PeriodFrom<=@p5))";
+                                            
+
+                    SortedList OutPut = new SortedList();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount = "select count(*) as N_Count from vw_ScheduledRentalOrders  where N_CompanyID=@p1 and N_ItemID=@p2 and ((D_PeriodFrom<=@p4 and D_PeriodTo>=@p4) OR (D_PeriodFrom<=@p5 and D_PeriodTo>=@p5) OR(D_PeriodFrom>=@p4 and D_PeriodFrom<=@p5))";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    return Ok(_api.Success(OutPut));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
 
     }
 }
