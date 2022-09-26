@@ -1327,11 +1327,9 @@ namespace SmartxAPI.Controllers
 
                     Params.Add("@p1", nCompanyID);
                     Params.Add("@p2", nItemID);
-                   // Params.Add("@p3",nFnYearID);
                     Params.Add("@p4", dPeriodFrom);
                     Params.Add("@p5",dPeriodTo);
-              
-                       
+    
                      sqlCommandText = "select * from vw_ScheduledRentalOrders where N_CompanyID=@p1 and N_ItemID=@p2 and ((D_PeriodFrom<=@p4 and D_PeriodTo>=@p4) OR (D_PeriodFrom<=@p5 and D_PeriodTo>=@p5) OR(D_PeriodFrom>=@p4 and D_PeriodFrom<=@p5))";
                                             
 
