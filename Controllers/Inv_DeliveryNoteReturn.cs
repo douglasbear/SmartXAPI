@@ -119,6 +119,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
 
                     int nDeliveryNoteRtnID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteRtnID"].ToString());
+                    int nDNRtnID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteRtnID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     int nFormID = myFunctions.getIntVAL(MasterRow["n_FormID"].ToString());
@@ -191,10 +192,10 @@ namespace SmartxAPI.Controllers
                         
                         rentalItem.AcceptChanges();
                       
-                            if (nDeliveryNoteRtnID > 0)
+                            if (nDNRtnID > 0)
                     {
-                        
-                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + nDeliveryNoteRtnID.ToString() + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                             int N_FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
+                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + nDeliveryNoteRtnID.ToString() + " and N_FormID="+ N_FormID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                        
                     }
                          dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
@@ -224,7 +225,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult DeliveryNoteReturnDetails(string xReturnNo, int nDeliveryNoteId)
+        public ActionResult DeliveryNoteReturnDetails(string xReturnNo, int nDeliveryNoteId ,int nFormID)
         {
             try
             {
@@ -239,9 +240,13 @@ namespace SmartxAPI.Controllers
 
                     string Mastersql = "";
                     string DetailSql = "";
-
+                    string crieteria = "";
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-
+                    Params.Add("@nFormID", nFormID);
+                    if(nFormID>0)
+                    {
+                    crieteria = " and N_FormID = @nFormID ";
+                    }
                     if (nDeliveryNoteId > 0)
                     {
                         Params.Add("@nDeliveryNoteId", nDeliveryNoteId);
@@ -252,7 +257,7 @@ namespace SmartxAPI.Controllers
                         DetailSql = "select * from vw_DeliveryNoteDispDetailstoReturn where N_CompanyId=@nCompanyID and N_DeliveryNoteID=@nDeliveryNoteId";
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                         DetailTable = _api.Format(DetailTable, "Details");
-                        string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nDeliveryNoteId";
+                        string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nDeliveryNoteId " +crieteria;
                         DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
                         RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
                         dt.Tables.Add(MasterTable);

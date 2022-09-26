@@ -618,7 +618,7 @@ namespace SmartxAPI.Controllers
                             if (N_DNoteID > 0)
                     {
                             int N_FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
-                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + N_DeliveryNoteID.ToString() + " and N_FormID="+ N_FormID + "and N_CompanyID=" + N_CompanyID, connection, transaction);
+                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + N_DeliveryNoteID.ToString() + " and N_FormID="+ N_FormID + " and N_CompanyID=" + N_CompanyID, connection, transaction);
                        
                     }
                          dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);

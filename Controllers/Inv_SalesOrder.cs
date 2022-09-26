@@ -70,7 +70,10 @@ namespace SmartxAPI.Controllers
                     {
                         RentalOrderCriteria="and N_FormID=1571 ";
                     }
-
+                    if(nFormID ==81)
+                    {
+                        RentalOrderCriteria="and N_FormID=81 ";
+                    }
                     if(xImeiNo!=""&& xImeiNo!=null)
                     {
                         object nDeviceID= dLayer.ExecuteScalar("select N_DeviceID From Inv_Device where X_SerialNo='"+xImeiNo+"' and N_CompanyID="+nCompanyID+" ",Params,connection);
@@ -658,8 +661,8 @@ namespace SmartxAPI.Controllers
                       
                             if (n_SOId > 0)
                     {
-                        
-                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + n_SalesOrderId.ToString() + " and N_CompanyID=" + N_CompanyID, connection, transaction);
+                            int FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
+                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + n_SalesOrderId.ToString() + "  and N_FormID="+ FormID + " and N_CompanyID=" + N_CompanyID, connection, transaction);
                        
                     }
                          dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
