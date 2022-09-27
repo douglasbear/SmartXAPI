@@ -86,7 +86,7 @@ namespace SmartxAPI.Controllers
             if (xSearchkey != null && xSearchkey.Trim() != "")
 
             
-                Searchkey = "and ([MRN No] like '%" + xSearchkey + "%' or X_VendorName like '%" + xSearchkey + "%' or x_InvoiceNo like '%" + xSearchkey + "%')";
+                Searchkey = "and ([MRN No] like '%" + xSearchkey + "%' or X_VendorName like '%" + xSearchkey + "%' or x_InvoiceNo like '%" + xSearchkey + "%' or D_MRNDate like '%" + xSearchkey + "%' or X_VendorInvoice like '%" + xSearchkey + "%')";
 
                         if (bAllBranchData == true)
                         {
@@ -207,13 +207,27 @@ namespace SmartxAPI.Controllers
 
                     }
 
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    int nGRNID = myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_MRNID"].ToString());
+                    object objReturnProcessed = dLayer.ExecuteScalar("Select Isnull(N_MRNReturnID,0) from Inv_MRNReturn where N_CompanyID=" + nCompanyId + " and N_MRNID=" + nGRNID , connection, transaction);
+                    if (objReturnProcessed == null)
+                        objReturnProcessed = 0;
+
+                    if (myFunctions.getIntVAL(objReturnProcessed.ToString()) != 0) {
+                        dtGoodReceive = myFunctions.AddNewColumnToDataTable(dtGoodReceive, "N_ReturnProcessed", typeof(int), 0);
+                        dtGoodReceive.Rows[0]["N_ReturnProcessed"] = 1;
+                    };
+                    transaction.Commit();
 
                     dtGoodReceiveDetails = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
                     dtGoodReceiveDetails = _api.Format(dtGoodReceiveDetails, "Details");
 
+
+
                     X_FreightSql = "Select *,X_ShortName as X_CurrencyName FROM vw_InvPurchaseFreights WHERE N_PurchaseID=" + N_GRNID;
                     dtFreightCharges = dLayer.ExecuteDataTable(X_FreightSql, Params, connection);
                     dtFreightCharges = _api.Format(dtFreightCharges, "freightCharges");
+                    
                     if (N_POrderID != 0)
                     {
                     }
@@ -228,7 +242,6 @@ namespace SmartxAPI.Controllers
                      dt.Tables.Add(dtGoodReceiveDetails);
                      dt.Tables.Add(dtFreightCharges);
                   
-
                 }
                 return Ok(_api.Success(dt));
             }
