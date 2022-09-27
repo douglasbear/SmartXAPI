@@ -51,7 +51,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial,int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID,bool b_Asn,int nPriceListID,bool isSalesItems,bool isRentalItem,bool RentalItems)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial,int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID,bool b_Asn,int nPriceListID,bool isSalesItems,bool isRentalItem,bool rentalItems,bool purchaseRentalItems)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -66,6 +66,7 @@ namespace SmartxAPI.Controllers
             string priceListCondition="";
             string ownAssent="";
             string RentalItem="";
+            string RentalPOItem="";
             //nItemUsedFor -> 1-Purchase, 2-Sales, 3-Both, 4-Raw Material
 
 
@@ -124,8 +125,10 @@ namespace SmartxAPI.Controllers
                   itemTypeCondition=itemTypeCondition+ " and N_ItemTypeID<>5 " ;
             if(isRentalItem)
               ownAssent=ownAssent+ " and N_ItemTypeID=7 ";
-               if(RentalItems)
-              RentalItem=RentalItem+ " and N_ItemTypeID=7 or N_ItemTypeID=8 or N_ItemTypeID=9 or N_ItemTypeID=10 or N_ItemTypeID=11";
+               if(rentalItems)
+              RentalItem=RentalItem+ " and (N_ItemTypeID=7 or N_ItemTypeID=8 or N_ItemTypeID=9 or N_ItemTypeID=10 or N_ItemTypeID=11)";
+            if(purchaseRentalItems)
+              RentalPOItem=RentalPOItem+ " and (N_ItemTypeID=8 or N_ItemTypeID=10 )";
 
             if (nItemUsedFor != 0)
             {
@@ -151,7 +154,7 @@ namespace SmartxAPI.Controllers
             // string sqlComandText = " * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
 
             string sqlComandText = "  vw_InvItem_Search_cloud.*,dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID,vw_InvItem_Search_cloud.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_SellingPrice2 FROM vw_InvItem_Search_cloud LEFT OUTER JOIN " +
-             " Inv_ItemUnit ON vw_InvItem_Search_cloud.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search_cloud.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search_cloud.N_CompanyID=@p1 and vw_InvItem_Search_cloud.B_Inactive=@p2 and vw_InvItem_Search_cloud.[Item Code]<> @p3 and vw_InvItem_Search_cloud.N_ItemTypeID<>@p4  and vw_InvItem_Search_cloud.N_ItemID=Inv_ItemUnit.N_ItemID and  vw_InvItem_Search_cloud.N_ClassID!=6 " + ownAssent + RentalItem + qry + Category + Condition + itemTypeCondition +  warehouseSql + priceListCondition;
+             " Inv_ItemUnit ON vw_InvItem_Search_cloud.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search_cloud.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search_cloud.N_CompanyID=@p1 and vw_InvItem_Search_cloud.B_Inactive=@p2 and vw_InvItem_Search_cloud.[Item Code]<> @p3 and vw_InvItem_Search_cloud.N_ItemTypeID<>@p4  and vw_InvItem_Search_cloud.N_ItemID=Inv_ItemUnit.N_ItemID and  vw_InvItem_Search_cloud.N_ClassID!=6 " + ownAssent + RentalItem + RentalPOItem + qry + Category + Condition + itemTypeCondition +  warehouseSql + priceListCondition;
 
 
 
