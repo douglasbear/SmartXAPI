@@ -1422,8 +1422,8 @@ namespace SmartxAPI.Controllers
                         bool B_ServiceSheet = myFunctions.CheckPermission(N_CompanyID, 1145, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection, transaction);
                         for (int j = 0; j < DetailTable.Rows.Count; j++)
                         {
-                            if (B_salesOrder)
-                            {
+                            // if (B_salesOrder)
+                            // {
                                 int nSalesOrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
                                 if (nSalesOrderID > 0)
                                 {
@@ -1431,13 +1431,13 @@ namespace SmartxAPI.Controllers
                                     if (B_ServiceSheet)
                                         dLayer.ExecuteNonQuery("Update Inv_ServiceSheetMaster Set N_Processed=1  Where N_RefID=" + nSalesOrderID + " and N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                                 }
-                            }
-                            else
-                            {
+                            // }
+                            // else
+                            // {
                                 int nQuotationID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_SalesQuotationID"].ToString());
                                 if (nQuotationID > 0)
                                     dLayer.ExecuteNonQuery("Update Inv_SalesQuotation Set N_SalesID=" + N_SalesID + ", N_Processed=1 Where N_QuotationID=" + nQuotationID + " and N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID", QueryParams, connection,transaction);
-                            }
+                            // }
                         }
 
                         // Warranty Save Code here
@@ -1842,51 +1842,32 @@ namespace SmartxAPI.Controllers
                                     if (nQuotationID > 0)
                                         dLayer.ExecuteNonQuery("update Inv_SalesQuotation set N_Processed=0 where N_QuotationId= @nQuotationID and N_CompanyId=@nCompanyID and N_FnYearId= @nFnYearID", QueryParams, connection, transaction);
 
-                            transaction.Commit();
-                            return Ok(_api.Success("Sales Invoice " + status + " Successfully"));
-                        }
-                        else
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, "Unable to delete Sales Invoice"));
-                        }
-                    }
-                    else
-                    {
-                        transaction.Rollback();
-                        if (myFunctions.getIntVAL(objSalesReturnProcessed.ToString()) > 0)
-                            return Ok(_api.Error(User, "Sales Return processed! Unable to delete"));
-                        else if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) > 0)
-                            return Ok(_api.Error(User, "Customer Payment processed! Unable to delete"));
-                        else
-                            return Ok(_api.Error(User, "Unable to delete!"));
-                    }
-                    //Invoice Counter Reset
+                            //Invoice Counter Reset
 
-                    if (InvoiceNO == LastInvoiceNO)
-                    {
-                        dLayer.ExecuteNonQuery("update inv_invoicecounter set N_lastUsedNo=" + (myFunctions.getVAL(InvoiceNO.ToString()) - 1) + " where n_formid=64 and n_companyid=" + nCompanyID + " and N_FnyearID=" + nFnYearID, Params, connection, transaction);
-                    }
-                    //Activity Log
+                            if (InvoiceNO == LastInvoiceNO)
+                            {
+                                dLayer.ExecuteNonQuery("update inv_invoicecounter set N_lastUsedNo=" + (myFunctions.getVAL(InvoiceNO.ToString()) - 1) + " where n_formid=64 and n_companyid=" + nCompanyID + " and N_FnyearID=" + nFnYearID, Params, connection, transaction);
+                            }
+                            //Activity Log
 
-                    string ipAddress = "";
-                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
-                        ipAddress = Request.Headers["X-Forwarded-For"];
-                    else
-                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                    SortedList LogParams = new SortedList();
-                    LogParams.Add("N_CompanyID", nCompanyID);
-                    LogParams.Add("N_FnYearID", nFnYearID);
-                    LogParams.Add("N_TransID", nInvoiceID);
-                    LogParams.Add("N_FormID", this.N_FormID);
-                    LogParams.Add("N_UserId", nUserID);
-                    //LogParams.Add("N_UserID", nUserID);
-                    LogParams.Add("X_Action", xButtonAction);
-                    LogParams.Add("X_SystemName", "ERP Cloud");
-                    LogParams.Add("X_IP", ipAddress);
-                    LogParams.Add("X_TransCode", InvoiceNO);
-                    LogParams.Add("X_Remark", " ");
-                    dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);
+                            string ipAddress = "";
+                            if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                                ipAddress = Request.Headers["X-Forwarded-For"];
+                            else
+                                ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                            SortedList LogParams = new SortedList();
+                            LogParams.Add("N_CompanyID", nCompanyID);
+                            LogParams.Add("N_FnYearID", nFnYearID);
+                            LogParams.Add("N_TransID", nInvoiceID);
+                            LogParams.Add("N_FormID", this.N_FormID);
+                            LogParams.Add("N_UserId", nUserID);
+                            //LogParams.Add("N_UserID", nUserID);
+                            LogParams.Add("X_Action", xButtonAction);
+                            LogParams.Add("X_SystemName", "ERP Cloud");
+                            LogParams.Add("X_IP", ipAddress);
+                            LogParams.Add("X_TransCode", InvoiceNO);
+                            LogParams.Add("X_Remark", " ");
+                            dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);
 
 
                             //StatusUpdate
@@ -1917,8 +1898,26 @@ namespace SmartxAPI.Controllers
                                 tempQtn=nSQID;
                             };
 
-                    transaction.Commit();
-                    return Ok(_api.Success("Sales invoice deleted"));
+                            transaction.Commit();
+                            return Ok(_api.Success("Sales Invoice " + status + " Successfully"));
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to delete Sales Invoice"));
+                        }
+                    }
+                    else
+                    {
+                        transaction.Rollback();
+                        if (myFunctions.getIntVAL(objSalesReturnProcessed.ToString()) > 0)
+                            return Ok(_api.Error(User, "Sales Return processed! Unable to delete"));
+                        else if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) > 0)
+                            return Ok(_api.Error(User, "Customer Payment processed! Unable to delete"));
+                        else
+                            return Ok(_api.Error(User, "Unable to delete!"));
+                    }
+                    
                 }
             }
             catch (Exception ex)
