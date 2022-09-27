@@ -122,6 +122,7 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     int nFormID = myFunctions.getIntVAL(MasterRow["n_FormID"].ToString());
                     string xReturnNo = MasterRow["x_ReturnNo"].ToString();
+                    int nMRNID = myFunctions.getIntVAL(MasterRow["n_MRNID"].ToString());
 
                     if (xReturnNo == "@Auto")
                     {
@@ -142,6 +143,10 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                         return Ok("Unable to save MRN Return");
+                    }
+                    if (nMRNID > 0)
+                    {
+                        dLayer.ExecuteNonQuery("Update Inv_MRN Set N_Processed=1 Where N_MRNID=" + nMRNID + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                     }
                     dLayer.DeleteData("Inv_MRNReturnDetails", "N_MRNReturnID", nMRNReturnID, "", connection, transaction);
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
