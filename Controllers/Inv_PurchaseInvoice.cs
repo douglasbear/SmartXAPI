@@ -1084,24 +1084,18 @@ namespace SmartxAPI.Controllers
                         }
 
                             //StatusUpdate
+                            int tempPOrderID=0;
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
                             {
-                                if (n_POrderID > 0)
+                                if (n_POrderID > 0 && tempPOrderID!=n_POrderID)
                                 {
-                                    SortedList statusParams = new SortedList();
-                                    statusParams.Add("@N_CompanyID", nCompanyID);
-                                    statusParams.Add("@N_TransID", n_POrderID);
-                                    statusParams.Add("@N_FormID", 82);
-                                    try
-                                    {
-                                        dLayer.ExecuteNonQueryPro("SP_TxtStatusUpdate", statusParams, connection, transaction);
-                                    }
-                                    catch (Exception ex)
+                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
                                     {
                                         transaction.Rollback();
-                                        return Ok(_api.Error(User, ex));
+                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
                                     }
                                 }
+                                tempPOrderID=n_POrderID;
                             };
                     }
                     SortedList VendorParams = new SortedList();
