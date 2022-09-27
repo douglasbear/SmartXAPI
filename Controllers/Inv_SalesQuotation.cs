@@ -315,6 +315,7 @@ namespace SmartxAPI.Controllers
 
                     //object objSalesOrder = dLayer.ExecuteScalar("Select N_SalesOrderID from Inv_SalesOrder Where N_CompanyID=@nCompanyID and N_QuotationID =@nQuotationID and B_IsSaveDraft=0", Params);
                     Master = myFunctions.AddNewColumnToDataTable(Master, "B_SalesOrderProcessed", typeof(int), 0);
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "N_OrderFormID", typeof(int), 0);
                     Master = myFunctions.AddNewColumnToDataTable(Master, "X_SalesOrderNo", typeof(string), "");
                     Master = myFunctions.AddNewColumnToDataTable(Master, "B_DeliveryNoteProcessed", typeof(int), 0);
                     Master = myFunctions.AddNewColumnToDataTable(Master, "X_DeliveryNoteNo", typeof(string), "");
@@ -328,6 +329,11 @@ namespace SmartxAPI.Controllers
                     {
                         Master.Rows[0]["B_SalesOrderProcessed"] = 1;
                         Master.Rows[0]["X_SalesOrderNo"] = objxSalesOrder;
+                        object objSalesOrderFormID = myFunctions.checkProcessed("Inv_SalesOrder", "N_FormID", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID ", Params, dLayer, connection);
+                        if (objSalesOrderFormID.ToString() != "")
+                        {
+                            Master.Rows[0]["N_OrderFormID"] = myFunctions.getIntVAL(objSalesOrderFormID.ToString());
+                        }
                         Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Sales Order Processed");
                     }
                     object objxDeliveryNoteNo = myFunctions.checkProcessed("Inv_DeliveryNote", "X_ReceiptNo", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
