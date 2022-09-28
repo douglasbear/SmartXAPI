@@ -124,8 +124,8 @@ namespace SmartxAPI.Controllers
                   itemTypeCondition=itemTypeCondition+ " and N_ItemTypeID<>5 " ;
             if(isRentalItem)
               ownAssent=ownAssent+ " and N_ItemTypeID=7 ";
-               if(RentalItems)
-              RentalItem=RentalItem+ " and N_ItemTypeID=7 or N_ItemTypeID=8 or N_ItemTypeID=9 or N_ItemTypeID=10 or N_ItemTypeID=11";
+            if(RentalItems)
+              RentalItem=RentalItem+ " and (N_ItemTypeID=7 or N_ItemTypeID=8 or N_ItemTypeID=9 or N_ItemTypeID=10 or N_ItemTypeID=11)";
 
             if (nItemUsedFor != 0)
             {
@@ -177,7 +177,7 @@ namespace SmartxAPI.Controllers
                     dt = myFunctions.AddNewColumnToDataTable(dt, "SubItems", typeof(DataTable), null);
 
                     foreach (DataRow item in dt.Rows)
-                    {//
+                    {
                         if (myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 1 )//|| myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 3
                         {
 

@@ -228,11 +228,9 @@ namespace SmartxAPI.Controllers
             }
         }
 
-         [HttpGet("details")]
-        public ActionResult EmployeeEvaluation(string xEvalCode)
+        [HttpGet("details")]
+        public ActionResult ServiceSheetDetails(int nFormID,string xServiceSheeetCode)
         {
-
-
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -263,7 +261,6 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(MasterTable);
                     dt.Tables.Add(DetailTable);
                     return Ok(_api.Success(dt));
-
 
                 }
 
