@@ -1422,8 +1422,8 @@ namespace SmartxAPI.Controllers
                         bool B_ServiceSheet = myFunctions.CheckPermission(N_CompanyID, 1145, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection, transaction);
                         for (int j = 0; j < DetailTable.Rows.Count; j++)
                         {
-                            if (B_salesOrder)
-                            {
+                            // if (B_salesOrder)
+                            // {
                                 int nSalesOrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
                                 if (nSalesOrderID > 0)
                                 {
@@ -1431,13 +1431,13 @@ namespace SmartxAPI.Controllers
                                     if (B_ServiceSheet)
                                         dLayer.ExecuteNonQuery("Update Inv_ServiceSheetMaster Set N_Processed=1  Where N_RefID=" + nSalesOrderID + " and N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                                 }
-                            }
-                            else
-                            {
+                            // }
+                            // else
+                            // {
                                 int nQuotationID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_SalesQuotationID"].ToString());
                                 if (nQuotationID > 0)
-                                    dLayer.ExecuteNonQuery("Update Inv_SalesQuotation Set N_SalesID=" + N_SalesID + ", N_Processed=1 Where N_QuotationID=" + nQuotationID + " and N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID", QueryParams, connection);
-                            }
+                                    dLayer.ExecuteNonQuery("Update Inv_SalesQuotation Set N_SalesID=" + N_SalesID + ", N_Processed=1 Where N_QuotationID=" + nQuotationID + " and N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID", QueryParams, connection,transaction);
+                            // }
                         }
 
                         // Warranty Save Code here
@@ -1563,44 +1563,31 @@ namespace SmartxAPI.Controllers
 
                             }
                             //StatusUpdate
+                            int tempQtn=0,tempSO=0;
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
                             {
                                 int nSalesOrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
                                 int nQuotationID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesQuotationID"].ToString());
 
-                                if (nSalesOrderID > 0)
+                                if (nSalesOrderID > 0 && tempSO!=nSalesOrderID)
                                 {
-                                    SortedList statusParams = new SortedList();
-                                    statusParams.Add("@N_CompanyID", N_CompanyID);
-                                    statusParams.Add("@N_TransID", nSalesOrderID);
-                                    statusParams.Add("@N_FormID", 81);
-                                    try
-                                    {
-                                        dLayer.ExecuteNonQueryPro("SP_TxtStatusUpdate", statusParams, connection, transaction);
-                                    }
-                                    catch (Exception ex)
+                                    if(!myFunctions.UpdateTxnStatus(N_CompanyID,nSalesOrderID,81,false,dLayer,connection,transaction))
                                     {
                                         transaction.Rollback();
-                                        return Ok(_api.Error(User, ex));
+                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
                                     }
                                 }
+                                tempSO = nSalesOrderID;
 
-                                if (nQuotationID > 0)
+                                if (nQuotationID > 0 && tempQtn!=nQuotationID)
                                 {
-                                    SortedList statusParams = new SortedList();
-                                    statusParams.Add("@N_CompanyID", N_CompanyID);
-                                    statusParams.Add("@N_TransID", nQuotationID);
-                                    statusParams.Add("@N_FormID", 80);
-                                    try
-                                    {
-                                        dLayer.ExecuteNonQueryPro("SP_TxtStatusUpdate", statusParams, connection, transaction);
-                                    }
-                                    catch (Exception ex)
+                                    if(!myFunctions.UpdateTxnStatus(N_CompanyID,nQuotationID,80,false,dLayer,connection,transaction))
                                     {
                                         transaction.Rollback();
-                                        return Ok(_api.Error(User, ex));
+                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
                                     }
                                 }
+                                tempQtn=nQuotationID;
                             };
                         }
                         SortedList CustomerParams = new SortedList();
@@ -1762,6 +1749,9 @@ namespace SmartxAPI.Controllers
                                 {"@nCompanyID",nCompanyID},
                                 {"@nFnYearID",nFnYearID},
                                 {"@nSalesID",nInvoiceID}};
+
+                    DataTable DetailTable = dLayer.ExecuteDataTable("select n_SalesOrderID,n_SalesQuotationID from Inv_SalesDetails where N_CompanyID=@nCompanyID and N_SalesID=@nSalesID group by n_SalesOrderID,n_SalesQuotationID order by n_SalesOrderID,n_SalesQuotationID", Params, connection);
+                    
                     object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection);
                     object objCustCode = dLayer.ExecuteScalar("Select X_CustomerCode From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection);
                     object InvoiceNO = dLayer.ExecuteScalar("select X_ReceiptNO from inv_sales where n_salesid=" + nInvoiceID + " and N_CompanyID=" + nCompanyID, Params, connection);
@@ -1809,62 +1799,6 @@ namespace SmartxAPI.Controllers
                                     {"@nBranchID",nBranchID}
                                    };
 
-                        // if (ButtonTag == "6" || ButtonTag == "0")
-                        // {
-                        //     SortedList DeleteParams = new SortedList(){
-                        //             {"N_CompanyID",nCompanyID},
-                        //             {"N_UserID",nUserID},
-                        //             {"X_TransType","SALES"},
-                        //             {"X_SystemName","WebRequest"},
-                        //             {"N_VoucherID",nInvoiceID}}; 
-
-                        //     Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
-                        //     if (Results <= 0)
-                        //     {
-                        //         transaction.Rollback();
-                        //         return Ok(_api.Error(User, "Unable to delete sales Invoice"));
-                        //     }
-                        //     else
-                        //     {
-                        //         dLayer.ExecuteNonQuery("delete from Inv_DeliveryDispatch where n_InvoiceID=@nSalesID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-                        //         //   if (N_AmtSplit == 1)
-                        //         //     {                                                
-                        //         dLayer.ExecuteNonQuery("delete from Inv_SaleAmountDetails where n_SalesID=@nSalesID and n_BranchID=@nBranchID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-                        //         dLayer.ExecuteNonQuery("delete from Inv_LoyaltyPointOut where n_SalesID=@nSalesID and n_PartyID=@nPartyID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-                        //         // }                        
-                        //         dLayer.ExecuteNonQuery("delete from Inv_ServiceContract where n_SalesID=@nSalesID and n_FnYearID=@nFnYearID and n_BranchID=@nBranchID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-                        //         if (dLayer.ExecuteNonQuery("delete from Inv_StockMaster where n_SalesID=@nSalesID and x_Type='Negative' and n_InventoryID = 0 and n_CompanyID=@nCompanyID", QueryParams, connection, transaction) <= 0)
-                        //         {
-                        //             // transaction.Rollback();
-                        //             // return Ok(_api.Error(User,"Unable to delete sales Invoice"));
-                        //         }
-                        //         if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator", "X_UserCategory", dLayer, connection, transaction))
-                        //             if (myFunctions.CheckPermission(nCompanyID, 81, xUserCategory.ToString(), "N_UserCategoryID", dLayer, connection, transaction))
-                        //                 if (nQuotationID > 0)
-                        //                     dLayer.ExecuteNonQuery("update Inv_SalesQuotation set N_Processed=0 where N_QuotationId= @nQuotationID and N_CompanyId=@nCompanyID and N_FnYearId= @nFnYearID", QueryParams, connection, transaction);
-
-                        //         myAttachments.DeleteAttachment(dLayer, 1, nInvoiceID, N_CustomerId, nFnYearID, N_FormID, User, transaction, connection);
-                        //     }
-                        // }
-                        // else
-                        // {
-                        //     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "SALES", nInvoiceID, TransRow["X_ReceiptNo"].ToString(), ProcStatus, "Inv_Sales", X_Criteria, objCustName.ToString(), User, dLayer, connection, transaction);
-                        //     if (status != "Error")
-                        //     {
-                        //         if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator", "X_UserCategory", dLayer, connection, transaction))
-                        //             if (myFunctions.CheckPermission(nCompanyID, 81, xUserCategory.ToString(), "N_UserCategoryID", dLayer, connection, transaction))
-                        //                 if (nQuotationID > 0)
-                        //                     dLayer.ExecuteNonQuery("update Inv_SalesQuotation set N_Processed=0 where N_QuotationId= @nQuotationID and N_CompanyId=@nCompanyID and N_FnYearId= @nFnYearID", QueryParams, connection, transaction);
-
-                        //         transaction.Commit();
-                        //         return Ok(_api.Success("Sales Invoice " + status + " Successfully"));
-                        //     }
-                        //     else
-                        //     {
-                        //         transaction.Rollback();
-                        //         return Ok(_api.Error(User, "Unable to delete Sales Invoice"));
-                        //     }
-                        // }
 
                         string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "SALES", nInvoiceID, TransRow["X_ReceiptNo"].ToString(), ProcStatus, "Inv_Sales", X_Criteria, objCustName.ToString(), User, dLayer, connection, transaction);
                         if (status != "Error")
@@ -1908,6 +1842,62 @@ namespace SmartxAPI.Controllers
                                     if (nQuotationID > 0)
                                         dLayer.ExecuteNonQuery("update Inv_SalesQuotation set N_Processed=0 where N_QuotationId= @nQuotationID and N_CompanyId=@nCompanyID and N_FnYearId= @nFnYearID", QueryParams, connection, transaction);
 
+                            //Invoice Counter Reset
+
+                            if (InvoiceNO == LastInvoiceNO)
+                            {
+                                dLayer.ExecuteNonQuery("update inv_invoicecounter set N_lastUsedNo=" + (myFunctions.getVAL(InvoiceNO.ToString()) - 1) + " where n_formid=64 and n_companyid=" + nCompanyID + " and N_FnyearID=" + nFnYearID, Params, connection, transaction);
+                            }
+                            //Activity Log
+
+                            string ipAddress = "";
+                            if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                                ipAddress = Request.Headers["X-Forwarded-For"];
+                            else
+                                ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                            SortedList LogParams = new SortedList();
+                            LogParams.Add("N_CompanyID", nCompanyID);
+                            LogParams.Add("N_FnYearID", nFnYearID);
+                            LogParams.Add("N_TransID", nInvoiceID);
+                            LogParams.Add("N_FormID", this.N_FormID);
+                            LogParams.Add("N_UserId", nUserID);
+                            //LogParams.Add("N_UserID", nUserID);
+                            LogParams.Add("X_Action", xButtonAction);
+                            LogParams.Add("X_SystemName", "ERP Cloud");
+                            LogParams.Add("X_IP", ipAddress);
+                            LogParams.Add("X_TransCode", InvoiceNO);
+                            LogParams.Add("X_Remark", " ");
+                            dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);
+
+
+                            //StatusUpdate
+                            int tempQtn=0,tempSO=0;
+                            for (int j = 0; j < DetailTable.Rows.Count; j++)
+                            {
+                                int nSOID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
+                                int nSQID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesQuotationID"].ToString());
+
+                                if (nSOID > 0 && tempSO!=nSOID)
+                                {
+                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,nSOID,81,true,dLayer,connection,transaction))
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                    }
+                                }
+                                tempSO = nSOID;
+
+                                if (nSQID > 0 && tempQtn!=nSQID)
+                                {
+                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,nSQID,80,true,dLayer,connection,transaction))
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                    }
+                                }
+                                tempQtn=nSQID;
+                            };
+
                             transaction.Commit();
                             return Ok(_api.Success("Sales Invoice " + status + " Successfully"));
                         }
@@ -1927,38 +1917,7 @@ namespace SmartxAPI.Controllers
                         else
                             return Ok(_api.Error(User, "Unable to delete!"));
                     }
-                    //Invoice Counter Reset
-
-                    if (InvoiceNO == LastInvoiceNO)
-                    {
-                        dLayer.ExecuteNonQuery("update inv_invoicecounter set N_lastUsedNo=" + (myFunctions.getVAL(InvoiceNO.ToString()) - 1) + " where n_formid=64 and n_companyid=" + nCompanyID + " and N_FnyearID=" + nFnYearID, Params, connection, transaction);
-                    }
-                    //Activity Log
-
-                    string ipAddress = "";
-                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
-                        ipAddress = Request.Headers["X-Forwarded-For"];
-                    else
-                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                    SortedList LogParams = new SortedList();
-                    LogParams.Add("N_CompanyID", nCompanyID);
-                    LogParams.Add("N_FnYearID", nFnYearID);
-                    LogParams.Add("N_TransID", nInvoiceID);
-                    LogParams.Add("N_FormID", this.N_FormID);
-                    LogParams.Add("N_UserId", nUserID);
-                    //LogParams.Add("N_UserID", nUserID);
-                    LogParams.Add("X_Action", xButtonAction);
-                    LogParams.Add("X_SystemName", "ERP Cloud");
-                    LogParams.Add("X_IP", ipAddress);
-                    LogParams.Add("X_TransCode", InvoiceNO);
-                    LogParams.Add("X_Remark", " ");
-                    dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);
-
-
-
-
-                    transaction.Commit();
-                    return Ok(_api.Success("Sales invoice deleted"));
+                    
                 }
             }
             catch (Exception ex)
