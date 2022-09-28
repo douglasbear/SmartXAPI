@@ -229,7 +229,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID, int nQuotationID, int n_OpportunityID, int nClaimID, string x_WarrantyNo)
+        public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID, int nQuotationID, int n_OpportunityID, int nClaimID, string x_WarrantyNo,int nFormID)
         {
             if (xOrderNo != null)
                 xOrderNo = xOrderNo.Replace("%2F", "/");
@@ -241,7 +241,12 @@ namespace SmartxAPI.Controllers
 
             string Mastersql = "";
             string DetailSql = "";
+            string crieteria = "";
 
+                 if(nFormID>0)
+                    {
+                    crieteria = " and N_FormID = @nFormID ";
+                    }
             if (bAllBranchData == true)
             {
                 Mastersql = "SP_InvSalesOrder_Disp @nCompanyID,@xOrderNo,1,0,@nFnYearID";
@@ -254,7 +259,7 @@ namespace SmartxAPI.Controllers
 
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
-
+            Params.Add("@nFormID", nFormID);
 
 
             try
@@ -504,7 +509,7 @@ namespace SmartxAPI.Controllers
                     string TermsSql = "SELECT     Inv_Terms.N_CompanyId, Inv_Terms.N_TermsID, Inv_Terms.N_ReferanceID, Inv_Terms.X_Terms, Inv_Terms.N_Percentage, Inv_Terms.N_Duration, Inv_Terms.X_Type, Inv_Terms.N_Amount, isnull(Inv_Sales.N_BillAmt,0)+isnull(Inv_Sales.N_TaxAmtF,0) as N_Paidamt FROM  Inv_Terms LEFT OUTER JOIN Inv_Sales ON Inv_Terms.N_CompanyId = Inv_Sales.N_CompanyId AND Inv_Terms.N_TermsID = Inv_Sales.N_TermsID Where Inv_Terms.N_CompanyID=@nCompanyID and Inv_Terms.N_ReferanceID=" + N_SOrderID + " and Inv_Terms.X_Type='SO'";
                     DataTable Terms = dLayer.ExecuteDataTable(TermsSql, Params, connection);
                     Terms = _api.Format(Terms, "Terms");
-                    string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=" + N_SOrderID;
+                    string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=" + N_SOrderID +crieteria;
                     DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
                     RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
 
