@@ -1223,7 +1223,8 @@ namespace SmartxAPI.Controllers
                                     {"X_SystemName","WebRequest"},
                                     {"B_MRNVisible",(B_isDirectMRN && B_MRNVisible) ?"1":"0"}};
                             //{"B_MRNVisible",n_MRNID>0?"1":"0"}};
-
+                            DataTable DetailTable = dLayer.ExecuteDataTable("select N_POrderID from Inv_PurchaseDetails where N_CompanyID=@nCompanyID and N_PurchaseID=@nTransID group by N_POrderID order by N_POrderID", ParamList, connection, transaction);
+                    
                             Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
                             if (Results <= 0)
                             {
@@ -1233,6 +1234,21 @@ namespace SmartxAPI.Controllers
 
                             myAttachments.DeleteAttachment(dLayer, 1, nPurchaseID, VendorID, nFnYearID, N_FormID, User, transaction, connection);
 
+                            //StatusUpdate
+                            int tempPOrderID=0;
+                            for (int j = 0; j < DetailTable.Rows.Count; j++)
+                            {
+                                int n_POrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_POrderID"].ToString());
+                                if (n_POrderID > 0 && tempPOrderID!=n_POrderID)
+                                {
+                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,true,dLayer,connection,transaction))
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                    }
+                                }
+                                tempPOrderID=n_POrderID;
+                            };
                         }
                         transaction.Commit();
                         return Ok(_api.Success("Purchase Invoice " + status + " Successfully"));
