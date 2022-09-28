@@ -285,7 +285,11 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(_api.Error(User, ex));
                         }
-
+                        int n_PRSID=myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_PrsID from Inv_TransferStock where N_CompanyID="+nCompanyID+" and N_TransferID="+N_TransferId+"", PostingParam, connection, transaction).ToString());
+                        if(n_PRSID>0)
+                        {
+                             dLayer.ExecuteNonQuery("UPDATE Inv_PRS  set N_Processed=2 where  N_CompanyID=" + nCompanyID + "  and N_PrsID=" + n_PRSID, Params, connection, transaction);
+                        }
 
 
 
@@ -369,8 +373,10 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     var nUserID = myFunctions.GetUserID(User);
+                      SortedList Params = new SortedList(){
+                                {"N_CompanyID",nCompanyID}};
 
-
+    int N_TransferId=myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_TransferID from Inv_ReceivableStock where N_CompanyID="+nCompanyID+" and N_ReceivableId="+nReceivableId+"", Params,connection, transaction).ToString());
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
                                 {"X_TransType", "STOCK RECEIVE"},
@@ -387,6 +393,17 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to delete Transfer Recieve"));
                     }
+                  
+                      int n_PRSID=myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_PrsID from Inv_TransferStock where N_CompanyID="+nCompanyID+" and N_TransferID="+N_TransferId+"", connection, transaction).ToString());
+                        if(n_PRSID>0)
+                        {
+                             dLayer.ExecuteNonQuery("UPDATE Inv_PRS  set N_Processed=1 where  N_CompanyID=" + nCompanyID + "  and N_PrsID=" + n_PRSID, Params, connection, transaction);
+                        }
+
+
+
+
+
                     transaction.Commit();
                     return Ok(_api.Success(" deleted"));
                 }
