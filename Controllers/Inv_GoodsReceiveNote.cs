@@ -416,7 +416,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,ex));
+                            return Ok(_api.Error(User,"Error Occurred in MRN Posting , Please check account mapping"));
                         }
 
                         if (n_POrderID > 0)
