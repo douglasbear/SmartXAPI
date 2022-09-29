@@ -180,7 +180,7 @@ namespace SmartxAPI.Controllers
                     dt = myFunctions.AddNewColumnToDataTable(dt, "SubItems", typeof(DataTable), null);
 
                     foreach (DataRow item in dt.Rows)
-                    {//
+                    {
                         if (myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 1 )//|| myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 3
                         {
 
