@@ -715,6 +715,19 @@ namespace SmartxAPI.Controllers
                                 tempSQID = N_SQID;
                             };
                         }
+
+                        for (int k = 0; k < rentalItem.Rows.Count; k++)
+                        {
+                            int nItemID = myFunctions.getIntVAL(rentalItem.Rows[k]["n_ItemID"].ToString());
+                            int nAssItemID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_AssItemID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID="+ nItemID , QueryParams, connection, transaction).ToString());
+                            int nRentalEmpID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_RentalEmpID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID="+ nItemID , QueryParams, connection, transaction).ToString());
+
+                            if (nAssItemID > 0)
+                            dLayer.ExecuteNonQuery("update Ass_AssetMaster Set N_RentalStatus=1 where N_ItemID="+ nAssItemID +" and N_CompanyID=@nCompanyID ", QueryParams, connection, transaction);
+                            if (nRentalEmpID > 0)
+                            dLayer.ExecuteNonQuery("update Pay_Employee Set N_RentalStatus=1 where N_EmpID="+ nRentalEmpID +" and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ", QueryParams, connection, transaction);
+                        }
+
                         SortedList Result = new SortedList();
                         Result.Add("n_DeliveryNoteID", N_DeliveryNoteID);
                         Result.Add("InvoiceNo", InvoiceNo);
@@ -837,6 +850,7 @@ namespace SmartxAPI.Controllers
                                 {"@nPartyID",nCustomerID},
                                 {"@nBranchID",nBranchID}};
                     DataTable DetailTable = dLayer.ExecuteDataTable("select n_SalesOrderID,n_SalesQuotationID from Inv_DeliveryNoteDetails where N_CompanyID=@nCompanyID and N_DeliveryNoteID=@nDeliveryNoteID group by n_SalesOrderID,n_SalesQuotationID order by n_SalesOrderID,n_SalesQuotationID", QueryParams, connection, transaction);
+                    DataTable rentalItem = dLayer.ExecuteDataTable("select * from Inv_RentalSchedule where N_CompanyID=@nCompanyID and N_TransID=@nDeliveryNoteID ", QueryParams, connection, transaction);
                     Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
                     if (Results <= 0)
                     {
@@ -846,6 +860,8 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         dLayer.ExecuteNonQuery("delete from Inv_StockMaster where N_SalesID=@nDeliveryNoteID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+
+                        dLayer.DeleteData("Inv_RentalSchedule", "N_TransID", nDeliveryNoteID, "  N_CompanyID="+ nCompanyID +" and N_FormID=1572 ", connection, transaction);
 
                         myAttachments.DeleteAttachment(dLayer, 1, nDeliveryNoteID, nCustomerID, nFnYearID, this.FormID, User, transaction, connection);
                     }
@@ -878,6 +894,18 @@ namespace SmartxAPI.Controllers
                         }
                         tempSQID = N_SQID;
                     };
+
+                    for (int k = 0; k < rentalItem.Rows.Count; k++)
+                    {
+                        int nItemID = myFunctions.getIntVAL(rentalItem.Rows[k]["n_ItemID"].ToString());
+                        int nAssItemID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_AssItemID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID="+ nItemID , QueryParams, connection, transaction).ToString());
+                        int nRentalEmpID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_RentalEmpID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID="+ nItemID , QueryParams, connection, transaction).ToString());
+
+                        if (nAssItemID > 0)
+                        dLayer.ExecuteNonQuery("update Ass_AssetMaster Set N_RentalStatus=0 where N_ItemID="+ nAssItemID +" and N_CompanyID=@nCompanyID ", QueryParams, connection, transaction);
+                        if (nRentalEmpID > 0)
+                        dLayer.ExecuteNonQuery("update Pay_Employee Set N_RentalStatus=0 where N_EmpID="+ nRentalEmpID +" and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ", QueryParams, connection, transaction);
+                    }
 
                     transaction.Commit();
                     return Ok(_api.Success("Delivery note deleted"));
