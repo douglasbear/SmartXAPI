@@ -362,8 +362,8 @@ namespace SmartxAPI.Controllers
                     masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "N_SalesId", typeof(int), 0);
                     masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "isSalesDone", typeof(bool), false);
                     masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "isProformaDone", typeof(bool), false);
-
-
+                    masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "isDeliveryReturnDone", typeof(bool), false);
+                  
                     if (myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()) > 0)
                     {
                         QueryParamsList.Add("@nDeliveryNoteId", myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()));
@@ -385,6 +385,16 @@ namespace SmartxAPI.Controllers
                                 masterTable.Rows[0]["N_SalesId"] = myFunctions.getIntVAL(NewSalesData.Rows[0]["N_SalesId"].ToString());
                                 masterTable.Rows[0]["isProformaDone"] = true;
                             }
+                        }
+                        DataTable returnData = dLayer.ExecuteDataTable("select N_DeliveryNoteId from Inv_DeliveryNoteReturn where N_DeliveryNoteId=@nDeliveryNoteId and N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
+                        if (returnData.Rows.Count > 0)
+                        {
+                           
+                            masterTable.Rows[0]["isDeliveryReturnDone"] = true;
+                        }
+                        else
+                        {
+                            masterTable.Rows[0]["isDeliveryReturnDone"] = false;
                         }
                     }
 
