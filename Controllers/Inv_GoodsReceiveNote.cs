@@ -149,7 +149,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listdetails")]
-        public ActionResult GetGoodsReceiveDetails(int nCompanyId, int nFnYearId, string nMRNNo, bool showAllBranch, int nBranchId, string poNo)
+        public ActionResult GetGoodsReceiveDetails(int nCompanyId, int nFnYearId, string nMRNNo, bool showAllBranch, int nBranchId, string poNo,int nFormID)
         {
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
@@ -166,7 +166,13 @@ namespace SmartxAPI.Controllers
             string X_MasterSql = "";
             string X_DetailsSql = "";
             string X_FreightSql = "";
+            string crieteria = "";
 
+         
+            if(nFormID>0)
+             {
+            crieteria = " and Inv_PurchaseOrder.N_FormID = @nFormID ";
+             }
             if (nMRNNo != null)
             {
                 Params.Add("@GRNNo", nMRNNo);
@@ -174,7 +180,7 @@ namespace SmartxAPI.Controllers
             }
             if (poNo != null)
             {
-                X_MasterSql = "Select Inv_PurchaseOrder.*,Inv_Location.X_LocationName,Inv_Vendor.* from Inv_PurchaseOrder Inner Join Inv_Vendor On Inv_PurchaseOrder.N_VendorID=Inv_Vendor.N_VendorID and Inv_PurchaseOrder.N_CompanyID=Inv_Vendor.N_CompanyID and Inv_PurchaseOrder.N_FnYearID=Inv_Vendor.N_FnYearID LEFT OUTER JOIN Inv_Location ON Inv_Location.N_LocationID=Inv_PurchaseOrder.N_LocationID Where Inv_PurchaseOrder.N_CompanyID=" + nCompanyId + " and X_POrderNo='" + poNo + "' and Inv_PurchaseOrder.B_IsSaveDraft<>1";
+                X_MasterSql = "Select Inv_PurchaseOrder.*,Inv_Location.X_LocationName,Inv_Vendor.* from Inv_PurchaseOrder Inner Join Inv_Vendor On Inv_PurchaseOrder.N_VendorID=Inv_Vendor.N_VendorID and Inv_PurchaseOrder.N_CompanyID=Inv_Vendor.N_CompanyID and Inv_PurchaseOrder.N_FnYearID=Inv_Vendor.N_FnYearID LEFT OUTER JOIN Inv_Location ON Inv_Location.N_LocationID=Inv_PurchaseOrder.N_LocationID Where Inv_PurchaseOrder.N_CompanyID=" + nCompanyId + " and X_POrderNo='" + poNo + "' "+crieteria+" and Inv_PurchaseOrder.B_IsSaveDraft<>1";
             }
             try
             {
