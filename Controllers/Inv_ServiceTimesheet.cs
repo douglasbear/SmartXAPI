@@ -210,7 +210,7 @@ namespace SmartxAPI.Controllers
                     string DetailSql = "";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    Params.Add("@xEvalCode", xEvalCode);
+                    Params.Add("@xEvalCode", xServiceSheeetCode);
                     Mastersql = "select * from vw_PayEvaluation_Details where N_CompanyId=@nCompanyID and X_EvalCode=@xEvalCode  ";
                    
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
