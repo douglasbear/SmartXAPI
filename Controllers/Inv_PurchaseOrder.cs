@@ -806,41 +806,31 @@ namespace SmartxAPI.Controllers
 
         }
 
-
-
-
- [HttpGet("invPurchaseOrderNo")]
-        public ActionResult GetInvPurchaseOrderNo( int nCompanyID,int nItemID,DateTime dPeriodFrom,DateTime dPeriodTo )
+        [HttpGet("purchaseOrderNo")]
+        public ActionResult GetInvPurchaseOrderNo( DateTime dDateFrom, DateTime dDateTo, int nFormID )
         {
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                   // int nCompanyID = myFunctions.GetCompanyID(User);
+                    int nCompanyID = myFunctions.GetCompanyID(User);
                     DataTable dt = new DataTable();
                     SortedList Params = new SortedList();
                    
                     string sqlCommandText = "";
-                    string sqlCommandCount = "";
-                    string Searchkey = "";
 
                     Params.Add("@p1", nCompanyID);
-                    Params.Add("@p2", nItemID);
-                    Params.Add("@p4", dPeriodFrom);
-                    Params.Add("@p5",dPeriodTo);
+                    Params.Add("@p2", nFormID);
+                    Params.Add("@p3", dDateFrom);
+                    Params.Add("@p4", dDateTo);
     
-                     sqlCommandText = "select * from vw_ScheduledRentalOrders where N_CompanyID=@p1 and N_ItemID=@p2 and ((D_PeriodFrom<=@p4 and D_PeriodTo>=@p4) OR (D_PeriodFrom<=@p5 and D_PeriodTo>=@p5) OR(D_PeriodFrom>=@p4 and D_PeriodFrom<=@p5))";
-                                            
+                    sqlCommandText = "select * from vw_PurchaseOrderReceive	where N_CompanyID=@p1 and ((D_ReceiveDate<=@p3) or (D_ReceiveDate>=@p3 AND D_ReceiveDate<=@p4) AND ISNULL(D_ReceiveReturnDate,@p4)>=@p4) and N_POrderID NOT IN (select N_POID from Inv_ServiceTimesheet where N_FormID=@p2 and N_CompanyID=@p1 and D_DateFrom=@p3 and D_DateTo=@p4)";
 
                     SortedList OutPut = new SortedList();
-
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_ScheduledRentalOrders  where N_CompanyID=@p1 and N_ItemID=@p2 and ((D_PeriodFrom<=@p4 and D_PeriodTo>=@p4) OR (D_PeriodFrom<=@p5 and D_PeriodTo>=@p5) OR(D_PeriodFrom>=@p4 and D_PeriodFrom<=@p5))";
-                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
 
                     OutPut.Add("Details", api.Format(dt));
-                    OutPut.Add("TotalCount", TotalCount);
                     return Ok(api.Success(OutPut));
                 }
             }

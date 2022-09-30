@@ -22,7 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly IMyFunctions myFunctions;
         private readonly IApiFunctions _api;
-        private readonly int N_FormID = 1145;
+        // private readonly int N_FormID = 1145;
         public InvServiceTimesheet(IDataAccessLayer dl,IMyFunctions myFun, IApiFunctions apiFun, IConfiguration conf)
         {
             dLayer = dl;
@@ -125,7 +125,7 @@ namespace SmartxAPI.Controllers
             }
         }  
         
-        [HttpPost("Save")]
+        [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
@@ -135,53 +135,68 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
+                    DataTable ItemTable;
                     DataTable DetailTable;
                     MasterTable = ds.Tables["master"];
+                    ItemTable = ds.Tables["items"];
                     DetailTable = ds.Tables["details"];
-                    DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
 
-                    int N_ServiceSheetID = myFunctions.getIntVAL(MasterRow["N_ServiceSheetID"].ToString());
-                    int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
-                    int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
-                    int N_FormID = myFunctions.getIntVAL(MasterRow["N_FormID"].ToString());
-                    string X_ServiceSheetCode = MasterRow["X_ServiceSheetCode"].ToString();
+                    int nServiceSheetID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ServiceSheetID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                    int nFormID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FormID"].ToString());
+                    string xServiceSheetCode = MasterTable.Rows[0]["x_ServiceSheetCode"].ToString();
 
-                    if (X_ServiceSheetCode == "@Auto")
+                    if (xServiceSheetCode == "@Auto")
                     {
-                        Params.Add("N_CompanyID", N_CompanyID);
-                        Params.Add("N_YearID", N_FnYearID);
-                        Params.Add("N_FormID", N_FormID);
-                        X_ServiceSheetCode = dLayer.GetAutoNumber("Inv_ServiceTimesheet", "X_ServiceSheetCode", Params, connection, transaction);
-                        if (X_ServiceSheetCode == "")
+                        Params.Add("N_CompanyID", nCompanyID);
+                        Params.Add("N_YearID", nFnYearID);
+                        Params.Add("N_FormID", nFormID);
+                        xServiceSheetCode = dLayer.GetAutoNumber("Inv_ServiceTimesheet", "X_ServiceSheetCode", Params, connection, transaction);
+                        if (xServiceSheetCode == "")
                         {
                             transaction.Rollback();
                             return Ok("Unable to generate Service Timesheet");
                         }
-                        MasterTable.Rows[0]["X_ServiceSheetCode"] = X_ServiceSheetCode;
+                        MasterTable.Rows[0]["X_ServiceSheetCode"] = xServiceSheetCode;
                     }
 
-                    N_ServiceSheetID = dLayer.SaveData("Inv_ServiceTimesheet", "N_ServiceSheetID", "", "", MasterTable, connection, transaction);
-                    if (N_ServiceSheetID <= 0)
+                    nServiceSheetID = dLayer.SaveData("Inv_ServiceTimesheet", "N_ServiceSheetID", "", "", MasterTable, connection, transaction);
+                    if (nServiceSheetID <= 0)
                     {
                         transaction.Rollback();
                         return Ok("Unable to save Service Timesheet!");
                     }
-                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+
+                    dLayer.DeleteData("Inv_ServiceTimesheetItems", "N_ServiceSheetID", nServiceSheetID, "", connection, transaction);
+                    for (int j = 0; j < ItemTable.Rows.Count; j++)
                     {
-                        DetailTable.Rows[j]["N_ServiceSheetID"] = N_ServiceSheetID;
+                        ItemTable.Rows[j]["N_ServiceSheetID"] = nServiceSheetID;
                     }
-                    int N_ServiceSheetDetailsID = dLayer.SaveData("Inv_ServiceSheetDetails", "N_ServiceSheetDetailsID", DetailTable, connection, transaction);
-                    if (N_ServiceSheetDetailsID <= 0)
+                    int nServiceSheetItemID = dLayer.SaveData("Inv_ServiceTimesheetItems", "N_ServiceSheetItemID", ItemTable, connection, transaction);
+                    if (nServiceSheetItemID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok("Unable to save Customer Service Timesheet!");
+                        return Ok("Unable to save Service Timesheet!");
+                    }
+
+                    dLayer.DeleteData("Inv_ServiceTimesheetDetails", "N_ServiceSheetItemID", nServiceSheetItemID, "", connection, transaction);
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        DetailTable.Rows[j]["N_ServiceSheetItemID"] = nServiceSheetItemID;
+                    }
+                    int nServiceSheetDetailsID = dLayer.SaveData("Inv_ServiceTimesheetDetails", "N_ServiceSheetDetailsID", DetailTable, connection, transaction);
+                    if (nServiceSheetDetailsID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok("Unable to save Service Timesheet!");
                     }
                    
                     transaction.Commit();
                     SortedList Result = new SortedList();
-                    Result.Add("N_ServiceSheetID", N_ServiceSheetID);
-                    Result.Add("X_ServiceSheetCode", X_ServiceSheetCode);
+                    Result.Add("N_ServiceSheetID", nServiceSheetID);
+                    Result.Add("X_ServiceSheetCode", xServiceSheetCode);
 
                     return Ok(_api.Success(Result, "Service Timesheet saved successfully!"));
                 }
@@ -210,8 +225,8 @@ namespace SmartxAPI.Controllers
                     string DetailSql = "";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    Params.Add("@xEvalCode", xServiceSheeetCode);
-                    Mastersql = "select * from vw_PayEvaluation_Details where N_CompanyId=@nCompanyID and X_EvalCode=@xEvalCode  ";
+                    Params.Add("@xServiceSheeetCode", xServiceSheeetCode);
+                    Mastersql = "select * from vw_PayEvaluation_Details where N_CompanyId=@nCompanyID and X_EvalCode=@xServiceSheeetCode   ";
                    
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -304,11 +319,52 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(_api.Error(User,ex));
             }
-
-
         }
 
+        [HttpGet("orderitemdetails")]
+        public ActionResult GetOrderItemDetails(int nFnYearID, int nFormID, int nBranchID, int nLocationID, DateTime dDateFrom, DateTime dDateTo, int nSOID, string xType)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataSet dt = new DataSet();
+                    SortedList Params = new SortedList();
+                    DataTable ItemTable = new DataTable();
+                    DataTable DetailTable = new DataTable();
+                    string Itemsql = "";
 
-           }
+                    Params.Add("@N_TransID", nSOID);
+                    Params.Add("@N_CompanyId", myFunctions.GetCompanyID(User));
+                    Params.Add("@N_FnyearID", nFnYearID);
+                    Params.Add("@N_BranchID", nBranchID);
+                    Params.Add("@D_DateFrom", dDateFrom);
+                    Params.Add("@D_DateTo", dDateTo);
+                    Params.Add("@N_LocationID", nLocationID);
+                    Params.Add("@N_UserID", myFunctions.GetUserID(User));
+                    Params.Add("@X_Type", xType);
+                    Params.Add("@N_FormID", nFormID);
+                    
+                    
+                    Itemsql = "select * from vw_SOItemsForTimesheet where N_CompanyID=@N_CompanyId and N_SalesOrderId=@N_TransID and ((D_DeliveryDate<=@D_DateFrom) or (D_DeliveryDate>=@D_DateFrom AND D_DeliveryDate<=@D_DateTo) AND ISNULL(D_ReturnDate,@D_DateTo)>=@D_DateTo)";
+                    ItemTable = dLayer.ExecuteDataTable(Itemsql, Params, connection);
+                    ItemTable = _api.Format(ItemTable, "Items");
+
+                    DetailTable = dLayer.ExecuteDataTablePro("SP_InvItemWiseDateList", Params, connection);
+
+                    DetailTable = _api.Format(DetailTable, "Details");
+                    dt.Tables.Add(ItemTable);
+                    dt.Tables.Add(DetailTable);
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
+
+    }
 }
     
