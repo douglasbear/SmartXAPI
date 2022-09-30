@@ -33,7 +33,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult DashboardList(int? nCompanyId, int nFnYearID,int nFormID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult DashboardList(int nFnYearID,int nFormID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -63,7 +63,7 @@ namespace SmartxAPI.Controllers
                 }
 
                 if (Count == 0)
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_ServiceSheetMaster where N_CompanyID=@nCompanyId   " + Searchkey + " " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_ServiceTimesheet where N_CompanyID=@nCompanyId   " + Searchkey + " " + xSortBy;
                 else
                     sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_ServiceSheetMaster where N_CompanyID=@nCompanyId  " + Searchkey + " and N_ServiceSheetID not in (select top(" + Count + ") N_ServiceSheetID from vw_Inv_ServiceSheetMaster where N_CompanyID=@nCompanyId " + xSortBy + " ) " + " " + xSortBy;
             }
@@ -87,11 +87,13 @@ namespace SmartxAPI.Controllers
                 }
 
                 if (Count == 0)
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_VendorServiceSheetMaster where N_CompanyID=@nCompanyId   " + Searchkey + " " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_ServiceTimesheet where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_FormID=@nFormID " + Searchkey + " " + xSortBy;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_VendorServiceSheetMaster where N_CompanyID=@nCompanyId  " + Searchkey + " and N_ServiceSheetID not in (select top(" + Count + ") N_ServiceSheetID from vw_Inv_VendorServiceSheetMaster where N_CompanyID=@nCompanyId " + xSortBy + " ) " + " " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_ServiceTimesheet where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_FormID=@nFormID " + Searchkey + " and N_ServiceSheetID not in (select top(" + Count + ") N_ServiceSheetID from vw_Inv_ServiceTimesheet where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_FormID=@nFormID " + xSortBy + " ) " + " " + xSortBy;
             }
-            Params.Add("@nCompanyId", nCompanyID);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@nFormID", nFormID);
 
             try
             {
@@ -102,9 +104,9 @@ namespace SmartxAPI.Controllers
                     SortedList OutPut = new SortedList();
 
                     if(nFormID==1145)
-                        sqlCommandCount = "select count(*) as N_Count  from vw_Inv_ServiceSheetMaster where N_CompanyID=@nCompanyId " + Searchkey + "";
+                        sqlCommandCount = "select count(*) as N_Count  from vw_Inv_ServiceTimesheet where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_FormID=@nFormID " + Searchkey + "";
                     else
-                        sqlCommandCount = "select count(*) as N_Count  from vw_Inv_VendorServiceSheetMaster where N_CompanyID=@nCompanyId " + Searchkey + "";
+                        sqlCommandCount = "select count(*) as N_Count  from vw_Inv_VendorServiceSheetMaster where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_FormID=@nFormID " + Searchkey + "";
 
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
