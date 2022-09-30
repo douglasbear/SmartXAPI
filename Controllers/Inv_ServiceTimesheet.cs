@@ -46,7 +46,7 @@ namespace SmartxAPI.Controllers
             if(nFormID==1145)
             {
                 if (xSearchkey != null && xSearchkey.Trim() != "")
-                    Searchkey = "and (X_ServiceSheetCode like '%" + xSearchkey + "%' or X_OrderNo like '%" + xSearchkey + "%' or X_ProjectName like '%" + xSearchkey + "%' or X_CustomerName like '%" + xSearchkey + "%' or D_Invoicedate like '%" + xSearchkey + "%')";
+                    Searchkey = "and (X_ServiceSheetCode like '%" + xSearchkey + "%' or X_OrderNo like '%" + xSearchkey + "%' or X_ProjectName like '%" + xSearchkey + "%' or X_CustomerName like '%" + xSearchkey + "%' or D_Entrydate like '%" + xSearchkey + "%')";
 
                 if (xSortBy == null || xSortBy.Trim() == "")
                     xSortBy = " order by X_ServiceSheetCode desc";
@@ -210,7 +210,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult ServiceSheetDetails(int nFormID,string xServiceSheeetCode)
+        public ActionResult ServiceSheetDetails(int nFormID,string xServiceSheetCode, int nLocationID, string xType)
         {
             try
             {
@@ -220,29 +220,62 @@ namespace SmartxAPI.Controllers
                     DataSet dt = new DataSet();
                     SortedList Params = new SortedList();
                     DataTable MasterTable = new DataTable();
+                    DataTable ItemTable = new DataTable();
                     DataTable DetailTable = new DataTable();
-                    DataTable DataTable = new DataTable();
+                    DataTable ProcTable = new DataTable();
 
                     string Mastersql = "";
+                    string Itemsql = "";
                     string DetailSql = "";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    Params.Add("@xServiceSheeetCode", xServiceSheeetCode);
-                    Mastersql = "select * from vw_PayEvaluation_Details where N_CompanyId=@nCompanyID and X_EvalCode=@xServiceSheeetCode   ";
+                    Params.Add("@xServiceSheetCode", xServiceSheetCode);
+                    Mastersql = "select * from vw_Inv_ServiceTimesheet where N_CompanyID=@nCompanyID and X_ServiceSheetCode=@xServiceSheetCode";
                    
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                    int EvaID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_EvalID"].ToString());
-                    Params.Add("@nEvalID", EvaID);
+                    int nServiceSheetID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ServiceSheetID"].ToString());
+                    Params.Add("@nServiceSheetID", nServiceSheetID);
 
                     MasterTable = _api.Format(MasterTable, "Master");
-                    DetailSql = "select * from vw_PayEvaluation_Details where N_CompanyId=@nCompanyID and N_EvalID=@nEvalID ";
+
+                    Itemsql = "select * from vw_Inv_ServiceTimesheetItems where N_CompanyID=@nCompanyID and N_ServiceSheetID=@nServiceSheetID";
+                    ItemTable = dLayer.ExecuteDataTable(Itemsql, Params, connection);
+                    ItemTable = _api.Format(ItemTable, "Items");
+
+                    Params.Add("@N_TransID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_SOID"].ToString()));
+                    Params.Add("@N_FnyearID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()));
+                    Params.Add("@N_BranchID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString()));
+                    Params.Add("@D_DateFrom", myFunctions.getIntVAL(MasterTable.Rows[0]["D_DateFrom"].ToString()));
+                    Params.Add("@D_DateTo", myFunctions.getIntVAL(MasterTable.Rows[0]["D_DateTo"].ToString()));
+                    Params.Add("@N_LocationID", nLocationID);
+                    Params.Add("@N_UserID", myFunctions.GetUserID(User));
+                    Params.Add("@X_Type", xType);
+                    Params.Add("@N_FormID", myFunctions.getIntVAL(MasterTable.Rows[0]["D_DateTo"].ToString()));
+                    ProcTable = dLayer.ExecuteDataTablePro("SP_InvItemWiseDateList", Params, connection);
+
+                    DetailSql = "select * from vw_Inv_ServiceTimesheetDetails where N_CompanyId=@nCompanyID and N_ServiceSheetID=@nServiceSheetID";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+
+                    foreach (DataRow Avar in ProcTable.Rows)
+                    {
+                        foreach (DataRow Kvar in DetailTable.Rows)
+                        {
+                            if (myFunctions.getIntVAL(Avar["N_TransDetailsID"].ToString()) == myFunctions.getIntVAL(Kvar["N_TransDetailsID"].ToString()) &&
+                                myFunctions.getIntVAL(Avar["N_ItemID"].ToString()) == myFunctions.getIntVAL(Kvar["N_ItemID"].ToString()) &&
+                                myFunctions.getIntVAL(Avar["DateValue"].ToString()) == myFunctions.getIntVAL(Kvar["D_Date"].ToString()))
+                            {
+                                Kvar["N_Hour"] = Avar["N_Hours"];
+                                Kvar["X_Remarks"] = Avar["X_Remarks"];
+                            }
+                        }
+                    }
                     DetailTable = _api.Format(DetailTable, "Details");
+
                     dt.Tables.Add(MasterTable);
+                    dt.Tables.Add(ItemTable);
                     dt.Tables.Add(DetailTable);
                     return Ok(_api.Success(dt));
-
                 }
 
             }
