@@ -1293,21 +1293,7 @@ namespace SmartxAPI.Controllers
                     }
                          
 
-                        if (b_RentalProduct)
-                        {
-                           SortedList ProductParams = new SortedList();
-                    ProductParams.Add("N_CompanyID", nCompanyID);
-                  
-                    ProductParams.Add("N_FnYearID",nFnYearID);
-                    ProductParams.Add("N_TransID",nEmpID);
-                     ProductParams.Add("N_LocationID",  myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LocationID"].ToString()));
-                    ProductParams.Add("N_ItemTypeID",9);
-                   
-                    ProductParams.Add("X_ItemName",  xEmpName);
-                    dLayer.ExecuteScalarPro("SP_CreateProduct", ProductParams, connection, transaction);
-
-                        
-                        }
+                
                          if (myFunctions.ContainColumn("b_RentalProduct", dtMasterTable))
                          dtMasterTable.Columns.Remove("b_RentalProduct");
                     nEmpID = dLayer.SaveData("pay_Employee", "n_EmpID", DupCriteria, X_Crieteria, dtMasterTable, connection, transaction);
@@ -1319,7 +1305,21 @@ namespace SmartxAPI.Controllers
                     else
                     {
 
+        if (b_RentalProduct)
+                        {
+                           SortedList ProductParams = new SortedList();
+                    ProductParams.Add("N_CompanyID", nCompanyID);
+                  
+                    ProductParams.Add("N_FnYearID",nFnYearID);
+                    ProductParams.Add("N_TransID",nEmpID);
+                     ProductParams.Add("N_LocationID",  myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LocationID"].ToString()));
+                    ProductParams.Add("N_ItemTypeID",8);
+                   
+                    ProductParams.Add("X_ItemName",  xEmpName);
+                    dLayer.ExecuteScalarPro("SP_CreateProduct", ProductParams, connection, transaction);
 
+                        
+                        }
                         if (empImage.Length > 0)
                             dLayer.SaveImage("pay_Employee", "i_Employe_Image", empImageBitmap, "n_EmpID", nEmpID, connection, transaction);
 

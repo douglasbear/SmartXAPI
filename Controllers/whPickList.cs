@@ -10,6 +10,7 @@ using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -152,6 +153,8 @@ namespace SmartxAPI.Controllers
                     int nFormID = myFunctions.getIntVAL(MasterRow["n_FormID"].ToString());
 
                     string x_PickListCode = "";
+                     string i_Signature = "";
+                     bool SigEnable = false;
                     if (xPickListCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
@@ -171,9 +174,34 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Wh_PickListDetails", "n_PickListID", nPickListID, "N_CompanyID=" + nCompanyID + " and n_PickListID=" + nPickListID, connection, transaction);
                         dLayer.DeleteData("Wh_PickList", "n_PickListID", nPickListID, "N_CompanyID=" + nCompanyID + " and n_PickListID=" + nPickListID, connection, transaction);
                     }
-
+                   //Signature
+                    Byte[] ImageBitmap = new Byte[i_Signature.Length];
+                      if (MasterTable.Columns.Contains("i_signature"))
+                    {
+                    if(!MasterRow["i_signature"].ToString().Contains("undefined"))
+                    {
+                    i_Signature = Regex.Replace(MasterRow["i_signature"].ToString(), @"^data:image\/[a-zA-Z]+;base64,", string.Empty);
+                    if (myFunctions.ContainColumn("i_signature", MasterTable))
+                        MasterTable.Columns.Remove("i_signature");
+                    ImageBitmap = new Byte[i_Signature.Length];
+                    ImageBitmap = Convert.FromBase64String(i_Signature);
+                    SigEnable=true;
+                    }
+                    }
 
                     int n_PickListID = dLayer.SaveData("Wh_PickList", "N_PickListID", "", "", MasterTable, connection, transaction);
+                     
+                        
+                    
+                    
+                   
+                    //Saving Signature
+                   if(SigEnable)
+                   {
+                    if (i_Signature.Length > 0)
+                        dLayer.SaveImage("Wh_PickList", "i_signature", ImageBitmap, "N_PickListID", nPickListID, connection, transaction);
+                    }
+
                     if (n_PickListID <= 0)
                     {
                         transaction.Rollback();
