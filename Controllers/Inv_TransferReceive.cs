@@ -256,7 +256,6 @@ namespace SmartxAPI.Controllers
                         StockParam.Add("N_CompanyID", nCompanyID);
                         StockParam.Add("@N_ReceiveId", nReceivableId);
                         StockParam.Add("@N_WarehouseIdFrom", N_LocationIDFrom);
-                        StockParam.Add("@N_WarehouseIdTo", N_LocationID);
                         StockParam.Add("N_UserID", nUserID);
                         StockParam.Add("X_SystemName", "");
 

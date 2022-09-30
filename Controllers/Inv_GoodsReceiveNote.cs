@@ -439,7 +439,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,ex));
+                            return Ok(_api.Error(User,"Error Occurred in MRN Posting , Please check account mapping"));
                         }
 
                         if (n_POrderID > 0)
@@ -567,7 +567,8 @@ namespace SmartxAPI.Controllers
                             {"N_UserID",nUserID},
                             {"X_SystemName","WebRequest"},
                             {"@B_MRNVisible","0"}};
-
+DataTable DetailTable = dLayer.ExecuteDataTable("SELECT Inv_PurchaseOrderDetails.N_POrderID FROM Inv_PurchaseOrderDetails INNER JOIN Inv_MRNDetails ON Inv_PurchaseOrderDetails.N_CompanyID = Inv_MRNDetails.N_CompanyID AND Inv_PurchaseOrderDetails.N_POrderDetailsID = Inv_MRNDetails.N_POrderDetailsID where Inv_MRNDetails.N_CompanyID=@nCompanyID and Inv_MRNDetails.N_MRNID=@nTransID  group by Inv_PurchaseOrderDetails.N_POrderID", ParamList, connection, transaction);
+                    
                         Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
                         if (Results <= 0)
                         {
@@ -576,7 +577,20 @@ namespace SmartxAPI.Controllers
                         }
 
                         myAttachments.DeleteAttachment(dLayer, 1, nGRNID, VendorID, nFnYearID, nFormID, User, transaction, connection);
-
+                            int tempPOrderID=0;
+                            for (int j = 0; j < DetailTable.Rows.Count; j++)
+                            {
+                                int n_POrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_POrderID"].ToString());
+                                if (n_POrderID > 0 && tempPOrderID!=n_POrderID)
+                                {
+                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,true,dLayer,connection,transaction))
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                    }
+                                }
+                                tempPOrderID=n_POrderID;
+                            };
                         transaction.Commit();
                         return Ok(_api.Success("Goods Receive Note deleted"));
                     }

@@ -649,6 +649,14 @@ namespace SmartxAPI.Controllers
                     DetailTable.Columns.Remove("X_ItemUnit");
                     int N_PurchaseOrderDetailId = dLayer.SaveData("Inv_PurchaseOrderDetails", "n_POrderDetailsID", DetailTable, connection, transaction);
 
+                                if (N_POrderID > 0)
+                                {
+                                    if(!myFunctions.UpdateTxnStatus(nCompanyId,N_POrderID,82,false,dLayer,connection,transaction))
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(api.Error(User, "Unable To Update Txn Status"));
+                                    }
+                                }
                     SortedList VendorParams = new SortedList();
                     VendorParams.Add("@nVendorID", N_VendorID);
                     DataTable VendorInfo = dLayer.ExecuteDataTable("Select X_VendorCode,X_VendorName from Inv_Vendor where N_VendorID=@nVendorID", VendorParams, connection, transaction);
