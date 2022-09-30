@@ -43,6 +43,7 @@ namespace SmartxAPI.Controllers
             int Count = (nPage - 1) * nSizeperpage;
 
             string sqlCommandText = "", sqlCommandCount = "";
+             string Searchkey = "";
 
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnyearID", nFnyearID);
@@ -58,6 +59,10 @@ namespace SmartxAPI.Controllers
             // else
             //     xType = "NoStock";
             //     xType = "No Stock";
+
+
+                if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_ItemCode like'%" + xSearchkey + "%'or X_ItemName like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by X_ItemCode desc";
@@ -150,9 +155,9 @@ namespace SmartxAPI.Controllers
                     }
 
                     if (Count == 0)
-                        sqlCommandText = "Select top(" + nSizeperpage + ") " + X_VisibleFieldList + " from " + X_TableName + " where " + X_Crieteria + " "  + xSortBy + "";
+                        sqlCommandText = "Select top(" + nSizeperpage + ") " + X_VisibleFieldList + " from " + X_TableName + " where " + X_Crieteria + " " + Searchkey +" "+ xSortBy + "";
                     else
-                        sqlCommandText = "Select top(" + nSizeperpage + ") " + X_VisibleFieldList + " from " + X_TableName + " where " + X_Crieteria + " " + " and N_ItemID not in (select top(" + Count + ") N_ItemID from " + X_TableName + " where " + X_Crieteria + ") " + xSortBy + "";
+                        sqlCommandText = "Select top(" + nSizeperpage + ") " + X_VisibleFieldList + " from " + X_TableName + " where " + X_Crieteria + " " + Searchkey + " " + " and N_ItemID not in (select top(" + Count + ") N_ItemID from " + X_TableName + " where " + X_Crieteria + ") " + xSortBy + "";
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     sqlCommandCount = "select count(*) as N_Count From " + X_TableName + " where " + X_Crieteria + " " ;
