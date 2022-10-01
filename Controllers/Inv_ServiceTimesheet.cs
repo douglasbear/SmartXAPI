@@ -149,6 +149,14 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nFormID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FormID"].ToString());
                     string xServiceSheetCode = MasterTable.Rows[0]["x_ServiceSheetCode"].ToString();
+                    int nServiceSheetItemID = 0;
+
+                    if (nServiceSheetID > 0)
+                    {
+                        dLayer.DeleteData("Inv_ServiceTimesheet", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Inv_ServiceTimesheetItems", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Inv_ServiceTimesheetDetails", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                    }
 
                     if (xServiceSheetCode == "@Auto")
                     {
@@ -171,23 +179,27 @@ namespace SmartxAPI.Controllers
                         return Ok("Unable to save Service Timesheet!");
                     }
 
-                    dLayer.DeleteData("Inv_ServiceTimesheetItems", "N_ServiceSheetID", nServiceSheetID, "", connection, transaction);
                     for (int j = 0; j < ItemTable.Rows.Count; j++)
                     {
                         ItemTable.Rows[j]["N_ServiceSheetID"] = nServiceSheetID;
-                    }
-                    int nServiceSheetItemID = dLayer.SaveData("Inv_ServiceTimesheetItems", "N_ServiceSheetItemID", ItemTable, connection, transaction);
-                    if (nServiceSheetItemID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok("Unable to save Service Timesheet!");
+
+                        nServiceSheetItemID = dLayer.SaveDataWithIndex("Inv_ServiceTimesheetItems", "N_ServiceSheetItemID", "", "", j, ItemTable, connection, transaction);
+                        if (nServiceSheetItemID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to save"));
+                        }
+
+                        for (int i = 0; i < DetailTable.Rows.Count; i++)
+                        {
+                            if (DetailTable.Rows[i]["N_TransDetailID"].ToString() == ItemTable.Rows[j]["N_DeliverNoteDetailsID"].ToString())
+                            {
+                                DetailTable.Rows[i]["N_ServiceSheetID"] = nServiceSheetID;
+                                DetailTable.Rows[i]["N_ServiceSheetItemID"] = nServiceSheetItemID;
+                            }
+                        }
                     }
 
-                    dLayer.DeleteData("Inv_ServiceTimesheetDetails", "N_ServiceSheetItemID", nServiceSheetItemID, "", connection, transaction);
-                    for (int j = 0; j < DetailTable.Rows.Count; j++)
-                    {
-                        DetailTable.Rows[j]["N_ServiceSheetItemID"] = nServiceSheetItemID;
-                    }
                     int nServiceSheetDetailsID = dLayer.SaveData("Inv_ServiceTimesheetDetails", "N_ServiceSheetDetailsID", DetailTable, connection, transaction);
                     if (nServiceSheetDetailsID <= 0)
                     {
@@ -263,9 +275,9 @@ namespace SmartxAPI.Controllers
                     {
                         foreach (DataRow Kvar in DetailTable.Rows)
                         {
-                            if (myFunctions.getIntVAL(Avar["N_TransDetailsID"].ToString()) == myFunctions.getIntVAL(Kvar["N_TransDetailsID"].ToString()) &&
+                            if (myFunctions.getIntVAL(Avar["N_TransDetailsID"].ToString()) == myFunctions.getIntVAL(Kvar["N_TransDetailID"].ToString()) &&
                                 myFunctions.getIntVAL(Avar["N_ItemID"].ToString()) == myFunctions.getIntVAL(Kvar["N_ItemID"].ToString()) &&
-                                myFunctions.getIntVAL(Avar["DateValue"].ToString()) == myFunctions.getIntVAL(Kvar["D_Date"].ToString()))
+                                Avar["DateValue"].ToString() == Kvar["D_Date"].ToString())
                             {
                                 Kvar["N_Hour"] = Avar["N_Hours"];
                                 Kvar["X_Remarks"] = Avar["X_Remarks"];
