@@ -219,6 +219,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     DataSet dt = new DataSet();
                     SortedList Params = new SortedList();
+                    SortedList ProcParams = new SortedList();
                     DataTable MasterTable = new DataTable();
                     DataTable ItemTable = new DataTable();
                     DataTable DetailTable = new DataTable();
@@ -243,16 +244,17 @@ namespace SmartxAPI.Controllers
                     ItemTable = dLayer.ExecuteDataTable(Itemsql, Params, connection);
                     ItemTable = _api.Format(ItemTable, "Items");
 
-                    Params.Add("@N_TransID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_SOID"].ToString()));
-                    Params.Add("@N_FnyearID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()));
-                    Params.Add("@N_BranchID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString()));
-                    Params.Add("@D_DateFrom", myFunctions.getIntVAL(MasterTable.Rows[0]["D_DateFrom"].ToString()));
-                    Params.Add("@D_DateTo", myFunctions.getIntVAL(MasterTable.Rows[0]["D_DateTo"].ToString()));
-                    Params.Add("@N_LocationID", nLocationID);
-                    Params.Add("@N_UserID", myFunctions.GetUserID(User));
-                    Params.Add("@X_Type", xType);
-                    Params.Add("@N_FormID", myFunctions.getIntVAL(MasterTable.Rows[0]["D_DateTo"].ToString()));
-                    ProcTable = dLayer.ExecuteDataTablePro("SP_InvItemWiseDateList", Params, connection);
+                    ProcParams.Add("@N_TransID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_SOID"].ToString()));
+                    ProcParams.Add("@N_CompanyId", myFunctions.GetCompanyID(User));
+                    ProcParams.Add("@N_FnyearID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()));
+                    ProcParams.Add("@N_BranchID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString()));
+                    ProcParams.Add("@D_DateFrom", MasterTable.Rows[0]["D_DateFrom"].ToString());
+                    ProcParams.Add("@D_DateTo", MasterTable.Rows[0]["D_DateTo"].ToString());
+                    ProcParams.Add("@N_LocationID", nLocationID);
+                    ProcParams.Add("@N_UserID", myFunctions.GetUserID(User));
+                    ProcParams.Add("@X_Type", xType);
+                    ProcParams.Add("@N_FormID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_FormID"].ToString()));
+                    ProcTable = dLayer.ExecuteDataTablePro("SP_InvItemWiseDateList", ProcParams, connection);
 
                     DetailSql = "select * from vw_Inv_ServiceTimesheetDetails where N_CompanyId=@nCompanyID and N_ServiceSheetID=@nServiceSheetID";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
