@@ -914,6 +914,8 @@ namespace SmartxAPI.Controllers
 
             objPayMode=dLayer.ExecuteScalar(payModeSql, connection);
 
+            if(objPayMode==null)
+            objPayMode="";
             object RetQty = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =" + nSalesID + " and Isnull(B_IsSaveDraft,0) =0 and N_CompanyID=" + nCompanyID , connection);
             object RetQtyDrft = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =" + nSalesID + " and Isnull(B_IsSaveDraft,0)=1 and N_CompanyID=" + nCompanyID , connection);
 
