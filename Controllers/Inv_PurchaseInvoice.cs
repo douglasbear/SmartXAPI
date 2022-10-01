@@ -589,8 +589,10 @@ namespace SmartxAPI.Controllers
             DataTable MasterTable;
             DataTable DetailTable;
             DataTable DetailsToImport;
+            DataTable WarrantyInfo;
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
+            WarrantyInfo = ds.Tables["warrantyInformation"];
             DataTable Approvals;
             Approvals = ds.Tables["approval"];
             DataRow ApprovalRow = Approvals.Rows[0];
@@ -856,6 +858,7 @@ namespace SmartxAPI.Controllers
 
                         dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + nCompanyID + " and X_VoucherNo='" + values + "' and N_FnYearID=" + nFnYearID + " and X_TransType = 'PURCHASE'", connection, transaction);
                         dLayer.ExecuteNonQuery("Delete FROM Inv_PurchaseFreights WHERE N_PurchaseID = " + N_PurchaseID + " and N_CompanyID = " + nCompanyID, connection, transaction);
+                        dLayer.ExecuteNonQuery("Delete from Inv_PurchaseWarranty where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.ExecuteNonQuery("Delete from Inv_PurchaseDetails where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.ExecuteNonQuery(" Delete From Inv_Purchase Where (N_PurchaseID = " + N_PurchaseID + " OR (N_PurchaseType =4 and N_PurchaseRefID =  " + N_PurchaseID + ")) and N_CompanyID = " + nCompanyID, connection, transaction);
                         dLayer.ExecuteNonQuery("Delete From Inv_Purchase Where (N_PurchaseID = " + N_PurchaseID + " OR (N_PurchaseType =5 and N_PurchaseRefID =  " + N_PurchaseID + ")) and N_CompanyID = " + nCompanyID, connection, transaction);
@@ -972,6 +975,22 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQueryPro("[SP_UpdateStock_MRN]", UpdateStockParam, connection, transaction);
 
                         }
+                        if(WarrantyInfo!=null)
+                        foreach (DataRow dtWarranty in WarrantyInfo.Rows)
+                        {
+                            if(myFunctions.getIntVAL(dtWarranty["rowID"].ToString())==j)
+                            dtWarranty["N_PurchaseID"] = N_PurchaseID;
+                            dtWarranty["N_PurchaseDetailID"] = N_InvoiceDetailId;
+                        }
+
+
+                    }
+
+                    if(WarrantyInfo!=null && WarrantyInfo.Rows.Count>0){
+                    if (WarrantyInfo.Columns.Contains("rowID"))
+                        WarrantyInfo.Columns.Remove("rowID");
+
+                    dLayer.SaveData("Inv_PurchaseWarranty", "N_WarrantyID", WarrantyInfo, connection, transaction);
                     }
 
                     if (N_PurchaseID > 0)
@@ -995,6 +1014,9 @@ namespace SmartxAPI.Controllers
                         }
                         dLayer.SaveData("Inv_PurchaseFreights", "N_PurchaseFreightID", PurchaseFreight, connection, transaction);
                     }
+
+                   
+
                     if (b_FreightAmountDirect == 0)
                     {
                         SortedList ProcParams = new SortedList(){
@@ -1062,24 +1084,18 @@ namespace SmartxAPI.Controllers
                         }
 
                             //StatusUpdate
+                            int tempPOrderID=0;
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
                             {
-                                if (n_POrderID > 0)
+                                if (n_POrderID > 0 && tempPOrderID!=n_POrderID)
                                 {
-                                    SortedList statusParams = new SortedList();
-                                    statusParams.Add("@N_CompanyID", nCompanyID);
-                                    statusParams.Add("@N_TransID", n_POrderID);
-                                    statusParams.Add("@N_FormID", 82);
-                                    try
-                                    {
-                                        dLayer.ExecuteNonQueryPro("SP_TxtStatusUpdate", statusParams, connection, transaction);
-                                    }
-                                    catch (Exception ex)
+                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
                                     {
                                         transaction.Rollback();
-                                        return Ok(_api.Error(User, ex));
+                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
                                     }
                                 }
+                                tempPOrderID=n_POrderID;
                             };
                     }
                     SortedList VendorParams = new SortedList();
@@ -1105,7 +1121,12 @@ namespace SmartxAPI.Controllers
                 Result.Add("n_InvoiceID", N_PurchaseID);
                 Result.Add("x_InvoiceNo", InvoiceNo);
                 return Ok(_api.Success(Result, "Purchase Invoice Saved"));
+
+
             }
+
+            
+                  
             catch (Exception ex)
             {
                 return Ok(_api.Error(User, ex));
@@ -1202,7 +1223,8 @@ namespace SmartxAPI.Controllers
                                     {"X_SystemName","WebRequest"},
                                     {"B_MRNVisible",(B_isDirectMRN && B_MRNVisible) ?"1":"0"}};
                             //{"B_MRNVisible",n_MRNID>0?"1":"0"}};
-
+                            DataTable DetailTable = dLayer.ExecuteDataTable("select N_POrderID from Inv_PurchaseDetails where N_CompanyID=@nCompanyID and N_PurchaseID=@nTransID group by N_POrderID order by N_POrderID", ParamList, connection, transaction);
+                    
                             Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
                             if (Results <= 0)
                             {
@@ -1212,6 +1234,21 @@ namespace SmartxAPI.Controllers
 
                             myAttachments.DeleteAttachment(dLayer, 1, nPurchaseID, VendorID, nFnYearID, N_FormID, User, transaction, connection);
 
+                            //StatusUpdate
+                            int tempPOrderID=0;
+                            for (int j = 0; j < DetailTable.Rows.Count; j++)
+                            {
+                                int n_POrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_POrderID"].ToString());
+                                if (n_POrderID > 0 && tempPOrderID!=n_POrderID)
+                                {
+                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,true,dLayer,connection,transaction))
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                    }
+                                }
+                                tempPOrderID=n_POrderID;
+                            };
                         }
                         transaction.Commit();
                         return Ok(_api.Success("Purchase Invoice " + status + " Successfully"));
@@ -1275,6 +1312,91 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
 
+        }
+
+
+         [HttpGet("warrantyDashboardList")]
+        public ActionResult WarrantyDashboardList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable dt = new DataTable();
+                    DataTable CountTable = new DataTable();
+                    SortedList Params = new SortedList();
+                    DataSet dataSet = new DataSet();
+                    string sqlCommandText = "";
+                    string sqlCommandCount = "";
+                    string Searchkey = "";
+                    string criteria = "";
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    int nUserID = myFunctions.GetUserID(User);
+
+
+
+
+
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and (x_InvoiceNo like '%" + xSearchkey + "%' or X_VendorName like '%" + xSearchkey + "%' or x_ItemName like '%" + xSearchkey + "%' or x_ItemCode like '%" + xSearchkey  + "%' or d_InvoiceDate like '%" + xSearchkey + "%' or x_WarrantyDescription like '%" + xSearchkey + "%' )";
+                       
+                   
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by N_PurchaseID desc";
+                    else
+                    {
+                        switch (xSortBy.Split(" ")[0])
+                        {
+                            case "x_InvoiceNo":
+                                xSortBy = "N_PurchaseID " + xSortBy.Split(" ")[1];
+                                break;
+                            case "d_WarrantyFrom":
+                                xSortBy = "Cast([d_WarrantyFrom] as DateTime ) " + xSortBy.Split(" ")[1];
+                                break;
+                            default: break;
+                        }
+                        xSortBy = " order by " + xSortBy;
+                    }
+
+
+                    int Count = (nPage - 1) * nSizeperpage;
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Inv_PurchaseWarranty where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId " + criteria + Searchkey + " " + xSortBy;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Inv_PurchaseWarranty where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId " + criteria + Searchkey + " and  N_WarrantyId not in (select top(" + Count + ") N_WarrantyId from Vw_Inv_PurchaseWarranty where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId " + criteria + Searchkey + xSortBy + " ) " + xSortBy;
+
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@nFnYearId", nFnYearId);
+                    SortedList OutPut = new SortedList();
+
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                   
+
+
+                    sqlCommandCount = "select count(*) as N_Count,0 as TotalAmount from Vw_Inv_PurchaseWarranty where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId " + criteria + " " + Searchkey + "";
+                    DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                    string TotalCount = "0";
+                    string TotalSum = "0";
+                    if (Summary.Rows.Count > 0)
+                    {
+                        DataRow drow = Summary.Rows[0];
+                        TotalCount = drow["N_Count"].ToString();
+                        TotalSum = drow["TotalAmount"].ToString();
+                    }
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    OutPut.Add("TotalSum", TotalSum);
+
+
+                        return Ok(_api.Success(OutPut));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
         }
 
 

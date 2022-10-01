@@ -32,7 +32,6 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
-        private readonly int N_FormID;
         public Inv_GoodsReceiveNote(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf, IMyAttachments myAtt)
         {
             _api = api;
@@ -40,10 +39,9 @@ namespace SmartxAPI.Controllers
             myFunctions = fun;
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            N_FormID = 555;
         }
         [HttpGet("list")]
-        public ActionResult GetGoodsReceiveList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,bool bAllBranchData,int nBranchID)
+        public ActionResult GetGoodsReceiveList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,bool bAllBranchData,int nBranchID, int nFormID)
         {
               try
             {
@@ -88,7 +86,7 @@ namespace SmartxAPI.Controllers
             if (xSearchkey != null && xSearchkey.Trim() != "")
 
             
-                Searchkey = "and ([MRN No] like '%" + xSearchkey + "%' or X_VendorName like '%" + xSearchkey + "%' or x_InvoiceNo like '%" + xSearchkey + "%')";
+                Searchkey = "and ([MRN No] like '%" + xSearchkey + "%' or X_VendorName like '%" + xSearchkey + "%' or x_InvoiceNo like '%" + xSearchkey + "%' or D_MRNDate like '%" + xSearchkey + "%' or X_VendorInvoice like '%" + xSearchkey + "%')";
 
                         if (bAllBranchData == true)
                         {
@@ -113,17 +111,18 @@ namespace SmartxAPI.Controllers
             }
             int Count = (nPage - 1) * nSizeperpage;
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,x_InvoiceNo from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_IsDirectMRN=1 " + Pattern + Searchkey + " " + "Group By  N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No],X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,x_InvoiceNo" + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,x_InvoiceNo,N_FormID from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_IsDirectMRN=1 and N_FormID=@p3 " + Pattern + Searchkey + " " + "Group By  N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No],X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,x_InvoiceNo,N_FormID" + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,x_InvoiceNo from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_IsDirectMRN=1 "+ Pattern + Searchkey + " and N_MRNID not in (select top(" + Count + ") N_MRNID from Inv_MRN where N_CompanyID=@p1 and N_FnYearID=@p2 and B_IsDirectMRN=1 "+ Pattern + Searchkey + " " + xSortBy + " ) " +  "Group By  N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No],X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,x_InvoiceNo" + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,x_InvoiceNo,N_FormID from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_IsDirectMRN=1 and N_FormID=@p3 "+ Pattern + Searchkey + " and N_MRNID not in (select top(" + Count + ") N_MRNID from Inv_MRN where N_CompanyID=@p1 and N_FnYearID=@p2 and B_IsDirectMRN=1 and N_FormID=@p3 "+ Pattern + Searchkey + " " + xSortBy + " ) " +  "Group By  N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No],X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,x_InvoiceNo,N_FormID" + xSortBy;
             // sqlCommandText = "select * from Inv_MRNDetails where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
+            Params.Add("@p3", nFormID);
             SortedList OutPut = new SortedList();
 
           
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_IsDirectMRN=1 " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_IsDirectMRN=1 and N_FormID=@p3 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     if (Summary.Rows.Count > 0)
@@ -150,7 +149,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listdetails")]
-        public ActionResult GetGoodsReceiveDetails(int nCompanyId, int nFnYearId, string nMRNNo, bool showAllBranch, int nBranchId, string poNo)
+        public ActionResult GetGoodsReceiveDetails(int nCompanyId, int nFnYearId, string nMRNNo, bool showAllBranch, int nBranchId, string poNo,int nFormID)
         {
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
@@ -164,18 +163,25 @@ namespace SmartxAPI.Controllers
             Params.Add("@YearID", nFnYearId);
             Params.Add("@TransType", "GRN");
             Params.Add("@BranchID", nBranchId);
+            Params.Add("@nFormID", nFormID);
             string X_MasterSql = "";
             string X_DetailsSql = "";
             string X_FreightSql = "";
+            string crieteria = "";
 
+         
+            if(nFormID>0)
+             {
+            crieteria = " and Inv_PurchaseOrder.N_FormID = @nFormID ";
+             }
             if (nMRNNo != null)
             {
                 Params.Add("@GRNNo", nMRNNo);
-                X_MasterSql = "select N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS x_MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,N_FreightAmt,N_CreatedUser,D_CreatedDate,N_ExchangeRate,N_CurrencyID,X_CurrencyName,OrderDate,isnull(N_Processed,0) as N_Processed,N_PurchaseID,X_InvoiceNo,X_ProjectCode,X_ProjectName,N_ProjectID from vw_InvMRNNo_Search where N_CompanyID=@CompanyID and [MRN No]=@GRNNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                X_MasterSql = "select N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS x_MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,N_FreightAmt,N_CreatedUser,D_CreatedDate,N_ExchangeRate,N_CurrencyID,X_CurrencyName,OrderDate,isnull(N_Processed,0) as N_Processed,N_PurchaseID,X_InvoiceNo,X_ProjectCode,X_ProjectName,N_ProjectID,N_FormID from vw_InvMRNNo_Search where N_CompanyID=@CompanyID and [MRN No]=@GRNNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
             }
             if (poNo != null)
             {
-                X_MasterSql = "Select Inv_PurchaseOrder.*,Inv_Location.X_LocationName,Inv_Vendor.* from Inv_PurchaseOrder Inner Join Inv_Vendor On Inv_PurchaseOrder.N_VendorID=Inv_Vendor.N_VendorID and Inv_PurchaseOrder.N_CompanyID=Inv_Vendor.N_CompanyID and Inv_PurchaseOrder.N_FnYearID=Inv_Vendor.N_FnYearID LEFT OUTER JOIN Inv_Location ON Inv_Location.N_LocationID=Inv_PurchaseOrder.N_LocationID Where Inv_PurchaseOrder.N_CompanyID=" + nCompanyId + " and X_POrderNo='" + poNo + "' and Inv_PurchaseOrder.B_IsSaveDraft<>1";
+                X_MasterSql = "Select Inv_PurchaseOrder.*,Inv_Location.X_LocationName,Inv_Vendor.* from Inv_PurchaseOrder Inner Join Inv_Vendor On Inv_PurchaseOrder.N_VendorID=Inv_Vendor.N_VendorID and Inv_PurchaseOrder.N_CompanyID=Inv_Vendor.N_CompanyID and Inv_PurchaseOrder.N_FnYearID=Inv_Vendor.N_FnYearID LEFT OUTER JOIN Inv_Location ON Inv_Location.N_LocationID=Inv_PurchaseOrder.N_LocationID Where Inv_PurchaseOrder.N_CompanyID=" + nCompanyId + " and X_POrderNo='" + poNo + "' "+crieteria+" and Inv_PurchaseOrder.B_IsSaveDraft<>1";
             }
             try
             {
@@ -208,19 +214,36 @@ namespace SmartxAPI.Controllers
 
                     }
 
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    if (dtGoodReceive.Columns.Contains("N_MRNID")) 
+                     {
+                    int nGRNID = myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_MRNID"].ToString());
+                    object objReturnProcessed = dLayer.ExecuteScalar("Select Isnull(N_MRNReturnID,0) from Inv_MRNReturn where N_CompanyID=" + nCompanyId + " and N_MRNID=" + nGRNID , connection, transaction);
+                    if (objReturnProcessed == null)
+                        objReturnProcessed = 0;
+
+                    if (myFunctions.getIntVAL(objReturnProcessed.ToString()) != 0) {
+                        dtGoodReceive = myFunctions.AddNewColumnToDataTable(dtGoodReceive, "N_ReturnProcessed", typeof(int), 0);
+                        dtGoodReceive.Rows[0]["N_ReturnProcessed"] = 1;
+                    };
+                   }
+                    transaction.Commit();
 
                     dtGoodReceiveDetails = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
                     dtGoodReceiveDetails = _api.Format(dtGoodReceiveDetails, "Details");
 
+            
+
                     X_FreightSql = "Select *,X_ShortName as X_CurrencyName FROM vw_InvPurchaseFreights WHERE N_PurchaseID=" + N_GRNID;
                     dtFreightCharges = dLayer.ExecuteDataTable(X_FreightSql, Params, connection);
                     dtFreightCharges = _api.Format(dtFreightCharges, "freightCharges");
+                    
                     if (N_POrderID != 0)
                     {
                     }
                     else
                     {
-                        DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_VendorID"].ToString()), myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_MRNID"].ToString()), this.N_FormID, myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                        DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_VendorID"].ToString()), myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_MRNID"].ToString()), myFunctions.getIntVAL(dtGoodReceive.Rows[0]["n_FormID"].ToString()), myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_FnYearID"].ToString()), User, connection);
                         Attachments = _api.Format(Attachments, "attachments");
                           dt.Tables.Add(Attachments);
                        
@@ -229,7 +252,6 @@ namespace SmartxAPI.Controllers
                      dt.Tables.Add(dtGoodReceiveDetails);
                      dt.Tables.Add(dtFreightCharges);
                   
-
                 }
                 return Ok(_api.Success(dt));
             }
@@ -292,6 +314,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nFnYearID = myFunctions.getIntVAL(masterRow["n_FnYearId"].ToString());
             int n_POrderID = myFunctions.getIntVAL(masterRow["n_POrderID"].ToString());
+            int n_FormID = myFunctions.getIntVAL(masterRow["n_FormID"].ToString());
 
             
             
@@ -332,7 +355,7 @@ namespace SmartxAPI.Controllers
                         N_SaveDraft = myFunctions.getIntVAL(masterRow["b_IsSaveDraft"].ToString());
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
-                        Params.Add("N_FormID", this.N_FormID);
+                        Params.Add("N_FormID", n_FormID);
                         Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
 
                         GRNNo = dLayer.GetAutoNumber("Inv_MRN", "X_MRNNo", Params, connection, transaction);
@@ -416,28 +439,17 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,ex));
+                            return Ok(_api.Error(User,"Error Occurred in MRN Posting , Please check account mapping"));
                         }
 
-                        for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        if (n_POrderID > 0)
                         {
-                            if (n_POrderID > 0)
-                            {
-                                SortedList statusParams = new SortedList();
-                                statusParams.Add("@N_CompanyID", masterRow["n_CompanyId"].ToString());
-                                statusParams.Add("@N_TransID", n_POrderID);
-                                statusParams.Add("@N_FormID", 82);
-                                try
-                                {
-                                    dLayer.ExecuteNonQueryPro("SP_TxtStatusUpdate", statusParams, connection, transaction);
-                                }
-                                catch (Exception ex)
-                                {
-                                    transaction.Rollback();
-                                    return Ok(_api.Error(User, ex));
-                                }
-                                }
-                            };
+                            if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                    }
+                        }
                     }
                     SortedList VendorParams = new SortedList();
                     VendorParams.Add("@nVendorID", N_VendorID);
@@ -505,7 +517,7 @@ namespace SmartxAPI.Controllers
         }
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nGRNID)
+        public ActionResult DeleteData(int nGRNID, int nFormID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
@@ -535,6 +547,13 @@ namespace SmartxAPI.Controllers
 
                     SqlTransaction transaction = connection.BeginTransaction();
 
+                    object objReturnProcessed = dLayer.ExecuteScalar("Select Isnull(N_MRNReturnID,0) from Inv_MRNReturn where N_CompanyID=" + nCompanyID + " and N_MRNID=" + nGRNID , connection, transaction);
+                    if (objReturnProcessed == null)
+                        objReturnProcessed = 0;
+
+                    if (myFunctions.getIntVAL(objReturnProcessed.ToString()) != 0)
+                        return Ok(_api.Error(User, "Return processed! Unable to delete"));
+
                     object objPurchaseProcessed = dLayer.ExecuteScalar("Select Isnull(N_PurchaseID,0) from Inv_Purchase where N_CompanyID=" + nCompanyID + " and N_RsID=" + nGRNID + " and B_IsSaveDraft = 0", connection, transaction);
                     if (objPurchaseProcessed == null)
                         objPurchaseProcessed = 0;
@@ -548,7 +567,8 @@ namespace SmartxAPI.Controllers
                             {"N_UserID",nUserID},
                             {"X_SystemName","WebRequest"},
                             {"@B_MRNVisible","0"}};
-
+DataTable DetailTable = dLayer.ExecuteDataTable("SELECT Inv_PurchaseOrderDetails.N_POrderID FROM Inv_PurchaseOrderDetails INNER JOIN Inv_MRNDetails ON Inv_PurchaseOrderDetails.N_CompanyID = Inv_MRNDetails.N_CompanyID AND Inv_PurchaseOrderDetails.N_POrderDetailsID = Inv_MRNDetails.N_POrderDetailsID where Inv_MRNDetails.N_CompanyID=@nCompanyID and Inv_MRNDetails.N_MRNID=@nTransID  group by Inv_PurchaseOrderDetails.N_POrderID", ParamList, connection, transaction);
+                    
                         Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
                         if (Results <= 0)
                         {
@@ -556,8 +576,21 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User,"Unable to Delete Goods Receive Note"));
                         }
 
-                        myAttachments.DeleteAttachment(dLayer, 1, nGRNID, VendorID, nFnYearID, this.N_FormID, User, transaction, connection);
-
+                        myAttachments.DeleteAttachment(dLayer, 1, nGRNID, VendorID, nFnYearID, nFormID, User, transaction, connection);
+                            int tempPOrderID=0;
+                            for (int j = 0; j < DetailTable.Rows.Count; j++)
+                            {
+                                int n_POrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_POrderID"].ToString());
+                                if (n_POrderID > 0 && tempPOrderID!=n_POrderID)
+                                {
+                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,true,dLayer,connection,transaction))
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                    }
+                                }
+                                tempPOrderID=n_POrderID;
+                            };
                         transaction.Commit();
                         return Ok(_api.Success("Goods Receive Note deleted"));
                     }

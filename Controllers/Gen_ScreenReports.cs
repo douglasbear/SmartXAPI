@@ -52,6 +52,7 @@ namespace SmartxAPI.Controllers
                     TviewParams.Add("@nMenuID", nMenuID);
                     TviewParams.Add("@nLangID", nLangID);
                     TviewParams.Add("@nTableViewID", 0);
+                    
                     DataTable tableViewResult = dLayer.ExecuteDataTable(tableViewSql, TviewParams, connection);
 
                     tableViewResult = myFunctions.AddNewColumnToDataTable(tableViewResult, "columns", typeof(DataTable), null);
@@ -132,10 +133,12 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
 
-                    string tableViewSql = "select X_HiddenFields,X_Fields,X_DataSource,X_DefaultCriteria,X_PKey from Sec_TableViewComponents where N_MenuID=@nMenuID and N_TableViewID=@nTableViewID";
+                    string tableViewSql = "select X_HiddenFields,X_Fields,X_DataSource,X_DefaultCriteria,X_PKey from Sec_TableViewComponents where N_MenuID=@nMenuID and N_TableViewID=@nTableViewID and N_CompanyID=@nCompanyID";
                     SortedList TviewParams = new SortedList();
                     TviewParams.Add("@nMenuID", nMenuID);
                     TviewParams.Add("@nTableViewID", nTableViewID);
+                    TviewParams.Add("@nCompanyID", nCompanyId);
+
                     DataTable tableViewResult = dLayer.ExecuteDataTable(tableViewSql, TviewParams, connection);
 
                     if (tableViewResult.Rows.Count > 0)

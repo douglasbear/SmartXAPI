@@ -13,16 +13,16 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-     [Route("invDeliveryNoteReturn")]
+     [Route("invMRNReturn")]
      [ApiController]
-    public class InvDeliveryNoteReturn : ControllerBase
+    public class InvMRNReturn : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions api;
         private readonly string connectionString;
         private readonly IMyFunctions myFunctions;
         private readonly IApiFunctions _api;
-        public InvDeliveryNoteReturn(IDataAccessLayer dl,IMyFunctions myFun, IApiFunctions apiFun, IConfiguration conf)
+        public InvMRNReturn(IDataAccessLayer dl,IMyFunctions myFun, IApiFunctions apiFun, IConfiguration conf)
         {
             dLayer = dl;
             api = apiFun;
@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
         }
            
         [HttpGet("dashboardList")]
-        public ActionResult GetDeliveryNoteReturnDashboardList(int nFormID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetMRNReturnDashboardList(int nFormID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -44,11 +44,11 @@ namespace SmartxAPI.Controllers
 
            
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                      Searchkey = "and (X_ReturnNo like'%" + xSearchkey + "%'or X_CustomerName like'%" + xSearchkey + "%')";
+                      Searchkey = "and (X_ReturnNo like'%" + xSearchkey + "%'or X_VendorName like'%" + xSearchkey + "%')";
 
          
                     if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_DeliveryNoteRtnID desc";
+                xSortBy = " order by N_MRNReturnID desc";
             else
             {
                 switch (xSortBy.Split(" ")[0])
@@ -66,9 +66,9 @@ namespace SmartxAPI.Controllers
             }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_DeliveryNoteReturn where N_CompanyID=@nCompanyID and N_FormID=@nFormID " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_MRNReturn where N_CompanyID=@nCompanyID and N_FormID=@nFormID " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_DeliveryNoteReturn where N_CompanyID=@nCompanyID and N_FormID=@nFormID " + Searchkey + " and N_DeliveryNoteRtnID not in (select top(" + Count + ") N_DeliveryNoteRtnID from vw_DeliveryNoteReturnMaster where N_CompanyID=@nCompanyID and N_FormID=@nFormID " + xSortBy + " ) " + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_MRNReturn where N_CompanyID=@nCompanyID and N_FormID=@nFormID " + Searchkey + " and N_MRNReturnID not in (select top(" + Count + ") N_MRNReturnID from vw_Inv_MRNReturn where N_CompanyID=@nCompanyID and N_FormID=@nFormID " + xSortBy + " ) " + " " + xSortBy;
 
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFormID", nFormID);
@@ -81,7 +81,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_Inv_DeliveryNoteReturn where N_CompanyID=@nCompanyID and N_FormID=@nFormID " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_Inv_MRNReturn where N_CompanyID=@nCompanyID and N_FormID=@nFormID " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -114,108 +114,58 @@ namespace SmartxAPI.Controllers
                     DataTable DetailTable;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
-                    DataTable rentalItem = ds.Tables["segmentTable"];
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
 
-                    int nDeliveryNoteRtnID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteRtnID"].ToString());
-                    int nDNRtnID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteRtnID"].ToString());
+                    int nMRNReturnID = myFunctions.getIntVAL(MasterRow["n_MRNReturnID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     int nFormID = myFunctions.getIntVAL(MasterRow["n_FormID"].ToString());
                     string xReturnNo = MasterRow["x_ReturnNo"].ToString();
+                    int nMRNID = myFunctions.getIntVAL(MasterRow["n_MRNID"].ToString());
 
                     if (xReturnNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", nFormID);
-                        xReturnNo = dLayer.GetAutoNumber("Inv_DeliveryNoteReturn", "X_ReturnNo", Params, connection, transaction);
+                        xReturnNo = dLayer.GetAutoNumber("Inv_MRNReturn", "X_ReturnNo", Params, connection, transaction);
                         if (xReturnNo == "")
                         {
                             transaction.Rollback();
-                            return Ok("Unable to generate Delivery Note Return No.");
+                            return Ok("Unable to generate MRN Return No.");
                         }
                         MasterTable.Rows[0]["X_ReturnNo"] = xReturnNo;
                     }
 
-                    nDeliveryNoteRtnID = dLayer.SaveData("Inv_DeliveryNoteReturn", "N_DeliveryNoteRtnID", "", "", MasterTable, connection, transaction);
-                    if (nDeliveryNoteRtnID <= 0)
+                    nMRNReturnID = dLayer.SaveData("Inv_MRNReturn", "N_MRNReturnID", "", "", MasterTable, connection, transaction);
+                    if (nMRNReturnID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok("Unable to save Delivery Note Return");
+                        return Ok("Unable to save MRN Return");
                     }
-                    dLayer.DeleteData("Inv_DeliveryNoteReturnDetails", "N_DeliveryNoteRtnID", nDeliveryNoteRtnID, "", connection, transaction);
-                    // for (int j = 0; j < DetailTable.Rows.Count; j++)
-                    // {
-                    //     DetailTable.Rows[j]["N_DeliveryNoteRtnID"] = nDeliveryNoteRtnID;
-                    // }
-
-                    // int nDeliveryNoteRtnDtlsID = dLayer.SaveData("Inv_DeliveryNoteReturnDetails", "N_DeliveryNoteRtnDtlsID", DetailTable, connection, transaction);
-                   
-                    int nDeliveryNoteRtnDtlsID =0;
-                      for (int j = 0; j < DetailTable.Rows.Count; j++)
-                        {
-                           DetailTable.Rows[j]["N_DeliveryNoteRtnID"] = nDeliveryNoteRtnID;
-                         
-                             nDeliveryNoteRtnDtlsID = dLayer.SaveDataWithIndex("Inv_DeliveryNoteReturnDetails", "N_DeliveryNoteRtnDtlsID", "", "", j, DetailTable, connection, transaction);
-                            
-                          
-                            if (nDeliveryNoteRtnDtlsID > 0)
-                            {
-                                for (int k = 0; k < rentalItem.Rows.Count; k++)
-                                {
-                                    
-                                    if (myFunctions.getIntVAL(rentalItem.Rows[k]["rowID"].ToString()) == j)
-                                    {
-                                     
-                                       rentalItem.Rows[k]["n_TransID"] = nDeliveryNoteRtnID;
-                                       rentalItem.Rows[k]["n_TransDetailsID"] = nDeliveryNoteRtnDtlsID;
-                                        
-                                         
-                                        rentalItem.AcceptChanges();
-                                    }
-                                    rentalItem.AcceptChanges();
-                                }
-
-                               
-
-                                rentalItem.AcceptChanges();
-                            }
-                            DetailTable.AcceptChanges();
-
-
-                        }
-                         
-                           if (rentalItem.Columns.Contains("rowID"))
-                            rentalItem.Columns.Remove("rowID");
-                        
-                        rentalItem.AcceptChanges();
-                      
-                            if (nDNRtnID > 0)
+                    if (nMRNID > 0)
                     {
-                             int N_FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
-                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + nDeliveryNoteRtnID.ToString() + " and N_FormID="+ N_FormID + " and N_CompanyID=" + nCompanyID, connection, transaction);
-                       
+                        dLayer.ExecuteNonQuery("Update Inv_MRN Set N_Processed=1 Where N_MRNID=" + nMRNID + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                     }
-                         dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
-
-
-                   
-                   
-                   
-                    if (nDeliveryNoteRtnDtlsID <= 0)
+                    dLayer.DeleteData("Inv_MRNReturnDetails", "N_MRNReturnID", nMRNReturnID, "", connection, transaction);
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        DetailTable.Rows[j]["N_MRNReturnID"] = nMRNReturnID;
+                    }
+                    int nMRNReturnDetailsID = dLayer.SaveData("Inv_MRNReturnDetails", "N_MRNReturnDetailsID", DetailTable, connection, transaction);
+                    if (nMRNReturnDetailsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok("Unable to save Delivery Note Return");
+                        return Ok("Unable to save MRN Return");
                     }
                     transaction.Commit();
                     SortedList Result = new SortedList();
-                    Result.Add("n_DeliveryNoteRtnID", nDeliveryNoteRtnID);
+                    Result.Add("n_MRNReturnID", nMRNReturnID);
                     Result.Add("x_ReturnNo", xReturnNo);
-                    Result.Add("n_DeliveryNoteRtnDtlsID", nDeliveryNoteRtnDtlsID);
+                    Result.Add("n_MRNReturnDetailsID", nMRNReturnDetailsID);
 
-                    return Ok(_api.Success(Result, "Delivery Note Return Saved"));
+                    return Ok(_api.Success(Result, "MRN Return Saved"));
                 }
             }
             catch (Exception ex)
@@ -225,7 +175,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult DeliveryNoteReturnDetails(string xReturnNo, int nDeliveryNoteId ,int nFormID)
+        public ActionResult MRNReturnDetails(string xReturnNo, int nMRNID)
         {
             try
             {
@@ -240,50 +190,37 @@ namespace SmartxAPI.Controllers
 
                     string Mastersql = "";
                     string DetailSql = "";
-                    string crieteria = "";
+
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    Params.Add("@nFormID", nFormID);
-                    if(nFormID>0)
+
+                    if (nMRNID > 0)
                     {
-                    crieteria = " and N_FormID = @nFormID ";
-                    }
-                    if (nDeliveryNoteId > 0)
-                    {
-                        Params.Add("@nDeliveryNoteId", nDeliveryNoteId);
-                        Mastersql = "select * from vw_DeliveryNoteDisptoReturn where N_CompanyId=@nCompanyID and N_DeliveryNoteID=@nDeliveryNoteId";
+                        Params.Add("@nMRNID", nMRNID);
+                        Mastersql = "select * from vw_MRNtoReturn where N_CompanyId=@nCompanyID and N_MRNID=@nMRNID";
                         MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable = _api.Format(MasterTable, "Master");
-                        DetailSql = "select * from vw_DeliveryNoteDispDetailstoReturn where N_CompanyId=@nCompanyID and N_DeliveryNoteID=@nDeliveryNoteId";
+                        DetailSql = "select * from vw_MRNtoReturnDetails where N_CompanyId=@nCompanyID and N_MRNID=@nMRNID";
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                         DetailTable = _api.Format(DetailTable, "Details");
-                        string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nDeliveryNoteId " +crieteria;
-                        DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
-                        RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
                         dt.Tables.Add(MasterTable);
                         dt.Tables.Add(DetailTable);
-                        dt.Tables.Add(RentalSchedule);
                         return Ok(_api.Success(dt));
                     } else {
                         Params.Add("@xReturnNo", xReturnNo);
-                        Mastersql = "select * from vw_Inv_DeliveryNoteReturn where N_CompanyID=@nCompanyID and X_ReturnNo=@xReturnNo  ";
+                        Mastersql = "select * from vw_Inv_MRNReturn where N_CompanyID=@nCompanyID and X_ReturnNo=@xReturnNo  ";
                    
                         MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                        int nDeliveryNoteRtnID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_DeliveryNoteRtnID"].ToString());
-                        Params.Add("@nDeliveryNoteRtnID", nDeliveryNoteRtnID);
+                        int nMRNReturnID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MRNReturnID"].ToString());
+                        Params.Add("@nMRNReturnID", nMRNReturnID);
 
                         MasterTable = _api.Format(MasterTable, "Master");
-                        DetailSql = "select * from vw_Inv_DeliveryNoteReturnDetails where N_CompanyID=@nCompanyID and N_DeliveryNoteRtnID=@nDeliveryNoteRtnID ";
+                        DetailSql = "select * from vw_Inv_MRNReturnDetails where N_CompanyID=@nCompanyID and N_MRNReturnID=@nMRNReturnID ";
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                         DetailTable = _api.Format(DetailTable, "Details");
-                        string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=" + nDeliveryNoteRtnID + crieteria ;
-                        DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
-                        RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
-
                         dt.Tables.Add(MasterTable);
                         dt.Tables.Add(DetailTable);
-                        dt.Tables.Add(RentalSchedule);
                         return Ok(_api.Success(dt));
                     };
                 }
@@ -295,14 +232,14 @@ namespace SmartxAPI.Controllers
         }
             
         [HttpGet("list")]
-        public ActionResult GetDeliveryNoteReturnList()
+        public ActionResult GetMRNReturnList()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nComapnyID", nCompanyID);
             SortedList OutPut = new SortedList();
-            string sqlCommandText = "select * from vw_DeliveryNoteReturnMaster where N_CompanyID=@nComapnyID";
+            string sqlCommandText = "select * from vw_Inv_MRNReturn where N_CompanyID=@nComapnyID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -327,7 +264,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nDeliveryNoteRtnID, int nCompanyID, int nFnYearID)
+        public ActionResult DeleteData(int nMRNReturnID, int nCompanyID, int nFnYearID)
         {
             int Results = 0;
             try
@@ -335,18 +272,16 @@ namespace SmartxAPI.Controllers
                 SortedList QueryParams = new SortedList();
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nFnYearID", nFnYearID);
-                QueryParams.Add("@nDeliveryNoteRtnID", nDeliveryNoteRtnID);
+                QueryParams.Add("@nMRNReturnID", nMRNReturnID);
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
-                    Results = dLayer.DeleteData("Inv_DeliveryNoteReturn", "N_DeliveryNoteRtnID", nDeliveryNoteRtnID, "", connection);
-
+                    Results = dLayer.DeleteData("Inv_MRNReturn", "N_MRNReturnID", nMRNReturnID, "", connection);
 
                     if (Results > 0)
                     {
-                        dLayer.DeleteData("Inv_DeliveryNoteReturnDetails", "N_DeliveryNoteRtnID", nDeliveryNoteRtnID, "", connection);
-                        return Ok(_api.Success("Delivery Note Return deleted"));
+                        dLayer.DeleteData("Inv_MRNReturnDetails", "N_MRNReturnID", nMRNReturnID, "", connection);
+                        return Ok(_api.Success("MRN Return deleted"));
                     }
                     else
                     {
