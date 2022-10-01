@@ -679,7 +679,7 @@ namespace SmartxAPI.Controllers
             }
             else
             {
-                sqlCommandText = "select * from  vw_InvCustomer  where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID ";
+                sqlCommandText = "select * from  vw_InvCustomer  where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID and N_FnYearID=@nFnYearID";
                 
             Params.Add("@nCustomerID", nCustomerID);
             }
