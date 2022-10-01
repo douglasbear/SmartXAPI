@@ -305,7 +305,7 @@ namespace SmartxAPI.Controllers
                     if(nSalesOrderId>0)
                     {
 
-                     DetailSql = "select * from vw_RentalOrderDetailsToRPO where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SalesOrderId=@p8 and N_ItemTypeID in (8,10)";
+                     DetailSql = "select * from vw_RentalOrderDetailsToRPO where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SalesOrderId=@p8 and N_ItemTypeID in (9)";
 
                     }
                     else
