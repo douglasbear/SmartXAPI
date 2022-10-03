@@ -275,13 +275,13 @@ namespace SmartxAPI.Controllers
                     {
                         foreach (DataRow Kvar in DetailTable.Rows)
                         {
-                            if (myFunctions.getIntVAL(Avar["N_TransDetailsID"].ToString()) == myFunctions.getIntVAL(Kvar["N_TransDetailID"].ToString()) &&
-                                myFunctions.getIntVAL(Avar["N_ItemID"].ToString()) == myFunctions.getIntVAL(Kvar["N_ItemID"].ToString()) &&
-                                Avar["DateValue"].ToString() == Kvar["D_Date"].ToString())
-                            {
-                                Kvar["N_Hour"] = Avar["N_Hours"];
-                                Kvar["X_Remarks"] = Avar["X_Remarks"];
-                            }
+                            // if (myFunctions.getIntVAL(Avar["N_TransDetailsID"].ToString()) == myFunctions.getIntVAL(Kvar["N_TransDetailID"].ToString()) &&
+                            //     myFunctions.getIntVAL(Avar["N_ItemID"].ToString()) == myFunctions.getIntVAL(Kvar["N_ItemID"].ToString()) &&
+                            //     Avar["DateValue"].ToString() == Kvar["D_Date"].ToString())
+                            // {
+                            //     Kvar["N_Hour"] = Avar["N_Hours"];
+                            //     Kvar["X_Remarks"] = Avar["X_Remarks"];
+                            // }
                         }
                     }
                     DetailTable = _api.Format(DetailTable, "Details");
