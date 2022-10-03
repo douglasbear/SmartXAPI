@@ -42,7 +42,10 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string criteria = "";
+           
             int nVendorId = 0;
+
+
             if (vendorId != "" && vendorId != null)
             {
                 criteria = " and N_VendorID =@nVendorID ";
@@ -156,7 +159,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetDashboardList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nFnYearId)
+        public ActionResult GetDashboardList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nFnYearId,bool isEnable)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -183,12 +186,19 @@ namespace SmartxAPI.Controllers
                 }
                 xSortBy = " order by " + xSortBy;
             }
-
+             if(isEnable==false){
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") N_VendorID,X_VendorCode,X_VendorName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_CurrencyID,X_CurrencyName,X_ContactName,X_Address,X_PhoneNo1,X_VendorType,X_VendorName_Ar from vw_InvVendor where N_CompanyID=@p1 and N_FnYearID=@nFnYearId " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_VendorID,X_VendorCode,X_VendorName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_CurrencyID,X_CurrencyName,X_ContactName,X_Address,X_PhoneNo1,X_VendorType,X_VendorName_Ar from vw_InvVendor where N_CompanyID=@p1 and N_FnYearID=@nFnYearId and b_Inactive=0 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") N_VendorID,X_VendorCode,X_VendorName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_CurrencyID,X_CurrencyName,X_ContactName,X_Address,X_PhoneNo1,X_VendorType,X_VendorName_Ar from vw_InvVendor where N_CompanyID=@p1 and N_FnYearID=@nFnYearId " + Searchkey + " and N_VendorID not in (select top(" + Count + ") N_VendorID from vw_InvVendor where N_CompanyID=@p1 and N_FnYearID=@nFnYearId " + Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_VendorID,X_VendorCode,X_VendorName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_CurrencyID,X_CurrencyName,X_ContactName,X_Address,X_PhoneNo1,X_VendorType,X_VendorName_Ar from vw_InvVendor where N_CompanyID=@p1 and N_FnYearID=@nFnYearId and b_Inactive=0 " + Searchkey + " and N_VendorID not in (select top(" + Count + ") N_VendorID from vw_InvVendor where N_CompanyID=@p1 and N_FnYearID=@nFnYearId " + Searchkey + xSortBy + " ) " + xSortBy;
+             }
 
+             if(isEnable==true){
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") N_VendorID,X_VendorCode,X_VendorName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_CurrencyID,X_CurrencyName,X_ContactName,X_Address,X_PhoneNo1,X_VendorType,X_VendorName_Ar from vw_InvVendor where N_CompanyID=@p1 and N_FnYearID=@nFnYearId and b_Inactive=1" + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") N_VendorID,X_VendorCode,X_VendorName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_CurrencyID,X_CurrencyName,X_ContactName,X_Address,X_PhoneNo1,X_VendorType,X_VendorName_Ar from vw_InvVendor where N_CompanyID=@p1 and N_FnYearID=@nFnYearId  and b_Inactive=1" + Searchkey + " " + xSortBy;
+             }
             Params.Add("@p1", nCompanyID);
             Params.Add("@nFnYearId", nFnYearId);
             Params.Add("@p2", 0);
