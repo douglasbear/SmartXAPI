@@ -245,11 +245,6 @@ namespace SmartxAPI.Controllers
                        ds.Tables.Add(Master);
                         sqlCommandText = "Select * from Inv_DeviceTemplateDetails Where N_CompanyID=@p1 and N_TemplateID=@p2";
                         Detail = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                  
-                       if (Detail.Rows.Count == 0)
-                        {
-                            return Ok(api.Notice("No Results Found"));
-                        }
                         Detail = api.Format(Detail, "Detail");
                         ds.Tables.Add(Detail);
                       
