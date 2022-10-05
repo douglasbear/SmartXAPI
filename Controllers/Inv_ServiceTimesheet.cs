@@ -300,7 +300,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nServiceSheetID, int nFnYearID)
+        public ActionResult DeleteData(int nServiceSheetID, int nFnYearID, int nFormID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             int Results = 0;
@@ -310,21 +310,29 @@ namespace SmartxAPI.Controllers
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nFnYearID", nFnYearID);
                 QueryParams.Add("@nServiceSheetID", nServiceSheetID);
+                QueryParams.Add("@nFormID", nFormID);
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
 
-                    Results = dLayer.DeleteData("Inv_ServiceTimesheet", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection);
+                    int serviceSheetID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_ServiceSheetID,0) from Inv_Sales where N_CompanyId=@nCompanyID and N_FormID=@nFormID ", QueryParams, connection).ToString());
 
-                    if (Results > 0)
+                    if (serviceSheetID>0)
                     {
-                        dLayer.DeleteData("Inv_ServiceTimesheetItems", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID, connection);
-                        dLayer.DeleteData("Inv_ServiceTimesheetDetails", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID, connection);
-                        return Ok(_api.Success("Service Timesheet deleted"));
-                    }
-                    else
-                    {
-                        return Ok(_api.Error(User,"Unable to delete"));
+                        return Ok(_api.Error(User,"Unable to delete,Invoice Processed"));
+                    } else {
+                        Results = dLayer.DeleteData("Inv_ServiceTimesheet", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection);
+
+                        if (Results > 0)
+                        {
+                            dLayer.DeleteData("Inv_ServiceTimesheetItems", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID, connection);
+                            dLayer.DeleteData("Inv_ServiceTimesheetDetails", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID, connection);
+                            return Ok(_api.Success("Service Timesheet deleted"));
+                        }
+                        else
+                        {
+                            return Ok(_api.Error(User,"Unable to delete"));
+                        }
                     }
                 }
             }
