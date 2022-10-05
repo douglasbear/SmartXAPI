@@ -126,9 +126,9 @@ namespace SmartxAPI.Controllers
             if(isRentalItem)
               ownAssent=ownAssent+ " and N_ItemTypeID=7 ";
                if(rentalItems)
-              RentalItem=RentalItem+ " and (N_ItemTypeID=7 or N_ItemTypeID=8 or N_ItemTypeID=9 or N_ItemTypeID=10 or N_ItemTypeID=11)";
+              RentalItem=RentalItem+ " and (N_ItemTypeID=7 or N_ItemTypeID=8 or N_ItemTypeID=9)";
             if(purchaseRentalItems)
-              RentalPOItem=RentalPOItem+ " and (N_ItemTypeID=8 or N_ItemTypeID=10 )";
+              RentalPOItem=RentalPOItem+ " and (N_ItemTypeID=9)";
 
             if (nItemUsedFor != 0)
             {
@@ -209,7 +209,7 @@ namespace SmartxAPI.Controllers
 
         }
         [HttpGet("dashboardList")]
-        public ActionResult GetDashboardList(int nFnYearId, bool b_AllBranchData, int nBranchID, int nLocationID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetDashboardList(int nFnYearId, bool b_AllBranchData, int nBranchID, int nLocationID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,bool bActiveItem)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -219,6 +219,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string Searchkey = "";
             string xCriteria = "";
+            string sqlCommandCount="";
 
             // if (b_AllBranchData)
             //     xCriteria = "";
@@ -275,8 +276,14 @@ namespace SmartxAPI.Controllers
             //     sqlCommandText = "select top(" + nSizeperpage + ") " + feildList + " from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + " and [Item Code] not in (select top(" + Count + ") [Item Code] from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + " group by " + feildList + Searchkey + xSortBy + " ) " + " group by " + feildList + xSortBy;
             int OFFSET = (nPage * nSizeperpage) - nSizeperpage;
             string PageString = " OFFSET " + OFFSET + " ROWS FETCH NEXT " + nSizeperpage + " ROWS ONLY";
+            if(bActiveItem==false)
+            {
             sqlCommandText = "select " + feildList + " from " + view + " where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + xCriteria + Searchkey + xSortBy + PageString;
-
+            }
+            else
+            {
+                sqlCommandText="select * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=1 and [Item Code]<> @p3 and N_ItemTypeID<>@p4" + Searchkey + xSortBy;
+            }
 
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", 0);
@@ -294,7 +301,14 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    string sqlCommandCount = "select Count(1)  from Inv_ItemMaster where N_CompanyID=@p1 and B_Inactive=@p2 and X_ItemCode<> @p3 and N_ItemTypeID<>@p4 " + xCriteria;
+                    if(bActiveItem==false)
+                    {
+                     sqlCommandCount = "select Count(1)  from Inv_ItemMaster where N_CompanyID=@p1 and B_Inactive=@p2 and X_ItemCode<> @p3 and N_ItemTypeID<>@p4 " + xCriteria;
+                    }
+                    else
+                    {
+                    sqlCommandCount = "select Count(1)  from Inv_ItemMaster where N_CompanyID=@p1 and B_Inactive=1 and X_ItemCode<> @p3 and N_ItemTypeID<>@p4 " + xCriteria;
+                    }
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

@@ -100,7 +100,7 @@ namespace SmartxAPI.Controllers
                     if (x_DeviceCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
-                        Params.Add("N_FormID", nFormID);
+                        Params.Add("N_FormID", this.nFormID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_UserID", N_UserID);
                         x_DeviceCode = dLayer.GetAutoNumber("Inv_Device", "X_DeviceCode", Params, connection, transaction);

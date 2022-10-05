@@ -149,7 +149,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listdetails")]
-        public ActionResult GetGoodsReceiveDetails(int nCompanyId, int nFnYearId, string nMRNNo, bool showAllBranch, int nBranchId, string poNo)
+        public ActionResult GetGoodsReceiveDetails(int nCompanyId, int nFnYearId, string nMRNNo, bool showAllBranch, int nBranchId, string poNo,int nFormID)
         {
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
@@ -163,10 +163,17 @@ namespace SmartxAPI.Controllers
             Params.Add("@YearID", nFnYearId);
             Params.Add("@TransType", "GRN");
             Params.Add("@BranchID", nBranchId);
+            Params.Add("@nFormID", nFormID);
             string X_MasterSql = "";
             string X_DetailsSql = "";
             string X_FreightSql = "";
+            string crieteria = "";
 
+         
+            if(nFormID>0)
+             {
+            crieteria = " and Inv_PurchaseOrder.N_FormID = @nFormID ";
+             }
             if (nMRNNo != null)
             {
                 Params.Add("@GRNNo", nMRNNo);
@@ -174,7 +181,7 @@ namespace SmartxAPI.Controllers
             }
             if (poNo != null)
             {
-                X_MasterSql = "Select Inv_PurchaseOrder.*,Inv_Location.X_LocationName,Inv_Vendor.* from Inv_PurchaseOrder Inner Join Inv_Vendor On Inv_PurchaseOrder.N_VendorID=Inv_Vendor.N_VendorID and Inv_PurchaseOrder.N_CompanyID=Inv_Vendor.N_CompanyID and Inv_PurchaseOrder.N_FnYearID=Inv_Vendor.N_FnYearID LEFT OUTER JOIN Inv_Location ON Inv_Location.N_LocationID=Inv_PurchaseOrder.N_LocationID Where Inv_PurchaseOrder.N_CompanyID=" + nCompanyId + " and X_POrderNo='" + poNo + "' and Inv_PurchaseOrder.B_IsSaveDraft<>1";
+                X_MasterSql = "Select Inv_PurchaseOrder.*,Inv_Location.X_LocationName,Inv_Vendor.* from Inv_PurchaseOrder Inner Join Inv_Vendor On Inv_PurchaseOrder.N_VendorID=Inv_Vendor.N_VendorID and Inv_PurchaseOrder.N_CompanyID=Inv_Vendor.N_CompanyID and Inv_PurchaseOrder.N_FnYearID=Inv_Vendor.N_FnYearID LEFT OUTER JOIN Inv_Location ON Inv_Location.N_LocationID=Inv_PurchaseOrder.N_LocationID Where Inv_PurchaseOrder.N_CompanyID=" + nCompanyId + " and X_POrderNo='" + poNo + "' "+crieteria+" and Inv_PurchaseOrder.B_IsSaveDraft<>1";
             }
             try
             {
@@ -208,6 +215,8 @@ namespace SmartxAPI.Controllers
                     }
 
                     SqlTransaction transaction = connection.BeginTransaction();
+                    if (dtGoodReceive.Columns.Contains("N_MRNID")) 
+                     {
                     int nGRNID = myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_MRNID"].ToString());
                     object objReturnProcessed = dLayer.ExecuteScalar("Select Isnull(N_MRNReturnID,0) from Inv_MRNReturn where N_CompanyID=" + nCompanyId + " and N_MRNID=" + nGRNID , connection, transaction);
                     if (objReturnProcessed == null)
@@ -217,12 +226,13 @@ namespace SmartxAPI.Controllers
                         dtGoodReceive = myFunctions.AddNewColumnToDataTable(dtGoodReceive, "N_ReturnProcessed", typeof(int), 0);
                         dtGoodReceive.Rows[0]["N_ReturnProcessed"] = 1;
                     };
+                   }
                     transaction.Commit();
 
                     dtGoodReceiveDetails = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
                     dtGoodReceiveDetails = _api.Format(dtGoodReceiveDetails, "Details");
 
-
+            
 
                     X_FreightSql = "Select *,X_ShortName as X_CurrencyName FROM vw_InvPurchaseFreights WHERE N_PurchaseID=" + N_GRNID;
                     dtFreightCharges = dLayer.ExecuteDataTable(X_FreightSql, Params, connection);
@@ -429,7 +439,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,ex));
+                            return Ok(_api.Error(User,"Error Occurred in MRN Posting , Please check account mapping"));
                         }
 
                         if (n_POrderID > 0)
@@ -557,7 +567,8 @@ namespace SmartxAPI.Controllers
                             {"N_UserID",nUserID},
                             {"X_SystemName","WebRequest"},
                             {"@B_MRNVisible","0"}};
-
+DataTable DetailTable = dLayer.ExecuteDataTable("SELECT Inv_PurchaseOrderDetails.N_POrderID FROM Inv_PurchaseOrderDetails INNER JOIN Inv_MRNDetails ON Inv_PurchaseOrderDetails.N_CompanyID = Inv_MRNDetails.N_CompanyID AND Inv_PurchaseOrderDetails.N_POrderDetailsID = Inv_MRNDetails.N_POrderDetailsID where Inv_MRNDetails.N_CompanyID=@nCompanyID and Inv_MRNDetails.N_MRNID=@nTransID  group by Inv_PurchaseOrderDetails.N_POrderID", ParamList, connection, transaction);
+                    
                         Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
                         if (Results <= 0)
                         {
@@ -566,7 +577,20 @@ namespace SmartxAPI.Controllers
                         }
 
                         myAttachments.DeleteAttachment(dLayer, 1, nGRNID, VendorID, nFnYearID, nFormID, User, transaction, connection);
-
+                            int tempPOrderID=0;
+                            for (int j = 0; j < DetailTable.Rows.Count; j++)
+                            {
+                                int n_POrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_POrderID"].ToString());
+                                if (n_POrderID > 0 && tempPOrderID!=n_POrderID)
+                                {
+                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,true,dLayer,connection,transaction))
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                    }
+                                }
+                                tempPOrderID=n_POrderID;
+                            };
                         transaction.Commit();
                         return Ok(_api.Success("Goods Receive Note deleted"));
                     }
