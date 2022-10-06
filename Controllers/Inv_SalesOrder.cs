@@ -1367,8 +1367,11 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p2", nFormID);
                     Params.Add("@p3", dDateFrom);
                     Params.Add("@p4", dDateTo);
-    
-                    sqlCommandText = "select * from vw_SalesorderDelivery where N_CompanyID=@p1 and ((D_DeliveryDate<=@p3) or (D_DeliveryDate>=@p3 AND D_DeliveryDate<=@p4) AND ISNULL(D_DeliveryReturnDate,@p4)>=@p4) and N_SalesOrderId NOT IN (select N_SOID from Inv_ServiceTimesheet where N_FormID=@p2 and N_CompanyID=@p1 and D_DateFrom=@p3 and D_DateTo=@p4)";
+
+                    if (nFormID==1145)
+                        sqlCommandText = "select * from vw_SalesorderDelivery where N_CompanyID=@p1 and ((D_DeliveryDate<=@p3) or (D_DeliveryDate>=@p3 AND D_DeliveryDate<=@p4) AND ISNULL(D_DeliveryReturnDate,@p4)>=@p4) and N_SalesOrderId NOT IN (select N_SOID from Inv_ServiceTimesheet where N_FormID=@p2 and N_CompanyID=@p1 and D_DateFrom=@p3 and D_DateTo=@p4)";
+                    else
+                        sqlCommandText = "select * from vw_SO_PO_List where N_CompanyID=@p1";
 
                     SortedList OutPut = new SortedList();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
