@@ -315,7 +315,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    int serviceSheetID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_ServiceSheetID,0) from Inv_Sales where N_CompanyId=@nCompanyID and N_FormID=@nFormID ", QueryParams, connection).ToString());
+                    int serviceSheetID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_ServiceSheetID,0) from Inv_Sales where N_CompanyId=@nCompanyID and N_FormID=@nFormID and N_ServiceSheetID="+nServiceSheetID, QueryParams, connection).ToString());
 
                     if (serviceSheetID>0)
                     {
