@@ -422,6 +422,14 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
+                   object countOfOrder =  dLayer.ExecuteScalar("Select Count(*) from vw_pendingSO Where N_CompanyID = " + nCompanyID + "  and N_SalesOrderId=" + myFunctions.getIntVAL(N_SOrderID.ToString()), DetailParams, connection);
+                   if(countOfOrder!=null)
+                   {
+                    if(myFunctions.getIntVAL(countOfOrder.ToString())>0)
+                    {
+                         InDeliveryNote = null;
+                    }
+                   }
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_SalesReceiptNo", typeof(string), InSales);
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "DeliveryNoteDone", typeof(int), InDeliveryNote != null ? 1 : 0);
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_DeliveryNoteNo", typeof(string), InDeliveryNote);

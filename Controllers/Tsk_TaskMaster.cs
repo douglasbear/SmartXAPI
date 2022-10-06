@@ -818,6 +818,12 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=0 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     }
 
+                //   if (masterStatus == 11)
+                //     {
+
+                //        dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=0 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                //     }
+
                     SortedList Result = new SortedList();
                     Result.Add("n_AssigneeID", DetailTable.Rows[0]["N_AssigneeID"]);
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET d_DueDate='" + MasterTable.Rows[0]["d_DueDate"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
@@ -826,6 +832,16 @@ namespace SmartxAPI.Controllers
                      dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_SubmitterID='" + DetailTable.Rows[0]["n_SubmitterID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                      dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_ClosedUserID='" + DetailTable.Rows[0]["n_ClosedUserID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET D_EntryDate='" + DetailTable.Rows[0]["D_EntryDate"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET x_SolutionNotes='" + MasterTable.Rows[0]["x_SolutionNotes"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    if(MasterTable.Columns.Contains("N_WorkHours"))
+                    {
+                      if(myFunctions.getIntVAL(MasterTable.Rows[0]["N_WorkHours"].ToString())>0)
+                       {
+                            dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_WorkHours=" + MasterTable.Rows[0]["N_WorkHours"] + " where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+   
+                       }
+                                }
+                   
                     transaction.Commit();
                     return Ok(_api.Success(Result, "Task Updated Successfully"));
                 }
