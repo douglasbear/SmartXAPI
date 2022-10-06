@@ -1714,7 +1714,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             // if (byDeptManager != null && byDeptManager != "")
             // {
-                sqlCommandText = "Select N_CompanyID,N_FnYearID,N_EmpID,Code as [Employee Code],[Employee Name] from vw_Supervisor_ReportTo Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID order by Code";
+                sqlCommandText = "Select N_CompanyID,N_FnYearID,N_EmpID,Code as [Employee Code],[Employee Name],N_SupervisorID from vw_Supervisor_ReportTo Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID order by Code";
             // }
             // else
             // {
