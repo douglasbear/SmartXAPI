@@ -305,7 +305,7 @@ namespace SmartxAPI.Controllers
                     if(nSalesOrderId>0)
                     {
 
-                     DetailSql = "select * from vw_RentalOrderDetailsToRPO where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SalesOrderId=@p8 and N_ItemTypeID in (8,10)";
+                     DetailSql = "select * from vw_RentalOrderDetailsToRPO where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SalesOrderId=@p8 and N_ItemTypeID in (9)";
 
                     }
                     else
@@ -370,7 +370,7 @@ namespace SmartxAPI.Controllers
                     bool InvoiceProcessed=false;
                     if (MasterTable.Rows.Count > 0)
                     {
-                        if(myFunctions.getBoolVAL(MasterTable.Rows[0]["N_Processed"].ToString()))
+                        if(myFunctions.getIntVAL(MasterTable.Rows[0]["N_Processed"].ToString())==1)
                         {
                             object InvoiceNotProcessed=false;
                             for(int i=0;i<DetailTable.Rows.Count;i++)
@@ -447,9 +447,13 @@ namespace SmartxAPI.Controllers
                     // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "InvoiceNotProcessed", typeof(bool),InvoiceNotProcessed);
 
                      DataTable Attachments =new DataTable();
-                    if(MasterTable.Rows.Count>0)
+                    if(MasterTable.Rows.Count>0 && MasterTable.Columns.Contains("N_VendorID"))
+                    {
+
+                   
                     Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_VendorID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString()), this.FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
                     Attachments = api.Format(Attachments, "attachments");
+                    }
 
                     dt.Tables.Add(Attachments);
                     dt.Tables.Add(DetailTable);

@@ -1712,14 +1712,14 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
             string sqlCommandText = "";
-            if (byDeptManager != null && byDeptManager != "")
-            {
-                sqlCommandText = "Select N_CompanyID,N_FnYearID,B_InActive,N_EmpID,X_EmpCode as [Employee Code],X_EmpName as [Employee Name] from vw_Manager_List Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  B_inactive <> 1 order by X_EmpCode";
-            }
-            else
-            {
-                sqlCommandText = "Select N_CompanyID,N_SupervisorID,N_EmpID,Code,N_BranchID,N_FnYearID,[Employee Code],[Employee Name],Description from vw_Supervisor_ReportTo Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID order by [Employee Code]";
-            }
+            // if (byDeptManager != null && byDeptManager != "")
+            // {
+                sqlCommandText = "Select N_CompanyID,N_FnYearID,N_EmpID,Code as [Employee Code],[Employee Name],N_SupervisorID from vw_Supervisor_ReportTo Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID order by Code";
+            // }
+            // else
+            // {
+            //     sqlCommandText = "Select N_CompanyID,N_SupervisorID,N_EmpID,Code,N_BranchID,N_FnYearID,[Employee Code],[Employee Name],Description from vw_Supervisor_ReportTo Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID order by [Employee Code]";
+            // }
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

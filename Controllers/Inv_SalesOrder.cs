@@ -666,8 +666,10 @@ namespace SmartxAPI.Controllers
                             rentalItem.Columns.Remove("rowID");
                         
                         rentalItem.AcceptChanges();
-                      
-                            if (n_SOId > 0)
+
+                        if(rentalItem.Rows.Count > 0)
+                       {
+                                      if (n_SOId > 0)
                     {
                             int FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
                             dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + n_SalesOrderId.ToString() + "  and N_FormID="+ FormID + " and N_CompanyID=" + N_CompanyID, connection, transaction);
@@ -675,6 +677,8 @@ namespace SmartxAPI.Controllers
                     }
                     dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
 
+                       }
+                
 
                     if (N_QuotationDetailId <= 0)
                     {
@@ -1327,13 +1331,13 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p4", dPeriodFrom);
                     Params.Add("@p5", dPeriodTo);
 
-                    sqlCommandText = "select * from vw_ScheduledRentalOrders where N_CompanyID=@p1 and N_ItemID=@p2 and ((D_PeriodFrom<=@p4 and D_PeriodTo>=@p4) OR (D_PeriodFrom<=@p5 and D_PeriodTo>=@p5) OR(D_PeriodFrom>=@p4 and D_PeriodFrom<=@p5))";
+                    sqlCommandText = "select * from vw_ScheduledRentalOrders where N_CompanyID=@p1 and N_ItemID=@p2 and ((D_PeriodFrom<=@p4 and isNull(D_PeriodTo,getDate())>=@p4) OR (D_PeriodFrom<=@p5 and isNull(D_PeriodTo,getDate())>=@p5) OR(D_PeriodFrom>=@p4 and D_PeriodFrom<=@p5))";
 
 
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_ScheduledRentalOrders  where N_CompanyID=@p1 and N_ItemID=@p2 and ((D_PeriodFrom<=@p4 and D_PeriodTo>=@p4) OR (D_PeriodFrom<=@p5 and D_PeriodTo>=@p5) OR(D_PeriodFrom>=@p4 and D_PeriodFrom<=@p5))";
+                    sqlCommandCount = "select count(*) as N_Count from vw_ScheduledRentalOrders  where N_CompanyID=@p1 and N_ItemID=@p2 and ((D_PeriodFrom<=@p4 and isNull(D_PeriodTo,getDate())>=@p4) OR (D_PeriodFrom<=@p5 and isNull(D_PeriodTo,getDate())>=@p5) OR(D_PeriodFrom>=@p4 and D_PeriodFrom<=@p5))";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
 
                     OutPut.Add("Details", _api.Format(dt));
@@ -1367,8 +1371,11 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p2", nFormID);
                     Params.Add("@p3", dDateFrom);
                     Params.Add("@p4", dDateTo);
-    
-                    sqlCommandText = "select * from vw_SalesorderDelivery where N_CompanyID=@p1 and ((D_DeliveryDate<=@p3) or (D_DeliveryDate>=@p3 AND D_DeliveryDate<=@p4) AND ISNULL(D_DeliveryReturnDate,@p4)>=@p4) and N_SalesOrderId NOT IN (select N_SOID from Inv_ServiceTimesheet where N_FormID=@p2 and N_CompanyID=@p1 and D_DateFrom=@p3 and D_DateTo=@p4)";
+
+                    if (nFormID==1145)
+                        sqlCommandText = "select * from vw_SalesorderDelivery where N_CompanyID=@p1 and ((D_DeliveryDate<=@p3) or (D_DeliveryDate>=@p3 AND D_DeliveryDate<=@p4) AND ISNULL(D_DeliveryReturnDate,@p4)>=@p4) and N_SalesOrderId NOT IN (select N_SOID from Inv_ServiceTimesheet where N_FormID=@p2 and N_CompanyID=@p1 and D_DateFrom=@p3 and D_DateTo=@p4)";
+                    else
+                        sqlCommandText = "select * from vw_SO_PO_List where N_CompanyID=@p1";
 
                     SortedList OutPut = new SortedList();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);

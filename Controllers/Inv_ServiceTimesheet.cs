@@ -149,6 +149,14 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nFormID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FormID"].ToString());
                     string xServiceSheetCode = MasterTable.Rows[0]["x_ServiceSheetCode"].ToString();
+                    int nServiceSheetItemID = 0;
+
+                    if (nServiceSheetID > 0)
+                    {
+                        dLayer.DeleteData("Inv_ServiceTimesheet", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Inv_ServiceTimesheetItems", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Inv_ServiceTimesheetDetails", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                    }
 
                     if (xServiceSheetCode == "@Auto")
                     {
@@ -171,23 +179,27 @@ namespace SmartxAPI.Controllers
                         return Ok("Unable to save Service Timesheet!");
                     }
 
-                    dLayer.DeleteData("Inv_ServiceTimesheetItems", "N_ServiceSheetID", nServiceSheetID, "", connection, transaction);
                     for (int j = 0; j < ItemTable.Rows.Count; j++)
                     {
                         ItemTable.Rows[j]["N_ServiceSheetID"] = nServiceSheetID;
-                    }
-                    int nServiceSheetItemID = dLayer.SaveData("Inv_ServiceTimesheetItems", "N_ServiceSheetItemID", ItemTable, connection, transaction);
-                    if (nServiceSheetItemID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok("Unable to save Service Timesheet!");
+
+                        nServiceSheetItemID = dLayer.SaveDataWithIndex("Inv_ServiceTimesheetItems", "N_ServiceSheetItemID", "", "", j, ItemTable, connection, transaction);
+                        if (nServiceSheetItemID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to save"));
+                        }
+
+                        for (int i = 0; i < DetailTable.Rows.Count; i++)
+                        {
+                            if (DetailTable.Rows[i]["N_TransDetailID"].ToString() == ItemTable.Rows[j]["N_DeliverNoteDetailsID"].ToString())
+                            {
+                                DetailTable.Rows[i]["N_ServiceSheetID"] = nServiceSheetID;
+                                DetailTable.Rows[i]["N_ServiceSheetItemID"] = nServiceSheetItemID;
+                            }
+                        }
                     }
 
-                    dLayer.DeleteData("Inv_ServiceTimesheetDetails", "N_ServiceSheetItemID", nServiceSheetItemID, "", connection, transaction);
-                    for (int j = 0; j < DetailTable.Rows.Count; j++)
-                    {
-                        DetailTable.Rows[j]["N_ServiceSheetItemID"] = nServiceSheetItemID;
-                    }
                     int nServiceSheetDetailsID = dLayer.SaveData("Inv_ServiceTimesheetDetails", "N_ServiceSheetDetailsID", DetailTable, connection, transaction);
                     if (nServiceSheetDetailsID <= 0)
                     {
@@ -219,6 +231,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     DataSet dt = new DataSet();
                     SortedList Params = new SortedList();
+                    SortedList ProcParams = new SortedList();
                     DataTable MasterTable = new DataTable();
                     DataTable ItemTable = new DataTable();
                     DataTable DetailTable = new DataTable();
@@ -243,16 +256,17 @@ namespace SmartxAPI.Controllers
                     ItemTable = dLayer.ExecuteDataTable(Itemsql, Params, connection);
                     ItemTable = _api.Format(ItemTable, "Items");
 
-                    Params.Add("@N_TransID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_SOID"].ToString()));
-                    Params.Add("@N_FnyearID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()));
-                    Params.Add("@N_BranchID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString()));
-                    Params.Add("@D_DateFrom", myFunctions.getIntVAL(MasterTable.Rows[0]["D_DateFrom"].ToString()));
-                    Params.Add("@D_DateTo", myFunctions.getIntVAL(MasterTable.Rows[0]["D_DateTo"].ToString()));
-                    Params.Add("@N_LocationID", nLocationID);
-                    Params.Add("@N_UserID", myFunctions.GetUserID(User));
-                    Params.Add("@X_Type", xType);
-                    Params.Add("@N_FormID", myFunctions.getIntVAL(MasterTable.Rows[0]["D_DateTo"].ToString()));
-                    ProcTable = dLayer.ExecuteDataTablePro("SP_InvItemWiseDateList", Params, connection);
+                    ProcParams.Add("@N_TransID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_SOID"].ToString()));
+                    ProcParams.Add("@N_CompanyId", myFunctions.GetCompanyID(User));
+                    ProcParams.Add("@N_FnyearID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()));
+                    ProcParams.Add("@N_BranchID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString()));
+                    ProcParams.Add("@D_DateFrom", MasterTable.Rows[0]["D_DateFrom"].ToString());
+                    ProcParams.Add("@D_DateTo", MasterTable.Rows[0]["D_DateTo"].ToString());
+                    ProcParams.Add("@N_LocationID", nLocationID);
+                    ProcParams.Add("@N_UserID", myFunctions.GetUserID(User));
+                    ProcParams.Add("@X_Type", xType);
+                    ProcParams.Add("@N_FormID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_FormID"].ToString()));
+                    ProcTable = dLayer.ExecuteDataTablePro("SP_InvItemWiseDateList", ProcParams, connection);
 
                     DetailSql = "select * from vw_Inv_ServiceTimesheetDetails where N_CompanyId=@nCompanyID and N_ServiceSheetID=@nServiceSheetID";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
@@ -261,13 +275,13 @@ namespace SmartxAPI.Controllers
                     {
                         foreach (DataRow Kvar in DetailTable.Rows)
                         {
-                            if (myFunctions.getIntVAL(Avar["N_TransDetailsID"].ToString()) == myFunctions.getIntVAL(Kvar["N_TransDetailsID"].ToString()) &&
-                                myFunctions.getIntVAL(Avar["N_ItemID"].ToString()) == myFunctions.getIntVAL(Kvar["N_ItemID"].ToString()) &&
-                                myFunctions.getIntVAL(Avar["DateValue"].ToString()) == myFunctions.getIntVAL(Kvar["D_Date"].ToString()))
-                            {
-                                Kvar["N_Hour"] = Avar["N_Hours"];
-                                Kvar["X_Remarks"] = Avar["X_Remarks"];
-                            }
+                            // if (myFunctions.getIntVAL(Avar["N_TransDetailsID"].ToString()) == myFunctions.getIntVAL(Kvar["N_TransDetailID"].ToString()) &&
+                            //     myFunctions.getIntVAL(Avar["N_ItemID"].ToString()) == myFunctions.getIntVAL(Kvar["N_ItemID"].ToString()) &&
+                            //     Avar["DateValue"].ToString() == Kvar["D_Date"].ToString())
+                            // {
+                            //     Kvar["N_Hour"] = Avar["N_Hours"];
+                            //     Kvar["X_Remarks"] = Avar["X_Remarks"];
+                            // }
                         }
                     }
                     DetailTable = _api.Format(DetailTable, "Details");
@@ -284,71 +298,43 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User,e));
             }
         }
-            
-        [HttpGet("List")]
-
-        
-        public ActionResult EmployeeEvaluationList()
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyID = myFunctions.GetCompanyID(User);
-            Params.Add("@nComapnyID", nCompanyID);
-            SortedList OutPut = new SortedList();
-            string sqlCommandText = "select N_CompanyID,N_EvalID,X_EvalCode,X_Description from vw_PayEmpEvauation_List where N_CompanyID=@nComapnyID";
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(dt));
-                }
-            }
-            catch (Exception e)
-            {
-                return Ok(_api.Error(User,e));
-            }
-        }
-        
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nEvalID, int nCompanyID, int nFnYearID)
+        public ActionResult DeleteData(int nServiceSheetID, int nFnYearID, int nFormID)
         {
+            int nCompanyID = myFunctions.GetCompanyID(User);
             int Results = 0;
             try
             {
                 SortedList QueryParams = new SortedList();
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nFnYearID", nFnYearID);
-                QueryParams.Add("@nEvalID", nEvalID);
+                QueryParams.Add("@nServiceSheetID", nServiceSheetID);
+                QueryParams.Add("@nFormID", nFormID);
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
 
-                    Results = dLayer.DeleteData("Pay_EmpEvaluation", "N_EvalID", nEvalID, "", connection);
+                    int serviceSheetID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_ServiceSheetID,0) from Inv_Sales where N_CompanyId=@nCompanyID and N_FormID=@nFormID and N_ServiceSheetID="+nServiceSheetID, QueryParams, connection).ToString());
 
-
-                    if (Results > 0)
+                    if (serviceSheetID>0)
                     {
-                        dLayer.DeleteData("Pay_EmpEvaluationDetails", "N_EvalID", nEvalID, "", connection);
-                        return Ok(_api.Success("Employee Evaluation deleted"));
-                    }
-                    else
-                    {
-                        return Ok(_api.Error(User,"Unable to delete"));
-                    }
+                        return Ok(_api.Error(User,"Unable to delete,Invoice Processed"));
+                    } else {
+                        Results = dLayer.DeleteData("Inv_ServiceTimesheet", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection);
 
+                        if (Results > 0)
+                        {
+                            dLayer.DeleteData("Inv_ServiceTimesheetItems", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID, connection);
+                            dLayer.DeleteData("Inv_ServiceTimesheetDetails", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID, connection);
+                            return Ok(_api.Success("Service Timesheet deleted"));
+                        }
+                        else
+                        {
+                            return Ok(_api.Error(User,"Unable to delete"));
+                        }
+                    }
                 }
-
             }
             catch (Exception ex)
             {
@@ -381,8 +367,11 @@ namespace SmartxAPI.Controllers
                     Params.Add("@X_Type", xType);
                     Params.Add("@N_FormID", nFormID);
                     
-                    
-                    Itemsql = "select * from vw_SOItemsForTimesheet where N_CompanyID=@N_CompanyId and N_SalesOrderId=@N_TransID and ((D_DeliveryDate<=@D_DateFrom) or (D_DeliveryDate>=@D_DateFrom AND D_DeliveryDate<=@D_DateTo) AND ISNULL(D_ReturnDate,@D_DateTo)>=@D_DateTo)";
+                    if (nFormID == 1145)
+                        Itemsql = "select * from vw_SOItemsForTimesheet where N_CompanyID=@N_CompanyId and N_SalesOrderId=@N_TransID and ((D_DeliveryDate<=@D_DateFrom) or (D_DeliveryDate>=@D_DateFrom AND D_DeliveryDate<=@D_DateTo) AND ISNULL(D_ReturnDate,@D_DateTo)>=@D_DateTo)";
+                    else
+                        Itemsql = "select * from vw_POItemsForTimesheet where N_CompanyID=@N_CompanyId and N_SOId=@N_TransID and ((D_MRNDate<=@D_DateFrom) or (D_MRNDate>=@D_DateFrom AND D_MRNDate<=@D_DateTo) AND ISNULL(D_ReturnDate,@D_DateTo)>=@D_DateTo)";
+
                     ItemTable = dLayer.ExecuteDataTable(Itemsql, Params, connection);
                     ItemTable = _api.Format(ItemTable, "Items");
 
