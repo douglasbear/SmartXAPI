@@ -587,11 +587,11 @@ namespace SmartxAPI.Controllers
 
                     if (Count == 0)
                     {
-                        sqlOverDueList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "  and isnull(N_AssigneeID,0)=0  and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed'";
+                        sqlOverDueList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "  and isnull(N_AssigneeID,0)=0  and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' order by D_TaskDate desc";
                     }
                     else
                     {
-                        sqlOverDueList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus  where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "  and isnull(N_AssigneeID,0)=0  and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and N_TaskID not in (select top(" + Count + ") N_TaskID from [vw_Tsk_TaskCurrentStatus] where  N_CompanyID=" + nCompanyID + " and N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "  and isnull(N_AssigneeID,0)=0  and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' order by N_PriorityID asc ) order by N_PriorityID asc";
+                        sqlOverDueList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus  where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "  and isnull(N_AssigneeID,0)=0  and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and N_TaskID not in (select top(" + Count + ") N_TaskID from [vw_Tsk_TaskCurrentStatus] where  N_CompanyID=" + nCompanyID + " and N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "  and isnull(N_AssigneeID,0)=0  and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' order by D_TaskDate desc ) order by D_TaskDate desc";
                     }
 
                     OverDueTasks = dLayer.ExecuteDataTable(sqlOverDueList, Params, connection);
@@ -641,11 +641,11 @@ namespace SmartxAPI.Controllers
 
                     if (Count == 0)
                     {
-                        sqlOverDueList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and N_Status=4 and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed'";
+                        sqlOverDueList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and N_Status=4 and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' order by D_DueDate asc";
                     }
                     else
                     {
-                        sqlOverDueList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and N_Status=4 and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and N_TaskID not in (select top(" + Count + ") N_TaskID from [vw_Tsk_TaskCurrentStatus] where  N_CompanyID=" + nCompanyID + " and N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and N_Status=4  and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' order by N_PriorityID asc ) order by N_PriorityID asc";
+                        sqlOverDueList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and N_Status=4 and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and N_TaskID not in (select top(" + Count + ") N_TaskID from [vw_Tsk_TaskCurrentStatus] where  N_CompanyID=" + nCompanyID + " and N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and N_Status=4  and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' order by D_DueDate asc ) order by D_DueDate asc";
                     }
 
                     SubmitTasks = dLayer.ExecuteDataTable(sqlOverDueList, Params, connection);
