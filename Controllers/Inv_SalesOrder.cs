@@ -666,8 +666,10 @@ namespace SmartxAPI.Controllers
                             rentalItem.Columns.Remove("rowID");
                         
                         rentalItem.AcceptChanges();
-                      
-                            if (n_SOId > 0)
+
+                        if(rentalItem.Rows.Count > 0)
+                       {
+                                      if (n_SOId > 0)
                     {
                             int FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
                             dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + n_SalesOrderId.ToString() + "  and N_FormID="+ FormID + " and N_CompanyID=" + N_CompanyID, connection, transaction);
@@ -675,6 +677,8 @@ namespace SmartxAPI.Controllers
                     }
                     dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
 
+                       }
+                
 
                     if (N_QuotationDetailId <= 0)
                     {
