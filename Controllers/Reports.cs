@@ -563,7 +563,7 @@ namespace SmartxAPI.Controllers
                                             g.Clear(Color.White);
                                             g.DrawImageUnscaled(Sign, 0, 0);
                                         }
-                                        b.Save("D://OLIVOSERVER2020/Images/" + var["N_ActionID"].ToString() + ".png");
+                                        b.Save("C://OLIVOSERVER2020/Images/" + var["N_ActionID"].ToString() + ".png");
                                     }
                                 }
                             }
