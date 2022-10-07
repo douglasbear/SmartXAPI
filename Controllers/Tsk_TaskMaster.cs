@@ -185,6 +185,7 @@ namespace SmartxAPI.Controllers
                     DataTable TimeTable = new DataTable();
                     DataTable options = new DataTable();
                     DataTable TasksList = new DataTable();
+                    DataTable Materials = new DataTable();
                     int loginUserID=myFunctions.GetUserID(User);
 
 
@@ -228,8 +229,13 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nTaskID", TaskID);
                     MasterTable = _api.Format(MasterTable, "Master");
                     string subTasksList = "select * from vw_TaskCurrentStatus where N_CompanyID=@nCompanyID  and  N_ParentID=@nTaskID order by N_SortID";
-
-
+               
+                   //
+                   
+                    // Materials
+                        string ReqMaterialsSql = "select * from vw_Inv_ServiceMaterials where N_CompanyID=" +  myFunctions.GetCompanyID(User) + " and N_TaskID=" + TaskID;
+                    Materials = dLayer.ExecuteDataTable(ReqMaterialsSql, Params, connection);
+                                       Materials = _api.Format(Materials, "Materials");
                     // TimeTable
                     timeSql = "select * from vw_Tsk_TaskStatus where N_CompanyId=@nCompanyID and N_TaskID=" + TaskID + " ";
                     TimeTable = dLayer.ExecuteDataTable(timeSql, Params, connection);
@@ -307,6 +313,7 @@ namespace SmartxAPI.Controllers
                     DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "Individualseconds", typeof(double), Individualseconds);
 
                     DetailTable = _api.Format(DetailTable, "Details");
+
 
 
 
@@ -398,6 +405,7 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(CommentsTable);
                     dt.Tables.Add(options);
                     dt.Tables.Add(TasksList);
+                    dt.Tables.Add(Materials);
 
                     return Ok(_api.Success(dt));
 
@@ -423,9 +431,11 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
                     DataTable DetailTable;
+                    DataTable MaterialTable;
                     string DocNo = "";
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
+                    MaterialTable = ds.Tables["materials"];
                     DataTable Attachment = ds.Tables["attachments"];
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
@@ -528,6 +538,8 @@ namespace SmartxAPI.Controllers
 
                     MasterTable.Rows[0]["N_StatusID"]= DetailTable.Rows[0]["N_Status"].ToString();
 
+
+
                     if (nProjectID > 0)
                     {
                         if (nTaskId == 0)
@@ -552,6 +564,16 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable To Save"));
                     }
+                    if(MaterialTable.Rows.Count>0)
+                    {
+                     for (int i = 0; i < MaterialTable.Rows.Count; i++)
+                    {
+                        MaterialTable.Rows[i]["n_TaskID"] = nTaskId;
+                    }
+
+                    dLayer.SaveData("Inv_ServiceMaterials", "n_MaterialID", MaterialTable, connection, transaction);
+                    }
+
                     else if (DetailTable.Rows[0]["N_AssigneeID"].ToString() != "0" && DetailTable.Rows[0]["N_AssigneeID"].ToString() != "")
                     {
                         DataRow row = DetailTable.NewRow();

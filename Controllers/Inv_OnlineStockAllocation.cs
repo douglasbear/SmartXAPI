@@ -282,6 +282,7 @@ namespace SmartxAPI.Controllers
                                 {
                                     totalCount = totalCount + rowCount;
                                     FieldValuesArray = FieldValuesArray.Substring(1);
+                                    dLayer.ExecuteNonQuery("delete from Mig_OnlineStore ", connection, transaction);
                                     string inserStript = "insert into Mig_OnlineStore (" + FieldList + ") values" + FieldValuesArray;
                                     dLayer.ExecuteNonQuery(inserStript, connection, transaction);
                                     FieldValuesArray = "";
@@ -348,12 +349,13 @@ namespace SmartxAPI.Controllers
             return OutputString;
         }
         [HttpGet("exportData")]
-        public ActionResult GetExportDetails(int nStoreID, int nRuleID)
+        public ActionResult GetExportDetails(int nStoreID, int nRuleID, string xStoreName)
         {
             DataTable Master = new DataTable();
             DataTable Detail = new DataTable();
             DataSet ds = new DataSet();
             SortedList Params = new SortedList();
+            SortedList OutPut = new SortedList();
             SortedList QueryParams = new SortedList();
             DataTable Attachments = new DataTable();
             int companyid = myFunctions.GetCompanyID(User);
@@ -370,12 +372,16 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
 
-                    string x_filelocation=GenerateCSV(nStoreID, nRuleID);
+                    string x_filelocation=GenerateCSV(nStoreID, nRuleID,xStoreName);
+                   // return Ok(_api.Success({ "FileName", x_filelocation }));
+                    //return Ok(_api.Success(x_filelocation));
+                    OutPut.Add("FileName", x_filelocation);
 
+                    return Ok(_api.Success(OutPut));
 
 
                 }
-                return Ok(_api.Warning("No Results Found"));
+               
             }
             catch (Exception e)
             {
@@ -421,7 +427,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    string CSVDatasql = "Select * from Vw_Inv_OnlineStoreDetail_Export"; //where N_StoreID='" + nStoreID;
+                    string CSVDatasql = "Select * from Vw_Inv_OnlineStoreDetail_Export where N_StoreID=" + nStoreID;
                     CSVData = dLayer.ExecuteDataTable(CSVDatasql, Params, connection);
 
                     int row = 1;
@@ -455,13 +461,13 @@ namespace SmartxAPI.Controllers
                 }
             }
         }
-        public string GenerateCSV(int nStoreID, int nRuleID)
+        public string GenerateCSV(int nStoreID, int nRuleID, string xStoreName)
         {
 
             try
             {
 
-                string X_WpsFileName = this.TempFilesPath + myFunctions.GetCompanyID(User) + "-" + nStoreID + ".csv";
+                string X_WpsFileName = this.TempFilesPath + myFunctions.GetCompanyID(User) + "-" + xStoreName + ".csv";
 
                 StringBuilder sb = new StringBuilder();
                 DataTable CSVData = new DataTable();
@@ -469,7 +475,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.GetCompanyID(User);
                 Params.Add("@p1", nCompanyID);
                 Params.Add("@p2", nStoreID);
-                string CSVDatasql = "Select * from Vw_Inv_OnlineStoreDetail_Export"; //where N_StoreID='" + nStoreID;
+                string CSVDatasql = "Select * from Vw_Inv_OnlineStoreDetail_Export where N_StoreID=" + nStoreID;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -516,7 +522,7 @@ namespace SmartxAPI.Controllers
 
                 System.IO.File.AppendAllText(X_WpsFileName, sb.ToString());
 
-                return X_WpsFileName;
+                return myFunctions.GetCompanyID(User) + "-" + nStoreID + ".csv";
             }
             catch (Exception ex)
             {

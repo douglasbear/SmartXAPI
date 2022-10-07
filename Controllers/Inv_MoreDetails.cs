@@ -71,7 +71,6 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_FormID", nFormID);
                         Params.Add("N_YearID", nFnYearID);
-                        // Params.Add("N_UserID", N_UserID);
                         X_ServiceInfoCode = dLayer.GetAutoNumber("Inv_ServiceInfo", "X_ServiceInfoCode", Params, connection, transaction);
                         if (X_ServiceInfoCode == "")
                         {
@@ -90,6 +89,8 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("Inv_ServiceCondition", "N_ServiceInfoID", N_ServiceInfoID, "N_CompanyID=" + N_CompanyID + " and N_ServiceInfoID=" + N_ServiceInfoID, connection, transaction);
                         dLayer.DeleteData("Inv_ServiceInfo", "N_ServiceInfoID", N_ServiceInfoID, "N_CompanyID=" + N_CompanyID + " and N_ServiceInfoID=" + N_ServiceInfoID, connection, transaction);
+                        dLayer.DeleteData("Inv_ServiceMaterials", "N_ServiceInfoID", N_ServiceInfoID, "N_CompanyID=" + N_CompanyID + " and N_ServiceInfoID=" + N_ServiceInfoID, connection, transaction);
+                         
                     }
                     // string DupCriteria = "";
 

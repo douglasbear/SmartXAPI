@@ -193,14 +193,22 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("assetList")]
-        public ActionResult ListAssetName()
+        public ActionResult ListAssetName(bool isRentalItem)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
+            string RentalItem="";
              Params.Add("@nCompanyID",nCompanyID);
             // Params.Add("@nFnYearID",nFnYearID);
-            string sqlCommandText = "Select * from Vw_AssetDashboard Where N_CompanyID=@nCompanyID";
+
+         
+
+          if(isRentalItem==true){
+                       RentalItem=RentalItem+ " and N_ItemID NOT IN (select isnull(N_AssItemID,0) from inv_itemmaster where N_CompanyId=@nCompanyID)";
+                    }
+
+            string sqlCommandText = "Select * from Vw_AssetDashboard Where N_CompanyID=@nCompanyID"+RentalItem;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

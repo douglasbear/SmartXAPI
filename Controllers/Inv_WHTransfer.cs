@@ -289,7 +289,13 @@ namespace SmartxAPI.Controllers
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
                     int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString());
                     int nLocationIDfrom = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationIDFrom"].ToString());
-                    int nLocationIDto = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationIDTo"].ToString());
+                     int nLocationIDto =0;
+                    if(MasterTable.Columns.Contains("n_LocationIDTo"))
+                    {
+                       nLocationIDto=myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationIDTo"].ToString());
+                    }
+                   
+                    int nLocationIDtoInGrid = myFunctions.getIntVAL(DetailTable.Rows[0]["n_LocationIDTo"].ToString());
                     string X_ReferenceNo = MasterTable.Rows[0]["X_ReferenceNo"].ToString();
 
 
@@ -400,7 +406,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         }
 
-                        bAutoReceive = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_AutoReceive From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_LocationID = " + nLocationIDto, StockParam, connection, transaction));
+                        bAutoReceive = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_AutoReceive From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_LocationID = " + nLocationIDtoInGrid, StockParam, connection, transaction));
                         if (bAutoReceive)
                         {
 
@@ -425,6 +431,10 @@ namespace SmartxAPI.Controllers
                             {
                                 dLayer.ExecuteNonQuery("UPDATE Inv_Location  set B_InActive=1 where  N_CompanyID=" + nCompanyID + "  and N_LocationID=" + nLocationIDfrom, Params, connection, transaction);
                             }
+                        }
+                        if(myFunctions.getIntVAL(MasterTable.Rows[0]["n_PRSID"].ToString())>0)
+                        {
+                             dLayer.ExecuteNonQuery("UPDATE Inv_PRS  set N_Processed=1 where  N_CompanyID=" + nCompanyID + "  and N_PrsID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["n_PRSID"].ToString()), Params, connection, transaction);
                         }
 
 
@@ -459,7 +469,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-
+                      int n_PRSID=myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_PrsID from Inv_TransferStock where N_CompanyID="+nCompanyID+" and N_TransferID="+nTransferId+"", connection, transaction).ToString());
 
                     SortedList deleteParams = new SortedList()
                             {
@@ -485,6 +495,12 @@ namespace SmartxAPI.Controllers
 
 
 
+                      
+                        if(n_PRSID>0)
+                        {
+                             dLayer.ExecuteNonQuery("UPDATE Inv_PRS  set N_Processed=0 where  N_CompanyID=" + nCompanyID + "  and N_PrsID=" + n_PRSID, deleteParams, connection, transaction);
+                        }
+
 
 
                         transaction.Commit();
@@ -506,7 +522,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("viewdetails")]
-        public ActionResult viewDetails(string xReceiptNo, int nBranchID, int nFnYearID)
+        public ActionResult viewDetails(string xReceiptNo, int nBranchID, int nFnYearID,int nPRSID )
         {
             try
             {
@@ -534,20 +550,35 @@ namespace SmartxAPI.Controllers
                     //     xCondition="X_ReceiptNo=@xReceiptNo and N_CompanyId=@nCompanyID and N_BranchID=@nBranchID";
 
                     Mastersql = "Select Inv_TransferStock.*,Inv_warehouseMasterFrom.X_LocationName As X_WarehouseNameFrom,Inv_warehouseMasterFrom.X_LocationCode As X_LocationCodeFrom,Inv_warehouseMasterTo.X_LocationName As X_WarehouseNameTo,Inv_warehouseMasterTo.X_LocationCode As X_LocationCodeTo,Inv_PRS.X_PRSNo,Inv_PRS.X_Purpose,Inv_PRS.N_PRSID,Inv_Department.N_DepartmentID,Inv_Department.X_DepartmentCode,Inv_Department.X_Department from Inv_TransferStock  left outer Join Inv_Location As Inv_warehouseMasterFrom on Inv_TransferStock.N_LocationIDFrom = Inv_warehouseMasterFrom.N_LocationID And Inv_TransferStock.N_CompanyID = Inv_warehouseMasterFrom.N_CompanyID  left outer  Join Inv_Location As Inv_warehouseMasterTo on Inv_TransferStock.N_LocationIDTo  = Inv_warehouseMasterTo.N_LocationID And Inv_TransferStock.N_CompanyID = Inv_warehouseMasterTo.N_CompanyID " +
-                "left outer join Inv_PRS on Inv_TransferStock.N_PRSID=Inv_PRS.N_PRSID left outer join Inv_Department On Inv_PRS.N_DepartmentID=Inv_Department.N_DepartmentID Where  Inv_TransferStock.N_CompanyID=" + nCompanyID + " and Inv_TransferStock.X_ReferenceNo='" + xReceiptNo + "' and Inv_TransferStock.N_FnYearId=" + nFnYearID + "";
+                   "left outer join Inv_PRS on Inv_TransferStock.N_PRSID=Inv_PRS.N_PRSID left outer join Inv_Department On Inv_PRS.N_DepartmentID=Inv_Department.N_DepartmentID Where  Inv_TransferStock.N_CompanyID=" + nCompanyID + " and Inv_TransferStock.X_ReferenceNo='" + xReceiptNo + "' and Inv_TransferStock.N_FnYearId=" + nFnYearID + "";
+                   if(nPRSID >0)
+                   {
+                    Mastersql="select * from VW_TransferReqToTransfer where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+" and N_PRSID="+nPRSID+"";
 
+                   }
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     MasterTable = _api.Format(MasterTable, "Master");
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                       if(nPRSID==0){
                     int nTransferId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TransferId"].ToString());
                     int N_LocationIDFrom = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationIDFrom"].ToString());
+                       
                     // DateTime dTransdate = Convert.ToDateTime(MasterTable.Rows[0]["D_ReceiptDate"].ToString());
                     Params.Add("@nTransferId", nTransferId);
+  
                     DetailGetSql = "Select vw_InvTransferStockDetails.*,dbo.[SP_BatchStock](vw_InvTransferStockDetails.N_ItemID," + N_LocationIDFrom + ",vw_InvTransferStockDetails.X_BatchCode,0) As N_Stock ,dbo.SP_Cost_Loc(vw_InvTransferStockDetails.N_ItemID,vw_InvTransferStockDetails.N_CompanyID,''," + N_LocationIDFrom + ") As N_LPrice,dbo.SP_SellingPrice(vw_InvTransferStockDetails.N_ItemID,vw_InvTransferStockDetails.N_CompanyID) As N_UnitSPrice " +
                     " from vw_InvTransferStockDetails  Where vw_InvTransferStockDetails.N_CompanyID=" + nCompanyID + " and vw_InvTransferStockDetails.N_TransferId=" + nTransferId + "";
+                       }
+                  
+                    if(nPRSID>0)
+                    {
+                       DetailGetSql="select * from VW_TransferReqToTransferDetails where   N_CompanyID="+nCompanyID+" and N_PRSID="+nPRSID+"";
+                    }
                     Details = dLayer.ExecuteDataTable(DetailGetSql, Params, connection);
+                    if(!Details.Columns.Contains("N_ClassID"))
+                    {
                     Details = myFunctions.AddNewColumnToDataTable(Details, "N_ClassID", typeof(int), 0);
-
+                     
 
                     foreach (DataRow item in Details.Rows)
                     {
@@ -561,6 +592,7 @@ namespace SmartxAPI.Controllers
 
                     }
                     Details.AcceptChanges();
+                    }
 
 
 
