@@ -319,7 +319,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesInvoiceDetails(int nCompanyId, bool bAllBranchData, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID, string xDeliveryNoteID,int nServiceSheetID)
+        public ActionResult GetSalesInvoiceDetails(int nCompanyId, bool bAllBranchData, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID, string xDeliveryNoteID,int nServiceSheetID, string xServiceSheetID)
         {
             if (xInvoiceNo != null)
                 xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
@@ -596,8 +596,15 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Success(dsSalesInvoice));
 
                     }
-                      else if (nServiceSheetID > 0)
+                    else  if (nServiceSheetID > 0 || (xServiceSheetID != "" && xServiceSheetID != null))
                     {
+                        if(nServiceSheetID>0)
+                            xServiceSheetID=nServiceSheetID.ToString();
+                        else
+                        {
+                            string[] xServiceSheet = xServiceSheetID.Split(",");
+                            nServiceSheetID = myFunctions.getIntVAL(xServiceSheet[0].ToString());
+                        }
 
                         QueryParamsList.Add("@nServiceSheetID", nServiceSheetID);
                         string Mastersql = "select * from vw_ServiceTimesheetToSales where N_CompanyId=@nCompanyID and N_ServiceSheetID=@nServiceSheetID";
@@ -611,7 +618,7 @@ namespace SmartxAPI.Controllers
                         }
 
                         string DetailSql = "";
-                        DetailSql = "select * from vw_ServiceTimesheetDetailsToSales where N_CompanyId=@nCompanyID and N_ServiceSheetID=@nServiceSheetID";
+                        DetailSql = "select * from vw_ServiceTimesheetDetailsToSales where N_CompanyId=@nCompanyID and N_ServiceSheetID in ( "+xServiceSheetID+" )";
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
                         dsSalesInvoice.Tables.Add(MasterTable);
@@ -2348,6 +2355,39 @@ namespace SmartxAPI.Controllers
                     OutPut.Add("TotalCount", TotalCount);
                     return Ok(_api.Success(OutPut));
                 }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+        [HttpGet("serviceTimesheetSearch")]
+        public ActionResult GetTimesheetList(int nCustomerId)
+        {
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string crieteria = "";
+
+            if (nCustomerId > 0)
+                crieteria = " where N_FormID=1145 and N_CustomerID=@nCustomerId and N_CompanyID=@nCompanyId and N_ServiceSheetID not in (select ISNULL(N_ServiceSheetID) from Inv_Sales where N_CompanyID=@nCompanyId)";
+            else
+                crieteria = " where N_FormID=1145 and N_CompanyID=@nCompanyId and N_ServiceSheetID not in (select ISNULL(N_ServiceSheetID) from Inv_Sales where N_CompanyID=@nCompanyId)";
+
+            Params.Add("@nCompanyId", nCompanyId);
+            Params.Add("@nCustomerId", nCustomerId);
+            string sqlCommandText = "select N_CompanyID,N_ServiceSheetID,X_ServiceSheetCode,D_DateFrom,D_DateTo,N_SOID,X_OrderNo,N_CustomerID,X_CustomerName,N_ProjectID,X_ProjectName from vw_Inv_ServiceTimesheet " + crieteria + " order by N_ServiceSheetID DESC,X_ServiceSheetCode";
+            try
+            {
+                DataTable ServiceTimesheetList = new DataTable();
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    ServiceTimesheetList = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    ServiceTimesheetList = _api.Format(ServiceTimesheetList);
+                    if (ServiceTimesheetList.Rows.Count == 0) { return Ok(_api.Notice("No Service Timesheet Found")); }
+                }
+                return Ok(_api.Success(ServiceTimesheetList));
             }
             catch (Exception e)
             {
