@@ -346,7 +346,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     if(N_RequestTypeID==0){
                     N_RequestTypeID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select max(isnull(N_RequestTypeID,0)) as N_RequestTypeID from Pay_EmployeeRequestType where N_CompanyID=@nCompanyID", Params, connection, transaction).ToString());
-                    if(N_RequestTypeID==0)
+                    if(N_RequestTypeID==0 || N_RequestTypeID < 3000)
                         {
                             N_RequestTypeID=3000;// Employee Request Type ID Starts From 3000
                             MasterTable.Rows[0]["n_RequestTypeID"]=N_RequestTypeID;
