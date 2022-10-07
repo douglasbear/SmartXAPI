@@ -270,7 +270,6 @@ namespace SmartxAPI.GeneralFunctions
                     }
                 }
                 SqlDataAdapter dataAdapter = new SqlDataAdapter();
-                Command.CommandTimeout = 60;
                 dataAdapter.SelectCommand = Command;
                 DataTable resTable = new DataTable();
                 recordsReturned = dataAdapter.Fill(resTable);
