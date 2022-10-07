@@ -153,6 +153,14 @@ namespace SmartxAPI.Controllers
 
                     if (nServiceSheetID > 0)
                     {
+                        object serviceSheetID = dLayer.ExecuteScalar("select isNull(N_ServiceSheetID,0) from Inv_Sales where N_CompanyId="+ nCompanyID +" and N_FormID=1601 and N_ServiceSheetID="+nServiceSheetID, Params, connection, transaction);
+                        if (serviceSheetID == null) serviceSheetID = 0;
+                        if (myFunctions.getIntVAL(serviceSheetID.ToString()) > 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User,"Unable to save,Invoice Processed"));
+                        }
+
                         dLayer.DeleteData("Inv_ServiceTimesheet", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Inv_ServiceTimesheetItems", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Inv_ServiceTimesheetDetails", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID, connection, transaction);
