@@ -91,6 +91,7 @@ namespace SmartxAPI.Controllers
                     EmployeeDetails = dLayer.ExecuteDataTable(sqlCommandEmployeeDetails, Params, connection);
                     EmployeeDetails = api.Format(EmployeeDetails, "EmployeeDetails");
                     EmployeeDetails = myFunctions.AddNewColumnToDataTable(EmployeeDetails, "EmployeeImage", typeof(string), null);
+                   if( EmployeeDetails.Rows.Count>0){
                     if (EmployeeDetails.Rows[0]["i_Employe_Image"] != null)
                     {
                         DataRow dataRow = EmployeeDetails.Rows[0];
@@ -102,7 +103,7 @@ namespace SmartxAPI.Controllers
                             EmployeeDetails.Columns.Remove("i_Employe_Image");
                         }
                         EmployeeDetails.AcceptChanges();
-                    }
+                    }}
                     object EnableLeaveData = dLayer.ExecuteScalar(EnableLeave, Params, connection);
                    // object EnableLeaveData = "";
                     object Loan = dLayer.ExecuteScalar(sqlCommandLoan, Params, connection);
