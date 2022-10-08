@@ -112,15 +112,15 @@ namespace SmartxAPI.Controllers
 
                     if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && nVacancyID > 0)
                     {
-                        int N_PkeyID = nVacancyID;
-                        string X_Criteria = "N_VacancyID=" + nVacancyID + " and N_CompanyID=" + nCompanyID;
-                        myFunctions.UpdateApproverEntry(Approvals, "Rec_JobVacancy", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearID.ToString()), "JOB VACANCY", N_PkeyID, MasterTable.Rows[0]["X_VacancyCode"].ToString(), 1, "", 0, "",myFunctions.getIntVAL(objUserID.ToString()), User, dLayer, connection, transaction);
+                        // int N_PkeyID = nVacancyID;
+                        // string X_Criteria = "N_VacancyID=" + nVacancyID + " and N_CompanyID=" + nCompanyID;
+                        // myFunctions.UpdateApproverEntry(Approvals, "Rec_JobVacancy", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        // N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearID.ToString()), "JOB VACANCY", N_PkeyID, MasterTable.Rows[0]["X_VacancyCode"].ToString(), 1, "", 0, "",myFunctions.getIntVAL(objUserID.ToString()), User, dLayer, connection, transaction);
 
-                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Rec_JobVacancy where N_VacancyID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID , connection, transaction).ToString());
+                        // N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Rec_JobVacancy where N_VacancyID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID , connection, transaction).ToString());
 
-                        transaction.Commit();
-                        return Ok(_api.Success("Job vacancy Approved " + "-" + MasterTable.Rows[0]["X_VacancyCode"].ToString()));
+                        // transaction.Commit();
+                        // return Ok(_api.Success("Job vacancy Approved " + "-" + MasterTable.Rows[0]["X_VacancyCode"].ToString()));
                     }     
 
                     if (nVacancyID > 0)
