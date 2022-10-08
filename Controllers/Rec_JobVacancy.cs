@@ -256,7 +256,7 @@ namespace SmartxAPI.Controllers
                     // if (Results > 0)
                     // {
                         transaction.Commit();
-                        return Ok(api.Success("Job Vacancy deleted"));
+                        return Ok(api.Success("Job Vacancy " + status + " Successfully"));
                     }
                     else
                     {
