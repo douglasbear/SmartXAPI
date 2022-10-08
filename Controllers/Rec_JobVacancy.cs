@@ -80,17 +80,17 @@ namespace SmartxAPI.Controllers
                 DataTable MasterTable;
                 MasterTable = ds.Tables["master"];
 
-                // DataTable Approvals;
-                // Approvals = ds.Tables["approval"];
-                // DataRow ApprovalRow = Approvals.Rows[0];
+                DataTable Approvals;
+                Approvals = ds.Tables["approval"];
+                DataRow ApprovalRow = Approvals.Rows[0];
 
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nVacancyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_VacancyID"].ToString());
 
-                // int N_SaveDraft = myFunctions.getIntVAL(MasterTable.Rows[0]["b_IsSaveDraft"].ToString());
-                // int nUserID = myFunctions.GetUserID(User);
-                // int N_NextApproverID=0;
+                int N_SaveDraft = myFunctions.getIntVAL(MasterTable.Rows[0]["b_IsSaveDraft"].ToString());
+                int nUserID = myFunctions.GetUserID(User);
+                int N_NextApproverID=0;
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -110,18 +110,18 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_VacancyCode"] = Code;
                     }
 
-                    // if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && nVacancyID > 0)
-                    // {
-                    //     int N_PkeyID = nVacancyID;
-                    //     string Criteria = "N_VacancyID=" + nVacancyID + " and N_CompanyID=" + nCompanyID;
-                    //     myFunctions.UpdateApproverEntry(Approvals, "Rec_JobVacancy", Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                    //     N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearId.ToString()), "JOB VACANCY", N_PkeyID, MasterTable.Rows[0]["X_VacancyCode"].ToString(), 1, "", 0, "",0, User, dLayer, connection, transaction);
+                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && nVacancyID > 0)
+                    {
+                        int N_PkeyID = nVacancyID;
+                        string Criteria = "N_VacancyID=" + nVacancyID + " and N_CompanyID=" + nCompanyID;
+                        myFunctions.UpdateApproverEntry(Approvals, "Rec_JobVacancy", Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearId.ToString()), "Job Vacancy", N_PkeyID, MasterTable.Rows[0]["X_VacancyCode"].ToString(), 1, "", 0, "",0, User, dLayer, connection, transaction);
 
-                    //     N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Rec_JobVacancy where N_VacancyID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID , connection, transaction).ToString());
+                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Rec_JobVacancy where N_VacancyID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID , connection, transaction).ToString());
 
-                    //     transaction.Commit();
-                    //     return Ok(api.Success("Job vacancy Approved " + "-" + MasterTable.Rows[0]["X_VacancyCode"].ToString()));
-                    // }     
+                        transaction.Commit();
+                        return Ok(api.Success("Job vacancy Approved " + "-" + MasterTable.Rows[0]["X_VacancyCode"].ToString()));
+                    }     
 
                     if (nVacancyID > 0)
                     {
@@ -131,8 +131,8 @@ namespace SmartxAPI.Controllers
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_VacancyCode='" + Code + "'";
                     string X_Criteria = "N_CompanyID=" + nCompanyID + "";
 
-                    // MasterTable.Rows[0]["n_UserID"] = nUserID;
-                    // MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+                    MasterTable.Rows[0]["n_UserID"] = nUserID;
+                    MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
 
                     nVacancyID = dLayer.SaveData("Rec_JobVacancy", "N_VacancyID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
 
@@ -143,8 +143,8 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        // N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearId.ToString()), "JOB VACANCY", nVacancyID, MasterTable.Rows[0]["X_VacancyCode"].ToString(), 1,"",0, "",0, User, dLayer, connection, transaction);
-                        // N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Rec_JobVacancy where N_VacancyID=" + nVacancyID + " and N_CompanyID=" + nCompanyID , connection, transaction).ToString());
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearId.ToString()), "Job Vacancy", nVacancyID, MasterTable.Rows[0]["X_VacancyCode"].ToString(), 1,"",0, "",0, User, dLayer, connection, transaction);
+                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Rec_JobVacancy where N_VacancyID=" + nVacancyID + " and N_CompanyID=" + nCompanyID , connection, transaction).ToString());
 
                         transaction.Commit();
                         return Ok(api.Success("Vacancy Created"));
@@ -214,7 +214,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nVacancyID)
+        public ActionResult DeleteData(int nVacancyID,int nFnyearID,string comments)
         {
 
             int Results = 0;
@@ -225,13 +225,38 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Rec_JobVacancy", "N_VacancyID", nVacancyID, "N_CompanyID =" + nCompanyID, connection, transaction);
 
-                    if (Results > 0)
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList(); 
+                    ParamList.Add("@nTransID", nVacancyID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                    string xButtonAction = "Delete";
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,X_VacancyCode,N_VacancyID from Rec_JobVacancy where N_CompanyId=@nCompanyID and N_VacancyID=@nTransID";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                    if (TransData.Rows.Count == 0)
                     {
+                        return Ok(api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+
+                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.N_FormID, nVacancyID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnyearID, 0, 0, User, dLayer, connection));
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
+                    SqlTransaction transaction = connection.BeginTransaction();
+
+                    string X_Criteria = "N_VacancyID=" + nVacancyID + " and N_CompanyID=" + nCompanyID;
+                    string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());        
+
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnyearID, "Job Vacancy", nVacancyID, TransRow["X_VacancyCode"].ToString(), ProcStatus, "Rec_JobVacancy", X_Criteria, "", User, dLayer, connection, transaction);
+                    if (status != "Error")
+                    {
+
+                    // Results = dLayer.DeleteData("Rec_JobVacancy", "N_VacancyID", nVacancyID, "N_CompanyID =" + nCompanyID, connection, transaction);
+
+                    // if (Results > 0)
+                    // {
                         transaction.Commit();
-                        return Ok(api.Success("Job Vacancy deleted"));
+                        return Ok(api.Success("Job Vacancy " + status + " Successfully"));
                     }
                     else
                     {
