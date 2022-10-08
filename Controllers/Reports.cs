@@ -518,7 +518,56 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                         }
+                        if (nFormID == 1426)
+                        {
+                            SqlCommand cmd = new SqlCommand("select i_signature from Inv_Deliverynote where N_DeliveryNoteID=" + nPkeyID, connection, transaction);
+                            object output=cmd.ExecuteScalar();
+                            if((cmd.ExecuteScalar().ToString())!="")
+                            {
+                            byte[] content = (byte[])cmd.ExecuteScalar();
+                            MemoryStream stream = new MemoryStream(content);
+                            Image Sign = Image.FromStream(stream);
 
+                            using (var b = new Bitmap(Sign.Width, Sign.Height))
+                            {
+                                b.SetResolution(Sign.HorizontalResolution, Sign.VerticalResolution);
+
+                                using (var g = Graphics.FromImage(b))
+                                {
+                                    g.Clear(Color.White);
+                                    g.DrawImageUnscaled(Sign, 0, 0);
+                                }
+                                //b = resizeImage(Sign, new Size(400, 300));
+                                b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + ".png");
+                            }
+                            }
+                        }
+
+                        if (nFormID == 1454)
+                        {
+                            DataTable dt = dLayer.ExecuteDataTable("select i_sign,N_ActionID from vw_Log_ApprovalAppraisal where n_transid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                            foreach (DataRow var in dt.Rows)
+                            {
+                                SqlCommand cmd = new SqlCommand("Select isnull(i_sign,'') as  i_sign from vw_Log_ApprovalAppraisal where N_ActionID=" + var["N_ActionID"].ToString(), connection, transaction);
+                                if ((cmd.ExecuteScalar().ToString()) != "")
+                                {
+                                    byte[] content = (byte[])cmd.ExecuteScalar();
+                                    MemoryStream stream = new MemoryStream(content);
+                                    Image Sign = Image.FromStream(stream);
+                                    using (var b = new Bitmap(Sign.Width, Sign.Height))
+                                    {
+                                        b.SetResolution(Sign.HorizontalResolution, Sign.VerticalResolution);
+
+                                        using (var g = Graphics.FromImage(b))
+                                        {
+                                            g.Clear(Color.White);
+                                            g.DrawImageUnscaled(Sign, 0, 0);
+                                        }
+                                        b.Save("C://OLIVOSERVER2020/Images/" + var["N_ActionID"].ToString() + ".png");
+                                    }
+                                }
+                            }
+                        }
 
                         string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
                         var path = client.GetAsync(URL);
