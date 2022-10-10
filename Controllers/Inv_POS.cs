@@ -34,7 +34,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("holdlist")]
-        public ActionResult GetInvoiceHoldList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string xDate, int ID, int nTerminalID)
+        public ActionResult GetInvoiceHoldList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string xDate, int ID, int nTerminalID,bool isHoldList)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -44,7 +44,11 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string sqlCommandCount = "";
             string Searchkey = "";
-
+            string crieteria = "";
+            if(isHoldList)
+            {
+            crieteria = " and  N_Hold=1 ";
+            }
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%')";
 
@@ -56,16 +60,16 @@ namespace SmartxAPI.Controllers
             if (ID == 0)
             {
                 if (Count == 0)
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_TerminalID,0)= " + nTerminalID + " " + Searchkey + " " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_TerminalID,0)= " + nTerminalID + " "+crieteria+" " + Searchkey + " " + xSortBy;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_TerminalID,0)= " + nTerminalID + " " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_TerminalID,0)= " + nTerminalID + " " + xSearchkey + xSortBy + " ) " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_TerminalID,0)= " + nTerminalID + " "+crieteria+" " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_TerminalID,0)= " + nTerminalID + " "+crieteria+" " + xSearchkey + xSortBy + " ) " + xSortBy;
             }
             else
             {
                 if (Count == 0)
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_TerminalID,0)= " + nTerminalID + " " + Searchkey + " " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_TerminalID,0)= " + nTerminalID + " "+crieteria+" " + Searchkey + " " + xSortBy;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_TerminalID,0)= " + nTerminalID + " " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_TerminalID,0)= " + nTerminalID + " " + xSearchkey + xSortBy + " ) " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_TerminalID,0)= " + nTerminalID + " "+crieteria+" " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_TerminalID,0)= " + nTerminalID + " "+crieteria+"  " + xSearchkey + xSortBy + " ) " + xSortBy;
 
             }
             Params.Add("@p1", nCompanyId);
@@ -79,7 +83,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_TerminalID,0)= " + nTerminalID + " " + xSearchkey;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_TerminalID,0)= " + nTerminalID + " "+crieteria+" " + xSearchkey;
 
                     object TotalHoldCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
