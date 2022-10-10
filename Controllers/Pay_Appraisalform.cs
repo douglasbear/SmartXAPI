@@ -228,7 +228,7 @@ namespace SmartxAPI.Controllers
 
                 DataTable Approvals;
                 Approvals = ds.Tables["approval"];
-                DataRow ApprovalRow = Approvals.Rows[0];
+                DataRow ApprovalRow = Approvals.Rows[0]; 
 
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
