@@ -70,7 +70,7 @@ namespace SmartxAPI.Controllers
                     
                     }
 
-                    if (nFormID == 589)
+                    if (nFormID == 1475)
                     {
                         offDaysSql = "Select * from pay_YearlyOffDays Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID order by N_OffID";
                         OffDays = dLayer.ExecuteDataTable(offDaysSql, Params, connection);
@@ -90,7 +90,7 @@ namespace SmartxAPI.Controllers
 
                     foreach (DataRow row in Settings.Rows)
                     {
-                        if (row["X_DataSource"] != null && row["X_DataSource"].ToString() != "")
+                        if (row["X_DataSource"] != null && row["X_DataSource"].ToString() != "" && row["X_DataSource"].ToString() != "null")
                         {
                             string sql = row["X_DataSource"].ToString();
                             SortedList lParamsList = new SortedList()
