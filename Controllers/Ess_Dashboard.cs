@@ -53,7 +53,7 @@ namespace SmartxAPI.Controllers
             string WorkerHours = "select top(7) D_Date,N_EmpID,convert(varchar(5),DateDiff(s, D_In, D_Out)/3600)+':'+convert(varchar(5),DateDiff(s, D_In, D_Out)%3600/60)+':'+convert(varchar(5),(DateDiff(s, D_In, D_Out)%60)) as [hh:mm:ss] from Pay_TimeSheetImport where N_EmpID = @p3 order by D_Date desc";
             string sqlPendingLeaveApproval = "select count(*) from (select N_VacationGroupID From vw_PayVacationList where N_CompanyID=@p1 and B_IsAdjustEntry<>1 and N_VacationGroupID in ( select N_TransID from vw_ApprovalPending where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type='LEAVE REQUEST' and N_NextApproverID=@p4) group by N_VacationGroupID) as tbl";
             string sqlLastApproval = "SELECT      Top(1) vw_ApprovalSummary.*,vw_PayVacationDetails_Disp.VacTypeId ,vw_PayVacationDetails_Disp.[Vacation Type], vw_PayVacationDetails_Disp.D_VacDateFrom, vw_PayVacationDetails_Disp.D_VacDateTo, vw_PayVacationDetails_Disp.N_VacDays FROM vw_ApprovalSummary INNER JOIN vw_PayVacationDetails_Disp ON vw_ApprovalSummary.N_CompanyID = vw_PayVacationDetails_Disp.N_CompanyID AND  vw_ApprovalSummary.N_FnYearID = vw_PayVacationDetails_Disp.N_FnYearID AND vw_ApprovalSummary.N_TransID = vw_PayVacationDetails_Disp.N_VacationGroupID AND vw_ApprovalSummary.X_Type='LEAVE REQUEST' where vw_ApprovalSummary.N_CompanyID=@p1 and vw_ApprovalSummary.N_ActionUserID=@p4 and vw_ApprovalSummary.N_ProcStatusID<>6 and vw_ApprovalSummary.N_ActionUserID<>vw_ApprovalSummary.N_ReqUserID and vw_ApprovalSummary.X_Type='LEAVE REQUEST'  ORDER BY vw_ApprovalSummary.X_ActionDate DESC";
-            string sqlEmpShiftSchedule ="select N_CompanyID,D_Date,D_In1,D_Out1,D_In2,D_Out2 from Pay_Empshiftdetails where N_EmpID=@p3 and N_CompanyID=@p1 and D_Date > getDate() and D_Date <(getDate()+9) order by D_Date asc";
+          
 
             //    DateTime Start = new DateTime(Convert.ToDateTime(dDateFrom.ToString()));
                 // DateTime dDateTo = Convert.ToDateTime(mstVar["D_PeriodTo"].ToString());
@@ -207,8 +207,8 @@ namespace SmartxAPI.Controllers
                     LastApproval = dLayer.ExecuteDataTable(sqlLastApproval, Params, connection);
                     LastApproval = api.Format(LastApproval, "LastApproval");
 
-                     ShiftSchedule = dLayer.ExecuteDataTable(sqlEmpShiftSchedule, Params, connection);
-                      ShiftSchedule = api.Format(ShiftSchedule, "ShiftSchedule");
+                    //  ShiftSchedule = dLayer.ExecuteDataTable(sqlEmpShiftSchedule, Params, connection);
+                    //   ShiftSchedule = api.Format(ShiftSchedule, "ShiftSchedule");
 
 
                 }
@@ -220,7 +220,7 @@ namespace SmartxAPI.Controllers
                 dt.Tables.Add(DailyLogin);
                 dt.Tables.Add(WorkedHours);
                 dt.Tables.Add(LastApproval);
-                dt.Tables.Add(ShiftSchedule);
+                // dt.Tables.Add(ShiftSchedule);
 
                 return Ok(api.Success(dt));
 
@@ -354,6 +354,44 @@ namespace SmartxAPI.Controllers
                 return "0";
             }
         }
+
+
+
+
+           [HttpGet("EmphiftDetails")]
+        public ActionResult EmphiftDetails(int nEmpID, int nFnyearID)
+        {
+            DataSet dt=new DataSet();
+            DataTable MasterTable = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId=myFunctions.GetCompanyID(User);
+              string sqlCommandText ="select N_CompanyID,D_Date,D_In1,D_Out1,D_In2,D_Out2 from Pay_Empshiftdetails where N_EmpID=@p3 and N_CompanyID=@p1 and D_Date > getDate() and D_Date <(getDate()+9) order by D_Date asc";
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnyearID);
+            Params.Add("@p3", nEmpID);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+
+                    if (MasterTable.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                
+                     MasterTable = api.Format(MasterTable, "Master");
+                    dt.Tables.Add(MasterTable);
+                }
+                return Ok(api.Success(dt));               
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+
 
 
 
