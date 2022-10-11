@@ -112,6 +112,11 @@ namespace SmartxAPI.Controllers
                                 break;
                             case "salary history":
                                 xTableName = "Mig_EmployeeSalaryHistory";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
                                 break;
                             case "employee salary":
                                 xTableName = "Mig_EmployeeSalary";
@@ -292,7 +297,7 @@ namespace SmartxAPI.Controllers
                             ValidationParam.Add("X_Type", dt.TableName);
                             try
                             {
-                                dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
+                              dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
                             }
                             catch (Exception ex)
                             {
@@ -312,7 +317,7 @@ namespace SmartxAPI.Controllers
                             }
                             else
                             {
-                                dLayer.ExecuteNonQueryPro("SP_SetupData_cloud", Params, connection, transaction);
+                               dLayer.ExecuteNonQueryPro("SP_SetupData_cloud", Params, connection, transaction);
                             }
 
                             if (nMasterID <= 0)
