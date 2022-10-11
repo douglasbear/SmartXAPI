@@ -2370,13 +2370,13 @@ namespace SmartxAPI.Controllers
             string crieteria = "";
 
             if (nCustomerId > 0)
-                crieteria = " where N_FormID=1145 and N_CustomerID=@nCustomerId and N_CompanyID=@nCompanyId and N_ServiceSheetID not in (select ISNULL(N_ServiceSheetID) from Inv_Sales where N_CompanyID=@nCompanyId)";
+                crieteria = " where N_FormID=1145 and N_CustomerID=@nCustomerId and N_CompanyID=@nCompanyId and N_ServiceSheetID not in (select ISNULL(N_ServiceSheetID, 0) from Inv_Sales where N_CompanyID=@nCompanyId)";
             else
-                crieteria = " where N_FormID=1145 and N_CompanyID=@nCompanyId and N_ServiceSheetID not in (select ISNULL(N_ServiceSheetID) from Inv_Sales where N_CompanyID=@nCompanyId)";
+                crieteria = " where N_FormID=1145 and N_CompanyID=@nCompanyId and N_ServiceSheetID not in (select ISNULL(N_ServiceSheetID, 0) from Inv_Sales where N_CompanyID=@nCompanyId)";
 
             Params.Add("@nCompanyId", nCompanyId);
             Params.Add("@nCustomerId", nCustomerId);
-            string sqlCommandText = "select N_CompanyID,N_ServiceSheetID,X_ServiceSheetCode,D_DateFrom,D_DateTo,N_SOID,X_OrderNo,N_CustomerID,X_CustomerName,N_ProjectID,X_ProjectName from vw_Inv_ServiceTimesheet " + crieteria + " order by N_ServiceSheetID DESC,X_ServiceSheetCode";
+            string sqlCommandText = "select N_CompanyID,N_ServiceSheetID,X_ServiceSheetCode,D_DateFrom,D_DateTo,N_SOID,X_OrderNo,N_CustomerID,X_CustomerName,N_ProjectID,X_ProjectName,X_DateFrom,X_DateTo from vw_Inv_ServiceTimesheet " + crieteria + " order by N_ServiceSheetID DESC,X_ServiceSheetCode";
             try
             {
                 DataTable ServiceTimesheetList = new DataTable();
