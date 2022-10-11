@@ -339,6 +339,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable("Select dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID,2) As AvlDays,dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID,1) As Accrude", QueryParams, connection);
                 }
+
                 if (dt.Rows.Count > 0)
                 {
                     return dt.Rows[0]["AvlDays"].ToString();
@@ -363,8 +364,11 @@ namespace SmartxAPI.Controllers
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
+             DataTable ScheduledDate = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
+            object CategoryID="";
+            string Sql="";
               string sqlCommandText ="select N_CompanyID,D_Date,D_In1,D_Out1,D_In2,D_Out2 from Pay_Empshiftdetails where N_EmpID=@p3 and N_CompanyID=@p1 and D_Date > getDate() and D_Date <(getDate()+9) order by D_Date asc";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnyearID);
@@ -374,12 +378,35 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                     
+             string CatID ="select N_CatagoryId from Pay_Employee where N_EmpID=@p3 and N_CompanyID=@p1";
+             CategoryID = dLayer.ExecuteScalar(CatID, Params, connection);
 
-                    if (MasterTable.Rows.Count == 0)
-                    {
-                        return Ok(api.Warning("No Results Found"));
-                    }
+                     MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                                    
+                 DateTime Start = DateTime.Now;
+                 DateTime End = Start.AddDays(9);
+
+                 double a = (End - Start).TotalDays;
+                 bool dayFlag = false;
+                  Params.Add("@p7",CategoryID);
+
+                 if(MasterTable.Rows.Count ==0){
+                   
+                    for (int j = 0; j <= a; j++) {
+                             dayFlag = false;
+                             DateTime NewDate = Convert.ToDateTime(Start).AddDays(j);
+                             var Date = myFunctions.getDateVAL(NewDate).ToString();
+                                 DayOfWeek dow = NewDate.DayOfWeek; 
+                                 string str = dow.ToString();
+                               string qry="select N_CompanyID,D_In1,D_Out1,D_In2,D_Out2,'"+NewDate+"' as  D_Date   from Pay_WorkingHours where N_CompanyID=@p1 and X_Day='"+str+"' and N_CatagoryID=@p7";
+                                Sql = Sql == "" ? qry : Sql + " UNION " + qry;
+
+                       }
+                         MasterTable = dLayer.ExecuteDataTable(Sql, Params, connection);
+                                  
+                  }
                 
                      MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
