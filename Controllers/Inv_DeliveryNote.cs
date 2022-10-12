@@ -646,10 +646,10 @@ namespace SmartxAPI.Controllers
                     rentalItem.AcceptChanges();
                     if (rentalItem.Columns.Contains("rowID"))
                             rentalItem.Columns.Remove("rowID");
-                            if (N_DNoteID > 0)
+                    if (N_DNoteID > 0)
                     {
                             int N_FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
-                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + N_DeliveryNoteID.ToString() + " and N_FormID="+ N_FormID + " and N_CompanyID=" + N_CompanyID, connection, transaction);
+                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + N_DNoteID.ToString() + " and N_FormID="+ N_FormID + " and N_CompanyID=" + N_CompanyID, connection, transaction);
                        
                     }
                     dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
@@ -745,14 +745,15 @@ namespace SmartxAPI.Controllers
 
                         for (int k = 0; k < rentalItem.Rows.Count; k++)
                         {
+                            if(!myFunctions.getBoolVAL(rentalItem.Rows[k]["B_Select"].ToString())) continue;
                             int nItemID = myFunctions.getIntVAL(rentalItem.Rows[k]["n_ItemID"].ToString());
                             int nAssItemID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_AssItemID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID="+ nItemID , QueryParams, connection, transaction).ToString());
                             int nRentalEmpID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_RentalEmpID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID="+ nItemID , QueryParams, connection, transaction).ToString());
 
                             if (nAssItemID > 0)
-                            dLayer.ExecuteNonQuery("update Ass_AssetMaster Set N_RentalStatus=1 where N_ItemID="+ nAssItemID +" and N_CompanyID=@nCompanyID ", QueryParams, connection, transaction);
+                                dLayer.ExecuteNonQuery("update Ass_AssetMaster Set N_RentalStatus=1 where N_ItemID="+ nAssItemID +" and N_CompanyID=@nCompanyID ", QueryParams, connection, transaction);
                             if (nRentalEmpID > 0)
-                            dLayer.ExecuteNonQuery("update Pay_Employee Set N_RentalStatus=1 where N_EmpID="+ nRentalEmpID +" and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ", QueryParams, connection, transaction);
+                                dLayer.ExecuteNonQuery("update Pay_Employee Set N_RentalStatus=1 where N_EmpID="+ nRentalEmpID +" and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ", QueryParams, connection, transaction);
                         }
 
                         SortedList Result = new SortedList();

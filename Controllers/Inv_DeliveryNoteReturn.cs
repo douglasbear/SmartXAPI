@@ -195,7 +195,7 @@ namespace SmartxAPI.Controllers
                             if (nDNRtnID > 0)
                     {
                              int N_FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
-                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + nDeliveryNoteRtnID.ToString() + " and N_FormID="+ N_FormID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + nDNRtnID.ToString() + " and N_FormID="+ N_FormID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                        
                     }
                          dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
@@ -342,9 +342,9 @@ namespace SmartxAPI.Controllers
 
                     Results = dLayer.DeleteData("Inv_DeliveryNoteReturn", "N_DeliveryNoteRtnID", nDeliveryNoteRtnID, "", connection);
 
-
                     if (Results > 0)
                     {
+                        dLayer.DeleteData("Inv_RentalSchedule", "N_TransID", nDeliveryNoteRtnID, "  N_CompanyID="+ nCompanyID +" and N_FormID=1585 ", connection);
                         dLayer.DeleteData("Inv_DeliveryNoteReturnDetails", "N_DeliveryNoteRtnID", nDeliveryNoteRtnID, "", connection);
                         return Ok(_api.Success("Delivery Note Return deleted"));
                     }
