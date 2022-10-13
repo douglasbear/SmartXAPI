@@ -302,9 +302,13 @@ namespace SmartxAPI.Controllers
                     //Detail
                     DetailSql = "select * from [vw_TaskCurrentStatus] where N_CompanyId=@nCompanyID and N_TaskID=@nTaskID ";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    if(DetailTable.Rows.Count>0)
+                    {
                     nextAction = DetailTable.Rows[0]["X_NextActions"].ToString();
                     DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "seconds", typeof(double), seconds);
                     DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "Individualseconds", typeof(double), Individualseconds);
+                    }
+
 
                     DetailTable = _api.Format(DetailTable, "Details");
 
@@ -378,6 +382,10 @@ namespace SmartxAPI.Controllers
                     CommentsTable = _api.Format(CommentsTable, "Comments");
 
                     //ActionTable
+                    if(nextAction=="")
+                    {
+                        nextAction="0";
+                    }
                     ActionSql = "select N_ActionID,X_ActionName as title ,B_SysDefault from Tsk_TaskAction Where N_ActionID in (" + nextAction + ") ";
                     options = dLayer.ExecuteDataTable(ActionSql, Params, connection);
                     options = _api.Format(options, "options");
