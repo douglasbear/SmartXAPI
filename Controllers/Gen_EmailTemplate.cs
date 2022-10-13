@@ -133,6 +133,8 @@ namespace SmartxAPI.Controllers
                         Master.Columns.Remove("n_PkeyId");
                     if (Master.Columns.Contains("n_PkeyIdSub"))
                         Master.Columns.Remove("n_PkeyIdSub");
+                    if (Master.Columns.Contains("x_RecruitmentCode"))
+                        Master.Columns.Remove("x_RecruitmentCode");    
                     Master = myFunctions.AddNewColumnToDataTable(Master, "N_MailLogID", typeof(int), 0);
                     Master = myFunctions.AddNewColumnToDataTable(Master, "X_Subject", typeof(string), Subject);
                     Master.Columns.Remove("X_Body");
