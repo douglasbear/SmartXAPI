@@ -114,10 +114,12 @@ namespace SmartxAPI.Controllers
                     DataTable DetailTable;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
+                    DataTable rentalItem = ds.Tables["segmentTable"];
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
 
                     int nDeliveryNoteRtnID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteRtnID"].ToString());
+                    int nDNRtnID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteRtnID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     int nFormID = myFunctions.getIntVAL(MasterRow["n_FormID"].ToString());
@@ -144,11 +146,64 @@ namespace SmartxAPI.Controllers
                         return Ok("Unable to save Delivery Note Return");
                     }
                     dLayer.DeleteData("Inv_DeliveryNoteReturnDetails", "N_DeliveryNoteRtnID", nDeliveryNoteRtnID, "", connection, transaction);
-                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    // for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    // {
+                    //     DetailTable.Rows[j]["N_DeliveryNoteRtnID"] = nDeliveryNoteRtnID;
+                    // }
+
+                    // int nDeliveryNoteRtnDtlsID = dLayer.SaveData("Inv_DeliveryNoteReturnDetails", "N_DeliveryNoteRtnDtlsID", DetailTable, connection, transaction);
+                   
+                    int nDeliveryNoteRtnDtlsID =0;
+                      for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        {
+                           DetailTable.Rows[j]["N_DeliveryNoteRtnID"] = nDeliveryNoteRtnID;
+                         
+                             nDeliveryNoteRtnDtlsID = dLayer.SaveDataWithIndex("Inv_DeliveryNoteReturnDetails", "N_DeliveryNoteRtnDtlsID", "", "", j, DetailTable, connection, transaction);
+                            
+                          
+                            if (nDeliveryNoteRtnDtlsID > 0)
+                            {
+                                for (int k = 0; k < rentalItem.Rows.Count; k++)
+                                {
+                                    
+                                    if (myFunctions.getIntVAL(rentalItem.Rows[k]["rowID"].ToString()) == j)
+                                    {
+                                     
+                                       rentalItem.Rows[k]["n_TransID"] = nDeliveryNoteRtnID;
+                                       rentalItem.Rows[k]["n_TransDetailsID"] = nDeliveryNoteRtnDtlsID;
+                                        
+                                         
+                                        rentalItem.AcceptChanges();
+                                    }
+                                    rentalItem.AcceptChanges();
+                                }
+
+                               
+
+                                rentalItem.AcceptChanges();
+                            }
+                            DetailTable.AcceptChanges();
+
+
+                        }
+                         
+                           if (rentalItem.Columns.Contains("rowID"))
+                            rentalItem.Columns.Remove("rowID");
+                        
+                        rentalItem.AcceptChanges();
+                      
+                            if (nDNRtnID > 0)
                     {
-                        DetailTable.Rows[j]["N_DeliveryNoteRtnID"] = nDeliveryNoteRtnID;
+                             int N_FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
+                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + nDeliveryNoteRtnID.ToString() + " and N_FormID="+ N_FormID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                       
                     }
-                    int nDeliveryNoteRtnDtlsID = dLayer.SaveData("Inv_DeliveryNoteReturnDetails", "N_DeliveryNoteRtnDtlsID", DetailTable, connection, transaction);
+                         dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
+
+
+                   
+                   
+                   
                     if (nDeliveryNoteRtnDtlsID <= 0)
                     {
                         transaction.Rollback();
@@ -170,7 +225,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult DeliveryNoteReturnDetails(string xReturnNo, int nDeliveryNoteId)
+        public ActionResult DeliveryNoteReturnDetails(string xReturnNo, int nDeliveryNoteId ,int nFormID)
         {
             try
             {
@@ -185,9 +240,13 @@ namespace SmartxAPI.Controllers
 
                     string Mastersql = "";
                     string DetailSql = "";
-
+                    string crieteria = "";
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-
+                    Params.Add("@nFormID", nFormID);
+                    if(nFormID>0)
+                    {
+                    crieteria = " and N_FormID = @nFormID ";
+                    }
                     if (nDeliveryNoteId > 0)
                     {
                         Params.Add("@nDeliveryNoteId", nDeliveryNoteId);
@@ -198,8 +257,12 @@ namespace SmartxAPI.Controllers
                         DetailSql = "select * from vw_DeliveryNoteDispDetailstoReturn where N_CompanyId=@nCompanyID and N_DeliveryNoteID=@nDeliveryNoteId";
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                         DetailTable = _api.Format(DetailTable, "Details");
+                        string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nDeliveryNoteId " +crieteria;
+                        DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
+                        RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
                         dt.Tables.Add(MasterTable);
                         dt.Tables.Add(DetailTable);
+                        dt.Tables.Add(RentalSchedule);
                         return Ok(_api.Success(dt));
                     } else {
                         Params.Add("@xReturnNo", xReturnNo);
@@ -214,8 +277,13 @@ namespace SmartxAPI.Controllers
                         DetailSql = "select * from vw_Inv_DeliveryNoteReturnDetails where N_CompanyID=@nCompanyID and N_DeliveryNoteRtnID=@nDeliveryNoteRtnID ";
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                         DetailTable = _api.Format(DetailTable, "Details");
+                        string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=" + nDeliveryNoteRtnID + crieteria ;
+                        DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
+                        RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
+
                         dt.Tables.Add(MasterTable);
                         dt.Tables.Add(DetailTable);
+                        dt.Tables.Add(RentalSchedule);
                         return Ok(_api.Success(dt));
                     };
                 }

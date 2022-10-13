@@ -122,6 +122,7 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     int nFormID = myFunctions.getIntVAL(MasterRow["n_FormID"].ToString());
                     string xReturnNo = MasterRow["x_ReturnNo"].ToString();
+                    int nMRNID = myFunctions.getIntVAL(MasterRow["n_MRNID"].ToString());
 
                     if (xReturnNo == "@Auto")
                     {
@@ -142,6 +143,10 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                         return Ok("Unable to save MRN Return");
+                    }
+                    if (nMRNID > 0)
+                    {
+                        dLayer.ExecuteNonQuery("Update Inv_MRN Set N_Processed=1 Where N_MRNID=" + nMRNID + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                     }
                     dLayer.DeleteData("Inv_MRNReturnDetails", "N_MRNReturnID", nMRNReturnID, "", connection, transaction);
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
@@ -188,20 +193,20 @@ namespace SmartxAPI.Controllers
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
 
-                    // if (nMRNID > 0)
-                    // {
-                    //     Params.Add("@nMRNID", nMRNID);
-                    //     Mastersql = "select * from vw_DeliveryNoteDisptoReturn where N_CompanyId=@nCompanyID and N_MRNID=@nMRNID";
-                    //     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
-                    //     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                    //     MasterTable = _api.Format(MasterTable, "Master");
-                    //     DetailSql = "select * from vw_DeliveryNoteDispDetailstoReturn where N_CompanyId=@nCompanyID and N_MRNID=@nMRNID";
-                    //     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
-                    //     DetailTable = _api.Format(DetailTable, "Details");
-                    //     dt.Tables.Add(MasterTable);
-                    //     dt.Tables.Add(DetailTable);
-                    //     return Ok(_api.Success(dt));
-                    // } else {
+                    if (nMRNID > 0)
+                    {
+                        Params.Add("@nMRNID", nMRNID);
+                        Mastersql = "select * from vw_MRNtoReturn where N_CompanyId=@nCompanyID and N_MRNID=@nMRNID";
+                        MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                        MasterTable = _api.Format(MasterTable, "Master");
+                        DetailSql = "select * from vw_MRNtoReturnDetails where N_CompanyId=@nCompanyID and N_MRNID=@nMRNID";
+                        DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                        DetailTable = _api.Format(DetailTable, "Details");
+                        dt.Tables.Add(MasterTable);
+                        dt.Tables.Add(DetailTable);
+                        return Ok(_api.Success(dt));
+                    } else {
                         Params.Add("@xReturnNo", xReturnNo);
                         Mastersql = "select * from vw_Inv_MRNReturn where N_CompanyID=@nCompanyID and X_ReturnNo=@xReturnNo  ";
                    
@@ -217,7 +222,7 @@ namespace SmartxAPI.Controllers
                         dt.Tables.Add(MasterTable);
                         dt.Tables.Add(DetailTable);
                         return Ok(_api.Success(dt));
-                    // };
+                    };
                 }
             }
             catch (Exception e)

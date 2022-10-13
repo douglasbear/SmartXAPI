@@ -76,7 +76,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetEmployeeList(int? nCompanyID, int nFnYearID, bool bAllBranchData, int nBranchID, int nEmpID, int nProjectID, int nUserEmpID)
+        public ActionResult GetEmployeeList(int? nCompanyID, int nFnYearID, bool bAllBranchData, int nBranchID, int nEmpID, int nProjectID, int nUserEmpID,bool isRentalemp)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -87,18 +87,23 @@ namespace SmartxAPI.Controllers
             Params.Add("@nEmpID", nEmpID);
             string sqlCommandText = "";
             string projectFilter = "";
+             string RentalEmp="";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     int filterByProject = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(max(N_Value),0) as val from gen_settings where x_Group='HR' and x_Description='FilterDelegateEmployeeByProject' and n_CompanyID=" + nCompanyID, connection).ToString());
+
+                    if(isRentalemp==true){
+                       RentalEmp=RentalEmp+ " and n_EmpID NOT IN (select isnull(n_RentalEmpID,0) from inv_itemmaster where N_CompanyId=@nCompanyID)";
+                    }
                     if (nEmpID > 0 && filterByProject > 0)
                         projectFilter = " and N_ProjectID =(select max(isNull(N_ProjectID,0)) from vw_PayEmployee_Disp where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ) and n_EmpID<>@nEmpID ";
                     if (bAllBranchData == true)
-                        sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo,X_Phone1,X_PassportNo,N_NationalityID,x_Nationality,D_HireDate,X_EmailID,X_Sex,D_DOB,D_JoinDate from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + projectFilter + " and (N_Status = 0 OR N_Status = 1) group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo,X_Phone1,X_PassportNo,N_NationalityID,x_Nationality,D_HireDate,X_EmailID,X_Sex,D_DOB,D_JoinDate";
+                        sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo,X_Phone1,X_PassportNo,N_NationalityID,x_Nationality,D_HireDate,X_EmailID,X_Sex,D_DOB,D_JoinDate from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + projectFilter + " and (N_Status = 0 OR N_Status = 1) " + RentalEmp +" group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo,X_Phone1,X_PassportNo,N_NationalityID,x_Nationality,D_HireDate,X_EmailID,X_Sex,D_DOB,D_JoinDate";
                     else
-                        sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode ,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo,X_Phone1,X_PassportNo,N_NationalityID,x_Nationality,D_HireDate,X_EmailID,X_Sex,D_DOB,D_JoinDate from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID)  " + projectFilter + "  and (N_Status = 0 OR N_Status = 1) group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo,X_Phone1,X_PassportNo,N_NationalityID,x_Nationality,D_HireDate,X_EmailID,X_Sex,D_DOB,D_JoinDate";
+                        sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode ,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo,X_Phone1,X_PassportNo,N_NationalityID,x_Nationality,D_HireDate,X_EmailID,X_Sex,D_DOB,D_JoinDate from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID)  " + projectFilter + "  and (N_Status = 0 OR N_Status = 1) " + RentalEmp +" group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo,X_Phone1,X_PassportNo,N_NationalityID,x_Nationality,D_HireDate,X_EmailID,X_Sex,D_DOB,D_JoinDate";
                     if (nProjectID > 0)
                     {
                         bool flag = false;
@@ -117,17 +122,18 @@ namespace SmartxAPI.Controllers
                         if (flag == true)
                         {
                             if (bAllBranchData == true)
-                                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + projectFilter + " and (N_Status = 0 OR N_Status = 1) group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo";
+                                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + projectFilter + " and (N_Status = 0 OR N_Status = 1) " + RentalEmp + " group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo";
                             else
-                                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode ,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID)  " + projectFilter + "  and (N_Status = 0 OR N_Status = 1) group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo";
+                                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode ,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID)  " + projectFilter + "  and (N_Status = 0 OR N_Status = 1) " + RentalEmp + " group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo";
                         }
                         else
                         {
-                            sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + projectFilter + " and (N_Status = 0 OR N_Status = 1) and N_EmpID=" + nUserEmpID + " group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo";
+                            sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + projectFilter + " and (N_Status = 0 OR N_Status = 1) and N_EmpID=" + nUserEmpID + " " + RentalEmp + " group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo";
                         }
 
                     }
 
+                
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
@@ -281,7 +287,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCountryID", nCountryID);
 
             string accrualSql = " select N_vacTypeID,Name,N_Accrued,X_Type,X_Period,B_InActive from [vw_PayAccruedCode_List] Where N_CompanyID=@nCompanyID and isnull(N_CountryID,0)=@nCountryID and isnull(B_InActive,0)=0 order by X_Type desc";
-            string paySetupSql = "Select * from vw_PayMaster Where  N_CompanyID=@nCompanyID  and (N_PayTypeID <>11 and N_PayTypeID <>12 and N_PayTypeID <>14) and N_FnYearID=@nFnYearID  and N_PaymentID=5 and (N_Paymethod=0 or N_Paymethod=3) and B_InActive=0";
+            string paySetupSql = "Select * from vw_PayMaster Where  N_CompanyID=@nCompanyID  and (N_PayTypeID <>11 and N_PayTypeID <>12 and N_PayTypeID <>14) and N_FnYearID=@nFnYearID  and N_PaymentID=5 and (N_Paymethod=0 or N_Paymethod=3 or N_PayMethod=4) and B_InActive=0";
             // string payBenifitsSql = "Select * from vw_PayMaster Where  N_CompanyID=@nCompanyID and  N_FnYearID=@nFnYearID and (N_PaymentID=6 or N_PaymentID=7 )and N_PaytypeID<>14  and (N_Paymethod=0 or N_Paymethod=3)";
             string payBenifitsSql = "Select * from vw_PayMaster Where ( N_CompanyID=@nCompanyID and  N_FnYearID=@nFnYearID and N_PaymentID in (6,7)  and (N_PaytypeID <>14 ) and (N_Paymethod=0 or N_Paymethod=3) or N_PayTypeID = 11 and N_CompanyID=@nCompanyID and  N_FnYearID=@nFnYearID) and isnull(B_InActive,0)=0 order by N_PayTypeID";
             string PayCodeSql = "Select * From [vw_Pay_Sal4perPaycodes] Where N_CompanyID=@nCompanyID and N_FnyearID =@nFnYearID";
@@ -366,6 +372,8 @@ namespace SmartxAPI.Controllers
                         Criteria =Criteria + "and  N_Status<>3 and N_Status<>2 ";
              if (screen == "Separated Employees")
                         Criteria =Criteria + "and  (N_Status=3 or N_Status=2) ";
+             if (screen == "Probation Employees")
+                        Criteria =Criteria + "and  D_ProbationEndDate> GETDATE() and  D_ProbationEndDate < (GETDATE()+14) ";
 
             if (EmpStatus == 0)
                 Criteria = Criteria + " and N_Status<>3 and N_Status<>2 ";
@@ -398,9 +406,9 @@ namespace SmartxAPI.Controllers
 
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_FnYearID,N_Branchid,B_Inactive,N_EmpID,N_Status,N_EmpTypeID,X_EmployeeCode,X_EmployeeName,X_Position,X_Department,X_BranchName,D_HireDate,X_TypeName,X_Nationality,X_IqamaNo,X_Sex,X_PhoneNo,N_TicketCount,X_EmailID,D_IqamaExpiry from vw_PayEmployee_Dashboard " + Criteria + Searchkey + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_FnYearID,N_Branchid,B_Inactive,N_EmpID,N_Status,N_EmpTypeID,X_EmployeeCode,X_EmployeeName,X_Position,X_Department,X_BranchName,D_HireDate,X_TypeName,X_Nationality,X_IqamaNo,X_Sex,X_PhoneNo,N_TicketCount,X_EmailID,D_IqamaExpiry,D_ProbationEndDate from vw_PayEmployee_Dashboard " + Criteria + Searchkey + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_FnYearID,N_Branchid,B_Inactive,N_EmpID,N_Status,N_EmpTypeID,X_EmployeeCode,X_EmployeeName,X_Position,X_Department,X_BranchName,D_HireDate,X_TypeName,X_Nationality,X_IqamaNo,X_Sex,X_PhoneNo,N_TicketCount,X_EmailID,D_IqamaExpiry from vw_PayEmployee_Dashboard " + Criteria + Searchkey + " and N_EmpID not in (select top(" + Count + ") N_EmpID from vw_PayEmployee_Dashboard " + Criteria + Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_FnYearID,N_Branchid,B_Inactive,N_EmpID,N_Status,N_EmpTypeID,X_EmployeeCode,X_EmployeeName,X_Position,X_Department,X_BranchName,D_HireDate,X_TypeName,X_Nationality,X_IqamaNo,X_Sex,X_PhoneNo,N_TicketCount,X_EmailID,D_IqamaExpiry,D_ProbationEndDate from vw_PayEmployee_Dashboard " + Criteria + Searchkey + " and N_EmpID not in (select top(" + Count + ") N_EmpID from vw_PayEmployee_Dashboard " + Criteria + Searchkey + xSortBy + " ) " + xSortBy;
 
             SortedList OutPut = new SortedList();
 
@@ -1293,21 +1301,7 @@ namespace SmartxAPI.Controllers
                     }
                          
 
-                        if (b_RentalProduct)
-                        {
-                           SortedList ProductParams = new SortedList();
-                    ProductParams.Add("N_CompanyID", nCompanyID);
-                  
-                    ProductParams.Add("N_FnYearID",nFnYearID);
-                    ProductParams.Add("N_TransID",nEmpID);
-                     ProductParams.Add("N_LocationID",  myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LocationID"].ToString()));
-                    ProductParams.Add("N_ItemTypeID",9);
-                   
-                    ProductParams.Add("X_ItemName",  xEmpName);
-                    dLayer.ExecuteScalarPro("SP_CreateProduct", ProductParams, connection, transaction);
-
-                        
-                        }
+                
                          if (myFunctions.ContainColumn("b_RentalProduct", dtMasterTable))
                          dtMasterTable.Columns.Remove("b_RentalProduct");
                     nEmpID = dLayer.SaveData("pay_Employee", "n_EmpID", DupCriteria, X_Crieteria, dtMasterTable, connection, transaction);
@@ -1319,7 +1313,21 @@ namespace SmartxAPI.Controllers
                     else
                     {
 
+        if (b_RentalProduct)
+                        {
+                           SortedList ProductParams = new SortedList();
+                    ProductParams.Add("N_CompanyID", nCompanyID);
+                  
+                    ProductParams.Add("N_FnYearID",nFnYearID);
+                    ProductParams.Add("N_TransID",nEmpID);
+                     ProductParams.Add("N_LocationID",  myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LocationID"].ToString()));
+                    ProductParams.Add("N_ItemTypeID",8);
+                   
+                    ProductParams.Add("X_ItemName",  xEmpName);
+                    dLayer.ExecuteScalarPro("SP_CreateProduct", ProductParams, connection, transaction);
 
+                        
+                        }
                         if (empImage.Length > 0)
                             dLayer.SaveImage("pay_Employee", "i_Employe_Image", empImageBitmap, "n_EmpID", nEmpID, connection, transaction);
 
@@ -1706,14 +1714,14 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
             string sqlCommandText = "";
-            if (byDeptManager != null && byDeptManager != "")
-            {
-                sqlCommandText = "Select N_CompanyID,N_FnYearID,B_InActive,N_EmpID,X_EmpCode as [Employee Code],X_EmpName as [Employee Name] from vw_Manager_List Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  B_inactive <> 1 order by X_EmpCode";
-            }
-            else
-            {
-                sqlCommandText = "Select N_CompanyID,N_SupervisorID,N_EmpID,Code,N_BranchID,N_FnYearID,[Employee Code],[Employee Name],Description from vw_Supervisor_ReportTo Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID order by [Employee Code]";
-            }
+            // if (byDeptManager != null && byDeptManager != "")
+            // {
+                sqlCommandText = "Select N_CompanyID,N_FnYearID,N_EmpID,Code as [Employee Code],[Employee Name],N_SupervisorID from vw_Supervisor_ReportTo Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID order by Code";
+            // }
+            // else
+            // {
+            //     sqlCommandText = "Select N_CompanyID,N_SupervisorID,N_EmpID,Code,N_BranchID,N_FnYearID,[Employee Code],[Employee Name],Description from vw_Supervisor_ReportTo Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID order by [Employee Code]";
+            // }
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -1850,7 +1858,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
-            string sqlCommandText = "Select X_GradeCode,X_Gradename,N_CompanyID,N_GradeID,B_Active,B_Edit from Pay_SalaryGrade Where N_CompanyID=@nCompanyID   and B_Active=1 order by X_Gradename";
+            string sqlCommandText = "Select X_GradeCode,X_Gradename,N_CompanyID,N_GradeID,B_Active,B_Edit,N_SalaryFrom,N_SalaryTo from Pay_SalaryGrade Where N_CompanyID=@nCompanyID   and B_Active=1 order by X_Gradename";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

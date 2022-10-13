@@ -185,6 +185,7 @@ namespace SmartxAPI.Controllers
                     DataTable TimeTable = new DataTable();
                     DataTable options = new DataTable();
                     DataTable TasksList = new DataTable();
+                    DataTable Materials = new DataTable();
                     int loginUserID=myFunctions.GetUserID(User);
 
 
@@ -228,8 +229,13 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nTaskID", TaskID);
                     MasterTable = _api.Format(MasterTable, "Master");
                     string subTasksList = "select * from vw_TaskCurrentStatus where N_CompanyID=@nCompanyID  and  N_ParentID=@nTaskID order by N_SortID";
-
-
+               
+                   //
+                   
+                    // Materials
+                        string ReqMaterialsSql = "select * from vw_Inv_ServiceMaterials where N_CompanyID=" +  myFunctions.GetCompanyID(User) + " and N_TaskID=" + TaskID;
+                    Materials = dLayer.ExecuteDataTable(ReqMaterialsSql, Params, connection);
+                                       Materials = _api.Format(Materials, "Materials");
                     // TimeTable
                     timeSql = "select * from vw_Tsk_TaskStatus where N_CompanyId=@nCompanyID and N_TaskID=" + TaskID + " ";
                     TimeTable = dLayer.ExecuteDataTable(timeSql, Params, connection);
@@ -307,6 +313,7 @@ namespace SmartxAPI.Controllers
                     DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "Individualseconds", typeof(double), Individualseconds);
 
                     DetailTable = _api.Format(DetailTable, "Details");
+
 
 
 
@@ -398,6 +405,7 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(CommentsTable);
                     dt.Tables.Add(options);
                     dt.Tables.Add(TasksList);
+                    dt.Tables.Add(Materials);
 
                     return Ok(_api.Success(dt));
 
@@ -423,9 +431,11 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
                     DataTable DetailTable;
+                    DataTable MaterialTable;
                     string DocNo = "";
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
+                    MaterialTable = ds.Tables["materials"];
                     DataTable Attachment = ds.Tables["attachments"];
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
@@ -528,6 +538,8 @@ namespace SmartxAPI.Controllers
 
                     MasterTable.Rows[0]["N_StatusID"]= DetailTable.Rows[0]["N_Status"].ToString();
 
+
+
                     if (nProjectID > 0)
                     {
                         if (nTaskId == 0)
@@ -552,6 +564,16 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable To Save"));
                     }
+                    if(MaterialTable.Rows.Count>0)
+                    {
+                     for (int i = 0; i < MaterialTable.Rows.Count; i++)
+                    {
+                        MaterialTable.Rows[i]["n_TaskID"] = nTaskId;
+                    }
+
+                    dLayer.SaveData("Inv_ServiceMaterials", "n_MaterialID", MaterialTable, connection, transaction);
+                    }
+
                     else if (DetailTable.Rows[0]["N_AssigneeID"].ToString() != "0" && DetailTable.Rows[0]["N_AssigneeID"].ToString() != "")
                     {
                         DataRow row = DetailTable.NewRow();
@@ -818,6 +840,12 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=0 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     }
 
+                //   if (masterStatus == 11)
+                //     {
+
+                //        dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=0 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                //     }
+
                     SortedList Result = new SortedList();
                     Result.Add("n_AssigneeID", DetailTable.Rows[0]["N_AssigneeID"]);
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET d_DueDate='" + MasterTable.Rows[0]["d_DueDate"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
@@ -826,6 +854,16 @@ namespace SmartxAPI.Controllers
                      dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_SubmitterID='" + DetailTable.Rows[0]["n_SubmitterID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                      dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_ClosedUserID='" + DetailTable.Rows[0]["n_ClosedUserID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET D_EntryDate='" + DetailTable.Rows[0]["D_EntryDate"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET x_SolutionNotes='" + MasterTable.Rows[0]["x_SolutionNotes"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    if(MasterTable.Columns.Contains("N_WorkHours"))
+                    {
+                      if(myFunctions.getIntVAL(MasterTable.Rows[0]["N_WorkHours"].ToString())>0)
+                       {
+                            dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_WorkHours=" + MasterTable.Rows[0]["N_WorkHours"] + " where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+   
+                       }
+                                }
+                   
                     transaction.Commit();
                     return Ok(_api.Success(Result, "Task Updated Successfully"));
                 }
