@@ -331,20 +331,39 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
+                return Ok(api.Success(dt));
             }
             catch (Exception e)
             {
                 return Ok(api.Error(User, e));
             }
         }
+
+        [HttpGet("summaryType")]
+        public ActionResult GetPayCodeForTypes()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            // string sqlCommandText = "Select * from Pay_PayType where N_CompanyID=@nCompanyID and N_PerPayMethod=0 or N_PerPayMethod=3 or N_PerPayMethod=30 and n_PerPayPayment=5 order by N_PayTypeID";
+            string sqlCommandText="SELECT Pay_PayMaster.*,Pay_PayMaster.N_PayID as N_PayCodeID,Pay_PayType.N_PerPayMethod, Pay_PayType.N_PerPayPayment FROM Pay_PayMaster LEFT OUTER JOIN Pay_PayType ON Pay_PayMaster.N_CompanyID = Pay_PayType.N_CompanyID AND Pay_PayMaster.N_PayTypeID = Pay_PayType.N_PayTypeID  where Pay_PayMaster.N_CompanyID=@nCompanyID";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                return Ok(api.Success(dt));
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+            
 
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nPayCodeId, int flag)
