@@ -293,7 +293,7 @@ namespace SmartxAPI.Controllers
         public ActionResult GetEmployeeDefault(int nFnYearID, int nBranchID, int nCountryID, string xRecruitmentCode)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
-            DataTable pay_Codes, pay_benifits, pay_EmpAccruls, pay_OtherInfo, pay_PaySetup, Pay_Employee;
+            DataTable pay_Codes, pay_benifits, pay_EmpAccruls, pay_OtherInfo, pay_PaySetup, Pay_Employee, pay_EmployeeEducation, pay_EmploymentHistory;
 
             SortedList Result = new SortedList();
             SortedList Params = new SortedList();
@@ -302,6 +302,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nBranchID", nBranchID);
             Params.Add("@nCountryID", nCountryID);
 
+
             string accrualSql = " select N_vacTypeID,Name,N_Accrued,X_Type,X_Period,B_InActive from [vw_PayAccruedCode_List] Where N_CompanyID=@nCompanyID and isnull(N_CountryID,0)=@nCountryID and isnull(B_InActive,0)=0 order by X_Type desc";
             string paySetupSql = "Select * from vw_PayMaster Where  N_CompanyID=@nCompanyID  and (N_PayTypeID <>11 and N_PayTypeID <>12 and N_PayTypeID <>14) and N_FnYearID=@nFnYearID  and N_PaymentID=5 and (N_Paymethod=0 or N_Paymethod=3) and B_InActive=0";
             // string payBenifitsSql = "Select * from vw_PayMaster Where  N_CompanyID=@nCompanyID and  N_FnYearID=@nFnYearID and (N_PaymentID=6 or N_PaymentID=7 )and N_PaytypeID<>14  and (N_Paymethod=0 or N_Paymethod=3)";
@@ -309,6 +310,8 @@ namespace SmartxAPI.Controllers
             string PayCodeSql = "Select * From [vw_Pay_Sal4perPaycodes] Where N_CompanyID=@nCompanyID and N_FnyearID =@nFnYearID";
             string payOthInfoSql = "Select N_OtherCode,X_subject from Acc_OtherInformationMaster Where  N_CompanyID=@nCompanyID and  N_FormID=188";
             string RecritmentSql = "Select * from vw_RecruitmentToEmployee Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_EmpCode=@xRecruitmentCode";
+            string empEducationSql = "select * from Rec_CandidateEducation where N_CompanyID=@nCompanyID  and N_RecruitmentID=@recID";
+            string employementHistorySql = "select * from Rec_EmploymentHistory where N_CompanyID=@nCompanyID  and N_RecruitmentID=@recID";
 
             try
             {
@@ -346,8 +349,14 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("@xRecruitmentCode", xRecruitmentCode);
                         Pay_Employee = dLayer.ExecuteDataTable(RecritmentSql, Params, connection);
+                        DataRow MasterRow = Pay_Employee.Rows[0];
+                        Params.Add("@recID", MasterRow["N_RecruitmentID"]);
+                        pay_EmployeeEducation = dLayer.ExecuteDataTable(empEducationSql, Params, connection);
+                        pay_EmploymentHistory = dLayer.ExecuteDataTable(employementHistorySql, Params, connection);
                         Pay_Employee = _api.Format(Pay_Employee);
                         Result.Add("pay_Employee", Pay_Employee);
+                        Result.Add("pay_EmployeeEducation", pay_EmployeeEducation);
+                        Result.Add("pay_EmploymentHistory", pay_EmploymentHistory);
                     }
 
                     pay_PaySetup.AcceptChanges();
