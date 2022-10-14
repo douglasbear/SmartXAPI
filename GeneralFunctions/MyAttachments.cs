@@ -123,11 +123,13 @@ namespace SmartxAPI.GeneralFunctions
 
                         ExpiryDate = "";
                         N_remCategory = 0;
+                        if(dsAttachment.Columns.Contains("D_ExpiryDate"))
+                        {
                         if (dsAttachment.Rows[i]["D_ExpiryDate"].ToString() != "")
                             ExpiryDate = Convert.ToDateTime(dsAttachment.Rows[i]["D_ExpiryDate"].ToString()).ToString("dd/MMM/yyyy");
                         if (dsAttachment.Rows[i]["X_RemCategory"].ToString() != "")
                             N_remCategory = Convert.ToInt32(dLayer.ExecuteScalar("Select N_CategoryID from Dms_ReminderCategory where X_Category='" + dsAttachment.Rows[i]["X_RemCategory"].ToString() + "' and N_CompanyID=" + nCompanyID, connection, transaction));
-
+                        }
                         if (FileType == "File")
                         {
                             if (dsAttachment.Rows[i]["X_Category"].ToString() != "")
