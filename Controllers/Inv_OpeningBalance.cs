@@ -74,7 +74,8 @@ namespace SmartxAPI.Controllers
 
                      details = myFunctions.AddNewColumnToDataTable(details, "customerFlag", typeof(bool), false);
 
-                      foreach (DataRow dtRow in details.Rows)
+                     if(nFlag==0){
+                              foreach (DataRow dtRow in details.Rows)
                         {
                              bool custFlag=false;
                             N_TransID = dtRow["N_TransID"].ToString();
@@ -88,6 +89,26 @@ namespace SmartxAPI.Controllers
                        dtRow["customerFlag"]=true;
                    }
                         }
+                     }
+
+                     else{
+                          foreach (DataRow dtRow in details.Rows)
+                        {
+                             bool custFlag=false;
+                            N_TransID = dtRow["N_TransID"].ToString();
+
+
+                     object nBalanceAmount = dLayer.ExecuteScalar("select N_BalanceAmount from vw_InvPayables where N_CompanyID="+nCompanyID +" and N_PurchaseID = " + N_TransID, connection, transaction);
+                      object netAmount = dLayer.ExecuteScalar("select NetAmount from vw_InvPayables where N_CompanyID="+nCompanyID +" and N_PurchaseID = " + N_TransID, connection, transaction);
+
+                       if( myFunctions.getVAL(nBalanceAmount.ToString()) < myFunctions.getVAL(netAmount.ToString()))
+                   { 
+                       dtRow["customerFlag"]=true;
+                   }
+                        }
+                     }
+
+                 
 
                     if (partylist.Rows.Count == 0)
                     { 
