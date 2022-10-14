@@ -44,6 +44,7 @@ namespace SmartxAPI.Controllers
                     DataTable settings = new DataTable();
                     DataTable details = new DataTable();
                     int nCompanyID = myFunctions.GetCompanyID(User);
+                    string N_TransID="";
 
                     SortedList ProParams = new SortedList();
                     ProParams.Add("N_CompanyID", nCompanyID);
@@ -66,6 +67,27 @@ namespace SmartxAPI.Controllers
                     row["B_FinancialEntryOpen"] = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Financial", "FinancialEntryOpen", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection,transaction)));
                     row["B_CustomerPO"] = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "EnableCustomerPO", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection,transaction)));
                     row["B_VendorPO"] = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("65", "EnableVendorPO", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection,transaction)));
+                     
+                      partylist = _api.Format(partylist);
+                       details = _api.Format(details);
+
+
+                     details = myFunctions.AddNewColumnToDataTable(details, "customerFlag", typeof(bool), false);
+
+                      foreach (DataRow dtRow in details.Rows)
+                        {
+                             bool custFlag=false;
+                            N_TransID = dtRow["N_TransID"].ToString();
+
+
+                     object nBalanceAmount = dLayer.ExecuteScalar("select N_BalanceAmount from vw_invReceivables where N_CompanyID="+nCompanyID +" and N_SalesId = " + N_TransID, connection, transaction);
+                      object netAmount = dLayer.ExecuteScalar("select NetAmount from vw_invReceivables where N_CompanyID="+nCompanyID +" and N_SalesId = " + N_TransID, connection, transaction);
+
+                       if( myFunctions.getVAL(nBalanceAmount.ToString()) < myFunctions.getVAL(netAmount.ToString()))
+                   { 
+                       dtRow["customerFlag"]=true;
+                   }
+                        }
 
                     if (partylist.Rows.Count == 0)
                     { 
@@ -106,34 +128,17 @@ namespace SmartxAPI.Controllers
                 int nBranchID = myFunctions.getIntVAL(PartyListTable.Rows[0]["n_BranchID"].ToString());
                 int nFlag=myFunctions.getIntVAL(PartyListTable.Rows[0]["nFlag"].ToString());
                  string xTransType = PartyListTable.Rows[0]["x_TransType"].ToString();
+                  object Count =0;
                 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+
+
+
                      
-                    
-                    // int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesId", SaveDataTable, connection, transaction);
 
-                    // //  if (nSalesID > 0)
-                    // // {
-                    // //     dLayer.DeleteData("Inv_Sales", "N_SalesId", nSalesID, "N_CompanyID=" + nCompanyID + " and N_SalesId=" + nSalesID, connection, transaction);
-                    // // }
-                    
-                    //     if (nSalesID <= 0)
-                    //     {
-                    //         transaction.Rollback();
-                    //         return Ok(_api.Error(User, "Unable to save"));
-                    //     }
-                  
-
-                    // for (int j = 0; j < PartyListTable.Rows.Count; j++)
-                    // {
-                    //     if(myFunctions.getIntVAL(SaveDataTable.Rows[i]["b_DeleteStatus"].ToString()) == 1)
-                    //     dLayer.DeleteData("Inv_Sales", "N_SalesID", myFunctions.getIntVAL(SaveDataTable.Rows[i]["n_SalesID"].ToString()), "", connection, transaction);
-                    // }
-
-                    // SaveDataTable.Columns.Remove("b_DeleteStatus");
                    if(nFlag==0){
                      
                         int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesID", SaveCustTable, connection, transaction);
@@ -150,6 +155,7 @@ namespace SmartxAPI.Controllers
                    {
                      int npurchaseID = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", SaveVendorTable, connection, transaction);
 
+                 
                      if (npurchaseID <= 0)
                     {
                         transaction.Rollback();
