@@ -241,25 +241,18 @@ namespace SmartxAPI.Controllers
            if (bAllBranchData == true)
             {
                
-            if(nSalesOrderId>0)
-            {
-            Mastersql = "SELECT * from vw_RentalOrderMasterToPurchaseRO Where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SalesOrderId=@p8";
-
-            }
-            else
-             Mastersql = "SELECT * from vw_Inv_PurchaseOrderMaster Where N_CompanyID=@p1 and N_FnYearID=@p2 and X_POrderNo=@p3";
+                if(nSalesOrderId>0)
+                    Mastersql = "SELECT * from vw_RentalOrderMasterToPurchaseRO Where N_CompanyID=@p1  and N_SalesOrderId=@p8";
+                else
+                    Mastersql = "SELECT * from vw_Inv_PurchaseOrderMaster Where N_CompanyID=@p1 and N_FnYearID=@p2 and X_POrderNo=@p3";
             }
             else
             {
-                  if(nSalesOrderId>0)
-            {
-                   Mastersql = "SELECT * from vw_RentalOrderMasterToPurchaseRO Where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SalesOrderId=@p8 and N_BranchID=@nBranchID";
+                if(nSalesOrderId>0)
+                    Mastersql = "SELECT * from vw_RentalOrderMasterToPurchaseRO Where N_CompanyID=@p1  and N_SalesOrderId=@p8 and N_BranchID=@nBranchID";
+                else
+                    Mastersql = "SELECT * from vw_Inv_PurchaseOrderMaster Where N_CompanyID=@p1 and X_POrderNo=@p3 and N_BranchID=@nBranchID and N_FnYearID=@p2";
 
-            }
-
-            else
-
-                Mastersql = "SELECT * from vw_Inv_PurchaseOrderMaster Where N_CompanyID=@p1 and X_POrderNo=@p3 and N_BranchID=@nBranchID and N_FnYearID=@p2";
                 Params.Add("@nBranchID", nBranchID);
             }
 
@@ -277,11 +270,12 @@ namespace SmartxAPI.Controllers
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     int N_POrderID = 0 ;
                     if(MasterTable.Rows.Count>0)
-                    { N_POrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString());
-                    object InPurchase = dLayer.ExecuteScalar("select 1 from Inv_Purchase where N_CompanyID=" + nCompanyId + " and N_POrderID=" + N_POrderID, Params, connection);
-                    if (InPurchase != null)
-                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), "Invoice Processed");
-}
+                    { 
+                        N_POrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString());
+                        object InPurchase = dLayer.ExecuteScalar("select 1 from Inv_Purchase where N_CompanyID=" + nCompanyId + " and N_POrderID=" + N_POrderID, Params, connection);
+                        if (InPurchase != null)
+                            MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), "Invoice Processed");
+                    }
 
                     MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
@@ -305,7 +299,7 @@ namespace SmartxAPI.Controllers
                     if(nSalesOrderId>0)
                     {
 
-                     DetailSql = "select * from vw_RentalOrderDetailsToRPO where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SalesOrderId=@p8 and N_ItemTypeID in (9)";
+                     DetailSql = "select * from vw_RentalOrderDetailsToRPO where N_CompanyID=@p1  and N_SalesOrderId=@p8 and N_ItemTypeID in (9)";
 
                     }
                     else

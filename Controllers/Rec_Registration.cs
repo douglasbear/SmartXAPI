@@ -38,7 +38,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult RegistrationDetails(string x_RecruitmentCode)
+        public ActionResult RegistrationDetails(string x_RecruitmentCode, int n_MainActionID)
         {
             DataSet dt = new DataSet();
             DataTable MasterTable = new DataTable();
@@ -48,6 +48,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             DataTable Attachments = new DataTable();
             DataTable Master = new DataTable();
+            DataTable MailData = new DataTable();
 
             MasterTable = api.Format(MasterTable, "Master");
             int N_RecruitmentID = 0;
@@ -58,9 +59,9 @@ namespace SmartxAPI.Controllers
             string sqlCommandEducation = "select * from Rec_CandidateEducation where N_CompanyID=@p1  and N_RecruitmentID=@p3";
             string sqlCommandPaymentHistory = "select * from Rec_EmploymentHistory where N_CompanyID=@p1  and N_RecruitmentID=@p3";
             string sqlCommandOptions = "select * from vw_GenStatusDetails where N_CompanyID=@p1  and N_ActionID=@p4";
+            string sqlmailData = "select * from vw_Genmail where N_CompanyID=@p1  and N_ActionID=" + n_MainActionID;
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", x_RecruitmentCode);
-
 
             try
             {
@@ -81,6 +82,15 @@ namespace SmartxAPI.Controllers
                     CandidateEducation = dLayer.ExecuteDataTable(sqlCommandEducation, Params, connection);
                     EmploymentHistory = dLayer.ExecuteDataTable(sqlCommandPaymentHistory, Params, connection);
                     Actions = dLayer.ExecuteDataTable(sqlCommandOptions, Params, connection);
+
+                    if (n_MainActionID > 0)
+                    {
+                        MailData = dLayer.ExecuteDataTable(sqlmailData, Params, connection);
+                        MasterTable.Rows[0]["x_Subject"]=MailData.Rows[0]["x_Subject"];
+                        MasterTable.Rows[0]["x_Body"]=MailData.Rows[0]["x_Body"];
+                    }
+
+
                     MasterTable = api.Format(MasterTable, "Master");
                     CandidateEducation = api.Format(CandidateEducation, "Rec_CandidateEducation");
                     EmploymentHistory = api.Format(EmploymentHistory, "Rec_EmploymentHistory");
