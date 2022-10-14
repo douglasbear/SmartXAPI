@@ -55,7 +55,13 @@ namespace SmartxAPI.Controllers
                     {
                     }
                     int N_PayID = myFunctions.getIntVAL(dt.Rows[0]["N_PayID"].ToString());
-                    string Pay_SummaryPercentageSql = "SELECT    * From Pay_SummaryPercentage inner join Pay_PayType on Pay_SummaryPercentage.N_PayTypeID = Pay_PayType.N_PayTypeID and Pay_SummaryPercentage.N_CompanyID = Pay_PayType.N_CompanyID  Where Pay_SummaryPercentage.N_PayID =" + N_PayID + " and Pay_SummaryPercentage.N_CompanyID=" + nCompanyId;
+                    // string Pay_SummaryPercentageSql = "SELECT    * From Pay_SummaryPercentage inner join Pay_PayType on Pay_SummaryPercentage.N_PayTypeID = Pay_PayType.N_PayTypeID and Pay_SummaryPercentage.N_CompanyID = Pay_PayType.N_CompanyID  Where Pay_SummaryPercentage.N_PayID =" + N_PayID + " and Pay_SummaryPercentage.N_CompanyID=" + nCompanyId;
+                    string Pay_SummaryPercentageSql="SELECT        Pay_PayMaster.N_CompanyID, Pay_SummaryPercentage.N_PerCalcID, Pay_SummaryPercentage.N_PayID, Pay_PayMaster.N_PayTypeID, Pay_SummaryPercentage.D_Entrydate, "+
+                         "Pay_PayType.X_PayType, Pay_PayType.N_PerPayMethod, Pay_PayType.N_Type, Pay_PayType.D_Entrydate AS Expr3, Pay_PayType.X_Cr_MappingLevel, Pay_PayType.X_Dr_MappingLevel, Pay_PayType.Cr_MappingLevel,  "+
+                         "Pay_PayType.Dr_MappingLevel, Pay_PayType.N_PerPayPayment, Pay_PayType.N_Order, Pay_PayMaster.X_Description, Pay_PayMaster.N_PayID AS N_PayCodeID "+
+"FROM            Pay_SummaryPercentage RIGHT OUTER JOIN "+
+                         "Pay_PayMaster ON Pay_SummaryPercentage.N_CompanyID = Pay_PayMaster.N_CompanyID AND Pay_SummaryPercentage.N_PayCodeID = Pay_PayMaster.N_PayID LEFT OUTER JOIN " +
+                         "Pay_PayType ON Pay_PayMaster.N_CompanyID = Pay_PayType.N_CompanyID AND Pay_PayMaster.N_PayTypeID = Pay_PayType.N_PayTypeID  Where Pay_SummaryPercentage.N_PayID =" + N_PayID + " and Pay_SummaryPercentage.N_CompanyID=" + nCompanyId;
 
                     DataTable SummryTable = dLayer.ExecuteDataTable(Pay_SummaryPercentageSql, Params, connection);
                     OutPut.Add("master", dt);
@@ -197,15 +203,15 @@ namespace SmartxAPI.Controllers
             }
             string X_Criteria = "";
             if (id > 0)
-                X_Criteria = "where N_PayTypeID=@p1 and N_CompanyID=@nCompanyID";
+                X_Criteria = "where Pay_PayMaster.N_PayTypeID=@p1 and Pay_PayMaster.N_CompanyID=@nCompanyID";
             else
-                X_Criteria = "where N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID";
+                X_Criteria = "where Pay_PayMaster.N_FnYearID=@nFnYearID and Pay_PayMaster.N_CompanyID=@nCompanyID";
 
             SortedList param = new SortedList() { { "@p1", id }, { "@nCompanyID", myFunctions.GetCompanyID(User) }, { "@nFnYearID", nFnyearID } };
 
             DataTable dt = new DataTable();
 
-            string sqlCommandText = "select * from Pay_PayMaster " + X_Criteria;
+            string sqlCommandText = "SELECT Pay_PayMaster.*,Pay_PayType.N_PerPayMethod, Pay_PayType.N_PerPayPayment FROM Pay_PayMaster LEFT OUTER JOIN Pay_PayType ON Pay_PayMaster.N_CompanyID = Pay_PayType.N_CompanyID AND Pay_PayMaster.N_PayTypeID = Pay_PayType.N_PayTypeID " + X_Criteria;
 
             try
             {
@@ -331,20 +337,39 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
+                return Ok(api.Success(dt));
             }
             catch (Exception e)
             {
                 return Ok(api.Error(User, e));
             }
         }
+
+        [HttpGet("summaryType")]
+        public ActionResult GetPayCodeForTypes()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            // string sqlCommandText = "Select * from Pay_PayType where N_CompanyID=@nCompanyID and N_PerPayMethod=0 or N_PerPayMethod=3 or N_PerPayMethod=30 and n_PerPayPayment=5 order by N_PayTypeID";
+            string sqlCommandText="SELECT Pay_PayMaster.*,Pay_PayMaster.N_PayID as N_PayCodeID,Pay_PayType.N_PerPayMethod, Pay_PayType.N_PerPayPayment FROM Pay_PayMaster LEFT OUTER JOIN Pay_PayType ON Pay_PayMaster.N_CompanyID = Pay_PayType.N_CompanyID AND Pay_PayMaster.N_PayTypeID = Pay_PayType.N_PayTypeID  where Pay_PayMaster.N_CompanyID=@nCompanyID";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                return Ok(api.Success(dt));
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+            
 
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nPayCodeId, int flag)
