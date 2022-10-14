@@ -209,6 +209,20 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok("Unable to save Delivery Note Return");
                     }
+
+                    for (int k = 0; k < rentalItem.Rows.Count; k++)
+                    {
+                        if(!myFunctions.getBoolVAL(rentalItem.Rows[k]["B_Select"].ToString())) continue;
+                        int nItemID = myFunctions.getIntVAL(rentalItem.Rows[k]["n_ItemID"].ToString());
+                        int nAssItemID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_AssItemID,0) from Inv_ItemMaster where N_CompanyID="+ nCompanyID +" and N_ItemID="+ nItemID , Params, connection, transaction).ToString());
+                        int nRentalEmpID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_RentalEmpID,0) from Inv_ItemMaster where N_CompanyID="+ nCompanyID +" and N_ItemID="+ nItemID , Params, connection, transaction).ToString());
+
+                        if (nAssItemID > 0)
+                            dLayer.ExecuteNonQuery("update Ass_AssetMaster Set N_RentalStatus=0 where N_ItemID="+ nAssItemID +" and N_CompanyID="+ nCompanyID , Params, connection, transaction);
+                        if (nRentalEmpID > 0)
+                            dLayer.ExecuteNonQuery("update Pay_Employee Set N_RentalStatus=0 where N_EmpID="+ nRentalEmpID +" and N_CompanyID="+ nCompanyID +" and N_FnYearID="+ nFnYearID, Params, connection, transaction);
+                    }
+
                     transaction.Commit();
                     SortedList Result = new SortedList();
                     Result.Add("n_DeliveryNoteRtnID", nDeliveryNoteRtnID);
@@ -339,13 +353,27 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
+                    DataTable rentalItem = dLayer.ExecuteDataTable("select * from Inv_RentalSchedule where N_CompanyID=@nCompanyID and N_TransID=@nDeliveryNoteRtnID ", QueryParams, connection);
                     Results = dLayer.DeleteData("Inv_DeliveryNoteReturn", "N_DeliveryNoteRtnID", nDeliveryNoteRtnID, "", connection);
 
                     if (Results > 0)
                     {
                         dLayer.DeleteData("Inv_RentalSchedule", "N_TransID", nDeliveryNoteRtnID, "  N_CompanyID="+ nCompanyID +" and N_FormID=1585 ", connection);
                         dLayer.DeleteData("Inv_DeliveryNoteReturnDetails", "N_DeliveryNoteRtnID", nDeliveryNoteRtnID, "", connection);
+
+                    for (int k = 0; k < rentalItem.Rows.Count; k++)
+                    {
+                        if(!myFunctions.getBoolVAL(rentalItem.Rows[k]["B_Select"].ToString())) continue;
+                        int nItemID = myFunctions.getIntVAL(rentalItem.Rows[k]["n_ItemID"].ToString());
+                        int nAssItemID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_AssItemID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID="+ nItemID , QueryParams, connection).ToString());
+                        int nRentalEmpID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_RentalEmpID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID="+ nItemID , QueryParams, connection).ToString());
+
+                        if (nAssItemID > 0)
+                        dLayer.ExecuteNonQuery("update Ass_AssetMaster Set N_RentalStatus=1 where N_ItemID="+ nAssItemID +" and N_CompanyID=@nCompanyID ", QueryParams, connection);
+                        if (nRentalEmpID > 0)
+                        dLayer.ExecuteNonQuery("update Pay_Employee Set N_RentalStatus=2 where N_EmpID="+ nRentalEmpID +" and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ", QueryParams, connection);
+                    }
+
                         return Ok(_api.Success("Delivery Note Return deleted"));
                     }
                     else
