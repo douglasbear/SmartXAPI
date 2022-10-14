@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
 
            
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                      Searchkey = "and (X_ReturnNo like'%" + xSearchkey + "%'or X_CustomerName like'%" + xSearchkey + "%')";
+                      Searchkey = "and (X_ReturnNo like'%" + xSearchkey + "%'or X_CustomerName like'%" + xSearchkey + "%' or X_ReceiptNo like'%" + xSearchkey + "%' or D_ReturnDate like'%" + xSearchkey + "%')";
 
          
                     if (xSortBy == null || xSortBy.Trim() == "")
