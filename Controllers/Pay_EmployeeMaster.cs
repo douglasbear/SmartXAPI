@@ -873,8 +873,9 @@ namespace SmartxAPI.Controllers
                             }
                             else
                             {
-                                if (empImageupdate.Length > 0)
-                                    dLayer.SaveImage("pay_Employee", "i_Employe_Image", empImageBitmapUpdate, "n_EmpID", nEmpID, connection, transaction);
+                                if (empImage.Length > 0)
+                                dLayer.SaveImage("pay_Employee", "i_Employe_Image", empImageBitmap, "n_EmpID", nEmpID, connection, transaction);
+                                    //dLayer.SaveImage("pay_Employee", "i_Employe_Image", empImageBitmapUpdate, "n_EmpID", nEmpID, connection, transaction);
 
                             }
 
