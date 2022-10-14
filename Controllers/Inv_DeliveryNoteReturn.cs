@@ -353,7 +353,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    DataTable rentalItem = dLayer.ExecuteDataTable("select * from Inv_RentalSchedule where N_CompanyID=@nCompanyID and N_TransID=@nDeliveryNoteRtnID ", QueryParams, connection);
+                    DataTable rentalItem = dLayer.ExecuteDataTable("select * from Inv_RentalSchedule where N_CompanyID=@nCompanyID and N_FormID=1585 and N_TransID=@nDeliveryNoteRtnID ", QueryParams, connection);
                     Results = dLayer.DeleteData("Inv_DeliveryNoteReturn", "N_DeliveryNoteRtnID", nDeliveryNoteRtnID, "", connection);
 
                     if (Results > 0)
@@ -371,7 +371,7 @@ namespace SmartxAPI.Controllers
                         if (nAssItemID > 0)
                         dLayer.ExecuteNonQuery("update Ass_AssetMaster Set N_RentalStatus=1 where N_ItemID="+ nAssItemID +" and N_CompanyID=@nCompanyID ", QueryParams, connection);
                         if (nRentalEmpID > 0)
-                        dLayer.ExecuteNonQuery("update Pay_Employee Set N_RentalStatus=2 where N_EmpID="+ nRentalEmpID +" and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ", QueryParams, connection);
+                        dLayer.ExecuteNonQuery("update Pay_Employee Set N_RentalStatus=1 where N_EmpID="+ nRentalEmpID +" and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ", QueryParams, connection);
                     }
 
                         return Ok(_api.Success("Delivery Note Return deleted"));
