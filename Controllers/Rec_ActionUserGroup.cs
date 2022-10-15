@@ -84,22 +84,22 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
                     // Auto Gen
-                    string RoomCode = "";
+                    string GroupCode = "";
                     var values = MasterTable.Rows[0]["X_GroupCode"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
-                        RoomCode = dLayer.GetAutoNumber("Gen_ActionGroup", "X_GroupCode", Params, connection, transaction);
-                        if (RoomCode == "") { return Ok(_api.Error(User, "Unable to generate Group Code")); }
-                        MasterTable.Rows[0]["X_GroupCode"] = RoomCode;
+                        GroupCode = dLayer.GetAutoNumber("Gen_ActionGroup", "X_GroupCode", Params, connection, transaction);
+                        if (GroupCode == "") { return Ok(_api.Error(User, "Unable to generate Group Code")); }
+                        MasterTable.Rows[0]["X_GroupCode"] = GroupCode;
 
 
                     }
 
 
-                    nGroupID = dLayer.SaveData("Pay_RoomMaster", "n_RoomId", MasterTable, connection, transaction);
+                    nGroupID = dLayer.SaveData("Gen_ActionGroup", "N_GroupID", MasterTable, connection, transaction);
 
 
                     if (nGroupID <= 0)
