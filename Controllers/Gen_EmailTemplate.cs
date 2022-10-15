@@ -57,6 +57,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     string Toemail = "";
                     string xRecruitmentCode = "";
+                    string x_PartyName = "";
                     string Email = MasterRow["X_ContactEmail"].ToString();
                     string Body = MasterRow["X_Body"].ToString();
                     string Subjectval = MasterRow["x_TempSubject"].ToString();
@@ -64,6 +65,8 @@ namespace SmartxAPI.Controllers
                     int nopportunityID = myFunctions.getIntVAL(MasterRow["N_OpportunityID"].ToString());
                     if (Master.Columns.Contains("x_RecruitmentCode"))
                         xRecruitmentCode = MasterRow["x_RecruitmentCode"].ToString();
+                    if (Master.Columns.Contains("x_TemplateName"))
+                        x_PartyName = MasterRow["x_TemplateName"].ToString();
                     Toemail = Email.ToString();
                     object companyemail = "";
                     object companypassword = "";
@@ -90,30 +93,35 @@ namespace SmartxAPI.Controllers
 
                             if (nopportunityID > 0)
                             {
-                                // Oppportunity = dLayer.ExecuteScalar("select x_Opportunity from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
-                                // Contact = dLayer.ExecuteScalar("Select x_Contact from vw_CRMOpportunity where N_CompanyID=" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
-                                // Company = dLayer.ExecuteScalar("select x_customer from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
-                                // CustomerID = dLayer.ExecuteScalar("select N_CustomerID from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                                Oppportunity = dLayer.ExecuteScalar("select x_Opportunity from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                                Contact = dLayer.ExecuteScalar("Select x_Contact from vw_CRMOpportunity where N_CompanyID=" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                                Company = dLayer.ExecuteScalar("select x_customer from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                                CustomerID = dLayer.ExecuteScalar("select N_CustomerID from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
 
 
-                                // Body = Body.ToString().Replace("@CompanyName", Company.ToString());
-                                // Body = Body.ToString().Replace("@ContactName", Contact.ToString());
-                                // Body = Body.ToString().Replace("@LeadName", Oppportunity.ToString());
+                                Body = Body.ToString().Replace("@CompanyName", Company.ToString());
+                                Body = Body.ToString().Replace("@ContactName", Contact.ToString());
+                                Body = Body.ToString().Replace("@LeadName", Oppportunity.ToString());
 
-                                // Subjectval = Subjectval.ToString().Replace("@CompanyName", Company.ToString());
-                                // Subjectval = Subjectval.ToString().Replace("@ContactName", Contact.ToString());
-                                // Subjectval = Subjectval.ToString().Replace("@LeadName", Oppportunity.ToString());
+                                Subjectval = Subjectval.ToString().Replace("@CompanyName", Company.ToString());
+                                Subjectval = Subjectval.ToString().Replace("@ContactName", Contact.ToString());
+                                Subjectval = Subjectval.ToString().Replace("@LeadName", Oppportunity.ToString());
 
 
                             }
                             if (xRecruitmentCode != "")
                             {
-                                object PartyName = dLayer.ExecuteScalar("select N_CustomerID from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                                object JobName = dLayer.ExecuteScalar("select x_postingtitle from vw_RecRegistrartion where N_CompanyID="+nCompanyId+"  and x_RecruitmentCode="+xRecruitmentCode, Params, connection, transaction);
+                                object d_intDate = dLayer.ExecuteScalar("select D_InterviewDate from vw_RecRegistrartion where N_CompanyID="+nCompanyId+"  and x_RecruitmentCode="+xRecruitmentCode, Params, connection, transaction);
                                 Body = Body.ToString().Replace("@CompanyName", myFunctions.GetCompanyName(User));
-                                Body = Body.ToString().Replace("@PartyName", myFunctions.GetCompanyName(User));
+                                Body = Body.ToString().Replace("@PartyName", x_PartyName);
+                                Body = Body.ToString().Replace("@JobName", JobName.ToString());
+                                Body = Body.ToString().Replace("@InterviewDate", d_intDate.ToString());
 
                                 Subjectval = Subjectval.ToString().Replace("@CompanyName", myFunctions.GetCompanyName(User));
-                                Subjectval = Subjectval.ToString().Replace("@PartyName", myFunctions.GetCompanyName(User));
+                                Subjectval = Subjectval.ToString().Replace("@PartyName", x_PartyName);
+                                Subjectval = Subjectval.ToString().Replace("@JobName", JobName.ToString());
+                                Subjectval = Subjectval.ToString().Replace("@InterviewDate", d_intDate.ToString());
 
 
                             }
@@ -134,7 +142,7 @@ namespace SmartxAPI.Controllers
                     if (Master.Columns.Contains("n_PkeyIdSub"))
                         Master.Columns.Remove("n_PkeyIdSub");
                     if (Master.Columns.Contains("x_RecruitmentCode"))
-                        Master.Columns.Remove("x_RecruitmentCode");    
+                        Master.Columns.Remove("x_RecruitmentCode");
                     Master = myFunctions.AddNewColumnToDataTable(Master, "N_MailLogID", typeof(int), 0);
                     Master = myFunctions.AddNewColumnToDataTable(Master, "X_Subject", typeof(string), Subject);
                     Master.Columns.Remove("X_Body");
