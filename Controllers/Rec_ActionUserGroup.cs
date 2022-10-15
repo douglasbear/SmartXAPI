@@ -72,7 +72,9 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable;
+                DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
+                DetailTable = ds.Tables["details"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nGroupID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_GroupID"].ToString());
@@ -107,11 +109,16 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to save"));
                     }
-                    else
+                    for (int i = 0; i < DetailTable.Rows.Count; i++)
                     {
-                        transaction.Commit();
-                        return Ok(_api.Success("Group Saved"));
+                        DetailTable.Rows[i]["N_GroupID"] = nGroupID;
                     }
+                    dLayer.SaveData("Gen_ActionGroupDetails", "N_GroupDetailsID", DetailTable, connection, transaction);
+
+
+                    transaction.Commit();
+                    return Ok(_api.Success("Group Saved"));
+
                 }
             }
             catch (Exception ex)
