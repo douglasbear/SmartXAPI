@@ -72,7 +72,9 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable;
-                MasterTable = ds.Tables["master"];
+                MasterTable = ds.Tables["details"];
+                int nActionID=0;
+
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -81,7 +83,14 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
 
 
-                    int nActionID = dLayer.SaveData("Gen_Status", "n_ActionID", MasterTable, connection, transaction);
+foreach (DataRow dRow in MasterTable.Rows)
+                        {
+                            
+                             dLayer.DeleteData("Gen_Status", "n_ActionID", Convert.ToInt32(dRow["n_ActionID"].ToString()) , "", connection,transaction);
+                        }
+
+                     nActionID = dLayer.SaveData("Gen_Status", "n_ActionID", MasterTable, connection, transaction);
+                        
 
 
                     if (nActionID <= 0)
