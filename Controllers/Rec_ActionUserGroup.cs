@@ -72,7 +72,9 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable;
+                DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
+                DetailTable = ds.Tables["details"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nGroupID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_GroupID"].ToString());
@@ -84,22 +86,22 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
                     // Auto Gen
-                    string RoomCode = "";
+                    string GroupCode = "";
                     var values = MasterTable.Rows[0]["X_GroupCode"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
-                        RoomCode = dLayer.GetAutoNumber("Gen_ActionGroup", "X_GroupCode", Params, connection, transaction);
-                        if (RoomCode == "") { return Ok(_api.Error(User, "Unable to generate Group Code")); }
-                        MasterTable.Rows[0]["X_GroupCode"] = RoomCode;
+                        GroupCode = dLayer.GetAutoNumber("Gen_ActionGroup", "X_GroupCode", Params, connection, transaction);
+                        if (GroupCode == "") { return Ok(_api.Error(User, "Unable to generate Group Code")); }
+                        MasterTable.Rows[0]["X_GroupCode"] = GroupCode;
 
 
                     }
 
 
-                    nGroupID = dLayer.SaveData("Pay_RoomMaster", "n_RoomId", MasterTable, connection, transaction);
+                    nGroupID = dLayer.SaveData("Gen_ActionGroup", "N_GroupID", MasterTable, connection, transaction);
 
 
                     if (nGroupID <= 0)
@@ -107,11 +109,16 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to save"));
                     }
-                    else
+                    for (int i = 0; i < DetailTable.Rows.Count; i++)
                     {
-                        transaction.Commit();
-                        return Ok(_api.Success("Group Saved"));
+                        DetailTable.Rows[i]["N_GroupID"] = nGroupID;
                     }
+                    dLayer.SaveData("Gen_ActionGroupDetails", "N_GroupDetailsID", DetailTable, connection, transaction);
+
+
+                    transaction.Commit();
+                    return Ok(_api.Success("Group Saved"));
+
                 }
             }
             catch (Exception ex)
