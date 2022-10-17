@@ -99,6 +99,11 @@ namespace SmartxAPI.Controllers
 
 
                     }
+                    if(nGroupID>0)
+                    {
+                    dLayer.DeleteData("Gen_ActionGroup", "n_GroupID", nGroupID, "", connection,transaction);
+                   dLayer.DeleteData("Gen_ActionGroupDetails", "n_GroupID", nGroupID, "", connection,transaction);
+                    }
 
 
                     nGroupID = dLayer.SaveData("Gen_ActionGroup", "N_GroupID", MasterTable, connection, transaction);
