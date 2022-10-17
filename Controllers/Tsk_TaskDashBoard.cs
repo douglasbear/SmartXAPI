@@ -565,6 +565,116 @@ namespace SmartxAPI.Controllers
             }
 
         }
+
+
+         [HttpGet("openTaskList")]
+        public ActionResult GetOpenTaskDetails(int nUserID, DateTime d_Date, int nPage, int nSizeperpage)
+
+        {
+            SortedList Params = new SortedList();
+            DataSet TaskManager = new DataSet();
+            DataTable OverDueTasks = new DataTable();
+            DataTable CountTable = new DataTable();
+            int nCompanyID = myFunctions.GetCompanyID(User); 
+            int Count = (nPage - 1) * nSizeperpage;
+
+            string sqlOverDueList = "";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    if (Count == 0)
+                    {
+                        sqlOverDueList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "  and isnull(N_AssigneeID,0)=0  and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' order by D_TaskDate desc";
+                    }
+                    else
+                    {
+                        sqlOverDueList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus  where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "  and isnull(N_AssigneeID,0)=0  and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and N_TaskID not in (select top(" + Count + ") N_TaskID from [vw_Tsk_TaskCurrentStatus] where  N_CompanyID=" + nCompanyID + " and N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "  and isnull(N_AssigneeID,0)=0  and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' order by D_TaskDate desc ) order by D_TaskDate desc";
+                    }
+
+                    OverDueTasks = dLayer.ExecuteDataTable(sqlOverDueList, Params, connection);
+                    OverDueTasks = api.Format(OverDueTasks, "openTasks");
+                    string sqlCommandCount1 = "select count(*) as N_Count from vw_Tsk_TaskCurrentStatus  where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "  and isnull(N_AssigneeID,0)=0  and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed'";
+                    DataTable Summary1 = dLayer.ExecuteDataTable(sqlCommandCount1, Params, connection);
+                    string TotalCount1 = "0";
+                    if (Summary1.Rows.Count > 0)
+                    {
+                        DataRow drow = Summary1.Rows[0];
+                        TotalCount1 = drow["N_Count"].ToString();
+                    }
+                    CountTable.Clear();
+                    CountTable.Columns.Add("OpenTasksTotalCount");
+                    DataRow row = CountTable.NewRow();
+                    row["OpenTasksTotalCount"] = myFunctions.getIntVAL(TotalCount1);
+                    CountTable.Rows.Add(row);
+                    CountTable = api.Format(CountTable, "CountTable");
+                    TaskManager.Tables.Add(OverDueTasks);
+                    TaskManager.Tables.Add(CountTable);
+                    return Ok(api.Success(TaskManager));
+
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+       [HttpGet("submitTaskList")]
+        public ActionResult GetSubmitTaskDetails(int nUserID, DateTime d_Date, int nPage, int nSizeperpage)
+
+        {
+            SortedList Params = new SortedList();
+            DataSet TaskManager = new DataSet();
+            DataTable SubmitTasks = new DataTable();
+            DataTable CountTable = new DataTable();
+            int nCompanyID = myFunctions.GetCompanyID(User); 
+            int Count = (nPage - 1) * nSizeperpage;
+
+            string sqlOverDueList = "";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    if (Count == 0)
+                    {
+                        sqlOverDueList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and N_Status=4 and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' order by D_DueDate asc";
+                    }
+                    else
+                    {
+                        sqlOverDueList = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and N_Status=4 and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and N_TaskID not in (select top(" + Count + ") N_TaskID from [vw_Tsk_TaskCurrentStatus] where  N_CompanyID=" + nCompanyID + " and N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and N_Status=4  and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' order by D_DueDate asc ) order by D_DueDate asc";
+                    }
+
+                    SubmitTasks = dLayer.ExecuteDataTable(sqlOverDueList, Params, connection);
+                    SubmitTasks = api.Format(SubmitTasks, "submitTasks");
+                    string sqlCommandCount1 = "select count(*) as N_Count from vw_Tsk_TaskCurrentStatus  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + "  and N_Status=4 and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed'";
+                    DataTable Summary1 = dLayer.ExecuteDataTable(sqlCommandCount1, Params, connection);
+                    string TotalCount1 = "0";
+                    if (Summary1.Rows.Count > 0)
+                    {
+                        DataRow drow = Summary1.Rows[0];
+                        TotalCount1 = drow["N_Count"].ToString();
+                    }
+                    CountTable.Clear();
+                    CountTable.Columns.Add("SubmitTasksTotalCount");
+                    DataRow row = CountTable.NewRow();
+                    row["SubmitTasksTotalCount"] = myFunctions.getIntVAL(TotalCount1);
+                    CountTable.Rows.Add(row);
+                    CountTable = api.Format(CountTable, "CountTable");
+                    TaskManager.Tables.Add(SubmitTasks);
+                    TaskManager.Tables.Add(CountTable);
+                    return Ok(api.Success(TaskManager));
+
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
         [HttpGet("sprintTasks")]
         public ActionResult GetcompletedDetails(int nUserID,int nSprintID )
         {
