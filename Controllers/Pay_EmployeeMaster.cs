@@ -302,8 +302,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nBranchID", nBranchID);
             Params.Add("@nCountryID", nCountryID);
 
-
-            string accrualSql = " select N_vacTypeID,Name,N_Accrued,X_Type,X_Period,B_InActive from [vw_PayAccruedCode_List] Where N_CompanyID=@nCompanyID and isnull(N_CountryID,0)=@nCountryID and isnull(B_InActive,0)=0 order by X_Type desc";
+            string accrualSql = " select N_vacTypeID,Name,N_Accrued,X_Type,X_Period,B_InActive,N_PayID from [vw_PayAccruedCode_List] Where N_CompanyID=@nCompanyID and isnull(N_CountryID,0)=@nCountryID and isnull(B_InActive,0)=0 order by X_Type desc";
             string paySetupSql = "Select * from vw_PayMaster Where  N_CompanyID=@nCompanyID  and (N_PayTypeID <>11 and N_PayTypeID <>12 and N_PayTypeID <>14) and N_FnYearID=@nFnYearID  and N_PaymentID=5 and (N_Paymethod=0 or N_Paymethod=3 or N_PayMethod=4) and B_InActive=0";
             // string payBenifitsSql = "Select * from vw_PayMaster Where  N_CompanyID=@nCompanyID and  N_FnYearID=@nFnYearID and (N_PaymentID=6 or N_PaymentID=7 )and N_PaytypeID<>14  and (N_Paymethod=0 or N_Paymethod=3)";
             string payBenifitsSql = "Select * from vw_PayMaster Where ( N_CompanyID=@nCompanyID and  N_FnYearID=@nFnYearID and N_PaymentID in (6,7)  and (N_PaytypeID <>14 ) and (N_Paymethod=0 or N_Paymethod=3) or N_PayTypeID = 11 and N_CompanyID=@nCompanyID and  N_FnYearID=@nFnYearID) and isnull(B_InActive,0)=0 order by N_PayTypeID";
@@ -832,7 +831,7 @@ namespace SmartxAPI.Controllers
                         {
                             foreach (DataRow dRow in Attachment.Rows)
                             {
-                                dRow["n_FormID"] = 1228;
+                                dRow["n_FormID"] = 188;
                             }
                             myAttachments.SaveAttachment(dLayer, Attachment, X_EmpUpdateCode, nEmpUpdateID, MasterTable.Rows[0]["x_EmpName"].ToString(), MasterTable.Rows[0]["X_EmpCode"].ToString(), nEmpID, "Employee Update", User, connection, transaction);
                         }
@@ -871,7 +870,11 @@ namespace SmartxAPI.Controllers
                                     }
                                 }
                             }
-
+                      if (Attachment.Rows.Count > 0)
+                        {
+                    dLayer.ExecuteNonQuery("update Dms_ScreenAttachments set N_TransID = " + nEmpID + " where N_PartyID=" +nEmpID+ " and N_CompanyID=" + nCompanyID, connection, transaction);
+                      
+                        }
                             string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID =" + nFnYearID + " and X_EmpCode='" + tmpEmployee.Rows[0]["x_EmpCode"].ToString() + "'";
                             string X_Crieteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID =" + nFnYearID;
                             nEmpID = dLayer.SaveData("pay_Employee", "n_EmpID", DupCriteria, X_Crieteria, tmpEmployee, connection, transaction);
@@ -1004,14 +1007,14 @@ namespace SmartxAPI.Controllers
                                 }
                             }
 
-                            if (Attachment.Rows.Count > 0)
-                            {
-                                foreach (DataRow dRow in Attachment.Rows)
-                                {
-                                    dRow["n_FormID"] = 188;
-                                }
-                                myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["x_EmpCode"].ToString(), nEmpID, MasterTable.Rows[0]["x_EmpName"].ToString(), MasterTable.Rows[0]["x_EmpCode"].ToString(), nEmpID, "Employee", User, connection, transaction);
-                            }
+                            // if (Attachment.Rows.Count > 0)
+                            // {
+                            //     foreach (DataRow dRow in Attachment.Rows)
+                            //     {
+                            //         dRow["n_FormID"] = 188;
+                            //     }
+                            //     myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["x_EmpCode"].ToString(), nEmpID, MasterTable.Rows[0]["x_EmpName"].ToString(), MasterTable.Rows[0]["x_EmpCode"].ToString(), nEmpID, "Employee", User, connection, transaction);
+                            // }
                         }
 
                         //myFunctions.SendApprovalMail(N_NextApproverID, FormID, nEmpUpdateID, "EMPLOYEE", X_EmpUpdateCode, dLayer, connection, transaction, User);
