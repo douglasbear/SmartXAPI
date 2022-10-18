@@ -710,7 +710,9 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@nFnYearID", nFnYearID);
 
-                    string sqlCommandText = "SELECT * FROM Pay_EmployeePayHistory where N_EmpID=" + nEmpID + " and D_EffectiveDate = (select MAX(D_EffectiveDate) from Pay_EmployeePayHistory where N_EmpID = " + nEmpID + " and N_PayID=1) and N_PayID=1";
+                    string sqlCommandText = "SELECT * FROM Pay_EmployeePayHistory where N_CompanyID="+nCompanyID+" and N_EmpID="+nEmpID+" and D_EffectiveDate = (select MAX(D_EffectiveDate) from Pay_EmployeePayHistory "+
+                                            " where N_EmpID = "+nEmpID+" and N_CompanyID="+nCompanyID+" and N_PayID=(select N_PayID from Pay_PayMaster where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+" and X_Description='Basic Salary')) "+
+                                            " and N_PayID=(select N_PayID from Pay_PayMaster where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+" and X_Description='Basic Salary')";
 
                     DataTable EmployeeTable = new DataTable();
                     DataTable RelationTable = new DataTable();
@@ -735,7 +737,7 @@ namespace SmartxAPI.Controllers
                     }
                     if (byEmp == "emp")
                     {
-                        object obj1 = dLayer.ExecuteScalar("select X_ServiceEndStatusDesc from vw_ServiceEndSettings where N_ServiceEndID=1", Params, connection);
+                        object obj1 = dLayer.ExecuteScalar("select X_ServiceEndStatusDesc from vw_ServiceEndSettings where x_ServiceEndCode='1' and N_CompanyID="+nCompanyID+" and N_EndSettiingsID="+n_ServiceEndSettingsID, Params, connection);
                         if (obj1 != null)
                         {
                             EmployeeTable.Rows[0]["X_ServiceEnd"] = obj1.ToString();
