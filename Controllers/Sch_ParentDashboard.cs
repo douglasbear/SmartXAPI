@@ -37,10 +37,10 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
             string crieteria = "";
-           
-                     
-         
-            
+            // if(StudentID>0) 
+            //         {
+            //   crieteria = " and N_StudentID="+nStudentID+" "
+            //         }
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
