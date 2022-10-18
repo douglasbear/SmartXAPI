@@ -892,7 +892,7 @@ namespace SmartxAPI.Controllers
                                 {"@nPartyID",nCustomerID},
                                 {"@nBranchID",nBranchID}};
                     DataTable DetailTable = dLayer.ExecuteDataTable("select n_SalesOrderID,n_SalesQuotationID from Inv_DeliveryNoteDetails where N_CompanyID=@nCompanyID and N_DeliveryNoteID=@nDeliveryNoteID group by n_SalesOrderID,n_SalesQuotationID order by n_SalesOrderID,n_SalesQuotationID", QueryParams, connection, transaction);
-                    DataTable rentalItem = dLayer.ExecuteDataTable("select * from Inv_RentalSchedule where N_CompanyID=@nCompanyID and N_TransID=@nDeliveryNoteID ", QueryParams, connection, transaction);
+                    DataTable rentalItem = dLayer.ExecuteDataTable("select * from Inv_RentalSchedule where N_CompanyID=@nCompanyID and N_FormID=1572 and N_TransID=@nDeliveryNoteID ", QueryParams, connection, transaction);
                     Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
                     if (Results <= 0)
                     {
@@ -939,6 +939,7 @@ namespace SmartxAPI.Controllers
 
                     for (int k = 0; k < rentalItem.Rows.Count; k++)
                     {
+                        if(!myFunctions.getBoolVAL(rentalItem.Rows[k]["B_Select"].ToString())) continue;
                         int nItemID = myFunctions.getIntVAL(rentalItem.Rows[k]["n_ItemID"].ToString());
                         int nAssItemID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_AssItemID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID="+ nItemID , QueryParams, connection, transaction).ToString());
                         int nRentalEmpID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_RentalEmpID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID="+ nItemID , QueryParams, connection, transaction).ToString());
