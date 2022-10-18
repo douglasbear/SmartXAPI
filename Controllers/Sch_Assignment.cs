@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetAssignmentList(int? nCompanyId, int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nFormID ,int nStudentID)
+        public ActionResult GetAssignmentList(int? nCompanyId, int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nFormID ,int nStudentID, bool isParent)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -48,7 +48,7 @@ namespace SmartxAPI.Controllers
             string crieteria="";
             string condn="";
             string vwname="vw_Sch_Assignment";
-              if (nStudentID >0)
+              if (nStudentID >=0 && isParent) 
             {
             vwname="vw_Sch_AssignmentDetails";
             crieteria=" and N_StudentID="+nStudentID+" and isnull(B_IsSaveDraft,0)=0 ";
@@ -143,9 +143,65 @@ namespace SmartxAPI.Controllers
                     DetailTable = api.Format(DetailTable, "Details");
                     dt.Tables.Add(DetailTable);
 
-                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_AssignmentID"].ToString()), 0, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FormID"].ToString()), nFnYearID, User, connection);
+
+                     int N_StudentID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_StudentID"].ToString());
+                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_AssignmentID"].ToString()),0,1485, nFnYearID, User, connection);
                      Attachments = api.Format(Attachments, "attachments");
                      dt.Tables.Add(Attachments);
+                     DataTable StuAttachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_AssignmentID"].ToString()), N_StudentID,1539, nFnYearID, User, connection);
+                     StuAttachments = api.Format(StuAttachments, "stuattachments");
+                     dt.Tables.Add(StuAttachments);
+
+                }
+                return Ok(api.Success(dt));               
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+
+         [HttpGet("attachmentDetails")]
+        public ActionResult AttachmentDetails(string xAssignmentCode,int nFnYearID,int nStudentID,int nAssignmentID)
+        {
+            DataSet dt=new DataSet();
+            DataTable MasterTable = new DataTable();
+            DataTable DetailTable = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            string sqlCommandText = "select * from vw_Sch_Assignment where N_CompanyID=@p1  and x_AssignmentCode=@p2";
+            Params.Add("@p1", nCompanyId);  
+            Params.Add("@p2", xAssignmentCode);
+             Params.Add("@nFnYearID", nFnYearID);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    // MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+
+                    // if (MasterTable.Rows.Count == 0)
+                    // {
+                    //     return Ok(api.Warning("No Results Found"));
+                    // }
+                
+                    // MasterTable = api.Format(MasterTable, "Master");
+                    // // dt.Tables.Add(MasterTable);
+
+                    // int N_AssignmentID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AssignmentID"].ToString());
+                    // Params.Add("@p3", N_AssignmentID);
+
+                    // string DetailSql = "select * from vw_Sch_AssignmentStudents where N_CompanyID=@p1 and N_AssignmentID=@p3";
+
+                    // DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    // DetailTable = api.Format(DetailTable, "Details");
+                    // dt.Tables.Add(DetailTable);
+
+
+                    
+                     DataTable StuAttachments = myAttachments.ViewAttachment(dLayer, nAssignmentID, nStudentID,1539, nFnYearID, User, connection);
+                     StuAttachments = api.Format(StuAttachments, "assignmentAttachments");
+                     dt.Tables.Add(StuAttachments);
 
                 }
                 return Ok(api.Success(dt));               
@@ -181,7 +237,7 @@ namespace SmartxAPI.Controllers
                     dLayer.ExecuteNonQuery("update Sch_AssignmentStudents set N_Status=1, X_StudentNotes='"+xStudentNotes+"' where  N_CompanyID=@nCompanyID and N_AssignmentID=@nAssignmentID and N_StudentID ="+nStudentID, Params, connection,transaction);
                     if (Attachment.Rows.Count > 0)
                     {
-                    myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["X_AssignmentCode"].ToString() + "-" + MasterTable.Rows[0]["X_Title"].ToString(), 0, MasterTable.Rows[0]["X_Title"].ToString(), MasterTable.Rows[0]["X_AssignmentCode"].ToString(), nAssignmentID, "Assignment Document", User, connection, transaction);
+                    myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["X_AssignmentCode"].ToString() + "-" + MasterTable.Rows[0]["X_Title"].ToString(),nStudentID, MasterTable.Rows[0]["X_Title"].ToString(), MasterTable.Rows[0]["X_AssignmentCode"].ToString(), nAssignmentID, "Assignment Document", User, connection, transaction);
                     }
                     transaction.Commit();
                     return Ok(api.Success("updated sucessfully"));

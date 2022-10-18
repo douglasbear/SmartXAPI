@@ -323,9 +323,11 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    int serviceSheetID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_ServiceSheetID,0) from Inv_Sales where N_CompanyId=@nCompanyID and N_FormID=@nFormID and N_ServiceSheetID="+nServiceSheetID, QueryParams, connection).ToString());
+                    object serviceSheetID = dLayer.ExecuteScalar("select isNull(N_ServiceSheetID,0) from Inv_Sales where N_CompanyId=@nCompanyID and N_FormID=@nFormID and N_ServiceSheetID="+nServiceSheetID, QueryParams, connection);
+                    if (serviceSheetID == null)
+                        serviceSheetID = 0;
 
-                    if (serviceSheetID>0)
+                    if (myFunctions.getIntVAL(serviceSheetID.ToString()) != 0)
                     {
                         return Ok(_api.Error(User,"Unable to delete,Invoice Processed"));
                     } else {
