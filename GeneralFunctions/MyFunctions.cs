@@ -2136,7 +2136,7 @@ namespace SmartxAPI.GeneralFunctions
                         break;
                     case 1068://Employee Evaluation
                         DeleteStatus = dLayer.DeleteData("Pay_EmpEvaluationDetails", "N_EvalID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
-                        DeleteStatus = dLayer.DeleteData("Pay_EmpEvaluation", "N_EvalID", N_TransID, "N_CompanyID=@nFnYearID and N_FnYearID=" + N_FnYearID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_EmpEvaluation", "N_EvalID", N_TransID, "N_CompanyID="+N_CompanyID+" and N_FnYearID=" + N_FnYearID, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 684://Material Dispatch
@@ -2871,7 +2871,7 @@ namespace SmartxAPI.GeneralFunctions
                             url = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + "" + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
                             var path = client.GetAsync(url);
 
-                            ReportName = FormName + "_" + docNumber + "_" + partyName.Trim() + ".pdf";
+                            ReportName = FormName + "_" + docNumber + "_" + partyName.Trim() +"_"+random+ ".pdf";
                             path.Wait();
                             if (env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName))
                                 return false;

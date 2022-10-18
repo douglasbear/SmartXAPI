@@ -323,9 +323,11 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    int serviceSheetID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_ServiceSheetID,0) from Inv_Sales where N_CompanyId=@nCompanyID and N_FormID=@nFormID and N_ServiceSheetID="+nServiceSheetID, QueryParams, connection).ToString());
+                    object serviceSheetID = dLayer.ExecuteScalar("select isNull(N_ServiceSheetID,0) from Inv_Sales where N_CompanyId=@nCompanyID and N_FormID=@nFormID and N_ServiceSheetID="+nServiceSheetID, QueryParams, connection);
+                    if (serviceSheetID == null)
+                        serviceSheetID = 0;
 
-                    if (serviceSheetID>0)
+                    if (myFunctions.getIntVAL(serviceSheetID.ToString()) != 0)
                     {
                         return Ok(_api.Error(User,"Unable to delete,Invoice Processed"));
                     } else {
@@ -376,9 +378,9 @@ namespace SmartxAPI.Controllers
                     Params.Add("@N_FormID", nFormID);
                     
                     if (nFormID == 1145)
-                        Itemsql = "select * from vw_SOItemsForTimesheet where N_CompanyID=@N_CompanyId and N_SalesOrderId=@N_TransID and ((D_DeliveryDate<=@D_DateFrom) or (D_DeliveryDate>=@D_DateFrom AND D_DeliveryDate<=@D_DateTo) AND ISNULL(D_ReturnDate,@D_DateTo)>=@D_DateTo)";
+                        Itemsql = "select * from vw_SOItemsForTimesheet where N_CompanyID=@N_CompanyId and N_SalesOrderId=@N_TransID and ((D_DeliveryDate<=@D_DateFrom) or (D_DeliveryDate>=@D_DateFrom AND D_DeliveryDate<=@D_DateTo) AND ISNULL(D_ReturnDate,@D_DateTo)<=@D_DateTo)";
                     else
-                        Itemsql = "select * from vw_POItemsForTimesheet where N_CompanyID=@N_CompanyId and N_SOId=@N_TransID and ((D_MRNDate<=@D_DateFrom) or (D_MRNDate>=@D_DateFrom AND D_MRNDate<=@D_DateTo) AND ISNULL(D_ReturnDate,@D_DateTo)>=@D_DateTo)";
+                        Itemsql = "select * from vw_POItemsForTimesheet where N_CompanyID=@N_CompanyId and N_SOId=@N_TransID and ((D_MRNDate<=@D_DateFrom) or (D_MRNDate>=@D_DateFrom AND D_MRNDate<=@D_DateTo) AND ISNULL(D_ReturnDate,@D_DateTo)<=@D_DateTo)";
 
                     ItemTable = dLayer.ExecuteDataTable(Itemsql, Params, connection);
                     ItemTable = _api.Format(ItemTable, "Items");
