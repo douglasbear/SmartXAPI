@@ -100,7 +100,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetDashboardDetails(int nAcYearID,int nBranchID,bool bAllBranchData,int nTeacherID)
+        public ActionResult GetDashboardDetails1(int nAcYearID,int nBranchID,bool bAllBranchData,int nTeacherID)
         {
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
