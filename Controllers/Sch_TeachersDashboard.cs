@@ -37,6 +37,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
             string crieteria = "";
+              DayOfWeek dayOfWk = DateTime.Today.DayOfWeek;
            
                      
          
@@ -51,31 +52,39 @@ namespace SmartxAPI.Controllers
             string sqlAssignmentTotal = "SELECT COUNT(*) as N_Count FROM vw_Sch_Assignment WHERE N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID  ;
             string sqlExam = "SELECT COUNT(*) as N_Count FROM Vw_ExamByTeacher WHERE  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  +" and n_TeacherID="+nTeacherID+""; 
             string sqlPubResults = "SELECT COUNT(*) as N_Count FROM vw_Sch_Assignment WHERE N_FormID=1547 and isnull(b_PublishMark,0)=1 and  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
-           
-           //string sqlAbsent = "SELECT COUNT(*) as N_Count FROM vw_SchAdmission WHERE x_Gender='FeMale' and N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
+            string sqlSheduledExam = "SELECT COUNT(*) as N_Count FROM Vw_ExamByTeacher WHERE  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  +" and n_TeacherID="+nTeacherID+" and  D_ExamDate>=GetDate()"; 
+             string sqlTimeTableData = "SELECT * FROM vw_TimetableDetails WHERE N_CompanyID = " + nCompanyID + " and  N_FnYearID="+nAcYearID+"  and  x_WeekName='"+dayOfWk+"' and n_TeacherID="+nTeacherID+"" ;
            
             SortedList Data = new SortedList();
             DataTable Assignment = new DataTable();
             DataTable AssignmentTotal = new DataTable();
             DataTable Exam = new DataTable();
             DataTable ExamResult = new DataTable();
+            DataTable ScheduleExam = new DataTable();
+            DataTable TimeTable = new DataTable();
             
                      //bool B_customer = myFunctions.CheckPermission(nCompanyID, 1302, "Administrator", "X_UserCategory", dLayer, connection);
                     Assignment = dLayer.ExecuteDataTable(sqlAssignment, Params, connection);
                     AssignmentTotal = dLayer.ExecuteDataTable(sqlAssignmentTotal, Params, connection);
                     Exam = dLayer.ExecuteDataTable(sqlExam, Params, connection);
                     ExamResult = dLayer.ExecuteDataTable(sqlPubResults, Params, connection);
+                    ScheduleExam = dLayer.ExecuteDataTable(sqlSheduledExam, Params, connection);
+                    TimeTable = dLayer.ExecuteDataTable(sqlTimeTableData, Params, connection);
 
 
                    Assignment.AcceptChanges();
                 AssignmentTotal.AcceptChanges();
                 Exam.AcceptChanges();
                 ExamResult.AcceptChanges();
+                ScheduleExam.AcceptChanges();
+                TimeTable.AcceptChanges();
             
                 if (Assignment.Rows.Count > 0) Data.Add("assignment", Assignment);
                 if (AssignmentTotal.Rows.Count > 0) Data.Add("assignmentTotal", AssignmentTotal);
                 if (Exam.Rows.Count > 0) Data.Add("exam", Exam);
                 if (ExamResult.Rows.Count > 0) Data.Add("examResult", ExamResult);
+                if (ScheduleExam.Rows.Count > 0) Data.Add("ScheduleExam", ScheduleExam);
+                if (TimeTable.Rows.Count > 0) Data.Add("TimeTable", TimeTable);
            
                 return Ok(api.Success(Data));  
                 }
@@ -89,6 +98,90 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,e));
             }
         }
+
+        [HttpGet("details")]
+        public ActionResult GetDashboardDetails(int nAcYearID,int nBranchID,bool bAllBranchData,int nTeacherID)
+        {
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            string crieteria = "";
+              DayOfWeek dayOfWk = DateTime.Today.DayOfWeek;
+           
+                     
+         
+            
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+            object nBatchID = dLayer.ExecuteScalar("select n_AdmittedDivisionID from vw_schAdmission where N_AdmissionID= "+nTeacherID+" and  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID,Params, connection) ;
+            string sqlAssignment = "SELECT COUNT(*) as N_Count FROM vw_Sch_Assignment WHERE MONTH(D_AssignedDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_AssignedDate) = YEAR(CURRENT_TIMESTAMP) and isnull(B_IsSaveDraft,0)=0 and  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID  ;
+            string sqlAssignmentTotal = "SELECT COUNT(*) as N_Count FROM vw_Sch_Assignment WHERE N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID  ;
+            string sqlExam = "SELECT COUNT(*) as N_Count FROM Vw_ExamByTeacher WHERE  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  +" and n_TeacherID="+nTeacherID+""; 
+            string sqlPubResults = "SELECT COUNT(*) as N_Count FROM vw_Sch_Assignment WHERE N_FormID=1547 and isnull(b_PublishMark,0)=1 and  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
+            string sqlSheduledExam = "SELECT COUNT(*) as N_Count FROM Vw_ExamByTeacher WHERE  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  +" and n_TeacherID="+nTeacherID+" and  D_ExamDate>=GetDate()"; 
+             string sqlTimeTableData = "SELECT * FROM vw_TimetableDetails WHERE N_CompanyID = " + nCompanyID + " and  N_FnYearID="+nAcYearID+"  and  x_WeekName='"+dayOfWk+"' and n_TeacherID="+nTeacherID+"" ;
+           
+            SortedList Data = new SortedList();
+            DataTable Assignment = new DataTable();
+            DataTable AssignmentTotal = new DataTable();
+            DataTable Exam = new DataTable();
+            DataTable ExamResult = new DataTable();
+            DataTable ScheduleExam = new DataTable();
+            DataTable TimeTable = new DataTable();
+            
+                     //bool B_customer = myFunctions.CheckPermission(nCompanyID, 1302, "Administrator", "X_UserCategory", dLayer, connection);
+                    Assignment = dLayer.ExecuteDataTable(sqlAssignment, Params, connection);
+                    AssignmentTotal = dLayer.ExecuteDataTable(sqlAssignmentTotal, Params, connection);
+                    Exam = dLayer.ExecuteDataTable(sqlExam, Params, connection);
+                    ExamResult = dLayer.ExecuteDataTable(sqlPubResults, Params, connection);
+                    ScheduleExam = dLayer.ExecuteDataTable(sqlSheduledExam, Params, connection);
+                    TimeTable = dLayer.ExecuteDataTable(sqlTimeTableData, Params, connection);
+
+
+                Assignment.AcceptChanges();
+                AssignmentTotal.AcceptChanges();
+                Exam.AcceptChanges();
+                ExamResult.AcceptChanges();
+                ScheduleExam.AcceptChanges();
+                TimeTable.AcceptChanges();
+            
+                if (Assignment.Rows.Count > 0) Data.Add("assignment", Assignment);
+                if (AssignmentTotal.Rows.Count > 0) Data.Add("assignmentTotal", AssignmentTotal);
+                if (Exam.Rows.Count > 0) Data.Add("exam", Exam);
+                if (ExamResult.Rows.Count > 0) Data.Add("examResult", ExamResult);
+                if (ScheduleExam.Rows.Count > 0) Data.Add("ScheduleExam", ScheduleExam);
+                if (TimeTable.Rows.Count > 0) Data.Add("TimeTable", TimeTable);
+           
+                return Ok(api.Success(Data));  
+                }
+
+                
+               
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
      
  
    [HttpGet("subjectList")]
