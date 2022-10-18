@@ -426,7 +426,7 @@ namespace SmartxAPI.Controllers
                     using (SqlConnection conn = new SqlConnection(connectionString))
                     {
                         conn.Open();
-                        string sql = "SELECT Acc_Company.N_CompanyID, Acc_Company.X_CompanyName, Sec_User.X_UserID, Sec_User.N_UserID, Acc_Company.N_ClientID FROM Inv_Customer LEFT OUTER JOIN Acc_Company ON Inv_Customer.N_CompanyID = Acc_Company.N_CompanyID RIGHT OUTER JOIN Sec_User ON Sec_User.N_CompanyID = Inv_Customer.N_CompanyID AND Sec_User.N_CustomerID = Inv_Customer.N_CustomerID WHERE Sec_User.N_LoginFlag="+appID+" and Inv_Customer.N_CustomerID=" + nVendorID;
+                        string sql = "SELECT Acc_Company.N_CompanyID, Acc_Company.X_CompanyName, Sec_User.X_UserID, Sec_User.N_UserID, Acc_Company.N_ClientID FROM Inv_Vendor LEFT OUTER JOIN Acc_Company ON Inv_Vendor.N_CompanyID = Acc_Company.N_CompanyID RIGHT OUTER JOIN Sec_User ON Sec_User.N_CompanyID = Inv_Vendor.N_CompanyID AND Sec_User.N_CustomerID = Inv_Vendor.N_VendorID WHERE Sec_User.N_LoginFlag="+appID+" and Inv_Vendor.N_VendorID=" + nVendorID;
                         SortedList Params = new SortedList();
                         DataTable output = dLayer.ExecuteDataTable(sql, conn);
                         if (output.Rows.Count == 0)

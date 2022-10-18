@@ -121,7 +121,21 @@ namespace SmartxAPI.Controllers
                         if (Count == 0)
                             sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1603 " + Pattern + Searchkey + " " + " group by [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID" + xSortBy;
                         else
-                            sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1603 " + Pattern + Searchkey + " and N_DeliveryNoteID not in (select top(" + Count + ") N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1572 " + xSortBy + " ) " + "Group By [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID" + xSortBy;
+                            sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1603 " + Pattern + Searchkey + " and N_DeliveryNoteID not in (select top(" + Count + ") N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1603 " + xSortBy + " ) " + "Group By [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID" + xSortBy;
+                    }
+                      else if (nFormID==884)
+                    {
+                        if (Count == 0)
+                            sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=884 " + Pattern + Searchkey + " " + " group by [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID" + xSortBy;
+                        else
+                            sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=884 " + Pattern + Searchkey + " and N_DeliveryNoteID not in (select top(" + Count + ") N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=884 " + xSortBy + " ) " + "Group By [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID" + xSortBy;
+                    }
+                      else if (nFormID==1426)
+                    {
+                        if (Count == 0)
+                            sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1426 " + Pattern + Searchkey + " " + " group by [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID" + xSortBy;
+                        else
+                            sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1426 " + Pattern + Searchkey + " and N_DeliveryNoteID not in (select top(" + Count + ") N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1426 " + xSortBy + " ) " + "Group By [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID" + xSortBy;
                     }
                     else
                     {
@@ -646,10 +660,10 @@ namespace SmartxAPI.Controllers
                     rentalItem.AcceptChanges();
                     if (rentalItem.Columns.Contains("rowID"))
                             rentalItem.Columns.Remove("rowID");
-                            if (N_DNoteID > 0)
+                    if (N_DNoteID > 0)
                     {
                             int N_FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
-                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + N_DeliveryNoteID.ToString() + " and N_FormID="+ N_FormID + " and N_CompanyID=" + N_CompanyID, connection, transaction);
+                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + N_DNoteID.ToString() + " and N_FormID="+ N_FormID + " and N_CompanyID=" + N_CompanyID, connection, transaction);
                        
                     }
                     dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
@@ -745,14 +759,15 @@ namespace SmartxAPI.Controllers
 
                         for (int k = 0; k < rentalItem.Rows.Count; k++)
                         {
+                            if(!myFunctions.getBoolVAL(rentalItem.Rows[k]["B_Select"].ToString())) continue;
                             int nItemID = myFunctions.getIntVAL(rentalItem.Rows[k]["n_ItemID"].ToString());
                             int nAssItemID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_AssItemID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID="+ nItemID , QueryParams, connection, transaction).ToString());
                             int nRentalEmpID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_RentalEmpID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID="+ nItemID , QueryParams, connection, transaction).ToString());
 
                             if (nAssItemID > 0)
-                            dLayer.ExecuteNonQuery("update Ass_AssetMaster Set N_RentalStatus=1 where N_ItemID="+ nAssItemID +" and N_CompanyID=@nCompanyID ", QueryParams, connection, transaction);
+                                dLayer.ExecuteNonQuery("update Ass_AssetMaster Set N_RentalStatus=1 where N_ItemID="+ nAssItemID +" and N_CompanyID=@nCompanyID ", QueryParams, connection, transaction);
                             if (nRentalEmpID > 0)
-                            dLayer.ExecuteNonQuery("update Pay_Employee Set N_RentalStatus=1 where N_EmpID="+ nRentalEmpID +" and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ", QueryParams, connection, transaction);
+                                dLayer.ExecuteNonQuery("update Pay_Employee Set N_RentalStatus=1 where N_EmpID="+ nRentalEmpID +" and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ", QueryParams, connection, transaction);
                         }
 
                         SortedList Result = new SortedList();
@@ -877,7 +892,7 @@ namespace SmartxAPI.Controllers
                                 {"@nPartyID",nCustomerID},
                                 {"@nBranchID",nBranchID}};
                     DataTable DetailTable = dLayer.ExecuteDataTable("select n_SalesOrderID,n_SalesQuotationID from Inv_DeliveryNoteDetails where N_CompanyID=@nCompanyID and N_DeliveryNoteID=@nDeliveryNoteID group by n_SalesOrderID,n_SalesQuotationID order by n_SalesOrderID,n_SalesQuotationID", QueryParams, connection, transaction);
-                    DataTable rentalItem = dLayer.ExecuteDataTable("select * from Inv_RentalSchedule where N_CompanyID=@nCompanyID and N_TransID=@nDeliveryNoteID ", QueryParams, connection, transaction);
+                    DataTable rentalItem = dLayer.ExecuteDataTable("select * from Inv_RentalSchedule where N_CompanyID=@nCompanyID and N_FormID=1572 and N_TransID=@nDeliveryNoteID ", QueryParams, connection, transaction);
                     Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
                     if (Results <= 0)
                     {
@@ -924,6 +939,7 @@ namespace SmartxAPI.Controllers
 
                     for (int k = 0; k < rentalItem.Rows.Count; k++)
                     {
+                        if(!myFunctions.getBoolVAL(rentalItem.Rows[k]["B_Select"].ToString())) continue;
                         int nItemID = myFunctions.getIntVAL(rentalItem.Rows[k]["n_ItemID"].ToString());
                         int nAssItemID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_AssItemID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID="+ nItemID , QueryParams, connection, transaction).ToString());
                         int nRentalEmpID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_RentalEmpID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID="+ nItemID , QueryParams, connection, transaction).ToString());

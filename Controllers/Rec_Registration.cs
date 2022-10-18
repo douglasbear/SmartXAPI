@@ -38,7 +38,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult RegistrationDetails(string x_RecruitmentCode)
+        public ActionResult RegistrationDetails(string x_RecruitmentCode, int n_MainActionID)
         {
             DataSet dt = new DataSet();
             DataTable MasterTable = new DataTable();
@@ -48,6 +48,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             DataTable Attachments = new DataTable();
             DataTable Master = new DataTable();
+            DataTable MailData = new DataTable();
 
             MasterTable = api.Format(MasterTable, "Master");
             int N_RecruitmentID = 0;
@@ -58,9 +59,9 @@ namespace SmartxAPI.Controllers
             string sqlCommandEducation = "select * from Rec_CandidateEducation where N_CompanyID=@p1  and N_RecruitmentID=@p3";
             string sqlCommandPaymentHistory = "select * from Rec_EmploymentHistory where N_CompanyID=@p1  and N_RecruitmentID=@p3";
             string sqlCommandOptions = "select * from vw_GenStatusDetails where N_CompanyID=@p1  and N_ActionID=@p4";
+            string sqlmailData = "select * from vw_Genmail where N_CompanyID=@p1  and N_ActionID=" + n_MainActionID;
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", x_RecruitmentCode);
-
 
             try
             {
@@ -81,6 +82,15 @@ namespace SmartxAPI.Controllers
                     CandidateEducation = dLayer.ExecuteDataTable(sqlCommandEducation, Params, connection);
                     EmploymentHistory = dLayer.ExecuteDataTable(sqlCommandPaymentHistory, Params, connection);
                     Actions = dLayer.ExecuteDataTable(sqlCommandOptions, Params, connection);
+
+                    if (n_MainActionID > 0)
+                    {
+                        MailData = dLayer.ExecuteDataTable(sqlmailData, Params, connection);
+                        MasterTable.Rows[0]["x_Subject"]=MailData.Rows[0]["x_Subject"];
+                        MasterTable.Rows[0]["x_Body"]=MailData.Rows[0]["x_Body"];
+                    }
+
+
                     MasterTable = api.Format(MasterTable, "Master");
                     CandidateEducation = api.Format(CandidateEducation, "Rec_CandidateEducation");
                     EmploymentHistory = api.Format(EmploymentHistory, "Rec_EmploymentHistory");
@@ -380,9 +390,88 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, ex));
             }
 
-
-
         }
-    }
+
+    //     [HttpPost("actionupdate")]
+    //     public ActionResult UpdateData([FromBody] DataSet ds)
+    //     {
+    //         try
+    //         {
+    //             DataTable MasterTable, dtRec_CandidateEducation, dtRec_CandidateHistory;
+    //             MasterTable = ds.Tables["master"];
+                
+    //             DataRow MasterRow = MasterTable.Rows[0];
+
+    //             int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
+    //             int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
+    //             int nRecruitmentID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_RecruitmentID"].ToString());
+    //             int N_RecruitmentID = myFunctions.getIntVAL(MasterRow["N_RecruitmentID"].ToString());
+    //             string X_RecruitmentCode = "";
+    //             using (SqlConnection connection = new SqlConnection(connectionString))
+    //             {
+    //                 connection.Open();
+    //                 SqlTransaction transaction = connection.BeginTransaction();
+    //                 SortedList Params = new SortedList();
+                   
+    //                 nRecruitmentID = dLayer.SaveData("Rec_Registration", "N_RecruitmentID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
+    //                 int Rec_CandidateEducationRes = 0;
+    //                 if (dtRec_CandidateEducation.Rows.Count > 0)
+    //                     foreach (DataRow dRow in dtRec_CandidateEducation.Rows)
+    //                     {
+    //                         dRow["N_RecruitmentID"] = nRecruitmentID;
+    //                     }
+    //                 dtRec_CandidateEducation.AcceptChanges();
+    //                 Rec_CandidateEducationRes = dLayer.SaveData("Rec_CandidateEducation", "N_EduID", dtRec_CandidateEducation, connection, transaction);
+
+    //                 int Rec_CandidateHistoryRes = 0;
+    //                 if (dtRec_CandidateHistory.Rows.Count > 0)
+    //                     foreach (DataRow dRow in dtRec_CandidateHistory.Rows)
+    //                     {
+    //                         dRow["N_RecruitmentID"] = nRecruitmentID;
+    //                     }
+    //                 dtRec_CandidateHistory.AcceptChanges();
+    //                 Rec_CandidateHistoryRes = dLayer.SaveData("Rec_EmploymentHistory", "N_JobID", dtRec_CandidateHistory, connection, transaction);
+    //                 SortedList RecruitmentParams = new SortedList();
+    //                 RecruitmentParams.Add("@nRecruitmentID", N_RecruitmentID);
+    //                 DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_RecruitmentCode,X_Name from Rec_Registration where N_RecruitmentID=@nRecruitmentID", RecruitmentParams, connection, transaction);
+    //                 if (CustomerInfo.Rows.Count > 0)
+    //                 {
+    //                     try
+    //                     {
+
+    //                         myAttachments.SaveAttachment(dLayer, Attachment, X_RecruitmentCode, nRecruitmentID, CustomerInfo.Rows[0]["X_Name"].ToString().Trim(), CustomerInfo.Rows[0]["X_RecruitmentCode"].ToString(), myFunctions.getIntVAL(MasterTable.Rows[0]["N_RecruitmentID"].ToString()), "Recruitment", User, connection, transaction);
+    //                     }
+    //                     catch (Exception ex)
+    //                     {
+    //                         transaction.Rollback();
+    //                         return Ok(api.Error(User, ex));
+    //                     }
+    //                 }
+
+
+    //                 if (nRecruitmentID <= 0)
+    //                 {
+    //                     transaction.Rollback();
+    //                     return Ok(api.Error(User, "Unable to save"));
+    //                 }
+    //                 else
+
+    //                 {
+    //                     if (image.Length > 0)
+    //                     {
+    //                         dLayer.SaveImage("Rec_Registration", "I_Photo", photoBitmap, "N_RecruitmentID", nRecruitmentID, connection, transaction);
+    //                     }
+
+    //                     transaction.Commit();
+    //                     return Ok(api.Success("Candidate Registered"));
+    //                 }
+    //             }
+    //         }
+    //         catch (Exception ex)
+    //         {
+    //             return Ok(api.Error(User, ex));
+    //         }
+    //     }
+     }
 }
 

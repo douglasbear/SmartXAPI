@@ -667,26 +667,25 @@ namespace SmartxAPI.Controllers
 
                             rentalItem.AcceptChanges();
                         }
-                                                 DetailTable.AcceptChanges();
-
-
+                        DetailTable.AcceptChanges();
                     }
-                           if (rentalItem.Columns.Contains("rowID"))
-                            rentalItem.Columns.Remove("rowID");
-                        
-                        rentalItem.AcceptChanges();
 
-                        if(rentalItem.Rows.Count > 0)
-                       {
-                                      if (n_SOId > 0)
+                    if (rentalItem.Columns.Contains("rowID"))
+                    rentalItem.Columns.Remove("rowID");
+                    
+                    rentalItem.AcceptChanges();
+
+                    if(rentalItem.Rows.Count > 0)
                     {
+                        if (n_SOId > 0)
+                        {
                             int FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
                             dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + n_SalesOrderId.ToString() + "  and N_FormID="+ FormID + " and N_CompanyID=" + N_CompanyID, connection, transaction);
-                       
-                    }
-                    dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
+                    
+                        }
+                        dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
 
-                       }
+                    }
                 
 
                     if (N_QuotationDetailId <= 0)
@@ -893,6 +892,9 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
+
+                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + nSalesOrderID.ToString() + "  and N_FormID=1571 and N_CompanyID=" + nCompanyID, connection, transaction);
+
                             myAttachments.DeleteAttachment(dLayer, 1, nSalesOrderID, N_CustomerId, nFnYearID, this.FormID, User, transaction, connection);
                             if (SQID > 0)//Updating SQ Status
                             {
