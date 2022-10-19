@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
             object nBatchID = dLayer.ExecuteScalar("select n_AdmittedDivisionID from vw_schAdmission where N_AdmissionID= "+nTeacherID+" and  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID,Params, connection) ;
             string sqlAssignment = "SELECT COUNT(*) as N_Count FROM vw_Sch_Assignment WHERE MONTH(D_AssignedDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_AssignedDate) = YEAR(CURRENT_TIMESTAMP) and isnull(B_IsSaveDraft,0)=0 and  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID  ;
             string sqlAssignmentTotal = "SELECT COUNT(*) as N_Count FROM vw_Sch_Assignment WHERE N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID  ;
-            string sqlExam = "SELECT COUNT(*) as N_Count FROM vw_Sch_Assignment WHERE N_FormID=1547 and isnull(B_IsSaveDraft,0)=0 and  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
+            string sqlExam = "SELECT COUNT(*) as N_Count FROM Vw_ExamByTeacher WHERE  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  +" and n_TeacherID="+nTeacherID+""; 
             string sqlPubResults = "SELECT COUNT(*) as N_Count FROM vw_Sch_Assignment WHERE N_FormID=1547 and isnull(b_PublishMark,0)=1 and  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
            
            //string sqlAbsent = "SELECT COUNT(*) as N_Count FROM vw_SchAdmission WHERE x_Gender='FeMale' and N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
