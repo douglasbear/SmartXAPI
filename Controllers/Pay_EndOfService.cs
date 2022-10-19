@@ -711,8 +711,8 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nFnYearID", nFnYearID);
 
                     string sqlCommandText = "SELECT * FROM Pay_EmployeePayHistory where N_CompanyID="+nCompanyID+" and N_EmpID="+nEmpID+" and D_EffectiveDate = (select MAX(D_EffectiveDate) from Pay_EmployeePayHistory "+
-                                            " where N_EmpID = "+nEmpID+" and N_CompanyID="+nCompanyID+" and N_PayID=(select N_PayID from Pay_PayMaster where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+" and X_Description='Basic Salary')) "+
-                                            " and N_PayID=(select N_PayID from Pay_PayMaster where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+" and X_Description='Basic Salary')";
+                                            " where N_EmpID = "+nEmpID+" and N_CompanyID="+nCompanyID+" and N_PayID in (select N_PayID from Pay_PayMaster where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+" and N_PayTypeID=1)) "+
+                                            " and N_PayID in (select N_PayID from Pay_PayMaster where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+" and N_PayTypeID=1)";
 
                     DataTable EmployeeTable = new DataTable();
                     DataTable RelationTable = new DataTable();
