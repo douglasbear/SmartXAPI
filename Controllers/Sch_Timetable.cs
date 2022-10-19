@@ -151,8 +151,10 @@ namespace SmartxAPI.Controllers
             {
                 Params.Add("@nClassID", nClassID);
                 Params.Add("@nClassDivisionID", nClassDivisionID);
+                if(xTimetableCode!=null)
                 Params.Add("@xTimetableCode", xTimetableCode);
             }
+            
 
                     if (type == 1)
                     {
