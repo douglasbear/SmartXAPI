@@ -180,6 +180,64 @@ namespace SmartxAPI.Controllers
             }
         }
 
+            [HttpGet("classAndBatch")]
+        public ActionResult GetClassAndBatch(int nAcYearID,int nBranchID,bool bAllBranchData,int nTeacherID, int nPage, int nSizeperpage)
+
+        {
+             SortedList Params = new SortedList();
+         
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            SortedList Data = new SortedList();
+            string crieteria = "";
+            DataTable BatchwiseDetails = new DataTable();
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlAssignment = "";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    if (Count == 0)
+                    {
+                        sqlAssignment = "select top(" + nSizeperpage + ") * from Vw_CLassWiseStudents WHERE   N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID+" and N_TeacherID="+nTeacherID+"";
+                    }
+                    else
+                    {
+                        sqlAssignment ="select top(" + nSizeperpage + ") * from Vw_CLassWiseStudents WHERE   N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID+" and N_TeacherID="+nTeacherID+"";
+                    }
+
+                    BatchwiseDetails = dLayer.ExecuteDataTable(sqlAssignment, Params, connection);
+                    BatchwiseDetails = api.Format(BatchwiseDetails, "BatchwiseDetails");
+                    if (BatchwiseDetails.Rows.Count > 0) Data.Add("BatchwiseDetails", BatchwiseDetails);
+                    string sqlCommandCount1 ="select count(*) as N_Count from Vw_CLassWiseStudents WHERE   N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID+" and N_TeacherID="+nTeacherID+"";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount1, Params, connection);
+                    Data.Add("TotalCount", TotalCount);
+                     if (BatchwiseDetails.Rows.Count == 0)
+                    { 
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(Data));
+                    }
+
+                   
+                    
+
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+
+
+
+
+
 
 
  
