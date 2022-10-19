@@ -2717,6 +2717,16 @@ namespace SmartxAPI.GeneralFunctions
             return B_completed;
         }
 
+// User Type Definition
+// 0 - Admin User
+// 1 - ERP User
+// 2 - ESS User
+// 3 - Teacher Portal User
+// 4 - Parent Portal User
+// 5 - Student Portal User
+// 6 - Customer Portal User
+// 7 - Vendor Portal User
+
         public bool CreatePortalUser(int nCompanyID, int nBranchID, string xPartyName, string emailID, string type, string partyCode, int partyID, bool active, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             int UserID = 0, UserCatID = 0;
