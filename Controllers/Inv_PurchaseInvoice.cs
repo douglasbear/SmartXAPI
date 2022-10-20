@@ -244,7 +244,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listdetails")]
-        public ActionResult GetPurchaseInvoiceDetails(int nCompanyId, int nFnYearId, string nPurchaseNO, bool showAllBranch, int nBranchId, string xPOrderNo, string xGrnNo, string multipleGrnNo)
+        public ActionResult GetPurchaseInvoiceDetails(int nCompanyId, int nFnYearId, string nPurchaseNO, bool showAllBranch, int nBranchId, string xPOrderNo, string xGrnNo, string multipleGrnNo, int nServiceSheetID)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
@@ -290,6 +290,11 @@ namespace SmartxAPI.Controllers
                 {
                     Params.Add("@POrderNo", xPOrderNo);
                     X_MasterSql = "select * from vw_Inv_PurchaseOrderAsInvoiceMaster where N_CompanyID=@CompanyID and X_POrderNo=@POrderNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                }
+                else if (nServiceSheetID != null)
+                {
+                    Params.Add("@nServiceSheetID", nServiceSheetID);
+                    X_MasterSql = "select * from vw_InvVendorSTAsInvoiceMaster where N_CompanyID=@CompanyID and N_ServiceSheetID=@nServiceSheetID and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                 }
 
                 try
@@ -365,6 +370,10 @@ namespace SmartxAPI.Controllers
 
                         }
 
+                    }
+                    else if (nServiceSheetID != null)
+                    {
+                        X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_POrderID=" + N_POrderID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                     }
                     //multiple GRN From Invoice
                     if (multipleGrnNo != null && multipleGrnNo != "")
