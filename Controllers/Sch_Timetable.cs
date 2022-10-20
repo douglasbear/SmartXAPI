@@ -307,7 +307,7 @@ namespace SmartxAPI.Controllers
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(api.Notice("No Results Found"));
+                    return Ok(api.Notice(""));
                 }
                 else
                 {
@@ -391,8 +391,8 @@ namespace SmartxAPI.Controllers
 
                     if (N_TimetableID > 0)
                     {
-                        dLayer.DeleteData("Sch_Timetable", "N_WeekID", N_TimetableID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
-                        dLayer.DeleteData("Sch_Timetabledetails", "N_WeekID", N_TimetableID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+                        dLayer.DeleteData("Sch_Timetable", "N_TimetableID", N_TimetableID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+                        dLayer.DeleteData("Sch_Timetabledetails", "N_TimetableID", N_TimetableID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
                     }
 
                     if (x_TimetableCode == "@Auto")
