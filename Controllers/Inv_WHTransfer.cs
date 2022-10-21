@@ -436,6 +436,20 @@ namespace SmartxAPI.Controllers
                         {
                              dLayer.ExecuteNonQuery("UPDATE Inv_PRS  set N_Processed=1 where  N_CompanyID=" + nCompanyID + "  and N_PrsID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["n_PRSID"].ToString()), Params, connection, transaction);
                         }
+                          if(nLocationIDto>0)
+                        { 
+                            bool bAutoReceiveMaster = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_AutoReceive From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_LocationID = " + nLocationIDto, StockParam, connection, transaction));
+                            if (bAutoReceiveMaster)
+                            {
+                                if(myFunctions.getIntVAL(MasterTable.Rows[0]["n_PRSID"].ToString())>0)
+                                {
+                                     dLayer.ExecuteNonQuery("UPDATE Inv_PRS  set N_Processed=2 where  N_CompanyID=" + nCompanyID + "  and N_PrsID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["n_PRSID"].ToString()), Params, connection, transaction);
+                                 }
+
+                            }
+                        }
+
+
 
 
 
