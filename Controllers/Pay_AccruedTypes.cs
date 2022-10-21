@@ -224,22 +224,19 @@ namespace SmartxAPI.Controllers
                         object objVacationStarted;
                         MasterTable.Columns.Remove("n_FnYearId");
 
-                        object LastProcessed = null;
-                        LastProcessed = dLayer.ExecuteScalar("select 1 From Pay_VacationDetails Where N_VacTypeID= " + n_VacTypeID + " and N_CompanyID= " + N_CompanyID, connection, transaction);
-                        if (LastProcessed != null)
-                        {
-                            DateTime DtpDate = Convert.ToDateTime(dLayer.ExecuteScalar("select MAX(D_VacSanctionDate) FRom Pay_VacationDetails Where N_VacTypeID= " + n_VacTypeID + " and N_CompanyID= " + N_CompanyID, connection, transaction));
-                            var ProcessDate = DtpDate;
-                            var Moddate = dtpModDate;
-                            if (Moddate < ProcessDate)
-                            {
+                        // object LastProcessed = null;
+                        // LastProcessed = dLayer.ExecuteScalar("select 1 From Pay_VacationDetails Where N_VacTypeID= " + n_VacTypeID + " and N_CompanyID= " + N_CompanyID, connection, transaction);
+                        // if (LastProcessed != null)
+                        // {
+                        //     DateTime DtpDate = Convert.ToDateTime(dLayer.ExecuteScalar("select MAX(D_VacSanctionDate) FRom Pay_VacationDetails Where N_VacTypeID= " + n_VacTypeID + " and N_CompanyID= " + N_CompanyID, connection, transaction));
+                        //     var ProcessDate = DtpDate;
+                        //     var Moddate = dtpModDate;
+                        //     if (Moddate < ProcessDate)
+                        //     {
+                        //          return Ok(_api.Error(User,"Cannot save by this Date!!!!!!"));
 
-                                 return Ok(_api.Error(User,"Cannot save by this Date!!!!!!"));
-
-                            }
-
-
-                        }
+                        //     }
+                        // }
 
                         dLayer.DeleteData("Pay_VacationTypeDetails", "N_VacTypeID", n_VacTypeID, " N_CompanyID=" +N_CompanyID+"", connection, transaction);
                     }

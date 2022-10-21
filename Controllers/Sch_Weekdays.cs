@@ -62,16 +62,17 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetWeekdaysDetails(int nFnYearID,int nClassID,int nClassDivisionID)
+        public ActionResult GetWeekdaysDetails(int nFnYearID, int nClassID, int nClassDivisionID)
         {
             DataTable dtWeekdaysDetails = new DataTable();
+            DataTable dtDefaults = new DataTable();
 
             DataSet DS = new DataSet();
             SortedList Params = new SortedList();
             SortedList dParamList = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
-           string DetailsWeek = "Select * from vw_Sch_WeekdaysDetails Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_ClassID = @p3 and N_ClassDivisionID=@p4";
+            string DetailsWeek = "Select * from vw_Sch_WeekdaysDetails Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_ClassID = @p3 and N_ClassDivisionID=@p4";
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearID);
@@ -88,10 +89,19 @@ namespace SmartxAPI.Controllers
                 dtWeekdaysDetails = api.Format(dtWeekdaysDetails, "Details");
                 SortedList Data = new SortedList();
                 Data.Add("Details", dtWeekdaysDetails);
-
                 if (dtWeekdaysDetails.Rows.Count == 0)
                 {
-                    return Ok(api.Warning("No Results Found"));
+                    dtDefaults.Columns.Add("n_WeekID");
+                    dtDefaults.Columns.Add("x_Week");
+                    dtDefaults.Rows.Add(new Object[]{1,"Sunday"});
+                    dtDefaults.Rows.Add(new Object[]{2,"Monday"});
+                    dtDefaults.Rows.Add(new Object[]{3,"Tuesday"});
+                    dtDefaults.Rows.Add(new Object[]{4,"Wednesday"});
+                    dtDefaults.Rows.Add(new Object[]{5,"Thursday"});
+                    dtDefaults.Rows.Add(new Object[]{6,"Friday"});
+                    dtDefaults.Rows.Add(new Object[]{7,"Saturday"});
+
+                    return Ok(api.Success(dtDefaults));
                 }
                 else
                 {
@@ -103,7 +113,7 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, e));
             }
         }
-        
+
 
         [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)
@@ -126,12 +136,12 @@ namespace SmartxAPI.Controllers
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     string X_WeekCode = MasterRow["x_WeekCode"].ToString();
 
-                    if(N_WeekID>0)
-                     {
-                      dLayer.DeleteData("Sch_Weekdays", "N_WeekID", N_WeekID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection,transaction);
-                      dLayer.DeleteData("Sch_WeekdaysDetails", "N_WeekID", N_WeekID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection,transaction);
-                     }
-               
+                    if (N_WeekID > 0)
+                    {
+                        dLayer.DeleteData("Sch_Weekdays", "N_WeekID", N_WeekID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+                        dLayer.DeleteData("Sch_WeekdaysDetails", "N_WeekID", N_WeekID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+                    }
+
                     if (X_WeekCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
