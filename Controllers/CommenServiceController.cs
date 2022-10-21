@@ -81,7 +81,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection con = new SqlConnection(connectionString))
                 {
                     con.Open();
-                    if(appID!=2 && appID!=8 && appID!=18 && appID!=7)
+                    if (appID != 2 && appID != 8 && appID != 18 && appID != 7)
                     {
                         if (!myFunctions.CheckVersion(xVersion, dLayer, con))
                         {
@@ -109,6 +109,12 @@ namespace SmartxAPI.Controllers
                 else
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
 
+                int GUserID = myFunctions.GetGlobalUserID(User);
+
+                if (GUserID > 0 && reqType == "client")
+                {
+                    reqType = "app";
+                }
 
                 if (reqType == "all")
                 {
@@ -119,7 +125,7 @@ namespace SmartxAPI.Controllers
                     int AppID = appID;
 
 
-                    var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppID, User.FindFirst(ClaimTypes.Uri)?.Value, myFunctions.GetClientID(User), myFunctions.GetGlobalUserID(User), ipAddress,myFunctions.GetLoginID(User));
+                    var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppID, User.FindFirst(ClaimTypes.Uri)?.Value, myFunctions.GetClientID(User), myFunctions.GetGlobalUserID(User), ipAddress, myFunctions.GetLoginID(User));
 
                     if (user == null) { return Ok(_api.Error(User, "Unauthorized Access")); }
 
@@ -134,7 +140,7 @@ namespace SmartxAPI.Controllers
                     string username = myFunctions.GetUserLoginName(User);
                     int AppID = appID;
 
-                    var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppID, User.FindFirst(ClaimTypes.Uri)?.Value, myFunctions.GetClientID(User), myFunctions.GetGlobalUserID(User), ipAddress,0);
+                    var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppID, User.FindFirst(ClaimTypes.Uri)?.Value, myFunctions.GetClientID(User), myFunctions.GetGlobalUserID(User), ipAddress, 0);
 
                     if (user == null) { return Ok(_api.Error(User, "Unauthorized Access")); }
 
@@ -159,8 +165,19 @@ namespace SmartxAPI.Controllers
                             SortedList paramList = new SortedList();
                             paramList.Add("@nClientID", clientID);
                             paramList.Add("@xEmailID", username);
+                            paramList.Add("@nGlobalUserID", GlobalUserID);
+
+
+                            if (appID == 0)
+                            {
+
+                                object userType = dLayer.ExecuteScalar("SELECT isnull(N_UserType,0) as N_UserType FROM Users where N_ClientID=@nClientID and N_UserID=@nGlobalUserID", paramList, olivCnn);
+                                if (myFunctions.getIntVAL(userType.ToString()) != 0)
+                                {
+                                    appID = myFunctions.getIntVAL(userType.ToString());
+                                }
+                            }
                             paramList.Add("@nAppID", appID);
-                            // paramList.Add("@nGlobalUserID", GlobalUserID);
                             object checkAppExisting = dLayer.ExecuteScalar("SELECT Count(N_AppID) as Count FROM ClientApps where N_ClientID=@nClientID and N_AppID=@nAppID", paramList, olivCnn);
                             if (myFunctions.getIntVAL(checkAppExisting.ToString()) == 0)
                             {
@@ -172,8 +189,8 @@ namespace SmartxAPI.Controllers
 
                                 b_AppNotExist = true;
 
-                                if(AppURL==null)
-                                return Ok(_api.Warning("App url not configured"));
+                                if (AppURL == null)
+                                    return Ok(_api.Warning("App url not configured"));
                                 paramList.Add("@xAppUrl", AppURL);
                                 paramList.Add("@xDBUri", activeDbUri);
                                 paramList.Add("@nUserLimit", 1);
@@ -212,11 +229,11 @@ namespace SmartxAPI.Controllers
                             {
                                 cnn.Open();
 
-                                string companySql="";
-                                if(companyid>0)
-                                companySql=" and Acc_Company.N_CompanyID="+companyid+" ";
+                                string companySql = "";
+                                if (companyid > 0)
+                                    companySql = " and Acc_Company.N_CompanyID=" + companyid + " ";
                                 string cmpSql = "select Acc_Company.N_CompanyID,Acc_Company.X_CompanyName from Acc_Company LEFT OUTER JOIN Sec_User ON Acc_Company.N_CompanyID = Sec_User.N_CompanyID " +
-                            " where Acc_Company.N_ClientID=@nClientID and  Sec_User.X_UserID=@xEmailID "+companySql+" order by B_IsDefault Desc ";
+                            " where Acc_Company.N_ClientID=@nClientID and  Sec_User.X_UserID=@xEmailID " + companySql + " order by B_IsDefault Desc ";
                                 DataTable companyDt = dLayer.ExecuteDataTable(cmpSql, paramList, cnn);
                                 if (companyDt.Rows.Count == 0)
                                 {
@@ -293,7 +310,7 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Error(User, "Unauthorized Access"));
                     }
-                    var user = _repository.Authenticate(companyid, companyname, username, 0, reqType, appID, User.FindFirst(ClaimTypes.Uri)?.Value, clientID, GlobalUserID, ipAddress,myFunctions.GetLoginID(User));
+                    var user = _repository.Authenticate(companyid, companyname, username, 0, reqType, appID, User.FindFirst(ClaimTypes.Uri)?.Value, clientID, GlobalUserID, ipAddress, myFunctions.GetLoginID(User));
 
                     if (user == null) { return Ok(_api.Error(User, "Unauthorized Access")); }
 
@@ -390,7 +407,7 @@ namespace SmartxAPI.Controllers
                 {
                     SortedList Res = new SortedList();
                     string seperator = "$$";
-                    string[] cred = myFunctions.DecryptStringFromUrl(customerKey,System.Text.Encoding.Unicode ).Split(seperator);
+                    string[] cred = myFunctions.DecryptStringFromUrl(customerKey, System.Text.Encoding.Unicode).Split(seperator);
                     int companyID = myFunctions.getIntVAL(cred[0]);
                     int nCustomerID = myFunctions.getIntVAL(cred[1]);
                     using (SqlConnection conn = new SqlConnection(connectionString))
@@ -406,7 +423,7 @@ namespace SmartxAPI.Controllers
 
                         DataRow dRow = output.Rows[0];
 
-                        var user = _repository.Authenticate(myFunctions.getIntVAL(dRow["N_CompanyID"].ToString()), dRow["X_CompanyName"].ToString(), dRow["X_UserID"].ToString(), myFunctions.getIntVAL(dRow["N_UserID"].ToString()), reqType, appID, "", myFunctions.getIntVAL(dRow["N_ClientID"].ToString()), 0, ipAddress,myFunctions.GetLoginID(User));
+                        var user = _repository.Authenticate(myFunctions.getIntVAL(dRow["N_CompanyID"].ToString()), dRow["X_CompanyName"].ToString(), dRow["X_UserID"].ToString(), myFunctions.getIntVAL(dRow["N_UserID"].ToString()), reqType, appID, "", myFunctions.getIntVAL(dRow["N_ClientID"].ToString()), 0, ipAddress, myFunctions.GetLoginID(User));
 
                         if (user == null) { return Ok(_api.Error(User, "Unauthorized Access")); }
 
@@ -420,13 +437,13 @@ namespace SmartxAPI.Controllers
                 {
                     SortedList Res = new SortedList();
                     string seperator = "$$";
-                    string[] cred = myFunctions.DecryptStringFromUrl(customerKey,System.Text.Encoding.Unicode ).Split(seperator);
+                    string[] cred = myFunctions.DecryptStringFromUrl(customerKey, System.Text.Encoding.Unicode).Split(seperator);
                     int companyID = myFunctions.getIntVAL(cred[0]);
                     int nVendorID = myFunctions.getIntVAL(cred[1]);
                     using (SqlConnection conn = new SqlConnection(connectionString))
                     {
                         conn.Open();
-                        string sql = "SELECT Acc_Company.N_CompanyID, Acc_Company.X_CompanyName, Sec_User.X_UserID, Sec_User.N_UserID, Acc_Company.N_ClientID FROM Inv_Vendor LEFT OUTER JOIN Acc_Company ON Inv_Vendor.N_CompanyID = Acc_Company.N_CompanyID RIGHT OUTER JOIN Sec_User ON Sec_User.N_CompanyID = Inv_Vendor.N_CompanyID AND Sec_User.N_CustomerID = Inv_Vendor.N_VendorID WHERE Sec_User.N_LoginFlag="+appID+" and Inv_Vendor.N_VendorID=" + nVendorID;
+                        string sql = "SELECT Acc_Company.N_CompanyID, Acc_Company.X_CompanyName, Sec_User.X_UserID, Sec_User.N_UserID, Acc_Company.N_ClientID FROM Inv_Vendor LEFT OUTER JOIN Acc_Company ON Inv_Vendor.N_CompanyID = Acc_Company.N_CompanyID RIGHT OUTER JOIN Sec_User ON Sec_User.N_CompanyID = Inv_Vendor.N_CompanyID AND Sec_User.N_CustomerID = Inv_Vendor.N_VendorID WHERE Sec_User.N_LoginFlag=" + appID + " and Inv_Vendor.N_VendorID=" + nVendorID;
                         SortedList Params = new SortedList();
                         DataTable output = dLayer.ExecuteDataTable(sql, conn);
                         if (output.Rows.Count == 0)
@@ -436,7 +453,7 @@ namespace SmartxAPI.Controllers
 
                         DataRow dRow = output.Rows[0];
 
-                        var user = _repository.Authenticate(myFunctions.getIntVAL(dRow["N_CompanyID"].ToString()), dRow["X_CompanyName"].ToString(), dRow["X_UserID"].ToString(), myFunctions.getIntVAL(dRow["N_UserID"].ToString()), reqType, appID , "", myFunctions.getIntVAL(dRow["N_ClientID"].ToString()), 0, ipAddress,myFunctions.GetLoginID(User));
+                        var user = _repository.Authenticate(myFunctions.getIntVAL(dRow["N_CompanyID"].ToString()), dRow["X_CompanyName"].ToString(), dRow["X_UserID"].ToString(), myFunctions.getIntVAL(dRow["N_UserID"].ToString()), reqType, appID, "", myFunctions.getIntVAL(dRow["N_ClientID"].ToString()), 0, ipAddress, myFunctions.GetLoginID(User));
 
                         if (user == null) { return Ok(_api.Error(User, "Unauthorized Access")); }
 
@@ -475,7 +492,7 @@ namespace SmartxAPI.Controllers
                 string username = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name).Value;
                 int AppID = 0;
 
-                var user = _repository.Authenticate(companyid, companyname, username, userid, "RefreshToken", AppID, "", 0, 0, ipAddress,myFunctions.GetLoginID(User));
+                var user = _repository.Authenticate(companyid, companyname, username, userid, "RefreshToken", AppID, "", 0, 0, ipAddress, myFunctions.GetLoginID(User));
 
                 if (user == null) { return StatusCode(403, _api.Response(403, "Unauthorized Access")); }
 

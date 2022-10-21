@@ -35,24 +35,42 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetAllApps(bool showAll,string AppName)
+        public ActionResult GetAllApps(bool showAll, string AppName)
         {
             DataTable dt = new DataTable();
             int ClientID = myFunctions.GetClientID(User);
-            string sqlCommandText = "select * from (SELECT AppMaster.*, ClientApps.N_ClientID FROM AppMaster LEFT OUTER JOIN ClientApps ON AppMaster.N_AppID = ClientApps.N_AppID" +
-                                    " WHERE(AppMaster.B_Inactive = 0) and(ClientApps.N_ClientID =" + ClientID + " )" +
-                                    " Union all" +
-                                    " SELECT *, null as N_ClientID FROM AppMaster WHERE  N_AppID not in (SELECT N_AppID FROM ClientApps WHERE N_ClientID =" + ClientID + " )) a where N_AppID in (SELECT  N_AppID FROM AppConfig where X_BuildType='"+AppName+"')  order by N_Order";
-// showAll=false;
-            if (showAll == false)
-            {
-                sqlCommandText = "SELECT AppMaster.*,ClientApps.N_ClientID FROM AppMaster INNER JOIN ClientApps ON AppMaster.N_AppID = ClientApps.N_AppID where ClientApps.N_ClientID=" + ClientID + " and AppMaster.B_Inactive =0 order by AppMaster.N_Order";
-            }
+            int GUserID = myFunctions.GetGlobalUserID(User);
+
+
+
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
                 {
                     connection.Open();
+                    int appID = 0;
+                    object userType = dLayer.ExecuteScalar("SELECT isnull(N_UserType,0) as N_UserType FROM Users where N_ClientID=" + ClientID + " and N_UserID=" + GUserID, connection);
+                    if (myFunctions.getIntVAL(userType.ToString()) != 0)
+                    {
+                        appID = myFunctions.getIntVAL(userType.ToString());
+                    }
+
+                    string xCritreria="";
+
+                    if(appID>1){
+xCritreria = " and (ClientApps.N_AppID="+appID+") ";
+                    }
+
+                    string sqlCommandText = "select * from (SELECT AppMaster.*, ClientApps.N_ClientID FROM AppMaster LEFT OUTER JOIN ClientApps ON AppMaster.N_AppID = ClientApps.N_AppID" +
+                        " WHERE (AppMaster.B_Inactive = 0) and (ClientApps.N_ClientID =" + ClientID + " )" +
+                        " Union all" +
+                        " SELECT *, null as N_ClientID FROM AppMaster WHERE  N_AppID not in (SELECT N_AppID FROM ClientApps WHERE N_ClientID =" + ClientID + " )) a where N_AppID in (SELECT  N_AppID FROM AppConfig where X_BuildType='" + AppName + "')  order by N_Order";
+                    if (showAll == false)
+                    {
+                        sqlCommandText = "SELECT AppMaster.*,ClientApps.N_ClientID FROM AppMaster INNER JOIN ClientApps ON AppMaster.N_AppID = ClientApps.N_AppID where ClientApps.N_ClientID=" + ClientID + " and AppMaster.B_Inactive =0 " + xCritreria + " order by AppMaster.N_Order";
+                    }
+
                     dt = dLayer.ExecuteDataTable(sqlCommandText, connection);
                 }
                 if (dt.Rows.Count == 0)
@@ -67,7 +85,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
 
         }
@@ -106,7 +124,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
 
         }
