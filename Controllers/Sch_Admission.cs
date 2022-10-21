@@ -541,7 +541,7 @@ namespace SmartxAPI.Controllers
 
                     if (FeeDetailsTable.Rows.Count == 0)
                     {
-                        return Ok(api.Warning("No Results Found"));
+                        return Ok(api.Success(dt));  
                     }
                 
                     FeeDetailsTable = api.Format(FeeDetailsTable, "FeeDetails");
