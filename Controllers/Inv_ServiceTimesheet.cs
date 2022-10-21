@@ -200,11 +200,19 @@ namespace SmartxAPI.Controllers
 
                         for (int i = 0; i < DetailTable.Rows.Count; i++)
                         {
-                            if (DetailTable.Rows[i]["N_TransDetailID"].ToString() == ItemTable.Rows[j]["N_DeliverNoteDetailsID"].ToString())
-                            {
-                                DetailTable.Rows[i]["N_ServiceSheetID"] = nServiceSheetID;
-                                DetailTable.Rows[i]["N_ServiceSheetItemID"] = nServiceSheetItemID;
-                            }
+                            if (nFormID == 1145) {
+                                if (DetailTable.Rows[i]["N_TransDetailID"].ToString() == ItemTable.Rows[j]["N_DeliverNoteDetailsID"].ToString())
+                                {
+                                    DetailTable.Rows[i]["N_ServiceSheetID"] = nServiceSheetID;
+                                    DetailTable.Rows[i]["N_ServiceSheetItemID"] = nServiceSheetItemID;
+                                }
+                            } else {
+                                if (DetailTable.Rows[i]["N_TransDetailID"].ToString() == ItemTable.Rows[j]["N_MRNDetailID"].ToString())
+                                {
+                                    DetailTable.Rows[i]["N_ServiceSheetID"] = nServiceSheetID;
+                                    DetailTable.Rows[i]["N_ServiceSheetItemID"] = nServiceSheetItemID;
+                                }
+                            };
                         }
                     }
 
