@@ -63,9 +63,9 @@ namespace SmartxAPI.Controllers
                 }
 
                 if (Count == 0)
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_ServiceTimesheet where N_CompanyID=@nCompanyId   " + Searchkey + " " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_ServiceTimesheet where N_CompanyID=@nCompanyId and N_FormID=@nFormID " + Searchkey + " " + xSortBy;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_ServiceSheetMaster where N_CompanyID=@nCompanyId  " + Searchkey + " and N_ServiceSheetID not in (select top(" + Count + ") N_ServiceSheetID from vw_Inv_ServiceSheetMaster where N_CompanyID=@nCompanyId " + xSortBy + " ) " + " " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_ServiceSheetMaster where N_CompanyID=@nCompanyId and N_FormID=@nFormID " + Searchkey + " and N_ServiceSheetID not in (select top(" + Count + ") N_ServiceSheetID from vw_Inv_ServiceSheetMaster where N_CompanyID=@nCompanyId and N_FormID=@nFormID " + xSortBy + " ) " + " " + xSortBy;
             }
             else
             {
