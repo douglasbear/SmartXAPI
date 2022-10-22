@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("details")]
-        public ActionResult GetDashboardDetails(int nAcYearID,int nBranchID,bool bAllBranchData,int nTeacherID)
+        public ActionResult GetDashboardDetails(int nAcYearID,int nBranchID,bool bAllBranchData,int nTeacherID,DateTime dDate)
         {
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -47,12 +47,14 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    //   Params.Add("@today", dDate);
+                      
             object nBatchID = dLayer.ExecuteScalar("select n_AdmittedDivisionID from vw_schAdmission where N_AdmissionID= "+nTeacherID+" and  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID,Params, connection) ;
             string sqlAssignment = "SELECT COUNT(*) as N_Count FROM vw_Sch_Assignment WHERE MONTH(D_AssignedDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_AssignedDate) = YEAR(CURRENT_TIMESTAMP) and isnull(B_IsSaveDraft,0)=0 and  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID+" and N_UserID="+nTeacherID+" " ;
             string sqlAssignmentTotal = "SELECT COUNT(*) as N_Count FROM vw_Sch_Assignment WHERE N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID+" and N_UserID="+nTeacherID+"" ;
             string sqlExam = "SELECT COUNT(*) as N_Count FROM Vw_ExamByTeacher WHERE  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  +" and n_TeacherID="+nTeacherID+""; 
             string sqlPubResults = "SELECT COUNT(*) as N_Count FROM vw_Sch_Assignment WHERE N_FormID=1547 and isnull(b_PublishMark,0)=1 and  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
-            string sqlSheduledExam = "SELECT COUNT(*) as N_Count FROM Vw_ExamByTeacher WHERE  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  +" and n_TeacherID="+nTeacherID+" and  D_ExamDate>=GetDate()"; 
+            string sqlSheduledExam = "SELECT COUNT(*) as N_Count FROM Vw_ExamByTeacher WHERE  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  +" and n_UserID="+nTeacherID+" and  D_ExamDate>="+dDate+""; 
              string sqlTimeTableData = "SELECT * FROM vw_TimetableDetails WHERE N_CompanyID = " + nCompanyID + " and  N_FnYearID="+nAcYearID+"  and  x_WeekName='"+dayOfWk+"' and n_TeacherID="+nTeacherID+"" ;
            
             SortedList Data = new SortedList();
@@ -211,7 +213,7 @@ namespace SmartxAPI.Controllers
                     BatchwiseDetails = dLayer.ExecuteDataTable(sqlAssignment, Params, connection);
                     BatchwiseDetails = api.Format(BatchwiseDetails, "BatchwiseDetails");
                     if (BatchwiseDetails.Rows.Count > 0) Data.Add("BatchwiseDetails", BatchwiseDetails);
-                    string sqlCommandCount1 ="select count(*) as N_Count from Vw_CLassWiseStudents WHERE   N_CompanyID = " + nCompanyID + " and N_FnYearID="+nAcYearID+" and N_TeacherID="+nTeacherID+"";
+                    string sqlCommandCount1 ="select count(*) as N_Count from Vw_ClassandBatchWiseList WHERE   N_CompanyID = " + nCompanyID + " and N_FnYearID="+nAcYearID+" and N_TeacherID="+nTeacherID+"";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount1, Params, connection);
                     Data.Add("TotalCount", TotalCount);
                      if (BatchwiseDetails.Rows.Count == 0)
