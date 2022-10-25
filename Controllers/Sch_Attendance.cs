@@ -86,7 +86,7 @@ namespace SmartxAPI.Controllers
             }
         }
       
- [HttpGet("detailList") ]
+        [HttpGet("detailList") ]
         public ActionResult AdmissionList(int nCompanyID,int nSubjectID,int nBatchID, DateTime dDate)
         {    
             SortedList param = new SortedList();           
