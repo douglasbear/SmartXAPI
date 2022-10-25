@@ -925,6 +925,8 @@ namespace SmartxAPI.Controllers
             string payModeSql = "select X_PayMode from Vw_InvSalesPayMode where N_SalesId = "+nSalesID+" and N_CompanyId ="+nCompanyID;
 
             objPayMode=dLayer.ExecuteScalar(payModeSql, connection);
+             if(objPayMode==null)
+            objPayMode="";
 
             if(objPayMode==null)
             objPayMode="";
