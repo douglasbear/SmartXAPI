@@ -139,8 +139,15 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    Results = dLayer.DeleteData("Inv_ServiceInfo", "nServiceInfoID", nServiceInfoID, "N_CompanyID=" + nCompanyID + "", connection);
-                    dLayer.DeleteData("Inv_ServiceCondition", "nServiceInfoID", nServiceInfoID, "N_CompanyID=" + nCompanyID + "", connection);
+                    object N_ServiceInfoID = dLayer.ExecuteScalar("select count(N_ServiceID) from Inv_SalesOrderDetails  Where N_CompanyID=" + nCompanyID + " and N_ServiceID="+nServiceInfoID, connection);
+
+                        if( myFunctions.getIntVAL(N_ServiceInfoID.ToString())>0){
+
+                             return Ok(api.Error(User, "Unable To Delete!"));
+                         }
+
+                    Results = dLayer.DeleteData("Inv_ServiceInfo", "N_ServiceInfoID", nServiceInfoID, "N_CompanyID=" + nCompanyID + "", connection);
+                    dLayer.DeleteData("Inv_ServiceCondition", "N_ServiceInfoID", nServiceInfoID, "N_CompanyID=" + nCompanyID + "", connection);
 
                 }
                 if (Results > 0)

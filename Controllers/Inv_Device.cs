@@ -181,6 +181,18 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
+
+                  object N_ServiceInfoID = dLayer.ExecuteScalar("select (N_ServiceInfoID) from Inv_ServiceInfo  Where N_CompanyID=" + nCompanyID + " and N_DeviceID="+nDeviceID, connection);
+                  if(N_ServiceInfoID!=null){
+                                   object serialNoCount = dLayer.ExecuteScalar("select count(N_ServiceID) from Inv_SalesOrderDetails  Where N_CompanyID=" + nCompanyID + " and N_ServiceID="+N_ServiceInfoID, connection);
+
+                      if( myFunctions.getIntVAL(serialNoCount.ToString())>0){
+
+                             return Ok(api.Error(User, "Unable To Delete!"));
+                         }
+
+                  }
+
                     Results = dLayer.DeleteData("Inv_Device", "N_DeviceID", nDeviceID, "N_CompanyID=" + nCompanyID + "", connection);
                     dLayer.DeleteData("Inv_DeviceDetails", "N_DeviceID", nDeviceID, "N_CompanyID=" + nCompanyID + "", connection);
 
