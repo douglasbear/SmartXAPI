@@ -815,7 +815,27 @@ namespace SmartxAPI.Controllers
                     SortedList Result = new SortedList();
                     Result.Add("n_SalesOrderID", n_SalesOrderId);
                     Result.Add("x_SalesOrderNo", x_OrderNo);
-                    return Ok(_api.Success(Result, "Sales Order Saved"));
+
+
+                                   
+                 if (N_FormID == 81)
+                 {
+                   return Ok(_api.Success(Result, "Sales Order Saved"));
+                 }
+                 else if(N_FormID == 1571) 
+                 {
+                 return Ok(_api.Success(Result,"Job Order Saved Successfully"));
+                  }
+                else if(N_FormID == 1546) 
+                 {
+                 return Ok(_api.Success(Result,"Service Order Saved Successfully"));
+                  }
+
+                     return Ok(_api.Success(Result, "Sales Order Saved"));
+                  
+
+
+
                 }
             }
             catch (Exception ex)
