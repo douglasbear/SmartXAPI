@@ -147,7 +147,7 @@ namespace SmartxAPI.Controllers
                     if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ") * from "+viewName+" where N_Hold=0 " +Pattern+ criteria + cndn + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from "+viewName+" where N_Hold=0 " + Pattern + criteria + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from Inv_Sales where N_Hold=0 " + Pattern+ criteria + cndn + Searchkey + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from "+viewName+" where N_Hold=0 " + Pattern + criteria + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from Inv_Sales where isnull(N_Hold,0)=0 " + Pattern+ criteria + cndn + Searchkey + xSortBy + " ) " + xSortBy;
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
