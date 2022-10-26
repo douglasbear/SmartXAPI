@@ -189,7 +189,7 @@ namespace SmartxAPI.Data
                             {
                                 cnn2.Open();
 
-                                string sqlGUserInfo = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,CASE WHEN Users.N_UserType=0 THEN 1 ELSE 0 end as isAdminUser,Users.X_UserID FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_UserID ='" + username + "')";
+                                string sqlGUserInfo = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.B_EnableAttachment,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,CASE WHEN Users.N_UserType=0 THEN 1 ELSE 0 end as isAdminUser,Users.X_UserID FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_UserID ='" + username + "')";
                                 DataTable globalInfo = dLayer.ExecuteDataTable(sqlGUserInfo, cnn2);
                                 if (globalInfo.Rows.Count > 0)
                                 {
@@ -207,6 +207,16 @@ namespace SmartxAPI.Data
                                 {
                                     string appUpdate = "Update Users set N_ActiveAppID=" + AppID + " WHERE (X_EmailID ='" + username + "' and N_UserID=" + globalUserID + ")";
                                     dLayer.ExecuteScalar(appUpdate, cnn2);
+                                }
+                                 if (globalInfo.Rows.Count > 0)
+                                {
+                                string sqlAttachment = "select isnull(B_EnableAttachment,0) from clientApps where N_AppId="+AppID+" and N_ClientID="+globalInfo.Rows[0]["N_ClientID"].ToString()+"";
+                                object attachment = dLayer.ExecuteScalar(sqlAttachment, cnn2);
+                                if(attachment!=null)
+                                    globalInfo.Rows[0]["N_ClientID"]=myFunctions.getBoolVAL(attachment.ToString());
+                                globalInfo.AcceptChanges();
+
+
                                 }
 
                                 object modulesObj = dLayer.ExecuteScalar("SELECT X_Modules=STUFF  ((SELECT DISTINCT ',' + CAST(N_ModuleID AS VARCHAR(MAX)) FROM AppModules t2 WHERE t2.N_AppID = t1.N_AppID and  t2.N_AppID=" + AppID + " FOR XML PATH('') ),1,1,''  )  FROM AppModules t1  where t1.N_AppID=" + AppID, cnn2);
