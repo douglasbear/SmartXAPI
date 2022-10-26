@@ -508,6 +508,12 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nBranchID", N_BranchID);
                     QueryParams.Add("@nLocationID", N_LocationID);
                     QueryParams.Add("@nCustomerID", N_CustomerID);
+                     int N_FormID = 0;
+                       if (MasterTable.Columns.Contains("N_FormID"))
+                    {
+                        N_FormID = myFunctions.getIntVAL(MasterRow["N_FormID"].ToString());
+                    }
+
 
                     if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_DeliveryDate"].ToString(), "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
                     {
@@ -662,7 +668,7 @@ namespace SmartxAPI.Controllers
                             rentalItem.Columns.Remove("rowID");
                     if (N_DNoteID > 0)
                     {
-                            int N_FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
+                            N_FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
                             dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + N_DNoteID.ToString() + " and N_FormID="+ N_FormID + " and N_CompanyID=" + N_CompanyID, connection, transaction);
                        
                     }
@@ -774,6 +780,15 @@ namespace SmartxAPI.Controllers
                         Result.Add("n_DeliveryNoteID", N_DeliveryNoteID);
                         Result.Add("InvoiceNo", InvoiceNo);
                         transaction.Commit();
+                        if (N_FormID == 1572)
+                            {
+                           return Ok(_api.Success(Result, "Rental Delivery Saved"));
+                            }
+                          else if(N_FormID == 1426) 
+                            {
+                        return Ok(_api.Success(Result,"Wh deliveryNote Saved Successfully"));
+                             }
+                  
                         return Ok(_api.Success(Result, "Delivery Note saved"));
                     }
 

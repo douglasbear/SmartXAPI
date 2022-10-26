@@ -1088,6 +1088,12 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nBranchID", N_BranchID);
                     QueryParams.Add("@nLocationID", N_LocationID);
                     QueryParams.Add("@nCustomerID", N_CustomerID); 
+                    int N_FormID = 0;
+                       if (MasterTable.Columns.Contains("N_FormID"))
+                    {
+                        N_FormID = myFunctions.getIntVAL(MasterRow["N_FormID"].ToString());
+                    }
+
 
                     if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_SalesDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
                     {
@@ -1669,6 +1675,14 @@ namespace SmartxAPI.Controllers
 
                     }
                     transaction.Commit();
+                        if (N_FormID == 64)
+                            {
+                           return Ok(_api.Success(Result, "Sales invoice saved"));
+                            }
+                          else if(N_FormID == 1601) 
+                            {
+                        return Ok(_api.Success(Result,"Rental Sales Saved Successfully"));
+                             }
                     return Ok(_api.Success(Result, "Sales invoice saved"));
 
                 }
