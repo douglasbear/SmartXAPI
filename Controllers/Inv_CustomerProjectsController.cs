@@ -138,8 +138,9 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, TaskMaster, TaskStatus;
+                DataTable MasterTable, TaskMaster, TaskStatus,JobTable;
                 MasterTable = ds.Tables["master"];
+                JobTable = ds.Tables["jobMaster"];
                 DataTable Attachment = ds.Tables["attachments"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
@@ -202,6 +203,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        if(JobTable.Rows.Count>0)
+                        {
+                          JobTable.Rows[0]["N_ProjectID"] =nProjectID;
+                          int jobID = dLayer.SaveData("Inv_CustomerJobDetails", "N_JobID", JobTable, connection, transaction);
+
+
+                        }
                         if (N_WorkFlowID != null)
                         {
                             if (nWTaskID != myFunctions.getIntVAL(N_WorkFlowID.ToString()))
@@ -369,9 +377,11 @@ namespace SmartxAPI.Controllers
         {
             DataSet ds = new DataSet();
             DataTable dt = new DataTable();
+            DataTable jobMaster = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
+            string sqlJob = "";
              if (nOpportunityID > 0)
             {
                 sqlCommandText = "select TOP 1 0 as N_ProjectID,'@Auto' as X_ProjectCode,vw_CRMOpportunity.N_CompanyId,vw_CRMOpportunity.N_FnYearID,vw_CRMOpportunity.N_OpportunityID, ISNULL(Inv_Customer.N_CustomerID,0) AS N_CustomerID, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, " +
@@ -382,6 +392,7 @@ namespace SmartxAPI.Controllers
            else{
                Params.Add("@xProjectCode", xProjectCode);
           sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
+          sqlJob = "select * from Vw_JobDetails  where N_CompanyID=@nCompanyID and X_ProjectCode=@xProjectCode";
                 }
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@YearID", nFnYearId);
@@ -392,6 +403,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    jobMaster = dLayer.ExecuteDataTable(sqlJob, Params, connection);
                    
                     if (dt.Rows.Count == 0)
                     {
@@ -403,7 +415,9 @@ namespace SmartxAPI.Controllers
                     Attachments = api.Format(Attachments, "attachments");
                    
                         dt = api.Format(dt, "master");
+                        jobMaster = api.Format(jobMaster, "jobMaster");
                         ds.Tables.Add(dt);
+                        ds.Tables.Add(jobMaster);
                         ds.Tables.Add(Attachments);
 
                         return Ok(api.Success(ds));

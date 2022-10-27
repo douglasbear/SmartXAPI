@@ -59,6 +59,7 @@ namespace SmartxAPI.Controllers
                      string UserPattern = myFunctions.GetUserPattern(User);
                     int nUserID = myFunctions.GetUserID(User);
                     string Pattern = "";
+                    bool B_ReduceTime =Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "reduceTime_Sales", "N_Value", myFunctions.getIntVAL(nCompanyId.ToString()), dLayer, connection)));
 
                     if (UserPattern != "")
                      {
@@ -79,11 +80,14 @@ namespace SmartxAPI.Controllers
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     bool bLocationChange = myFunctions.CheckPermission(myFunctions.GetCompanyID(User), 564, myFunctions.GetUserCategory(User).ToString(), "", dLayer, connection);
-                    string viewName = " vw_InvSalesInvoiceNo_Search_New_Cloud ";
+                    string viewName = " [vw_InvSalesInvoiceNo_Search_New_Cloud] ";
 
                     bool PayModeEnabled = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "ShowPayModeInInvoiceListing", "N_Value", myFunctions.getIntVAL(nCompanyId.ToString()), dLayer, connection)));
                     if(PayModeEnabled)
                     viewName = " vw_InvSalesInvoiceNo_Search_cloud ";
+
+                    if(B_ReduceTime)
+                         viewName = " vw_InvSalesInvoiceDashboard_Cloud ";
 
                     if (nCustomerID > 0)
                         cndn = "and N_CustomerID=@nCustomerID ";
@@ -143,7 +147,7 @@ namespace SmartxAPI.Controllers
                     if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ") * from "+viewName+" where N_Hold=0 " +Pattern+ criteria + cndn + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from "+viewName+" where N_Hold=0 " + Pattern + criteria + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from "+viewName+" where N_Hold=0 " + Pattern+ criteria + cndn + Searchkey + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from "+viewName+" where N_Hold=0 " + Pattern + criteria + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from Inv_Sales where isnull(N_Hold,0)=0 " + Pattern+ criteria + cndn + Searchkey + xSortBy + " ) " + xSortBy;
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
@@ -890,6 +894,8 @@ namespace SmartxAPI.Controllers
             string payModeSql = "select X_PayMode from Vw_InvSalesPayMode where N_SalesId = "+nSalesID+" and N_CompanyId ="+nCompanyID;
 
             objPayMode=dLayer.ExecuteScalar(payModeSql, connection);
+             if(objPayMode==null)
+            objPayMode="";
 
             object RetQty = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =" + nSalesID + " and Isnull(B_IsSaveDraft,0) =0 and N_CompanyID=" + nCompanyID , connection);
             object RetQtyDrft = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =" + nSalesID + " and Isnull(B_IsSaveDraft,0)=1 and N_CompanyID=" + nCompanyID , connection);

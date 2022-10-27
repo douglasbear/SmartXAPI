@@ -1083,9 +1083,17 @@ namespace SmartxAPI.Controllers
                                 }
                                 else
                                 {
+                                      //  bool B_Alert = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("894", "StockAlertByPos", "N_Value","N_UserCategoryID",myFunctions.getIntVAL(N_CompanyID.ToString()), dLayer, connection,transaction)));
+                                     bool B_Alert =Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("894", "StockAlertByPos", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), myFunctions.getIntVAL(N_CompanyID.ToString()), dLayer, connection,transaction)));
                                     // if (ex.Message == "55"){
-                                    dLayer.ExecuteNonQuery("update  Inv_Sales set B_IsSaveDraft=1 where N_SalesID=" + N_SalesID + " and N_CompanyID=@nCompanyID and N_BranchID=@nBranchID", QueryParams, connection, transaction);
-                                    // return Ok(_api.Error(User, "Quantity exceeds!"));
+                                        if(B_Alert==false){
+                                       dLayer.ExecuteNonQuery("update  Inv_Sales set B_IsSaveDraft=1 where N_SalesID=" + N_SalesID + " and N_CompanyID=@nCompanyID and N_BranchID=@nBranchID", QueryParams, connection, transaction);
+
+                                        }
+                                        else{
+                                            transaction.Rollback();
+                                           return Ok(_api.Error(User,"stock alert"));
+                                        }
                                 }
                                 // else{
                                 //      transaction.Rollback();
