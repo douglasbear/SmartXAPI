@@ -88,7 +88,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult TaskList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nTableViewID, int nMenuID, int n_UserID,DateTime d_Date)
+        public ActionResult TaskList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nTableViewID, int nMenuID, int n_UserID,DateTime d_Date,bool isMyTeam)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID;
@@ -112,6 +112,7 @@ namespace SmartxAPI.Controllers
             string Criteria2 = "";
             object TotalCount = 0;
             string Header = "[]";
+            string UserPattern="";
             // if (byUser == true)
             // {
             //     Criteria = " and N_AssigneeID=@nUserID ";
@@ -132,15 +133,17 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
+                      connection.Open();
 
                     string tableViewSql = "select X_HiddenFields,X_Fields,X_DataSource,X_DefaultCriteria,X_PKey from Sec_TableViewComponents where N_MenuID=@nMenuID and N_TableViewID=@nTableViewID and N_CompanyID=@nCompanyID";
                     SortedList TviewParams = new SortedList();
                     TviewParams.Add("@nMenuID", nMenuID);
                     TviewParams.Add("@nTableViewID", nTableViewID);
                     TviewParams.Add("@nCompanyID", nCompanyId);
+                    TviewParams.Add("@nUserID", nUserID);
 
                     DataTable tableViewResult = dLayer.ExecuteDataTable(tableViewSql, TviewParams, connection);
-
+                      
                     if (tableViewResult.Rows.Count > 0)
                     {
                         DataRow dRow = tableViewResult.Rows[0];
@@ -149,7 +152,16 @@ namespace SmartxAPI.Controllers
                         string DefaultCriteria = dRow["X_DefaultCriteria"].ToString();
                         Header = dRow["X_Fields"].ToString();
                         string PKey = dRow["X_PKey"].ToString();
-                        string UserPattern = myFunctions.GetUserPattern(User);
+                        if(isMyTeam==true){
+                             object patternCode = dLayer.ExecuteScalar("select X_Pattern From Sec_UserHierarchy where N_CompanyID =@nCompanyID and N_UserID =@nUserID", TviewParams,connection);
+                             UserPattern = patternCode.ToString();
+                        }
+                        else{
+                            UserPattern = myFunctions.GetUserPattern(User);
+                        }
+                        
+
+
                         string Pattern = "";
 
                         if (UserPattern != "")
@@ -169,6 +181,8 @@ namespace SmartxAPI.Controllers
                         {
                             Pattern="";
                         }
+                    
+              
 
                         if (Count == 0)
                             sqlCommandText = "select top(" + nSizeperpage + ") * from " + Table + " where " + DefaultCriteria + Pattern + " " + Searchkey + Criteria + Criteria2 + xSortBy;
@@ -184,7 +198,7 @@ namespace SmartxAPI.Controllers
                             Params.Add("@dVal", d_Date);
 
 
-                        connection.Open();
+                       
                         dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                         sqlCommandCount = "select count(*) as N_Count  from " + Table + " where " + DefaultCriteria + Pattern;
                         TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
