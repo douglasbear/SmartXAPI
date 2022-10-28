@@ -213,7 +213,7 @@ namespace SmartxAPI.Controllers
                     BatchwiseDetails = dLayer.ExecuteDataTable(sqlAssignment, Params, connection);
                     BatchwiseDetails = api.Format(BatchwiseDetails, "BatchwiseDetails");
                     if (BatchwiseDetails.Rows.Count > 0) Data.Add("BatchwiseDetails", BatchwiseDetails);
-                    string sqlCommandCount1 ="select count(*) as N_Count from Vw_CLassWiseStudents WHERE   N_CompanyID = " + nCompanyID + " and N_FnYearID="+nAcYearID+" and N_TeacherID="+nTeacherID+"";
+                    string sqlCommandCount1 ="select count(*) as N_Count from Vw_ClassandBatchWiseList WHERE   N_CompanyID = " + nCompanyID + " and N_FnYearID="+nAcYearID+" and N_TeacherID="+nTeacherID+"";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount1, Params, connection);
                     Data.Add("TotalCount", TotalCount);
                      if (BatchwiseDetails.Rows.Count == 0)

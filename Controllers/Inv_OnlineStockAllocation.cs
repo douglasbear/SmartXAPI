@@ -198,8 +198,7 @@ namespace SmartxAPI.Controllers
 
 
                         // Mapping Rule Configuration
-
-                        if (DetailsToImport.Rows.Count > 0)
+                       if (DetailsToImport.Rows.Count > 0)
                         {
 
                             string FieldList = "";
@@ -290,20 +289,45 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                         }
-
+                        
 
                         //dLayer.SaveData("Mig_OnlineStore", "Pkey_Code", "", "", DetailsToImport, connection, transaction);
-
-                        SortedList ProParam = new SortedList();
+                      try
+                      {
+                           SortedList ProParam = new SortedList();
                         ProParam.Add("N_CompanyID", nCompanyID);
                         ProParam.Add("n_PkeyID", n_StoreID);
 
                         ProParam.Add("X_Type", "Online Stock Allocation");
                         DetailTable = dLayer.ExecuteDataTablePro("SP_ScreenDataImport", ProParam, connection, transaction);
+                      }
 
-
-
+                     
+                      catch (Exception ex)
+                     {
+                      return Ok(_api.Error(User, ex));
+                      }
+                        
+                       
                     }
+                     else
+                        {
+                            if (ds.Tables.Contains("general") & isRuleBasedImport)
+                            {
+                            if(nStoreID>0 )
+                            {
+                             transaction.Rollback();
+                             return Ok(_api.Warning("Unable to import Excel"));
+                        
+                            }
+                            }
+                           
+                           
+                        }
+
+
+
+                
 
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -320,11 +344,6 @@ namespace SmartxAPI.Controllers
 
 
                     }
-
-
-
-
-
                     transaction.Commit();
                     SortedList Result = new SortedList();
                     Result.Add("n_StoreID", n_StoreID);
@@ -480,10 +499,10 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     CSVData = dLayer.ExecuteDataTable(CSVDatasql, Params, connection);
-                    object headerval = dLayer.ExecuteScalar(@"SELECT (STUFF((SELECT ', ' + X_ColumnRefName +'' FROM gen_importruledetails WHERE n_ruleid= 6 FOR XML PATH('')), 1, 2, '')) AS StringValue", connection);
+                    object headerval = dLayer.ExecuteScalar(@"SELECT (STUFF((SELECT ', ' + X_ColumnRefName +'' FROM gen_importruledetails WHERE X_ColumnRefName is Not null and n_ruleid=  "+nRuleID+" FOR XML PATH('')), 1, 2, '') ) AS StringValue", connection);
                     string headervalModified = headerval.ToString();
-                    headervalModified = headervalModified.Replace(@"\","");
-                    headervalModified = headervalModified.Substring(1, headervalModified.Length - 2);
+                    headervalModified = headervalModified.Replace(@", ",",");
+                    //headervalModified = headervalModified.Substring(1, headervalModified.Length - 2);
                     int index = 0;
                     foreach (DataRow drow in CSVData.Rows)
                     {
@@ -500,11 +519,11 @@ namespace SmartxAPI.Controllers
                         string delimiter = ",";
 
                         string[][] header = new string[][]
-                        {new string[]{headerval.ToString()}
+                        {new string[]{headervalModified.ToString()}
                         };
                         string[][] output = new string[][]
                         {
-                        new string[]{drow["Item Code"].ToString(),""+ drow["Item Name"].ToString(),drow["Available Qty"].ToString(),drow["Allocated Qty"].ToString(),drow["Allocation Percentage"].ToString(),""+ drow["Minimum Qty"].ToString(),drow["Online Code"].ToString()}
+                        new string[]{drow["Item Code"].ToString(),""+ drow["Item Name"].ToString(),drow["Online Code"].ToString(),drow["Available Qty"].ToString(),drow["Allocated Qty"].ToString(),drow["Allocation Percentage"].ToString(),""+ drow["Minimum Qty"].ToString()}
                        };
 
                         int length = output.GetLength(0);

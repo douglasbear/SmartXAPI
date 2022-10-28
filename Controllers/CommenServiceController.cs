@@ -196,10 +196,13 @@ namespace SmartxAPI.Controllers
                                 paramList.Add("@nUserLimit", 1);
 
                                 int expDays = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_TrialPeriod from AppMaster where N_AppID=@nAppID", paramList, olivCnn).ToString());
-
                                 DateTime expDate = DateTime.Today.AddDays(expDays);
-
                                 paramList.Add("@dExpDate", expDate);
+
+                                bool isAttachment = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_EnableAttachment,0) from AppMaster where N_AppID=@nAppID", paramList, olivCnn).ToString());
+                                
+                                paramList.Add("@isAttachment", isAttachment);
+
 
                                 object totalCount = dLayer.ExecuteScalar("SELECT Count(N_AppID) as Count FROM ClientApps where N_ClientID=@nClientID", paramList, olivCnn);
                                 if (myFunctions.getIntVAL(totalCount.ToString()) == 0)
@@ -208,7 +211,7 @@ namespace SmartxAPI.Controllers
                                     dLayer.ExecuteScalar(appUpdate, paramList, olivCnn);
                                 }
 
-                                int rows = dLayer.ExecuteNonQuery("insert into ClientApps select @nClientID,@nAppID,@xAppUrl,@xDBUri,@nUserLimit,0,'Service',max(N_RefID)+1,@dExpDate,0,null from ClientApps", paramList, olivCnn);
+                                int rows = dLayer.ExecuteNonQuery("insert into ClientApps select @nClientID,@nAppID,@xAppUrl,@xDBUri,@nUserLimit,0,'Service',max(N_RefID)+1,@dExpDate,0,null,@isAttachment from ClientApps", paramList, olivCnn);
                                 // string appUpdate = "Update Users set N_ActiveAppID=@nAppID WHERE (X_EmailID =@xEmailID and N_UserID=@nGlobalUserID)";
 
                                 if (rows <= 0)
@@ -325,7 +328,7 @@ namespace SmartxAPI.Controllers
                     using (SqlConnection olivCnn = new SqlConnection(masterDBConnectionString))
                     {
                         olivCnn.Open();
-                        string sql = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.X_UserID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,CASE WHEN Users.N_UserType=0 THEN 1 ELSE 0 end as isAdminUser FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE Users.x_UserID=@emailID and Users.N_ClientID=@nClientID ";
+                        string sql = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.X_UserID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri,ClientApps., AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,CASE WHEN Users.N_UserType=0 THEN 1 ELSE 0 end as isAdminUser FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE Users.x_UserID=@emailID and Users.N_ClientID=@nClientID ";
                         SortedList Params = new SortedList();
                         Params.Add("@emailID", username);
                         Params.Add("@nClientID", clientID);
