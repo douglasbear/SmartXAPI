@@ -21,15 +21,17 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+         private readonly IMyAttachments myAttachments;
         private readonly int FormID;
 
-        public Pay_VacationReturn(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Pay_VacationReturn(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf,IMyAttachments myAtt)
         {
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 1361;//463;
+            myAttachments = myAtt;
         }
 
         [HttpGet("vacationList")]
@@ -102,19 +104,23 @@ namespace SmartxAPI.Controllers
                 DataTable MasterTable;
                 DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
+                DataRow MasterRow = MasterTable.Rows[0];
                 DetailTable = ds.Tables["details"];
                 DataTable Approvals;
                 Approvals = ds.Tables["approval"];
                 DataRow ApprovalRow = Approvals.Rows[0];
+                 DataTable Attachment = ds.Tables["attachments"];
 
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
+                string xVacationReturnCode = MasterRow["x_VacationReturnCode"].ToString();
+               
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction;
-                    DataRow MasterRow = MasterTable.Rows[0];
+                   // DataRow MasterRow = MasterTable.Rows[0];
                     transaction = connection.BeginTransaction();
 
 
@@ -150,6 +156,7 @@ namespace SmartxAPI.Controllers
                         string X_Criteria = "N_VacationReturnID=" + N_PkeyID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_VacationReturn", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "VACATION RETURN", N_PkeyID, X_VacationReturnCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
+                        myAttachments.SaveAttachment(dLayer, Attachment, xVacationReturnCode, N_VacationReturnID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
                         transaction.Commit();
                         //myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_VacationReturnID, "VACATION RETURN", X_VacationReturnCode, dLayer, connection, transaction, User);
                         return Ok(_api.Success("Request Approved " + "-" + X_VacationReturnCode));
@@ -177,7 +184,13 @@ namespace SmartxAPI.Controllers
                     }
 
                     N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "VACATION RETURN", N_VacationReturnID, X_VacationReturnCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
+                     
+                     
+                      SortedList VacationParams = new SortedList();
+                        VacationParams.Add("@nVacationReturnID", N_VacationReturnID);
 
+                        DataTable VacationInfo = dLayer.ExecuteDataTable("Select X_VacationReturnCode,X_CustomerName from Pay_VacationReturn where N_VacationReturnID=@nVacationReturnID", VacationParams, connection, transaction);
+                      
                     if (N_VacationReturnID > 0)
                         dLayer.ExecuteNonQuery("delete from Pay_VacationDetails where N_VoucherID=" + N_VacationReturnID.ToString() + "and N_FormID=463 and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearId=" + N_FnYearID, connection, transaction);
                     if (DetailTable.Rows.Count > 0)
@@ -192,6 +205,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User,"Unable to save Vacation Return"));
                         }
                     }
+                     myAttachments.SaveAttachment(dLayer, Attachment, xVacationReturnCode, N_VacationReturnID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
                     transaction.Commit();
                     SortedList Result = new SortedList();
                     Result.Add("N_VacationReturnID", N_VacationReturnID);
