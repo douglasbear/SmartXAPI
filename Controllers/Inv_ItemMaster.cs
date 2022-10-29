@@ -1272,6 +1272,7 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteScalar("delete from  Inv_ItemUnit  Where N_ItemID=" + _itemID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                             dLayer.ExecuteScalar("delete from  Inv_BOMEmployee  Where N_MainItem=" + _itemID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                             dLayer.ExecuteScalar("delete from  Inv_BOMAsset  Where N_MainItemID=" + _itemID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                            dLayer.ExecuteScalar("delete from  Inv_ItemCategoryDisplayMaster  Where N_ItemID=" + _itemID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                             // transaction.Commit();
                             // return Ok(_api.Success("Product deleted"));
                         }

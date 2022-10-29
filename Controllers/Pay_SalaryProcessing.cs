@@ -157,7 +157,8 @@ namespace SmartxAPI.Controllers
                            }
                         if (B_ShowBenefitsInGrid)
                         {
-                            if (ValidateBenefits(myFunctions.getIntVAL(dt.Rows[i]["N_PayID"].ToString()), myFunctions.getIntVAL(dt.Rows[i]["N_Type"].ToString()), PayPayMaster))
+                            // if (ValidateBenefits(myFunctions.getIntVAL(dt.Rows[i]["N_PayID"].ToString()), myFunctions.getIntVAL(dt.Rows[i]["N_Type"].ToString()), PayPayMaster))
+                            if (myFunctions.getIntVAL(dt.Rows[i]["b_ISBenefit"].ToString())==1)
                             {
                                 dt.Rows[i]["isHidden"] = true;
                             }

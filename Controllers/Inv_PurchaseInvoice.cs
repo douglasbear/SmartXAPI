@@ -356,7 +356,7 @@ namespace SmartxAPI.Controllers
                     {
                         X_DetailsSql = "select * from vw_Inv_PurchaseOrderAsInvoiceDetails where N_CompanyID=@CompanyID and N_POrderID=" + N_POrderID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                     }
-                    else if (xGrnNo != null || xGrnNo != "")
+                    else if (xGrnNo != null && xGrnNo != "")
                     {
                         int n_MRNID = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_MRNID"].ToString());
 

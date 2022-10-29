@@ -62,9 +62,9 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listdetails")]
-        public ActionResult TimetableFillDetails(int nClassID, int nClassDivisionID, int type, string xTimetableCode,int nStudentID,bool isDashboard)
+        public ActionResult TimetableFillDetails(int nClassID, int nClassDivisionID, int type, string xTimetableCode, int nStudentID, bool isDashboard)
         {
-            
+
             DataTable dt = new DataTable();
             DataTable dtSunday = new DataTable();
             DataTable dtMonday = new DataTable();
@@ -84,7 +84,7 @@ namespace SmartxAPI.Controllers
             string sqlFriday = "";
             string sqlSaturday = "";
             int nCompanyID = myFunctions.GetCompanyID(User);
-          
+
             Params.Add("@nCompanyID", nCompanyID);
             dt = myFunctions.AddNewColumnToDataTable(dt, "Day", typeof(string), null);
             dt = myFunctions.AddNewColumnToDataTable(dt, "weekdata", typeof(DataTable), null);
@@ -94,23 +94,25 @@ namespace SmartxAPI.Controllers
             dt = myFunctions.AddNewColumnToDataTable(dt, "n_ClassDivisionID", typeof(string), null);
             dt = myFunctions.AddNewColumnToDataTable(dt, "x_ClassDivision", typeof(string), null);
             dt = myFunctions.AddNewColumnToDataTable(dt, "n_TimetableID", typeof(string), null);
+            dt = myFunctions.AddNewColumnToDataTable(dt, "d_EffectiveDate", typeof(string), null);
+            dt = myFunctions.AddNewColumnToDataTable(dt, "count", typeof(int), null);
             if (type == 1)
             {
-               
+
                 sqlMain = "select * from vw_Timetable where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode";
                 sqlSunday = "select  x_time,n_TeacherID,x_TeacherName,n_SubjectID,x_Subject,'Sunday' as x_WeekName,B_Interval,N_TimetableID,N_TimetableDetailsID,N_CompanyID,N_FnyearID,X_Class,X_ClassDivision,n_ClassID,n_ClassDivisionID  from vw_TimetableDetails where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode and x_weekname='Sunday'";
-                sqlMonday = "select  x_time,n_TeacherID,x_TeacherName,n_SubjectID,x_Subject,'Sunday' as x_WeekName,B_Interval,N_TimetableID,N_TimetableDetailsID,N_CompanyID,N_FnyearID,X_Class,X_ClassDivision,n_ClassID,n_ClassDivisionID  from vw_TimetableDetails where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode and x_weekname='Monday'";
+                sqlMonday = "select  x_time,n_TeacherID,x_TeacherName,n_SubjectID,x_Subject,'Monday' as x_WeekName,B_Interval,N_TimetableID,N_TimetableDetailsID,N_CompanyID,N_FnyearID,X_Class,X_ClassDivision,n_ClassID,n_ClassDivisionID  from vw_TimetableDetails where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode and x_weekname='Monday'";
                 sqlTuesday = "select  x_time,n_TeacherID,x_TeacherName,n_SubjectID,x_Subject,'Tuesday' as x_WeekName,B_Interval,N_TimetableID,N_TimetableDetailsID,N_CompanyID,N_FnyearID,X_Class,X_ClassDivision,n_ClassID,n_ClassDivisionID  from vw_TimetableDetails where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode and x_weekname='Tuesday'";
-                sqlWednesday = "select  x_time,n_TeacherID,x_TeacherName,n_SubjectID,x_Subject,'Sunday' as x_WeekName,B_Interval,N_TimetableID,N_TimetableDetailsID,N_CompanyID,N_FnyearID,X_Class,X_ClassDivision,n_ClassID,n_ClassDivisionID  from vw_TimetableDetails where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode and x_weekname='Wednesday'";
-                sqlThursday = "select  x_time,n_TeacherID,x_TeacherName,n_SubjectID,x_Subject,'Sunday' as x_WeekName,B_Interval,N_TimetableID,N_TimetableDetailsID,N_CompanyID,N_FnyearID,X_Class,X_ClassDivision,n_ClassID,n_ClassDivisionID  from vw_TimetableDetails where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode and x_weekname='Thursday'";
-                sqlFriday = "select  x_time,n_TeacherID,x_TeacherName,n_SubjectID,x_Subject,'Sunday' as x_WeekName,B_Interval,N_TimetableID,N_TimetableDetailsID,N_CompanyID,N_FnyearID,X_Class,X_ClassDivision,n_ClassID,n_ClassDivisionID  from vw_TimetableDetails where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode and x_weekname='Friday'";
-                sqlSaturday = "select  x_time,n_TeacherID,x_TeacherName,n_SubjectID,x_Subject,'Sunday' as x_WeekName,B_Interval,N_TimetableID,N_TimetableDetailsID,N_CompanyID,N_FnyearID,X_Class,X_ClassDivision,n_ClassID,n_ClassDivisionID  from vw_TimetableDetails where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode and x_weekname='Saturday'";
+                sqlWednesday = "select  x_time,n_TeacherID,x_TeacherName,n_SubjectID,x_Subject,'Wednesday' as x_WeekName,B_Interval,N_TimetableID,N_TimetableDetailsID,N_CompanyID,N_FnyearID,X_Class,X_ClassDivision,n_ClassID,n_ClassDivisionID  from vw_TimetableDetails where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode and x_weekname='Wednesday'";
+                sqlThursday = "select  x_time,n_TeacherID,x_TeacherName,n_SubjectID,x_Subject,'Thursday' as x_WeekName,B_Interval,N_TimetableID,N_TimetableDetailsID,N_CompanyID,N_FnyearID,X_Class,X_ClassDivision,n_ClassID,n_ClassDivisionID  from vw_TimetableDetails where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode and x_weekname='Thursday'";
+                sqlFriday = "select  x_time,n_TeacherID,x_TeacherName,n_SubjectID,x_Subject,'Friday' as x_WeekName,B_Interval,N_TimetableID,N_TimetableDetailsID,N_CompanyID,N_FnyearID,X_Class,X_ClassDivision,n_ClassID,n_ClassDivisionID  from vw_TimetableDetails where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode and x_weekname='Friday'";
+                sqlSaturday = "select  x_time,n_TeacherID,x_TeacherName,n_SubjectID,x_Subject,'Saturday' as x_WeekName,B_Interval,N_TimetableID,N_TimetableDetailsID,N_CompanyID,N_FnyearID,X_Class,X_ClassDivision,n_ClassID,n_ClassDivisionID  from vw_TimetableDetails where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode and x_weekname='Saturday'";
 
 
             }
             else
             {
-                
+
                 sqlMain = "select * from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID";
                 sqlSunday = "select CONVERT(VARCHAR(5),vw_TimetableDisplay.D_StartTime,108) +' - '+ CONVERT(VARCHAR(5),vw_TimetableDisplay.D_EndTime,108)as x_time,0 as n_TeacherID,'' as x_TeacherName,0 as n_SubjectID,'' as x_Subject,'Sunday' as x_WeekName,B_Interval,0 as N_TimetableID,0 as N_TimetableDetailsID,N_CompanyID,N_FnyearID,'' as X_Class,'' as X_ClassDivision,0 as n_ClassID,0 as n_ClassDivisionID  from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Sunday'";
                 sqlMonday = "select CONVERT(VARCHAR(5),vw_TimetableDisplay.D_StartTime,108) +' - '+ CONVERT(VARCHAR(5),vw_TimetableDisplay.D_EndTime,108)as x_time,0 as n_TeacherID,'' as x_TeacherName,0 as n_SubjectID,'' as x_Subject,'Monday' as x_WeekName,B_Interval,0 as N_TimetableID,0 as N_TimetableDetailsID,N_CompanyID,N_FnyearID,'' as X_Class,'' as X_ClassDivision,0 as n_ClassID,0 as n_ClassDivisionID from vw_TimetableDisplay where N_CompanyID=@nCompanyID and N_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and x_week='Monday'";
@@ -132,29 +134,31 @@ namespace SmartxAPI.Controllers
                     object n_ClassDivisionID = 0;
                     object x_ClassDivision = "";
                     object n_TimetableID = "";
+                    object d_EffectiveDate = "";
+
                     SqlTransaction transaction = connection.BeginTransaction();
-         if(isDashboard && nStudentID>0)
-            {
-                 object N_ClassID =  dLayer.ExecuteScalar("select N_ClassID from sch_Admission where N_AdmissionID="+ nStudentID+" and N_CompanyID =@nCompanyID", Params, connection, transaction);
-             if( N_ClassID!=null)
-             Params.Add("@nClassID", myFunctions.getIntVAL(N_ClassID.ToString()));
-             object N_ClassDivisionID =  dLayer.ExecuteScalar("select N_DivisionID from sch_Admission where N_AdmissionID="+ nStudentID+" and N_CompanyID =@nCompanyID", Params, connection, transaction);
-               if( N_ClassDivisionID!=null)
-             Params.Add("@nClassDivisionID", myFunctions.getIntVAL(N_ClassDivisionID.ToString()));
-              object TimetableCode =  dLayer.ExecuteScalar("select X_TimetableCode from vw_Timetable where n_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and N_CompanyID =@nCompanyID", Params, connection, transaction);
-               if( TimetableCode!=null)
-                Params.Add("@xTimetableCode", myFunctions.getVAL(TimetableCode.ToString()));
-              
-           
-            }
-            else
-            {
-                Params.Add("@nClassID", nClassID);
-                Params.Add("@nClassDivisionID", nClassDivisionID);
-                if(xTimetableCode!=null)
-                Params.Add("@xTimetableCode", xTimetableCode);
-            }
-            
+                    if (isDashboard && nStudentID > 0)
+                    {
+                        object N_ClassID = dLayer.ExecuteScalar("select N_ClassID from sch_Admission where N_AdmissionID=" + nStudentID + " and N_CompanyID =@nCompanyID", Params, connection, transaction);
+                        if (N_ClassID != null)
+                            Params.Add("@nClassID", myFunctions.getIntVAL(N_ClassID.ToString()));
+                        object N_ClassDivisionID = dLayer.ExecuteScalar("select N_DivisionID from sch_Admission where N_AdmissionID=" + nStudentID + " and N_CompanyID =@nCompanyID", Params, connection, transaction);
+                        if (N_ClassDivisionID != null)
+                            Params.Add("@nClassDivisionID", myFunctions.getIntVAL(N_ClassDivisionID.ToString()));
+                        object TimetableCode = dLayer.ExecuteScalar("select X_TimetableCode from vw_Timetable where n_ClassID=@nClassID and N_ClassDivisionID=@nClassDivisionID and N_CompanyID =@nCompanyID", Params, connection, transaction);
+                        if (TimetableCode != null)
+                            Params.Add("@xTimetableCode", myFunctions.getVAL(TimetableCode.ToString()));
+
+
+                    }
+                    else
+                    {
+                        Params.Add("@nClassID", nClassID);
+                        Params.Add("@nClassDivisionID", nClassDivisionID);
+                        if (xTimetableCode != null)
+                            Params.Add("@xTimetableCode", xTimetableCode);
+                    }
+
 
                     if (type == 1)
                     {
@@ -163,6 +167,7 @@ namespace SmartxAPI.Controllers
                         n_ClassDivisionID = dLayer.ExecuteScalar("Select n_ClassDivisionID from vw_Timetable where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode", Params, connection, transaction);
                         x_ClassDivision = dLayer.ExecuteScalar("Select x_ClassDivision from vw_Timetable where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode", Params, connection, transaction);
                         n_TimetableID = dLayer.ExecuteScalar("Select n_TimetableID from vw_Timetable where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode", Params, connection, transaction);
+                        d_EffectiveDate = dLayer.ExecuteScalar("Select d_EffectiveDate from vw_Timetable where N_CompanyID=@nCompanyID and X_TimetableCode=@xTimetableCode", Params, connection, transaction);
                     }
                     dtSunday = dLayer.ExecuteDataTable(sqlSunday, Params, connection, transaction);
                     dtMonday = dLayer.ExecuteDataTable(sqlMonday, Params, connection, transaction);
@@ -172,57 +177,91 @@ namespace SmartxAPI.Controllers
                     dtFriday = dLayer.ExecuteDataTable(sqlFriday, Params, connection, transaction);
                     dtSaturday = dLayer.ExecuteDataTable(sqlSaturday, Params, connection, transaction);
                     dtMain = dLayer.ExecuteDataTable(sqlMain, Params, connection, transaction);
+                    int row=0;
                     for (int i = 0; i <= 6; i++)
                     {
-                        dt.Rows.Add();
+                        
+
                         if (i == 0)
                         {
                             Day = "Sunday";
-                            dt.Rows[i]["weekdata"] = dtSunday;
+                            if (dtSunday.Rows.Count == 0)
+                                continue;
+                            dt.Rows.Add();
+                            dt.Rows[row]["weekdata"] = dtSunday;
                         }
                         if (i == 1)
                         {
                             Day = "Monday";
-                            dt.Rows[i]["weekdata"] = dtMonday;
+                            if (dtMonday.Rows.Count == 0)
+                                continue;
+                            dt.Rows.Add();
+                            dt.Rows[row]["weekdata"] = dtMonday;
                         }
                         if (i == 2)
                         {
+                            if (dtTuesday.Rows.Count == 0)
+                                continue;
+                            dt.Rows.Add();
                             Day = "Tuesday";
-                            dt.Rows[i]["weekdata"] = dtTuesday;
+                            dt.Rows[row]["weekdata"] = dtTuesday;
                         }
                         if (i == 3)
                         {
+                            if (dtWednesday.Rows.Count == 0)
+                                continue;
+                            dt.Rows.Add();
                             Day = "Wednesday";
-                            dt.Rows[i]["weekdata"] = dtWednesday;
+                            dt.Rows[row]["weekdata"] = dtWednesday;
                         }
                         if (i == 4)
                         {
+                            if (dtThursday.Rows.Count == 0)
+                                continue;
+                            dt.Rows.Add();
                             Day = "Thursday";
-                            dt.Rows[i]["weekdata"] = dtThursday;
+                            dt.Rows[row]["weekdata"] = dtThursday;
                         }
 
                         if (i == 5)
                         {
+                            if (dtFriday.Rows.Count == 0)
+                                continue;
+                            dt.Rows.Add();
                             Day = "Friday";
-                            dt.Rows[i]["weekdata"] = dtFriday;
+                            dt.Rows[row]["weekdata"] = dtFriday;
                         }
                         if (i == 6)
                         {
+                            if (dtSaturday.Rows.Count == 0)
+                                continue;
+                            dt.Rows.Add();
                             Day = "Saturday";
-                            dt.Rows[i]["weekdata"] = dtSaturday;
+                            dt.Rows[row]["weekdata"] = dtSaturday;
                         }
-                        dt.Rows[i]["Day"] = Day;
-                        dt.Rows[i]["x_weekname"] = Weekname;
-                        dt.Rows[i]["n_ClassID"] = n_ClassID;
-                        dt.Rows[i]["x_Class"] = x_Class;
-                        dt.Rows[i]["n_ClassDivisionID"] = n_ClassDivisionID;
-                        dt.Rows[i]["x_ClassDivision"] = x_ClassDivision;
-                        dt.Rows[i]["n_timetableID"] = n_TimetableID;
+                        dt.Rows[row]["Day"] = Day;
+                        dt.Rows[row]["x_weekname"] = Weekname;
+                        dt.Rows[row]["n_ClassID"] = n_ClassID;
+                        dt.Rows[row]["x_Class"] = x_Class;
+                        dt.Rows[row]["n_ClassDivisionID"] = n_ClassDivisionID;
+                        dt.Rows[row]["x_ClassDivision"] = x_ClassDivision;
+                        dt.Rows[row]["n_timetableID"] = n_TimetableID;
+                        dt.Rows[row]["d_EffectiveDate"] = d_EffectiveDate;
+                        row=row+1;
 
 
                     }
 
                 }
+                foreach (DataRow row in dt.Rows)
+                {
+                    // if (row["weekdata"].Rows.count() == "")
+                    // {
+                    //     var a="test";
+                    // }
+
+                }
+
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
@@ -482,7 +521,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    Results = dLayer.DeleteData("Sch_Timetable", "N_TimetableID", ntimetableid, "N_CompanyID=" + nCompanyID +"", connection);
+                    Results = dLayer.DeleteData("Sch_Timetable", "N_TimetableID", ntimetableid, "N_CompanyID=" + nCompanyID + "", connection);
                     dLayer.DeleteData("Sch_TimetableDetails", "N_TimetableID", ntimetableid, "N_CompanyID=" + nCompanyID + "", connection);
 
                 }
