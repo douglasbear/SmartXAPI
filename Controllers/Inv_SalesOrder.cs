@@ -493,6 +493,7 @@ namespace SmartxAPI.Controllers
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "customer_PONo", typeof(string), "");
                     DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "X_UpdatedSPrice", typeof(string), "");
                    // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_", typeof(string), "");
+
                     if (DetailTable.Rows.Count != 0)
                     {
                         MasterTable.Rows[0]["x_CustomerName"] = DetailTable.Rows[0]["x_CustomerName"];
