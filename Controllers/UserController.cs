@@ -225,9 +225,10 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, globalUser;
+                DataTable MasterTable, globalUser,apps;
                 MasterTable = ds.Tables["master"];
                 globalUser = ds.Tables["globalUser"];
+                apps = ds.Tables["apps"];
 
                 int nFnYearID = 0;
                 if (MasterTable.Columns.Contains("n_FnYearID"))
@@ -395,6 +396,14 @@ namespace SmartxAPI.Controllers
                         userID = dLayer.SaveData("Sec_User", "n_UserID", MasterTable, connection, transaction);
                         if (userID > 0)
                         {
+                          foreach (DataRow row in apps.Rows)
+                          {
+                            row["N_UserID"]=userID;
+                            row["N_GlobalUserID"]=globalUserID;
+
+                          }
+                          apps.AcceptChanges();
+                          int userAppsID = dLayer.SaveData("sec_userApps", "n_AppMappingID", MasterTable, connection, transaction);
                             if (bSalesPerson)
                             {
 
