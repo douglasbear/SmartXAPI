@@ -541,7 +541,7 @@ namespace SmartxAPI.Controllers
 
                 System.IO.File.AppendAllText(X_WpsFileName, sb.ToString());
 
-                return myFunctions.GetCompanyID(User) + "-" + nStoreID + ".csv";
+                return myFunctions.GetCompanyID(User) + "-" + xStoreName + ".csv";
             }
             catch (Exception ex)
             {
