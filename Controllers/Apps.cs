@@ -23,6 +23,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly IDataAccessLayer dLayer;
         private readonly string masterDBConnectionString;
+        private readonly string connectionString;
 
         public Apps(ISec_UserRepo repository, IApiFunctions api, IMyFunctions myFun, IDataAccessLayer dl, IConfiguration conf)
         {
