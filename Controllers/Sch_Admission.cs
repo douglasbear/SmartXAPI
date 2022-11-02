@@ -206,8 +206,8 @@ namespace SmartxAPI.Controllers
                     SortedList CustParams = new SortedList();
 
                     // Auto Gen
-                    string Code = "",CustCode="";;
-
+                    string Code = "",CustCode="";
+                  
                     object CustomerCode = dLayer.ExecuteScalar("select X_CustomerCode from Inv_Customer where N_CompanyID="+nCompanyID+" and N_FnYearID="+nAcYearID+" and N_CustomerID="+nCustomerID, Params, connection, transaction);
                     if (CustomerCode != null)
                     {
@@ -215,6 +215,16 @@ namespace SmartxAPI.Controllers
                     }
 
                     var values = MasterTable.Rows[0]["X_AdmissionNo"].ToString();
+                    if(values!= null && values != "@Auto")
+                    {
+                           object AdCode = dLayer.ExecuteScalar("select COUNT(*) from Sch_Admission  where N_CompanyID="+ nCompanyID +"  and X_AdmissionNo='"+values+"' and N_AcYearID= "+nAcYearID +" and N_AdmissionID<>" + nAdmissionID, Params, connection, transaction);
+                         
+                           if(myFunctions.getIntVAL(AdCode.ToString())>0)
+                           {
+                             transaction.Rollback();
+                             return Ok(api.Error(User,"Unable to generate Admission No!...... Admission No already exist")); 
+                           }
+                    }
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
@@ -224,18 +234,25 @@ namespace SmartxAPI.Controllers
                         if (Code == "") {
                              transaction.Rollback();
                              return Ok(api.Error(User,"Unable to generate Admission No")); }
-                        MasterTable.Rows[0]["X_AdmissionNo"] = Code;
+                             MasterTable.Rows[0]["X_AdmissionNo"] = Code;
 
                         //Generating Customer Code
+                        
+                    
+                    }
+                    if(nAdmissionID==0)
+                    {   
                         CustParams.Add("N_CompanyID", nCompanyID);
                         CustParams.Add("N_YearID", nAcYearID);
                         CustParams.Add("N_FormID", 51);
+                        
                         CustCode = dLayer.GetAutoNumber("Inv_Customer", "X_CustomerCode", CustParams, connection, transaction);
                         if (CustCode == "") 
                         { 
                             transaction.Rollback();
                         return Ok(api.Error(User,"Unable to generate Customer Code")); 
                         }
+                        
                     }
                     
                      MasterTable.Columns.Remove("n_FnYearId");
@@ -441,7 +458,7 @@ namespace SmartxAPI.Controllers
         }   
       
     [HttpDelete("delete")]
-        public ActionResult DeleteData(int nAdmissionID ,int nFnYearId)
+        public ActionResult DeleteData(int nAdmissionID ,int nFnYearId,int nCustomerID)
         {
 
             int Results = 0;
@@ -485,7 +502,16 @@ namespace SmartxAPI.Controllers
 
                                 dLayer.DeleteData("Sch_SalesDetails", "N_SalesID", myFunctions.getIntVAL(dtSch_Sales.Rows[j]["N_SalesID"].ToString()), "N_CompanyID =" + nCompanyID, connection, transaction);                   
                             }
-                            dLayer.DeleteData("Sch_Sales", "N_RefId", nAdmissionID, "N_CompanyID =" + nCompanyID , connection, transaction);                                                  
+                             object customerCount = dLayer.ExecuteScalar("select COUNT(*) from Inv_Sales  where N_CompanyID="+ nCompanyID +"  and N_CustomerId="+nCustomerID, Params, connection, transaction);
+                         
+                           if(myFunctions.getIntVAL(customerCount.ToString())>0)
+                           {
+                             transaction.Rollback();
+                             return Ok(api.Error(User,"Unable to delete Customer already exist in sales")); 
+                           }
+
+                            dLayer.DeleteData("Sch_Sales", "N_RefID", nAdmissionID, "N_CompanyID =" + nCompanyID , connection, transaction);    
+                                                                   
                             dLayer.ExecuteNonQuery("delete from Inv_Customer where N_CompanyID="+nCompanyID+" and N_CustomerID = (select N_CustomerID from Sch_Admission where N_CompanyID="+nCompanyID+" and N_AdmissionID= "+nAdmissionID+")", Params, connection, transaction);
                             Results = dLayer.DeleteData("Sch_Admission", "n_AdmissionID", nAdmissionID, "N_CompanyID =" + nCompanyID, connection, transaction);                   
                             if (Results > 0)
