@@ -123,7 +123,7 @@ namespace SmartxAPI.GeneralFunctions
 
                         ExpiryDate = "";
                         N_remCategory = 0;
-                        if(dsAttachment.Columns.Contains("D_ExpiryDate"))
+                         if(dsAttachment.Columns.Contains("D_ExpiryDate"))
                         {
                         if (dsAttachment.Rows[i]["D_ExpiryDate"].ToString() != "")
                             ExpiryDate = Convert.ToDateTime(dsAttachment.Rows[i]["D_ExpiryDate"].ToString()).ToString("dd/MMM/yyyy");
