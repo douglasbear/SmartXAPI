@@ -77,7 +77,7 @@ namespace SmartxAPI.Controllers
             DataTable MasterTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_SchTeacher where N_CompanyID=@p1  and n_TicketID=@p2";
+            string sqlCommandText = "select * from Vw_TvlTicketingMaster where N_CompanyID=@p1  and n_TicketID=@p2";
             Params.Add("@p1", nCompanyId);  
             Params.Add("@p2", n_TicketID);
             try
@@ -124,15 +124,15 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string Code = "";
-                    var values = MasterTable.Rows[0]["x_TicketNo"].ToString();
+                    var values = MasterTable.Rows[0]["x_InvoiceNo"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                          Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
-                        Code = dLayer.GetAutoNumber("Tvl_Ticketing", "x_TicketNo", Params, connection, transaction);
+                        Code = dLayer.GetAutoNumber("Tvl_Ticketing", "x_InvoiceNo", Params, connection, transaction);
                         if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Course Code")); }
-                        MasterTable.Rows[0]["x_TicketNo"] = Code;
+                        MasterTable.Rows[0]["x_InvoiceNo"] = Code;
                     }
                     
                     if (nTicketID > 0) 
@@ -159,41 +159,72 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("list") ]
-        public ActionResult TicketingList(int nCompanyID)
-        {    
-            SortedList param = new SortedList();           
-            DataTable dt=new DataTable();
-            
-            string sqlCommandText="";
+         [HttpGet("list")]
+        public ActionResult GetTicketingList(int? nCompanyId, int nFnYearId ,int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
 
-            sqlCommandText="select * from vw_SchTeacher where N_CompanyID=@p1";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_TicketNo like '%" + xSearchkey + "%' or X_InvoiceNo like '%" + xSearchkey + "%')";
 
-            param.Add("@p1", nCompanyID);                 
-                
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_TicketID desc";
+            else
+            {
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "X_InvoiceNo":
+                        xSortBy = "X_InvoiceNo " + xSortBy.Split(" ")[1];
+                        break;
+                    default: break;
+                }
+                xSortBy = " order by " + xSortBy;
+            }
+
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_TvlTicketingMaster where N_CompanyID=@nCompanyId and N_FnyearID=@nFnYearId  " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_TvlTicketingMaster where N_CompanyID=@nCompanyId and N_FnyearID=@nFnYearId " + Searchkey + " and N_TicketID not in (select top(" + Count + ") N_TicketID from Vw_TvlTicketingMaster where N_CompanyID=@nCompanyId and N_FnyearID=@nFnYearId " + xSortBy + " ) " + " " + xSortBy;
+
+            Params.Add("@nCompanyId", nCompanyID);
+            Params.Add("@nFnYearId", nFnYearId);
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    SortedList OutPut = new SortedList();
 
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                    sqlCommandCount = "select count(*) as N_Count  from Vw_TvlTicketingMaster  where N_CompanyID=@nCompanyId and N_FnyearID=@nFnYearId " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
                 }
-                if(dt.Rows.Count==0)
-                {
-                    return Ok(api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
-                
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                return Ok(api.Error(User,e));
-            }   
-        }   
+                return Ok(api.Error(User, e));
+            }
+        }
+
+   
       
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nTicketID)
