@@ -35,7 +35,41 @@ namespace SmartxAPI.Controllers
             conf.GetConnectionString("SmartxConnection");
         }
 
+    [HttpGet("typeList") ]
+        public ActionResult GetAllTktSalesTypeList(int nTiketTypeID)
+        {    
+            SortedList param = new SortedList();           
+            DataTable dt=new DataTable();
+            
+            string sqlCommandText="";
 
+            sqlCommandText="select * from Tvl_TicketType where N_TiketTypeID=@p1";
+
+            param.Add("@p1", nTiketTypeID);                 
+                
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                }
+                if(dt.Rows.Count==0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+                
+            }
+            catch(Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }   
+        }   
         [HttpGet("details")]
         public ActionResult TicketingDetails(int n_TicketID)
         {
