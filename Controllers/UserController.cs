@@ -403,7 +403,12 @@ namespace SmartxAPI.Controllers
 
                           }
                           apps.AcceptChanges();
-                          int userAppsID = dLayer.SaveData("sec_userApps", "n_AppMappingID", MasterTable, connection, transaction);
+                          if(myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString())>0)
+                          {
+                          dLayer.ExecuteNonQuery("DELETE FROM sec_userApps  WHERE N_UserID="+userID , connection, transaction);
+                          }
+                       
+                          int userAppsID = dLayer.SaveData("sec_userApps", "n_AppMappingID", apps, connection, transaction);
                             if (bSalesPerson)
                             {
 
@@ -653,16 +658,26 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            DataTable multiApps = new DataTable();
             int nCompanyId = myFunctions.GetCompanyID(User);
             Params.Add("@xUserID", xUser);
+          
             Params.Add("@nCompanyID", nCompanyId);
             string sqlCommandText = "select * from vw_UserList where x_UserID=@xUserID and N_CompanyID=@nCompanyID";
+         
+            string multiqry = "SELECT * from Sec_UserApps where n_UserID=@nUserID and N_CompanyID=@nCompanyID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    object nUserID= dLayer.ExecuteScalar("select N_UserID from vw_UserList where X_UserID=@xUserID" ,Params, connection); 
+                    Params.Add("@nUserID",  myFunctions.getIntVAL(nUserID.ToString()));
+                    multiApps = dLayer.ExecuteDataTable(multiqry, Params, connection);
+                    
+
+
                 }
 
                 using (SqlConnection olvConn = new SqlConnection(masterDBConnectionString))
@@ -673,17 +688,23 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Warning("User Not Found"));
 
                     dt = myFunctions.AddNewColumnToDataTable(dt, "N_GlobalUserID", typeof(int), myFunctions.getIntVAL(objUser.ToString()));
+
                     dt.AcceptChanges();
                 }
-
-                dt = _api.Format(dt);
+                DataSet dataSet = new DataSet();
+                multiApps = _api.Format(multiApps, "apps");
+                dt = _api.Format(dt, "master");
+                dataSet.Tables.Add(dt);
+                dataSet.Tables.Add(multiApps);
+                //dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                     return Ok(_api.Warning("No Results Found"));
                 else
                 {
                     dt.Columns.Remove("X_Password");
+
                     dt.AcceptChanges();
-                    return Ok(_api.Success(dt));
+                    return Ok(_api.Success(dataSet));
                 }
 
             }
