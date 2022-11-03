@@ -246,6 +246,25 @@ namespace SmartxAPI.Controllers
             // if (xSortBy == null || xSortBy.Trim() == "")
             //     xSortBy = " order by N_FeeCodeID desc";
                 
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_FeeSetupCode like '%" + xSearchkey + "%' OR X_Class like '%" + xSearchkey + "%'OR X_StudentCatName like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by n_FeeSetupID desc";
+            else
+            {
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "X_FeeSetupCode":
+                        xSortBy = "X_FeeSetupCode " + xSortBy.Split(" ")[1];
+                        break;
+                    case "n_FeeSetupID":
+                        xSortBy = "n_FeeSetupID " + xSortBy.Split(" ")[1];
+                        break;
+                    default: break;
+                }
+                xSortBy = " order by " + xSortBy;
+            }
        
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_FeeSetup where N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;

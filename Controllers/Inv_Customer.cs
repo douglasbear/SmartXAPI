@@ -202,6 +202,7 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchId"].ToString());
                 int nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerId"].ToString());
+                 bool isSave = myFunctions.getBoolVAL(MasterTable.Rows[0]["isSave"].ToString());
                 int nLedgerID=0;
                 if(MasterTable.Columns.Contains("N_LedgerID"))
                 {
@@ -212,9 +213,6 @@ namespace SmartxAPI.Controllers
                 int flag=0;
                 int customerFlag=0;
                 bool showConfirmationCustomer=false;
-
-              
-
 
                 if(MasterTable.Columns.Contains("b_AutoGenerate"))
                 {
@@ -232,6 +230,11 @@ namespace SmartxAPI.Controllers
                 if(MasterTable.Columns.Contains("customerFlag")){
                     customerFlag=myFunctions.getIntVAL(MasterTable.Rows[0]["customerFlag"].ToString());
                     MasterTable.Columns.Remove("customerFlag");
+                }
+                
+                if(MasterTable.Columns.Contains("isSave")){
+                    isSave=myFunctions.getBoolVAL(MasterTable.Rows[0]["isSave"].ToString());
+                    MasterTable.Columns.Remove("isSave");
                 }
 
                 bool showConformationLedger = false;
@@ -282,9 +285,20 @@ namespace SmartxAPI.Controllers
                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "b_DirPosting", typeof(int), 0);
                     }
 
-                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_CustomerCode='" + CustomerCode + "'";
-                    string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
-                    nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
+
+                    if (isSave== true)
+                                    {
+                     nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", MasterTable, connection, transaction);
+                                 
+                                    }else
+                                 {
+                    //string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_CustomerCode='" + CustomerCode + "'";
+                   string  DupCriteria = "x_CustomerName='" + x_CustomerName + "' and N_CompanyID=" + nCompanyID;
+                   string  X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
+                        nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
+                     }
+                 
+                                   
               
               if(MasterTable.Columns.Contains("N_CrmCompanyID"))
               {

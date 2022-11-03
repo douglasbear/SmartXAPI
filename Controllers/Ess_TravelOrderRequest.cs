@@ -27,10 +27,11 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly IMyReminders myReminders;
         private readonly string connectionString;
+          private readonly IMyAttachments myAttachments;
         private readonly int FormID;
 
 
-        public Ess_TravelOrderRequest(IDataAccessLayer dl, IApiFunctions _api, IMyFunctions myFun, IConfiguration conf,IMyReminders myRem)
+        public Ess_TravelOrderRequest(IDataAccessLayer dl, IApiFunctions _api, IMyFunctions myFun, IConfiguration conf,IMyReminders myRem,IMyAttachments myAtt)
         {
             dLayer = dl;
             api = _api;
@@ -38,6 +39,7 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 1235;
             myReminders=myRem;
+            myAttachments = myAtt;
         }
 
 
@@ -119,6 +121,8 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
+             DataTable Master = new DataTable();
+              DataSet ds=new DataSet();
 
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -133,17 +137,24 @@ namespace SmartxAPI.Controllers
                     string _sqlQuery = "SELECT Pay_EmpBussinessTripRequest.*, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Employee.N_EmpID AS Expr1, Gen_Defaults.X_TypeName FROM Pay_EmpBussinessTripRequest LEFT OUTER JOIN Gen_Defaults ON Pay_EmpBussinessTripRequest.N_TravelTypeID = Gen_Defaults.N_TypeId LEFT OUTER JOIN Pay_Employee ON Pay_EmpBussinessTripRequest.N_EmpID = Pay_Employee.N_EmpID AND  Pay_EmpBussinessTripRequest.N_CompanyID = Pay_Employee.N_CompanyID where Pay_EmpBussinessTripRequest.X_RequestCode=@xRequestCode and Pay_EmpBussinessTripRequest.N_CompanyID=@nCompanyID";
 
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+                    
 
+                dt = api.Format(dt,"master");
 
+                
+                   DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dt.Rows[0]["N_RequestID"].ToString()), myFunctions.getIntVAL(dt.Rows[0]["N_RequestID"].ToString()), this.FormID, myFunctions.getIntVAL(dt.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                    Attachments = api.Format(Attachments, "attachments");
+                    ds.Tables.Add(Attachments);
+                    ds.Tables.Add(dt);
                 }
-                dt = api.Format(dt);
+                   
                 if (dt.Rows.Count == 0)
                 {
                     return Ok(api.Notice("No Results Found"));
                 }
                 else
                 {
-                    return Ok(api.Success(dt));
+                    return Ok(api.Success(ds));
                 }
 
             }
@@ -151,6 +162,7 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(User,e));
             }
+            
         }
 
 
@@ -167,6 +179,7 @@ namespace SmartxAPI.Controllers
                 DataTable Approvals;
                 Approvals = ds.Tables["approval"];
                 DataRow ApprovalRow = Approvals.Rows[0];
+                 DataTable Attachment = ds.Tables["attachments"];
 
                 var x_RequestCode = MasterRow["x_RequestCode"].ToString();
                 int nRequestID = myFunctions.getIntVAL(MasterRow["n_RequestID"].ToString());
@@ -175,6 +188,7 @@ namespace SmartxAPI.Controllers
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
                 int N_UserID = myFunctions.getIntVAL(MasterRow["N_UserID"].ToString());
                 int N_NextApproverID=0;
+                
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -223,13 +237,14 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(api.Error(User,"Unable to save"));
                         }
-                    }
-
+                    }    
+                          
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_RequestType", typeof(int), this.FormID);
                     MasterTable.AcceptChanges();
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
                     nRequestID = dLayer.SaveData("Pay_EmpBussinessTripRequest", "n_RequestID", MasterTable, connection, transaction);
+                    
                     if (nRequestID <= 0)
                     {
                         transaction.Rollback();
@@ -254,6 +269,22 @@ namespace SmartxAPI.Controllers
                         transaction.Commit();
                         //myFunctions.SendApprovalMail(N_NextApproverID,FormID,nRequestID,"Travel Order Request",x_RequestCode,dLayer,connection,transaction,User);
                     }
+                     SortedList TravelParams = new SortedList();
+                           TravelParams.Add("@nRequestID", nRequestID);
+                          DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_RequestCode,X_FileName from Pay_EmpBussinessTripRequest where N_RequestID=@nRequestID", TravelParams, connection, transaction);
+                        if (CustomerInfo.Rows.Count > 0)
+                        {
+                            try
+                            {
+                                myAttachments.SaveAttachment(dLayer, Attachment, x_RequestCode, nRequestID, CustomerInfo.Rows[0]["X_FileName"].ToString().Trim(), CustomerInfo.Rows[0]["X_RequestCode"].ToString(), nRequestID, "Travel Order Document", User, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error(User, ex));
+                            }
+                        }
+                  
                     Dictionary<string, string> res = new Dictionary<string, string>();
                     res.Add("x_RequestCode", x_RequestCode.ToString());
                     return Ok(api.Success(res, "Travel Order request saved"));
