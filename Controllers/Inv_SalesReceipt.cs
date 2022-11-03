@@ -967,7 +967,7 @@ namespace SmartxAPI.Controllers
         [HttpGet("paymentType")]
         public ActionResult GetPaymentType()
         {
-            string sqlCommandText = "select 'Invoice Payment' AS X_PaymentType,'SR' AS x_Type UNION select 'Advance Payment' AS X_PaymentType,'SA' AS x_Type";
+            string sqlCommandText = "select 'Invoice Payment' AS X_PaymentType,'ادفع الفاتورة' AS X_PaymentType_Ar,'SR' AS x_Type UNION select 'Advance Payment' AS X_PaymentType,'دفعه مقدمه' AS X_PaymentType_Ar,'SA' AS x_Type";
             SortedList mParamList = new SortedList() { };
             DataTable typeTable = new DataTable();
             try
