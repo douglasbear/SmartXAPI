@@ -220,7 +220,7 @@ namespace SmartxAPI.Controllers
                 {
                     output.Rows[0]["N_ActiveAppID"] = appType;
                 }else{
-                    if(myFunctions.getIntVAL(output.Rows[0]["N_UserType"].ToString())!=0)
+                    if(myFunctions.getIntVAL(output.Rows[0]["N_UserType"].ToString())!=0 &&  (myFunctions.getIntVAL(output.Rows[0]["N_ActiveAppID"].ToString())==0 ||  myFunctions.getIntVAL(output.Rows[0]["N_ActiveAppID"].ToString()) ==null )  )
                     {
                         output.Rows[0]["N_ActiveAppID"] = myFunctions.getIntVAL(output.Rows[0]["N_UserType"].ToString());
                     }
