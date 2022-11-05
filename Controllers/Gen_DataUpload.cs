@@ -127,6 +127,9 @@ namespace SmartxAPI.Controllers
                             case "customer balances":
                                 xTableName = "Mig_CustomerOpening";
                                 break;
+                            case "leave adjustment":
+                                xTableName = "Mig_LeaveAdjustment";
+                                break;
                             case "vendor balances":
                                 xTableName = "Mig_VendorOpening";
                                 break;
