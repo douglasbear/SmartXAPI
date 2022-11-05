@@ -214,7 +214,7 @@ namespace SmartxAPI.Data
                                 string sqlAttachment = "select isnull(B_EnableAttachment,0) from clientApps where N_AppId="+AppID+" and N_ClientID="+globalInfo.Rows[0]["N_ClientID"].ToString()+"";
                                 object attachment = dLayer.ExecuteScalar(sqlAttachment, cnn2);
                                 if(attachment!=null)
-                                    globalInfo.Rows[0]["N_ClientID"]=myFunctions.getBoolVAL(attachment.ToString());
+                                    globalInfo.Rows[0]["B_EnableAttachment"]=myFunctions.getBoolVAL(attachment.ToString());
                                 globalInfo.AcceptChanges();
 
 
