@@ -293,9 +293,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(10) N_BillAmt=Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)),* from vw_InvSalesInvoiceNo_Search where  YEAR(D_SalesDate) = YEAR(CURRENT_TIMESTAMP)  and N_CompanyId = " + nCompanyID + " and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(10) N_BillAmt=Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)),* from vw_InvSalesInvoiceNo_Search_Cloud where  YEAR(D_SalesDate) = YEAR(CURRENT_TIMESTAMP)  and N_CompanyId = " + nCompanyID + " and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(10) N_BillAmt=Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)),* from vw_InvSalesInvoiceNo_Search where YEAR(D_SalesDate) = YEAR(CURRENT_TIMESTAMP)  and N_CompanyId = " + nCompanyID + " and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search where N_CompanyId=@p1 and N_FnyearID="+nFnYearID + crieteria + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(10) N_BillAmt=Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)),* from vw_InvSalesInvoiceNo_Search_Cloud where YEAR(D_SalesDate) = YEAR(CURRENT_TIMESTAMP)  and N_CompanyId = " + nCompanyID + " and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search_Cloud where N_CompanyId=@p1 and N_FnyearID="+nFnYearID + crieteria + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyID);
 
             SortedList OutPut = new SortedList();
@@ -308,7 +308,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = api.Format(dt);
-                    sqlCommandCount = "Select count(*) from vw_InvSalesInvoiceNo_Search Where  YEAR(D_SalesDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyId = " + nCompanyID + " and N_FnyearID="+nFnYearID + crieteria;
+                    sqlCommandCount = "Select count(*) from vw_InvSalesInvoiceNo_Search_Cloud Where  YEAR(D_SalesDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyId = " + nCompanyID + " and N_FnyearID="+nFnYearID + crieteria;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
