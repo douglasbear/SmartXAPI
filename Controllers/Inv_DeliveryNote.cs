@@ -671,12 +671,13 @@ namespace SmartxAPI.Controllers
                     rentalItem.AcceptChanges();
                     if (rentalItem.Columns.Contains("rowID"))
                             rentalItem.Columns.Remove("rowID");
-                    if (N_DNoteID > 0)
+                    if (N_DNoteID > 0 && rentalItem.Rows.Count>0 )
                     {
                             N_FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
                             dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + N_DNoteID.ToString() + " and N_FormID="+ N_FormID + " and N_CompanyID=" + N_CompanyID, connection, transaction);
                        
                     }
+                    if(rentalItem.Rows.Count>0 )
                     dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
 
                     //int N_DeliveryNoteDetailsID = dLayer.SaveData("Inv_DeliveryNoteDetails", "n_DeliveryNoteDetailsID", DetailTable, connection, transaction);
