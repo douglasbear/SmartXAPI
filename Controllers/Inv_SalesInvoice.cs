@@ -376,7 +376,7 @@ namespace SmartxAPI.Controllers
                             
                             //  MasterTable = dLayer.ExecuteDataTable(xDeliveryNo, QueryParamsList, Con);
                              
-                            Mastersql = "select N_CompanyId,N_FnYearId,n_SalesId,x_ReceiptNo,N_CustomerID,X_CustPONo,X_DeliveryNoteNo,N_ProjectID,X_ProjectName,X_ProjectCode from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId=" + N_DeliveryNote + "";
+                            Mastersql = "select N_CompanyId,N_FnYearId,n_SalesId,x_ReceiptNo,N_CustomerID,X_CustPONo,X_DeliveryNoteNo,N_ProjectID,X_ProjectName,X_ProjectCode,N_TaxCategoryID from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId=" + N_DeliveryNote + "";
                             MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                             if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                             MasterTable = _api.Format(MasterTable, "Master");
@@ -451,6 +451,24 @@ namespace SmartxAPI.Controllers
 
 
                             }
+                        }
+                        else
+                        {
+                            MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_DisplayName", typeof(string), null);
+                             MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_TaxPercentage", typeof(int), 0);
+                            object taxID = dLayer.ExecuteScalar("Select N_TaxType from Acc_FnYear where N_CompanyId=" + nCompanyId+" and N_FnYearID="+nFnYearId+"", QueryParamsList, Con);
+                            if(taxID!=null)
+                            {
+                              object category = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_PkeyID=" + taxID+" ", QueryParamsList, Con);
+                              object percentage = dLayer.ExecuteScalar("Select Cast(REPLACE(N_Amount,',','') as Numeric(10,0)) from Acc_TaxCategory where N_PkeyID=" + taxID+" ", QueryParamsList, Con);
+                            
+                                MasterTable.Rows[0]["x_DisplayName"] = category.ToString();
+                                MasterTable.Rows[0]["N_TaxCategoryID"] = myFunctions.getIntVAL(taxID.ToString());
+                                MasterTable.Rows[0]["n_TaxPercentage"] =myFunctions.getIntVAL(percentage.ToString());
+                            }
+                            MasterTable.AcceptChanges();
+
+
                         }
 
 
