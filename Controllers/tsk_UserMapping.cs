@@ -93,11 +93,11 @@ namespace SmartxAPI.Controllers
                        
                     }
                     int nRouteDetailID = dLayer.SaveData("tsk_UserMappingDetails", "N_UserMappingDetailID", DetailTable, connection, transaction);
-                    if (nRouteDetailID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok("Unable to save ");
-                    }
+                    // if (nRouteDetailID <= 0)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok("Unable to save ");
+                    // }
                     transaction.Commit();
                     return Ok(api.Success("Saved Successfully"));
 
