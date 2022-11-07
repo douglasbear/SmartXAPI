@@ -42,7 +42,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetInvOnlineStockAllocation(int? nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetInvOnlineStockAllocation(int nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             try
             {
@@ -56,16 +56,22 @@ namespace SmartxAPI.Controllers
                     string sqlCommandText = "";
                     string sqlCommandCount = "";
                     string Searchkey = "";
-
                     int nUserID = myFunctions.GetUserID(User);
+         
+                    
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and (X_StoreCode like'%" + xSearchkey + "%'or X_StoreName like'%" + xSearchkey + "%')";
+                      Searchkey = " and (X_StoreName like '%" + xSearchkey + "%' or X_StoreCode like '%" + xSearchkey + "%')";
 
+                  
                     if (xSortBy == null || xSortBy.Trim() == "")
-                        xSortBy = " order by N_StoreID desc";
-                    else
-                        xSortBy = " order by " + xSortBy;
-
+                      xSortBy = " order by N_StoreID desc";
+                     else
+                       {
+                
+                      xSortBy = " order by " + xSortBy;
+                      }
+       
+                     Params.Add("@p1", nCompanyId);
 
                     int Count = (nPage - 1) * nSizeperpage;
                     if (Count == 0)
@@ -74,13 +80,13 @@ namespace SmartxAPI.Controllers
                         sqlCommandText = "select top(" + nSizeperpage + ") [X_StoreCode] AS X_StoreCode,* from Inv_OnlineStore where N_CompanyID=@p1" + Searchkey + " and N_StoreID not in (select top(" + Count + ") N_StoreID from Inv_OnlineStore where N_CompanyID=@p1" + xSortBy + " ) " + xSortBy;
 
                     // sqlCommandText = "select * from Inv_MRNDetails where N_CompanyID=@p1";
-                    Params.Add("@p1", nCompanyId);
-                    //  Params.Add("@p2", nFnYearId);
+                   
+                    // Params.Add("@p2", nFnYearId);
                     SortedList OutPut = new SortedList();
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from Inv_OnlineStore where N_CompanyID=@p1 " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count from Inv_OnlineStore where N_CompanyID=@p1" + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     if (Summary.Rows.Count > 0)
@@ -541,7 +547,7 @@ namespace SmartxAPI.Controllers
 
                 System.IO.File.AppendAllText(X_WpsFileName, sb.ToString());
 
-                return myFunctions.GetCompanyID(User) + "-" + nStoreID + ".csv";
+                return myFunctions.GetCompanyID(User) + "-" + xStoreName + ".csv";
             }
             catch (Exception ex)
             {

@@ -132,7 +132,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             SortedList Output = new SortedList();
 
-            string sqlCommandText = "SELECT Acc_Company.*, Acc_TaxType.X_TypeName, Gen_TimeZone.X_ZoneName +' '+'GMT'+Gen_TimeZone.X_UtcOffSet as X_ZoneName FROM Acc_Company LEFT OUTER JOIN Gen_TimeZone ON Acc_Company.N_TimeZoneID = Gen_TimeZone.N_TimeZoneID LEFT OUTER JOIN Acc_FnYear ON Acc_Company.N_CompanyID = Acc_FnYear.N_CompanyID LEFT OUTER JOIN Acc_TaxType ON Acc_Company.N_CompanyID = Acc_TaxType.N_CompanyID AND Acc_FnYear.N_TaxType = Acc_TaxType.N_TypeID where Acc_Company.B_Inactive =@p1 and Acc_Company.N_CompanyID=@p2 and Acc_FnYear.N_FnYearID=(select Top(1) N_FnYearID from Acc_FnYear where N_CompanyID=@p2 order by D_Start Desc) and Acc_Company.N_ClientID=@nClientID";
+            string sqlCommandText = "SELECT Acc_Company.*,Acc_TaxType.X_TypeName, Gen_TimeZone.X_ZoneName + ' ' + 'GMT' + Gen_TimeZone.X_UtcOffSet AS X_ZoneName, Acc_BankMaster.X_BankName FROM Acc_Company LEFT OUTER JOIN Acc_BankMaster ON Acc_Company.N_CompanyID = Acc_BankMaster.N_CompanyID AND Acc_Company.N_BankID = Acc_BankMaster.N_BankID LEFT OUTER JOIN Gen_TimeZone ON Acc_Company.N_TimeZoneID = Gen_TimeZone.N_TimeZoneID LEFT OUTER JOIN Acc_FnYear ON Acc_Company.N_CompanyID = Acc_FnYear.N_CompanyID LEFT OUTER JOIN Acc_TaxType ON Acc_Company.N_CompanyID = Acc_TaxType.N_CompanyID AND Acc_FnYear.N_TaxType = Acc_TaxType.N_TypeID where Acc_Company.B_Inactive =@p1 and Acc_Company.N_CompanyID=@p2 and Acc_FnYear.N_FnYearID=(select Top(1) N_FnYearID from Acc_FnYear where N_CompanyID=@p2 order by D_Start Desc) and Acc_Company.N_ClientID=@nClientID";
             Params.Add("@p1", 0);
             Params.Add("@p2", nCompanyID);
             Params.Add("@nClientID", myFunctions.GetClientID(User));
@@ -143,13 +143,8 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-
-
-
                     DataTable AdminInfo = dLayer.ExecuteDataTable("Select N_UserID,X_UserID as x_AdminName from Sec_User Inner Join Sec_UserCategory on Sec_User.N_UserCategoryID= Sec_UserCategory.N_UserCategoryID and X_UserCategory ='Administrator' and Sec_User.X_UserID='Admin' and Sec_User.N_CompanyID=Sec_UserCategory.N_CompanyID  and Sec_User.N_CompanyID=@p2", Params, connection);
                     // DataTable TaxInfo = dLayer.ExecuteDataTable("Select N_Value as n_PkeyID,X_Value as x_DisplayName from Gen_Settings where N_CompanyID=@p2 and X_Group='Inventory' and X_Description='DefaultTaxCategory'" , Params, connection);
-
-
 
                     DataTable FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID, (select top 1 N_FnYearID from vw_CheckTransaction Where N_FnYearID = Acc_FnYear.N_FnYearID and N_CompanyID = Acc_FnYear.N_CompanyID) As 'TransAction',N_TaxType from Acc_FnYear Where N_FnYearID=(select Top(1) N_FnYearID from Acc_FnYear where N_CompanyID=@p2 order by D_Start Desc)  and  N_CompanyID=@p2", Params, connection);
                     if (FnYearInfo.Rows.Count == 0)
@@ -158,7 +153,6 @@ namespace SmartxAPI.Controllers
                     }
 
                     int N_FnYearID = myFunctions.getIntVAL(FnYearInfo.Rows[0]["N_FnYearID"].ToString());
-
 
                     DataTable TaxInfo = dLayer.ExecuteDataTable("SELECT  Top(1) Gen_Settings.N_Value AS n_PkeyID, Acc_TaxCategory.X_CategoryName AS x_DisplayName FROM Acc_TaxCategory INNER JOIN Acc_FnYear ON Acc_TaxCategory.N_TaxTypeID = Acc_FnYear.N_TaxType AND Acc_TaxCategory.N_CompanyID = Acc_FnYear.N_CompanyID INNER JOIN Gen_Settings ON Acc_TaxCategory.X_PkeyCode = Gen_Settings.N_Value AND Acc_TaxCategory.N_CompanyID = Gen_Settings.N_CompanyID WHERE (Gen_Settings.N_CompanyID = @p2) AND (Gen_Settings.X_Group = 'Inventory') AND (Gen_Settings.X_Description = 'DefaultTaxCategory') and Acc_FnYear.N_FnYearID=" + N_FnYearID, Params, connection);
 

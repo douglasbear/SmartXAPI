@@ -65,6 +65,8 @@ namespace SmartxAPI.Controllers
                         formIDCndn= " and N_FormID = @N_FormID ";
                         Params.Add("@N_FormID", nFormID);
                     }
+                    bool B_ReduceTime =Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "reduceTime_Sales", "N_Value", myFunctions.getIntVAL(nCompanyId.ToString()), dLayer, connection)));
+
                     if (UserPattern != "")
                      {
                     Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
@@ -84,11 +86,14 @@ namespace SmartxAPI.Controllers
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     bool bLocationChange = myFunctions.CheckPermission(myFunctions.GetCompanyID(User), 564, myFunctions.GetUserCategory(User).ToString(), "", dLayer, connection);
-                    string viewName = " vw_InvSalesInvoiceNo_Search_New_Cloud ";
+                    string viewName = " [vw_InvSalesInvoiceNo_Search_New_Cloud] ";
 
                     bool PayModeEnabled = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "ShowPayModeInInvoiceListing", "N_Value", myFunctions.getIntVAL(nCompanyId.ToString()), dLayer, connection)));
                     if(PayModeEnabled)
                     viewName = " vw_InvSalesInvoiceNo_Search_cloud ";
+
+                    if(B_ReduceTime)
+                         viewName = " vw_InvSalesInvoiceDashboard_Cloud ";
 
                     if (nCustomerID > 0)
                         cndn = "and N_CustomerID=@nCustomerID ";
@@ -148,7 +153,7 @@ namespace SmartxAPI.Controllers
                     if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ") * from "+viewName+" where N_Hold=0 " +Pattern+ criteria + formIDCndn + cndn + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from "+viewName+" where N_Hold=0 " + Pattern + criteria + formIDCndn + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from "+viewName+" where N_Hold=0 " + Pattern+ criteria + formIDCndn + cndn + Searchkey + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from "+viewName+" where isnull(N_Hold,0)=0 " + Pattern + criteria + formIDCndn + cndn + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from "+viewName+" where isnull(N_Hold,0)=0 " + Pattern+ criteria + formIDCndn + cndn + Searchkey + xSortBy + " ) " + xSortBy;
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
