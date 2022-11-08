@@ -57,21 +57,21 @@ namespace SmartxAPI.Controllers
                     string sqlCommandCount = "";
                     string Searchkey = "";
                     int nUserID = myFunctions.GetUserID(User);
-         
-                    
-                    if (xSearchkey != null && xSearchkey.Trim() != "")
-                      Searchkey = " and (X_StoreName like '%" + xSearchkey + "%' or X_StoreCode like '%" + xSearchkey + "%')";
 
-                  
+
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = " and (X_StoreName like '%" + xSearchkey + "%' or X_StoreCode like '%" + xSearchkey + "%')";
+
+
                     if (xSortBy == null || xSortBy.Trim() == "")
-                      xSortBy = " order by N_StoreID desc";
-                     else
-                       {
-                
-                      xSortBy = " order by " + xSortBy;
-                      }
-       
-                     Params.Add("@p1", nCompanyId);
+                        xSortBy = " order by N_StoreID desc";
+                    else
+                    {
+
+                        xSortBy = " order by " + xSortBy;
+                    }
+
+                    Params.Add("@p1", nCompanyId);
 
                     int Count = (nPage - 1) * nSizeperpage;
                     if (Count == 0)
@@ -80,7 +80,7 @@ namespace SmartxAPI.Controllers
                         sqlCommandText = "select top(" + nSizeperpage + ") [X_StoreCode] AS X_StoreCode,* from Inv_OnlineStore where N_CompanyID=@p1" + Searchkey + " and N_StoreID not in (select top(" + Count + ") N_StoreID from Inv_OnlineStore where N_CompanyID=@p1" + xSortBy + " ) " + xSortBy;
 
                     // sqlCommandText = "select * from Inv_MRNDetails where N_CompanyID=@p1";
-                   
+
                     // Params.Add("@p2", nFnYearId);
                     SortedList OutPut = new SortedList();
 
@@ -204,7 +204,7 @@ namespace SmartxAPI.Controllers
 
 
                         // Mapping Rule Configuration
-                       if (DetailsToImport.Rows.Count > 0)
+                        if (DetailsToImport.Rows.Count > 0)
                         {
 
                             string FieldList = "";
@@ -295,45 +295,45 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                         }
-                        
+
 
                         //dLayer.SaveData("Mig_OnlineStore", "Pkey_Code", "", "", DetailsToImport, connection, transaction);
-                      try
-                      {
-                           SortedList ProParam = new SortedList();
-                        ProParam.Add("N_CompanyID", nCompanyID);
-                        ProParam.Add("n_PkeyID", n_StoreID);
-
-                        ProParam.Add("X_Type", "Online Stock Allocation");
-                        DetailTable = dLayer.ExecuteDataTablePro("SP_ScreenDataImport", ProParam, connection, transaction);
-                      }
-
-                     
-                      catch (Exception ex)
-                     {
-                      return Ok(_api.Error(User, ex));
-                      }
-                        
-                       
-                    }
-                     else
+                        try
                         {
-                            if (ds.Tables.Contains("general") & isRuleBasedImport)
-                            {
-                            if(nStoreID>0 )
-                            {
-                             transaction.Rollback();
-                             return Ok(_api.Warning("Unable to import Excel"));
-                        
-                            }
-                            }
-                           
-                           
+                            SortedList ProParam = new SortedList();
+                            ProParam.Add("N_CompanyID", nCompanyID);
+                            ProParam.Add("n_PkeyID", n_StoreID);
+
+                            ProParam.Add("X_Type", "Online Stock Allocation");
+                            DetailTable = dLayer.ExecuteDataTablePro("SP_ScreenDataImport", ProParam, connection, transaction);
                         }
 
 
+                        catch (Exception ex)
+                        {
+                            return Ok(_api.Error(User, ex));
+                        }
 
-                
+
+                    }
+                    else
+                    {
+                        if (ds.Tables.Contains("general") & isRuleBasedImport)
+                        {
+                            if (nStoreID > 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Warning("Unable to import Excel"));
+
+                            }
+                        }
+
+
+                    }
+
+
+
+
 
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -397,8 +397,8 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
 
-                    string x_filelocation=GenerateCSV(nStoreID, nRuleID,xStoreName);
-                   // return Ok(_api.Success({ "FileName", x_filelocation }));
+                    string x_filelocation = GenerateCSV(nStoreID, nRuleID, xStoreName);
+                    // return Ok(_api.Success({ "FileName", x_filelocation }));
                     //return Ok(_api.Success(x_filelocation));
                     OutPut.Add("FileName", x_filelocation);
 
@@ -406,7 +406,7 @@ namespace SmartxAPI.Controllers
 
 
                 }
-               
+
             }
             catch (Exception e)
             {
@@ -505,47 +505,50 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     CSVData = dLayer.ExecuteDataTable(CSVDatasql, Params, connection);
-                    object headerval = dLayer.ExecuteScalar(@"SELECT (STUFF((SELECT ', ' + X_ColumnRefName +'' FROM gen_importruledetails WHERE X_ColumnRefName is Not null and n_ruleid=  "+nRuleID+" FOR XML PATH('')), 1, 2, '') ) AS StringValue", connection);
-                    string headervalModified = headerval.ToString();
-                    headervalModified = headervalModified.Replace(@", ",",");
-                    //headervalModified = headervalModified.Substring(1, headervalModified.Length - 2);
-                    int index = 0;
-                    foreach (DataRow drow in CSVData.Rows)
+                    string hSQL = "select * from Gen_ImportRuleDetails where N_CompanyID=" + nCompanyID + " and N_RuleID=" + nRuleID + " and isnull(X_ColumnRefName,'')<>''";
+                    DataTable headerval = dLayer.ExecuteDataTable(hSQL, connection);
+
+                    String ExpoetSelect = "";
+                    foreach (DataRow row in headerval.Rows)
                     {
-
-
-                        if (!System.IO.File.Exists(X_WpsFileName))
-                        {
-                            System.IO.File.Create(X_WpsFileName).Close();
-                        }
-                        else
-                        {
-                            System.IO.File.WriteAllText(X_WpsFileName, String.Empty);
-                        }
-                        string delimiter = ",";
-
-                        string[][] header = new string[][]
-                        {new string[]{headervalModified.ToString()}
-                        };
-                        string[][] output = new string[][]
-                        {
-                        new string[]{drow["Item Code"].ToString(),""+ drow["Item Name"].ToString(),drow["Online Code"].ToString(),drow["Available Qty"].ToString(),drow["Allocated Qty"].ToString(),drow["Allocation Percentage"].ToString(),""+ drow["Minimum Qty"].ToString()}
-                       };
-
-                        int length = output.GetLength(0);
-
-
-                        if (index == 0)
-                        {
-                            sb.AppendLine(string.Join(delimiter, header[0]));
-                        }
-                        for (index = 0; index < length; index++)
-                            sb.AppendLine(string.Join(delimiter, output[index]));
-
+                        ExpoetSelect = ExpoetSelect + " [" + row["X_FieldName"].ToString() + "] as [" + row["X_ColumnRefName"].ToString() + "] ,";
                     }
-                }
+                    ExpoetSelect = ExpoetSelect.Substring(0,ExpoetSelect.Length-1);
 
-                System.IO.File.AppendAllText(X_WpsFileName, sb.ToString());
+                    ExpoetSelect = "select " + ExpoetSelect + " from Vw_Inv_OnlineStoreDetail_Export where N_StoreID=" + nStoreID ;
+
+                    DataTable data = dLayer.ExecuteDataTable(ExpoetSelect, connection);
+                    
+
+                        StreamWriter sw = new StreamWriter(X_WpsFileName, false);  
+                        //headers    
+                        for (int i = 0; i < data.Columns.Count; i++) {  
+                            sw.Write(data.Columns[i]);  
+                            if (i < data.Columns.Count - 1) {  
+                                sw.Write(",");  
+                            }  
+                        }  
+                        sw.Write(sw.NewLine);  
+                        foreach(DataRow dr in data.Rows) {  
+                            for (int i = 0; i < data.Columns.Count; i++) {  
+                                if (!Convert.IsDBNull(dr[i])) {  
+                                    string value = dr[i].ToString();  
+                                    if (value.Contains(',')) {  
+                                        value = String.Format("\"{0}\"", value);  
+                                        sw.Write(value);  
+                                    } else {  
+                                        sw.Write(dr[i].ToString());  
+                                    }  
+                                }  
+                                if (i < data.Columns.Count - 1) {  
+                                    sw.Write(",");  
+                                }  
+                            }  
+                            sw.Write(sw.NewLine);  
+                        }  
+                        sw.Close(); 
+
+                }
 
                 return myFunctions.GetCompanyID(User) + "-" + xStoreName + ".csv";
             }
