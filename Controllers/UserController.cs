@@ -327,7 +327,7 @@ namespace SmartxAPI.Controllers
                         {
                             return Ok(_api.Warning("user with this email id already exists"));
                         }
-                        object nUserLimit =dLayer.ExecuteScalar("select isnull(N_Value,0) from GenSettings where N_ClientID="+ClientID+" and X_Description='BRANCH LIMIT' ", olivoCon, olivoTxn);
+                        object nUserLimit =dLayer.ExecuteScalar("select isnull(N_Value,0) from GenSettings where N_ClientID="+nClientID+" and X_Description='BRANCH LIMIT' ", olivoCon, olivoTxn);
                          if(nUserLimit==null){nUserLimit="0";}
                         object nUserCount = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Users where N_ClientID=@nClientID and N_UserType=1", userParams, olivoCon, olivoTxn);
 

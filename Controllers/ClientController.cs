@@ -113,8 +113,7 @@ namespace SmartxAPI.Controllers
                 DataTable DetailTable;
                 DetailTable = ds.Tables["Details"];
                 DataRow MasterRow = DetailTable.Rows[0];
-               
-                int clientID = myFunctions.getIntVAL(MasterRow["n_ClientID"].ToString());
+                int n_ClientID = myFunctions.getIntVAL(MasterRow["n_ClientID"].ToString());
 
                  using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
                 {
@@ -123,10 +122,12 @@ namespace SmartxAPI.Controllers
                     transaction = connection.BeginTransaction();
 
                     SortedList paramList = new SortedList();
-                    paramList.Add("@clientID", clientID);
+                    paramList.Add("@clientID", n_ClientID);
 
-                    clientID = dLayer.SaveData("ClientMaster", "N_ClientID", DetailTable, connection, transaction);
-                    if (clientID <= 0)
+
+                    dLayer.DeleteData("genSettings", "n_ClientID", n_ClientID, "", connection, transaction);
+                    int settingsID = dLayer.SaveData("genSettings", "N_SettingsID", DetailTable, connection, transaction);
+                    if (settingsID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Something went wrong"));
@@ -252,6 +253,82 @@ namespace SmartxAPI.Controllers
             }
 
         }
+        [HttpGet("allApps")]
+        public ActionResult allappdetails(int nClientID)
+        {
+            try
+            {
+                 using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
+                {
+                    connection.Open();
+                    SortedList Params = new SortedList();
+                     Params.Add("@nClientID", nClientID);
+                   // string AppListSql=" SELECT  * from  ClientApps where N_ClientID=@nClientID";
+                    string AppListSql="select * from AppMaster";
+                    DataTable AppList = dLayer.ExecuteDataTable(AppListSql,Params, connection);
+                    return Ok(_api.Success(AppList));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+
+        }
+        
+         [HttpPost("saveApps")]
+         public ActionResult saveApps([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable MasterTable;
+                MasterTable = ds.Tables["Master"];
+               
+                int n_AppID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_AppID"].ToString());
+                int n_ClientID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ClientID"].ToString());
+                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_AppUrl", typeof(string), null);
+                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_AppUrl", typeof(string), null);
+                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_DbUri", typeof(string), "SmartxConnection");
+                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_UserLimit", typeof(int), 1);
+                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_UserLimit", typeof(int), 1);
+                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_Sector", typeof(string), "Service");
+                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "D_LastExpiryReminder", typeof(DateTime), "");
+                MasterTable.AcceptChanges();    
+                
+
+                 using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction;
+                    transaction = connection.BeginTransaction();
+
+                    SortedList paramList = new SortedList();
+                    paramList.Add("@clientID", n_ClientID);
+
+
+                    dLayer.DeleteData("ClientApps", "n_AppID", n_AppID, "n_ClientID="+n_ClientID+"",connection, transaction);
+                    int refID = dLayer.SaveData("ClientApps", "N_RefID", MasterTable,connection, transaction);
+                    if (refID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Something went wrong"));
+                    }
+                       transaction.Commit();
+                    return Ok(_api.Success(""));
+                 
+                }
+            }
+           catch (Exception ex)
+            {
+                return StatusCode(403, _api.Error(User, ex));
+            }
+
+
+        }
+
+        
+
+        
 
 
     }
