@@ -206,6 +206,7 @@ namespace SmartxAPI.Controllers
             }
 
         }
+   
         [HttpGet("appDetails")]
         public ActionResult AppDetails(int nClientID,int nAppID)
         {
