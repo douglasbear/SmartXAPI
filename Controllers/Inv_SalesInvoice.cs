@@ -337,6 +337,7 @@ namespace SmartxAPI.Controllers
                     object N_QuotationID = 0;
                     object N_SalesOrderID = 0;
                     string DetailGetSql = "";
+                     int N_DeliveryNote=0;
                       string x_DeliveryNoteNo="";
                     //CRM Quotation Checking
                     if (n_OpportunityID > 0)
@@ -372,11 +373,11 @@ namespace SmartxAPI.Controllers
                         {
                             QueryParamsList.Add("@nDeliveryNoteID", nDeliveryNoteId);
                             string[] X_Delivery = xDeliveryNoteID.Split(",");
-                            int N_DeliveryNote = myFunctions.getIntVAL(X_Delivery[0].ToString());
+                             N_DeliveryNote = myFunctions.getIntVAL(X_Delivery[0].ToString());
                             
                             //  MasterTable = dLayer.ExecuteDataTable(xDeliveryNo, QueryParamsList, Con);
                              
-                            Mastersql = "select N_CompanyId,N_FnYearId,n_SalesId,x_ReceiptNo,N_CustomerID,X_CustPONo,X_DeliveryNoteNo,N_ProjectID,X_ProjectName,X_ProjectCode from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId=" + N_DeliveryNote + "";
+                            Mastersql = "select * from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId=" + N_DeliveryNote + "";
                             MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                             if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                             MasterTable = _api.Format(MasterTable, "Master");
@@ -421,7 +422,7 @@ namespace SmartxAPI.Controllers
 
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
-                        if (xDeliveryNoteID == "" || xDeliveryNoteID == null)
+                        if (nDeliveryNoteId >0 || N_DeliveryNote>0)
                         {
                             if (myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesOrderID"].ToString()) > 0)
                             {
@@ -451,6 +452,24 @@ namespace SmartxAPI.Controllers
 
 
                             }
+                        }
+                        else
+                        {
+                            // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_DisplayName", typeof(string), null);
+                            //  MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_TaxPercentage", typeof(int), 0);
+                            // object taxID = dLayer.ExecuteScalar("Select N_Value from Gen_Settings where N_CompanyId=" + nCompanyId+" and X_Description='DefaultTaxCategory' and X_Group='Inventory'", QueryParamsList, Con);
+                            // if(taxID!=null)
+                            // {
+                            //   object category = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_PkeyID=" + taxID+" ", QueryParamsList, Con);
+                            //   object percentage = dLayer.ExecuteScalar("Select Cast(REPLACE(N_Amount,',','') as Numeric(10,0)) from Acc_TaxCategory where N_PkeyID=" + taxID+" ", QueryParamsList, Con);
+                            
+                            //     MasterTable.Rows[0]["X_DisplayName"] = category.ToString();
+                            //     MasterTable.Rows[0]["N_TaxCategoryID1"] = myFunctions.getIntVAL(taxID.ToString());
+                            //     MasterTable.Rows[0]["n_TaxPercentage"] =myFunctions.getIntVAL(percentage.ToString());
+                            // }
+                            // MasterTable.AcceptChanges();
+
+
                         }
 
 
