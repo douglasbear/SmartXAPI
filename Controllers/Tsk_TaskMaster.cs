@@ -167,7 +167,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult TaskDetails(string xTaskCode,int nTaskID)
+        public ActionResult TaskDetails(string xTaskCode, int nTaskID)
         {
 
 
@@ -186,7 +186,7 @@ namespace SmartxAPI.Controllers
                     DataTable options = new DataTable();
                     DataTable TasksList = new DataTable();
                     DataTable Materials = new DataTable();
-                    int loginUserID=myFunctions.GetUserID(User);
+                    int loginUserID = myFunctions.GetUserID(User);
 
 
                     string Mastersql = "";
@@ -199,17 +199,17 @@ namespace SmartxAPI.Controllers
 
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    if(nTaskID>0)
+                    if (nTaskID > 0)
                     {
-                    Params.Add("@xTaskCode", nTaskID);
-                    Mastersql = "select * from vw_Tsk_TaskMaster where N_CompanyId=@nCompanyID and N_TaskID=@xTaskCode  ";
+                        Params.Add("@xTaskCode", nTaskID);
+                        Mastersql = "select * from vw_Tsk_TaskMaster where N_CompanyId=@nCompanyID and N_TaskID=@xTaskCode  ";
                     }
                     else
                     {
-                    Params.Add("@xTaskCode", xTaskCode);
-                    Mastersql = "select * from vw_Tsk_TaskMaster where N_CompanyId=@nCompanyID and X_TaskCode=@xTaskCode  ";
+                        Params.Add("@xTaskCode", xTaskCode);
+                        Mastersql = "select * from vw_Tsk_TaskMaster where N_CompanyId=@nCompanyID and X_TaskCode=@xTaskCode  ";
                     }
-                    
+
 
 
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
@@ -229,13 +229,13 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nTaskID", TaskID);
                     MasterTable = _api.Format(MasterTable, "Master");
                     string subTasksList = "select * from vw_TaskCurrentStatus where N_CompanyID=@nCompanyID  and  N_ParentID=@nTaskID order by N_SortID";
-               
-                   //
-                   
+
+                    //
+
                     // Materials
-                        string ReqMaterialsSql = "select * from vw_Inv_ServiceMaterials where N_CompanyID=" +  myFunctions.GetCompanyID(User) + " and N_TaskID=" + TaskID;
+                    string ReqMaterialsSql = "select * from vw_Inv_ServiceMaterials where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_TaskID=" + TaskID;
                     Materials = dLayer.ExecuteDataTable(ReqMaterialsSql, Params, connection);
-                                       Materials = _api.Format(Materials, "Materials");
+                    Materials = _api.Format(Materials, "Materials");
                     // TimeTable
                     timeSql = "select * from vw_Tsk_TaskStatus where N_CompanyId=@nCompanyID and N_TaskID=" + TaskID + " ";
                     TimeTable = dLayer.ExecuteDataTable(timeSql, Params, connection);
@@ -249,70 +249,72 @@ namespace SmartxAPI.Controllers
                     {
 
 
-                        if (row["N_Status"].ToString() == "7" && row["N_CreaterID"].ToString()==loginUserID.ToString() )
+                        if (row["N_Status"].ToString() == "7" && row["N_CreaterID"].ToString() == loginUserID.ToString())
                         {
                             entryDateStart = Convert.ToDateTime(row["d_EntryDate"].ToString());
 
                         }
-                        if (row["N_Status"].ToString() == "6" && row["N_CreaterID"].ToString()==loginUserID.ToString())
+                        if (row["N_Status"].ToString() == "6" && row["N_CreaterID"].ToString() == loginUserID.ToString())
                         {
                             entryDateHold = Convert.ToDateTime(row["d_EntryDate"].ToString());
                         }
-                        if (row["N_Status"].ToString() == "4" && row["N_CreaterID"].ToString()==loginUserID.ToString())
+                        if (row["N_Status"].ToString() == "4" && row["N_CreaterID"].ToString() == loginUserID.ToString())
                         {
-                          entryDateComplete =Convert.ToDateTime(row["d_EntryDate"].ToString());
+                            entryDateComplete = Convert.ToDateTime(row["d_EntryDate"].ToString());
                         }
-                        if (row["N_Status"].ToString() == "6" && row["N_CreaterID"].ToString()==loginUserID.ToString())
+                        if (row["N_Status"].ToString() == "6" && row["N_CreaterID"].ToString() == loginUserID.ToString())
                         {
                             Individualseconds = Individualseconds + (entryDateHold - entryDateStart).TotalSeconds;
                         }
-                        else if(row["N_Status"].ToString() != "7" && row["N_Status"].ToString() != "6" &&  row["N_Status"].ToString() == "4" && row["N_CreaterID"].ToString()==loginUserID.ToString() ){
+                        else if (row["N_Status"].ToString() != "7" && row["N_Status"].ToString() != "6" && row["N_Status"].ToString() == "4" && row["N_CreaterID"].ToString() == loginUserID.ToString())
+                        {
                             Individualseconds = Individualseconds + (entryDateComplete - entryDateStart).TotalSeconds;
                         }
-                    
+
                     }
-                     foreach (DataRow row in TimeTable.Rows)
+                    foreach (DataRow row in TimeTable.Rows)
                     {
 
 
-                        if (row["N_Status"].ToString() == "7"  )
+                        if (row["N_Status"].ToString() == "7")
                         {
                             entryDateStart = Convert.ToDateTime(row["d_EntryDate"].ToString());
 
                         }
-                        if (row["N_Status"].ToString() == "6" )
+                        if (row["N_Status"].ToString() == "6")
                         {
                             entryDateHold = Convert.ToDateTime(row["d_EntryDate"].ToString());
                         }
-                        if (row["N_Status"].ToString() == "4" )
+                        if (row["N_Status"].ToString() == "4")
                         {
-                          entryDateComplete =Convert.ToDateTime(row["d_EntryDate"].ToString());
+                            entryDateComplete = Convert.ToDateTime(row["d_EntryDate"].ToString());
                         }
                         if (row["N_Status"].ToString() == "6")
                         {
                             seconds = seconds + (entryDateHold - entryDateStart).TotalSeconds;
                         }
-                        else if(row["N_Status"].ToString() != "7" && row["N_Status"].ToString() != "6" &&  row["N_Status"].ToString() == "4"  ){
+                        else if (row["N_Status"].ToString() != "7" && row["N_Status"].ToString() != "6" && row["N_Status"].ToString() == "4")
+                        {
                             seconds = seconds + (entryDateComplete - entryDateStart).TotalSeconds;
                         }
-                    
+
                     }
-                    
+
                     //    TimeSpan t = TimeSpan.FromSeconds(seconds);
                     //  string answer = string.Format("{0:D2}h:{1:D2}m",
                     //                  t.Hours,
                     //                  t.Minutes);
-                                    
+
 
 
                     //Detail
                     DetailSql = "select * from [vw_TaskCurrentStatus] where N_CompanyId=@nCompanyID and N_TaskID=@nTaskID ";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
-                    if(DetailTable.Rows.Count>0)
+                    if (DetailTable.Rows.Count > 0)
                     {
-                    nextAction = DetailTable.Rows[0]["X_NextActions"].ToString();
-                    DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "seconds", typeof(double), seconds);
-                    DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "Individualseconds", typeof(double), Individualseconds);
+                        nextAction = DetailTable.Rows[0]["X_NextActions"].ToString();
+                        DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "seconds", typeof(double), seconds);
+                        DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "Individualseconds", typeof(double), Individualseconds);
                     }
 
 
@@ -389,9 +391,9 @@ namespace SmartxAPI.Controllers
                     CommentsTable = _api.Format(CommentsTable, "Comments");
 
                     //ActionTable
-                    if(nextAction=="")
+                    if (nextAction == "")
                     {
-                        nextAction="0";
+                        nextAction = "0";
                     }
                     ActionSql = "select N_ActionID,X_ActionName as title ,B_SysDefault from Tsk_TaskAction Where N_ActionID in (" + nextAction + ") ";
                     options = dLayer.ExecuteDataTable(ActionSql, Params, connection);
@@ -453,11 +455,11 @@ namespace SmartxAPI.Controllers
                     string X_TaskCode = MasterTable.Rows[0]["X_TaskCode"].ToString();
                     string xTaskSummery = MasterTable.Rows[0]["x_TaskSummery"].ToString();
                     int nProjectID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ProjectID"].ToString());
-                    int nParentyID=  myFunctions.getIntVAL(MasterTable.Rows[0]["N_ParentID"].ToString());
-                                        DataTable  SavedData;
+                    int nParentyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ParentID"].ToString());
+                    DataTable SavedData;
 
 
-                    if(DetailTable.Columns.Contains("x_WorkPercentage"))
+                    if (DetailTable.Columns.Contains("x_WorkPercentage"))
                     {
                         DetailTable.Columns.Remove("x_WorkPercentage");
                     }
@@ -471,20 +473,20 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskId, "", connection, transaction);
                     }
 
-                          //Percentage Calculation
-         
+                    //Percentage Calculation
 
 
-                //     if(nParentyID >0)
-                //     {
-                //         double totalweightage= myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_WeightPercentage) from Tsk_TaskMaster  where N_ParentID="+nParentyID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
-                //         ParentTaskPercentage= myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_CompletedPercentage) from Tsk_TaskMaster  where N_TaskID="+nParentyID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
-                //         ParentTaskPercentage=(((totalweightage+n_WeightPercentage) *100 )/ParentTaskPercentage );
-                //         ParentTaskPercentage = 0 ;
-                //           dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CompletedPercentage= "+ParentTaskPercentage+"  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nParentyID, Params, connection,transaction);
 
-                    
-                //    }
+                    //     if(nParentyID >0)
+                    //     {
+                    //         double totalweightage= myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_WeightPercentage) from Tsk_TaskMaster  where N_ParentID="+nParentyID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
+                    //         ParentTaskPercentage= myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_CompletedPercentage) from Tsk_TaskMaster  where N_TaskID="+nParentyID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
+                    //         ParentTaskPercentage=(((totalweightage+n_WeightPercentage) *100 )/ParentTaskPercentage );
+                    //         ParentTaskPercentage = 0 ;
+                    //           dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CompletedPercentage= "+ParentTaskPercentage+"  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nParentyID, Params, connection,transaction);
+
+
+                    //    }
 
 
                     DocNo = MasterRow["X_TaskCode"].ToString();
@@ -544,7 +546,7 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    MasterTable.Rows[0]["N_StatusID"]= DetailTable.Rows[0]["N_Status"].ToString();
+                    MasterTable.Rows[0]["N_StatusID"] = DetailTable.Rows[0]["N_Status"].ToString();
 
 
 
@@ -572,14 +574,14 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable To Save"));
                     }
-                    if(MaterialTable.Rows.Count>0)
+                    if (MaterialTable.Rows.Count > 0)
                     {
-                     for (int i = 0; i < MaterialTable.Rows.Count; i++)
-                    {
-                        MaterialTable.Rows[i]["n_TaskID"] = nTaskId;
-                    }
+                        for (int i = 0; i < MaterialTable.Rows.Count; i++)
+                        {
+                            MaterialTable.Rows[i]["n_TaskID"] = nTaskId;
+                        }
 
-                    dLayer.SaveData("Inv_ServiceMaterials", "n_MaterialID", MaterialTable, connection, transaction);
+                        dLayer.SaveData("Inv_ServiceMaterials", "n_MaterialID", MaterialTable, connection, transaction);
                     }
 
                     else if (DetailTable.Rows[0]["N_AssigneeID"].ToString() != "0" && DetailTable.Rows[0]["N_AssigneeID"].ToString() != "")
@@ -595,7 +597,7 @@ namespace SmartxAPI.Controllers
                         row["n_Status"] = 1;
                         row["d_EntryDate"] = DetailTable.Rows[0]["d_EntryDate"];
                         DetailTable.Rows.InsertAt(row, 0);
-                      //  dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 1  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskId, Params, connection,transaction);
+                        //  dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 1  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskId, Params, connection,transaction);
                     }
 
 
@@ -623,42 +625,42 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         }
                     }
-                    
-                    if(nParentyID >0)
+
+                    if (nParentyID > 0)
                     {
 
-    
-                        string sql= "select * from Vw_TaskCurrentStatus where N_CompanyID="+nCompanyID+" and N_ParentID ="+nParentyID+"";
-                        SavedData=dLayer.ExecuteDataTable(sql,Params,connection,transaction);
-                       // object count = dLayer.ExecuteScalar("select  N_TaskID from Count(Tsk_TaskMaster where N_ParentID="+nParentyID+" and N_CompanyID="+nCompanyID+"",Params,connection,transaction);
 
-                       double ParentTaskPercentage=0.00;
+                        string sql = "select * from Vw_TaskCurrentStatus where N_CompanyID=" + nCompanyID + " and N_ParentID =" + nParentyID + "";
+                        SavedData = dLayer.ExecuteDataTable(sql, Params, connection, transaction);
+                        // object count = dLayer.ExecuteScalar("select  N_TaskID from Count(Tsk_TaskMaster where N_ParentID="+nParentyID+" and N_CompanyID="+nCompanyID+"",Params,connection,transaction);
 
-                      foreach (DataRow item in SavedData.Rows)
-                    
+                        double ParentTaskPercentage = 0.00;
+
+                        foreach (DataRow item in SavedData.Rows)
+
                         {
-                              double n_WeightPercentage=0.00;
-                              double TaskPercentage=0.00;
-                         
-                              double  workPercentage=0.00;
-                            
-                              n_WeightPercentage=myFunctions.getVAL(item["N_WeightPercentage"].ToString());
-                              workPercentage=myFunctions.getVAL(item["N_CompletedPercentage"].ToString());
-                            
-                              TaskPercentage=(n_WeightPercentage * workPercentage)/100;
+                            double n_WeightPercentage = 0.00;
+                            double TaskPercentage = 0.00;
+
+                            double workPercentage = 0.00;
+
+                            n_WeightPercentage = myFunctions.getVAL(item["N_WeightPercentage"].ToString());
+                            workPercentage = myFunctions.getVAL(item["N_CompletedPercentage"].ToString());
+
+                            TaskPercentage = (n_WeightPercentage * workPercentage) / 100;
                             //  dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CompletedPercentage= "+workPercentage+"  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
-                     
-                             double totalweightage= myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_WeightPercentage) from Tsk_TaskMaster  where N_ParentID="+nParentyID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
-                              if(totalweightage ==0){totalweightage=1;}
-                              //ParentTaskPercentage= myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_CompletedPercentage) from Tsk_TaskMaster  where N_TaskID="+nParentyID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
-                             ParentTaskPercentage=ParentTaskPercentage+((TaskPercentage * 100)/totalweightage);
-                              
+
+                            double totalweightage = myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_WeightPercentage) from Tsk_TaskMaster  where N_ParentID=" + nParentyID + " and N_CompanyID=" + nCompanyID, Params, connection, transaction).ToString());
+                            if (totalweightage == 0) { totalweightage = 1; }
+                            //ParentTaskPercentage= myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_CompletedPercentage) from Tsk_TaskMaster  where N_TaskID="+nParentyID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
+                            ParentTaskPercentage = ParentTaskPercentage + ((TaskPercentage * 100) / totalweightage);
 
 
-                         
+
+
                         }
-                        dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CompletedPercentage= "+ParentTaskPercentage+"  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nParentyID, Params, connection,transaction);
-                       
+                        dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CompletedPercentage= " + ParentTaskPercentage + "  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nParentyID, Params, connection, transaction);
+
 
 
 
@@ -693,76 +695,76 @@ namespace SmartxAPI.Controllers
                     int nTaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
                     //int nparentID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ParentID"].ToString());
                     string nStatus = DetailTable.Rows[0]["N_Status"].ToString();
-                    int masterStatus= myFunctions.getIntVAL(DetailTable.Rows[0]["N_Status"].ToString());
-                    int nParentyID= myFunctions.getIntVAL(MasterTable.Rows[0]["N_ParentID"].ToString());
-                    double n_WeightPercentage=myFunctions.getVAL(MasterTable.Rows[0]["n_WeightPercentage"].ToString());
-                    double workPercentage=myFunctions.getIntVAL(DetailTable.Rows[0]["x_WorkPercentage"].ToString());
-                    double TaskPercentage=0.00;
-                    double ParentTaskPercentage=0.00;
-                    if(DetailTable.Columns.Contains("x_WorkPercentage"))
+                    int masterStatus = myFunctions.getIntVAL(DetailTable.Rows[0]["N_Status"].ToString());
+                    int nParentyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ParentID"].ToString());
+                    double n_WeightPercentage = myFunctions.getVAL(MasterTable.Rows[0]["n_WeightPercentage"].ToString());
+                    double workPercentage = myFunctions.getIntVAL(DetailTable.Rows[0]["x_WorkPercentage"].ToString());
+                    double TaskPercentage = 0.00;
+                    double ParentTaskPercentage = 0.00;
+                    if (DetailTable.Columns.Contains("x_WorkPercentage"))
                     {
                         DetailTable.Columns.Remove("x_WorkPercentage");
                     }
                     //Percentage Calculation
 
-         
-          
-                    if(myFunctions.getIntVAL(nStatus)==6 || myFunctions.getIntVAL(nStatus)==4 )
-                    {
-                          
-                         TaskPercentage=(n_WeightPercentage * workPercentage)/100;
-                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CompletedPercentage= "+workPercentage+"  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
-                         if(nParentyID >0)
-                         {
-                             double totalweightage= myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_WeightPercentage) from Tsk_TaskMaster  where N_ParentID="+nParentyID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
-                              ParentTaskPercentage= myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_CompletedPercentage) from Tsk_TaskMaster  where N_TaskID="+nParentyID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
-                            if( totalweightage==0){totalweightage=1;}
-                             ParentTaskPercentage=ParentTaskPercentage+((TaskPercentage * 100)/totalweightage);
-                              dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CompletedPercentage= "+ParentTaskPercentage+"  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nParentyID, Params, connection,transaction);
- 
 
-                         }
+
+                    if (myFunctions.getIntVAL(nStatus) == 6 || myFunctions.getIntVAL(nStatus) == 4)
+                    {
+
+                        TaskPercentage = (n_WeightPercentage * workPercentage) / 100;
+                        dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CompletedPercentage= " + workPercentage + "  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection, transaction);
+                        if (nParentyID > 0)
+                        {
+                            double totalweightage = myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_WeightPercentage) from Tsk_TaskMaster  where N_ParentID=" + nParentyID + " and N_CompanyID=" + nCompanyID, Params, connection, transaction).ToString());
+                            ParentTaskPercentage = myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_CompletedPercentage) from Tsk_TaskMaster  where N_TaskID=" + nParentyID + " and N_CompanyID=" + nCompanyID, Params, connection, transaction).ToString());
+                            if (totalweightage == 0) { totalweightage = 1; }
+                            ParentTaskPercentage = ParentTaskPercentage + ((TaskPercentage * 100) / totalweightage);
+                            dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CompletedPercentage= " + ParentTaskPercentage + "  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nParentyID, Params, connection, transaction);
+
+
+                        }
 
 
 
                     }
 
-                /// all Updates
-                 if(nParentyID >0)
-                         {
-                    if(myFunctions.getIntVAL(nStatus)==6 || myFunctions.getIntVAL(nStatus)==4 )
+                    /// all Updates
+                    if (nParentyID > 0)
                     {
-                 { 
-                      int ParentID=0;
-                     ParentID= myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ParentID from Tsk_TaskMaster  where N_TaskID="+nParentyID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
-                     bool ok;
-                     int taskIDNew=nTaskID;
-                     if(ParentID>0){ok=true;}else{ok=false;}
-                     while (ok)
-                       {
-                            double totalweightage= myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_WeightPercentage) from Tsk_TaskMaster  where N_ParentID="+ParentID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
-                            dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CompletedPercentage= "+totalweightage+"  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + ParentID, Params, connection,transaction);
-                            ParentID= myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ParentID from Tsk_TaskMaster  where N_TaskID="+ParentID+" and N_CompanyID="+nCompanyID, Params, connection,transaction).ToString());
-                            if(ParentID>0){ok=true;}else{ok=false;}
-                      }
-                 }
+                        if (myFunctions.getIntVAL(nStatus) == 6 || myFunctions.getIntVAL(nStatus) == 4)
+                        {
+                            {
+                                int ParentID = 0;
+                                ParentID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ParentID from Tsk_TaskMaster  where N_TaskID=" + nParentyID + " and N_CompanyID=" + nCompanyID, Params, connection, transaction).ToString());
+                                bool ok;
+                                int taskIDNew = nTaskID;
+                                if (ParentID > 0) { ok = true; } else { ok = false; }
+                                while (ok)
+                                {
+                                    double totalweightage = myFunctions.getVAL(dLayer.ExecuteScalar("select sum(N_WeightPercentage) from Tsk_TaskMaster  where N_ParentID=" + ParentID + " and N_CompanyID=" + nCompanyID, Params, connection, transaction).ToString());
+                                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CompletedPercentage= " + totalweightage + "  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + ParentID, Params, connection, transaction);
+                                    ParentID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ParentID from Tsk_TaskMaster  where N_TaskID=" + ParentID + " and N_CompanyID=" + nCompanyID, Params, connection, transaction).ToString());
+                                    if (ParentID > 0) { ok = true; } else { ok = false; }
+                                }
+                            }
+                        }
                     }
-                         }
 
 
 
-                    if(myFunctions.getIntVAL(nStatus.ToString())==4)
+                    if (myFunctions.getIntVAL(nStatus.ToString()) == 4)
                     {
-                    object N_ClosedTaskStatus = dLayer.ExecuteScalar("select COUNT(*) from Tsk_TaskMaster where N_ParentID=" + nTaskID + " and ISNULL(B_Closed,0)=0 and N_CompanyID=" + nCompanyID.ToString(), Params, connection,transaction);
-                    int N_Count = myFunctions.getIntVAL(N_ClosedTaskStatus.ToString());
-                    if (N_Count>0)
-                    {
-                         transaction.Rollback();
-                         return Ok(_api.Error(User, "Please complete the subtasks........."));  
+                        object N_ClosedTaskStatus = dLayer.ExecuteScalar("select COUNT(*) from Tsk_TaskMaster where N_ParentID=" + nTaskID + " and ISNULL(B_Closed,0)=0 and N_CompanyID=" + nCompanyID.ToString(), Params, connection, transaction);
+                        int N_Count = myFunctions.getIntVAL(N_ClosedTaskStatus.ToString());
+                        if (N_Count > 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Please complete the subtasks........."));
+                        }
                     }
-                    }
-                  
-                    if (nStatus == "4" && (DetailTable.Rows[0]["N_AssigneeID"].ToString()== DetailTable.Rows[0]["N_SubmitterID"].ToString()) && ( DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_ClosedUserID"].ToString()))
+
+                    if (nStatus == "4" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_SubmitterID"].ToString()) && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_ClosedUserID"].ToString()))
                     {
                         DataRow row = DetailTable.NewRow();
                         row["N_TaskID"] = nTaskID;
@@ -775,15 +777,15 @@ namespace SmartxAPI.Controllers
                         row["n_Status"] = 5;
                         row["d_EntryDate"] = DetailTable.Rows[0]["d_EntryDate"];
                         DetailTable.Rows.InsertAt(row, 1);
-                     masterStatus=5;
-                    //  dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 5  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
-                      dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed= 1  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
+                        masterStatus = 5;
+                        //  dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 5  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
+                        dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed= 1  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection, transaction);
                     }
-                     if (nStatus == "4" && (DetailTable.Rows[0]["N_AssigneeID"].ToString()== DetailTable.Rows[0]["N_SubmitterID"].ToString()) && ( DetailTable.Rows[0]["N_AssigneeID"].ToString() != DetailTable.Rows[0]["N_ClosedUserID"].ToString()))
+                    if (nStatus == "4" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_SubmitterID"].ToString()) && (DetailTable.Rows[0]["N_AssigneeID"].ToString() != DetailTable.Rows[0]["N_ClosedUserID"].ToString()))
                     {
-                         DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
-                         masterStatus=9;
-                      //  dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 9  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
+                        DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
+                        masterStatus = 9;
+                        //  dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 9  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
 
                     }
                     else if (nStatus == "4" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() != DetailTable.Rows[0]["N_SubmitterID"].ToString()))
@@ -791,30 +793,30 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_SubmitterID"].ToString();
 
                     }
-                     if (nStatus == "4" && (DetailTable.Rows[0]["N_SubmitterID"].ToString() == DetailTable.Rows[0]["N_ClosedUserID"].ToString()))
+                    if (nStatus == "4" && (DetailTable.Rows[0]["N_SubmitterID"].ToString() == DetailTable.Rows[0]["N_ClosedUserID"].ToString()))
                     {
-                       masterStatus=9;
+                        masterStatus = 9;
                     }
 
 
-                 
-                   if (nStatus == "9" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_ClosedUserID"].ToString()))
-                    {
-                            DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
-                            DetailTable.Rows[0]["n_Status"] = 5;
-                            masterStatus=5;
-                 
 
-                     // dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 5  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
-                      dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed= 1  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
-                    
+                    if (nStatus == "9" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_ClosedUserID"].ToString()))
+                    {
+                        DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
+                        DetailTable.Rows[0]["n_Status"] = 5;
+                        masterStatus = 5;
+
+
+                        // dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 5  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
+                        dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed= 1  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection, transaction);
+
                     }
-                     else   if (nStatus == "9" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_SubmitterID"].ToString()))
+                    else if (nStatus == "9" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_SubmitterID"].ToString()))
                     {
                         DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
                     }
-                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= "+masterStatus+"  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
-                  
+                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= " + masterStatus + "  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection, transaction);
+
                     if (DetailTable.Columns.Contains("X_Assignee"))
                         DetailTable.Columns.Remove("X_Assignee");
                     if (DetailTable.Columns.Contains("x_Submitter"))
@@ -842,36 +844,36 @@ namespace SmartxAPI.Controllers
 
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=1 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     }
-                     if (masterStatus == 8)
+                    if (masterStatus == 8)
                     {
 
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=0 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     }
 
-                //   if (masterStatus == 11)
-                //     {
+                    //   if (masterStatus == 11)
+                    //     {
 
-                //        dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=0 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                //     }
+                    //        dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=0 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    //     }
 
                     SortedList Result = new SortedList();
                     Result.Add("n_AssigneeID", DetailTable.Rows[0]["N_AssigneeID"]);
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET d_DueDate='" + MasterTable.Rows[0]["d_DueDate"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CurrentAssigneeID='" + DetailTable.Rows[0]["N_AssigneeID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CurrentAssignerID='" + DetailTable.Rows[0]["n_CreaterID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_SubmitterID='" + DetailTable.Rows[0]["n_SubmitterID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_ClosedUserID='" + DetailTable.Rows[0]["n_ClosedUserID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CurrentAssigneeID='" + DetailTable.Rows[0]["N_AssigneeID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CurrentAssignerID='" + DetailTable.Rows[0]["n_CreaterID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_SubmitterID='" + DetailTable.Rows[0]["n_SubmitterID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_ClosedUserID='" + DetailTable.Rows[0]["n_ClosedUserID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET D_EntryDate='" + DetailTable.Rows[0]["D_EntryDate"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET x_SolutionNotes='" + MasterTable.Rows[0]["x_SolutionNotes"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                    if(MasterTable.Columns.Contains("N_WorkHours"))
+                    if (MasterTable.Columns.Contains("N_WorkHours"))
                     {
-                      if(myFunctions.getIntVAL(MasterTable.Rows[0]["N_WorkHours"].ToString())>0)
-                       {
+                        if (myFunctions.getIntVAL(MasterTable.Rows[0]["N_WorkHours"].ToString()) > 0)
+                        {
                             dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_WorkHours=" + MasterTable.Rows[0]["N_WorkHours"] + " where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-   
-                       }
-                                }
-                   
+
+                        }
+                    }
+
                     transaction.Commit();
                     return Ok(_api.Success(Result, "Task Updated Successfully"));
                 }
@@ -1122,6 +1124,50 @@ namespace SmartxAPI.Controllers
             catch (Exception ex)
             {
                 return Ok(_api.Error(User, ex));
+            }
+        }
+        [HttpGet("maildetails")]
+        public ActionResult MailDetails()
+        {
+            DataSet dt = new DataSet();
+            DataTable MailData = new DataTable();
+            DataTable MasterTable = new DataTable();
+            MasterTable = _api.Format(MasterTable, "Master");
+            SortedList Params = new SortedList();
+            int N_UserID = myFunctions.GetUserID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            DateTime datetime = DateTime.Now;
+            string sqlCommandText = "select * from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyId + " and N_CreaterID=" + N_UserID + " and  N_Status =9 and Cast(D_EntryDate as DATE) =  ' Cast(" + datetime + " as DATE)'";
+            string sqlmailData = "select * from Gen_MailTemplates where N_CompanyID=" + nCompanyId + " and x_templatename='Daily Task'";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    MasterTable = dLayer.ExecuteDataTable(sqlmailData, Params, connection);
+                    if (MasterTable.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        MailData = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                        // MasterTable.Rows[0]["x_Subject"] = MailData.Rows[0]["x_Subject"];
+                        // MasterTable.Rows[0]["x_Body"] = MailData.Rows[0]["x_Body"];
+                    }
+
+
+                    MasterTable = _api.Format(MasterTable, "Master");
+                    dt.Tables.Add(MasterTable);
+
+                }
+
+                return Ok(_api.Success(dt));
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
             }
         }
     }
