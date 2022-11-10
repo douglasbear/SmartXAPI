@@ -1102,6 +1102,51 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
         }
+
+        [HttpGet("maildetails")]
+        public ActionResult MailDetails()
+        {
+            DataSet dt = new DataSet();
+            DataTable MailData = new DataTable();
+            DataTable MasterTable = new DataTable();
+            MasterTable = _api.Format(MasterTable, "Master");
+            SortedList Params = new SortedList();
+            int N_UserID = myFunctions.GetUserID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            DateTime datetime = DateTime.Now;
+            string sqlCommandText = "select * from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyId + " and N_CreaterID=" + N_UserID + " and  N_Status =4 and Cast(D_EntryDate as DATE) =  Cast('" + datetime + "' as DATE)";
+            string sqlmailData = "select * from Gen_MailTemplates where N_CompanyID=" + nCompanyId + " and x_templatename='Daily Task'";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    MasterTable = dLayer.ExecuteDataTable(sqlmailData, Params, connection);
+                    if (MasterTable.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        MailData = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                        // MasterTable.Rows[0]["x_Subject"] = MailData.Rows[0]["x_Subject"];
+                        // MasterTable.Rows[0]["x_Body"] = MailData.Rows[0]["x_Body"];
+                    }
+
+
+                    MasterTable = _api.Format(MasterTable, "Master");
+                    dt.Tables.Add(MasterTable);
+
+                }
+
+                return Ok(_api.Success(dt));
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+    }
     }
 
-}
