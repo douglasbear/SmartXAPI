@@ -24,15 +24,16 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
 
         private readonly int N_FormID =1484 ;
+       // private readonly ITxnHandler txnHandler;
 
 
-        public Tck_Ticketing(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Tck_Ticketing(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)//,ITxnHandler txn)
         {
             api = apifun;
             dLayer = dl;
             myFunctions = myFun;
-            connectionString = 
-            conf.GetConnectionString("SmartxConnection");
+            connectionString = conf.GetConnectionString("SmartxConnection");
+           // txnHandler=txn;
         }
 
     [HttpGet("typeList") ]
@@ -143,6 +144,8 @@ namespace SmartxAPI.Controllers
                     nTicketID = dLayer.SaveData("Tvl_Ticketing", "n_TicketID", MasterTable, connection, transaction);
                     if (nTicketID <= 0)
                     {
+
+
                         transaction.Rollback();
                         return Ok(api.Error(User,"Unable to save"));
                     }
