@@ -150,10 +150,33 @@ namespace SmartxAPI.Controllers
                     if (xSearchkey != null && xSearchkey.Trim() != "")
                         Searchkey = "and ( X_LedgerName like '%" + xSearchkey + "%' or X_LedgerCode like '%" + xSearchkey + "%' or N_Opening like '%" + xSearchkey + "%' or N_Debit like '%" + xSearchkey + "%' or N_Credit like '%" + xSearchkey + "%' or N_Balance like '%" + xSearchkey + "%' ) ";
 
-                    if (xSortBy == null || xSortBy.Trim() == "")
-                        xSortBy = " order by N_LedgerID desc";
-                    else
-                        xSortBy = " order by " + xSortBy;
+                    // if (xSortBy == null || xSortBy.Trim() == "")
+                    //     xSortBy = " order by N_LedgerID desc";
+                    // else
+                    //  {
+                    //      switch (xSortBy.Split(" ")[0])
+                    //        {
+                    //     case "X_LedgerCode":
+                    //     xSortBy = "X_LedgerCode " + xSortBy.Split(" ")[1];
+                    //     break;
+                    //     default: break;
+                    //       }
+                    //      xSortBy = " order by " + xSortBy;
+                    //       }
+                         if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_LedgerID desc";
+                   else
+                   {
+                switch (xSortBy.Split(" ")[0])
+                   {
+                    case "X_LedgerCode":
+                        xSortBy = "X_LedgerCode " + xSortBy.Split(" ")[1];
+                        break;
+                     default: break;
+                     }
+                xSortBy = " order by " + xSortBy;
+                     }
+
                        if (b_AllBranchData == true)
                             {
                                 sqlCommandText = "SP_OpeningBalanceGenerate @p1,@p2,0,11,@p5,@p3,0";

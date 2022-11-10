@@ -65,6 +65,7 @@ namespace SmartxAPI.Controllers
                     if(appID>0){
                         using (SqlConnection con = new SqlConnection(connectionString))
                         {
+                            con.Open();
                             string appString="select N_AppID from Sec_UserApps where N_UserID="+userID+" and N_CompanyID="+nCompanyID+"";
                             DataTable userApps=dLayer.ExecuteDataTable(appString,con);
                             var listApps = userApps.AsEnumerable().Select(r => r["N_AppID"].ToString());
