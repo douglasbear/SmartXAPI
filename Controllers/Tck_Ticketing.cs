@@ -22,20 +22,19 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly int N_FormID =565 ;
+        private readonly ITxnHandler txnHandler;
 
-        private readonly int N_FormID =565;
-
-
-        public Tck_Ticketing(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Tck_Ticketing(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf,ITxnHandler txn)
         {
             api = apifun;
             dLayer = dl;
             myFunctions = myFun;
-            connectionString = 
-            conf.GetConnectionString("SmartxConnection");
+            connectionString = conf.GetConnectionString("SmartxConnection");
+            txnHandler=txn;
         }
 
-    [HttpGet("typeList") ]
+        [HttpGet("typeList") ]
         public ActionResult GetAllTktSalesTypeList()
         {    
             SortedList param = new SortedList();           
@@ -104,8 +103,6 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
-
         //Save....
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
@@ -123,13 +120,15 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
+                    SortedList PResult = new SortedList();
+                    SortedList SResult = new SortedList();
                     // Auto Gen
                     string Code = "";
                     var values = MasterTable.Rows[0]["x_InvoiceNo"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
-                         Params.Add("N_YearID", nFnYearId);
+                        Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         Code = dLayer.GetAutoNumber("Tvl_Ticketing", "x_InvoiceNo", Params, connection, transaction);
                         if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Ticket Code")); }
@@ -143,12 +142,78 @@ namespace SmartxAPI.Controllers
 
                     nTicketID = dLayer.SaveData("Tvl_Ticketing", "n_TicketID", MasterTable, connection, transaction);
                     if (nTicketID <= 0)
-                    {
+                    {                       
                         transaction.Rollback();
                         return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
+                        DataSet Pds= new DataSet();
+                        DataTable PMasterDt = new DataTable();
+                        DataTable PDetailsDt = new DataTable();
+                        DataTable ApprovalDt = new DataTable();
+                        DataTable PFreightDt = new DataTable();
+                        DataTable AttachmentDt = new DataTable();
+
+                        int n_IsCompleted=0;
+                        string x_Message="";
+
+                        string sqlPurchaseMaster ="SELECT Tvl_Ticketing.N_CompanyID, Tvl_Ticketing.N_FnyearID, 0 AS N_PurchaseID, '@Auto' AS X_InvoiceNo, Tvl_Ticketing.N_VendorID, GETDATE() AS D_EntryDate, "+
+                                                    " Tvl_Ticketing.D_TicketDate AS D_InvoiceDate, (Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission) AS N_InvoiceAmt, 0 AS N_DiscountAmt, 0 AS N_CashPaid, "+
+                                                    " 0 AS N_FreightAmt, Tvl_Ticketing.N_userID, 0 AS B_BeginingBalEntry, 7 AS N_PurchaseType, Tvl_Ticketing.N_TicketID AS N_PurchaseRefID, Inv_Location.N_LocationID, "+
+                                                    " Acc_BranchMaster.N_BranchID, 'PURCHASE' AS X_TransType, Tvl_Ticketing.X_Notes AS X_Description, 0 AS B_IsSaveDraft,Acc_Company.N_CurrencyID,1 AS N_ExchangeRate, "+
+                                                    " (Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission) AS N_InvoiceAmtF, 0 AS N_DiscountAmtF, 0 AS N_CashPaidF,0 AS N_FreightAmtF, "+
+                                                    " 1 AS B_FreightAmountDirect,Tvl_Ticketing.N_SuppTax AS N_TaxAmt,Tvl_Ticketing.N_SuppTax AS N_TaxAmtF,Tvl_Ticketing.N_TaxCategoryID,2 AS N_PaymentMethod,Tvl_Ticketing.D_TicketDate D_PrintDate, "+
+                                                    " Tvl_Ticketing.N_TaxPercentage AS n_TaxPercentage,Tvl_Ticketing.N_userID AS N_CreatedUser,GETDATE() AS D_CreatedDate,565 AS N_FormID,0 AS N_POrderID "+
+                                                    " FROM         Tvl_Ticketing INNER JOIN "+
+                                                    " Inv_Location ON Tvl_Ticketing.N_CompanyID = Inv_Location.N_CompanyID AND Inv_Location.B_IsDefault = 1 INNER JOIN "+
+                                                    " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND Acc_BranchMaster.B_DefaultBranch = 1 INNER JOIN "+
+                                                    " Acc_Company ON Tvl_Ticketing.N_CompanyID = Acc_Company.N_CompanyID "+
+                                                    " WHERE      Tvl_Ticketing.N_CompanyID="+ nCompanyID +" AND Tvl_Ticketing.N_TicketID= "+ nTicketID;
+
+                        PMasterDt = dLayer.ExecuteDataTable(sqlPurchaseMaster, Params, connection,transaction);
+                        PMasterDt = api.Format(PMasterDt, "master");
+                        Pds.Tables.Add(PMasterDt);
+
+                        string sqlPurchaseDetails ="SELECT     Tvl_Ticketing.N_CompanyID, 0 AS N_PurchaseID, 0 AS N_PurchaseDetailsID, Inv_ItemMaster.N_ItemID, 1 AS N_Qty, "+
+                                                    " (Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission) AS N_PPrice, Inv_ItemMaster.N_ItemUnitID, 1 AS N_QtyDisplay, "+                                                    
+                                                    " (Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission) AS N_Cost, GETDATE() AS D_Entrydate, Acc_BranchMaster.N_BranchID, Inv_Location.N_LocationID, "+
+                                                    " Acc_Company.N_CurrencyID,1 AS N_ExchangeRate,(Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission) AS N_PPriceF, "+
+                                                    " (Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission) AS N_CostF,Tvl_Ticketing.N_TaxCategoryID AS N_TaxCategoryID1, "+
+                                                    " Tvl_Ticketing.N_TaxPercentage AS N_TaxPercentage1,Tvl_Ticketing.N_SuppTax AS N_TaxAmt1 ,inv_itemunit.X_ItemUnit"+
+                                                    " FROM         Tvl_Ticketing INNER JOIN "+
+                                                    " Inv_ItemMaster ON Tvl_Ticketing.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemMaster.X_ItemCode = '001' INNER JOIN "+
+                                                    " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND Acc_BranchMaster.B_DefaultBranch = 1 INNER JOIN "+
+                                                    " Inv_Location ON Tvl_Ticketing.N_CompanyID = Inv_Location.N_CompanyID AND Inv_Location.B_IsDefault = 1 INNER JOIN "+
+                                                    " Acc_Company ON Tvl_Ticketing.N_CompanyID = Acc_Company.N_CompanyID INNER JOIN "+
+                                                    " inv_itemunit ON inv_itemunit.N_CompanyID=Inv_ItemMaster.N_CompanyID AND inv_itemunit.N_ItemUnitID=Inv_ItemMaster.N_ItemUnitID "+
+                                                    " WHERE      Tvl_Ticketing.N_CompanyID= "+nCompanyID+" and Tvl_Ticketing.N_TicketID= "+nTicketID;
+
+                        PDetailsDt = dLayer.ExecuteDataTable(sqlPurchaseDetails, Params, connection,transaction);
+                        PDetailsDt = api.Format(PDetailsDt, "details");
+                        Pds.Tables.Add(PDetailsDt);       
+
+                        ApprovalDt = dLayer.ExecuteDataTable("select N_CompanyID ,'true' as isEditable,0 as approvalID,0 as isApprovalSystem, 565 AS formID,0 AS saveTag, 1 as nextApprovalLevel,'' AS btnSaveText from Acc_Company where N_CompanyID= "+nCompanyID, Params, connection,transaction);
+                        ApprovalDt = api.Format(ApprovalDt, "approval");
+                        Pds.Tables.Add(ApprovalDt);    
+
+                        PFreightDt = api.Format(PFreightDt, "freightCharges");
+                        Pds.Tables.Add(PFreightDt);   
+
+                        AttachmentDt = api.Format(AttachmentDt, "attachments");
+                        Pds.Tables.Add(AttachmentDt);                                           
+
+                        PResult=txnHandler.PurchaseSaveData( Pds ,User , dLayer, connection, transaction);
+
+                        n_IsCompleted=myFunctions.getIntVAL(PResult["b_IsCompleted"].ToString());
+                        x_Message=PResult["x_Msg"].ToString();
+
+                        if(n_IsCompleted==0)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, x_Message));
+                        }
+
                         transaction.Commit();
                         return Ok(api.Success("Ticket Created"));
                     }

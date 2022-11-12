@@ -410,6 +410,28 @@ namespace SmartxAPI.GeneralFunctions
                 return true;
         }
 
+        public bool CheckPRProcessed(int nPurchaseID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection ,SqlTransaction transaction)
+        {
+            SortedList Params = new SortedList();
+            int nCompanyID = this.GetCompanyID(User);
+            int nUserID = this.GetUserID(User);
+            object AdvancePRProcessed = null;
+
+            string sqlCommand = "Select COUNT(N_TransID) From Inv_PaymentRequest Where  N_CompanyID=@p1 and N_TransID=@p2 and N_FormID=65";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nPurchaseID);
+            AdvancePRProcessed = dLayer.ExecuteScalar(sqlCommand, Params, connection,transaction);
+
+            if (AdvancePRProcessed != null)
+            {
+                if (this.getIntVAL(AdvancePRProcessed.ToString()) > 0)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public bool UpdateTxnStatus(int nCompanyID, int nTransID, int nFormID, bool forceUpdate, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             SortedList statusParams = new SortedList();
@@ -3270,6 +3292,7 @@ namespace SmartxAPI.GeneralFunctions
         public bool SendMail(string ToMail, string Body, string Subjectval, IDataAccessLayer dLayer, int FormID, int ReferID, int CompanyID);
         public bool CheckClosedYear(int N_CompanyID, int nFnYearID, IDataAccessLayer dLayer, SqlConnection connection);
         public bool CheckActiveYearTransaction(int nCompanyID, int nFnYearID, DateTime dTransDate, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
+        public bool CheckPRProcessed(int nPurchaseID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection,SqlTransaction transaction);
         public bool ExportToExcel(ClaimsPrincipal User, string _fillquery, string _filename, IDataAccessLayer dLayer, SqlConnection connection);
         public string GetUploadsPath(ClaimsPrincipal User, string DocType);
         public string GetTempFileName(ClaimsPrincipal User, string DocType, string FileName);

@@ -34,7 +34,8 @@ namespace SmartxAPI.Controllers
         private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
         private readonly int N_FormID;
-        public Inv_PurchaseInvoice(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf, IMyAttachments myAtt)
+        private readonly ITxnHandler txnHandler;
+        public Inv_PurchaseInvoice(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf, IMyAttachments myAtt,ITxnHandler txn)
         {
             _api = api;
             dLayer = dl;
@@ -42,6 +43,7 @@ namespace SmartxAPI.Controllers
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
             N_FormID = 65;
+            txnHandler=txn;
         }
 
 
@@ -588,567 +590,661 @@ namespace SmartxAPI.Controllers
             return TxnStatus;
         }
 
-
-
-
-        //Save....
+     //Save....
         [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
-
-            DataTable MasterTable;
-            DataTable DetailTable;
-            DataTable DetailsToImport;
-            DataTable WarrantyInfo;
-            MasterTable = ds.Tables["master"];
-            DetailTable = ds.Tables["details"];
-            WarrantyInfo = ds.Tables["warrantyInformation"];
-            DataTable Approvals;
-            Approvals = ds.Tables["approval"];
-            DataRow ApprovalRow = Approvals.Rows[0];
-            DataTable Attachment = ds.Tables["attachments"];
-            DataTable PurchaseFreight = ds.Tables["freightCharges"];
-            SortedList Params = new SortedList();
-            // Auto Gen
-            string InvoiceNo = "";
-            DataRow masterRow = MasterTable.Rows[0];
-            var values = masterRow["x_InvoiceNo"].ToString();
-            int N_PurchaseID = 0;
-            int N_SaveDraft = 0;
-            int nUserID = myFunctions.GetUserID(User);
-            int nCompanyID = myFunctions.GetCompanyID(User);
-            int nFnYearID = myFunctions.getIntVAL(masterRow["n_FnYearId"].ToString());
-            int n_POrderID = myFunctions.getIntVAL(masterRow["N_POrderID"].ToString());
-             var vendorInvoice="";
-            if(MasterTable.Columns.Contains("X_VendorInvoice"))
-                  vendorInvoice = masterRow["X_VendorInvoice"].ToString();
-            int n_MRNID = 0;
-            if (MasterTable.Columns.Contains("N_RsID"))
-                n_MRNID = myFunctions.getIntVAL(masterRow["N_RsID"].ToString());
-            int Dir_Purchase = 1;
-            int b_FreightAmountDirect = myFunctions.getIntVAL(masterRow["b_FreightAmountDirect"].ToString());
-            DetailsToImport = ds.Tables["detailsImport"];
-            bool B_isImport = false;
-
-            if (ds.Tables.Contains("detailsImport"))
-                B_isImport = true;
-
+            SortedList Result = new SortedList();
+            int n_IsCompleted=0;
+            string x_Message="";
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    connection.Open();
-                    SqlTransaction transaction;
-                    transaction = connection.BeginTransaction();
-                    N_PurchaseID = myFunctions.getIntVAL(masterRow["n_PurchaseID"].ToString());
-                    int N_VendorID = myFunctions.getIntVAL(masterRow["n_VendorID"].ToString());
-                    int N_NextApproverID = 0;
+                        connection.Open();
+                        SqlTransaction transaction;
+                        transaction = connection.BeginTransaction();
 
-                    if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_InvoiceDate"].ToString()), dLayer, connection, transaction))
-                    {
-                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=" + nCompanyID + " and convert(date ,'" + MasterTable.Rows[0]["D_InvoiceDate"].ToString() + "') between D_Start and D_End", Params, connection, transaction);
-                        if (DiffFnYearID != null)
-                        {
-                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
-                            nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
-                        }
-                        else
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
-                        }
-                    }
-                    MasterTable.AcceptChanges();
+                        Result=txnHandler.PurchaseSaveData( ds,User, dLayer,  connection, transaction);
 
-                    object mrnCount = dLayer.ExecuteScalar("SELECT count(Sec_UserPrevileges.N_MenuID) as Count FROM Sec_UserPrevileges INNER JOIN Sec_UserCategory ON Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID and Sec_UserPrevileges.N_MenuID=555 and Sec_UserCategory.N_CompanyID=" + nCompanyID + " and Sec_UserPrevileges.B_Visible=1", connection, transaction);
-                    bool B_MRNVisible = myFunctions.getIntVAL(mrnCount.ToString()) > 0 ? true : false;
-
-                    if (B_MRNVisible && n_MRNID != 0) Dir_Purchase = 0;
-
-                    if (N_PurchaseID > 0)
-                    {
-                        if (CheckProcessed(N_PurchaseID))
-                        {
-                             transaction.Rollback();
-                             return Ok(_api.Error(User, "Transaction Started!"));
-                        }
-                            
-
-                        object Dir_PurchaseCount = dLayer.ExecuteScalar("SELECT COUNT(Inv_Purchase.N_PurchaseID) FROM Inv_Purchase INNER JOIN Inv_MRN ON Inv_Purchase.N_CompanyID = Inv_MRN.N_CompanyID AND Inv_Purchase.N_RsID = Inv_MRN.N_MRNID AND Inv_Purchase.N_FnYearID = Inv_MRN.N_FnYearID " +
-                                                                        " WHERE Inv_MRN.B_IsDirectMRN=0 and Inv_Purchase.N_CompanyID=" + nCompanyID + " and Inv_Purchase.N_PurchaseID=" + N_PurchaseID, connection, transaction);
-
-                        if (myFunctions.getIntVAL(Dir_PurchaseCount.ToString()) > 0)
-                            Dir_Purchase = 1;
-                    }
-
-                    SortedList VendParams = new SortedList();
-                    VendParams.Add("@nCompanyID", nCompanyID);
-                    VendParams.Add("@N_VendorID", N_VendorID);
-                    VendParams.Add("@nFnYearID", nFnYearID);
-                    object objVendorName = dLayer.ExecuteScalar("Select X_VendorName From Inv_Vendor where N_VendorID=@N_VendorID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", VendParams, connection, transaction);
-                    object objVendorCode = dLayer.ExecuteScalar("Select X_VendorCode From Inv_Vendor where N_VendorID=@N_VendorID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", VendParams, connection, transaction);
-
-                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_PurchaseID > 0)
-                    {
-                        int N_PkeyID = N_PurchaseID;
-                        string X_Criteria = "N_PurchaseID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
-                        myFunctions.UpdateApproverEntry(Approvals, "Inv_Purchase", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "PURCHASE", N_PkeyID, values, 1, objVendorName.ToString(), 0, "", 0, User, dLayer, connection, transaction);
-                        myAttachments.SaveAttachment(dLayer, Attachment, values, N_PurchaseID, objVendorName.ToString().Trim(), objVendorCode.ToString(), N_VendorID, "Vendor Document", User, connection, transaction);
-
-                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
-                        if (N_SaveDraft == 0)
-                        {
-                            try
-                            {
-                                // SortedList PostingMRNParam = new SortedList();
-                                // PostingMRNParam.Add("N_CompanyID", nCompanyID);
-                                // PostingMRNParam.Add("N_PurchaseID", N_PurchaseID);
-                                // PostingMRNParam.Add("N_UserID", nUserID);
-                                // PostingMRNParam.Add("X_SystemName", "ERP Cloud");
-                                // PostingMRNParam.Add("X_UseMRN", "");
-                                // PostingMRNParam.Add("N_SaveDraft", N_SaveDraft);
-                                // PostingMRNParam.Add("N_MRNID", 0);
-
-                                // dLayer.ExecuteNonQueryPro("[SP_Inv_MRNposting]", PostingMRNParam, connection, transaction);
-
-                                SortedList PostingMRNParam = new SortedList();
-                                PostingMRNParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
-                                PostingMRNParam.Add("N_PurchaseID", N_PurchaseID);
-                                PostingMRNParam.Add("N_UserID", nUserID);
-                                PostingMRNParam.Add("X_SystemName", "ERP Cloud");
-                                PostingMRNParam.Add("X_UseMRN", "");
-                                PostingMRNParam.Add("N_SaveDraft", N_SaveDraft);
-                                PostingMRNParam.Add("B_DirectPurchase", Dir_Purchase);
-                                PostingMRNParam.Add("N_MRNID", n_MRNID);
-
-                                dLayer.ExecuteNonQueryPro("[SP_Inv_MRNprocessing]", PostingMRNParam, connection, transaction);
-
-
-                                SortedList PostingParam = new SortedList();
-                                PostingParam.Add("N_CompanyID", nCompanyID);
-                                PostingParam.Add("X_InventoryMode", "PURCHASE");
-                                PostingParam.Add("N_InternalID", N_PurchaseID);
-                                PostingParam.Add("N_UserID", nUserID);
-                                PostingParam.Add("X_SystemName", "ERP Cloud");
-                                PostingParam.Add("MRN_Flag", Dir_Purchase==0 ? "1" : "0");
-
-                                dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
-                            }
-                            catch (Exception ex)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, ex.Message));
-                            }
-                        }
-
-                        // myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "PURCHASE", values, dLayer, connection, transaction, User);
-                        transaction.Commit();
-                        return Ok(_api.Success("Purchase Approved " + "-" + values));
-                    }
-
-                    // if (values == "@Auto")
-                    // {
-                    //     N_SaveDraft = myFunctions.getIntVAL(masterRow["b_IsSaveDraft"].ToString());
-
-                    //     Params.Add("N_CompanyID", nCompanyID);
-                    //     Params.Add("N_YearID", nFnYearID);
-                    //     Params.Add("N_FormID", this.N_FormID);
-                    //     Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
-
-                    //     InvoiceNo = dLayer.GetAutoNumber("Inv_Purchase", "x_InvoiceNo", Params, connection, transaction);
-                    //     if (InvoiceNo == "")
-                    //     {
-                    //         transaction.Rollback();
-                    //         return Ok(_api.Error(User, "Unable to generate Invoice Number"));
-                    //     }
-                    //     MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
-                    // }
-                    if (N_PurchaseID == 0 && values != "@Auto")
-                    {
-                        object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_Purchase Where X_InvoiceNo ='" + values + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
-                        if (N_DocNumber == null)
-                        {
-                            N_DocNumber = 0;
-                        }
-                        if (myFunctions.getVAL(N_DocNumber.ToString()) >= 1)
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, "Invoice number already in use"));
-                        }
-                    }
-                    if (values == "@Auto")
-                    {
-                        Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
-                        Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
-                        Params.Add("N_FormID", this.N_FormID);
+                        n_IsCompleted=myFunctions.getIntVAL(Result["b_IsCompleted"].ToString());
+                        x_Message=Result["x_Msg"].ToString();
                        
-                        while (true)
-                        {
-                            InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
-                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Purchase Where X_InvoiceNo ='" + values + "' and N_CompanyID= " + nCompanyID, connection, transaction);
-                            if (N_Result == null)
-                                break;
-                        }
-                        if (InvoiceNo == "")
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, "Unable to generate Invoice Number"));
-                        }
-                        MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
-                       // object invoiceCount ;
-                        if(vendorInvoice!="")
-                        {
-                             object invoiceCount = dLayer.ExecuteScalar("select count(N_PurchaseID) as Count from inv_purchase where N_CompanyID= " + nCompanyID + " and X_VendorInvoice= '" +vendorInvoice +"' and N_VendorID = " + N_VendorID, connection, transaction);
-
-                        if (myFunctions.getIntVAL(invoiceCount.ToString()) >0)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, "vendor invoice number already exist"));
-                            }
-                        }
-                    }
-
-                    if (N_PurchaseID > 0)
+                    if(n_IsCompleted==1)
                     {
-                        // SortedList DeleteParams = new SortedList(){
-                        //         {"N_CompanyID",masterRow["n_CompanyId"].ToString()},
-                        //         {"X_TransType","PURCHASE"},
-                        //         {"N_VoucherID",N_PurchaseID},
-                        //                                         {"N_UserID",nUserID},
-                        //         {"X_SystemName","WebRequest"},
-                        //         {"B_MRNVisible",n_MRNID>0?"1":"0"}};
-
-                        // try
-                        // {
-                        //     dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
-                        // }
-                        // catch (Exception ex)
-                        // {
-                        //     transaction.Rollback();
-                        //     if (ex.Message.Contains("50"))
-                        //         return Ok(_api.Error(User, "DayClosed"));
-                        //     else if (ex.Message.Contains("51"))
-                        //         return Ok(_api.Error(User, "YearClosed"));
-                        //     else if (ex.Message.Contains("52"))
-                        //         return Ok(_api.Error(User, "YearExists"));
-                        //     else if (ex.Message.Contains("53"))
-                        //         return Ok(_api.Error(User, "PeriodClosed"));
-                        //     else if (ex.Message.Contains("54"))
-                        //         return Ok(_api.Error(User, "TxnDate"));
-                        //     else if (ex.Message.Contains("55"))
-                        //         return Ok(_api.Error(User, "TransactionStarted"));
-                        //     return Ok(_api.Error(User, ex.Message));
-                        // }
-
-
-                        object OPaymentDone = dLayer.ExecuteScalar("SELECT DISTINCT 1	FROM dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId AND dbo.Inv_PayReceipt.N_CompanyID = dbo.Inv_PayReceiptDetails.N_CompanyID " +
-                                                                                     " WHERE dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and dbo.Inv_PayReceipt.N_CompanyID =" + nCompanyID + " and dbo.Inv_PayReceipt.N_FnYearID=" + nFnYearID + " and  dbo.Inv_PayReceiptDetails.N_InventoryId=" + N_PurchaseID, connection, transaction);
-                        if (OPaymentDone != null)
-                        {
-                            if (myFunctions.getIntVAL(OPaymentDone.ToString()) == 1)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, "Purchase Payment processed against this purchase."));
-                            }
-                        }
-
-                        object OReturnDone = dLayer.ExecuteScalar("SELECT DISTINCT 1 FROM Inv_Purchase INNER JOIN Inv_PurchaseReturnMaster ON Inv_Purchase.N_CompanyID = Inv_PurchaseReturnMaster.N_CompanyID AND Inv_Purchase.N_FnYearID = Inv_PurchaseReturnMaster.N_FnYearID AND Inv_Purchase.N_PurchaseID = Inv_PurchaseReturnMaster.N_PurchaseId " +
-                                                                                    " where dbo.Inv_PurchaseReturnMaster.N_CompanyID =" + nCompanyID + " and dbo.Inv_PurchaseReturnMaster.N_FnYearID=" + nFnYearID + " and  dbo.Inv_PurchaseReturnMaster.N_PurchaseId=" + N_PurchaseID, connection, transaction);
-
-                        if (OReturnDone != null)
-                        {
-                            if (myFunctions.getIntVAL(OReturnDone.ToString()) == 1)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, "Purchase Return processed against this purchase."));
-                            }
-                        }
-
-                        dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + nCompanyID + " and X_VoucherNo='" + values + "' and N_FnYearID=" + nFnYearID + " and X_TransType = 'PURCHASE'", connection, transaction);
-                        dLayer.ExecuteNonQuery("Delete FROM Inv_PurchaseFreights WHERE N_PurchaseID = " + N_PurchaseID + " and N_CompanyID = " + nCompanyID, connection, transaction);
-                        dLayer.ExecuteNonQuery("Delete from Inv_PurchaseWarranty where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
-                        dLayer.ExecuteNonQuery("Delete from Inv_PurchaseDetails where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
-                        dLayer.ExecuteNonQuery(" Delete From Inv_Purchase Where (N_PurchaseID = " + N_PurchaseID + " OR (N_PurchaseType =4 and N_PurchaseRefID =  " + N_PurchaseID + ")) and N_CompanyID = " + nCompanyID, connection, transaction);
-                        dLayer.ExecuteNonQuery("Delete From Inv_Purchase Where (N_PurchaseID = " + N_PurchaseID + " OR (N_PurchaseType =5 and N_PurchaseRefID =  " + N_PurchaseID + ")) and N_CompanyID = " + nCompanyID, connection, transaction);
-
-                        dLayer.ExecuteNonQuery("Delete from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
-                    }
-                    MasterTable.Rows[0]["n_userID"] = myFunctions.GetUserID(User);
-
-                    MasterTable.AcceptChanges();
-
-                    MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
-
-                    if (MasterTable.Columns.Contains("n_TaxAmtDisp"))
-                        MasterTable.Columns.Remove("n_TaxAmtDisp");
-
-                    if (MasterTable.Columns.Contains("N_ActVendorID"))
-                    {
-                        MasterTable.Rows[0]["N_ActVendorID"] = N_VendorID;
+                        transaction.Commit();
+                        return Ok(_api.Success(Result, x_Message));
                     }
                     else
                     {
-                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_ActVendorID", typeof(int), N_VendorID);
-                    }
-
-                    N_PurchaseID = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", MasterTable, connection, transaction);
-
-                    if (N_PurchaseID <= 0)
-                    {
                         transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to save Purchase Invoice!"));
+                        return Ok(_api.Error(User, x_Message));
                     }
-
-                    if (B_isImport)
-                    {
-                        foreach (DataColumn col in DetailsToImport.Columns)
-                        {
-                            col.ColumnName = col.ColumnName.Replace(" ", "_");
-                            col.ColumnName = col.ColumnName.Replace("*", "");
-                            col.ColumnName = col.ColumnName.Replace("/", "_");
-                        }
-
-                        DetailsToImport.Columns.Add("N_MasterID");
-                        DetailsToImport.Columns.Add("X_Type");
-                        DetailsToImport.Columns.Add("N_CompanyID");
-                        DetailsToImport.Columns.Add("PkeyID");
-                        foreach (DataRow dtRow in DetailsToImport.Rows)
-                        {
-                            dtRow["N_MasterID"] = N_PurchaseID;
-                            dtRow["N_CompanyID"] = nCompanyID;
-                            dtRow["PkeyID"] = 0;
-                        }
-
-                        dLayer.ExecuteNonQuery("delete from Mig_Purchase ", connection, transaction);
-                        dLayer.SaveData("Mig_Purchase", "PkeyID", "", "", DetailsToImport, connection, transaction);
-
-                        SortedList ProParam = new SortedList();
-                        ProParam.Add("N_CompanyID", nCompanyID);
-                        ProParam.Add("N_PKeyID", N_PurchaseID);
-
-                        SortedList ValidationParam = new SortedList();
-                        ValidationParam.Add("N_CompanyID", nCompanyID);
-                        ValidationParam.Add("N_FnYearID", nFnYearID);
-                        ValidationParam.Add("X_Type", "purchase invoice");
-                        try
-                        {
-                            dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
-                        }
-                        catch (Exception ex)
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, ex));
-                        }
-
-                        ProParam.Add("X_Type", "purchase invoice");
-                        DetailTable = dLayer.ExecuteDataTablePro("SP_ScreenDataImport", ProParam, connection, transaction);
-                    }
-
-                    N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "PURCHASE", N_PurchaseID, InvoiceNo, 1, objVendorName.ToString(), 0, "", 0, User, dLayer, connection, transaction);
-                    N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
-
-                    for (int j = 0; j < DetailTable.Rows.Count; j++)
-                    {
-                        int UnitID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit where N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_ItemID"].ToString()) + " and N_CompanyID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_CompanyID"].ToString()) + " and X_ItemUnit='" + DetailTable.Rows[j]["X_ItemUnit"].ToString() + "'", connection, transaction).ToString());
-                        DetailTable.Rows[j]["N_PurchaseID"] = N_PurchaseID;
-                        DetailTable.Rows[j]["N_ItemUnitID"] = UnitID;
-                    }
-                    if (DetailTable.Columns.Contains("X_ItemUnit"))
-                        DetailTable.Columns.Remove("X_ItemUnit");
-                    int N_InvoiceDetailId = 0;
-                    DataTable DetailTableCopy = DetailTable.Copy();
-                    DetailTableCopy.AcceptChanges();
-                    if (DetailTable.Columns.Contains("n_MRNDetailsID"))
-                        DetailTable.Columns.Remove("n_MRNDetailsID");
-                    for (int j = 0; j < DetailTable.Rows.Count; j++)
-                    {
-                        N_InvoiceDetailId = dLayer.SaveDataWithIndex("Inv_PurchaseDetails", "n_PurchaseDetailsID", "", "", j, DetailTable, connection, transaction);
-                        if (N_InvoiceDetailId <= 0)
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, "Unable to save Purchase Invoice!"));
-                        }
-
-                        if (n_MRNID > 0 && B_MRNVisible)
-                        {
-                            dLayer.ExecuteScalar("Update Inv_MRNDetails Set N_SPrice=" + myFunctions.getVAL(DetailTableCopy.Rows[j]["N_PPrice"].ToString()) + ",N_PurchaseDetailsID=" + N_InvoiceDetailId + " Where N_ItemID=" + myFunctions.getIntVAL(DetailTableCopy.Rows[j]["N_ItemID"].ToString()) + "  and N_MRNID=" + myFunctions.getVAL(DetailTableCopy.Rows[j]["n_RsID"].ToString()) + " and N_CompanyID=" + nCompanyID + " and N_MRNDetailsID=" + myFunctions.getVAL(DetailTableCopy.Rows[j]["n_MRNDetailsID"].ToString()), connection, transaction);
-                            dLayer.ExecuteScalar("Update Inv_MRN Set N_Processed = 1 Where  N_MRNID=" + myFunctions.getVAL(DetailTableCopy.Rows[j]["n_RsID"].ToString()) + " and N_CompanyID=" + nCompanyID, connection, transaction);
-
-                            SortedList UpdateStockParam = new SortedList();
-                            UpdateStockParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
-                            UpdateStockParam.Add("N_MRNID", n_MRNID);
-                            UpdateStockParam.Add("N_ItemID", myFunctions.getIntVAL(DetailTableCopy.Rows[j]["N_ItemID"].ToString()));
-                            UpdateStockParam.Add("N_SPrice", myFunctions.getVAL(DetailTableCopy.Rows[j]["N_PPrice"].ToString()));
-
-                            dLayer.ExecuteNonQueryPro("[SP_UpdateStock_MRN]", UpdateStockParam, connection, transaction);
-
-                        }
-                        if(WarrantyInfo!=null)
-                        foreach (DataRow dtWarranty in WarrantyInfo.Rows)
-                        {
-                            if(myFunctions.getIntVAL(dtWarranty["rowID"].ToString())==j)
-                            dtWarranty["N_PurchaseID"] = N_PurchaseID;
-                            dtWarranty["N_PurchaseDetailID"] = N_InvoiceDetailId;
-                        }
-
-
-                                SortedList QueryParams = new SortedList();
-                                QueryParams.Add("@Cost",myFunctions.getVAL(DetailTableCopy.Rows[j]["N_Cost"].ToString()));
-                                QueryParams.Add("@nCompanyID",myFunctions.getVAL(DetailTableCopy.Rows[j]["N_CompanyID"].ToString()));
-                                QueryParams.Add("@nItemID",myFunctions.getVAL(DetailTableCopy.Rows[j]["N_ItemID"].ToString()));
-                                dLayer.ExecuteNonQuery("Update Inv_ItemMaster Set N_PurchaseCost=@Cost Where N_ItemID=@nItemID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-
-
-                    }
-
-                    if(WarrantyInfo!=null && WarrantyInfo.Rows.Count>0){
-                    if (WarrantyInfo.Columns.Contains("rowID"))
-                        WarrantyInfo.Columns.Remove("rowID");
-
-                    dLayer.SaveData("Inv_PurchaseWarranty", "N_WarrantyID", WarrantyInfo, connection, transaction);
-                    }
-
-                    if (N_PurchaseID > 0)
-                    {
-                        dLayer.ExecuteScalar("Update Inv_PurchaseOrder Set N_Processed=1 , N_PurchaseID=" + N_PurchaseID + " Where N_POrderID=" + n_POrderID + " and N_CompanyID=" + nCompanyID, connection, transaction);
-                        dLayer.ExecuteScalar("Update Inv_MRN Set N_Processed=1 Where N_MRNID=" + n_MRNID + " and N_CompanyID=" + nCompanyID, connection, transaction);
-                        // if (B_ServiceSheet)
-                        //     dba.ExecuteNonQuery("Update Inv_VendorServiceSheet Set N_Processed=1  Where N_RefID=" + n_POrderID + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID,connection,transaction);
-
-                    }
-
-                    if (PurchaseFreight.Rows.Count > 0)
-                    {
-                        if (!PurchaseFreight.Columns.Contains("N_PurchaseID"))
-                        {
-                            PurchaseFreight.Columns.Add("N_PurchaseID");
-                        }
-                        foreach (DataRow var in PurchaseFreight.Rows)
-                        {
-                            var["N_PurchaseID"] = N_PurchaseID;
-                        }
-                        dLayer.SaveData("Inv_PurchaseFreights", "N_PurchaseFreightID", PurchaseFreight, connection, transaction);
-                    }
-
-                   
-
-                    if (b_FreightAmountDirect == 0)
-                    {
-                        SortedList ProcParams = new SortedList(){
-                            {"N_FPurchaseID", N_PurchaseID},
-                            {"N_CompanyID", nCompanyID},
-                            {"N_FnYearID", nFnYearID},
-                            {"N_FormID", this.N_FormID},
-                        };
-                        dLayer.ExecuteNonQueryPro("SP_FillFreightToPurchase", ProcParams, connection, transaction);
-                    }
-
-                    if (N_SaveDraft == 0)
-                    {
-                        try
-                        {
-                            // SortedList PostingMRNParam = new SortedList();
-                            // PostingMRNParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
-                            // PostingMRNParam.Add("N_PurchaseID", N_PurchaseID);
-                            // PostingMRNParam.Add("N_UserID", nUserID);
-                            // PostingMRNParam.Add("X_SystemName", "ERP Cloud");
-                            // PostingMRNParam.Add("X_UseMRN", "");
-                            // PostingMRNParam.Add("N_SaveDraft", N_SaveDraft);
-                            // PostingMRNParam.Add("N_MRNID", 0);
-
-                            // dLayer.ExecuteNonQueryPro("[SP_Inv_MRNposting]", PostingMRNParam, connection, transaction);
-
-                            SortedList PostingMRNParam = new SortedList();
-                            PostingMRNParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
-                            PostingMRNParam.Add("N_PurchaseID", N_PurchaseID);
-                            PostingMRNParam.Add("N_UserID", nUserID);
-                            PostingMRNParam.Add("X_SystemName", "ERP Cloud");
-                            PostingMRNParam.Add("X_UseMRN", "");
-                            PostingMRNParam.Add("N_SaveDraft", N_SaveDraft);
-                            PostingMRNParam.Add("B_DirectPurchase", Dir_Purchase);
-                            PostingMRNParam.Add("N_MRNID", n_MRNID);
-
-                            dLayer.ExecuteNonQueryPro("[SP_Inv_MRNprocessing]", PostingMRNParam, connection, transaction);
-
-                            SortedList PostingParam = new SortedList();
-                            PostingParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
-                            PostingParam.Add("X_InventoryMode", "PURCHASE");
-                            PostingParam.Add("N_InternalID", N_PurchaseID);
-                            PostingParam.Add("N_UserID", nUserID);
-                            PostingParam.Add("X_SystemName", "ERP Cloud");
-                            PostingParam.Add("MRN_Flag", Dir_Purchase==0 ? "1" : "0");
-
-                            dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
-                        }
-                        catch (Exception ex)
-                        {
-                            transaction.Rollback();
-                            if (ex.Message.Contains("50"))
-                                return Ok(_api.Error(User, "Day Closed"));
-                            else if (ex.Message.Contains("51"))
-                                return Ok(_api.Error(User, "Year Closed"));
-                            else if (ex.Message.Contains("52"))
-                                return Ok(_api.Error(User, "Year Exists"));
-                            else if (ex.Message.Contains("53"))
-                                return Ok(_api.Error(User, "Period Closed"));
-                            else if (ex.Message.Contains("54"))
-                                return Ok(_api.Error(User, "Wrong Txn Date"));
-                            else if (ex.Message.Contains("55"))
-                                return Ok(_api.Error(User, "Transaction Started"));
-                            return Ok(_api.Error(User, ex.Message));
-                        }
-
-                            //StatusUpdate
-                            int tempPOrderID=0;
-                            for (int j = 0; j < DetailTable.Rows.Count; j++)
-                            {
-                                if (n_POrderID > 0 && tempPOrderID!=n_POrderID)
-                                {
-                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
-                                    {
-                                        transaction.Rollback();
-                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
-                                    }
-                                }
-                                tempPOrderID=n_POrderID;
-                            };
-                    }
-                    SortedList VendorParams = new SortedList();
-                    VendorParams.Add("@nVendorID", N_VendorID);
-                    DataTable VendorInfo = dLayer.ExecuteDataTable("Select X_VendorCode,X_VendorName from Inv_Vendor where N_VendorID=@nVendorID", VendorParams, connection, transaction);
-                    if (VendorInfo.Rows.Count > 0)
-                    {
-                        try
-                        {
-                            myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_PurchaseID, VendorInfo.Rows[0]["X_VendorName"].ToString().Trim(), VendorInfo.Rows[0]["X_VendorCode"].ToString(), N_VendorID, "Vendor Document", User, connection, transaction);
-                        }
-                        catch (Exception ex)
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, ex));
-                        }
-                    }
-                    //myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PurchaseID, "PURCHASE", InvoiceNo, dLayer, connection, transaction, User);
-
-                    transaction.Commit();
                 }
-                SortedList Result = new SortedList();
-                Result.Add("n_InvoiceID", N_PurchaseID);
-                Result.Add("x_InvoiceNo", InvoiceNo);
-                return Ok(_api.Success(Result, "Purchase Invoice Saved"));
-
-
-            }
-
-            
-                  
+                     
+            }       
             catch (Exception ex)
             {
                 return Ok(_api.Error(User, ex));
             }
+
         }
+
+
+        //Save....
+        //private SortedList PurchaseSaveData([FromBody] DataSet ds,IDataAccessLayer dLayer,SqlConnection connection, SqlTransaction transaction)
+        // {
+
+        //     DataTable MasterTable;
+        //     DataTable DetailTable;
+        //     DataTable DetailsToImport;
+        //     DataTable WarrantyInfo;
+        //     MasterTable = ds.Tables["master"];
+        //     DetailTable = ds.Tables["details"];
+        //     WarrantyInfo = ds.Tables["warrantyInformation"];
+        //     DataTable Approvals;
+        //     Approvals = ds.Tables["approval"];
+        //     DataRow ApprovalRow = Approvals.Rows[0];
+        //     DataTable Attachment = ds.Tables["attachments"];
+        //     DataTable PurchaseFreight = ds.Tables["freightCharges"];
+        //     SortedList Params = new SortedList();
+        //     SortedList Result = new SortedList();
+        //     // Auto Gen
+        //     string InvoiceNo = "";
+        //     DataRow masterRow = MasterTable.Rows[0];
+        //     var values = masterRow["x_InvoiceNo"].ToString();
+        //     int N_PurchaseID = 0;
+        //     int N_SaveDraft = 0;
+        //     int nUserID = myFunctions.GetUserID(User);
+        //     int nCompanyID = myFunctions.GetCompanyID(User);
+        //     int nFnYearID = myFunctions.getIntVAL(masterRow["n_FnYearId"].ToString());
+        //     int n_POrderID = myFunctions.getIntVAL(masterRow["N_POrderID"].ToString());
+        //     var vendorInvoice="";
+        //     if(MasterTable.Columns.Contains("X_VendorInvoice"))
+        //           vendorInvoice = masterRow["X_VendorInvoice"].ToString();
+        //     int n_MRNID = 0;
+        //     if (MasterTable.Columns.Contains("N_RsID"))
+        //         n_MRNID = myFunctions.getIntVAL(masterRow["N_RsID"].ToString());
+        //     int Dir_Purchase = 1;
+        //     int b_FreightAmountDirect = myFunctions.getIntVAL(masterRow["b_FreightAmountDirect"].ToString());
+        //     DetailsToImport = ds.Tables["detailsImport"];
+        //     bool B_isImport = false;
+
+        //     if (ds.Tables.Contains("detailsImport"))
+        //         B_isImport = true;
+
+
+        //     // try
+        //     // {
+        //     //     using (SqlConnection connection = new SqlConnection(connectionString))
+        //     //     {
+        //     //         connection.Open();
+        //     //         SqlTransaction transaction;
+        //     //         transaction = connection.BeginTransaction();
+        //             N_PurchaseID = myFunctions.getIntVAL(masterRow["n_PurchaseID"].ToString());
+        //             int N_VendorID = myFunctions.getIntVAL(masterRow["n_VendorID"].ToString());
+        //             int N_NextApproverID = 0;
+
+        //             if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_InvoiceDate"].ToString()), dLayer, connection, transaction))
+        //             {
+        //                 object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=" + nCompanyID + " and convert(date ,'" + MasterTable.Rows[0]["D_InvoiceDate"].ToString() + "') between D_Start and D_End", Params, connection, transaction);
+        //                 if (DiffFnYearID != null)
+        //                 {
+        //                     MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+        //                     nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+        //                 }
+        //                 else
+        //                  {
+        //                 //     transaction.Rollback();
+        //                 //     return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+        //                     Result.Add("b_IsCompleted", 0);
+        //                     Result.Add("x_Msg", "Transaction date must be in the active Financial Year.");
+        //                     return Result;
+        //                 }
+        //             }
+        //             MasterTable.AcceptChanges();
+
+        //             object mrnCount = dLayer.ExecuteScalar("SELECT count(Sec_UserPrevileges.N_MenuID) as Count FROM Sec_UserPrevileges INNER JOIN Sec_UserCategory ON Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID and Sec_UserPrevileges.N_MenuID=555 and Sec_UserCategory.N_CompanyID=" + nCompanyID + " and Sec_UserPrevileges.B_Visible=1", connection, transaction);
+        //             bool B_MRNVisible = myFunctions.getIntVAL(mrnCount.ToString()) > 0 ? true : false;
+
+        //             if (B_MRNVisible && n_MRNID != 0) Dir_Purchase = 0;
+
+        //             if (N_PurchaseID > 0)
+        //             {
+        //                 if (CheckProcessed(N_PurchaseID))
+        //                 {
+        //                     //  transaction.Rollback();
+        //                     //  return Ok(_api.Error(User, "Transaction Started!"));
+        //                     Result.Add("b_IsCompleted", 0);
+        //                     Result.Add("x_Msg", "Transaction Started!");
+        //                     return Result;
+        //                 }
+                            
+
+        //                 object Dir_PurchaseCount = dLayer.ExecuteScalar("SELECT COUNT(Inv_Purchase.N_PurchaseID) FROM Inv_Purchase INNER JOIN Inv_MRN ON Inv_Purchase.N_CompanyID = Inv_MRN.N_CompanyID AND Inv_Purchase.N_RsID = Inv_MRN.N_MRNID AND Inv_Purchase.N_FnYearID = Inv_MRN.N_FnYearID " +
+        //                                                                 " WHERE Inv_MRN.B_IsDirectMRN=0 and Inv_Purchase.N_CompanyID=" + nCompanyID + " and Inv_Purchase.N_PurchaseID=" + N_PurchaseID, connection, transaction);
+
+        //                 if (myFunctions.getIntVAL(Dir_PurchaseCount.ToString()) > 0)
+        //                     Dir_Purchase = 1;
+        //             }
+
+        //             SortedList VendParams = new SortedList();
+        //             VendParams.Add("@nCompanyID", nCompanyID);
+        //             VendParams.Add("@N_VendorID", N_VendorID);
+        //             VendParams.Add("@nFnYearID", nFnYearID);
+        //             object objVendorName = dLayer.ExecuteScalar("Select X_VendorName From Inv_Vendor where N_VendorID=@N_VendorID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", VendParams, connection, transaction);
+        //             object objVendorCode = dLayer.ExecuteScalar("Select X_VendorCode From Inv_Vendor where N_VendorID=@N_VendorID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", VendParams, connection, transaction);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+        //             if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_PurchaseID > 0)
+        //             {
+        //                 int N_PkeyID = N_PurchaseID;
+        //                 string X_Criteria = "N_PurchaseID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+        //                 myFunctions.UpdateApproverEntry(Approvals, "Inv_Purchase", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+        //                 N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "PURCHASE", N_PkeyID, values, 1, objVendorName.ToString(), 0, "", 0, User, dLayer, connection, transaction);
+        //                 myAttachments.SaveAttachment(dLayer, Attachment, values, N_PurchaseID, objVendorName.ToString().Trim(), objVendorCode.ToString(), N_VendorID, "Vendor Document", User, connection, transaction);
+
+        //                 N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
+        //                 if (N_SaveDraft == 0)
+        //                 {
+        //                     try
+        //                     {
+        //                         // SortedList PostingMRNParam = new SortedList();
+        //                         // PostingMRNParam.Add("N_CompanyID", nCompanyID);
+        //                         // PostingMRNParam.Add("N_PurchaseID", N_PurchaseID);
+        //                         // PostingMRNParam.Add("N_UserID", nUserID);
+        //                         // PostingMRNParam.Add("X_SystemName", "ERP Cloud");
+        //                         // PostingMRNParam.Add("X_UseMRN", "");
+        //                         // PostingMRNParam.Add("N_SaveDraft", N_SaveDraft);
+        //                         // PostingMRNParam.Add("N_MRNID", 0);
+
+        //                         // dLayer.ExecuteNonQueryPro("[SP_Inv_MRNposting]", PostingMRNParam, connection, transaction);
+
+        //                         SortedList PostingMRNParam = new SortedList();
+        //                         PostingMRNParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+        //                         PostingMRNParam.Add("N_PurchaseID", N_PurchaseID);
+        //                         PostingMRNParam.Add("N_UserID", nUserID);
+        //                         PostingMRNParam.Add("X_SystemName", "ERP Cloud");
+        //                         PostingMRNParam.Add("X_UseMRN", "");
+        //                         PostingMRNParam.Add("N_SaveDraft", N_SaveDraft);
+        //                         PostingMRNParam.Add("B_DirectPurchase", Dir_Purchase);
+        //                         PostingMRNParam.Add("N_MRNID", n_MRNID);
+
+        //                         dLayer.ExecuteNonQueryPro("[SP_Inv_MRNprocessing]", PostingMRNParam, connection, transaction);
+
+
+        //                         SortedList PostingParam = new SortedList();
+        //                         PostingParam.Add("N_CompanyID", nCompanyID);
+        //                         PostingParam.Add("X_InventoryMode", "PURCHASE");
+        //                         PostingParam.Add("N_InternalID", N_PurchaseID);
+        //                         PostingParam.Add("N_UserID", nUserID);
+        //                         PostingParam.Add("X_SystemName", "ERP Cloud");
+        //                         PostingParam.Add("MRN_Flag", Dir_Purchase==0 ? "1" : "0");
+
+        //                         dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
+        //                     }
+        //                     catch (Exception ex)
+        //                     {
+        //                         // transaction.Rollback();
+        //                         // return Ok(_api.Error(User, ex.Message));
+        //                         Result.Add("b_IsCompleted", 0);
+        //                         Result.Add("x_Msg", ex.Message);
+        //                         return Result;
+        //                     }
+        //                 }
+
+        //                 // myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "PURCHASE", values, dLayer, connection, transaction, User);
+        //                 // transaction.Commit();
+        //                 // return Ok(_api.Success("Purchase Approved " + "-" + values));
+        //                 Result.Add("b_IsCompleted", 1);
+        //                 Result.Add("x_Msg", "Purchase Approved " + "-" + values);
+        //                 return Result;
+        //             }
+
+        //             // if (values == "@Auto")
+        //             // {
+        //             //     N_SaveDraft = myFunctions.getIntVAL(masterRow["b_IsSaveDraft"].ToString());
+
+        //             //     Params.Add("N_CompanyID", nCompanyID);
+        //             //     Params.Add("N_YearID", nFnYearID);
+        //             //     Params.Add("N_FormID", this.N_FormID);
+        //             //     Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
+
+        //             //     InvoiceNo = dLayer.GetAutoNumber("Inv_Purchase", "x_InvoiceNo", Params, connection, transaction);
+        //             //     if (InvoiceNo == "")
+        //             //     {
+        //             //         transaction.Rollback();
+        //             //         return Ok(_api.Error(User, "Unable to generate Invoice Number"));
+        //             //     }
+        //             //     MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
+        //             // }
+        //             if (N_PurchaseID == 0 && values != "@Auto")
+        //             {
+        //                 object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_Purchase Where X_InvoiceNo ='" + values + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+        //                 if (N_DocNumber == null)
+        //                 {
+        //                     N_DocNumber = 0;
+        //                 }
+        //                 if (myFunctions.getVAL(N_DocNumber.ToString()) >= 1)
+        //                 {
+        //                     // transaction.Rollback();
+        //                     // return Ok(_api.Error(User, "Invoice number already in use"));
+        //                     Result.Add("b_IsCompleted", 0);
+        //                     Result.Add("x_Msg", "Invoice number already in use");
+        //                     return Result;
+        //                 }
+        //             }
+        //             if (values == "@Auto")
+        //             {
+        //                 Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
+        //                 Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
+        //                 Params.Add("N_FormID", this.N_FormID);
+                       
+        //                 while (true)
+        //                 {
+        //                     InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+        //                     object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Purchase Where X_InvoiceNo ='" + values + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+        //                     if (N_Result == null)
+        //                         break;
+        //                 }
+        //                 if (InvoiceNo == "")
+        //                 {
+        //                     // transaction.Rollback();
+        //                     // return Ok(_api.Error(User, "Unable to generate Invoice Number"));
+        //                     Result.Add("b_IsCompleted", 0);
+        //                     Result.Add("x_Msg", "Unable to generate Invoice Number");
+        //                     return Result;
+        //                 }
+        //                 MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
+        //                // object invoiceCount ;
+        //                 if(vendorInvoice!="")
+        //                 {
+        //                      object invoiceCount = dLayer.ExecuteScalar("select count(N_PurchaseID) as Count from inv_purchase where N_CompanyID= " + nCompanyID + " and X_VendorInvoice= '" +vendorInvoice +"' and N_VendorID = " + N_VendorID, connection, transaction);
+
+        //                 if (myFunctions.getIntVAL(invoiceCount.ToString()) >0)
+        //                     {
+        //                         // transaction.Rollback();
+        //                         // return Ok(_api.Error(User, "vendor invoice number already exist"));
+        //                         Result.Add("b_IsCompleted", 0);
+        //                         Result.Add("x_Msg", "vendor invoice number already exist");
+        //                         return Result;
+        //                     }
+        //                 }
+        //             }
+
+        //             if (N_PurchaseID > 0)
+        //             {
+        //                 // SortedList DeleteParams = new SortedList(){
+        //                 //         {"N_CompanyID",masterRow["n_CompanyId"].ToString()},
+        //                 //         {"X_TransType","PURCHASE"},
+        //                 //         {"N_VoucherID",N_PurchaseID},
+        //                 //                                         {"N_UserID",nUserID},
+        //                 //         {"X_SystemName","WebRequest"},
+        //                 //         {"B_MRNVisible",n_MRNID>0?"1":"0"}};
+
+        //                 // try
+        //                 // {
+        //                 //     dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
+        //                 // }
+        //                 // catch (Exception ex)
+        //                 // {
+        //                 //     transaction.Rollback();
+        //                 //     if (ex.Message.Contains("50"))
+        //                 //         return Ok(_api.Error(User, "DayClosed"));
+        //                 //     else if (ex.Message.Contains("51"))
+        //                 //         return Ok(_api.Error(User, "YearClosed"));
+        //                 //     else if (ex.Message.Contains("52"))
+        //                 //         return Ok(_api.Error(User, "YearExists"));
+        //                 //     else if (ex.Message.Contains("53"))
+        //                 //         return Ok(_api.Error(User, "PeriodClosed"));
+        //                 //     else if (ex.Message.Contains("54"))
+        //                 //         return Ok(_api.Error(User, "TxnDate"));
+        //                 //     else if (ex.Message.Contains("55"))
+        //                 //         return Ok(_api.Error(User, "TransactionStarted"));
+        //                 //     return Ok(_api.Error(User, ex.Message));
+        //                 // }
+
+
+        //                 object OPaymentDone = dLayer.ExecuteScalar("SELECT DISTINCT 1	FROM dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId AND dbo.Inv_PayReceipt.N_CompanyID = dbo.Inv_PayReceiptDetails.N_CompanyID " +
+        //                                                                              " WHERE dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and dbo.Inv_PayReceipt.N_CompanyID =" + nCompanyID + " and dbo.Inv_PayReceipt.N_FnYearID=" + nFnYearID + " and  dbo.Inv_PayReceiptDetails.N_InventoryId=" + N_PurchaseID, connection, transaction);
+        //                 if (OPaymentDone != null)
+        //                 {
+        //                     if (myFunctions.getIntVAL(OPaymentDone.ToString()) == 1)
+        //                     {
+        //                         // transaction.Rollback();
+        //                         // return Ok(_api.Error(User, "Purchase Payment processed against this purchase."));
+        //                         Result.Add("b_IsCompleted", 0);
+        //                         Result.Add("x_Msg", "Purchase Payment processed against this purchase.");
+        //                         return Result;
+        //                     }
+        //                 }
+
+        //                 object OReturnDone = dLayer.ExecuteScalar("SELECT DISTINCT 1 FROM Inv_Purchase INNER JOIN Inv_PurchaseReturnMaster ON Inv_Purchase.N_CompanyID = Inv_PurchaseReturnMaster.N_CompanyID AND Inv_Purchase.N_FnYearID = Inv_PurchaseReturnMaster.N_FnYearID AND Inv_Purchase.N_PurchaseID = Inv_PurchaseReturnMaster.N_PurchaseId " +
+        //                                                                             " where dbo.Inv_PurchaseReturnMaster.N_CompanyID =" + nCompanyID + " and dbo.Inv_PurchaseReturnMaster.N_FnYearID=" + nFnYearID + " and  dbo.Inv_PurchaseReturnMaster.N_PurchaseId=" + N_PurchaseID, connection, transaction);
+
+        //                 if (OReturnDone != null)
+        //                 {
+        //                     if (myFunctions.getIntVAL(OReturnDone.ToString()) == 1)
+        //                     {
+        //                         // transaction.Rollback();
+        //                         // return Ok(_api.Error(User, "Purchase Return processed against this purchase."));
+        //                         Result.Add("b_IsCompleted", 0);
+        //                         Result.Add("x_Msg", "Purchase Return processed against this purchase.");
+        //                         return Result;
+        //                     }
+        //                 }
+
+        //                 dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + nCompanyID + " and X_VoucherNo='" + values + "' and N_FnYearID=" + nFnYearID + " and X_TransType = 'PURCHASE'", connection, transaction);
+        //                 dLayer.ExecuteNonQuery("Delete FROM Inv_PurchaseFreights WHERE N_PurchaseID = " + N_PurchaseID + " and N_CompanyID = " + nCompanyID, connection, transaction);
+        //                 dLayer.ExecuteNonQuery("Delete from Inv_PurchaseWarranty where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+        //                 dLayer.ExecuteNonQuery("Delete from Inv_PurchaseDetails where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+        //                 dLayer.ExecuteNonQuery(" Delete From Inv_Purchase Where (N_PurchaseID = " + N_PurchaseID + " OR (N_PurchaseType =4 and N_PurchaseRefID =  " + N_PurchaseID + ")) and N_CompanyID = " + nCompanyID, connection, transaction);
+        //                 dLayer.ExecuteNonQuery("Delete From Inv_Purchase Where (N_PurchaseID = " + N_PurchaseID + " OR (N_PurchaseType =5 and N_PurchaseRefID =  " + N_PurchaseID + ")) and N_CompanyID = " + nCompanyID, connection, transaction);
+
+        //                 dLayer.ExecuteNonQuery("Delete from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+        //             }
+        //             MasterTable.Rows[0]["n_userID"] = myFunctions.GetUserID(User);
+
+        //             MasterTable.AcceptChanges();
+
+        //             MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+
+        //             if (MasterTable.Columns.Contains("n_TaxAmtDisp"))
+        //                 MasterTable.Columns.Remove("n_TaxAmtDisp");
+
+        //             if (MasterTable.Columns.Contains("N_ActVendorID"))
+        //             {
+        //                 MasterTable.Rows[0]["N_ActVendorID"] = N_VendorID;
+        //             }
+        //             else
+        //             {
+        //                 MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_ActVendorID", typeof(int), N_VendorID);
+        //             }
+
+        //             N_PurchaseID = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", MasterTable, connection, transaction);
+
+        //             if (N_PurchaseID <= 0)
+        //             {
+        //                 // transaction.Rollback();
+        //                 // return Ok(_api.Error(User, "Unable to save Purchase Invoice!"));
+        //                 Result.Add("b_IsCompleted", 0);
+        //                 Result.Add("x_Msg", "Unable to save Purchase Invoice!");
+        //                 return Result;
+        //             }
+
+        //             if (B_isImport)
+        //             {
+        //                 foreach (DataColumn col in DetailsToImport.Columns)
+        //                 {
+        //                     col.ColumnName = col.ColumnName.Replace(" ", "_");
+        //                     col.ColumnName = col.ColumnName.Replace("*", "");
+        //                     col.ColumnName = col.ColumnName.Replace("/", "_");
+        //                 }
+
+        //                 DetailsToImport.Columns.Add("N_MasterID");
+        //                 DetailsToImport.Columns.Add("X_Type");
+        //                 DetailsToImport.Columns.Add("N_CompanyID");
+        //                 DetailsToImport.Columns.Add("PkeyID");
+        //                 foreach (DataRow dtRow in DetailsToImport.Rows)
+        //                 {
+        //                     dtRow["N_MasterID"] = N_PurchaseID;
+        //                     dtRow["N_CompanyID"] = nCompanyID;
+        //                     dtRow["PkeyID"] = 0;
+        //                 }
+
+        //                 dLayer.ExecuteNonQuery("delete from Mig_Purchase ", connection, transaction);
+        //                 dLayer.SaveData("Mig_Purchase", "PkeyID", "", "", DetailsToImport, connection, transaction);
+
+        //                 SortedList ProParam = new SortedList();
+        //                 ProParam.Add("N_CompanyID", nCompanyID);
+        //                 ProParam.Add("N_PKeyID", N_PurchaseID);
+
+        //                 SortedList ValidationParam = new SortedList();
+        //                 ValidationParam.Add("N_CompanyID", nCompanyID);
+        //                 ValidationParam.Add("N_FnYearID", nFnYearID);
+        //                 ValidationParam.Add("X_Type", "purchase invoice");
+        //                 try
+        //                 {
+        //                     dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
+        //                 }
+        //                 catch (Exception ex)
+        //                 {
+        //                     // transaction.Rollback();
+        //                     // return Ok(_api.Error(User, ex));
+        //                     Result.Add("b_IsCompleted", 0);
+        //                     Result.Add("x_Msg", ex);
+        //                     return Result;
+        //                 }
+
+        //                 ProParam.Add("X_Type", "purchase invoice");
+        //                 DetailTable = dLayer.ExecuteDataTablePro("SP_ScreenDataImport", ProParam, connection, transaction);
+        //             }
+
+        //             N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "PURCHASE", N_PurchaseID, InvoiceNo, 1, objVendorName.ToString(), 0, "", 0, User, dLayer, connection, transaction);
+        //             N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
+
+        //             for (int j = 0; j < DetailTable.Rows.Count; j++)
+        //             {
+        //                 int UnitID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit where N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_ItemID"].ToString()) + " and N_CompanyID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_CompanyID"].ToString()) + " and X_ItemUnit='" + DetailTable.Rows[j]["X_ItemUnit"].ToString() + "'", connection, transaction).ToString());
+        //                 DetailTable.Rows[j]["N_PurchaseID"] = N_PurchaseID;
+        //                 DetailTable.Rows[j]["N_ItemUnitID"] = UnitID;
+        //             }
+        //             if (DetailTable.Columns.Contains("X_ItemUnit"))
+        //                 DetailTable.Columns.Remove("X_ItemUnit");
+        //             int N_InvoiceDetailId = 0;
+        //             DataTable DetailTableCopy = DetailTable.Copy();
+        //             DetailTableCopy.AcceptChanges();
+        //             if (DetailTable.Columns.Contains("n_MRNDetailsID"))
+        //                 DetailTable.Columns.Remove("n_MRNDetailsID");
+        //             for (int j = 0; j < DetailTable.Rows.Count; j++)
+        //             {
+        //                 N_InvoiceDetailId = dLayer.SaveDataWithIndex("Inv_PurchaseDetails", "n_PurchaseDetailsID", "", "", j, DetailTable, connection, transaction);
+        //                 if (N_InvoiceDetailId <= 0)
+        //                 {
+        //                     // transaction.Rollback();
+        //                     // return Ok(_api.Error(User, "Unable to save Purchase Invoice!"));
+        //                     Result.Add("b_IsCompleted", 0);
+        //                     Result.Add("x_Msg", "Unable to save Purchase Invoice!");
+        //                     return Result;
+        //                 }
+
+        //                 if (n_MRNID > 0 && B_MRNVisible)
+        //                 {
+        //                     dLayer.ExecuteScalar("Update Inv_MRNDetails Set N_SPrice=" + myFunctions.getVAL(DetailTableCopy.Rows[j]["N_PPrice"].ToString()) + ",N_PurchaseDetailsID=" + N_InvoiceDetailId + " Where N_ItemID=" + myFunctions.getIntVAL(DetailTableCopy.Rows[j]["N_ItemID"].ToString()) + "  and N_MRNID=" + myFunctions.getVAL(DetailTableCopy.Rows[j]["n_RsID"].ToString()) + " and N_CompanyID=" + nCompanyID + " and N_MRNDetailsID=" + myFunctions.getVAL(DetailTableCopy.Rows[j]["n_MRNDetailsID"].ToString()), connection, transaction);
+        //                     dLayer.ExecuteScalar("Update Inv_MRN Set N_Processed = 1 Where  N_MRNID=" + myFunctions.getVAL(DetailTableCopy.Rows[j]["n_RsID"].ToString()) + " and N_CompanyID=" + nCompanyID, connection, transaction);
+
+        //                     SortedList UpdateStockParam = new SortedList();
+        //                     UpdateStockParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+        //                     UpdateStockParam.Add("N_MRNID", n_MRNID);
+        //                     UpdateStockParam.Add("N_ItemID", myFunctions.getIntVAL(DetailTableCopy.Rows[j]["N_ItemID"].ToString()));
+        //                     UpdateStockParam.Add("N_SPrice", myFunctions.getVAL(DetailTableCopy.Rows[j]["N_PPrice"].ToString()));
+
+        //                     dLayer.ExecuteNonQueryPro("[SP_UpdateStock_MRN]", UpdateStockParam, connection, transaction);
+
+        //                 }
+        //                 if(WarrantyInfo!=null)
+        //                 foreach (DataRow dtWarranty in WarrantyInfo.Rows)
+        //                 {
+        //                     if(myFunctions.getIntVAL(dtWarranty["rowID"].ToString())==j)
+        //                     dtWarranty["N_PurchaseID"] = N_PurchaseID;
+        //                     dtWarranty["N_PurchaseDetailID"] = N_InvoiceDetailId;
+        //                 }
+
+
+        //             }
+
+        //             if(WarrantyInfo!=null && WarrantyInfo.Rows.Count>0){
+        //             if (WarrantyInfo.Columns.Contains("rowID"))
+        //                 WarrantyInfo.Columns.Remove("rowID");
+
+        //             dLayer.SaveData("Inv_PurchaseWarranty", "N_WarrantyID", WarrantyInfo, connection, transaction);
+        //             }
+
+        //             if (N_PurchaseID > 0)
+        //             {
+        //                 dLayer.ExecuteScalar("Update Inv_PurchaseOrder Set N_Processed=1 , N_PurchaseID=" + N_PurchaseID + " Where N_POrderID=" + n_POrderID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+        //                 dLayer.ExecuteScalar("Update Inv_MRN Set N_Processed=1 Where N_MRNID=" + n_MRNID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+        //                 // if (B_ServiceSheet)
+        //                 //     dba.ExecuteNonQuery("Update Inv_VendorServiceSheet Set N_Processed=1  Where N_RefID=" + n_POrderID + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID,connection,transaction);
+
+        //             }
+
+        //             if (PurchaseFreight.Rows.Count > 0)
+        //             {
+        //                 if (!PurchaseFreight.Columns.Contains("N_PurchaseID"))
+        //                 {
+        //                     PurchaseFreight.Columns.Add("N_PurchaseID");
+        //                 }
+        //                 foreach (DataRow var in PurchaseFreight.Rows)
+        //                 {
+        //                     var["N_PurchaseID"] = N_PurchaseID;
+        //                 }
+        //                 dLayer.SaveData("Inv_PurchaseFreights", "N_PurchaseFreightID", PurchaseFreight, connection, transaction);
+        //             }
+
+                   
+
+        //             if (b_FreightAmountDirect == 0)
+        //             {
+        //                 SortedList ProcParams = new SortedList(){
+        //                     {"N_FPurchaseID", N_PurchaseID},
+        //                     {"N_CompanyID", nCompanyID},
+        //                     {"N_FnYearID", nFnYearID},
+        //                     {"N_FormID", this.N_FormID},
+        //                 };
+        //                 dLayer.ExecuteNonQueryPro("SP_FillFreightToPurchase", ProcParams, connection, transaction);
+        //             }
+
+        //             if (N_SaveDraft == 0)
+        //             {
+        //                 try
+        //                 {
+        //                     // SortedList PostingMRNParam = new SortedList();
+        //                     // PostingMRNParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+        //                     // PostingMRNParam.Add("N_PurchaseID", N_PurchaseID);
+        //                     // PostingMRNParam.Add("N_UserID", nUserID);
+        //                     // PostingMRNParam.Add("X_SystemName", "ERP Cloud");
+        //                     // PostingMRNParam.Add("X_UseMRN", "");
+        //                     // PostingMRNParam.Add("N_SaveDraft", N_SaveDraft);
+        //                     // PostingMRNParam.Add("N_MRNID", 0);
+
+        //                     // dLayer.ExecuteNonQueryPro("[SP_Inv_MRNposting]", PostingMRNParam, connection, transaction);
+
+        //                     SortedList PostingMRNParam = new SortedList();
+        //                     PostingMRNParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+        //                     PostingMRNParam.Add("N_PurchaseID", N_PurchaseID);
+        //                     PostingMRNParam.Add("N_UserID", nUserID);
+        //                     PostingMRNParam.Add("X_SystemName", "ERP Cloud");
+        //                     PostingMRNParam.Add("X_UseMRN", "");
+        //                     PostingMRNParam.Add("N_SaveDraft", N_SaveDraft);
+        //                     PostingMRNParam.Add("B_DirectPurchase", Dir_Purchase);
+        //                     PostingMRNParam.Add("N_MRNID", n_MRNID);
+
+        //                     dLayer.ExecuteNonQueryPro("[SP_Inv_MRNprocessing]", PostingMRNParam, connection, transaction);
+
+        //                     SortedList PostingParam = new SortedList();
+        //                     PostingParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+        //                     PostingParam.Add("X_InventoryMode", "PURCHASE");
+        //                     PostingParam.Add("N_InternalID", N_PurchaseID);
+        //                     PostingParam.Add("N_UserID", nUserID);
+        //                     PostingParam.Add("X_SystemName", "ERP Cloud");
+        //                     PostingParam.Add("MRN_Flag", Dir_Purchase==0 ? "1" : "0");
+
+        //                     dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
+        //                 }
+        //                 catch (Exception ex)
+        //                 {
+        //                     // transaction.Rollback();
+        //                     // if (ex.Message.Contains("50"))
+        //                     //     return Ok(_api.Error(User, "Day Closed"));
+        //                     // else if (ex.Message.Contains("51"))
+        //                     //     return Ok(_api.Error(User, "Year Closed"));
+        //                     // else if (ex.Message.Contains("52"))
+        //                     //     return Ok(_api.Error(User, "Year Exists"));
+        //                     // else if (ex.Message.Contains("53"))
+        //                     //     return Ok(_api.Error(User, "Period Closed"));
+        //                     // else if (ex.Message.Contains("54"))
+        //                     //     return Ok(_api.Error(User, "Wrong Txn Date"));
+        //                     // else if (ex.Message.Contains("55"))
+        //                     //     return Ok(_api.Error(User, "Transaction Started"));
+        //                     // return Ok(_api.Error(User, ex.Message));
+
+        //                     Result.Add("b_IsCompleted", 0);
+        //                     if (ex.Message.Contains("50"))
+        //                         Result.Add("x_Msg", "Day Closed");
+        //                     else if (ex.Message.Contains("51"))
+        //                         Result.Add("x_Msg", "Year Closed");
+        //                     else if (ex.Message.Contains("52"))
+        //                         Result.Add("x_Msg", "Year Exists");
+        //                     else if (ex.Message.Contains("53"))
+        //                         Result.Add("x_Msg", "Period Closed");
+        //                     else if (ex.Message.Contains("54"))
+        //                         Result.Add("x_Msg", "Wrong Txn Date");
+        //                     else if (ex.Message.Contains("55"))
+        //                         Result.Add("x_Msg", "Transaction Started");
+        //                     else
+        //                         Result.Add("x_Msg", ex.Message);
+        //                     return Result;
+        //                 }
+
+        //                     //StatusUpdate
+        //                     int tempPOrderID=0;
+        //                     for (int j = 0; j < DetailTable.Rows.Count; j++)
+        //                     {
+        //                         if (n_POrderID > 0 && tempPOrderID!=n_POrderID)
+        //                         {
+        //                             if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
+        //                             {
+        //                                 // xturn Ok(_api.Error(User, "Unable To Update Txn Status"));
+
+        //                                 Result.Add("b_IsCompleted", 0);
+        //                                 Result.Add("x_Msg", "Unable To Update Txn Status");
+        //                                 return Result;
+        //                             }
+        //                         }
+        //                         tempPOrderID=n_POrderID;
+        //                     };
+        //             }
+        //             SortedList VendorParams = new SortedList();
+        //             VendorParams.Add("@nVendorID", N_VendorID);
+        //             DataTable VendorInfo = dLayer.ExecuteDataTable("Select X_VendorCode,X_VendorName from Inv_Vendor where N_VendorID=@nVendorID", VendorParams, connection, transaction);
+        //             if (VendorInfo.Rows.Count > 0)
+        //             {
+        //                 try
+        //                 {
+        //                     myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_PurchaseID, VendorInfo.Rows[0]["X_VendorName"].ToString().Trim(), VendorInfo.Rows[0]["X_VendorCode"].ToString(), N_VendorID, "Vendor Document", User, connection, transaction);
+        //                 }
+        //                 catch (Exception ex)
+        //                 {
+        //                     // transaction.Rollback();
+        //                     // return Ok(_api.Error(User, ex));
+        //                     Result.Add("b_IsCompleted", 0);
+        //                     Result.Add("x_Msg", ex);
+        //                     return Result;
+        //                 }
+        //             }
+        //             Result.Add("b_IsCompleted", 1);
+        //             Result.Add("x_Msg", "Purchase Invoice Saved");
+        //             return Result;
+        //             //myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PurchaseID, "PURCHASE", InvoiceNo, dLayer, connection, transaction, User);
+
+        //       //      transaction.Commit();
+        //     //     }
+        //     //     SortedList Result = new SortedList();
+        //     //     Result.Add("n_InvoiceID", N_PurchaseID);
+        //     //     Result.Add("x_InvoiceNo", InvoiceNo);
+        //     //     return Ok(_api.Success(Result, "Purchase Invoice Saved"));
+
+
+        //     // }
+
+            
+                  
+        //     // catch (Exception ex)
+        //     // {
+        //     //     return Ok(_api.Error(User, ex));
+        //     // }
+        // }
         private bool CheckProcessed(int nPurchaseID)
         {
             SortedList Params = new SortedList();
@@ -1419,4 +1515,6 @@ namespace SmartxAPI.Controllers
 
 
     }
+
+
 }
