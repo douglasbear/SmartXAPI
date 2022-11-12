@@ -117,7 +117,7 @@ namespace SmartxAPI.GeneralFunctions
 
                     if (N_PurchaseID > 0)
                     {
-                        if (myFunctions.CheckPRProcessed(N_PurchaseID,User,dLayer,connection))
+                        if (myFunctions.CheckPRProcessed(N_PurchaseID,User,dLayer,connection,transaction))
                         {
                             //  transaction.Rollback();
                             //  return Ok(_api.Error(User, "Transaction Started!"));
