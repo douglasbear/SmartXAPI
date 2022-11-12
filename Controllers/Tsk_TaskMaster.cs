@@ -1126,7 +1126,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
         }
-        [HttpGet("maildetails")]
+       [HttpGet("maildetails")]
         public ActionResult MailDetails()
         {
             DataSet dt = new DataSet();
@@ -1137,7 +1137,11 @@ namespace SmartxAPI.Controllers
             int N_UserID = myFunctions.GetUserID(User);
             int nCompanyId = myFunctions.GetCompanyID(User);
             DateTime datetime = DateTime.Now;
-            string sqlCommandText = "select * from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyId + " and N_CreaterID=" + N_UserID + " and  N_Status =9 and Cast(D_EntryDate as DATE) =  ' Cast(" + datetime + " as DATE)'";
+            string x_SubjectClosed="";
+            string x_SubjectCompleted="";
+            string x_SubjectSubmitted="";
+            int N_StatusID=0;
+            string sqlCommandText = "select * from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyId + " and N_CreaterID=" + N_UserID + " and  N_Status in(4,5,9) and Cast(D_EntryDate as DATE) =  Cast('" + datetime + "' as DATE)";
             string sqlmailData = "select * from Gen_MailTemplates where N_CompanyID=" + nCompanyId + " and x_templatename='Daily Task'";
 
             try
@@ -1153,9 +1157,25 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         MailData = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                        // MasterTable.Rows[0]["x_Subject"] = MailData.Rows[0]["x_Subject"];
-                        // MasterTable.Rows[0]["x_Body"] = MailData.Rows[0]["x_Body"];
+                        foreach(DataRow dr in MailData.Rows)
+                        {
+                            N_StatusID=myFunctions.getIntVAL(dr["N_Status"].ToString());
+                            if(N_StatusID==4)
+                                x_SubjectCompleted=x_SubjectCompleted+"*"+dr["x_tasksummery"]+"<br>";
+                                else if(N_StatusID==9)
+                                x_SubjectSubmitted=x_SubjectSubmitted+"*"+dr["x_tasksummery"]+"<br>";
+                                else if(N_StatusID==5)
+                                x_SubjectClosed=x_SubjectClosed+"*"+dr["x_tasksummery"]+"<br>";
+                        }
+                        string x_body=(MasterTable.Rows[0]["x_body"]).ToString();
+                        x_body= x_body.Replace("@Submitted",x_SubjectCompleted);
+                        x_body= x_body.Replace("@Completed",x_SubjectCompleted);
+                        x_body=x_body.Replace("@Closed",x_SubjectClosed);
+                        MasterTable.Rows[0]["x_body"]=x_body;
+
+
                     }
+                    MasterTable.AcceptChanges();
 
 
                     MasterTable = _api.Format(MasterTable, "Master");
