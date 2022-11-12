@@ -216,10 +216,14 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 DataTable GeneralTable;
+                 DataTable userApps = new DataTable();
                 MasterTable = ds.Tables["master"];
                 GeneralTable = ds.Tables["general"];
                 string xUserName = GeneralTable.Rows[0]["X_AdminName"].ToString();
                 string xPassword = myFunctions.EncryptString(GeneralTable.Rows[0]["X_AdminPwd"].ToString());
+                int n_userType=0;
+                int n_GBUserID=0;
+                int userID=0;
 
                 string x_DisplayName = myFunctions.ContainColumn("x_DisplayName", GeneralTable) ? GeneralTable.Rows[0]["x_DisplayName"].ToString() : "";
                 int n_PkeyID = 0;
@@ -295,10 +299,13 @@ namespace SmartxAPI.Controllers
                             string sqlGUserInfo = "SELECT X_Password FROM Users where x_EmailID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
                             pwd = dLayer.ExecuteScalar(sqlGUserInfo, cnn).ToString();
 
+                          
                             string sqlClientmaster = "SELECT TOP 1 * FROM clientmaster where x_EmailID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
                             DataTable dtClientmaster = dLayer.ExecuteDataTable(sqlClientmaster, Param, cnn);
                             xUsrName = dtClientmaster.Rows[0]["X_ClientName"].ToString();
                             xPhoneNo = dtClientmaster.Rows[0]["X_ContactNumber"].ToString();
+                            n_userType = myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_DefaultAppID"].ToString());
+                            n_GBUserID =myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_ClientID"].ToString());
                         }
 
 
@@ -315,8 +322,8 @@ namespace SmartxAPI.Controllers
                                         // {"X_UserName",xUsrName}
                                         };
                             dLayer.ExecuteNonQueryPro("SP_NewAdminCreation", proParams1, connection, transaction);
-
-
+                                string usersql = "SELECT N_UserID FROM Sec_User where X_UserID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
+                            userID = myFunctions.getIntVAL(dLayer.ExecuteScalar(usersql, connection, transaction).ToString());
 
                             SortedList proParams2 = new SortedList(){
                                         {"N_CompanyID",N_CompanyId},
@@ -329,6 +336,29 @@ namespace SmartxAPI.Controllers
                                         {"N_CompanyID",N_CompanyId},
                                         {"N_FnYearID",N_FnYearId}};
                             dLayer.ExecuteNonQueryPro("SP_AccGruops_Accounts_Create", proParams3, connection, transaction);
+
+
+                           userApps.Clear();
+                           userApps.Columns.Add("N_CompanyID");
+                           userApps.Columns.Add("N_AppMappingID");
+                           userApps.Columns.Add("N_AppID");
+                           userApps.Columns.Add("N_UserID");
+                           userApps.Columns.Add("N_GlobalUserID");
+                      
+
+
+                        DataRow row = userApps.NewRow();
+                        row["N_CompanyID"] = N_CompanyId;
+                        row["N_AppMappingID"] = 0;
+                        row["N_AppID"] =n_userType;
+                        row["N_UserID"] = userID;
+                        row["N_GlobalUserID"] =n_GBUserID;
+                        userApps.Rows.InsertAt(row, 0);
+                        int userAppsID = dLayer.SaveData("sec_userApps", "n_AppMappingID", userApps, connection, transaction);
+
+
+
+
                         }
                         SortedList taxParams = new SortedList(){
                                         {"@nCompanyID",N_CompanyId},

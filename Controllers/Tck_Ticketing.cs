@@ -36,16 +36,16 @@ namespace SmartxAPI.Controllers
         }
 
     [HttpGet("typeList") ]
-        public ActionResult GetAllTktSalesTypeList(int nTiketTypeID)
+        public ActionResult GetAllTktSalesTypeList()
         {    
             SortedList param = new SortedList();           
             DataTable dt=new DataTable();
             
             string sqlCommandText="";
 
-            sqlCommandText="select * from Tvl_TicketType where N_TiketTypeID=@p1";
+            sqlCommandText="select * from Tvl_TicketType ";
 
-            param.Add("@p1", nTiketTypeID);                 
+                     
                 
             try
             {
@@ -70,36 +70,37 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,e));
             }   
         }   
-        [HttpGet("details")]
-        public ActionResult TicketingDetails(int n_TicketID)
+       
+          [HttpGet("details")]
+        public ActionResult VacancyDetails(string x_InvoiceNo)
         {
-            DataSet dt=new DataSet();
+            DataSet dt = new DataSet();
             DataTable MasterTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from Vw_TvlTicketingMaster where N_CompanyID=@p1  and n_TicketID=@p2";
+            string sqlCommandText = "select * from Vw_TvlTicketingMaster where N_CompanyID=@p1  and x_InvoiceNo=@p2";
             Params.Add("@p1", nCompanyId);  
-            Params.Add("@p2", n_TicketID);
+            Params.Add("@p2", x_InvoiceNo);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     if (MasterTable.Rows.Count == 0)
                     {
                         return Ok(api.Warning("No Results Found"));
                     }
-                
+
                     MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
                 }
-                return Ok(api.Success(dt));               
+                return Ok(api.Success(dt));
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -131,7 +132,7 @@ namespace SmartxAPI.Controllers
                          Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         Code = dLayer.GetAutoNumber("Tvl_Ticketing", "x_InvoiceNo", Params, connection, transaction);
-                        if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Course Code")); }
+                        if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Ticket Code")); }
                         MasterTable.Rows[0]["x_InvoiceNo"] = Code;
                     }
                     
@@ -149,7 +150,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Teacher Created"));
+                        return Ok(api.Success("Ticket Created"));
                     }
                 }
             }
@@ -171,7 +172,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_TicketNo like '%" + xSearchkey + "%' or X_InvoiceNo like '%" + xSearchkey + "%')";
+                Searchkey = "and (X_TicketNo like '%" + xSearchkey + "%' or X_InvoiceNo like '%" + xSearchkey + "%' or X_Passenger like '%" + xSearchkey + "%' or X_Route like '%" + xSearchkey +"%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_TicketID desc";
@@ -244,7 +245,7 @@ namespace SmartxAPI.Controllers
                     if (Results > 0)
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Teacher deleted"));
+                        return Ok(api.Success("Ticket deleted"));
                     }
                     else
                     {
