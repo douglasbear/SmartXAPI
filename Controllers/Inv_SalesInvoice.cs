@@ -96,7 +96,13 @@ namespace SmartxAPI.Controllers
                         criteria = " and MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP) ";
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
+                    {
+                      if(!B_ReduceTime)
                         Searchkey = " and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_OrderNo like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or cast([Invoice Date] as VarChar) like '%" + xSearchkey + "%' or x_CustPONo like '%"+xSearchkey+"%' or X_BillAmt like '%" + xSearchkey + "%' or X_ProjectCode like '%" +xSearchkey + "%')";
+                      else
+                        Searchkey = " and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%'  or cast([Invoice Date] as VarChar) like '%" + xSearchkey + "%'  or X_BillAmt like '%" + xSearchkey + "%')";
+                    }
+                  
                     if (CheckClosedYear == false)
                     {
                         if (bAllBranchData == true && bLocationChange==true)
