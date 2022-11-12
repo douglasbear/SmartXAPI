@@ -994,6 +994,13 @@ namespace SmartxAPI.Controllers
                         }
 
 
+                                SortedList QueryParams = new SortedList();
+                                QueryParams.Add("@Cost",myFunctions.getVAL(DetailTableCopy.Rows[j]["N_Cost"].ToString()));
+                                QueryParams.Add("@nCompanyID",myFunctions.getVAL(DetailTableCopy.Rows[j]["N_CompanyID"].ToString()));
+                                QueryParams.Add("@nItemID",myFunctions.getVAL(DetailTableCopy.Rows[j]["N_ItemID"].ToString()));
+                                dLayer.ExecuteNonQuery("Update Inv_ItemMaster Set N_PurchaseCost=@Cost Where N_ItemID=@nItemID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+
+
                     }
 
                     if(WarrantyInfo!=null && WarrantyInfo.Rows.Count>0){
