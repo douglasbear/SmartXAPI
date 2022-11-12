@@ -54,8 +54,10 @@ namespace SmartxAPI.Controllers
         {
 
             DataTable dt = new DataTable();
+            DataTable settings = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandCount = "";
+            string sqlSettings = "";
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Criteria = "";
@@ -64,20 +66,20 @@ namespace SmartxAPI.Controllers
                 Searchkey = "where ([X_EmailID] like '%" + xSearchkey + "%' )";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_ClientID desc";
+                xSortBy = " order by N_ClientID asc";
    
 
-
+           
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from ClientMaster  " + Searchkey  + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from ClientMaster "  + Searchkey + Criteria + " and N_ClientID not in (select top(" + Count + ") N_ClientID from ClientMaster  " + Criteria + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from ClientMaster  where N_ClientID not in (select top(" + Count + ") N_ClientID from ClientMaster  " + Criteria + xSortBy + " ) " + xSortBy;
             SortedList OutPut = new SortedList();
 
 
             try
             {
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
@@ -219,7 +221,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     Params.Add("@nClientID", nClientID);
                     Params.Add("@nAppID", nAppID);
-                    string AppDetailsSql=" SELECT     ClientApps.N_ClientID, ClientApps.N_AppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, ClientApps.N_UserLimit, ClientApps.B_Inactive, ClientApps.X_Sector, ClientApps.N_RefID, ClientApps.D_ExpiryDate, ClientApps.B_Licensed, ClientApps.D_LastExpiryReminder, ClientApps.B_EnableAttachment, AppMaster.X_AppName FROM "+
+                    string AppDetailsSql=" SELECT     ClientApps.N_ClientID, ClientApps.N_AppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, ClientApps.N_UserLimit, ClientApps.B_Inactive, ClientApps.X_Sector, ClientApps.N_RefID, ClientApps.D_ExpiryDate, ClientApps.B_Licensed, ClientApps.D_LastExpiryReminder, ClientApps.B_EnableAttachment, AppMaster.X_AppName,AppMaster.b_EnableAttachment as enableAttachment FROM "+
                     " ClientApps LEFT OUTER JOIN  AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID where N_ClientID=@nClientID and ClientApps.N_AppID=@nAppID";
                     DataTable AppDetails = dLayer.ExecuteDataTable(AppDetailsSql,Params, connection);
                     AppDetails = _api.Format(AppDetails, "AppDetails");
@@ -289,12 +291,10 @@ namespace SmartxAPI.Controllers
                 int n_AppID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_AppID"].ToString());
                 int n_ClientID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ClientID"].ToString());
                 MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_AppUrl", typeof(string), null);
-                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_AppUrl", typeof(string), null);
                 MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_DbUri", typeof(string), "SmartxConnection");
                 MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_UserLimit", typeof(int), 1);
-                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_UserLimit", typeof(int), 1);
                 MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_Sector", typeof(string), "Service");
-                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "D_LastExpiryReminder", typeof(DateTime), "");
+                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "D_LastExpiryReminder", typeof(DateTime), null);
                 MasterTable.AcceptChanges();    
                 
 

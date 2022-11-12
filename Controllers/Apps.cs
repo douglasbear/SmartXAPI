@@ -42,8 +42,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             int ClientID = myFunctions.GetClientID(User);
             int GUserID = myFunctions.GetGlobalUserID(User);
-            int userID = myFunctions.GetUserID(User);
-            int nCompanyID = myFunctions.GetCompanyID(User);
+      
 
 
 
@@ -66,6 +65,8 @@ namespace SmartxAPI.Controllers
                         using (SqlConnection con = new SqlConnection(connectionString))
                         {
                             con.Open();
+                               int userID = myFunctions.GetUserID(User);
+                                     int nCompanyID = myFunctions.GetCompanyID(User);
                             string appString="select N_AppID from Sec_UserApps where N_UserID="+userID+" and N_CompanyID="+nCompanyID+"";
                             DataTable userApps=dLayer.ExecuteDataTable(appString,con);
                             var listApps = userApps.AsEnumerable().Select(r => r["N_AppID"].ToString());
