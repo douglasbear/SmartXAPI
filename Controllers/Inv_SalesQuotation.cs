@@ -176,7 +176,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult GetQuotationDetails(string xQuotationNo, int nFnYearId, bool bAllBranchData, int nBranchID, int n_OpportunityID)
+        public ActionResult GetQuotationDetails(string xQuotationNo, int nFnYearId, bool bAllBranchData, int nBranchID, int n_OpportunityID, int n_RFQDecisionID)
         {
 
             if (xQuotationNo != null)
@@ -190,8 +190,15 @@ namespace SmartxAPI.Controllers
             Params.Add("@nFnYearID", nFnYearId);
             Params.Add("@nBranchID", nBranchID);
             Params.Add("@n_OpportunityID", n_OpportunityID);
+            Params.Add("@n_RFQDecisionID", n_RFQDecisionID);
             if (n_OpportunityID > 0)
-                sqlCommandText = "select * from vw_OpportunityToQuotation Where N_CompanyID=@nCompanyID and n_OpportunityID=@n_OpportunityID";
+            {
+            sqlCommandText = "select * from vw_OpportunityToQuotation Where N_CompanyID=@nCompanyID and n_OpportunityID=@n_OpportunityID";
+            }
+            else if(n_RFQDecisionID>0) 
+             {
+             sqlCommandText = "select * from vw_RFQDToSalesQuotationMaster Where N_CompanyID=@nCompanyID and N_RFQDecisionID=@n_RFQDecisionID";
+             }
             else
             if (bAllBranchData == true)
             {
@@ -373,6 +380,9 @@ namespace SmartxAPI.Controllers
                     string sqlCommandText2 = "Select *,dbo.SP_SellingPrice(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID) As N_SPrice,dbo.SP_SellingPrice_Select(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID,@nDefSPriceID,@nBranchID) As N_UnitSPrice  from vw_InvQuotationDetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nQuotationID";
                     if (n_OpportunityID > 0)
                         sqlCommandText2 = "select * from vw_OpportunityToQuotationDetails Where N_CompanyID=@nCompanyID and n_OpportunityID=" + n_OpportunityID;
+                    if (n_RFQDecisionID > 0)
+                        sqlCommandText2 = "select * from vw_RFQDecisionToQuotationDetails Where N_CompanyID=@nCompanyID and n_RFQDecisionID=" + n_RFQDecisionID;
+
                     DataTable Details = new DataTable();
                     Details = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
                     Details = _api.Format(Details, "Details");

@@ -346,9 +346,10 @@ namespace SmartxAPI.Controllers
                         // _sqlQuery = "Select * from Inv_VendorRequest Where " + Condition + "";
                         _sqlQuery = "SELECT  Inv_VendorRequest.N_CompanyId, Inv_VendorRequest.N_FnYearId, Inv_VendorRequest.N_QuotationId, Inv_VendorRequest.X_QuotationNo, Inv_VendorRequest.D_QuotationDate, Inv_VendorRequest.D_EntryDate," +
                         " Inv_VendorRequest.N_VendorID, Inv_VendorRequest.N_BillAmt, Inv_VendorRequest.N_DiscountAmt, Inv_VendorRequest.N_FreightAmt, Inv_VendorRequest.N_CashReceived, Inv_VendorRequest.x_Notes, " +
-                         "Inv_VendorRequest.N_UserID, Inv_VendorRequest.N_Processed, Inv_VendorRequest.N_LocationID, Inv_VendorRequest.N_BranchId, Inv_VendorRequest.N_ProjectID, Inv_VendorRequest.X_RfqRefNo," +
+                         "Inv_VendorRequest.N_UserID, Inv_VendorRequest.N_Processed, Inv_VendorRequest.N_LocationID, Inv_VendorRequest.N_BranchId, Inv_VendorRequest.N_ProjectID, Inv_VendorRequest.X_RfqRefNo,Inv_VendorRequest.X_CustomerDocNo,Inv_VendorRequest.N_CustomerId,Inv_Customer.X_CustomerName ," +
                          "Inv_VendorRequest.X_TandC, Inv_VendorRequest.D_DueDate, Inv_VendorRequest.N_ValidUpTo, Inv_VendorRequest.N_EmpID, Pay_Employee.X_EmpName " +
  " FROM            Inv_VendorRequest LEFT OUTER JOIN " +
+                        "Inv_Customer ON Inv_VendorRequest.N_CompanyId = Inv_Customer.N_CompanyID AND Inv_VendorRequest.N_CustomerId = Inv_Customer.N_CustomerID   LEFT OUTER JOIN " +
                          " Pay_Employee ON Inv_VendorRequest.N_CompanyId = Pay_Employee.N_CompanyID AND Inv_VendorRequest.N_EmpID = Pay_Employee.N_EmpID AND Inv_VendorRequest.N_FnYearId = Pay_Employee.N_FnYearID  Where " + Condition + "";
 
                         Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
@@ -356,6 +357,10 @@ namespace SmartxAPI.Controllers
 
                         Master = myFunctions.AddNewColumnToDataTable(Master, "n_IsDecisionDone", typeof(int), 0);
                         Master = myFunctions.AddNewColumnToDataTable(Master, "n_IsInwardsDone", typeof(int), 0);
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "n_IsPriceUpdateDone", typeof(int), 0);
+                        object objPriceUpdateDone = dLayer.ExecuteScalar("select COUNT(N_QuotationID) from Inv_RFQVendorListMaster where N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID and N_VendorID= "+nVendorID, QueryParams, connection);
+                        if (myFunctions.getIntVAL(objPriceUpdateDone.ToString()) != 0)
+                            Master.Rows[0]["n_IsPriceUpdateDone"] = 1;
 
                         object objDecisionDone = dLayer.ExecuteScalar("select COUNT(N_QuotationID) from Inv_RFQDecisionMaster where N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID", QueryParams, connection);
                         if (myFunctions.getIntVAL(objDecisionDone.ToString()) != 0)
@@ -387,15 +392,19 @@ namespace SmartxAPI.Controllers
                                 vendorCriteria = " and N_QuotationDetailsID in (select N_QuotationDetailsID from Inv_RFQVendorList where N_VendorID=@nVendorID and N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID) ";
                             }
                             _sqlQuery = "Select *,dbo.SP_Cost(vw_InvVendorRequestDetails.N_ItemID,vw_InvVendorRequestDetails.N_CompanyID,'') As N_LPrice,dbo.SP_SellingPrice(vw_InvVendorRequestDetails.N_ItemID,vw_InvVendorRequestDetails.N_CompanyID) As N_UnitSPrice  from vw_InvVendorRequestDetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@N_QuotationID " + vendorCriteria;
-                            Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+                    
+                            // if (myFunctions.getIntVAL(objPriceUpdateDone.ToString()) == 0)
+                            // {
+                            //     return Ok(_api.Success(ds));
+                            // }
+                             Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
                             Detail = _api.Format(Detail, "details");
-                            if (Detail.Rows.Count == 0)
-                            {
-                                return Ok(_api.Notice("No Results Found"));
-                            }
                             ds.Tables.Add(Detail);
-
+                            if (Detail.Rows.Count == 0)
+                               {
+                            return Ok(_api.Notice("No Results Found"));
+                              }
                             VendorListDetails = GetVendorListTable(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationID"].ToString()), 0, nFnYearID, companyid, byMaster, dLayer, connection);
                             VendorListDetails = _api.Format(VendorListDetails, "vendorList");
                             ds.Tables.Add(VendorListDetails);

@@ -84,11 +84,11 @@ namespace SmartxAPI.Controllers
                         X_TableName = "VW_StockStatusByLocationDashboard";
                         if (B_PartNo)
                         {
-                            X_VisibleFieldList = "X_PartNo,X_ItemCode,X_ItemName,X_Category,X_PreferredVendor,X_LocationName,X_Rack,N_CurrentStock,X_ItemUnit,X_ItemManufacturer";
+                            X_VisibleFieldList = "X_PartNo,X_ItemCode,X_ItemName,X_Category,X_PreferredVendor,X_LocationName,X_Rack,isNull(N_CurrentStock, 0) AS N_CurrentStock,X_ItemUnit,X_ItemManufacturer,isNull(N_MinQty, 0) AS N_MinQty,isNull(N_ReOrderQty, 0) AS N_ReOrderQty";
                         }
                         else
                         {
-                            X_VisibleFieldList = "X_ItemCode,X_ItemName,X_Category,X_PreferredVendor,X_LocationName,X_Rack,N_CurrentStock,X_ItemUnit";
+                            X_VisibleFieldList = "X_ItemCode,X_ItemName,X_Category,X_PreferredVendor,X_LocationName,X_Rack,isNull(N_CurrentStock, 0) AS N_CurrentStock,X_ItemUnit,isNull(N_MinQty, 0) AS N_MinQty,isNull(N_ReOrderQty, 0) AS N_ReOrderQty";
                         }
 
 
@@ -97,22 +97,22 @@ namespace SmartxAPI.Controllers
                             if (xType == "All")
                                 X_Crieteria = " N_CompanyID=@nCompanyID and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) ";
                             else if (xType == "NoStock")
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock=0 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null)";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and isNull(N_CurrStock, 0)=0 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null)";
                             else if (xType == "MinimumQty")
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock <= N_MinQty and N_ClassID in (2,3,5) and N_MinQty is not null";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and isNull(N_CurrStock, 0) <= isNull(N_MinQty, 0) and N_ClassID in (2,3,5) and isNull(N_CurrStock, 0)!=0 and N_MinQty is not null";
                             else
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock <= N_ReOrderQty and N_ClassID in (2,3,5) and N_ReOrderQty is not null";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and isNull(N_CurrStock, 0) <= isNull(N_ReOrderQty, 0) and N_ClassID in (2,3,5) and isNull(N_CurrStock, 0)!=0 and N_ReOrderQty is not null";
                         }
                         else
                         {
                             if (xType == "All")
                                 X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) ";
                             else if (xType == "NoStock")
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and  N_CurrStock = 0 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null)";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and  isNull(N_CurrStock, 0) = 0 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null)";
                             else if (xType == "MinimumQty")
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_CurrStock <= N_MinQty and N_ClassID in (2,3,5) and N_MinQty is not null";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and isNull(N_CurrStock, 0) <= isNull(N_MinQty, 0) and N_ClassID in (2,3,5) and isNull(N_CurrStock, 0)!=0 and N_MinQty is not null";
                             else
-                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_CurrStock <= N_ReOrderQty and N_ClassID in (2,3,5) and N_ReOrderQty is not null";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and isNull(N_CurrStock, 0) <= isNull(N_ReOrderQty, 0) and N_ClassID in (2,3,5) and isNull(N_CurrStock, 0)!=0 and N_ReOrderQty is not null";
                         }
                     }
                     else
@@ -123,11 +123,11 @@ namespace SmartxAPI.Controllers
 
                         if (B_PartNo)
                         {
-                            X_VisibleFieldList = "X_PartNo,X_LocationName,N_MinQty,N_ReOrderQty,X_ItemCode,X_ItemName,X_Category,X_PreferredVendor,X_Rack,N_CurrentStock,X_ItemUnit,X_ItemManufacturer";
+                            X_VisibleFieldList = "X_PartNo,X_LocationName,isNull(N_MinQty, 0) AS N_MinQty,isNull(N_ReOrderQty, 0) AS N_ReOrderQty,X_ItemCode,X_ItemName,X_Category,X_PreferredVendor,X_Rack,isNull(N_CurrentStock, 0) AS N_CurrentStock,X_ItemUnit,X_ItemManufacturer";
                         }
                         else
                         {
-                            X_VisibleFieldList = "X_ItemCode,X_LocationName,N_MinQty,N_ReOrderQty,X_ItemName,X_Category,X_PreferredVendor,X_Rack,N_CurrentStock,X_ItemUnit";
+                            X_VisibleFieldList = "X_ItemCode,X_LocationName,isNull(N_MinQty, 0) AS N_MinQty,isNull(N_ReOrderQty, 0) AS N_ReOrderQty,X_ItemName,X_Category,X_PreferredVendor,X_Rack,isNull(N_CurrentStock, 0) AS N_CurrentStock,X_ItemUnit";
                         }
 
                         if (bAllBranchData == true)
@@ -209,10 +209,13 @@ namespace SmartxAPI.Controllers
                 
             // criteria="N_CompanyID ="+nCompanyID+" and N_LocationID="+nLocationID+" and N_BranchID="+nBranchID;
 
-            sqlAll = "SELECT COUNT(N_ItemID) as N_Count FROM vw_InvItem_WHLink WHERE " + criteria1 + " and B_Inactive=0 and X_ItemCode <> '001' and N_ItemTypeID<>1 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) ";
+           // sqlAll = "SELECT COUNT(N_ItemID) as N_Count FROM vw_InvItem_WHLink WHERE " + criteria1 + " and B_Inactive=0 and X_ItemCode <> '001' and N_ItemTypeID<>1 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) ";
+            sqlAll = "SELECT COUNT(N_ItemID) as N_Count from Inv_ItemMaster where " + criteria1 + " and B_InActive=0 and X_ItemCode <> '001' and N_ItemTypeID<>1 and N_ClassID in (2,3,5) and N_ItemID in "+
+                        " (SELECT N_ItemID FROM vw_InvItem_WHLink WHERE " + criteria1 + " and B_Inactive=0 and X_ItemCode <> '001' and N_ItemTypeID<>1 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) "+
+                        " GROUP BY N_ItemID,N_CompanyID) ";
             sqlNoStock = "SELECT COUNT(N_ItemID) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock = 0 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) ";
-            sqlMinQty = "SELECT COUNT(N_ItemID) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock <= N_MinQty and N_ClassID in (2,3,5) and N_MinQty is not null ";
-            sqlReOrder = "SELECT COUNT(N_ItemID) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock <= N_ReOrderQty and N_ClassID in (2,3,5) and N_ReOrderQty is not null ";
+            sqlMinQty = "SELECT COUNT(N_ItemID) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock <= N_MinQty and N_ClassID in (2,3,5) and N_CurrentStock != 0 and  N_MinQty is not null ";
+            sqlReOrder = "SELECT COUNT(N_ItemID) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock <= N_ReOrderQty and N_ClassID in (2,3,5) and N_CurrentStock != 0 and N_ReOrderQty is not null ";
 
             sqlTopSell = "select Top 5 * from vw_TopSellingItem where N_ItemID in (select N_ItemID from vw_InvItem_WHLink where " + criteria1 + ") and N_CompanyID ="+ nCompanyID+" order by N_Count Desc";
             sqlInvValue = "SELECT vw_InvStock_Status.N_CompanyID, Inv_ItemCategory.X_CategoryCode, Inv_ItemCategory.X_Category,SUM(vw_InvStock_Status.N_Factor*vw_InvStock_Status.N_Cost*vw_InvStock_Status.N_Qty) AS N_Value "

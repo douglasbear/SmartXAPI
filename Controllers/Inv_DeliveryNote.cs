@@ -355,7 +355,7 @@ namespace SmartxAPI.Controllers
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable = _api.Format(MasterTable, "Master");
                         string DetailSql = "";
-                        DetailSql = "select N_CompanyID,0 as N_DeliveryNoteID,0 as N_DeliveryNoteDetailsID,0 as N_SalesQuotationID,N_ItemID,X_ItemName,X_ItemCode,X_BatchCode,D_ExpiryDate,N_ItemUnitID,X_ItemUnit,N_Qty,N_Qty as N_QtyDisplay,0 as N_Sprice,0 as N_IteDiscAmt,2 as N_ClassID,N_Qty as n_QtyDisplay,0 as N_Cost,N_LocationID,X_CustomerSKU,X_Temperature,X_Dimesnsion from vw_WhPickListDetails where N_CompanyId=@nCompanyID and N_PickListID=@nPickListID";
+                        DetailSql = "select N_CompanyID,0 as N_DeliveryNoteID,0 as N_DeliveryNoteDetailsID,0 as N_SalesQuotationID,N_ItemID,X_ItemName,X_ItemCode,X_BatchCode,D_ExpiryDate,N_ItemUnitID,X_ItemUnit,N_Qty,N_Qty, N_QtyDisplay,0 as N_Sprice,0 as N_IteDiscAmt,2 as N_ClassID,N_Qty as n_QtyDisplay,0 as N_Cost,N_LocationID,X_CustomerSKU,X_Temperature,X_Dimesnsion from vw_WhPickListDetails where N_CompanyId=@nCompanyID and N_PickListID=@nPickListID";
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
 
                         DetailTable = _api.Format(DetailTable, "Details");
@@ -378,7 +378,10 @@ namespace SmartxAPI.Controllers
                     int N_SalesOrderID = myFunctions.getIntVAL(MasterRow["n_SalesOrderID"].ToString());
                     QueryParamsList.Add("@nDelID", N_DelID);
                     QueryParamsList.Add("@nSaleOrderID", N_SalesOrderID);
-                    object InSales = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_Sales where N_CompanyID=@nCompanyID and N_deliverynoteid=@nDelID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
+                    object InSales="";
+                    object inSaleID = dLayer.ExecuteScalar("select N_SalesID from Inv_SalesDetails where N_CompanyID=@nCompanyID and N_deliverynoteid=@nDelID ", QueryParamsList, Con);
+                    if(inSaleID!=null && inSaleID!="")
+                          InSales = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_Sales where N_CompanyID=@nCompanyID and  N_SalesID="+myFunctions.getIntVAL(inSaleID.ToString())+" and N_FnYearID=@nFnYearID", QueryParamsList, Con);
                     masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "x_SalesReceiptNo", typeof(string), InSales);
 
                     object InSalesOrder = dLayer.ExecuteScalar("select x_OrderNo from Inv_SalesOrder where N_CompanyID=@nCompanyID and N_SalesOrderID=@nSaleOrderID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
@@ -398,13 +401,15 @@ namespace SmartxAPI.Controllers
                     if (myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()) > 0)
                     {
                         QueryParamsList.Add("@nDeliveryNoteId", myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()));
-
-                        DataTable SalesData = dLayer.ExecuteDataTable("select X_ReceiptNo,N_SalesId from Inv_Sales where N_DeliveryNoteId=@nDeliveryNoteId and N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
+                        if(inSaleID!=null && inSaleID!="")
+                        {
+                        DataTable SalesData = dLayer.ExecuteDataTable("select X_ReceiptNo,N_SalesId from Inv_Sales where  N_CompanyId=@nCompanyID and N_SalesID="+myFunctions.getIntVAL(inSaleID.ToString())+" and  N_FnYearID=@nFnYearID", QueryParamsList, Con);
                         if (SalesData.Rows.Count > 0)
                         {
                             masterTable.Rows[0]["X_SalesReceiptNo"] = SalesData.Rows[0]["X_ReceiptNo"].ToString();
                             masterTable.Rows[0]["N_SalesId"] = myFunctions.getIntVAL(SalesData.Rows[0]["N_SalesId"].ToString());
                             masterTable.Rows[0]["isSalesDone"] = true;
+                        }
                         }
                         else if (myFunctions.getIntVAL(masterTable.Rows[0]["n_SalesOrderID"].ToString()) > 0)
                         {
@@ -508,6 +513,12 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nBranchID", N_BranchID);
                     QueryParams.Add("@nLocationID", N_LocationID);
                     QueryParams.Add("@nCustomerID", N_CustomerID);
+                     int N_FormID = 0;
+                       if (MasterTable.Columns.Contains("N_FormID"))
+                    {
+                        N_FormID = myFunctions.getIntVAL(MasterRow["N_FormID"].ToString());
+                    }
+
 
                     if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_DeliveryDate"].ToString(), "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
                     {
@@ -660,12 +671,13 @@ namespace SmartxAPI.Controllers
                     rentalItem.AcceptChanges();
                     if (rentalItem.Columns.Contains("rowID"))
                             rentalItem.Columns.Remove("rowID");
-                    if (N_DNoteID > 0)
+                    if (N_DNoteID > 0 && rentalItem.Rows.Count>0 )
                     {
-                            int N_FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
+                            N_FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
                             dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + N_DNoteID.ToString() + " and N_FormID="+ N_FormID + " and N_CompanyID=" + N_CompanyID, connection, transaction);
                        
                     }
+                    if(rentalItem.Rows.Count>0 )
                     dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
 
                     //int N_DeliveryNoteDetailsID = dLayer.SaveData("Inv_DeliveryNoteDetails", "n_DeliveryNoteDetailsID", DetailTable, connection, transaction);
@@ -774,6 +786,15 @@ namespace SmartxAPI.Controllers
                         Result.Add("n_DeliveryNoteID", N_DeliveryNoteID);
                         Result.Add("InvoiceNo", InvoiceNo);
                         transaction.Commit();
+                        if (N_FormID == 1572)
+                            {
+                           return Ok(_api.Success(Result, "Rental Delivery Saved"));
+                            }
+                          else if(N_FormID == 1426) 
+                            {
+                        return Ok(_api.Success(Result,"Wh deliveryNote Saved Successfully"));
+                             }
+                  
                         return Ok(_api.Success(Result, "Delivery Note saved"));
                     }
 

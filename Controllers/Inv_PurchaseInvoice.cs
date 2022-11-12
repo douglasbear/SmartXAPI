@@ -46,7 +46,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetPurchaseInvoiceList(int? nCompanyId, int nFnYearId, bool bAllBranchData, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string screen)
+        public ActionResult GetPurchaseInvoiceList(int? nCompanyId, int nFnYearId, bool bAllBranchData, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string screen, int nFormID)
         {
             try
             {
@@ -139,12 +139,13 @@ namespace SmartxAPI.Controllers
 
                     int Count = (nPage - 1) * nSizeperpage;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate,x_VendorInvoice from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + Searchkey + " " + " Group By N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate,x_VendorInvoice "+ xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate,x_VendorInvoice,N_FormID from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_FormID, 0)=@p3 " + criteria + Searchkey + " " + " Group By N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate,x_VendorInvoice,N_FormID "+ xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate,x_VendorInvoice from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + Searchkey + " and  N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + Searchkey + xSortBy + " ) " + "Group By N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate,x_VendorInvoice " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate,x_VendorInvoice,N_FormID from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_FormID, 0)=@p3 " + criteria + Searchkey + " and  N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_FormID, 0)=@p3 " + criteria + Searchkey + xSortBy + " ) " + "Group By N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate,x_VendorInvoice,N_FormID " + xSortBy;
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
+                    Params.Add("@p3", nFormID);
                     SortedList OutPut = new SortedList();
 
 
@@ -180,7 +181,7 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(10," + N_decimalPlace + ")) ) as TotalAmount from vw_InvPurchaseInvoiceNo_Search_Cloud where  N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + " " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(10," + N_decimalPlace + ")) ) as TotalAmount from vw_InvPurchaseInvoiceNo_Search_Cloud where  N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_FormID, 0)=@p3 " + criteria + " " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -356,7 +357,7 @@ namespace SmartxAPI.Controllers
                     {
                         X_DetailsSql = "select * from vw_Inv_PurchaseOrderAsInvoiceDetails where N_CompanyID=@CompanyID and N_POrderID=" + N_POrderID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                     }
-                    else if (xGrnNo != null || xGrnNo != "")
+                    else if (xGrnNo != null && xGrnNo != "")
                     {
                         int n_MRNID = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_MRNID"].ToString());
 

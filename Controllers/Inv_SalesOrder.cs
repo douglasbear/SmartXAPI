@@ -242,6 +242,7 @@ namespace SmartxAPI.Controllers
             string Mastersql = "";
             string DetailSql = "";
             string crieteria = "";
+            
 
                  if(nFormID>0)
                     {
@@ -382,6 +383,7 @@ namespace SmartxAPI.Controllers
                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "D_ContractEndDate", typeof(string), null);
                     MasterTable.Rows[0]["SalesOrderType"] = "";
                     if (N_SalesOrderTypeID.ToString() != "")
+
                     {
                         MasterTable.Rows[0]["SalesOrderType"] = dLayer.ExecuteScalar("Select X_TypeName from Gen_Defaults where N_DefaultId=50 and N_TypeId=@nSalesOrderTypeID", DetailParams, connection);
                         MasterTable.Rows[0]["D_ContractEndDate"] = dLayer.ExecuteScalar("Select D_ContractEndDate from Inv_SalesOrder where N_SalesOrderId=@nSOrderID and N_CompanyID=@nCompanyID", DetailParams, connection);
@@ -492,7 +494,22 @@ namespace SmartxAPI.Controllers
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_CustomerName", typeof(string), "");
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "customer_PONo", typeof(string), "");
                     DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "X_UpdatedSPrice", typeof(string), "");
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "b_taskFlag", typeof(bool), true);
                    // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_", typeof(string), "");
+                    if(nFormID==1546){
+                      if (DetailTable.Rows.Count > 0){
+                            foreach (DataRow var in DetailTable.Rows)
+                        {
+                          
+                        if(myFunctions.getIntVAL(var["N_StatusID"].ToString()) != 5)
+                            MasterTable.Rows[0]["b_taskFlag"]=false;    
+                         }
+
+                            }
+                    
+                   MasterTable.AcceptChanges();
+                    }
+              
                     if (DetailTable.Rows.Count != 0)
                     {
                         MasterTable.Rows[0]["x_CustomerName"] = DetailTable.Rows[0]["x_CustomerName"];
@@ -815,7 +832,27 @@ namespace SmartxAPI.Controllers
                     SortedList Result = new SortedList();
                     Result.Add("n_SalesOrderID", n_SalesOrderId);
                     Result.Add("x_SalesOrderNo", x_OrderNo);
-                    return Ok(_api.Success(Result, "Sales Order Saved"));
+
+
+                                   
+                 if (N_FormID == 81)
+                 {
+                   return Ok(_api.Success(Result, "Sales Order Saved"));
+                 }
+                 else if(N_FormID == 1571) 
+                 {
+                 return Ok(_api.Success(Result,"Job Order Saved Successfully"));
+                  }
+                else if(N_FormID == 1546) 
+                 {
+                 return Ok(_api.Success(Result,"Service Order Saved Successfully"));
+                  }
+
+                     return Ok(_api.Success(Result, "Sales Order Saved"));
+                  
+
+
+
                 }
             }
             catch (Exception ex)

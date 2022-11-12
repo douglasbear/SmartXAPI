@@ -396,6 +396,7 @@ namespace SmartxAPI.Controllers
                                 if(N_TypeID==5 || N_TypeID==6)
                                 {
                                     rowPattern = dLayer.ExecuteScalar("Select isnull(max(X_LocationCode),'')  From Inv_Location Where N_CompanyID=" + nCompanyID + "  and N_MainLocationID=" + N_MainLocationID + " ", connection, transaction);
+                                    if(rowPattern==""){rowPattern="0";}
                                     x_LocationCodePattern = Convert.ToChar(rowPattern);
                                     x_LocationCodePattern++;
                                     MasterTable.Rows[0]["X_LocationCode"] = x_LocationCodePattern.ToString();
@@ -520,7 +521,8 @@ namespace SmartxAPI.Controllers
                         }
 
                         transaction.Commit();
-                        return GetLocationDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()), N_LocationID);
+                        return Ok(_api.Success("Location Saved"));
+                        // return GetLocationDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()), N_LocationID);
                     }
                 }
             }
