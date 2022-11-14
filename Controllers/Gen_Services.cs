@@ -81,6 +81,16 @@ namespace SmartxAPI.Controllers
                         masterTable = "inv_CustomerProjects";
                         column = "X_ProjectCode";
                     }
+                   if (formID == 1636)
+                    {
+                        masterTable = "Inv_Location";
+                        column = "X_LocationCode";
+                    }
+                   if (formID == 1637)
+                    {
+                        masterTable = "Inv_Location";
+                        column = "X_LocationCode";
+                    }
 
 
 
