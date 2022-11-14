@@ -638,6 +638,8 @@ namespace SmartxAPI.GeneralFunctions
                     }
                     Result.Add("b_IsCompleted", 1);
                     Result.Add("x_Msg", "Purchase Invoice Saved");
+                    Result.Add("n_InvoiceID", N_PurchaseID);
+                    Result.Add("x_InvoiceNo", InvoiceNo);
                     return Result;
                     //myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PurchaseID, "PURCHASE", InvoiceNo, dLayer, connection, transaction, User);
 
@@ -1403,6 +1405,9 @@ namespace SmartxAPI.GeneralFunctions
                 Result.Add("x_Msg", "Rental Sales Saved Successfully");
             else
                 Result.Add("x_Msg", "Sales invoice saved");
+
+            Result.Add("n_SalesID", N_SalesID);
+            Result.Add("x_SalesNo", InvoiceNo);
 
             return Result;
 
