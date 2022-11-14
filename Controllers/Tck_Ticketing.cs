@@ -148,15 +148,16 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        //-------------------------------Purchase Save------------------------------------//
                         DataSet Pds= new DataSet();
                         DataTable PMasterDt = new DataTable();
                         DataTable PDetailsDt = new DataTable();
-                        DataTable ApprovalDt = new DataTable();
                         DataTable PFreightDt = new DataTable();
-                        DataTable AttachmentDt = new DataTable();
-
-                        int n_IsCompleted=0;
-                        string x_Message="";
+                        DataTable PApprovalDt = new DataTable();
+                        DataTable PAttachmentDt = new DataTable();
+                        
+                        int n_PIsCompleted=0;
+                        string x_PMessage="";
 
                         string sqlPurchaseMaster ="SELECT Tvl_Ticketing.N_CompanyID, Tvl_Ticketing.N_FnyearID, 0 AS N_PurchaseID, '@Auto' AS X_InvoiceNo, Tvl_Ticketing.N_VendorID, GETDATE() AS D_EntryDate, "+
                                                     " Tvl_Ticketing.D_TicketDate AS D_InvoiceDate, (Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission) AS N_InvoiceAmt, 0 AS N_DiscountAmt, 0 AS N_CashPaid, "+
@@ -193,26 +194,106 @@ namespace SmartxAPI.Controllers
                         PDetailsDt = api.Format(PDetailsDt, "details");
                         Pds.Tables.Add(PDetailsDt);       
 
-                        ApprovalDt = dLayer.ExecuteDataTable("select N_CompanyID ,'true' as isEditable,0 as approvalID,0 as isApprovalSystem, 565 AS formID,0 AS saveTag, 1 as nextApprovalLevel,'' AS btnSaveText from Acc_Company where N_CompanyID= "+nCompanyID, Params, connection,transaction);
-                        ApprovalDt = api.Format(ApprovalDt, "approval");
-                        Pds.Tables.Add(ApprovalDt);    
+                        PApprovalDt = dLayer.ExecuteDataTable("select N_CompanyID ,'true' as isEditable,0 as approvalID,0 as isApprovalSystem, 565 AS formID,0 AS saveTag, 1 as nextApprovalLevel,'' AS btnSaveText from Acc_Company where N_CompanyID= "+nCompanyID, Params, connection,transaction);
+                        PApprovalDt = api.Format(PApprovalDt, "approval");
+                        Pds.Tables.Add(PApprovalDt);    
 
                         PFreightDt = api.Format(PFreightDt, "freightCharges");
                         Pds.Tables.Add(PFreightDt);   
 
-                        AttachmentDt = api.Format(AttachmentDt, "attachments");
-                        Pds.Tables.Add(AttachmentDt);                                           
+                        PAttachmentDt = api.Format(PAttachmentDt, "attachments");
+                        Pds.Tables.Add(PAttachmentDt);                                           
 
                         PResult=txnHandler.PurchaseSaveData( Pds ,User , dLayer, connection, transaction);
 
-                        n_IsCompleted=myFunctions.getIntVAL(PResult["b_IsCompleted"].ToString());
-                        x_Message=PResult["x_Msg"].ToString();
+                        n_PIsCompleted=myFunctions.getIntVAL(PResult["b_IsCompleted"].ToString());
+                        x_PMessage=PResult["x_Msg"].ToString();
 
-                        if(n_IsCompleted==0)
+                        if(n_PIsCompleted==0)
                         {
                             transaction.Rollback();
-                            return Ok(api.Error(User, x_Message));
+                            return Ok(api.Error(User, x_PMessage));
                         }
+                        //-------------------------------^^^^^^^^^^^^^^------------------------------------//
+
+                        //-------------------------------Sales Save------------------------------------//
+                        DataSet Sds= new DataSet();
+                        DataTable SMasterDt = new DataTable();
+                        DataTable SDetailsDt = new DataTable();
+                        DataTable SAmountDetailsDt = new DataTable();
+                        DataTable SApprovalDt = new DataTable();
+                        DataTable SAttachmentDt = new DataTable();
+                        DataTable SAdvanceDt = new DataTable();
+                        
+                        int n_SIsCompleted=0;
+                        string x_SMessage="";
+
+                        string sqlSalesMaster=" SELECT     Tvl_Ticketing.N_CompanyID, Tvl_Ticketing.N_FnyearID, 0 AS N_SalesId, '@Auto' AS X_ReceiptNo, REPLACE(CONVERT(VARCHAR,Tvl_Ticketing.D_TicketDate,121),'.',':') AS D_SalesDate, GETDATE() AS D_EntryDate, "+
+                                                    " Tvl_Ticketing.N_CustomerID AS N_CustomerId, Tvl_Ticketing.N_CustomerAmt AS N_BillAmt, 0 AS N_DiscountAmt, 0 AS N_FreightAmt, 0 AS N_CashReceived, "+
+                                                    " Tvl_Ticketing.X_Description AS x_Notes, Tvl_Ticketing.N_userID, 0 AS N_SalesOrderID, 0 AS B_BeginingBalEntry, 7 AS N_SalesType, Tvl_Ticketing.N_TicketID AS N_SalesRefID, "+
+                                                    " Inv_Location.N_LocationID, Acc_BranchMaster.N_BranchID, 'SALES' AS X_TransType, 0 AS B_IsSaveDraft, 2 AS N_PaymentMethodId, Tvl_Ticketing.D_TicketDate AS D_PrintDate, "+
+                                                    " 565 AS N_FormID, Acc_Company.N_CurrencyID,1 AS N_ExchangeRate,Tvl_Ticketing.N_CustomerAmt AS N_BillAmtF,0 AS N_DiscountAmtF,0 AS N_CashReceivedF, "+
+                                                    " Tvl_Ticketing.N_userID AS N_CreatedUser,GETDATE() AS D_CreatedDate, 0 AS n_DeliveryNoteId "+
+                                                    " FROM         Tvl_Ticketing INNER JOIN "+
+                                                    " Inv_Location ON Tvl_Ticketing.N_CompanyID = Inv_Location.N_CompanyID AND Inv_Location.B_IsDefault = 1 INNER JOIN "+
+                                                    " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND Acc_BranchMaster.B_DefaultBranch = 1 INNER JOIN "+
+                                                    " Acc_Company ON Tvl_Ticketing.N_CompanyID = Acc_Company.N_CompanyID "+
+                                                    " WHERE     Tvl_Ticketing.N_CompanyID= "+nCompanyID+" and Tvl_Ticketing.N_TicketID= "+nTicketID;
+
+                        SMasterDt = dLayer.ExecuteDataTable(sqlSalesMaster, Params, connection,transaction);
+                        SMasterDt = api.Format(SMasterDt, "master");
+                        Sds.Tables.Add(SMasterDt); 
+
+                        string sqlSalesDetails ="SELECT     Tvl_Ticketing.N_CompanyID, 0 AS N_SalesID, 0 AS N_SalesDetailsID, Inv_ItemMaster.N_ItemID, 1 AS N_Qty, Tvl_Ticketing.N_CustomerAmt AS N_Sprice, Inv_ItemMaster.N_ClassID, "+
+                                                " Inv_ItemMaster.N_ItemID AS N_MainItemID, Inv_ItemMaster.N_ItemUnitID, 1 AS N_QtyDisplay, Tvl_Ticketing.N_CustomerAmt AS N_Cost, GETDATE() AS D_EntryDate, "+
+                                                " Inv_Location.N_LocationID,Acc_BranchMaster.N_BranchID,Tvl_Ticketing.N_CustomerAmt AS N_SpriceF,0 AS n_SalesOrderID,0 AS N_SalesQuotationID "+
+                                                " FROM         Tvl_Ticketing INNER JOIN "+
+                                                " Inv_ItemMaster ON Tvl_Ticketing.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemMaster.X_ItemCode = '001' INNER JOIN "+
+                                                " Inv_Location ON Tvl_Ticketing.N_CompanyID = Inv_Location.N_CompanyID AND Inv_Location.B_IsDefault=1 INNER JOIN "+
+                                                " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND B_DefaultBranch=1 "+
+                                                " WHERE         Tvl_Ticketing.N_CompanyID= "+nCompanyID+" and Tvl_Ticketing.N_TicketID= "+nTicketID;     
+
+                        SDetailsDt = dLayer.ExecuteDataTable(sqlSalesDetails, Params, connection,transaction);
+                        SDetailsDt = api.Format(SDetailsDt, "details");
+                        Sds.Tables.Add(SDetailsDt);  
+
+                        string sqlSalesAmountDetails ="SELECT     Tvl_Ticketing.N_CompanyID,Acc_BranchMaster.N_BranchID,0 AS N_SalesID,Tvl_Ticketing.N_CustomerID,Tvl_Ticketing.N_CustomerAmt AS N_Amount, "+
+			                                    " 0 AS N_CommissionAmt, 0 AS N_CommissionPer,0 AS N_SalesAmountID,0 AS N_TaxID,Tvl_Ticketing.N_CustomerAmt AS N_AmountF, 0 AS N_CommissionAmtF "+
+                                                " FROM         Tvl_Ticketing INNER JOIN "+
+                                                " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND Acc_BranchMaster.B_DefaultBranch=1 "+
+                                                " WHERE        Tvl_Ticketing.N_CompanyID= "+nCompanyID+" and Tvl_Ticketing.N_TicketID= "+nTicketID;
+
+                        SAmountDetailsDt = dLayer.ExecuteDataTable(sqlSalesAmountDetails, Params, connection,transaction);
+                        SAmountDetailsDt = api.Format(SAmountDetailsDt, "saleamountdetails");
+                        Sds.Tables.Add(SAmountDetailsDt);                                                  
+
+                        SApprovalDt = dLayer.ExecuteDataTable("select N_CompanyID ,'true' as isEditable,0 as approvalID,0 as isApprovalSystem, 565 AS formID,0 AS saveTag, 1 as nextApprovalLevel,'' AS btnSaveText from Acc_Company where N_CompanyID= "+nCompanyID, Params, connection,transaction);
+                        SApprovalDt = api.Format(SApprovalDt, "approval");
+                        Sds.Tables.Add(SApprovalDt);  
+
+                        SAttachmentDt = api.Format(SAttachmentDt, "attachments");
+                        Sds.Tables.Add(SAttachmentDt);  
+
+                        SAdvanceDt = api.Format(SAdvanceDt, "advanceTable");
+                        Sds.Tables.Add(SAdvanceDt);                                               
+
+                        string ipAddress = "";
+                        if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                            ipAddress = Request.Headers["X-Forwarded-For"];
+                        else
+                            ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+
+                        SResult=txnHandler.SalesSaveData( Sds ,ipAddress,User , dLayer, connection, transaction);
+                        
+                        n_SIsCompleted=myFunctions.getIntVAL(SResult["b_IsCompleted"].ToString());
+                        x_SMessage=SResult["x_Msg"].ToString();
+
+                        if(n_SIsCompleted==0)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, x_SMessage));
+                        }
+                        //-------------------------------^^^^^^^^^^^^^^------------------------------------//
 
                         transaction.Commit();
                         return Ok(api.Success("Ticket Created"));
