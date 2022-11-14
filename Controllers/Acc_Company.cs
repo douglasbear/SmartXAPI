@@ -336,7 +336,11 @@ namespace SmartxAPI.Controllers
                                         {"N_CompanyID",N_CompanyId},
                                         {"N_FnYearID",N_FnYearId}};
                             dLayer.ExecuteNonQueryPro("SP_AccGruops_Accounts_Create", proParams3, connection, transaction);
+                          
+                           SortedList proParams6 = new SortedList(){
+                                  {"N_ClientID",n_GBUserID}};
 
+                          dLayer.ExecuteNonQueryPro("Sp_GenSettingInsert", proParams6, connection, transaction);
 
                            userApps.Clear();
                            userApps.Columns.Add("N_CompanyID");
@@ -380,8 +384,6 @@ namespace SmartxAPI.Controllers
                                         {"N_Value",n_PkeyID},
                                         {"X_Value",x_DisplayName},};
                         dLayer.ExecuteNonQueryPro("SP_GeneralDefaults_ins", proParams4, connection, transaction);
-
-
 
                         SortedList proParams5 = new SortedList(){
                                   {"N_CompanyID",N_CompanyId}};
