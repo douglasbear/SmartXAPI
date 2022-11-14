@@ -299,13 +299,16 @@ namespace SmartxAPI.Controllers
                             string sqlGUserInfo = "SELECT X_Password FROM Users where x_EmailID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
                             pwd = dLayer.ExecuteScalar(sqlGUserInfo, cnn).ToString();
 
+                             string sqlGBUserInfo = "SELECT N_UserID FROM Users where x_EmailID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
+                            n_GBUserID =myFunctions.getIntVAL(dLayer.ExecuteScalar(sqlGBUserInfo, cnn).ToString());
+
                           
                             string sqlClientmaster = "SELECT TOP 1 * FROM clientmaster where x_EmailID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
                             DataTable dtClientmaster = dLayer.ExecuteDataTable(sqlClientmaster, Param, cnn);
                             xUsrName = dtClientmaster.Rows[0]["X_ClientName"].ToString();
                             xPhoneNo = dtClientmaster.Rows[0]["X_ContactNumber"].ToString();
                             n_userType = myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_DefaultAppID"].ToString());
-                            n_GBUserID =myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_ClientID"].ToString());
+                           // n_GBUserID =myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_ClientID"].ToString());
                         }
 
 
@@ -325,6 +328,8 @@ namespace SmartxAPI.Controllers
                                 string usersql = "SELECT N_UserID FROM Sec_User where X_UserID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
                             userID = myFunctions.getIntVAL(dLayer.ExecuteScalar(usersql, connection, transaction).ToString());
 
+                            
+
                             SortedList proParams2 = new SortedList(){
                                         {"N_CompanyID",N_CompanyId},
                                         {"N_FnYearID",N_FnYearId},
@@ -336,7 +341,11 @@ namespace SmartxAPI.Controllers
                                         {"N_CompanyID",N_CompanyId},
                                         {"N_FnYearID",N_FnYearId}};
                             dLayer.ExecuteNonQueryPro("SP_AccGruops_Accounts_Create", proParams3, connection, transaction);
+                          
+                           SortedList proParams6 = new SortedList(){
+                                  {"N_ClientID",n_GBUserID}};
 
+                          dLayer.ExecuteNonQueryPro("Sp_GenSettingInsert", proParams6, connection, transaction);
 
                            userApps.Clear();
                            userApps.Columns.Add("N_CompanyID");
@@ -380,8 +389,6 @@ namespace SmartxAPI.Controllers
                                         {"N_Value",n_PkeyID},
                                         {"X_Value",x_DisplayName},};
                         dLayer.ExecuteNonQueryPro("SP_GeneralDefaults_ins", proParams4, connection, transaction);
-
-
 
                         SortedList proParams5 = new SortedList(){
                                   {"N_CompanyID",N_CompanyId}};
