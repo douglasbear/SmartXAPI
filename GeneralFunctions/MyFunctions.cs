@@ -410,6 +410,28 @@ namespace SmartxAPI.GeneralFunctions
                 return true;
         }
 
+        public bool CheckPRProcessed(int nPurchaseID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection ,SqlTransaction transaction)
+        {
+            SortedList Params = new SortedList();
+            int nCompanyID = this.GetCompanyID(User);
+            int nUserID = this.GetUserID(User);
+            object AdvancePRProcessed = null;
+
+            string sqlCommand = "Select COUNT(N_TransID) From Inv_PaymentRequest Where  N_CompanyID=@p1 and N_TransID=@p2 and N_FormID=65";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nPurchaseID);
+            AdvancePRProcessed = dLayer.ExecuteScalar(sqlCommand, Params, connection,transaction);
+
+            if (AdvancePRProcessed != null)
+            {
+                if (this.getIntVAL(AdvancePRProcessed.ToString()) > 0)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public bool UpdateTxnStatus(int nCompanyID, int nTransID, int nFormID, bool forceUpdate, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             SortedList statusParams = new SortedList();
@@ -1018,7 +1040,25 @@ namespace SmartxAPI.GeneralFunctions
             if (nApprovalID > 0)
             {
                 nIsApprovalSystem = 1;
-                Response["isApprovalSystem"] = nIsApprovalSystem;
+                Response["isApprovalSystem"] = nIsApprovalSystem;                
+            }
+            else
+            {
+                if(nActionID>0)
+                {
+                    Response["btnSaveText"] = "Save";
+                    Response["btnDeleteText"] = "Delete";
+                    Response["saveEnabled"] = false;
+                    Response["deleteEnabled"] = false; 
+                    Response["saveTag"] = 0;
+                    Response["deleteTag"] = 0;
+                    Response["isApprovalSystem"] = 0;
+                    Response["ApprovalID"] = 0;
+                    Response["isEditable"] = false;
+                    Response["lblVisible"] = true;
+                    Response["lblText"] = "Approval not set for this user";
+                    return Response;
+                }              
             }
             if (nTransID > 0)
             {
@@ -1040,29 +1080,7 @@ namespace SmartxAPI.GeneralFunctions
                     Response["isEditable"] = true;
                     return Response;
                 }
-            }
-
-            if (nTransID > 0)
-            {
-                object objApprovalPresent = dLayer.ExecuteScalar("select COUNT(*) from Gen_ApprovalCodesTrans where N_FormID=" + nFormID + " and N_CompanyID=" + nCompanyID + " and N_TransID=" + nTransID, ApprovalParams, connection);
-                if (this.getIntVAL(objApprovalPresent.ToString()) == 0)
-                {
-                    Response["btnSaveText"] = "Save";
-                    Response["btnDeleteText"] = "Delete";
-                    Response["saveEnabled"] = true;
-                    if (nTransID == 0)
-                    { Response["deleteEnabled"] = false; }
-                    else
-                    { Response["deleteEnabled"] = true; }
-
-                    Response["saveTag"] = 0;
-                    Response["deleteTag"] = 0;
-                    Response["isApprovalSystem"] = 0;
-                    Response["ApprovalID"] = nApprovalID;
-                    Response["isEditable"] = true;
-                    return Response;
-                }
-            }
+            }           
 
             if (nIsApprovalSystem == -1)
             {
@@ -2186,7 +2204,7 @@ namespace SmartxAPI.GeneralFunctions
                 }
             }
 
-            Approvals.Rows[0]["btnSaveText"] = X_Action;
+            Approvals.Rows[0]["btnSaveText"] = "SGRYE";
             Approvals.Rows[0]["nextApprovalLevel"] = N_ApprovalLevelID;
             Approvals.Rows[0]["saveTag"] = N_ProcStatusID;
             Approvals.Rows[0]["approvalID"] = N_ApprovalID;
@@ -3270,6 +3288,7 @@ namespace SmartxAPI.GeneralFunctions
         public bool SendMail(string ToMail, string Body, string Subjectval, IDataAccessLayer dLayer, int FormID, int ReferID, int CompanyID);
         public bool CheckClosedYear(int N_CompanyID, int nFnYearID, IDataAccessLayer dLayer, SqlConnection connection);
         public bool CheckActiveYearTransaction(int nCompanyID, int nFnYearID, DateTime dTransDate, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
+        public bool CheckPRProcessed(int nPurchaseID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection,SqlTransaction transaction);
         public bool ExportToExcel(ClaimsPrincipal User, string _fillquery, string _filename, IDataAccessLayer dLayer, SqlConnection connection);
         public string GetUploadsPath(ClaimsPrincipal User, string DocType);
         public string GetTempFileName(ClaimsPrincipal User, string DocType, string FileName);

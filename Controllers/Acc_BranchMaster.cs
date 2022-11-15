@@ -22,6 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly string masterDBConnectionString;
         private readonly int FormID;
 
         public AccBranchController(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
@@ -29,6 +30,7 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
+             masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 370;
 
@@ -138,6 +140,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                         int ClientID = myFunctions.GetClientID(User);
                     DataTable MasterTable;
                     MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
@@ -170,15 +173,20 @@ namespace SmartxAPI.Controllers
                     if (xBranchCode == "@Auto")
                     {
                         ValidateParams.Add("@N_CompanyID", nCompanyID);
-                        object BranchCount = dLayer.ExecuteScalar("select count(N_BranchID)  from Acc_BranchMaster where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
-                        object limit = dLayer.ExecuteScalar("select isnull(N_BranchLimit,0) from Acc_Company where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
-                        if (BranchCount != null && limit != null)
+                        using (SqlConnection cnn2 = new SqlConnection(masterDBConnectionString))
                         {
+                         cnn2.Open();
+                         object BranchCount = dLayer.ExecuteScalar("select count(N_BranchID)  from Acc_BranchMaster where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
+                         object limit = dLayer.ExecuteScalar("select isnull(N_Value,0) from GenSettings where N_ClientID="+ClientID+" and X_Description='COMPANY LIMIT' ", cnn2);
+                         if(limit==null){limit="0";}
+                         if (BranchCount != null && limit != null)
+                         {
                             if (myFunctions.getIntVAL(BranchCount.ToString()) >= myFunctions.getIntVAL(limit.ToString()))
                             {
                                 transaction.Rollback();
                                 return Ok(_api.Error(User, "Branch Limit exceeded!!!"));
                             }
+                         }
                         }
                       if(bDefaultBranch==true)
                        {

@@ -358,7 +358,7 @@ namespace SmartxAPI.Controllers
 
                 string FileCreateTime = DateTime.Now.ToString("yyyyMMdd") + DateTime.Now.ToString("HHmm");
                 string X_WpsFileName = this.TempFilesPath +myFunctions.GetCompanyID(User)+"-"+ x_batchID + ".csv";
-                string CSVData = "Select X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText,X_IBAN,x_CompanyBank,X_Currency,x_CompanyBankAccountNo from [vw_pay_ProcessedDetails_CSV] where X_Batch='" + x_batchID + "' and N_EmpTypeID<>183 and TransBankID="+ BankID;
+                string CSVData = "Select X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText from [vw_pay_ProcessedDetails_CSV] where X_Batch='" + x_batchID + "' and N_EmpTypeID<>183 and TransBankID="+ BankID;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -378,11 +378,11 @@ namespace SmartxAPI.Controllers
                         }
                         string delimiter = ",";
                         string[][] header = new string[][]
-                        {new string[]{"Bank Name ","Account Number(34N)","Employee Name","Employee Number","National ID Number (15N)","Salary (15N)","Basic Salary","Housing Allowance","Other Earnings","Deductions","Branch Code","Branch Name","Employee Remarks","Employee Department","Currency","Date","IBAN","Company Bankname","Company Bank Account"},
+                        {new string[]{"Bank Name ","Account Number(34N)","Employee Name","Employee Number","National ID Number (15N)","Salary (15N)","Basic Salary","Housing Allowance","Other Earnings","Deductions","Branch Code","Branch Name","Employee Remarks","Employee Department"}
                         };
                         string[][] output = new string[][]
                         {
-                       new string[]{drow["X_BankName"].ToString(),"'"+drow["X_BankAccountNo"].ToString(),drow["X_EmpName"].ToString(),drow["X_EmpCode"].ToString(),"'"+drow["X_IqamaNo"].ToString(),drow["totalsalary"].ToString(),drow["N_BasicSalary"].ToString(),drow["N_HA"].ToString(),drow["N_OtherEarnings"].ToString(),drow["N_OtherDeductions"].ToString(),drow["X_BranchCode"].ToString(),drow["X_BranchName"].ToString(),drow["X_PayrunText"].ToString()+" - Salary",drow["X_Department"].ToString(),drow["X_Currency"].ToString(),drow["X_TransDate"].ToString(),drow["X_IBAN"].ToString(),drow["x_CompanyBank"].ToString(),drow["x_CompanyBankAccountNo"].ToString()}
+                       new string[]{drow["X_BankName"].ToString(),"'"+drow["X_BankAccountNo"].ToString(),drow["X_EmpName"].ToString(),drow["X_EmpCode"].ToString(),"'"+drow["X_IqamaNo"].ToString(),drow["totalsalary"].ToString(),drow["N_BasicSalary"].ToString(),drow["N_HA"].ToString(),drow["N_OtherEarnings"].ToString(),drow["N_OtherDeductions"].ToString(),drow["X_BranchCode"].ToString(),drow["X_BranchName"].ToString(),drow["X_PayrunText"].ToString()+" - Salary",drow["X_Department"].ToString()}
                      };
                         int length = output.GetLength(0);
                         if (index == 0)
@@ -413,7 +413,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        public int AlRajhiBankTahweel(string x_batchID, int BankID)
+       public int AlRajhiBankTahweel(string x_batchID, int BankID)
         {
 
             try
@@ -430,7 +430,7 @@ namespace SmartxAPI.Controllers
                 string FileCreateTime = DateTime.Now.ToString("yyyyMMdd") + DateTime.Now.ToString("HHmm");
                 string X_WpsFileName = this.TempFilesPath +myFunctions.GetCompanyID(User)+"-"+ x_batchID + ".csv";
 
-                string CSVData = "Select X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText,X_IBAN,x_CompanyBank,X_Currency,x_CompanyBankAccountNo from [vw_pay_ProcessedDetails_CSV] where X_Batch='" + x_batchID + "' and N_EmpTypeID<>183 and TransBankID="+ BankID;
+                string CSVData = "Select X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText from [vw_pay_ProcessedDetails_CSV] where X_Batch='" + x_batchID + "' and N_EmpTypeID<>183 and TransBankID=" + BankID;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -450,11 +450,11 @@ namespace SmartxAPI.Controllers
                         }
                         string delimiter = ",";
                         string[][] header = new string[][]
-                        {new string[]{"Bank Name ","Account Number(34N)","Employee Name","Employee Number","National ID Number (15N)","Salary (15N)","Basic Salary","Housing Allowance","Other Earnings","Deductions","Branch Code","Branch Name","Employee Remarks","Employee Department","Currency","Date","IBAN","Company Bankname","Company Bank Account"},
+                        {new string[]{"Bank Name ","Account Number(34N)","Employee Name","Employee Number","National ID Number (15N)","Salary (15N)","Basic Salary","Housing Allowance","Other Earnings","Deductions","Branch Code","Branch Name","Employee Remarks","Employee Department"}
                         };
                         string[][] output = new string[][]
                         {
-                        new string[]{drow["X_BankName"].ToString(),"'"+drow["X_BankAccountNo"].ToString(),drow["X_EmpName"].ToString(),drow["X_EmpCode"].ToString(),"'"+drow["X_IqamaNo"].ToString(),drow["totalsalary"].ToString(),drow["N_BasicSalary"].ToString(),drow["N_HA"].ToString(),drow["N_OtherEarnings"].ToString(),drow["N_OtherDeductions"].ToString(),drow["X_BranchCode"].ToString(),drow["X_BranchName"].ToString(),drow["X_PayrunText"].ToString()+" - Salary",drow["X_Department"].ToString(),drow["X_Currency"].ToString(),drow["X_TransDate"].ToString(),drow["X_IBAN"].ToString(),drow["x_CompanyBank"].ToString(),drow["x_CompanyBankAccountNo"].ToString()}
+                      new string[]{drow["X_EmpCode"].ToString().PadLeft(12,'0')+drow["X_BankAccountNo"].ToString().PadLeft(24,'0')+drow["X_EmpName"].ToString().PadRight(50)+drow["X_IqamaNo"].ToString().PadLeft(10,'0')+ myFunctions.getVAL( drow["totalsalary"].ToString()).ToString("0.00").Replace(".","").PadLeft(15,'0')+FileCreateTime.PadRight(15,'0')+myFunctions.getVAL(drow["N_BasicSalary"].ToString()).ToString("0.00").Replace(".","").PadLeft(12,'0')+myFunctions.getVAL(drow["N_HA"].ToString()).ToString("0.00").Replace(".","").PadLeft(12,'0')+myFunctions.getVAL(drow["N_OtherEarnings"].ToString()).ToString("0.00").Replace(".","").PadLeft(12,'0')+myFunctions.getVAL(drow["N_OtherDeductions"].ToString()).ToString("0.00").Replace(".","").PadLeft(12,'0')}
                        };
                         int length = output.GetLength(0);
                         for (index = 0; index < length; index++)
@@ -480,6 +480,7 @@ namespace SmartxAPI.Controllers
                 }
             }
         }
+
 
         public int BanqueSaudiFransi(string x_batchID, int BankID, DateTime dtPayrun)
         {
