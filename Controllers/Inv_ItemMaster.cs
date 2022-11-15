@@ -66,13 +66,12 @@ namespace SmartxAPI.Controllers
             string priceListCondition="";
             string ownAssent="";
             string RentalItem="";
+            string xOrder="";
+            string xOrderNew="";
             //nItemUsedFor -> 1-Purchase, 2-Sales, 3-Both, 4-Raw Material
 
 
-            // if (b_AllBranchData)
-            //     xCriteria = " N_FnYearID=@p2 and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyID=@p1 ";
-            // else
-            //     xCriteria = " N_FnY.0earID=@p2 and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchID=@p3 and N_CompanyID=@p1 ";
+           
             if (b_whGrn == true && n_CustomerID > 0)
             {
                 warehouseSql = "and vw_InvItem_Search_cloud.N_ItemID in (select N_ItemID from  Vw_wh_AsnDetails_disp where N_CompanyID=@p1 and N_CustomerID=" + n_CustomerID + ")";
@@ -145,8 +144,7 @@ namespace SmartxAPI.Controllers
                 priceListCondition=" and vw_InvItem_Search_cloud.N_ItemID in (Select N_ItemID from Inv_DiscountDetails where N_CompanyID=@p1 and n_DiscID=" + nPriceListID + " )";
             }
 
-            string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search_cloud.N_ItemID) RowNo,";
-            string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by Description asc";
+          
 
             // string sqlComandText = " * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
 
@@ -170,6 +168,18 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                     bool b_Order = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "ProductListOrder", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer,connection)));
+                   if(b_Order){
+                        xOrder= "ORDER BY vw_InvItem_Search_cloud.[Item Code]";
+                        xOrderNew= "ORDER BY [Item Code] ";
+                   }
+                   else{
+                        xOrder= "ORDER BY vw_InvItem_Search_cloud.Description asc";
+                          xOrderNew= "ORDER BY Description asc";
+                   }
+                       
+                      string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER("+xOrder+") RowNo,";
+                    string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) " + xOrderNew +" ";
                     string sql = pageQry + sqlComandText + pageQryEnd;
                     dt = dLayer.ExecuteDataTable(sql, Params, connection);
 
