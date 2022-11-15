@@ -713,6 +713,43 @@ namespace SmartxAPI.GeneralFunctions
             return AutoNumber;
         }
 
+        public string GetAutoNumberLoc(string TableName, String Coloumn, SortedList Params, SqlConnection connection, SqlTransaction transaction)
+        {
+            string AutoNumber = "";
+            string BranchId = "0";
+            if (Params.Contains("N_BranchID")) { BranchId = Params["N_BranchID"].ToString(); }
+            SortedList paramList = new SortedList(){
+                {"N_CompanyID", Params["N_CompanyID"]},
+                {"N_YearID", Params["N_YearID"]},
+                {"N_FormID", Params["N_FormID"]},
+                {"N_BranchID", BranchId}
+                };
+            SortedList validParam = new SortedList(){
+                {"@CompanyID", Params["N_CompanyID"]},
+                {"@FnYearID", Params["N_YearID"]},
+                {"@FormID", Params["N_FormID"]}
+                };
+            object objCount = ExecuteScalar("Select Count(1) from Inv_InvoiceCounter where N_FormID=@FormID and N_CompanyID=@CompanyID and N_FnYearID=@FnYearID", validParam, connection, transaction);
+            if(myFunctions.getIntVAL(objCount.ToString())==0){
+                throw new Exception("Invoice Counter not found");
+            }
+            while (true)
+            {
+                AutoNumber = (string)ExecuteScalarPro("SP_AutoNumberGenerate", paramList, connection, transaction);
+                string sqlCommandText = "select 1 from " + TableName + " where " + Coloumn + " = @p1 and N_CompanyID=@p2 and N_TypeId=@p3";
+                SortedList SqlParams = new SortedList(){
+                    {"@p1",AutoNumber},
+                    {"@p2",Params["N_CompanyID"]},
+                    {"@p3",Params["N_TypeId"]}};
+                object obj = ExecuteScalar(sqlCommandText, SqlParams, connection, transaction);
+
+                if (obj == null)
+                    break;
+
+            }
+            return AutoNumber;
+        }
+
         public bool SaveFiles(DataTable FilesTable, string TableName, string PkeyName, int PkeyVal, string PrependStr, int compID, SqlConnection connection, SqlTransaction transaction)
         {
             try
@@ -777,6 +814,7 @@ namespace SmartxAPI.GeneralFunctions
         public int ExecuteNonQuery(string sqlCommandText, SqlConnection connection);
 
         public string GetAutoNumber(string TableName, String Coloumn, SortedList Params, SqlConnection connection, SqlTransaction transaction);
+        public string GetAutoNumberLoc(string TableName, String Coloumn, SortedList Params, SqlConnection connection, SqlTransaction transaction);
 
         public int SaveData(string TableName, string IDFieldName, DataTable DataTable, SqlConnection connection, SqlTransaction transaction);
 
