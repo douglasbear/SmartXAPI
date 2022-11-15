@@ -328,6 +328,10 @@ namespace SmartxAPI.Controllers
                                 case "SBB":
                                     SaudiBritishBank(x_batchID, myFunctions.getIntVAL(dr["N_BankID"].ToString()), dtPayrun, dtpSalFrom, dtpSalTo);
                                     break;
+                                case "ARNB":
+                                    ARNBBank(x_batchID, myFunctions.getIntVAL(dr["N_BankID"].ToString()));
+                                    break;
+
                                 default:
                                     GenerateCSV(x_batchID, myFunctions.getIntVAL(dr["N_BankID"].ToString()), N_salaryAmt, nFnYearID);
                                     break;
@@ -341,6 +345,80 @@ namespace SmartxAPI.Controllers
             {
                 return 0;
 
+            }
+        }
+        public int ARNBBank(string x_batchID, int BankID)
+        {
+
+            try
+            {
+                DataTable dtTransaction = new DataTable();
+                int nCompanyID = myFunctions.GetCompanyID(User);
+
+                StringBuilder sb = new StringBuilder();
+                SortedList Params = new SortedList();
+                Params.Add("@p1", nCompanyID);
+                Params.Add("@p2", BankID);
+
+                string FileCreateTime = DateTime.Now.ToString("yyyyMMdd") + DateTime.Now.ToString("HHmm");
+                string X_WpsFileName = this.TempFilesPath +myFunctions.GetCompanyID(User)+"-"+ x_batchID + ".csv";
+                string CSVData = "Select X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText,D_TransDate,x_CompanyBank,X_Currency,x_CompanyBankAccountNo from [vw_pay_ProcessedDetails_CSV] where X_Batch='" + x_batchID + "' and N_EmpTypeID<>183 and TransBankID="+ BankID;
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dtTransaction = dLayer.ExecuteDataTable(CSVData, Params, connection);
+                    int index = 0;
+                    double TotAmount=0;
+                     foreach (DataRow drow in dtTransaction.Rows)
+                    {
+                        TotAmount=TotAmount+ myFunctions.getVAL(drow["totalsalary"].ToString());
+                    }
+                    foreach (DataRow drow in dtTransaction.Rows)
+                    {
+
+
+                        if (!System.IO.File.Exists(X_WpsFileName))
+                        {
+                            System.IO.File.Create(X_WpsFileName).Close();
+                        }
+                        else
+                        {
+                            System.IO.File.WriteAllText(X_WpsFileName, String.Empty);
+                        }
+                        string delimiter = ",";
+                        string[][] header = new string[][]
+                        {new string[]{"H",drow["x_CompanyBank"].ToString(),"1249","N",DateTime.Now.ToString("ddMyyyy")+".EX1",drow["x_CompanyBankAccountNo"].ToString(),drow["X_Currency"].ToString(),Convert.ToDateTime(drow["D_TransDate"]).ToString("ddMyyyy"),TotAmount.ToString(),Convert.ToDateTime(drow["D_TransDate"]).ToString("ddMyyyy"),"1-12779","Salary For " +drow["X_PayrunText"].ToString()}
+                        };
+                        string[][] output = new string[][]
+                        {
+                       new string[]{"D",drow["totalsalary"].ToString(),drow["X_BankAccountNo"].ToString(),drow["X_EmpName"].ToString(),drow["X_BankName"].ToString(),"Salary For " +drow["X_PayrunText"].ToString(),drow["N_BasicSalary"].ToString(),drow["N_HA"].ToString(),drow["N_OtherEarnings"].ToString(),drow["N_OtherDeductions"].ToString(),drow["X_IqamaNo"].ToString()}
+                     };
+                        int length = output.GetLength(0);
+                        if (index == 0)
+                        {
+                            sb.AppendLine(string.Join(delimiter, header[0]));
+                        }
+                        for (index = 0; index < length; index++)
+                            sb.AppendLine(string.Join(delimiter, output[index]));
+
+                    }
+                }
+
+                System.IO.File.AppendAllText(X_WpsFileName, sb.ToString());
+
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                if (ex is DirectoryNotFoundException)
+                {
+
+                    return 0;
+                }
+                else
+                {
+                    return 0;
+                }
             }
         }
         public int AlRajhiBank(string x_batchID, int BankID)

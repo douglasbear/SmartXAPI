@@ -409,6 +409,8 @@ namespace SmartxAPI.Controllers
                 Criteria = Criteria + "and  (N_Status=3 or N_Status=2) ";
             if (screen == "Probation Employees")
                 Criteria = Criteria + "and  D_ProbationEndDate> GETDATE() and  D_ProbationEndDate < (GETDATE()+14) ";
+            if(screen=="Employees On Leave")
+                Criteria=Criteria+" and N_EmpID in ( select N_EmpID from Pay_VacationDetails where N_VacDays < 0 and B_IsAdjustEntry =0 and (Cast(D_VacDateFrom as DATE)<=Cast(GETDATE() as DATE) and Cast(D_VacDateTo as DATE)>=cast(GETDATE() as DATE)) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearID+")";
 
             if (EmpStatus == 0)
                 Criteria = Criteria + " and N_Status<>3 and N_Status<>2 ";
