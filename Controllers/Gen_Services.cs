@@ -128,9 +128,21 @@ namespace SmartxAPI.Controllers
                             Params.Add("N_YearID", nFnYearID);
                             Params.Add("N_FormID", formID);
 
-                            newCode = dLayer.GetAutoNumber(masterTable, column, Params, connection, transaction);
+                            if (formID==1636)
+                            {
+                                Params.Add("N_TypeId", 6);
+                                newCode = dLayer.GetAutoNumberLoc(masterTable, column, Params, connection, transaction);
+                            }
+                            else if (formID==1637)
+                            {
+                                Params.Add("N_TypeId", 5);
+                                newCode = dLayer.GetAutoNumberLoc(masterTable, column, Params, connection, transaction);
+                            }
+                            else
+                            {
+                                newCode = dLayer.GetAutoNumber(masterTable, column, Params, connection, transaction);
+                            };
                             if (newCode == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate ")); }
-
                         }
 
                     }
