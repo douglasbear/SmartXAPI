@@ -63,7 +63,7 @@ namespace SmartxAPI.Controllers
             string Criteria = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "where ([X_EmailID] like '%" + xSearchkey + "%' )";
+                Searchkey = "where ([X_EmailID] like '%" + xSearchkey + "%'  or x_ClientName  like '%" + xSearchkey + "%'  or  x_CompanyName like '%" + xSearchkey + "%' )";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ClientID asc";

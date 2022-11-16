@@ -224,6 +224,7 @@ namespace SmartxAPI.Controllers
                 int n_userType=0;
                 int n_GBUserID=0;
                 int userID=0;
+                int n_ClientID=0;
 
                 string x_DisplayName = myFunctions.ContainColumn("x_DisplayName", GeneralTable) ? GeneralTable.Rows[0]["x_DisplayName"].ToString() : "";
                 int n_PkeyID = 0;
@@ -308,7 +309,7 @@ namespace SmartxAPI.Controllers
                             xUsrName = dtClientmaster.Rows[0]["X_ClientName"].ToString();
                             xPhoneNo = dtClientmaster.Rows[0]["X_ContactNumber"].ToString();
                             n_userType = myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_DefaultAppID"].ToString());
-                           // n_GBUserID =myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_ClientID"].ToString());
+                           n_ClientID =myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_ClientID"].ToString());
                         }
 
 
@@ -341,11 +342,14 @@ namespace SmartxAPI.Controllers
                                         {"N_CompanyID",N_CompanyId},
                                         {"N_FnYearID",N_FnYearId}};
                             dLayer.ExecuteNonQueryPro("SP_AccGruops_Accounts_Create", proParams3, connection, transaction);
-                          
+                               using (SqlConnection cnn1 = new SqlConnection(masterDBConnectionString))
+                        {
+                            cnn1.Open();
                            SortedList proParams6 = new SortedList(){
-                                  {"N_ClientID",n_GBUserID}};
+                                  {"N_ClientID",n_ClientID}};
 
-                          dLayer.ExecuteNonQueryPro("Sp_GenSettingInsert", proParams6, connection, transaction);
+                          dLayer.ExecuteNonQueryPro("Sp_GenSettingInsert", proParams6, cnn1);
+                        }
 
                            userApps.Clear();
                            userApps.Columns.Add("N_CompanyID");
