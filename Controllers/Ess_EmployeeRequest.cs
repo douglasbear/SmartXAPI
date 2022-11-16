@@ -353,6 +353,11 @@ namespace SmartxAPI.Controllers
                             MasterTable.AcceptChanges();
                         }
                     }    
+                         if (N_RequestTypeID > 0) 
+                    {  
+                        dLayer.DeleteData("Pay_EmployeeRequestType", "N_RequestTypeID",N_RequestTypeID,"N_CompanyId=" + myFunctions.GetCompanyID(User), connection, transaction);                        
+                    }
+
                     N_RequestTypeID = dLayer.SaveData("Pay_EmployeeRequestType", "N_RequestTypeID", MasterTable, connection, transaction);
                     if (N_RequestTypeID <= 0)
                     {

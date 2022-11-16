@@ -634,7 +634,7 @@ namespace SmartxAPI.Controllers
                         Detail = _api.Format(Detail, "details");
                         if (Detail.Rows.Count == 0)
                         {
-                            return Ok(_api.Notice("No Results Found"));
+                           return Ok(_api.Success(ds));
                         }
                         ds.Tables.Add(Detail);
 
@@ -682,6 +682,77 @@ namespace SmartxAPI.Controllers
             catch (Exception ex)
             {
                 return Ok(_api.Error(User, ex));
+            }
+        }
+
+         [HttpGet("listdetails")]
+        public ActionResult GetListDetails(int nItemID, int nCompanyID, int nBranchID, bool bShowAllBranchData)
+        {
+            DataTable Master = new DataTable();
+            DataTable Detail = new DataTable();
+            DataSet ds = new DataSet();
+            SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
+            DataTable Attachments = new DataTable();
+            int companyid = myFunctions.GetCompanyID(User);
+
+            QueryParams.Add("@nCompanyID", nCompanyID);
+
+            QueryParams.Add("@nBranchID", nBranchID);
+            // QueryParams.Add("@nFnYearID", nFnYearID);
+            string Condition = "";
+            string _sqlQuery = "";string _sqlDetailQuery = "";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                     _sqlQuery = "Select * from Inv_OnlineStore Where N_CompanyID= "+companyid+"";
+                   
+                    Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+
+                    Master = _api.Format(Master, "master");
+
+                    if (Master.Rows.Count == 0)
+                    {
+                        return Ok(_api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+
+                        ds.Tables.Add(Master);
+                        //int n_ItemID=0;
+                        // if (nItemID >0)
+                        // {
+                        //     //QueryParams.Add("@nStoreID", Master.Rows[0]["N_StoreID"].ToString());
+                        //    n_ItemID=nItemID;
+                          
+                        // }
+                         _sqlDetailQuery = "Select * from vw_Inv_StoreStockAllocation Where N_CompanyID="+companyid+" and N_ItemID="+nItemID+"";
+                     
+                        Detail = dLayer.ExecuteDataTable(_sqlDetailQuery, QueryParams, connection);
+
+                        Detail = _api.Format(Detail, "details");
+                        if (Detail.Rows.Count == 0)
+                        {
+                              return Ok(_api.Success(ds));
+                        }
+                        ds.Tables.Add(Detail);
+
+
+                        return Ok(_api.Success(ds));
+                    }
+
+
+                }
+
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
             }
         }
     }

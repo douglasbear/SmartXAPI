@@ -626,7 +626,7 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable = new DataTable();
-                DataTable MasterTableNew, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2, LocationList, CategoryList, VariantList, ItemUnits, itemWarranty;
+                DataTable MasterTableNew, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2, LocationList, CategoryList, VariantList, ItemUnits, itemWarranty,storeAllocation;
                 DataTable SubItemTable = new DataTable();
                 DataTable ScrapItemTable = new DataTable();
                 DataTable BOMEmpTable = new DataTable();
@@ -650,6 +650,7 @@ namespace SmartxAPI.Controllers
                 BOMEmpTable = ds.Tables["bomEmp"];
                 BOMAssetTable = ds.Tables["bomAsset"];
                 itemWarranty = ds.Tables["itemWarranty"];
+                storeAllocation = ds.Tables["store"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CompanyId"].ToString());
                 int N_ItemID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString());
                 string XItemName = MasterTableNew.Rows[0]["X_ItemName"].ToString();
@@ -1019,6 +1020,28 @@ namespace SmartxAPI.Controllers
                             itemWarranty.AcceptChanges();
                             dLayer.SaveData("Inv_ItemWarranty", "N_ItemDetailsID", itemWarranty, connection, transaction);
                         }
+                      if (storeAllocation.Rows.Count > 0)
+                        {
+
+
+                         
+                             for (int l = 0; l < storeAllocation.Rows.Count; l++)
+                            {    int  n_StoreID=  myFunctions.getIntVAL(storeAllocation.Rows[l]["N_StoreID"].ToString()) ;
+                                 int  n_StoreDetailID=  myFunctions.getIntVAL(storeAllocation.Rows[l]["N_StoreDetailID"].ToString()) ;
+                                 object storeCount = dLayer.ExecuteScalar("select count(*) from Inv_OnlineStoreDetail  where N_StoreID = " + n_StoreID + " and N_StoreDetailID="+n_StoreDetailID+" and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                               
+                                if(myFunctions.getIntVAL(storeCount.ToString())>0){
+                                
+                                  dLayer.DeleteData("Inv_OnlineStoreDetail", "n_StoreDetailID", n_StoreDetailID, "", connection, transaction);
+                                }
+                                    
+                                    storeAllocation.Rows[l]["N_ItemID"] = N_ItemID;
+                                    dLayer.SaveDataWithIndex("Inv_OnlineStoreDetail", "n_StoreDetailID", "", "" ,l,storeAllocation,connection, transaction);
+                    
+                            }
+                         
+                        }
+                        
                     }
 
 
