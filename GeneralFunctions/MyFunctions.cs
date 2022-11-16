@@ -1042,24 +1042,24 @@ namespace SmartxAPI.GeneralFunctions
                 nIsApprovalSystem = 1;
                 Response["isApprovalSystem"] = nIsApprovalSystem;                
             }
-            else
-            {
-                if(nActionID>0)
-                {
-                    Response["btnSaveText"] = "Save";
-                    Response["btnDeleteText"] = "Delete";
-                    Response["saveEnabled"] = false;
-                    Response["deleteEnabled"] = false; 
-                    Response["saveTag"] = 0;
-                    Response["deleteTag"] = 0;
-                    Response["isApprovalSystem"] = 0;
-                    Response["ApprovalID"] = 0;
-                    Response["isEditable"] = false;
-                    Response["lblVisible"] = true;
-                    Response["lblText"] = "Approval not set for this user";
-                    return Response;
-                }              
-            }
+            // else
+            // {
+            //     if(nActionID>0)
+            //     {
+            //         Response["btnSaveText"] = "Save";
+            //         Response["btnDeleteText"] = "Delete";
+            //         Response["saveEnabled"] = false;
+            //         Response["deleteEnabled"] = false; 
+            //         Response["saveTag"] = 0;
+            //         Response["deleteTag"] = 0;
+            //         Response["isApprovalSystem"] = 0;
+            //         Response["ApprovalID"] = 0;
+            //         Response["isEditable"] = false;
+            //         Response["lblVisible"] = true;
+            //         Response["lblText"] = "Approval not set for this user";
+            //         return Response;
+            //     }              
+            // }
             if (nTransID > 0)
             {
                 object objApprovalPresent = dLayer.ExecuteScalar("select COUNT(*) from Gen_ApprovalCodesTrans where N_FormID=" + nFormID + " and N_CompanyID=" + nCompanyID + " and N_TransID=" + nTransID, ApprovalParams, connection);
