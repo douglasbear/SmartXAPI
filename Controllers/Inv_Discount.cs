@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("pricelist")]
-        public ActionResult GetPriceListDetails(int nCustomerID, int nBranchID, int nFnYearID, int nItemID, int nCategoryID, int nItemUnitID, double nQty, int nBrandID,int n_PriceTypeID,int nLocationID)
+        public ActionResult GetPriceListDetails(int nCustomerID, int nBranchID, int nFnYearID, int nItemID, int nCategoryID, int nItemUnitID, double nQty, int nBrandID,int n_PriceTypeID,int nLocationID ,DateTime dSalesDate)
         {
             DataTable dtPriceList = new DataTable();
 
@@ -132,6 +132,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nCategoryID", nCategoryID);
                     Params.Add("@nBranchID", nBranchID);
                     Params.Add("@nBrandID", nBrandID);
+                     Params.Add("@dSalesDate", dSalesDate);
                    // object N_PriceTypeID = null;
                     if (nBranchID > 0)
                     {
@@ -160,12 +161,12 @@ namespace SmartxAPI.Controllers
                     if (n_PriceTypeID.ToString() != "" && n_PriceTypeID!=0)
                     {
                         Params.Add("@nPriceTypeID", n_PriceTypeID);
-                        string pricelistAll = "Select  CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID =@nPriceTypeID and N_ItemID=@nItemID and N_ItemUnitID=@nItemUnitID " + Condition + "";
+                        string pricelistAll = "Select  CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID =@nPriceTypeID and N_ItemID=@nItemID and N_ItemUnitID=@nItemUnitID and  D_Startdate <=@dSalesDate and  D_Enddate>=@dSalesDate" + Condition + "";
 
-                        string pricelistItem = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemID=@nItemID " + Condition + " ";
-                        string pricelistCategory = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_CategoryID=@nCategoryID " + Condition + "";
-                        string pricelistUnit = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemUnitID=@nItemUnitID " + Condition + "";
-                        string pricelistBrand = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_BrandID=@nBrandID and N_BrandID<>0 " + Condition + "";
+                        string pricelistItem = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemID=@nItemID and D_Startdate <= @dSalesDate and  D_Enddate>=@dSalesDate " + Condition + " ";
+                        string pricelistCategory = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_CategoryID=@nCategoryID and D_Startdate <= @dSalesDate and  D_Enddate>=@dSalesDate " + Condition + "";
+                        string pricelistUnit = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemUnitID=@nItemUnitID and D_Startdate <= @dSalesDate and  D_Enddate>=@dSalesDate" + Condition + "";
+                        string pricelistBrand = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_BrandID=@nBrandID and N_BrandID<>0 and D_Startdate <= @dSalesDate and  D_Enddate>=@dSalesDate" + Condition + "";
 
                         dtPriceList = dLayer.ExecuteDataTable(pricelistAll, Params, connection);
                         if (dtPriceList.Rows.Count == 0)
