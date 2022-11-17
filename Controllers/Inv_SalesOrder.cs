@@ -111,7 +111,7 @@ namespace SmartxAPI.Controllers
                         criteria = "and MONTH(Cast(D_OrderDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_OrderDate)= YEAR(CURRENT_TIMESTAMP)";
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([Order No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%')";
+                        Searchkey = "and ([Order No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or x_CustomerPO like '%" + xSearchkey + "%')";
 
                     if ((xSortBy == null || xSortBy.Trim() == "") && salesOrder == false)
                     {
