@@ -285,7 +285,7 @@ namespace SmartxAPI.Controllers
                     Byte[] ImageBitmap = new Byte[i_Signature.Length];
                     if (MasterTable.Columns.Contains("i_signature"))
                     {
-                        if (!MasterRow["i_signature"].ToString().Contains("undefined"))
+                        if (!MasterRow["i_signature"].ToString().Contains("undefined") && !MasterRow["i_signature"].ToString().Contains("ZGF0YTppbWFnZS9wbmc7YmFzZTY0LHVuZGVmaW5lZA=="))
                         {
                             i_Signature = Regex.Replace(MasterRow["i_signature"].ToString(), @"^data:image\/[a-zA-Z]+;base64,", string.Empty);
                             if (myFunctions.ContainColumn("i_signature", MasterTable))
