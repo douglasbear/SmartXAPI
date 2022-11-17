@@ -177,7 +177,7 @@ namespace SmartxAPI.Controllers
                         {
                          cnn2.Open();
                          object BranchCount = dLayer.ExecuteScalar("select count(N_BranchID)  from Acc_BranchMaster where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
-                         object limit = dLayer.ExecuteScalar("select isnull(N_Value,0) from GenSettings where N_ClientID="+ClientID+" and X_Description='COMPANY LIMIT' ", cnn2);
+                         object limit = dLayer.ExecuteScalar("select isnull(N_Value,0) from GenSettings where N_ClientID="+ClientID+" and X_Description='BRANCH LIMIT' ", cnn2);
                          if(limit==null){limit="0";}
                          if (BranchCount != null && limit != null)
                          {
