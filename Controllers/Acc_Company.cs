@@ -410,7 +410,7 @@ namespace SmartxAPI.Controllers
                            SortedList proParams6 = new SortedList(){
                                   {"N_ClientID",n_GBUserID}};
 
-                          //dLayer.ExecuteNonQueryPro("Sp_GenSettingInsert", proParams6, connection, transaction);
+                          dLayer.ExecuteNonQueryPro("Sp_GenSettingInsert", proParams6, connection, transaction);
 
                            userApps.Clear();
                            userApps.Columns.Add("N_CompanyID");
@@ -457,7 +457,7 @@ namespace SmartxAPI.Controllers
                         SortedList proParams5 = new SortedList(){
                                   {"N_CompanyID",N_CompanyId}};
 
-                         //dLayer.ExecuteNonQueryPro("UTL_UpdateGenSettings", proParams5, connection, transaction);
+                         dLayer.ExecuteNonQueryPro("UTL_UpdateGenSettings", proParams5, connection, transaction);
                       
 
 
