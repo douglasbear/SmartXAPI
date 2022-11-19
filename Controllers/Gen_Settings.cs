@@ -90,7 +90,7 @@ namespace SmartxAPI.Controllers
 
                     foreach (DataRow row in Settings.Rows)
                     {
-                        if (row["X_DataSource"] != null && row["X_DataSource"].ToString() != "" && row["X_DataSource"].ToString() != "null")
+                        if (row["X_DataSource"] != null && row["X_DataSource"].ToString() != "" && row["X_DataSource"].ToString() != "null" && row["X_DataSource"].ToString() != "0")
                         {
                             string sql = row["X_DataSource"].ToString();
                             SortedList lParamsList = new SortedList()
