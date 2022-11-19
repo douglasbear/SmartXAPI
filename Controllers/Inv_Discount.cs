@@ -248,7 +248,9 @@ namespace SmartxAPI.Controllers
 
                 if (nQty < myFunctions.getVAL(dtPriceList.Rows[0]["N_MinQty"].ToString()))
                 {
-                    return Ok(api.Warning("No Results Found"));
+                    string pricelistArray = ""; 
+                   return Ok(api.Success(pricelistArray));
+                     //return Ok(api.Warning("No Results Found"));
                 }
                 dtPriceList = api.Format(dtPriceList, "pricelist");
 
