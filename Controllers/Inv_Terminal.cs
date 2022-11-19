@@ -102,7 +102,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("setTerminal")]
-        public ActionResult SetTerminal(int n_TerminalID, int n_SessionID, int n_BranchID, int n_LocationID, int n_FnYearID, int n_CashOpening, string d_SessionDate, string d_SessionStartTime)
+        public ActionResult SetTerminal(int n_TerminalID, int n_SessionID, int n_BranchID, int n_LocationID, int n_FnYearID, double n_CashOpening, string d_SessionDate, string d_SessionStartTime)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
