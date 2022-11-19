@@ -230,6 +230,33 @@ namespace SmartxAPI.GeneralFunctions
 
                         }
                     }
+                    else{
+                            if (ExpiryDate == "")
+                        {
+                            if (dsAttachment.Columns.Contains("D_ExpiryDate"))
+                                dsAttachment.Columns.Remove("D_ExpiryDate");
+                            if (dsAttachment.Columns.Contains("N_RemCategoryID"))
+                                dsAttachment.Columns.Remove("N_RemCategoryID");
+                        }
+                        if (dsAttachment.Columns.Contains("FileData"))
+                            dsAttachment.Columns.Remove("FileData");
+                        if (dsAttachment.Columns.Contains("x_RemCategory"))
+                            dsAttachment.Columns.Remove("x_RemCategory");
+                        if (dsAttachment.Columns.Contains("x_Category"))
+                            dsAttachment.Columns.Remove("x_Category");
+                             if (dsAttachment.Columns.Contains("n_PartyID"))
+                            dsAttachment.Columns.Remove("n_PartyID");
+                            if (dsAttachment.Columns.Contains("n_TransID"))
+                            dsAttachment.Columns.Remove("n_TransID");
+                           dsAttachment.AcceptChanges();
+                           dLayer.SaveData("Acc_CompanyAttachments", "N_AttachmentID", dsAttachment, connection, transaction);
+                            if (myFunctions.getIntVAL(Result.ToString()) > 0)
+                            {
+
+                            }
+
+                        
+                    }
 
                 }
 

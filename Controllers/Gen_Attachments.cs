@@ -121,8 +121,17 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
                     int nUserID = myFunctions.GetUserID(User);
-                    myAttachments.DeleteAttachment(dLayer, formId, 2, nFnyearID, nAttachmentId, User, transaction, connection);
+                    if(formId==113)
+                    {
+                         dLayer.DeleteData("Acc_CompanyAttachments", "N_AttachmentID", nAttachmentId, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnyearID, connection, transaction);
+                    }
+                    else
+                    {
+                        myAttachments.DeleteAttachment(dLayer, formId, 2, nFnyearID, nAttachmentId, User, transaction, connection);
+                    }
+                  
                     transaction.Commit();
                     return Ok(api.Success("Attachment Deleted"));
                 }

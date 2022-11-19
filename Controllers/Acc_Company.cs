@@ -11,6 +11,24 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Text;
 
+
+
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Security.Claims;
+using System.Security.Cryptography;
+
+using System.Text.RegularExpressions;
+
+using System.Security;
+
+using System.Net;
+using System.Net.Mail;
+using System.Windows;
+
+
+
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -21,20 +39,23 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
+        private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
         private readonly string masterDBConnectionString;
+        private readonly string TempFilesPath;
 
-
-        public Acc_Company(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Acc_Company(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf,IMyAttachments myAtt)
         {
             api = apifun;
             dLayer = dl;
             myFunctions = myFun;
+            myAttachments = myAtt;
+            TempFilesPath = conf.GetConnectionString("TempFilesPath");
             connectionString = conf.GetConnectionString("SmartxConnection");
             masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
         }
 
-        //GET api/Company/list
+        //GET api/Company/list5
         // [AllowAnonymous]
         [HttpGet("list")]
         public ActionResult GetAllCompanys()
@@ -155,12 +176,49 @@ namespace SmartxAPI.Controllers
                     int N_FnYearID = myFunctions.getIntVAL(FnYearInfo.Rows[0]["N_FnYearID"].ToString());
 
                     DataTable TaxInfo = dLayer.ExecuteDataTable("SELECT  Top(1) Gen_Settings.N_Value AS n_PkeyID, Acc_TaxCategory.X_CategoryName AS x_DisplayName FROM Acc_TaxCategory INNER JOIN Acc_FnYear ON Acc_TaxCategory.N_TaxTypeID = Acc_FnYear.N_TaxType AND Acc_TaxCategory.N_CompanyID = Acc_FnYear.N_CompanyID INNER JOIN Gen_Settings ON Acc_TaxCategory.X_PkeyCode = Gen_Settings.N_Value AND Acc_TaxCategory.N_CompanyID = Gen_Settings.N_CompanyID WHERE (Gen_Settings.N_CompanyID = @p2) AND (Gen_Settings.X_Group = 'Inventory') AND (Gen_Settings.X_Description = 'DefaultTaxCategory') and Acc_FnYear.N_FnYearID=" + N_FnYearID, Params, connection);
+                  
 
+                    DataTable Attachments =new DataTable();
+                    
+                    SortedList ProParam = new SortedList();
+                    ProParam.Add("@CompanyID", nCompanyID);
+                   // DataTable Details = dLayer.ExecuteSettingsPro("SP_GenSettings_Disp", QList, myFunctions.GetCompanyID(User), nFnYearID, connection);
+                    Attachments = dLayer.ExecuteDataTablePro("SP_CompanyAttachments",ProParam, connection);
+                    //Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(AdminInfo.Rows[0]["N_CompanyID"].ToString()), myFunctions.getIntVAL(AdminInfo.Rows[0]["N_CompanyID"].ToString()), 113, myFunctions.getIntVAL(AdminInfo.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                    Attachments = api.Format(Attachments, "attachments");
+                    Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "FileData", typeof(string), null);
+                    Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "TempFileName", typeof(string), null);
+
+            if (Attachments.Rows.Count > 0)
+            {
+                Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "n_CompanyID", typeof(int), myFunctions.GetCompanyID(User));
+                Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "n_FnYearID", typeof(int), N_FnYearID);
+               
+            }
+
+            foreach (DataRow var in Attachments.Rows)
+            {
+                if (var["x_refName"] != null)
+                {
+                    var path = var["x_refName"].ToString();
+                    if (System.IO.File.Exists(path))
+                    {
+                        Byte[] bytes = System.IO.File.ReadAllBytes(path);
+                        var random = RandomString();
+                        System.IO.File.Copy(path, this.TempFilesPath + random + "." + var["x_Extension"].ToString());
+                        var["TempFileName"] = random + "." + var["x_Extension"].ToString();
+                        var["FileData"] = "data:" + api.GetContentType(path) + ";base64," + Convert.ToBase64String(bytes);
+                    }
+                }
+
+            }
+            Attachments.AcceptChanges();
+                 
                     Output.Add("CompanyInfo", dt);
                     Output.Add("AdminInfo", AdminInfo);
                     Output.Add("TaxInfo", TaxInfo);
                     Output.Add("FnYearInfo", FnYearInfo);
-
+                    Output.Add("Attachments", Attachments);
                 }
                 if (dt.Rows.Count == 0)
                 {
@@ -178,7 +236,13 @@ namespace SmartxAPI.Controllers
             }
 
         }
-
+      private static Random random = new Random();
+      public string RandomString(int length = 6)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nCompanyID)
         {
@@ -219,6 +283,7 @@ namespace SmartxAPI.Controllers
                  DataTable userApps = new DataTable();
                 MasterTable = ds.Tables["master"];
                 GeneralTable = ds.Tables["general"];
+                DataTable Attachment = ds.Tables["attachments"];
                 string xUserName = GeneralTable.Rows[0]["X_AdminName"].ToString();
                 string xPassword = myFunctions.EncryptString(GeneralTable.Rows[0]["X_AdminPwd"].ToString());
                 int n_userType=0;
@@ -369,8 +434,7 @@ namespace SmartxAPI.Controllers
                         userApps.Rows.InsertAt(row, 0);
                         int userAppsID = dLayer.SaveData("sec_userApps", "n_AppMappingID", userApps, connection, transaction);
 
-
-
+              
 
                         }
                         SortedList taxParams = new SortedList(){
@@ -398,9 +462,22 @@ namespace SmartxAPI.Controllers
                                   {"N_CompanyID",N_CompanyId}};
 
                          dLayer.ExecuteNonQueryPro("UTL_UpdateGenSettings", proParams5, connection, transaction);
-                        transaction.Commit();
+                      
 
 
+                if (Attachment.Rows.Count > 0)
+                    {
+                        try
+                        {
+                            myAttachments.SaveAttachment(dLayer, Attachment,MasterTable.Rows[0]["X_CompanyCode"].ToString(),N_CompanyId, MasterTable.Rows[0]["X_CompanyName"].ToString().Trim(), MasterTable.Rows[0]["X_CompanyCode"].ToString(), N_CompanyId, "Company Document", User, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, ex));
+                        }
+                    }
+                      transaction.Commit();
 
                         return Ok(api.Success("Company successfully saved"));
                     }
