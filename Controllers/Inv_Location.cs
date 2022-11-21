@@ -252,7 +252,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     SortedList ValidateParams = new SortedList();
                     // Auto Gen
-                    string LocationCode = "";
+                    string LocationCode = MasterTable.Rows[0]["x_LocationCode"].ToString();
                     char x_LocationCodePattern;
                     char initialCode;
                     String DupCriteria=" ";
