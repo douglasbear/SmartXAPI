@@ -45,22 +45,22 @@ namespace SmartxAPI.Controllers
             {
                 Params.Add("@nCashBahavID", nCashBahavID);
 
-                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and N_CashBahavID =@nCashBahavID and B_Inactive = 0  order by [Account Code]";
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,X_LedgerName_Ar as account_Ar,N_TransBehavID from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and N_CashBahavID =@nCashBahavID and B_Inactive = 0  order by [Account Code]";
             }
             else if(nGroupID > 0)
             {
                Params.Add("@nGroupID", nGroupID);
 
-                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and N_GroupID =@nGroupID and B_Inactive = 0  order by [Account Code]";  
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,X_LedgerName_Ar as account_Ar,N_TransBehavID from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and N_GroupID =@nGroupID and B_Inactive = 0  order by [Account Code]";  
             }
             else
             if (xType.ToLower() != "all")
             {
                 Params.Add("@p3", xType);
-                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type =@p3 and B_Inactive = 0  order by [Account Code]";
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,X_LedgerName_Ar as account_Ar,N_TransBehavID from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type =@p3 and B_Inactive = 0  order by [Account Code]";
             }
             else
-                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and B_Inactive = 0  order by [Account Code]";
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,X_LedgerName_Ar as account_Ar,N_TransBehavID from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and B_Inactive = 0  order by [Account Code]";
 
             try
             {
