@@ -83,10 +83,21 @@ namespace SmartxAPI.Controllers
                         " SELECT *, null as N_ClientID FROM AppMaster WHERE  N_AppID not in (SELECT N_AppID FROM ClientApps WHERE N_ClientID =" + ClientID + " )) a where N_AppID in (SELECT  N_AppID FROM AppConfig where X_BuildType='" + AppName + "')  order by N_Order";
                     if (showAll == false)
                     {
-                        sqlCommandText = "SELECT AppMaster.*,ClientApps.N_ClientID FROM AppMaster INNER JOIN ClientApps ON AppMaster.N_AppID = ClientApps.N_AppID where ClientApps.N_ClientID=" + ClientID + " and AppMaster.B_Inactive =0 " + xCritreria + " order by AppMaster.N_Order";
+                        sqlCommandText = "SELECT  AppMaster.N_AppID ,AppMaster.X_AppName,AppMaster.X_AppDescription,AppMaster.X_Version,"
+                                         +" AppMaster.B_Inactive,AppMaster.N_Order,AppMaster.N_TrialPeriod,AppMaster.X_HelpUrl,AppMaster.X_InitialDataUrl,"
+                                          +" AppMaster.B_EnableAttachment,ClientApps.N_ClientID,ClientApps.D_ExpiryDate"
+                                           +",isnull(DATEDIFF(day, GETDATE(),min(D_ExpiryDate)),0) as expiry"
+                                          +" FROM AppMaster "
+                                           +"INNER JOIN ClientApps ON AppMaster.N_AppID = ClientApps.N_AppID "
+                                          +"  where ClientApps.N_ClientID=" + ClientID + " and AppMaster.B_Inactive =0 " + xCritreria + " "
+                                           +"Group By AppMaster.N_AppID ,AppMaster.X_AppName,AppMaster.X_AppDescription,AppMaster.X_Version, "
+                                          +" AppMaster.B_Inactive,AppMaster.N_Order,AppMaster.N_TrialPeriod,AppMaster.X_HelpUrl,AppMaster.X_InitialDataUrl, "
+                                         +"  AppMaster.B_EnableAttachment,ClientApps.N_ClientID,ClientApps.D_ExpiryDate  order by AppMaster.N_Order";
                     }
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, connection);
+
+                
                 }
                 if (dt.Rows.Count == 0)
                 {
