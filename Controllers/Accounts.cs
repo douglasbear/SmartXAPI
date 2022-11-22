@@ -45,22 +45,37 @@ namespace SmartxAPI.Controllers
             {
                 Params.Add("@nCashBahavID", nCashBahavID);
 
+<<<<<<< HEAD
                 sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,N_TransBehavID,X_LedgerName_Ar as account_Ar from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and N_CashBahavID =@nCashBahavID and B_Inactive = 0  order by [Account Code]";
+=======
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,X_LedgerName_Ar as account_Ar,N_TransBehavID from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and N_CashBahavID =@nCashBahavID and B_Inactive = 0  order by [Account Code]";
+>>>>>>> 4f4d7ed799baa50d786979243642abd9ebc74ada
             }
             else if(nGroupID > 0)
             {
                Params.Add("@nGroupID", nGroupID);
 
+<<<<<<< HEAD
                 sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,N_TransBehavID,X_LedgerName_Ar as account_Ar from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and N_GroupID =@nGroupID and B_Inactive = 0  order by [Account Code]";  
+=======
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,X_LedgerName_Ar as account_Ar,N_TransBehavID from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and N_GroupID =@nGroupID and B_Inactive = 0  order by [Account Code]";  
+>>>>>>> 4f4d7ed799baa50d786979243642abd9ebc74ada
             }
             else
             if (xType.ToLower() != "all")
             {
                 Params.Add("@p3", xType);
+<<<<<<< HEAD
                 sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,N_TransBehavID,X_LedgerName_Ar as account_Ar from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type =@p3 and B_Inactive = 0  order by [Account Code]";
             }
             else
                 sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,N_TransBehavID,X_LedgerName_Ar as account_Ar from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and B_Inactive = 0  order by [Account Code]";
+=======
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,X_LedgerName_Ar as account_Ar,N_TransBehavID from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type =@p3 and B_Inactive = 0  order by [Account Code]";
+            }
+            else
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,X_LedgerName_Ar as account_Ar,N_TransBehavID from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and B_Inactive = 0  order by [Account Code]";
+>>>>>>> 4f4d7ed799baa50d786979243642abd9ebc74ada
 
             try
             {
