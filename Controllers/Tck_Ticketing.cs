@@ -209,11 +209,11 @@ namespace SmartxAPI.Controllers
                         n_PIsCompleted=myFunctions.getIntVAL(PResult["b_IsCompleted"].ToString());
                         x_PMessage=PResult["x_Msg"].ToString();
 
-                        if(n_PIsCompleted==0)
-                        {
-                            transaction.Rollback();
-                            return Ok(api.Error(User, x_PMessage));
-                        }
+                        // if(n_PIsCompleted==0)
+                        // {
+                        //     transaction.Rollback();
+                        //     return Ok(api.Error(User, x_PMessage));
+                        // }
                         //-------------------------------^^^^^^^^^^^^^^------------------------------------//
 
                         //-------------------------------Sales Save------------------------------------//
@@ -288,11 +288,11 @@ namespace SmartxAPI.Controllers
                         n_SIsCompleted=myFunctions.getIntVAL(SResult["b_IsCompleted"].ToString());
                         x_SMessage=SResult["x_Msg"].ToString();
 
-                        if(n_SIsCompleted==0)
-                        {
-                            transaction.Rollback();
-                            return Ok(api.Error(User, x_SMessage));
-                        }
+                        // if(n_SIsCompleted==0)
+                        // {
+                        //     transaction.Rollback();
+                        //     return Ok(api.Error(User, x_SMessage));
+                        // }
                         //-------------------------------^^^^^^^^^^^^^^------------------------------------//
 
                         transaction.Commit();
