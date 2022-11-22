@@ -19,7 +19,7 @@ using System.IO.Compression;
 using System.Net.Cache;
 using System.Drawing;
 using System.Drawing.Imaging;
-using ZXing;
+using System.Net;
 namespace SmartxAPI.Controllers
 {
     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -269,6 +269,7 @@ namespace SmartxAPI.Controllers
                     string TaxType = ObjTaxType.ToString();
 
                     object ObjPath = dLayer.ExecuteScalar("SELECT X_RptFolder FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+
                     if (ObjPath != null)
                     {
                         if (ObjPath.ToString() != "")
@@ -376,7 +377,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("getscreenprint")]
-        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, int nPreview, string xrptname, string docNumber, string partyName, bool printSave, bool sendWtsapMessage)
+        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, int nPreview, string xrptname, string docNumber, string partyName, bool printSave, bool sendWtsapMessage,int nLangId)
         {
             SortedList QueryParams = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -449,6 +450,11 @@ namespace SmartxAPI.Controllers
                         DateTime currentTime;
                         string x_comments = "";
                         //Local Time Checking
+                        var clientdata = new WebClient();
+                        var content1 = clientdata.DownloadString("http://worldtimeapi.org/api/timezone/Asia/Kolkata");
+
+
+
                         object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyId, connection, transaction);
                         object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection, transaction);
                         if (Timezone != null && Timezone.ToString() != "")
@@ -521,25 +527,25 @@ namespace SmartxAPI.Controllers
                         if (nFormID == 1426)
                         {
                             SqlCommand cmd = new SqlCommand("select i_signature from Inv_Deliverynote where N_DeliveryNoteID=" + nPkeyID, connection, transaction);
-                            object output=cmd.ExecuteScalar();
-                            if((cmd.ExecuteScalar().ToString())!="")
+                            object output = cmd.ExecuteScalar();
+                            if ((cmd.ExecuteScalar().ToString()) != "")
                             {
-                            byte[] content = (byte[])cmd.ExecuteScalar();
-                            MemoryStream stream = new MemoryStream(content);
-                            Image Sign = Image.FromStream(stream);
+                                byte[] content = (byte[])cmd.ExecuteScalar();
+                                MemoryStream stream = new MemoryStream(content);
+                                Image Sign = Image.FromStream(stream);
 
-                            using (var b = new Bitmap(Sign.Width, Sign.Height))
-                            {
-                                b.SetResolution(Sign.HorizontalResolution, Sign.VerticalResolution);
-
-                                using (var g = Graphics.FromImage(b))
+                                using (var b = new Bitmap(Sign.Width, Sign.Height))
                                 {
-                                    g.Clear(Color.White);
-                                    g.DrawImageUnscaled(Sign, 0, 0);
+                                    b.SetResolution(Sign.HorizontalResolution, Sign.VerticalResolution);
+
+                                    using (var g = Graphics.FromImage(b))
+                                    {
+                                        g.Clear(Color.White);
+                                        g.DrawImageUnscaled(Sign, 0, 0);
+                                    }
+                                    //b = resizeImage(Sign, new Size(400, 300));
+                                    b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + ".png");
                                 }
-                                //b = resizeImage(Sign, new Size(400, 300));
-                                b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + ".png");
-                            }
                             }
                         }
 
@@ -622,6 +628,7 @@ namespace SmartxAPI.Controllers
                             }
 
                         }
+                        
 
                         // ReportName = FormName + "_" + docNumber + "_" + partyName.Trim()+".pdf";
                         ReportName = FormName + "_" + docNumber + "_" + partyName.Trim() + "_" + random + ".pdf";
