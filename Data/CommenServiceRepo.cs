@@ -209,9 +209,42 @@ namespace SmartxAPI.Data
                                     xGlobalUserID = globalInfo.Rows[0]["X_UserID"].ToString();
                                 }
 
-                                int daysToExpire = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_ExpiryDate)),0) as expiry from ClientApps where N_ClientID=" + clientID, cnn2).ToString());
+                                int daysToExpire = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_ExpiryDate)),0) as expiry from ClientApps where N_ClientID=" + clientID+" and N_AppID="+AppID+"", cnn2).ToString());
                                 if (daysToExpire <= 0)
-                                    throw new Exception("Your Subscription Expired");
+                                {
+                                    int expiredApp=AppID;
+                                    string appsID=AppID.ToString();
+                                    int flag=0;
+                                     while (expiredApp != 0 )
+                                    {
+                                    string appNew = "select Top 1 N_AppID from ClientApps where N_ClientID="+globalInfo.Rows[0]["N_ClientID"].ToString()+"  and N_AppID not in ("+appsID+") ";
+                                    object newAppID =   dLayer.ExecuteScalar(appNew, cnn2);
+                                    if(newAppID==null)
+                                    {
+                                        flag=1;
+                                        expiredApp=0;
+                                    }
+                                    else
+                                    {
+                                         int daysToExpireNeApp = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_ExpiryDate)),0) as expiry from ClientApps where N_ClientID=" + clientID+" and N_AppID="+myFunctions.getIntVAL(newAppID.ToString())+"", cnn2).ToString());
+                                         if (daysToExpireNeApp <= 0)
+                                         {
+                                            appsID=appsID+","+newAppID.ToString();
+                                            expiredApp=myFunctions.getIntVAL(newAppID.ToString());
+                                            flag=1;
+                                         }
+                                        else  
+                                        {
+                                            AppID=myFunctions.getIntVAL(newAppID.ToString());
+                                             expiredApp=0;
+                                             flag=0;
+                                        }
+                                    }
+                                }
+                                if(flag==1)
+                                  throw new Exception("Your Subscription Expired"); 
+
+                                }  
                                 // if (AppID != 6 && AppID != 8 && AppID != 15 && AppID != 16 && AppID != 13 && AppID != 14 && AppID != 18)
                                 if (AppID != 6 && AppID != 15 && AppID != 16 && AppID != 8 && AppID != 13 && AppID != 14 && AppID != 18 && AppID != 20 && AppID != 21 && AppID != 22)
                                 {
