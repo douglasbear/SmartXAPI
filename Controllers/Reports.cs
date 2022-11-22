@@ -215,7 +215,7 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                var handler = new HttpClientHandler
+                var handler1 = new HttpClientHandler
                 {
                     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                 };
@@ -225,7 +225,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction;
                     transaction = connection.BeginTransaction();
 
-                    var client = new HttpClient(handler);
+                    var client = new HttpClient(handler1);
                     var random = RandomString();
                     var dbName = connection.Database;
                     //string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
