@@ -71,7 +71,7 @@ namespace SmartxAPI.Controllers
         public ActionResult AccountTransactionType()
         {
             DataTable dt = new DataTable();
-            string sqlCommandText = "select N_CategoryID,N_GenTypeId,N_SubCategoryID,N_Order,X_Description from Acc_CashFlowCategory";
+            string sqlCommandText = "select N_CategoryID,N_GenTypeId,N_SubCategoryID,N_Order,X_Description,X_Description_Ar from Acc_CashFlowCategory";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
