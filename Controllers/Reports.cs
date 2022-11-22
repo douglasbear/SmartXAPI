@@ -240,7 +240,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-        private bool LoadReportDetails(int nFnYearID, int nFormID, int nPkeyID, int nPreview, string xRptname)
+        private bool LoadReportDetails(int nFnYearID, int nFormID, int nPkeyID, int nPreview, string xRptname,int nLangId)
         {
             SortedList QueryParams = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -271,10 +271,11 @@ namespace SmartxAPI.Controllers
                     object ObjPath = dLayer.ExecuteScalar("SELECT X_RptFolder FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
                     if (ObjPath != null)
                     {
+                        RPTLocation = reportLocation.Remove(reportLocation.Length - 2, 2) + nLangId + "/";
                         if (ObjPath.ToString() != "")
-                            RPTLocation = reportLocation + "printing/" + ObjPath + "/" + TaxType + "/";
+                            RPTLocation = RPTLocation + "printing/" + ObjPath + "/" + TaxType + "/";
                         else
-                            RPTLocation = reportLocation + "printing/";
+                            RPTLocation = RPTLocation + "printing/";
                     }
 
                     object Templatecritiria = dLayer.ExecuteScalar("SELECT X_PkeyField FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
@@ -376,7 +377,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("getscreenprint")]
-        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, int nPreview, string xrptname, string docNumber, string partyName, bool printSave, bool sendWtsapMessage)
+        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, int nPreview, string xrptname, string docNumber, string partyName, bool printSave, bool sendWtsapMessage,int n_LanguageID)
         {
             SortedList QueryParams = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -407,7 +408,7 @@ namespace SmartxAPI.Controllers
                         }
 
                     }
-                    if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, nPreview, xrptname))
+                    if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, nPreview, xrptname,n_LanguageID))
                     {
 
                         var client = new HttpClient(handler);
