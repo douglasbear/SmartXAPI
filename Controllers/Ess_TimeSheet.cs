@@ -352,9 +352,9 @@ namespace SmartxAPI.Controllers
                                 object Receip = dLayer.ExecuteScalar("select x_phone1 from acc_company where n_companyid=" + myFunctions.GetCompanyID(User), Params, connection, transaction);
                                 string body = "";
                                 if (Punchtype == "IN")
-                                    body = Employee + " Logged In @ " + date.ToString();
+                                    body = Employee + "%0AIN @ " + date.ToString("hh:mm tt");
                                 if (Punchtype == "OUT")
-                                    body = Employee + " Logged Out @ " + date.ToString();
+                                    body = Employee + "%0AOUT @ " + date.ToString("hh:mm tt");
 
 
                                 string URLAPI = "https://api.textmebot.com/send.php?recipient=" + Receip + "&apikey=" + WhatsappAPI + "&text=" + body;
