@@ -192,9 +192,11 @@ namespace SmartxAPI.GeneralFunctions
                             {
                                 // transaction.Rollback();
                                 // return Ok(_api.Error(User, ex.Message));
-                                Result.Add("b_IsCompleted", 0);
-                                Result.Add("x_Msg", ex.Message);
-                                return Result;
+                                transaction.Rollback();
+                                throw ex; 
+                                // Result.Add("b_IsCompleted", 0);
+                                // Result.Add("x_Msg", ex.Message);
+                                //return Result;
                             }
                         }
 
@@ -414,11 +416,12 @@ namespace SmartxAPI.GeneralFunctions
                         }
                         catch (Exception ex)
                         {
-                            // transaction.Rollback();
+                            transaction.Rollback();
+                            throw ex;
                             // return Ok(_api.Error(User, ex));
-                            Result.Add("b_IsCompleted", 0);
-                            Result.Add("x_Msg", ex);
-                            return Result;
+                            // Result.Add("b_IsCompleted", 0);
+                            // Result.Add("x_Msg", ex);
+                           // return Result;
                         }
 
                         ProParam.Add("X_Type", "purchase invoice");
@@ -596,7 +599,11 @@ namespace SmartxAPI.GeneralFunctions
                             else if (ex.Message.Contains("55"))
                                 Result.Add("x_Msg", "Transaction Started");
                             else
-                                Result.Add("x_Msg", ex.Message);
+                            {
+                                transaction.Rollback();
+                                //Result.Add("x_Msg", ex.Message);
+                                throw ex;
+                            }
                             return Result;
                         }
 
@@ -629,11 +636,12 @@ namespace SmartxAPI.GeneralFunctions
                         }
                         catch (Exception ex)
                         {
-                            // transaction.Rollback();
+                             transaction.Rollback();
                             // return Ok(_api.Error(User, ex));
-                            Result.Add("b_IsCompleted", 0);
-                            Result.Add("x_Msg", ex);
-                            return Result;
+                            // Result.Add("b_IsCompleted", 0);
+                            // Result.Add("x_Msg", ex);
+                            // return Result;
+                            throw ex;
                         }
                     }
                     Result.Add("b_IsCompleted", 1);
@@ -793,11 +801,12 @@ namespace SmartxAPI.GeneralFunctions
                     }
                     catch (Exception ex)
                     {
-                        // transaction.Rollback();
+                        transaction.Rollback();
                         // return Ok(_api.Error(User, ex));
-                        Result.Add("b_IsCompleted", 0);
-                        Result.Add("x_Msg", ex);
-                        return Result;
+                        // Result.Add("b_IsCompleted", 0);
+                        // Result.Add("x_Msg", ex);
+                        // return Result;
+                        throw ex;
                     }
                     bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
                     if (B_AmtpaidEnable)
@@ -952,11 +961,12 @@ namespace SmartxAPI.GeneralFunctions
                 }
                 catch (Exception ex)
                 {
-                    // transaction.Rollback();
+                    transaction.Rollback();
                     // return Ok(_api.Error(User, ex));
-                    Result.Add("b_IsCompleted", 0);
-                    Result.Add("x_Msg", ex);
-                    return Result;
+                    // Result.Add("b_IsCompleted", 0);
+                    // Result.Add("x_Msg", ex);
+                    // return Result;
+                    throw ex;
                 }
 
                 dLayer.ExecuteNonQuery("delete from Inv_SaleAmountDetails where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_BranchID=" + N_BranchID, connection, transaction);
@@ -1203,12 +1213,12 @@ namespace SmartxAPI.GeneralFunctions
                         }
                         catch (Exception ex)
                         {
-                            // transaction.Rollback();
+                            transaction.Rollback();
                             // return Ok(_api.Error(User, ex));
-                            Result.Add("b_IsCompleted", 0);
-                            Result.Add("x_Msg", ex);
-                            return Result;
-
+                            // Result.Add("b_IsCompleted", 0);
+                            // Result.Add("x_Msg", ex);
+                            // return Result;
+                            throw ex;
                         }
 
 
@@ -1259,7 +1269,11 @@ namespace SmartxAPI.GeneralFunctions
                             else if (ex.Message == "55")
                                 Result.Add("x_Msg", "Quantity exceeds!");
                             else
-                                Result.Add("x_Msg", ex);
+                            {
+                                transaction.Rollback();
+                                throw ex;
+                            }
+                                //Result.Add("x_Msg", ex);
 
                             return Result;
                         }
@@ -1280,11 +1294,12 @@ namespace SmartxAPI.GeneralFunctions
                     }
                     catch (Exception ex)
                     {
-                        // transaction.Rollback();
+                        transaction.Rollback();
                         // return Ok(_api.Error(User, ex));
-                        Result.Add("b_IsCompleted", 0);
-                        Result.Add("x_Msg", ex);
-                        return Result;
+                        // Result.Add("b_IsCompleted", 0);
+                        // Result.Add("x_Msg", ex);
+                        // return Result;
+                        throw ex;
                     }
                     bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
                     if (B_AmtpaidEnable)
@@ -1359,11 +1374,12 @@ namespace SmartxAPI.GeneralFunctions
                     }
                     catch (Exception ex)
                     {
-                        // transaction.Rollback();
+                        transaction.Rollback();
                         // return Ok(_api.Error(User, ex));
-                        Result.Add("b_IsCompleted", 0);
-                        Result.Add("x_Msg", ex);
-                        return Result;
+                        // Result.Add("b_IsCompleted", 0);
+                        // Result.Add("x_Msg", ex);
+                        // return Result;
+                        throw ex;
                     }
                 }
                 //dispatch saving here
@@ -1493,11 +1509,12 @@ namespace SmartxAPI.GeneralFunctions
                 }
                 catch (Exception ex)
                 {
-                    // transaction.Rollback();
+                    transaction.Rollback();
                     // return Ok(_api.Error(User, ex));
-                    Result.Add("b_IsCompleted", 0);
-                    Result.Add("x_Msg", ex);
-                    return Result;
+                    // Result.Add("b_IsCompleted", 0);
+                    // Result.Add("x_Msg", ex);
+                    // return Result;
+                    throw ex;
                 }
                 // string sqlCommandText = "";
                 // SortedList DeleteParams = new SortedList();
@@ -1537,11 +1554,12 @@ namespace SmartxAPI.GeneralFunctions
                 }
                 catch (Exception ex)
                 {
-                    // transaction.Rollback();
+                    transaction.Rollback();
                     // return Ok(_api.Error(User, ex));
-                    Result.Add("b_IsCompleted", 0);
-                    Result.Add("x_Msg", ex);
-                    return Result;
+                    // Result.Add("b_IsCompleted", 0);
+                    // Result.Add("x_Msg", ex);
+                    // return Result;
+                    throw ex;
                 }
             }
 
