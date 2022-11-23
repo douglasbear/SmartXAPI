@@ -63,7 +63,11 @@ namespace SmartxAPI.Controllers
                     string formIDCndn = "";
                     if(nFormID>0)
                     {
+                        if(nFormID==64)
+                        formIDCndn= " and ( N_FormID = 64 or N_FormID = 894 ) ";
+                        else
                         formIDCndn= " and N_FormID = @N_FormID ";
+
                         Params.Add("@N_FormID", nFormID);
                     }
                     bool B_ReduceTime =Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "reduceTime_Sales", "N_Value", myFunctions.getIntVAL(nCompanyId.ToString()), dLayer, connection)));
