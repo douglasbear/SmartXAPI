@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
         }
 
          [HttpGet("list")]
-        public ActionResult CompanyList(int nUserID)
+        public ActionResult CompanyList(string XUserID)
         {
             try
             {
@@ -42,9 +42,9 @@ namespace SmartxAPI.Controllers
                     DataTable dt = new DataTable();
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
-                    Params.Add("@nUserID", nUserID);
+                    Params.Add("@XUserID", XUserID);
 
-                    string sqlCommandText = "select * from Acc_Company where N_CompanyID in ( select N_CompanyID from Sec_User where n_userID=nUserID)";
+                    string sqlCommandText = "select * from Acc_Company where N_CompanyID in ( select N_CompanyID from Sec_User where n_userID=XUserID)";
 
                     SortedList OutPut = new SortedList();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
@@ -69,11 +69,10 @@ namespace SmartxAPI.Controllers
 
          [HttpGet("details")]
 
-        public ActionResult GetData()
+        public ActionResult GetData(int nCompanyID)
         {
             DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyID = myFunctions.GetCompanyID(User);
+            SortedList Params = new SortedList();      
             string sqlCommandCount = "";
             string sqlCommandText = "select * from Inv_ItemMaster where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyID);
