@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     Params.Add("@nUserID", nUserID);
 
-                    string sqlCommandText = "select * from Acc_Company where N_CompanyID in ( select N_CompanyID from Sec_User where n_userID=nUserID)";
+                    string sqlCommandText = "select * from Acc_Company where N_CompanyID in ( select N_CompanyID from Sec_User where n_userID=@nUserID)";
 
                     SortedList OutPut = new SortedList();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
