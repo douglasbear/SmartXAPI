@@ -626,7 +626,7 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable = new DataTable();
-                DataTable MasterTableNew, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2, LocationList, CategoryList, VariantList, ItemUnits, itemWarranty;
+                DataTable MasterTableNew, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2, LocationList, CategoryList, VariantList, ItemUnits, itemWarranty,storeAllocation;
                 DataTable SubItemTable = new DataTable();
                 DataTable ScrapItemTable = new DataTable();
                 DataTable BOMEmpTable = new DataTable();
@@ -650,6 +650,7 @@ namespace SmartxAPI.Controllers
                 BOMEmpTable = ds.Tables["bomEmp"];
                 BOMAssetTable = ds.Tables["bomAsset"];
                 itemWarranty = ds.Tables["itemWarranty"];
+                storeAllocation = ds.Tables["store"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CompanyId"].ToString());
                 int N_ItemID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString());
                 string XItemName = MasterTableNew.Rows[0]["X_ItemName"].ToString();
@@ -1019,6 +1020,28 @@ namespace SmartxAPI.Controllers
                             itemWarranty.AcceptChanges();
                             dLayer.SaveData("Inv_ItemWarranty", "N_ItemDetailsID", itemWarranty, connection, transaction);
                         }
+                      if (storeAllocation.Rows.Count > 0)
+                        {
+
+
+                         
+                             for (int l = 0; l < storeAllocation.Rows.Count; l++)
+                            {    int  n_StoreID=  myFunctions.getIntVAL(storeAllocation.Rows[l]["N_StoreID"].ToString()) ;
+                                 int  n_StoreDetailID=  myFunctions.getIntVAL(storeAllocation.Rows[l]["N_StoreDetailID"].ToString()) ;
+                                 object storeCount = dLayer.ExecuteScalar("select count(*) from Inv_OnlineStoreDetail  where N_StoreID = " + n_StoreID + " and N_StoreDetailID="+n_StoreDetailID+" and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                               
+                                if(myFunctions.getIntVAL(storeCount.ToString())>0){
+                                
+                                  dLayer.DeleteData("Inv_OnlineStoreDetail", "n_StoreDetailID", n_StoreDetailID, "", connection, transaction);
+                                }
+                                    
+                                    storeAllocation.Rows[l]["N_ItemID"] = N_ItemID;
+                                    dLayer.SaveDataWithIndex("Inv_OnlineStoreDetail", "n_StoreDetailID", "", "" ,l,storeAllocation,connection, transaction);
+                    
+                            }
+                         
+                        }
+                        
                     }
 
 
@@ -1308,13 +1331,18 @@ namespace SmartxAPI.Controllers
                 DataTable masterTable = new DataTable();
 
                 string x_Criteria = "";
+                string sql = "";
 
                 if (isWHM)
                     x_Criteria = " (select N_LocationID from Inv_Location where Left(X_Pattern,(select len(X_Pattern) from Inv_Location where N_CompanyID=@N_CompanyID and N_LocationID=@N_LocationID)) =(select cast(X_Pattern as varchar) from Inv_Location where N_CompanyID=@N_CompanyID and N_LocationID=@N_LocationID)) ";
                 else
                     x_Criteria = " (@N_LocationID) ";
 
-                string sql = "select  N_CompanyID,N_ItemID,N_LocationID,X_BatchCode,' Exp Date : ' + CONVERT(varchar(110),DATEADD(YEAR,1,D_ExpiryDate),106) + ',  Qty : '+ cast(Stock as varchar) as Stock_Disp,D_ExpiryDate,Stock,X_ItemUnit,N_Qty as N_BaseUnitQty,X_LocationName,N_ItemUnitID,X_Bin,X_Row,X_Rack,X_Room,x_Shelf,N_LPrice from vw_BatchwiseStockDisp where N_CompanyID=@N_CompanyID and N_ItemID=@N_ItemID and N_LocationID in " + x_Criteria + " and CurrentStock>0 and ISNULL(X_BatchCode,'')<>'' order by D_ExpiryDate ASC";
+                if (isWHM)
+                    sql =  "select  N_CompanyID,N_ItemID,N_LocationID,X_BatchCode,' Exp Date : ' + CONVERT(varchar(110),DATEADD(YEAR,1,D_ExpiryDate),106) + ',  Qty : '+ cast(Stock as varchar) as Stock_Disp,D_ExpiryDate,Stock,X_ItemUnit,N_Qty as N_BaseUnitQty,X_LocationName,N_ItemUnitID,X_Bin,X_Row,X_Rack,X_Room,x_Shelf,N_LPrice from vw_BatchwiseStockDisp_MRNDetails where N_CompanyID=@N_CompanyID and N_ItemID=@N_ItemID and N_LocationID in " + x_Criteria + " and CurrentStock>0 and ISNULL(X_BatchCode,'')<>'' order by D_ExpiryDate ASC";
+                else
+                    sql = "select  N_CompanyID,N_ItemID,N_LocationID,X_BatchCode,' Exp Date : ' + CONVERT(varchar(110),DATEADD(YEAR,1,D_ExpiryDate),106) + ',  Qty : '+ cast(Stock as varchar) as Stock_Disp,D_ExpiryDate,Stock,X_ItemUnit,N_Qty as N_BaseUnitQty,X_LocationName,N_ItemUnitID,X_Bin,X_Row,X_Rack,X_Room,x_Shelf,N_LPrice from vw_BatchwiseStockDisp where N_CompanyID=@N_CompanyID and N_ItemID=@N_ItemID and N_LocationID in " + x_Criteria + " and CurrentStock>0 and ISNULL(X_BatchCode,'')<>'' order by D_ExpiryDate ASC";
+
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {

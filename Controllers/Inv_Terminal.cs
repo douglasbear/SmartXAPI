@@ -102,7 +102,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("setTerminal")]
-        public ActionResult SetTerminal(int n_TerminalID, int n_SessionID, int n_BranchID, int n_LocationID, int n_FnYearID, int n_CashOpening, string d_SessionDate, string d_SessionStartTime)
+        public ActionResult SetTerminal(int n_TerminalID, int n_SessionID, int n_BranchID, int n_LocationID, int n_FnYearID, double n_CashOpening, string d_SessionDate, string d_SessionStartTime)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -119,23 +119,28 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     DataTable OutPut;
                     SqlTransaction transaction = connection.BeginTransaction();
-                    if (n_SessionID == 0)
-                    {
-
-                        string presessionsql = "select max(N_SessionID)-1 from Acc_PosSession where N_CompanyID= "+nCompanyId+"";
-                        object preSessionID = dLayer.ExecuteScalar(presessionsql, Params, connection,transaction);
-                        string cashBalancesql = "select cast(isnull(N_CashBalance,0) as decimal(10,2)) from Acc_PosSession where N_CompanyID= "+nCompanyId+" and N_SessionID="+myFunctions.getIntVAL(preSessionID.ToString())+"";
-                        object cashBalance = dLayer.ExecuteScalar(cashBalancesql, Params, connection,transaction);
-                      
-                        sqlCommandText = "select Top(1) N_CompanyID," + n_FnYearID + " as N_FnYearID," + n_BranchID + " as N_BranchID,cast(@sessionTime as datetime) as D_SessionDate,0 as N_SessionID,N_TerminalID, " + n_CashOpening + " as n_CashBalance,cast(@sessionTime as datetime) as D_EntryDate," + nUserID + " as N_UserID,0 as B_Closed,"+myFunctions.getIntVAL(cashBalance.ToString())+" as n_CashOpening,'" + HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString() + "' as X_SessionStartIP,cast(@sessionTime as datetime) as D_SessionStartTime,'" + System.Net.Dns.GetHostName() + "' as X_SystemName from vw_InvTerminal_Disp where N_CompanyID=@nCompanyID and N_TerminalID=" + n_TerminalID;
+                     Params.Add("@nTerminalID", n_TerminalID);
                         Params.Add("@nCompanyID", nCompanyId);
                         Params.Add("@sessionTime", DateTime.ParseExact(d_SessionStartTime, "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture));
 
+                    if (n_SessionID == 0)
+                    {
 
+                      
+                        string presessionsql = "select max(N_SessionID) from Acc_PosSession where N_CompanyID= "+nCompanyId+"";
+                        object preSessionID = dLayer.ExecuteScalar(presessionsql, Params, connection,transaction);
+                        string cashBalancesql = "select cast(isnull(N_CashBalance,0) as decimal(10,2)) from Acc_PosSession where N_CompanyID= "+nCompanyId+" and N_SessionID="+myFunctions.getIntVAL(preSessionID.ToString())+"";
+                        object cashBalance = dLayer.ExecuteScalar(cashBalancesql, Params, connection,transaction);
+                        sqlCommandText = "select Top(1) N_CompanyID," + n_FnYearID + " as N_FnYearID," + n_BranchID + " as N_BranchID,cast(@sessionTime as datetime) as D_SessionDate,0 as N_SessionID,N_TerminalID, "+myFunctions.getVAL(cashBalance.ToString())+" as n_CashBalance,cast(@sessionTime as datetime) as D_EntryDate," + nUserID + " as N_UserID,0 as B_Closed,"+myFunctions.getVAL(cashBalance.ToString())+" as n_CashOpening,'" + HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString() + "' as X_SessionStartIP,cast(@sessionTime as datetime) as D_SessionStartTime,'" + System.Net.Dns.GetHostName() + "' as X_SystemName from vw_InvTerminal_Disp where N_CompanyID=@nCompanyID and N_TerminalID=" + n_TerminalID;
+                        
+                        Params.Add("@sessionTime", DateTime.ParseExact(d_SessionStartTime, "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture));
+
+                       // sqlCommandText = "select Top(1) N_CompanyID," + n_FnYearID + " as N_FnYearID," + n_BranchID + " as N_BranchID,cast(@sessionTime as datetime) as D_SessionDate,0 as N_SessionID,N_TerminalID, " + n_CashOpening + " as n_CashBalance,cast(@sessionTime as datetime) as D_EntryDate," + nUserID + " as N_UserID,0 as B_Closed,"+myFunctions.getVAL(cashBalance.ToString())+" as n_CashOpening,'" + HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString() + "' as X_SessionStartIP,cast(@sessionTime as datetime) as D_SessionStartTime,'" + System.Net.Dns.GetHostName() + "' as X_SystemName from vw_InvTerminal_Disp where N_CompanyID=@nCompanyID and N_TerminalID=" + n_TerminalID;
+                      
                         // Close Current active sessions
 
                         Double nCashWithdrawal = 0;
-                        Params.Add("@nTerminalID", n_TerminalID);
+                       
                         string sessionsql = "select max(N_SessionID) from Acc_PosSession where N_CompanyID=@nCompanyID and N_TerminalID=@nTerminalID and isnull(B_Closed,0)=0";
                         object sessionID = dLayer.ExecuteScalar(sessionsql, Params, connection,transaction);
                         if (sessionID != null)

@@ -194,17 +194,59 @@ namespace SmartxAPI.Data
                                 if (globalInfo.Rows.Count > 0)
                                 {
                                     loginRes.Warning = userNotifications(myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString()),cnn2);
-                                    object AllowMultipleCompany = dLayer.ExecuteScalar("select isnull(B_AllowMultipleCom,0) as B_AllowMultipleCom  from Acc_Company where N_CompanyID=@nCompanyID  and B_IsDefault=1", Params, connection);
+                                    object AllowMultipleCompany=true;
+                                    object numberOfCompanies = dLayer.ExecuteScalar("select count(*)   from Acc_Company where N_ClientID="+myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString())+"", Params, connection);
+                                    object companyLimit = dLayer.ExecuteScalar("select isnull(N_Value,0) from GenSettings where N_ClientID="+myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString())+" and X_Description='COMPANY LIMIT'", Params, cnn2);
+                                    if(companyLimit==null){companyLimit="0";}
+                                     if(myFunctions.getIntVAL(companyLimit.ToString())<=myFunctions.getIntVAL(numberOfCompanies.ToString()))
+                                     {
+                                        AllowMultipleCompany=false;
+
+                                     }
+
                                     globalInfo = myFunctions.AddNewColumnToDataTable(globalInfo, "B_AllowMultipleCom", typeof(bool), AllowMultipleCompany == null ? 0 : AllowMultipleCompany);
                                     loginRes.GlobalUserInfo = globalInfo;
                                     xGlobalUserID = globalInfo.Rows[0]["X_UserID"].ToString();
                                 }
 
-                                int daysToExpire = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_ExpiryDate)),0) as expiry from ClientApps where N_ClientID=" + clientID, cnn2).ToString());
+                                int daysToExpire = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_ExpiryDate)),0) as expiry from ClientApps where N_ClientID=" + clientID+" and N_AppID="+AppID+"", cnn2).ToString());
                                 if (daysToExpire <= 0)
-                                    throw new Exception("Your Subscription Expired");
+                                {
+                                    int expiredApp=AppID;
+                                    string appsID=AppID.ToString();
+                                    int flag=0;
+                                     while (expiredApp != 0 )
+                                    {
+                                    string appNew = "select Top 1 N_AppID from ClientApps where N_ClientID="+globalInfo.Rows[0]["N_ClientID"].ToString()+"  and N_AppID not in ("+appsID+") ";
+                                    object newAppID =   dLayer.ExecuteScalar(appNew, cnn2);
+                                    if(newAppID==null)
+                                    {
+                                        flag=1;
+                                        expiredApp=0;
+                                    }
+                                    else
+                                    {
+                                         int daysToExpireNeApp = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_ExpiryDate)),0) as expiry from ClientApps where N_ClientID=" + clientID+" and N_AppID="+myFunctions.getIntVAL(newAppID.ToString())+"", cnn2).ToString());
+                                         if (daysToExpireNeApp <= 0)
+                                         {
+                                            appsID=appsID+","+newAppID.ToString();
+                                            expiredApp=myFunctions.getIntVAL(newAppID.ToString());
+                                            flag=1;
+                                         }
+                                        else  
+                                        {
+                                            AppID=myFunctions.getIntVAL(newAppID.ToString());
+                                             expiredApp=0;
+                                             flag=0;
+                                        }
+                                    }
+                                }
+                                if(flag==1)
+                                  throw new Exception("Your Subscription Expired"); 
+
+                                }  
                                 // if (AppID != 6 && AppID != 8 && AppID != 15 && AppID != 16 && AppID != 13 && AppID != 14 && AppID != 18)
-                                if (AppID != 8 && AppID != 13 && AppID != 14 && AppID != 18 && AppID != 20 && AppID != 21 && AppID != 22)
+                                if (AppID != 6 && AppID != 15 && AppID != 16 && AppID != 8 && AppID != 13 && AppID != 14 && AppID != 18 && AppID != 20 && AppID != 21 && AppID != 22)
                                 {
                                     string appUpdate = "Update Users set N_ActiveAppID=" + AppID + " WHERE (X_EmailID ='" + username + "' and N_UserID=" + globalUserID + ")";
                                     dLayer.ExecuteScalar(appUpdate, cnn2);
@@ -213,8 +255,8 @@ namespace SmartxAPI.Data
                                 {
                                 string sqlAttachment = "select isnull(B_EnableAttachment,0) from clientApps where N_AppId="+AppID+" and N_ClientID="+globalInfo.Rows[0]["N_ClientID"].ToString()+"";
                                 object attachment = dLayer.ExecuteScalar(sqlAttachment, cnn2);
-                                // if(attachment!=null)
-                                //     globalInfo.Rows[0]["N_ClientID"]=myFunctions.getBoolVAL(attachment.ToString());
+                                if(attachment!=null)
+                                    globalInfo.Rows[0]["B_EnableAttachment"]=myFunctions.getBoolVAL(attachment.ToString());
                                 globalInfo.AcceptChanges();
 
 

@@ -197,13 +197,15 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 DataTable Attachment = ds.Tables["attachments"];
                  bool b_AutoGenerate=false;
-             
+                string CustomerCode = "";
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchId"].ToString());
                 int nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerId"].ToString());
                  bool isSave = myFunctions.getBoolVAL(MasterTable.Rows[0]["isSave"].ToString());
                 int nLedgerID=0;
+                object CustCount="";
+               
                 if(MasterTable.Columns.Contains("N_LedgerID"))
                 {
                     nLedgerID=myFunctions.getIntVAL(MasterTable.Rows[0]["N_LedgerID"].ToString());
@@ -251,8 +253,15 @@ namespace SmartxAPI.Controllers
                     //var values = MasterTable.Rows[0]["X_CustomerCode"].ToString();
                     SortedList Params = new SortedList();
                     // Auto Gen
-                    string CustomerCode = "";
+                    
                     CustomerCode = MasterTable.Rows[0]["X_CustomerCode"].ToString();
+                    if(nCustomerID==0 && CustomerCode!="@Auto"){
+                     CustCount = dLayer.ExecuteScalar("select count(N_customerID) from Inv_Customer  Where N_CompanyID=" + nCompanyID + " and  X_CustomerCode=" + CustomerCode,  Params, connection,transaction);
+                      if( myFunctions.getIntVAL(CustCount.ToString())>0){
+                       CustomerCode = "@Auto";
+                    }
+                    } 
+                   
                     if (CustomerCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
@@ -706,7 +715,7 @@ namespace SmartxAPI.Controllers
             object customerCounts = null;
             if (crmcustomerID > 0)
             {
-                sqlCommandText = "select   X_Customer as X_CustomerName,X_Phone as X_PhoneNo1,* from vw_CRMCustomer where N_CompanyID=@nCompanyID and N_CustomerID=" + crmcustomerID + "";
+                sqlCommandText = "select   X_Customer as X_CustomerName,X_Phone as X_PhoneNo1,X_Address,* from vw_CRMCustomer where N_CompanyID=@nCompanyID and N_CustomerID=" + crmcustomerID + "";
             }
             else
             {
@@ -749,7 +758,8 @@ namespace SmartxAPI.Controllers
                     {
                         if (crmcustomerID > 0)
                         {
-                            dt.Rows[0]["x_CustomerCode"] = "@Auto";
+                            object res = dLayer.ExecuteScalar("select x_CustomerCode from CRM_Customer where N_CompanyID=@nCompanyID and N_CustomerID="+crmcustomerID+" ", Params, connection);
+                            dt.Rows[0]["x_CustomerCode"] = res;
 
                         }
                         else

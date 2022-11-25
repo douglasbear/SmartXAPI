@@ -252,7 +252,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     SortedList ValidateParams = new SortedList();
                     // Auto Gen
-                    string LocationCode = "";
+                    string LocationCode = MasterTable.Rows[0]["x_LocationCode"].ToString();
                     char x_LocationCodePattern;
                     char initialCode;
                     String DupCriteria=" ";
@@ -262,6 +262,14 @@ namespace SmartxAPI.Controllers
                     int N_TypeID = 0;
                     int N_MainLocationID = 0;
                     string xTerminalCode ="@Auto";
+                    int nFormID = 0;
+
+                    if (myFunctions.getIntVAL(MasterTable.Rows[0]["n_TypeId"].ToString())==5)
+                        nFormID = 1637;
+                    else if (myFunctions.getIntVAL(MasterTable.Rows[0]["n_TypeId"].ToString())==6)
+                        nFormID = 1636;
+                    else
+                        nFormID = 450;
 
                     int N_LocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationID"].ToString());
                    // string Barcode =MasterTable.Rows[0]["X_Barcode"].ToString();
@@ -315,7 +323,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
                         Params.Add("N_YearID", nFnYearID);
-                        Params.Add("N_FormID", 450);
+                        Params.Add("N_FormID", nFormID);
                         // Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         LocationCode = dLayer.GetAutoNumber("Inv_Location", "X_LocationCode", Params, connection, transaction);
                         if (LocationCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Location Code")); }
@@ -372,14 +380,14 @@ namespace SmartxAPI.Controllers
                             if (roomPattern == null || roomPattern.ToString() == "")
                             {
                                 x_LocationCodePattern = 'A';
-                                MasterTable.Rows[0]["X_LocationCode"] = x_LocationCodePattern.ToString();
+                                // MasterTable.Rows[0]["X_LocationCode"] = x_LocationCodePattern.ToString();
 
                             }
                             else
                             {
                                 x_LocationCodePattern = Convert.ToChar(roomPattern);
                                 x_LocationCodePattern++;
-                                MasterTable.Rows[0]["X_LocationCode"] = x_LocationCodePattern.ToString();
+                                // MasterTable.Rows[0]["X_LocationCode"] = x_LocationCodePattern.ToString();
 
 
                             }
@@ -399,7 +407,7 @@ namespace SmartxAPI.Controllers
                                     if(rowPattern==""){rowPattern="0";}
                                     x_LocationCodePattern = Convert.ToChar(rowPattern);
                                     x_LocationCodePattern++;
-                                    MasterTable.Rows[0]["X_LocationCode"] = x_LocationCodePattern.ToString();
+                                    // MasterTable.Rows[0]["X_LocationCode"] = x_LocationCodePattern.ToString();
 
 
                                 }
@@ -410,7 +418,7 @@ namespace SmartxAPI.Controllers
                             object parentRomPattern = dLayer.ExecuteScalar("select TOP 1  X_LocationCode from Inv_Location where N_LocationID=" + N_MainLocationID + " and N_CompanyID=" + nCompanyID + " ", connection, transaction);
                             if (rowPattern == null || rowPattern.ToString() == "")
                             {
-                                MasterTable.Rows[0]["X_LocationCode"] = parentRomPattern.ToString() + "-" + "01";
+                                // MasterTable.Rows[0]["X_LocationCode"] = parentRomPattern.ToString() + "-" + "01";
 
                             }
                             else
@@ -420,7 +428,7 @@ namespace SmartxAPI.Controllers
                                 addingCode = addingCode.Remove(0, 1);
                                 if (myFunctions.getIntVAL(addingCode) <= 9) { addingCode = "0" + (myFunctions.getIntVAL(addingCode) + 1).ToString(); }
                                 else { addingCode = (myFunctions.getIntVAL(addingCode) + 1).ToString(); }
-                                MasterTable.Rows[0]["X_LocationCode"] = parentRomPattern.ToString() + "-" + addingCode;
+                                // MasterTable.Rows[0]["X_LocationCode"] = parentRomPattern.ToString() + "-" + addingCode;
 
 
                             }

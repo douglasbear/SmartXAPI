@@ -215,7 +215,7 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                var handler = new HttpClientHandler
+                var handler1 = new HttpClientHandler
                 {
                     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                 };
@@ -225,7 +225,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction;
                     transaction = connection.BeginTransaction();
 
-                    var client = new HttpClient(handler);
+                    var client = new HttpClient(handler1);
                     var random = RandomString();
                     var dbName = connection.Database;
                     //string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
@@ -240,7 +240,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-        private bool LoadReportDetails(int nFnYearID, int nFormID, int nPkeyID, int nPreview, string xRptname)
+        private bool LoadReportDetails(int nFnYearID, int nFormID, int nPkeyID, int nPreview, string xRptname, int nLangId)
         {
             SortedList QueryParams = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -272,10 +272,11 @@ namespace SmartxAPI.Controllers
 
                     if (ObjPath != null)
                     {
+                        RPTLocation = reportLocation.Remove(reportLocation.Length - 2, 2) + nLangId + "/";
                         if (ObjPath.ToString() != "")
-                            RPTLocation = reportLocation + "printing/" + ObjPath + "/" + TaxType + "/";
+                            RPTLocation = RPTLocation + "printing/" + ObjPath + "/" + TaxType + "/";
                         else
-                            RPTLocation = reportLocation + "printing/";
+                            RPTLocation = RPTLocation + "printing/";
                     }
 
                     object Templatecritiria = dLayer.ExecuteScalar("SELECT X_PkeyField FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
@@ -377,7 +378,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("getscreenprint")]
-        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, int nPreview, string xrptname, string docNumber, string partyName, bool printSave, bool sendWtsapMessage,int nLangId)
+        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, int nPreview, string xrptname, string docNumber, string partyName, bool printSave, bool sendWtsapMessage, int n_LanguageID)
         {
             SortedList QueryParams = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -408,7 +409,7 @@ namespace SmartxAPI.Controllers
                         }
 
                     }
-                    if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, nPreview, xrptname))
+                    if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, nPreview, xrptname, n_LanguageID))
                     {
 
                         var client = new HttpClient(handler);
@@ -451,7 +452,8 @@ namespace SmartxAPI.Controllers
                         string x_comments = "";
                         //Local Time Checking
                         var clientdata = new WebClient();
-                        var content1 = clientdata.DownloadString("http://worldtimeapi.org/api/timezone/Asia/Kolkata");
+                        string content1 = clientdata.DownloadString("http://worldtimeapi.org/api/timezone/Asia/Kolkata");
+                        string datentime=content1.Substring(0, 12);
 
 
 
@@ -575,6 +577,7 @@ namespace SmartxAPI.Controllers
                             }
                         }
 
+
                         string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
                         var path = client.GetAsync(URL);
 
@@ -628,7 +631,7 @@ namespace SmartxAPI.Controllers
                             }
 
                         }
-                        
+
 
                         // ReportName = FormName + "_" + docNumber + "_" + partyName.Trim()+".pdf";
                         ReportName = FormName + "_" + docNumber + "_" + partyName.Trim() + "_" + random + ".pdf";

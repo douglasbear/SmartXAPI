@@ -76,7 +76,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetEmployeeList(int? nCompanyID, int nFnYearID, bool bAllBranchData, int nBranchID, int nEmpID, int nProjectID, int nUserEmpID, bool isRentalemp)
+        public ActionResult GetEmployeeList(int? nCompanyID, int nFnYearID, bool bAllBranchData, int nBranchID, int nEmpID, int nProjectID, int nUserEmpID, bool isRentalemp,bool essLeave,int loginEmpID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -88,11 +88,28 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string projectFilter = "";
             string RentalEmp = "";
+           string managers="";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    object nReportToID = dLayer.ExecuteScalar("Select N_SuperVisorID From pay_supervisor Where N_CompanyID ="+nCompanyID+" and N_EmpID=" + loginEmpID + " ", Params, connection);
+                    
+                    if(loginEmpID>0)
+                    {
+                         if(nReportToID==null || nReportToID.ToString()=="")
+                         { managers="and N_EmpID in (select N_EmpID from Pay_employee where N_CompanyID="+nCompanyID+" and (N_ReportingToID="+loginEmpID+" or N_EmpID="+loginEmpID+"))";
+                         }
+                         else
+                         {
+                         managers="and N_EmpID in (select N_EmpID from Pay_employee where N_CompanyID="+nCompanyID+" and (N_ReportToID="+myFunctions.getIntVAL(nReportToID.ToString())+" or N_ReportingToID="+loginEmpID+" or N_EmpID="+loginEmpID+"))";
+                         }
+                    }
+                    object nReportingToID1 = dLayer.ExecuteScalar("Select count(N_EmpID) From Pay_Employee Where N_CompanyID =@nCompanyID and N_ReportingToID=" + loginEmpID + " ", Params, connection);
+                    int nReportingToID = myFunctions.getIntVAL(nReportingToID1.ToString());
+
+
                     int filterByProject = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(max(N_Value),0) as val from gen_settings where x_Group='HR' and x_Description='FilterDelegateEmployeeByProject' and n_CompanyID=" + nCompanyID, connection).ToString());
 
                     if (isRentalemp == true)
@@ -102,9 +119,9 @@ namespace SmartxAPI.Controllers
                     if (nEmpID > 0 && filterByProject > 0)
                         projectFilter = " and N_ProjectID =(select max(isNull(N_ProjectID,0)) from vw_PayEmployee_Disp where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ) and n_EmpID<>@nEmpID ";
                     if (bAllBranchData == true)
-                        sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo,X_Phone1,X_PassportNo,N_NationalityID,x_Nationality,D_HireDate,X_EmailID,X_Sex,D_DOB,D_JoinDate from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + projectFilter + " and (N_Status = 0 OR N_Status = 1) " + RentalEmp + " group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo,X_Phone1,X_PassportNo,N_NationalityID,x_Nationality,D_HireDate,X_EmailID,X_Sex,D_DOB,D_JoinDate";
+                        sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo,X_Phone1,X_PassportNo,N_NationalityID,x_Nationality,D_HireDate,X_EmailID,X_Sex,D_DOB,D_JoinDate from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + projectFilter + " and (N_Status = 0 OR N_Status = 1) " + RentalEmp + "  "+managers+" group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo,X_Phone1,X_PassportNo,N_NationalityID,x_Nationality,D_HireDate,X_EmailID,X_Sex,D_DOB,D_JoinDate";
                     else
-                        sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode ,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo,X_Phone1,X_PassportNo,N_NationalityID,x_Nationality,D_HireDate,X_EmailID,X_Sex,D_DOB,D_JoinDate from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID)  " + projectFilter + "  and (N_Status = 0 OR N_Status = 1) " + RentalEmp + " group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo,X_Phone1,X_PassportNo,N_NationalityID,x_Nationality,D_HireDate,X_EmailID,X_Sex,D_DOB,D_JoinDate";
+                        sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode ,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo,X_Phone1,X_PassportNo,N_NationalityID,x_Nationality,D_HireDate,X_EmailID,X_Sex,D_DOB,D_JoinDate from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID)  " + projectFilter + "  and (N_Status = 0 OR N_Status = 1) " + RentalEmp + "  "+managers+"  group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo,X_Phone1,X_PassportNo,N_NationalityID,x_Nationality,D_HireDate,X_EmailID,X_Sex,D_DOB,D_JoinDate";
                     if (nProjectID > 0)
                     {
                         bool flag = false;
@@ -409,6 +426,8 @@ namespace SmartxAPI.Controllers
                 Criteria = Criteria + "and  (N_Status=3 or N_Status=2) ";
             if (screen == "Probation Employees")
                 Criteria = Criteria + "and  D_ProbationEndDate> GETDATE() and  D_ProbationEndDate < (GETDATE()+14) ";
+            if(screen=="Employees On Leave")
+                Criteria=Criteria+" and N_EmpID in ( select N_EmpID from Pay_VacationDetails where N_VacDays < 0 and B_IsAdjustEntry =0 and (Cast(D_VacDateFrom as DATE)<=Cast(GETDATE() as DATE) and Cast(D_VacDateTo as DATE)>=cast(GETDATE() as DATE)) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearID+")";
 
             if (EmpStatus == 0)
                 Criteria = Criteria + " and N_Status<>3 and N_Status<>2 ";
