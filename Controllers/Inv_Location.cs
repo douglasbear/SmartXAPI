@@ -478,7 +478,7 @@ namespace SmartxAPI.Controllers
                          }
                       }
 
-                       DupCriteria = "N_BranchID=" + nBranchID + " and X_LocationName= '" + x_LocationName + "' and N_CompanyID=" + nCompanyID;
+                       DupCriteria = "N_BranchID=" + nBranchID + " and X_LocationName= '" + x_LocationName + "' and N_CompanyID=" + nCompanyID + " and N_TypeId="+N_TypeID;
              
 
                     MasterTable.Columns.Remove("n_FnYearId");
