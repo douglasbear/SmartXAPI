@@ -137,11 +137,6 @@ namespace SmartxAPI.Controllers
                     
                     if (nTicketID > 0) 
                     {  
-                        // dLayer.ExecuteNonQuery("delete from Inv_SalesDetails where  N_CompanyId= "+nCompanyID+" and N_SalesID in (select N_SalesID from Inv_Sales where N_SalesType=7 and N_CompanyId= "+nCompanyID+" and N_SalesRefID= "+nTicketID+")", connection, transaction);
-                        // dLayer.ExecuteNonQuery("delete from Inv_Sales where N_SalesType=7 and N_CompanyId= "+nCompanyID+" and N_SalesRefID= "+nTicketID, connection, transaction);
-                        // dLayer.ExecuteNonQuery("delete from Inv_Sales where N_SalesType=7 and N_CompanyId= "+nCompanyID+" and N_SalesRefID= "+nTicketID, connection, transaction);
-                        // dLayer.DeleteData("Tvl_Ticketing", "n_TicketID", nTicketID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
-                        // dLayer.DeleteData("Tvl_Ticketing", "n_TicketID", nTicketID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
                         dLayer.DeleteData("Tvl_Ticketing", "n_TicketID", nTicketID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
                     }
 
@@ -218,11 +213,11 @@ namespace SmartxAPI.Controllers
                         n_PIsCompleted=myFunctions.getIntVAL(PResult["b_IsCompleted"].ToString());
                         x_PMessage=PResult["x_Msg"].ToString();
 
-                        // if(n_PIsCompleted==0)
-                        // {
-                        //     transaction.Rollback();
-                        //     return Ok(api.Error(User, x_PMessage));
-                        // }
+                        if(n_PIsCompleted==0)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, x_PMessage));
+                        }
                         //-------------------------------^^^^^^^^^^^^^^------------------------------------//
 
                         //-------------------------------Sales Save------------------------------------//
@@ -304,11 +299,11 @@ namespace SmartxAPI.Controllers
                         n_SIsCompleted=myFunctions.getIntVAL(SResult["b_IsCompleted"].ToString());
                         x_SMessage=SResult["x_Msg"].ToString();
 
-                        // if(n_SIsCompleted==0)
-                        // {
-                        //     transaction.Rollback();
-                        //     return Ok(api.Error(User, x_SMessage));
-                        // }
+                        if(n_SIsCompleted==0)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, x_SMessage));
+                        }
                         //-------------------------------^^^^^^^^^^^^^^------------------------------------//
 
                         transaction.Commit();
@@ -402,6 +397,26 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+
+                    // int N_SalesID=0,N_PurchaseID=0;
+                    // object SalesID = dLayer.ExecuteScalar("select N_SalesId from Inv_Sales where N_SalesType=7 and N_CompanyID="+nCompanyID+" and N_SalesRefID= "+nTicketID, Params, connection,transaction);
+                    // if(SalesID!=null)
+                    //     N_SalesID=myFunctions.getIntVAL(SalesID.ToString());
+
+                    // if(N_SalesID>0)
+                    // {
+                    //     string payRecieptqry = "select N_PayReceiptID from  Inv_PayReceipt where N_CompanyID=" + nCompanyID + " and N_RefID=" + N_SalesID + " and N_FormID=" + this.N_FormID + "";
+                    //     object nRecieptID = dLayer.ExecuteScalar(payRecieptqry, connection, transaction);
+                    //     if (nRecieptID != null && myFunctions.getIntVAL(nRecieptID.ToString()) > 0)
+                    //     {
+                    //         dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + nCompanyID + " and N_InventoryID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " and X_TransType = 'SA'", connection, transaction);
+                    //         dLayer.ExecuteNonQuery(" delete from Inv_PayReceiptDetails Where N_CompanyID=" + nCompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " ", connection, transaction);
+                    //         dLayer.ExecuteNonQuery(" delete from Inv_PayReceipt Where N_CompanyID=" + nCompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " ", connection, transaction);
+                    //     }
+                    //     dLayer.DeleteData("Inv_SalesAdvanceSettlement", "N_SalesID", N_SalesID, "N_CompanyID = " + nCompanyID + " ", connection, transaction);
+                                
+                    // }                        
+
                     Results = dLayer.DeleteData("Tvl_Ticketing ", "n_TicketID", nTicketID, "N_CompanyID =" + nCompanyID, connection, transaction);
                 
                     if (Results > 0)

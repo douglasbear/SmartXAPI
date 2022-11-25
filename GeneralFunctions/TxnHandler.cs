@@ -534,18 +534,7 @@ namespace SmartxAPI.GeneralFunctions
                     if (N_SaveDraft == 0)
                     {
                         try
-                        {
-                            // SortedList PostingMRNParam = new SortedList();
-                            // PostingMRNParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
-                            // PostingMRNParam.Add("N_PurchaseID", N_PurchaseID);
-                            // PostingMRNParam.Add("N_UserID", nUserID);
-                            // PostingMRNParam.Add("X_SystemName", "ERP Cloud");
-                            // PostingMRNParam.Add("X_UseMRN", "");
-                            // PostingMRNParam.Add("N_SaveDraft", N_SaveDraft);
-                            // PostingMRNParam.Add("N_MRNID", 0);
-
-                            // dLayer.ExecuteNonQueryPro("[SP_Inv_MRNposting]", PostingMRNParam, connection, transaction);
-
+                        {                    
                             SortedList PostingMRNParam = new SortedList();
                             PostingMRNParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
                             PostingMRNParam.Add("N_PurchaseID", N_PurchaseID);
