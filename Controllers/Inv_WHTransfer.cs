@@ -536,7 +536,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("viewdetails")]
-        public ActionResult viewDetails(string xReceiptNo, int nBranchID, int nFnYearID,int nPRSID )
+        public ActionResult viewDetails(string xReceiptNo, int nBranchID, int nFnYearID,int nPRSID,int nPickListID )
         {
             try
             {
@@ -570,10 +570,16 @@ namespace SmartxAPI.Controllers
                     Mastersql="select * from VW_TransferReqToTransfer where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+" and N_PRSID="+nPRSID+"";
 
                    }
+                     if(nPickListID >0)
+                   {
+                    Mastersql="select * from Vw_WhPickListToTransfer where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+" and N_PickListID="+nPickListID+"";
+
+                   }
+
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     MasterTable = _api.Format(MasterTable, "Master");
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                       if(nPRSID==0){
+                       if(nPRSID==0 &&nPickListID==0 ){
                     int nTransferId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TransferId"].ToString());
                     int N_LocationIDFrom = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationIDFrom"].ToString());
                        
@@ -588,6 +594,11 @@ namespace SmartxAPI.Controllers
                     {
                        DetailGetSql="select * from VW_TransferReqToTransferDetails where   N_CompanyID="+nCompanyID+" and N_PRSID="+nPRSID+"";
                     }
+                       if(nPickListID>0)
+                    {
+                       DetailGetSql="select * from Vw_WhPickListToTransferDetails where   N_CompanyID="+nCompanyID+" and N_PickListID="+nPickListID+"";
+                    }
+
                     Details = dLayer.ExecuteDataTable(DetailGetSql, Params, connection);
                     if(!Details.Columns.Contains("N_ClassID"))
                     {

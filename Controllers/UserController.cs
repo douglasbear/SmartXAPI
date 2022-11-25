@@ -359,14 +359,14 @@ namespace SmartxAPI.Controllers
                         if (nGlobalUserID > 0)
                         {
                             xPwd = dLayer.ExecuteScalar("SELECT X_Password FROM Users where x_EmailID=@xEmailID and N_ClientID=@nClientID and N_UserID=@nGlobalUserID", userParams, olivoCon, olivoTxn);
-                            globalUser.Rows[0]["n_ActiveAppID"] = MasterTable.Rows[0]["n_AppID"].ToString();
+                            globalUser.Rows[0]["n_ActiveAppID"] = apps.Rows[0]["n_AppID"].ToString();
                         }
                         else
                         {
                             MasterTable.Rows[0]["b_Active"] = 0;
                             globalUser.Rows[0]["b_Inactive"] = 1;
                             globalUser.Rows[0]["b_EmailVerified"] = 0;
-                            globalUser.Rows[0]["n_ActiveAppID"] = MasterTable.Rows[0]["n_AppID"].ToString();
+                            globalUser.Rows[0]["n_ActiveAppID"] = apps.Rows[0]["n_AppID"].ToString();
                         }
 
                         MasterTable.Rows[0]["x_Password"] = xPwd;
