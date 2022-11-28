@@ -81,10 +81,12 @@ namespace SmartxAPI.Controllers
                              bool custFlag=false;
                                    
                             N_TransID = dtRow["N_TransID"].ToString();
-                      if(N_TransID!=""){       
+                      if(N_TransID!="" && N_TransID!=null){       
                       nBalanceAmount = dLayer.ExecuteScalar("select N_BalanceAmount from vw_invReceivables where N_CompanyID="+nCompanyID +" and N_SalesId = " + N_TransID, connection, transaction);
+                     if(nBalanceAmount==null){nBalanceAmount=0;}
+                   
                        netAmount = dLayer.ExecuteScalar("select NetAmount from vw_invReceivables where N_CompanyID="+nCompanyID +" and N_SalesId = " + N_TransID, connection, transaction);
-
+                      if(netAmount==null){netAmount=0;}
                             }
 
                        if( myFunctions.getVAL(nBalanceAmount.ToString()) < myFunctions.getVAL(netAmount.ToString()))
