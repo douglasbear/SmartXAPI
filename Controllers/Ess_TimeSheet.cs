@@ -9,6 +9,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
+using System.Net.Mail;
+using System.Net.Http;
 
 namespace SmartxAPI.Controllers
 {
@@ -307,37 +309,14 @@ namespace SmartxAPI.Controllers
 
                     DateTime dateTime_Indian = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, India_Standard_Time);
                     DateTime date = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, Timezone.ToString());
-
-
-                    // string d_in = Convert.ToDateTime(masterRow["d_In"].ToString()).ToString("HH:mm:ss");
-                    // string d_out = Convert.ToDateTime(masterRow["d_Out"].ToString()).ToString("HH:mm:ss");
-                    // string d_Shift2_In = Convert.ToDateTime(masterRow["d_Shift2_In"].ToString()).ToString("HH:mm:ss");
-                    // string d_Shift2_Out = Convert.ToDateTime(masterRow["d_Shift2_Out"].ToString()).ToString("HH:mm:ss");
-
-                    // if (Punchtype == "IN")
-                    // {
-                    //     masterRow["d_In"] = currentTime;
-                    // }
-                    // if (Punchtype == "OUT")
-                    // {
-                    //     masterRow["d_out"] = currentTime;
-                    // }
-                    // else if (d_Shift2_In == defultTime)
-                    // {
-                    //     masterRow["d_Shift2_In"] = currentTime;
-                    // }
-                    // else if (d_Shift2_Out == defultTime)
-                    // {
-                    //     masterRow["d_Shift2_Out"] = currentTime;
-                    // }
-                    // masterRow["d_Date"] = date.ToString();
+                    date=date.AddDays(-1);
+                    date=date.AddHours(-1);
 
                     masterRow["transactionTime"] = date.ToString();
                     masterRow["serverRecordTime"] = date.ToString();
 
                     MasterTable.AcceptChanges();
 
-                    // nTimesheetID = dLayer.SaveData("Pay_TimeSheetImport", "N_SheetID", MasterTable, connection, transaction);
                     nTimesheetID = dLayer.SaveData("Pay_TimeSheetLog", "indexKey", MasterTable, connection, transaction);
 
 
@@ -357,9 +336,40 @@ namespace SmartxAPI.Controllers
 
                         //Time Updates
                         if (Punchtype == "IN")
-                            dLayer.ExecuteNonQuery("update Pay_TimeSheetImport set D_Out='00:00:00.0000000' where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + date.ToString("yyyy-M-dd")+"'", Params, connection, transaction);
+                            dLayer.ExecuteNonQuery("update Pay_TimeSheetImport set D_Out='00:00:00.0000000' where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + date.ToString("yyyy-M-dd") + "'", Params, connection, transaction);
                         if (Punchtype == "OUT")
-                            dLayer.ExecuteNonQuery("update Pay_TimeSheetImport set D_Out='" + date.ToString() + "' where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + date.ToString("yyyy-M-dd")+"'", Params, connection, transaction);
+                            dLayer.ExecuteNonQuery("update Pay_TimeSheetImport set D_Out='" + date.ToString() + "' where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + date.ToString("yyyy-M-dd") + "'", Params, connection, transaction);
+
+                        //Whatsapp
+                        object N_WhatsappMSG = dLayer.ExecuteScalar("select N_Value from Gen_Settings where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_Group='1334' and X_Description='Whatsapp Message'", Params, connection, transaction);
+                        if (N_WhatsappMSG != null)
+                        {
+                            if (N_WhatsappMSG.ToString() == "1")
+                            {
+                                string Company = myFunctions.GetCompanyName(User);
+                                object WhatsappAPI = dLayer.ExecuteScalar("select X_Value from Gen_Settings where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_Group='1334' and X_Description='Whatsapp Message'", Params, connection, transaction);
+                                object Employee = dLayer.ExecuteScalar("select x_empname from vw_PayEmployee where n_companyid=" + myFunctions.GetCompanyID(User) + " and  n_empid=" + nEmpID, Params, connection, transaction);
+                                object Receip = dLayer.ExecuteScalar("select x_phone1 from acc_company where n_companyid=" + myFunctions.GetCompanyID(User), Params, connection, transaction);
+                                string body = "";
+                                if (Punchtype == "IN")
+                                    body = Employee + "%0AIN @ " + date.ToString("hh:mm tt");
+                                if (Punchtype == "OUT")
+                                    body = Employee + "%0AOUT @ " + date.ToString("hh:mm tt");
+
+
+                                string URLAPI = "https://api.textmebot.com/send.php?recipient=" + Receip + "&apikey=" + WhatsappAPI + "&text=" + body;
+                                var handler = new HttpClientHandler
+                                {
+                                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
+                                };
+                                var client = new HttpClient(handler);
+                                var clientFile = new HttpClient(handler);
+                                var MSG = client.GetAsync(URLAPI);
+                                MSG.Wait();
+
+                            }
+                        }
+
 
                         SortedList QueryParams = new SortedList();
 
@@ -367,7 +377,7 @@ namespace SmartxAPI.Controllers
                         QueryParams.Add("@nFnYear", nFnYearId);
                         QueryParams.Add("@nDate", date);
                         QueryParams.Add("@nEmpID", nEmpID);
-                        string sqlCommandDailyLogin = "SELECT isNull(MAX(D_In),'00:00:00') as D_In,isNull(MAX(D_Out),'00:00:00') as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,MAX(D_In),case when Max(D_Out)='00:00:00.0000000' then  Convert(Time, '"+date+"') else Max(D_Out) end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
+                        string sqlCommandDailyLogin = "SELECT isNull(MAX(D_In),'00:00:00') as D_In,isNull(MAX(D_Out),'00:00:00') as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,MAX(D_In),case when Max(D_Out)='00:00:00.0000000' then  Convert(Time, '" + date + "') else Max(D_Out) end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
 
                         // DataTable Details = dLayer.ExecuteDataTable("select * from Pay_TimeSheetImport where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID", QueryParams, connection, transaction);
                         DataTable Details = dLayer.ExecuteDataTable(sqlCommandDailyLogin, QueryParams, connection, transaction);
@@ -440,8 +450,6 @@ namespace SmartxAPI.Controllers
                     string sqlCommandDailyLogin = "SELECT isNull(MAX(D_In),'00:00:00') as D_In,isNull(MAX(D_Out),'00:00:00') as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,MAX(D_In),case when Max(D_Out)='00:00:00.0000000' then  Convert(Time, GetDate()) else Max(D_Out) end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
 
                     DataTable Details = dLayer.ExecuteDataTable(sqlCommandDailyLogin, QueryParams, connection, transaction);
-
-
 
                     if (Details.Rows.Count == 0)
                     {
