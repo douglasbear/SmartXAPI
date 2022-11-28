@@ -152,6 +152,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList Output = new SortedList();
+            bool setReadOnly=false;
 
             string sqlCommandText = "SELECT Acc_Company.*,Acc_TaxType.X_TypeName, Gen_TimeZone.X_ZoneName + ' ' + 'GMT' + Gen_TimeZone.X_UtcOffSet AS X_ZoneName, Acc_BankMaster.X_BankName FROM Acc_Company LEFT OUTER JOIN Acc_BankMaster ON Acc_Company.N_CompanyID = Acc_BankMaster.N_CompanyID AND Acc_Company.N_BankID = Acc_BankMaster.N_BankID LEFT OUTER JOIN Gen_TimeZone ON Acc_Company.N_TimeZoneID = Gen_TimeZone.N_TimeZoneID LEFT OUTER JOIN Acc_FnYear ON Acc_Company.N_CompanyID = Acc_FnYear.N_CompanyID LEFT OUTER JOIN Acc_TaxType ON Acc_Company.N_CompanyID = Acc_TaxType.N_CompanyID AND Acc_FnYear.N_TaxType = Acc_TaxType.N_TypeID where Acc_Company.B_Inactive =@p1 and Acc_Company.N_CompanyID=@p2 and Acc_FnYear.N_FnYearID=(select Top(1) N_FnYearID from Acc_FnYear where N_CompanyID=@p2 order by D_Start Desc) and Acc_Company.N_ClientID=@nClientID";
             Params.Add("@p1", 0);
@@ -176,8 +177,12 @@ namespace SmartxAPI.Controllers
                     int N_FnYearID = myFunctions.getIntVAL(FnYearInfo.Rows[0]["N_FnYearID"].ToString());
 
                     DataTable TaxInfo = dLayer.ExecuteDataTable("SELECT  Top(1) Gen_Settings.N_Value AS n_PkeyID, Acc_TaxCategory.X_CategoryName AS x_DisplayName FROM Acc_TaxCategory INNER JOIN Acc_FnYear ON Acc_TaxCategory.N_TaxTypeID = Acc_FnYear.N_TaxType AND Acc_TaxCategory.N_CompanyID = Acc_FnYear.N_CompanyID INNER JOIN Gen_Settings ON Acc_TaxCategory.X_PkeyCode = Gen_Settings.N_Value AND Acc_TaxCategory.N_CompanyID = Gen_Settings.N_CompanyID WHERE (Gen_Settings.N_CompanyID = @p2) AND (Gen_Settings.X_Group = 'Inventory') AND (Gen_Settings.X_Description = 'DefaultTaxCategory') and Acc_FnYear.N_FnYearID=" + N_FnYearID, Params, connection);
-                  
-
+                       Params.Add("@nCompanyID", nCompanyID);
+                     object CompanyCount = dLayer.ExecuteScalar("select count(*) from Acc_VoucherDetails where N_CompanyID= " + nCompanyID, connection);
+                      
+                       if(myFunctions.getIntVAL(CompanyCount.ToString())>0){
+                          setReadOnly=true;
+                       } 
                     DataTable Attachments =new DataTable();
                     
                     SortedList ProParam = new SortedList();
@@ -188,6 +193,7 @@ namespace SmartxAPI.Controllers
                     Attachments = api.Format(Attachments, "attachments");
                     Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "FileData", typeof(string), null);
                     Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "TempFileName", typeof(string), null);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "b_AllowEdit", typeof(bool), setReadOnly);
 
             if (Attachments.Rows.Count > 0)
             {
