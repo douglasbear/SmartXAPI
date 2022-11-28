@@ -165,7 +165,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult EmpMaintenanceList(int nCompanyId, int nFnYearID, bool bAllBranchData, int nBranchID, int nLocationID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult EmpMaintenanceList(int nCompanyId, int nFnYearID, bool bAllBranchData, int nBranchID, int nLocationID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nFormID)
         {
             try
             {
@@ -189,7 +189,8 @@ namespace SmartxAPI.Controllers
 
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=@p1 and N_FnYearID=@p2 ", Params, connection));
-
+                    if(nFormID==367)
+                    {
                     if (!CheckClosedYear)
                     {
                         if (bAllBranchData)
@@ -203,6 +204,25 @@ namespace SmartxAPI.Controllers
                             Criteria = "and N_PurchaseType=0 and X_TransType=@p4  and ( N_LocationFrom=" + nLocationID + " or N_LocationFrom in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID=" + nLocationID + "))";
                         else
                             Criteria = "and N_PurchaseType=0 and X_TransType=@p4  and ( N_LocationFrom=" + nLocationID + " or N_LocationFrom in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID=" + nLocationID + "))";
+                    }
+                    }
+                    else
+                    {
+                          if (!CheckClosedYear)
+                    {
+                        if (bAllBranchData)
+                            Criteria = "and B_YearEndProcess=0 and N_Type=1 and ( N_EntryLocationID=" + nLocationID + " )";
+                        else
+                            Criteria = "and B_YearEndProcess=0 and N_Type=1 and ( N_EntryLocationID=" + nLocationID + ")";
+                    }
+                    else
+                    {
+                        if (bAllBranchData)
+                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FormID=1442  and ( N_EntryLocationID=" + nLocationID + ")";
+                        else
+                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4 N_FormID=1442   and ( N_EntryLocationID=" + nLocationID + " )";
+                    }
+
                     }
 
 
@@ -423,6 +443,8 @@ namespace SmartxAPI.Controllers
                                 return Ok(_api.Error(User, ex));
                             }
                         }
+                        if(nLocationIDfrom>0)
+                        {
                         object nTypeID = dLayer.ExecuteScalar("select N_TypeID from Inv_Location where N_LocationID=" + nLocationIDfrom + "  and N_CompanyID=" + nCompanyID + " ", Params, connection, transaction);
                         if (myFunctions.getIntVAL(nTypeID.ToString()) == 6)
                         {
@@ -431,6 +453,7 @@ namespace SmartxAPI.Controllers
                             {
                                 dLayer.ExecuteNonQuery("UPDATE Inv_Location  set B_InActive=1 where  N_CompanyID=" + nCompanyID + "  and N_LocationID=" + nLocationIDfrom, Params, connection, transaction);
                             }
+                        }
                         }
                         if(myFunctions.getIntVAL(MasterTable.Rows[0]["n_PRSID"].ToString())>0)
                         {
@@ -589,12 +612,12 @@ namespace SmartxAPI.Controllers
                     DetailGetSql = "Select vw_InvTransferStockDetails.*,dbo.[SP_BatchStock](vw_InvTransferStockDetails.N_ItemID," + N_LocationIDFrom + ",vw_InvTransferStockDetails.X_BatchCode,0) As N_Stock ,dbo.SP_Cost_Loc(vw_InvTransferStockDetails.N_ItemID,vw_InvTransferStockDetails.N_CompanyID,''," + N_LocationIDFrom + ") As N_LPrice,dbo.SP_SellingPrice(vw_InvTransferStockDetails.N_ItemID,vw_InvTransferStockDetails.N_CompanyID) As N_UnitSPrice " +
                     " from vw_InvTransferStockDetails  Where vw_InvTransferStockDetails.N_CompanyID=" + nCompanyID + " and vw_InvTransferStockDetails.N_TransferId=" + nTransferId + "";
                        }
-                  
+                    //convert-----
                     if(nPRSID>0)
                     {
                        DetailGetSql="select * from VW_TransferReqToTransferDetails where   N_CompanyID="+nCompanyID+" and N_PRSID="+nPRSID+"";
                     }
-                       if(nPickListID>0)
+                    if(nPickListID>0)
                     {
                        DetailGetSql="select * from Vw_WhPickListToTransferDetails where   N_CompanyID="+nCompanyID+" and N_PickListID="+nPickListID+"";
                     }

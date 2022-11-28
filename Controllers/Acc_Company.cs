@@ -290,6 +290,7 @@ namespace SmartxAPI.Controllers
                 int n_GBUserID=0;
                 int userID=0;
                 int n_ClientID=0;
+                int appID=0;
 
                 string x_DisplayName = myFunctions.ContainColumn("x_DisplayName", GeneralTable) ? GeneralTable.Rows[0]["x_DisplayName"].ToString() : "";
                 int n_PkeyID = 0;
@@ -373,6 +374,7 @@ namespace SmartxAPI.Controllers
                             DataTable dtClientmaster = dLayer.ExecuteDataTable(sqlClientmaster, Param, cnn);
                             xUsrName = dtClientmaster.Rows[0]["X_ClientName"].ToString();
                             xPhoneNo = dtClientmaster.Rows[0]["X_ContactNumber"].ToString();
+                            //appID = myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_AppID"].ToString());
                             n_userType = myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_DefaultAppID"].ToString());
                            n_ClientID =myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_ClientID"].ToString());
                         }
@@ -393,8 +395,11 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQueryPro("SP_NewAdminCreation", proParams1, connection, transaction);
                                 string usersql = "SELECT N_UserID FROM Sec_User where X_UserID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
                             userID = myFunctions.getIntVAL(dLayer.ExecuteScalar(usersql, connection, transaction).ToString());
-
-                            
+                         using (SqlConnection cnn4 = new SqlConnection(masterDBConnectionString))
+                        {
+                                    cnn4.Open();
+                            appID = myFunctions.getIntVAL(dLayer.ExecuteScalar( "SELECT N_AppID FROM ClientApps where N_ClientID='" +n_ClientID + "'", cnn4).ToString());
+                        }
 
                             SortedList proParams2 = new SortedList(){
                                         {"N_CompanyID",N_CompanyId},
@@ -402,7 +407,7 @@ namespace SmartxAPI.Controllers
                                         {"D_Start",GeneralTable.Rows[0]["d_FromDate"].ToString()},
                                         {"D_End",GeneralTable.Rows[0]["d_ToDate"].ToString()}};
                             N_FnYearId = dLayer.ExecuteScalarPro("SP_FinancialYear_Create", proParams2, connection, transaction);
-
+                           dLayer.ExecuteNonQuery("insert into Sec_UserApps select "+N_CompanyId+",max(N_APPMappingID)+1,"+appID+","+userID+","+n_GBUserID+" from Sec_UserApps",connection, transaction);
                             SortedList proParams3 = new SortedList(){
                                         {"N_CompanyID",N_CompanyId},
                                         {"N_FnYearID",N_FnYearId}};

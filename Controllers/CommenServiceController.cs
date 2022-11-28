@@ -228,7 +228,8 @@ namespace SmartxAPI.Controllers
                             using (SqlConnection cnn = new SqlConnection(connectionString))
                             {
                                 cnn.Open();
-                               int rows = dLayer.ExecuteNonQuery("insert into Sec_UserApps select "+companyid+",max(N_APPMappingID)+1,"+appID+","+myFunctions.GetUserID(User)+","+GlobalUserID+" from Sec_UserApps", paramList, cnn);
+                                if(companyid>0)
+                                  dLayer.ExecuteNonQuery("insert into Sec_UserApps select "+companyid+",max(N_APPMappingID)+1,"+appID+","+myFunctions.GetUserID(User)+","+GlobalUserID+" from Sec_UserApps", paramList, cnn);
                                 string companySql = "";
                                 if (companyid > 0)
                                     companySql = " and Acc_Company.N_CompanyID=" + companyid + " ";
