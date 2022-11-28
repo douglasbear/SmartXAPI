@@ -734,9 +734,9 @@ namespace SmartxAPI.Controllers
                             benifitParam.Add("@nEmpID", nEmpID);
 
                             object result = dLayer.ExecuteScalar("select ISNULL(Sum(N_VacDays),0) from Pay_VacationDetails where  N_VacTypeID=@nVacTypeID and  N_CompanyID =@nCompanyID and N_EmpID=@nEmpID and N_FnYearID=@nFnYearID", benifitParam, connection, transaction);
-                            if (myFunctions.getIntVAL(result.ToString()) <= 0)
+                            if (myFunctions.getVAL(result.ToString()) <= 0)
                             {
-                                if (myFunctions.getIntVAL(var["Value"].ToString()) < 0) continue;
+                                if (myFunctions.getVAL(var["Value"].ToString()) < 0) continue;
 
                             }
 
@@ -890,10 +890,21 @@ namespace SmartxAPI.Controllers
             if (res == null)
                 res = 0;
             string sql = "";
-            if (nVacGroupID > 0)
-                sql = "SELECT    N_VacTypeID,X_VacCode,X_VacType as Code,N_Accrued as Value,N_Accrued+isnull(" + res.ToString() + ",0) as Avlbl,CONVERT(bit,0) As Mark,B_IsReturn,X_Type,0 as DetailsID  from vw_pay_EmpVacation_Alowance  where (X_Type='A' or X_Type='T') AND  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID and N_VacDays<=0  Group by N_VacTypeID,X_VacCode,X_VacType,N_Accrued,B_IsReturn,X_Type";
-            else
+            if (nVacGroupID > 0){
+                sql ="SELECT        vw_pay_EmpVacation_Alowance.N_VacTypeID, vw_pay_EmpVacation_Alowance.X_VacCode, vw_pay_EmpVacation_Alowance.X_VacType AS Code, Pay_VacationDetails.N_VacDays * -1 AS Value, "+
+"                         vw_pay_EmpVacation_Alowance.N_Accrued + ISNULL(- 1, 0) AS Avlbl, CONVERT(bit, 0) AS Mark, vw_pay_EmpVacation_Alowance.B_IsReturn, vw_pay_EmpVacation_Alowance.X_Type, 0 AS DetailsID "+
+"FROM            vw_pay_EmpVacation_Alowance INNER JOIN "+
+"                         Pay_VacationDetails ON vw_pay_EmpVacation_Alowance.N_CompanyID = Pay_VacationDetails.N_CompanyID AND vw_pay_EmpVacation_Alowance.N_VacTypeID = Pay_VacationDetails.N_VacTypeID "+
+"WHERE        (vw_pay_EmpVacation_Alowance.X_Type = 'A' OR "+
+"                         vw_pay_EmpVacation_Alowance.X_Type = 'T') AND (vw_pay_EmpVacation_Alowance.N_CompanyID = @nCompanyID) AND (vw_pay_EmpVacation_Alowance.N_EmpId = @nEmpID) AND (vw_pay_EmpVacation_Alowance.N_VacDays <= 0) "+
+"						 and vw_pay_EmpVacation_Alowance.N_EmpId=865 and Pay_VacationDetails.N_FormID=210 "+
+"GROUP BY vw_pay_EmpVacation_Alowance.N_VacTypeID, vw_pay_EmpVacation_Alowance.X_VacCode, vw_pay_EmpVacation_Alowance.X_VacType, vw_pay_EmpVacation_Alowance.N_Accrued,  "+
+"                         vw_pay_EmpVacation_Alowance.B_IsReturn, vw_pay_EmpVacation_Alowance.X_Type, Pay_VacationDetails.N_VacDays "; 
+                //"SELECT    N_VacTypeID,X_VacCode,X_VacType as Code,N_Accrued as Value,N_Accrued+isnull(" + res.ToString() + ",0) as Avlbl,CONVERT(bit,0) As Mark,B_IsReturn,X_Type,0 as DetailsID  from vw_pay_EmpVacation_Alowance  where (X_Type='A' or X_Type='T') AND  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID and N_VacDays<=0  Group by N_VacTypeID,X_VacCode,X_VacType,N_Accrued,B_IsReturn,X_Type";
+            }else
+               { 
                 sql = "SELECT    N_VacTypeID,X_VacCode,X_VacType as Code,N_Accrued as Value,N_Accrued+isnull(" + res.ToString() + ",0) as Avlbl,CONVERT(bit,0) As Mark,B_IsReturn,X_Type,0 as DetailsID  from vw_pay_EmpVacation_Alowance  where (X_Type='A' or X_Type='T') AND  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID and N_VacDays>0 Group by N_VacTypeID,X_VacCode,X_VacType,N_Accrued,B_IsReturn,X_Type";
+            }
             Benifits = dLayer.ExecuteDataTable(sql, benifitParam, connection);
 
             DataTable PayVacDetails = dLayer.ExecuteDataTable("Select * from vw_PayVacationDetails Where N_CompanyID=@nCompanyID and N_EmpID =@nEmpID and N_VacationGroupID=@nVacGroupID and (X_Type='A' or X_Type='T')", benifitParam, connection);
