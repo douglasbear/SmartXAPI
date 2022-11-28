@@ -66,8 +66,26 @@ namespace SmartxAPI.Controllers
                 Searchkey = "where ([X_EmailID] like '%" + xSearchkey + "%'  or x_ClientName  like '%" + xSearchkey + "%'  or  x_CompanyName like '%" + xSearchkey + "%' )";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_ClientID asc";
-   
+                xSortBy = " order by N_ClientID desc";
+           
+            else
+            {
+                switch (xSortBy.Split(" ")[0])
+                {
+                 
+                    case "X_CompanyName":
+                        xSortBy = "X_CompanyName " + xSortBy.Split(" ")[1];
+                        break;
+                          case "X_ClientName":
+                        xSortBy = "X_ClientName " + xSortBy.Split(" ")[1];
+                        break;
+                          case "X_EmailID":
+                        xSortBy = "X_EmailID " + xSortBy.Split(" ")[1];
+                        break;
+                    default: break;
+                }
+                xSortBy = " order by " + xSortBy;
+            }
 
            
             if (Count == 0)

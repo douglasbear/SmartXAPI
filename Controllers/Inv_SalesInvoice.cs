@@ -1892,7 +1892,7 @@ namespace SmartxAPI.Controllers
                                 {"@nFnYearID",nFnYearID},
                                 {"@nSalesID",nInvoiceID}};
 
-                    DataTable DetailTable = dLayer.ExecuteDataTable("select n_SalesOrderID,n_SalesQuotationID from Inv_SalesDetails where N_CompanyID=@nCompanyID and N_SalesID=@nSalesID group by n_SalesOrderID,n_SalesQuotationID order by n_SalesOrderID,n_SalesQuotationID", Params, connection);
+                    DataTable DetailTable = dLayer.ExecuteDataTable("select n_SalesOrderID,n_SalesQuotationID,N_DeliveryNoteID from Inv_SalesDetails where N_CompanyID=@nCompanyID and N_SalesID=@nSalesID group by n_SalesOrderID,n_SalesQuotationID,N_DeliveryNoteID order by n_SalesOrderID,n_SalesQuotationID,N_DeliveryNoteID", Params, connection);
                     
                     object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection);
                     object objCustCode = dLayer.ExecuteScalar("Select X_CustomerCode From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection);
@@ -2013,12 +2013,12 @@ namespace SmartxAPI.Controllers
 
 
                             //StatusUpdate
-                            int tempQtn=0,tempSO=0;
+                            int tempQtn=0,tempSO=0,tempDevnote=0;
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
                             {
                                 int nSOID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
                                 int nSQID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesQuotationID"].ToString());
-
+                                int nDeliveryNoteID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_DeliveryNoteID"].ToString());
                                 if (nSOID > 0 && tempSO!=nSOID)
                                 {
                                     if(!myFunctions.UpdateTxnStatus(nCompanyID,nSOID,81,true,dLayer,connection,transaction))
@@ -2037,7 +2037,17 @@ namespace SmartxAPI.Controllers
                                         return Ok(_api.Error(User, "Unable To Update Txn Status"));
                                     }
                                 }
-                                tempQtn=nSQID;
+                                tempDevnote=nSQID;
+
+                                if (nDeliveryNoteID > 0 )
+                                {
+                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,nDeliveryNoteID,884,true,dLayer,connection,transaction))
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                    }
+                                }
+                                tempQtn=tempDevnote;
                             };
 
                             transaction.Commit();
