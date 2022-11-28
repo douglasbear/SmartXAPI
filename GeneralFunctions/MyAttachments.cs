@@ -208,8 +208,8 @@ namespace SmartxAPI.GeneralFunctions
                         // }
                     }
 
-                    if (FormID != 113)
-                    {
+                    // if (FormID != 113)
+                    // {
                         if (ExpiryDate == "")
                         {
                             if (dsAttachment.Columns.Contains("D_ExpiryDate"))
@@ -229,34 +229,34 @@ namespace SmartxAPI.GeneralFunctions
                         {
 
                         }
-                    }
-                    else{
-                            if (ExpiryDate == "")
-                        {
-                            if (dsAttachment.Columns.Contains("D_ExpiryDate"))
-                                dsAttachment.Columns.Remove("D_ExpiryDate");
-                            if (dsAttachment.Columns.Contains("N_RemCategoryID"))
-                                dsAttachment.Columns.Remove("N_RemCategoryID");
-                        }
-                        if (dsAttachment.Columns.Contains("FileData"))
-                            dsAttachment.Columns.Remove("FileData");
-                        if (dsAttachment.Columns.Contains("x_RemCategory"))
-                            dsAttachment.Columns.Remove("x_RemCategory");
-                        if (dsAttachment.Columns.Contains("x_Category"))
-                            dsAttachment.Columns.Remove("x_Category");
-                             if (dsAttachment.Columns.Contains("n_PartyID"))
-                            dsAttachment.Columns.Remove("n_PartyID");
-                            if (dsAttachment.Columns.Contains("n_TransID"))
-                            dsAttachment.Columns.Remove("n_TransID");
-                           dsAttachment.AcceptChanges();
-                           dLayer.SaveData("Acc_CompanyAttachments", "N_AttachmentID", dsAttachment, connection, transaction);
-                            if (myFunctions.getIntVAL(Result.ToString()) > 0)
-                            {
+                    // }
+                    // else{
+                    //         if (ExpiryDate == "")
+                    //     {
+                    //         if (dsAttachment.Columns.Contains("D_ExpiryDate"))
+                    //             dsAttachment.Columns.Remove("D_ExpiryDate");
+                    //         if (dsAttachment.Columns.Contains("N_RemCategoryID"))
+                    //             dsAttachment.Columns.Remove("N_RemCategoryID");
+                    //     }
+                    //     if (dsAttachment.Columns.Contains("FileData"))
+                    //         dsAttachment.Columns.Remove("FileData");
+                    //     if (dsAttachment.Columns.Contains("x_RemCategory"))
+                    //         dsAttachment.Columns.Remove("x_RemCategory");
+                    //     if (dsAttachment.Columns.Contains("x_Category"))
+                    //         dsAttachment.Columns.Remove("x_Category");
+                    //          if (dsAttachment.Columns.Contains("n_PartyID"))
+                    //         dsAttachment.Columns.Remove("n_PartyID");
+                    //         if (dsAttachment.Columns.Contains("n_TransID"))
+                    //         dsAttachment.Columns.Remove("n_TransID");
+                    //        dsAttachment.AcceptChanges();
+                    //        dLayer.SaveData("Acc_CompanyAttachments", "N_AttachmentID", dsAttachment, connection, transaction);
+                    //         if (myFunctions.getIntVAL(Result.ToString()) > 0)
+                    //         {
 
-                            }
+                    //         }
 
                         
-                    }
+                    // }
 
                 }
 
@@ -555,9 +555,9 @@ namespace SmartxAPI.GeneralFunctions
                         // }
 
                     }
-                    if (formId == 113)
-                        dLayer.DeleteData("Acc_CompanyAttachments", "N_CompanyID", nCompanyID, "N_FnyearID=" + nFnYearID, connection, transaction);
-                    else
+                    // if (formId == 113)
+                    //     dLayer.DeleteData("Acc_CompanyAttachments", "N_CompanyID", nCompanyID, "N_FnyearID=" + nFnYearID, connection, transaction);
+                    // else
                         dLayer.DeleteData("Dms_ScreenAttachments", "N_PartyID", nPartyID, "N_FormID=" + formId + " and N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearID, connection, transaction);
 
                     dLayer.DeleteData("Gen_Reminder", "N_PartyID", nPartyID, "N_FormID=" + formId + " and N_CompanyID=" + nCompanyID, connection, transaction);
@@ -632,13 +632,13 @@ namespace SmartxAPI.GeneralFunctions
                     //         deleteList(dba1, myFunctions.getIntVAL(obj.ToString()), s, 1);
                     //     }
                     // }
-                    if (formId == 113)
-                        dLayer.DeleteData("Acc_CompanyAttachments", "N_AttachmentID", nAttachmentId, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearID, connection, transaction);
-                    else
-                    {
+                    // if (formId == 113)
+                    //     dLayer.DeleteData("Acc_CompanyAttachments", "N_AttachmentID", nAttachmentId, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearID, connection, transaction);
+                    // else
+                    // {
                         
                       int result =  dLayer.DeleteData("Dms_ScreenAttachments", "N_AttachmentID",nAttachmentId , "", connection, transaction);
-                    }
+                    //}
 
                 }
             }

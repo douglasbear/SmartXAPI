@@ -183,35 +183,35 @@ namespace SmartxAPI.Controllers
                     SortedList ProParam = new SortedList();
                     ProParam.Add("@CompanyID", nCompanyID);
                    // DataTable Details = dLayer.ExecuteSettingsPro("SP_GenSettings_Disp", QList, myFunctions.GetCompanyID(User), nFnYearID, connection);
-                    Attachments = dLayer.ExecuteDataTablePro("SP_CompanyAttachments",ProParam, connection);
-                    //Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(AdminInfo.Rows[0]["N_CompanyID"].ToString()), myFunctions.getIntVAL(AdminInfo.Rows[0]["N_CompanyID"].ToString()), 113, myFunctions.getIntVAL(AdminInfo.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                    //Attachments = dLayer.ExecuteDataTablePro("SP_CompanyAttachments",ProParam, connection);
+                    Attachments = myAttachments.ViewAttachment(dLayer,nCompanyID,nCompanyID, 113,N_FnYearID, User, connection);
                     Attachments = api.Format(Attachments, "attachments");
-                    Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "FileData", typeof(string), null);
-                    Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "TempFileName", typeof(string), null);
+                    // Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "FileData", typeof(string), null);
+                    // Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "TempFileName", typeof(string), null);
 
-            if (Attachments.Rows.Count > 0)
-            {
-                Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "n_CompanyID", typeof(int), myFunctions.GetCompanyID(User));
-                Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "n_FnYearID", typeof(int), N_FnYearID);
+            // if (Attachments.Rows.Count > 0)
+            // {
+            //     Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "n_CompanyID", typeof(int), myFunctions.GetCompanyID(User));
+            //     Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "n_FnYearID", typeof(int), N_FnYearID);
                
-            }
+            // }
 
-            foreach (DataRow var in Attachments.Rows)
-            {
-                if (var["x_refName"] != null)
-                {
-                    var path = var["x_refName"].ToString();
-                    if (System.IO.File.Exists(path))
-                    {
-                        Byte[] bytes = System.IO.File.ReadAllBytes(path);
-                        var random = RandomString();
-                        System.IO.File.Copy(path, this.TempFilesPath + random + "." + var["x_Extension"].ToString());
-                        var["TempFileName"] = random + "." + var["x_Extension"].ToString();
-                        var["FileData"] = "data:" + api.GetContentType(path) + ";base64," + Convert.ToBase64String(bytes);
-                    }
-                }
+            // foreach (DataRow var in Attachments.Rows)
+            // {
+            //     if (var["x_refName"] != null)
+            //     {
+            //         var path = var["x_refName"].ToString();
+            //         if (System.IO.File.Exists(path))
+            //         {
+            //             Byte[] bytes = System.IO.File.ReadAllBytes(path);
+            //             var random = RandomString();
+            //             System.IO.File.Copy(path, this.TempFilesPath + random + "." + var["x_Extension"].ToString());
+            //             var["TempFileName"] = random + "." + var["x_Extension"].ToString();
+            //             var["FileData"] = "data:" + api.GetContentType(path) + ";base64," + Convert.ToBase64String(bytes);
+            //         }
+            //     }
 
-            }
+            // }
             Attachments.AcceptChanges();
                  
                     Output.Add("CompanyInfo", dt);

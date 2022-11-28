@@ -1161,6 +1161,11 @@ namespace SmartxAPI.GeneralFunctions
                         if (nQuotationID > 0)
                             dLayer.ExecuteNonQuery("Update Inv_SalesQuotation Set N_SalesID=" + N_SalesID + ", N_Processed=1 Where N_QuotationID=" + nQuotationID + " and N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID", QueryParams, connection,transaction);
                     // }
+                        // int nDeliveryNoteID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_DeliveryNoteID"].ToString());
+                        // if (nDeliveryNoteID > 0)
+                        //     dLayer.ExecuteNonQuery("Update Inv_DeliveryNote Set  N_Processed=1 Where N_DeliveryNoteID=" + nDeliveryNoteID + " and N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID", QueryParams, connection,transaction);
+                 
+
                 }
 
                 // Warranty Save Code here
@@ -1316,12 +1321,12 @@ namespace SmartxAPI.GeneralFunctions
 
                     }
                     //StatusUpdate
-                    int tempQtn=0,tempSO=0;
+                    int tempQtn=0,tempSO=0,tempDevnote=0;
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         int nSalesOrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
                         int nQuotationID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesQuotationID"].ToString());
-
+                        int nDeliveryNoteID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_DeliveryNoteID"].ToString());
                         if (nSalesOrderID > 0 && tempSO!=nSalesOrderID)
                         {
                             if(!myFunctions.UpdateTxnStatus(N_CompanyID,nSalesOrderID,81,false,dLayer,connection,transaction))
@@ -1347,6 +1352,19 @@ namespace SmartxAPI.GeneralFunctions
                             }
                         }
                         tempQtn=nQuotationID;
+
+                         if (nDeliveryNoteID > 0 && tempDevnote!=nDeliveryNoteID )
+                        {
+                            if(!myFunctions.UpdateTxnStatus(N_CompanyID,nDeliveryNoteID,884,false,dLayer,connection,transaction))
+                            {
+                                // transaction.Rollback();
+                                // return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                Result.Add("b_IsCompleted", 0);
+                                Result.Add("x_Msg", "Unable To Update Txn Status");
+                                return Result;
+                            }
+                        }
+                        tempDevnote=nDeliveryNoteID;
                     };
                 }
                 SortedList CustomerParams = new SortedList();
