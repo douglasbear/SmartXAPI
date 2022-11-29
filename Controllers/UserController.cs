@@ -315,6 +315,7 @@ namespace SmartxAPI.Controllers
                         if (nGlobalUserID != 0)
                         {
                             skipUserSql = " and N_UserID<>@nGlobalUserID";
+
                         }
                         object userCountWithUserID = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Users where X_UserID=@xUserID " + skipUserSql, userParams, olivoCon, olivoTxn);
                         if (myFunctions.getIntVAL(userCountWithUserID.ToString()) > 0)
@@ -356,10 +357,13 @@ namespace SmartxAPI.Controllers
                         DataRow MasterRow = MasterTable.Rows[0];
 
                         object xPwd = ".";
+                        object nUserType;
                         if (nGlobalUserID > 0)
                         {
                             xPwd = dLayer.ExecuteScalar("SELECT X_Password FROM Users where x_EmailID=@xEmailID and N_ClientID=@nClientID and N_UserID=@nGlobalUserID", userParams, olivoCon, olivoTxn);
                             globalUser.Rows[0]["n_ActiveAppID"] = apps.Rows[0]["n_AppID"].ToString();
+                            nUserType =dLayer.ExecuteScalar("SELECT N_UserType FROM Users where x_EmailID=@xEmailID and N_ClientID=@nClientID and N_UserID=@nGlobalUserID", userParams, olivoCon, olivoTxn);
+                            globalUser.Rows[0]["N_UserType"] = myFunctions.getIntVAL(nUserType.ToString());
                         }
                         else
                         {
