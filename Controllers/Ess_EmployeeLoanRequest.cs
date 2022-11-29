@@ -579,9 +579,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,N_LoanTransID,N_LoanID,D_LoanIssueDate,D_EntryDate,X_Remarks,D_LoanPeriodFrom,D_LoanPeriodTo,N_LoanAmount,N_Installments,N_FnYearID,B_IsSaveDraft,X_Guarantor1,X_Guarantor2,N_FormID,x_Description from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,N_LoanTransID,N_LoanID,D_LoanIssueDate,D_EntryDate,X_Remarks,D_LoanPeriodFrom,D_LoanPeriodTo,N_LoanAmount,N_Installments,N_FnYearID,B_IsSaveDraft,X_Guarantor1,X_Guarantor2,N_FormID,x_Description,X_BranchName from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,N_LoanTransID,N_LoanID,D_LoanIssueDate,D_EntryDate,X_Remarks,D_LoanPeriodFrom,D_LoanPeriodTo,N_LoanAmount,N_Installments,N_FnYearID,B_IsSaveDraft,X_Guarantor1,X_Guarantor2,N_FormID,x_Description from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + Searchkey + " and N_LoanTransID not in (select top(" + Count + ") N_LoanTransID from vw_Pay_LoanIssueList where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,N_LoanTransID,N_LoanID,D_LoanIssueDate,D_EntryDate,X_Remarks,D_LoanPeriodFrom,D_LoanPeriodTo,N_LoanAmount,N_Installments,N_FnYearID,B_IsSaveDraft,X_Guarantor1,X_Guarantor2,N_FormID,x_Description,X_BranchName from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + Searchkey + " and N_LoanTransID not in (select top(" + Count + ") N_LoanTransID from vw_Pay_LoanIssueList where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + xSortBy + " ) " + xSortBy;
 
             SortedList OutPut = new SortedList();
 
