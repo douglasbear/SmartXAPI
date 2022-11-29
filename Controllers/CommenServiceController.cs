@@ -213,11 +213,8 @@ namespace SmartxAPI.Controllers
 
                                 int rows = dLayer.ExecuteNonQuery("insert into ClientApps select @nClientID,@nAppID,@xAppUrl,@xDBUri,@nUserLimit,0,'Service',max(N_RefID)+1,@dExpDate,0,null,@isAttachment from ClientApps", paramList, olivCnn);
                                 // string appUpdate = "Update Users set N_ActiveAppID=@nAppID WHERE (X_EmailID =@xEmailID and N_UserID=@nGlobalUserID)";
-
-                                if (rows <= 0)
-                                {
-                                    return Ok(_api.Warning("App not registerd in your company"));
-                                }
+                                
+                             
                                 //     else{
                                 // //         if (appID != 6 && appID != 8)
                                 // // {
@@ -231,7 +228,8 @@ namespace SmartxAPI.Controllers
                             using (SqlConnection cnn = new SqlConnection(connectionString))
                             {
                                 cnn.Open();
-
+                                if(companyid>0)
+                                  dLayer.ExecuteNonQuery("insert into Sec_UserApps select "+companyid+",max(N_APPMappingID)+1,"+appID+","+myFunctions.GetUserID(User)+","+GlobalUserID+" from Sec_UserApps", paramList, cnn);
                                 string companySql = "";
                                 if (companyid > 0)
                                     companySql = " and Acc_Company.N_CompanyID=" + companyid + " ";

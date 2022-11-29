@@ -687,6 +687,8 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nCompanyID, int N_AssetInventoryID, int FormID)
         {
             int Results = 0;
+             string xTransType = "";
+              int N_UserID = myFunctions.GetUserID(User);
 
             SortedList Params = new SortedList();
             try
@@ -697,8 +699,28 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@N_AssetInventoryID", N_AssetInventoryID);
+        
+                    if (FormID == 1293)
+                     xTransType = "AR";
+                    else xTransType = "AP";
                     if (N_AssetInventoryID > 0)
                     {
+                             SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",@nCompanyID},
+                                {"X_TransType",xTransType},
+                                {"N_VoucherID",N_AssetInventoryID},
+                                {"N_UserID",N_UserID},
+                                {"X_SystemName",System.Environment.MachineName}};
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts ", DeleteParams, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, ex));
+                        }
+
                         if (FormID == 129)
                         {
                             dLayer.ExecuteNonQuery("DELETE FROM Ass_AssetMaster WHERE Ass_AssetMaster.N_CompanyID = @nCompanyID AND Ass_AssetMaster.N_AssetInventoryDetailsID IN (SELECT N_AssetInventoryDetailsID FROM Ass_PurchaseDetails WHERE Ass_PurchaseDetails.N_AssetInventoryID =@N_AssetInventoryID AND Ass_PurchaseDetails.N_CompanyID = @nCompanyID)", Params, connection, transaction);
@@ -707,6 +729,7 @@ namespace SmartxAPI.Controllers
 
                         dLayer.ExecuteNonQuery("delete from Ass_PurchaseDetails Where N_AssetInventoryID=@N_AssetInventoryID and N_CompanyID=@nCompanyID", Params, connection, transaction);
                         dLayer.ExecuteNonQuery("delete from Ass_PurchaseMaster Where N_AssetInventoryID=@N_AssetInventoryID and N_CompanyID=@nCompanyID", Params, connection, transaction);
+                         
 
                     }
                     else

@@ -16,7 +16,7 @@ namespace SmartxAPI.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("Ticketing")]
     [ApiController]
-    public class Tck_Ticketing : ControllerBase
+    public class Tvl_Ticketing : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
@@ -25,7 +25,7 @@ namespace SmartxAPI.Controllers
         private readonly int N_FormID =565 ;
         private readonly ITxnHandler txnHandler;
 
-        public Tck_Ticketing(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf,ITxnHandler txn)
+        public Tvl_Ticketing(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf,ITxnHandler txn)
         {
             api = apifun;
             dLayer = dl;
@@ -71,7 +71,7 @@ namespace SmartxAPI.Controllers
         }   
        
           [HttpGet("details")]
-        public ActionResult VacancyDetails(string x_InvoiceNo)
+        public ActionResult TicketDetails(string x_InvoiceNo)
         {
             DataSet dt = new DataSet();
             DataTable MasterTable = new DataTable();
@@ -137,6 +137,11 @@ namespace SmartxAPI.Controllers
                     
                     if (nTicketID > 0) 
                     {  
+                        // dLayer.ExecuteNonQuery("delete from Inv_SalesDetails where  N_CompanyId= "+nCompanyID+" and N_SalesID in (select N_SalesID from Inv_Sales where N_SalesType=7 and N_CompanyId= "+nCompanyID+" and N_SalesRefID= "+nTicketID+")", connection, transaction);
+                        // dLayer.ExecuteNonQuery("delete from Inv_Sales where N_SalesType=7 and N_CompanyId= "+nCompanyID+" and N_SalesRefID= "+nTicketID, connection, transaction);
+                        // dLayer.ExecuteNonQuery("delete from Inv_Sales where N_SalesType=7 and N_CompanyId= "+nCompanyID+" and N_SalesRefID= "+nTicketID, connection, transaction);
+                        // dLayer.DeleteData("Tvl_Ticketing", "n_TicketID", nTicketID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
+                        // dLayer.DeleteData("Tvl_Ticketing", "n_TicketID", nTicketID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
                         dLayer.DeleteData("Tvl_Ticketing", "n_TicketID", nTicketID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
                     }
 
@@ -159,7 +164,7 @@ namespace SmartxAPI.Controllers
                         int n_PIsCompleted=0;
                         string x_PMessage="";
 
-                        string sqlPurchaseMaster ="SELECT Tvl_Ticketing.N_CompanyID, Tvl_Ticketing.N_FnyearID, 0 AS N_PurchaseID, '@Auto' AS X_InvoiceNo, Tvl_Ticketing.N_VendorID, GETDATE() AS D_EntryDate, "+
+                        string sqlPurchaseMaster ="SELECT Tvl_Ticketing.N_CompanyID, Tvl_Ticketing.N_FnyearID, ISNULL(Inv_Purchase.N_PurchaseID,0) AS N_PurchaseID, ISNULL(Inv_Purchase.X_InvoiceNo,'@Auto') AS X_InvoiceNo, Tvl_Ticketing.N_VendorID, GETDATE() AS D_EntryDate, "+
                                                     " Tvl_Ticketing.D_TicketDate AS D_InvoiceDate, (Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission) AS N_InvoiceAmt, 0 AS N_DiscountAmt, 0 AS N_CashPaid, "+
                                                     " 0 AS N_FreightAmt, Tvl_Ticketing.N_userID, 0 AS B_BeginingBalEntry, 7 AS N_PurchaseType, Tvl_Ticketing.N_TicketID AS N_PurchaseRefID, Inv_Location.N_LocationID, "+
                                                     " Acc_BranchMaster.N_BranchID, 'PURCHASE' AS X_TransType, Tvl_Ticketing.X_Notes AS X_Description, 0 AS B_IsSaveDraft,Acc_Company.N_CurrencyID,1 AS N_ExchangeRate, "+
@@ -169,25 +174,29 @@ namespace SmartxAPI.Controllers
                                                     " FROM         Tvl_Ticketing INNER JOIN "+
                                                     " Inv_Location ON Tvl_Ticketing.N_CompanyID = Inv_Location.N_CompanyID AND Inv_Location.B_IsDefault = 1 INNER JOIN "+
                                                     " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND Acc_BranchMaster.B_DefaultBranch = 1 INNER JOIN "+
-                                                    " Acc_Company ON Tvl_Ticketing.N_CompanyID = Acc_Company.N_CompanyID "+
+                                                    " Acc_Company ON Tvl_Ticketing.N_CompanyID = Acc_Company.N_CompanyID LEFT OUTER JOIN "+
+                                                    " Inv_Purchase ON Tvl_Ticketing.N_TicketID = Inv_Purchase.N_PurchaseRefID AND Tvl_Ticketing.N_CompanyID = Inv_Purchase.N_CompanyID and Inv_Purchase.N_PurchaseType=7 "+
                                                     " WHERE      Tvl_Ticketing.N_CompanyID="+ nCompanyID +" AND Tvl_Ticketing.N_TicketID= "+ nTicketID;
 
                         PMasterDt = dLayer.ExecuteDataTable(sqlPurchaseMaster, Params, connection,transaction);
                         PMasterDt = api.Format(PMasterDt, "master");
                         Pds.Tables.Add(PMasterDt);
 
-                        string sqlPurchaseDetails ="SELECT     Tvl_Ticketing.N_CompanyID, 0 AS N_PurchaseID, 0 AS N_PurchaseDetailsID, Inv_ItemMaster.N_ItemID, 1 AS N_Qty, "+
-                                                    " (Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission) AS N_PPrice, Inv_ItemMaster.N_ItemUnitID, 1 AS N_QtyDisplay, "+                                                    
-                                                    " (Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission) AS N_Cost, GETDATE() AS D_Entrydate, Acc_BranchMaster.N_BranchID, Inv_Location.N_LocationID, "+
-                                                    " Acc_Company.N_CurrencyID,1 AS N_ExchangeRate,(Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission) AS N_PPriceF, "+
-                                                    " (Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission) AS N_CostF,Tvl_Ticketing.N_TaxCategoryID AS N_TaxCategoryID1, "+
-                                                    " Tvl_Ticketing.N_TaxPercentage AS N_TaxPercentage1,Tvl_Ticketing.N_SuppTax AS N_TaxAmt1 ,inv_itemunit.X_ItemUnit"+
-                                                    " FROM         Tvl_Ticketing INNER JOIN "+
+                        string sqlPurchaseDetails ="SELECT     Tvl_Ticketing.N_CompanyID, ISNULL(Inv_PurchaseDetails.N_PurchaseID,0) AS N_PurchaseID, ISNULL(Inv_PurchaseDetails.N_PurchaseID,N_PurchaseDetailsID) AS N_PurchaseDetailsID, Inv_ItemMaster.N_ItemID, 1 AS N_Qty, "+
+                                                    " Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission AS N_PPrice, Inv_ItemMaster.N_ItemUnitID, 1 AS N_QtyDisplay, "+
+                                                    " Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission AS N_Cost, GETDATE() AS D_Entrydate, Acc_BranchMaster.N_BranchID, Inv_Location.N_LocationID, "+
+                                                    " Acc_Company.N_CurrencyID, 1 AS N_ExchangeRate, Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission AS N_PPriceF, "+
+                                                    " Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission AS N_CostF, Tvl_Ticketing.N_TaxCategoryID AS N_TaxCategoryID1, "+
+                                                    " Tvl_Ticketing.N_TaxPercentage AS N_TaxPercentage1, Tvl_Ticketing.N_SuppTax AS N_TaxAmt1, Inv_ItemUnit.X_ItemUnit "+
+                                                    " FROM         Inv_PurchaseDetails RIGHT OUTER JOIN "+
+                                                    " Inv_Purchase ON Inv_PurchaseDetails.N_CompanyID = Inv_Purchase.N_CompanyID AND Inv_PurchaseDetails.N_PurchaseID = Inv_Purchase.N_PurchaseID RIGHT OUTER JOIN "+
+                                                    " Tvl_Ticketing INNER JOIN "+
                                                     " Inv_ItemMaster ON Tvl_Ticketing.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemMaster.X_ItemCode = '001' INNER JOIN "+
                                                     " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND Acc_BranchMaster.B_DefaultBranch = 1 INNER JOIN "+
                                                     " Inv_Location ON Tvl_Ticketing.N_CompanyID = Inv_Location.N_CompanyID AND Inv_Location.B_IsDefault = 1 INNER JOIN "+
                                                     " Acc_Company ON Tvl_Ticketing.N_CompanyID = Acc_Company.N_CompanyID INNER JOIN "+
-                                                    " inv_itemunit ON inv_itemunit.N_CompanyID=Inv_ItemMaster.N_CompanyID AND inv_itemunit.N_ItemUnitID=Inv_ItemMaster.N_ItemUnitID "+
+                                                    " Inv_ItemUnit ON Inv_ItemUnit.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemUnit.N_ItemUnitID = Inv_ItemMaster.N_ItemUnitID ON "+
+                                                    " Inv_Purchase.N_CompanyID = Tvl_Ticketing.N_CompanyID AND Inv_Purchase.N_PurchaseRefID = Tvl_Ticketing.N_TicketID "+
                                                     " WHERE      Tvl_Ticketing.N_CompanyID= "+nCompanyID+" and Tvl_Ticketing.N_TicketID= "+nTicketID;
 
                         PDetailsDt = dLayer.ExecuteDataTable(sqlPurchaseDetails, Params, connection,transaction);
@@ -209,11 +218,11 @@ namespace SmartxAPI.Controllers
                         n_PIsCompleted=myFunctions.getIntVAL(PResult["b_IsCompleted"].ToString());
                         x_PMessage=PResult["x_Msg"].ToString();
 
-                        if(n_PIsCompleted==0)
-                        {
-                            transaction.Rollback();
-                            return Ok(api.Error(User, x_PMessage));
-                        }
+                        // if(n_PIsCompleted==0)
+                        // {
+                        //     transaction.Rollback();
+                        //     return Ok(api.Error(User, x_PMessage));
+                        // }
                         //-------------------------------^^^^^^^^^^^^^^------------------------------------//
 
                         //-------------------------------Sales Save------------------------------------//
@@ -233,35 +242,42 @@ namespace SmartxAPI.Controllers
                                                     " Tvl_Ticketing.X_Description AS x_Notes, Tvl_Ticketing.N_userID, 0 AS N_SalesOrderID, 0 AS B_BeginingBalEntry, 7 AS N_SalesType, Tvl_Ticketing.N_TicketID AS N_SalesRefID, "+
                                                     " Inv_Location.N_LocationID, Acc_BranchMaster.N_BranchID, 'SALES' AS X_TransType, 0 AS B_IsSaveDraft, 2 AS N_PaymentMethodId, Tvl_Ticketing.D_TicketDate AS D_PrintDate, "+
                                                     " 565 AS N_FormID, Acc_Company.N_CurrencyID,1 AS N_ExchangeRate,Tvl_Ticketing.N_CustomerAmt AS N_BillAmtF,0 AS N_DiscountAmtF,0 AS N_CashReceivedF, "+
-                                                    " Tvl_Ticketing.N_userID AS N_CreatedUser,GETDATE() AS D_CreatedDate, 0 AS n_DeliveryNoteId "+
+                                                    " Tvl_Ticketing.N_userID AS N_CreatedUser,GETDATE() AS D_CreatedDate, 0 AS n_DeliveryNoteId, Tvl_Ticketing.N_SalesmanID "+
                                                     " FROM         Tvl_Ticketing INNER JOIN "+
                                                     " Inv_Location ON Tvl_Ticketing.N_CompanyID = Inv_Location.N_CompanyID AND Inv_Location.B_IsDefault = 1 INNER JOIN "+
                                                     " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND Acc_BranchMaster.B_DefaultBranch = 1 INNER JOIN "+
-                                                    " Acc_Company ON Tvl_Ticketing.N_CompanyID = Acc_Company.N_CompanyID "+
+                                                    " Acc_Company ON Tvl_Ticketing.N_CompanyID = Acc_Company.N_CompanyID LEFT OUTER JOIN "+
+                                                    " Inv_Sales ON Tvl_Ticketing.N_CompanyID = Inv_Sales.N_CompanyId AND Tvl_Ticketing.N_TicketID = Inv_Sales.N_SalesRefID AND Inv_Sales.N_SalesType=7 "+
                                                     " WHERE     Tvl_Ticketing.N_CompanyID= "+nCompanyID+" and Tvl_Ticketing.N_TicketID= "+nTicketID;
 
                         SMasterDt = dLayer.ExecuteDataTable(sqlSalesMaster, Params, connection,transaction);
                         SMasterDt = api.Format(SMasterDt, "master");
                         Sds.Tables.Add(SMasterDt); 
 
-                        string sqlSalesDetails ="SELECT     Tvl_Ticketing.N_CompanyID, 0 AS N_SalesID, 0 AS N_SalesDetailsID, Inv_ItemMaster.N_ItemID, 1 AS N_Qty, Tvl_Ticketing.N_CustomerAmt AS N_Sprice, Inv_ItemMaster.N_ClassID, "+
-                                                " Inv_ItemMaster.N_ItemID AS N_MainItemID, Inv_ItemMaster.N_ItemUnitID, 1 AS N_QtyDisplay, Tvl_Ticketing.N_CustomerAmt AS N_Cost, GETDATE() AS D_EntryDate, "+
-                                                " Inv_Location.N_LocationID,Acc_BranchMaster.N_BranchID,Tvl_Ticketing.N_CustomerAmt AS N_SpriceF,0 AS n_SalesOrderID,0 AS N_SalesQuotationID "+
-                                                " FROM         Tvl_Ticketing INNER JOIN "+
+                        string sqlSalesDetails ="SELECT     Tvl_Ticketing.N_CompanyID, ISNULL(Inv_SalesDetails.N_SalesID,0) AS N_SalesID, ISNULL(Inv_SalesDetails.N_SalesDetailsID,0) AS N_SalesDetailsID, Inv_ItemMaster.N_ItemID, 1 AS N_Qty, Tvl_Ticketing.N_CustomerAmt AS N_Sprice, Inv_ItemMaster.N_ClassID, "+
+                                                " Inv_ItemMaster.N_ItemID AS N_MainItemID, Inv_ItemMaster.N_ItemUnitID, 1 AS N_QtyDisplay, Tvl_Ticketing.N_CustomerAmt AS N_Cost, GETDATE() AS D_EntryDate, Inv_Location.N_LocationID, "+
+                                                " Acc_BranchMaster.N_BranchID, Tvl_Ticketing.N_CustomerAmt AS N_SpriceF, 0 AS n_SalesOrderID, 0 AS N_SalesQuotationID "+
+                                                " FROM         Inv_SalesDetails INNER JOIN "+
+                                                " Inv_Sales ON Inv_SalesDetails.N_CompanyID = Inv_Sales.N_CompanyId AND Inv_SalesDetails.N_SalesID = Inv_Sales.N_SalesId RIGHT OUTER JOIN "+
+                                                " Tvl_Ticketing INNER JOIN "+
                                                 " Inv_ItemMaster ON Tvl_Ticketing.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemMaster.X_ItemCode = '001' INNER JOIN "+
-                                                " Inv_Location ON Tvl_Ticketing.N_CompanyID = Inv_Location.N_CompanyID AND Inv_Location.B_IsDefault=1 INNER JOIN "+
-                                                " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND B_DefaultBranch=1 "+
+                                                " Inv_Location ON Tvl_Ticketing.N_CompanyID = Inv_Location.N_CompanyID AND Inv_Location.B_IsDefault = 1 INNER JOIN "+
+                                                " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND Acc_BranchMaster.B_DefaultBranch = 1 ON Inv_Sales.N_CompanyId = Tvl_Ticketing.N_CompanyID AND "+
+                                                " Inv_Sales.N_SalesRefID = Tvl_Ticketing.N_TicketID AND Inv_Sales.N_SalesType=7 "+
                                                 " WHERE         Tvl_Ticketing.N_CompanyID= "+nCompanyID+" and Tvl_Ticketing.N_TicketID= "+nTicketID;     
 
                         SDetailsDt = dLayer.ExecuteDataTable(sqlSalesDetails, Params, connection,transaction);
                         SDetailsDt = api.Format(SDetailsDt, "details");
                         Sds.Tables.Add(SDetailsDt);  
 
-                        string sqlSalesAmountDetails ="SELECT     Tvl_Ticketing.N_CompanyID,Acc_BranchMaster.N_BranchID,0 AS N_SalesID,Tvl_Ticketing.N_CustomerID,Tvl_Ticketing.N_CustomerAmt AS N_Amount, "+
-			                                    " 0 AS N_CommissionAmt, 0 AS N_CommissionPer,0 AS N_SalesAmountID,0 AS N_TaxID,Tvl_Ticketing.N_CustomerAmt AS N_AmountF, 0 AS N_CommissionAmtF "+
-                                                " FROM         Tvl_Ticketing INNER JOIN "+
-                                                " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND Acc_BranchMaster.B_DefaultBranch=1 "+
-                                                " WHERE        Tvl_Ticketing.N_CompanyID= "+nCompanyID+" and Tvl_Ticketing.N_TicketID= "+nTicketID;
+                        string sqlSalesAmountDetails ="SELECT     Tvl_Ticketing.N_CompanyID, Acc_BranchMaster.N_BranchID, ISNULL(Inv_SaleAmountDetails.N_SalesID,0) AS N_SalesID, Tvl_Ticketing.N_CustomerID, Tvl_Ticketing.N_CustomerAmt AS N_Amount, 0 AS N_CommissionAmt, "+
+                                                        " 0 AS N_CommissionPer, ISNULL(Inv_SaleAmountDetails.N_SalesAmountID,0) AS N_SalesAmountID, 0 AS N_TaxID, Tvl_Ticketing.N_CustomerAmt AS N_AmountF, 0 AS N_CommissionAmtF "+
+                                                        " FROM         Inv_SaleAmountDetails INNER JOIN "+
+                                                        " Inv_Sales ON Inv_SaleAmountDetails.N_CompanyID = Inv_Sales.N_CompanyId AND Inv_SaleAmountDetails.N_SalesID = Inv_Sales.N_SalesId RIGHT OUTER JOIN "+
+                                                        " Tvl_Ticketing INNER JOIN "+
+                                                        " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND Acc_BranchMaster.B_DefaultBranch = 1 ON Inv_Sales.N_CompanyId = Tvl_Ticketing.N_CompanyID AND "+
+                                                        " Inv_Sales.N_SalesRefID = Tvl_Ticketing.N_TicketID AND Inv_Sales.N_SalesType=7 "+
+                                                        " WHERE        Tvl_Ticketing.N_CompanyID= "+nCompanyID+" and Tvl_Ticketing.N_TicketID= "+nTicketID;
 
                         SAmountDetailsDt = dLayer.ExecuteDataTable(sqlSalesAmountDetails, Params, connection,transaction);
                         SAmountDetailsDt = api.Format(SAmountDetailsDt, "saleamountdetails");
@@ -288,11 +304,11 @@ namespace SmartxAPI.Controllers
                         n_SIsCompleted=myFunctions.getIntVAL(SResult["b_IsCompleted"].ToString());
                         x_SMessage=SResult["x_Msg"].ToString();
 
-                        if(n_SIsCompleted==0)
-                        {
-                            transaction.Rollback();
-                            return Ok(api.Error(User, x_SMessage));
-                        }
+                        // if(n_SIsCompleted==0)
+                        // {
+                        //     transaction.Rollback();
+                        //     return Ok(api.Error(User, x_SMessage));
+                        // }
                         //-------------------------------^^^^^^^^^^^^^^------------------------------------//
 
                         transaction.Commit();

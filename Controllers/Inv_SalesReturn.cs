@@ -22,8 +22,8 @@ namespace SmartxAPI.Controllers
         private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
         private readonly int FormID;
-
-        public Inv_SalesReturn(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
+        private readonly ITxnHandler txnHandler;
+        public Inv_SalesReturn(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt,ITxnHandler txn)
         {
             _api = api;
             dLayer = dl;
@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 55;
-
+             txnHandler=txn;
         }
 
 
@@ -390,7 +390,46 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        //  //Save....
+        // [HttpPost("Save")]
+        // public ActionResult SaveData([FromBody] DataSet ds)
+        // {
+        //     SortedList Result = new SortedList();
+        //     int n_IsCompleted=0;
+        //     string x_Message="";
 
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             SqlTransaction transaction;
+        //             transaction = connection.BeginTransaction();
+
+        //             Result=txnHandler.SalesReturnSaveData( ds,User, dLayer,  connection, transaction);
+
+        //             n_IsCompleted=myFunctions.getIntVAL(Result["b_IsCompleted"].ToString());
+        //             x_Message=Result["x_Msg"].ToString();
+                       
+        //             if(n_IsCompleted==1)
+        //             {
+        //                 transaction.Commit();
+        //                 return Ok(_api.Success(Result, x_Message));
+        //             }
+        //             else
+        //             {
+        //                 transaction.Rollback();
+        //                 return Ok(_api.Error(User, x_Message));
+        //             }
+        //         }
+                     
+        //     }       
+        //     catch (Exception ex)
+        //     {
+        //         return Ok(_api.Error(User, ex));
+        //     }
+
+        // }
 
 
         //Save....

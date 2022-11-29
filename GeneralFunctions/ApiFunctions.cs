@@ -141,16 +141,18 @@ namespace SmartxAPI.GeneralFunctions
                         Msg = "Some accounts may not properly set. Please check the  Account Mapping !";
                         break;
                     }
+
+                    if(ex.Message.Contains("ResponseText-")){
+                         Msg = ex.Message.Replace("ResponseText- ","");
+                        break;
+                    }
                     if (ex.Message.Contains("Transaction Processed"))
                     {
                         Msg = ex.Message;
                         break;
                     }
-                    if(ex.Message.Contains("ResponseText-")){
-                         Msg = ex.Message.Replace("ResponseText- ","");
-                        break;
-                    }
                     break;
+
                     // if (env.EnvironmentName == "Development")
                     // {
                     //     Msg = ex.Message;

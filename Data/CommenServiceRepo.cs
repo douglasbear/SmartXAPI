@@ -217,8 +217,8 @@ namespace SmartxAPI.Data
                                     int flag=0;
                                      while (expiredApp != 0 )
                                     {
-                                    string appNew = "select Top 1 N_AppID from ClientApps where N_ClientID="+globalInfo.Rows[0]["N_ClientID"].ToString()+"  and N_AppID not in ("+appsID+") ";
-                                    object newAppID =   dLayer.ExecuteScalar(appNew, cnn2);
+                                    string appNew = "select Top 1 N_AppID from Sec_UserApps where N_GlobalUserID="+globalInfo.Rows[0]["N_UserID"].ToString()+"  and N_AppID not in ("+appsID+") ";
+                                    object newAppID =   dLayer.ExecuteScalar(appNew, connection);
                                     if(newAppID==null)
                                     {
                                         flag=1;

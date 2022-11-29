@@ -1126,7 +1126,8 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
         }
-       [HttpGet("maildetails")]
+
+        [HttpGet("maildetails")]
         public ActionResult MailDetails()
         {
             DataSet dt = new DataSet();
@@ -1171,7 +1172,11 @@ namespace SmartxAPI.Controllers
                         x_body= x_body.Replace("@Submitted",x_SubjectCompleted);
                         x_body= x_body.Replace("@Completed",x_SubjectCompleted);
                         x_body=x_body.Replace("@Closed",x_SubjectClosed);
+                        x_body=x_body.Replace("@Date",datetime.ToString("dd-MM-yyyy"));
                         MasterTable.Rows[0]["x_body"]=x_body;
+                        string x_Subject=(MasterTable.Rows[0]["x_Subject"]).ToString();
+                        x_Subject=x_Subject.Replace("@Month",datetime.ToString("MMMM"));
+                        MasterTable.Rows[0]["x_Subject"]=x_Subject;
 
 
                     }
@@ -1191,5 +1196,6 @@ namespace SmartxAPI.Controllers
             }
         }
     }
+    }
+    
 
-}
