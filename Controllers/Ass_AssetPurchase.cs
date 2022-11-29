@@ -699,6 +699,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@N_AssetInventoryID", N_AssetInventoryID);
                     if (N_AssetInventoryID > 0)
                     {
+                        
                         if (FormID == 129)
                         {
                             dLayer.ExecuteNonQuery("DELETE FROM Ass_AssetMaster WHERE Ass_AssetMaster.N_CompanyID = @nCompanyID AND Ass_AssetMaster.N_AssetInventoryDetailsID IN (SELECT N_AssetInventoryDetailsID FROM Ass_PurchaseDetails WHERE Ass_PurchaseDetails.N_AssetInventoryID =@N_AssetInventoryID AND Ass_PurchaseDetails.N_CompanyID = @nCompanyID)", Params, connection, transaction);

@@ -165,7 +165,7 @@ namespace SmartxAPI.Controllers
                                                     " Acc_BranchMaster.N_BranchID, 'PURCHASE' AS X_TransType, Tvl_Ticketing.X_Notes AS X_Description, 0 AS B_IsSaveDraft,Acc_Company.N_CurrencyID,1 AS N_ExchangeRate, "+
                                                     " (Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission) AS N_InvoiceAmtF, 0 AS N_DiscountAmtF, 0 AS N_CashPaidF,0 AS N_FreightAmtF, "+
                                                     " 1 AS B_FreightAmountDirect,Tvl_Ticketing.N_SuppTax AS N_TaxAmt,Tvl_Ticketing.N_SuppTax AS N_TaxAmtF,Tvl_Ticketing.N_TaxCategoryID,2 AS N_PaymentMethod,Tvl_Ticketing.D_TicketDate D_PrintDate, "+
-                                                    " Tvl_Ticketing.N_TaxPercentage AS n_TaxPercentage,Tvl_Ticketing.N_userID AS N_CreatedUser,GETDATE() AS D_CreatedDate,565 AS N_FormID,0 AS N_POrderID "+
+                                                    " Tvl_Ticketing.N_TaxPercentage AS n_TaxPercentage,Tvl_Ticketing.N_CreatedUser,Tvl_Ticketing.D_CreatedDate,565 AS N_FormID,0 AS N_POrderID "+
                                                     " FROM         Tvl_Ticketing INNER JOIN "+
                                                     " Inv_Location ON Tvl_Ticketing.N_CompanyID = Inv_Location.N_CompanyID AND Inv_Location.B_IsDefault = 1 INNER JOIN "+
                                                     " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND Acc_BranchMaster.B_DefaultBranch = 1 INNER JOIN "+
@@ -237,7 +237,7 @@ namespace SmartxAPI.Controllers
                                                     " Tvl_Ticketing.X_Description AS x_Notes, Tvl_Ticketing.N_userID, 0 AS N_SalesOrderID, 0 AS B_BeginingBalEntry, 7 AS N_SalesType, Tvl_Ticketing.N_TicketID AS N_SalesRefID, "+
                                                     " Inv_Location.N_LocationID, Acc_BranchMaster.N_BranchID, 'SALES' AS X_TransType, 0 AS B_IsSaveDraft, 2 AS N_PaymentMethodId, Tvl_Ticketing.D_TicketDate AS D_PrintDate, "+
                                                     " 565 AS N_FormID, Acc_Company.N_CurrencyID,1 AS N_ExchangeRate,Tvl_Ticketing.N_CustomerAmt AS N_BillAmtF,0 AS N_DiscountAmtF,0 AS N_CashReceivedF, "+
-                                                    " Tvl_Ticketing.N_userID AS N_CreatedUser,GETDATE() AS D_CreatedDate, 0 AS n_DeliveryNoteId, Tvl_Ticketing.N_SalesmanID "+
+                                                    " Tvl_Ticketing.N_CreatedUser,Tvl_Ticketing.D_CreatedDate, 0 AS n_DeliveryNoteId, Tvl_Ticketing.N_SalesmanID "+
                                                     " FROM         Tvl_Ticketing INNER JOIN "+
                                                     " Inv_Location ON Tvl_Ticketing.N_CompanyID = Inv_Location.N_CompanyID AND Inv_Location.B_IsDefault = 1 INNER JOIN "+
                                                     " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND Acc_BranchMaster.B_DefaultBranch = 1 INNER JOIN "+
@@ -390,6 +390,7 @@ namespace SmartxAPI.Controllers
 
             int Results = 0;
             int nCompanyID=myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
             try
             {                        
                 SortedList Params = new SortedList();
@@ -398,24 +399,83 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
 
-                    // int N_SalesID=0,N_PurchaseID=0;
-                    // object SalesID = dLayer.ExecuteScalar("select N_SalesId from Inv_Sales where N_SalesType=7 and N_CompanyID="+nCompanyID+" and N_SalesRefID= "+nTicketID, Params, connection,transaction);
-                    // if(SalesID!=null)
-                    //     N_SalesID=myFunctions.getIntVAL(SalesID.ToString());
+                    int N_SalesID=0,N_PurchaseID=0;
 
-                    // if(N_SalesID>0)
-                    // {
-                    //     string payRecieptqry = "select N_PayReceiptID from  Inv_PayReceipt where N_CompanyID=" + nCompanyID + " and N_RefID=" + N_SalesID + " and N_FormID=" + this.N_FormID + "";
-                    //     object nRecieptID = dLayer.ExecuteScalar(payRecieptqry, connection, transaction);
-                    //     if (nRecieptID != null && myFunctions.getIntVAL(nRecieptID.ToString()) > 0)
-                    //     {
-                    //         dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + nCompanyID + " and N_InventoryID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " and X_TransType = 'SA'", connection, transaction);
-                    //         dLayer.ExecuteNonQuery(" delete from Inv_PayReceiptDetails Where N_CompanyID=" + nCompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " ", connection, transaction);
-                    //         dLayer.ExecuteNonQuery(" delete from Inv_PayReceipt Where N_CompanyID=" + nCompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " ", connection, transaction);
-                    //     }
-                    //     dLayer.DeleteData("Inv_SalesAdvanceSettlement", "N_SalesID", N_SalesID, "N_CompanyID = " + nCompanyID + " ", connection, transaction);
-                                
-                    // }                        
+                    //----------------------------------SALES Delete-------------------------------------------
+                    object SalesID = dLayer.ExecuteScalar("select N_SalesId from Inv_Sales where N_SalesType=7 and N_CompanyID="+nCompanyID+" and N_SalesRefID= "+nTicketID, Params, connection,transaction);
+                    if(SalesID!=null)
+                        N_SalesID=myFunctions.getIntVAL(SalesID.ToString());
+
+                    if(N_SalesID>0)
+                    {
+                        string payRecieptqry = "select N_PayReceiptID from  Inv_PayReceipt where N_CompanyID=" + nCompanyID + " and N_RefID=" + N_SalesID + " and N_FormID=" + this.N_FormID + "";
+                        object nRecieptID = dLayer.ExecuteScalar(payRecieptqry, connection, transaction);
+                        if (nRecieptID != null && myFunctions.getIntVAL(nRecieptID.ToString()) > 0)
+                        {
+                            dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + nCompanyID + " and N_InventoryID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " and X_TransType = 'SA'", connection, transaction);
+                            dLayer.ExecuteNonQuery(" delete from Inv_PayReceiptDetails Where N_CompanyID=" + nCompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " ", connection, transaction);
+                            dLayer.ExecuteNonQuery(" delete from Inv_PayReceipt Where N_CompanyID=" + nCompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " ", connection, transaction);
+                        }
+                        dLayer.DeleteData("Inv_SalesAdvanceSettlement", "N_SalesID", N_SalesID, "N_CompanyID = " + nCompanyID + " ", connection, transaction);
+
+                        SortedList DeleteParamSales = new SortedList(){
+                                        {"N_CompanyID",nCompanyID},
+                                        {"N_UserID",nUserID}, 
+                                        {"X_TransType","SALES"},
+                                        {"X_SystemName","WebRequest"},
+                                        {"N_VoucherID",N_SalesID}}; 
+
+                        Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParamSales, connection, transaction);
+                        if (Results <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, "Unable to delete"));
+                        }                                                       
+                    }    
+                    //-------------------------------------------^^^^^^^^^^^-----------------------------------------------------
+                    //----------------------------------PURCHASE Delete-------------------------------------------
+                    object PurchaseID = dLayer.ExecuteScalar("select N_PurchaseID from Inv_Purchase where N_PurchaseType=7 and N_CompanyID="+nCompanyID+" and N_PurchaseRefID= "+nTicketID, Params, connection,transaction);
+                    if(PurchaseID!=null)
+                        N_PurchaseID=myFunctions.getIntVAL(PurchaseID.ToString());     
+
+                    if(N_PurchaseID>0)
+                    {
+                        try
+                        {
+                         SortedList DeleteParamPurchase = new SortedList(){
+                                    {"N_CompanyID",nCompanyID},
+                                    {"X_TransType","PURCHASE"},
+                                    {"N_VoucherID",N_PurchaseID},
+                                    {"N_UserID",nUserID},
+                                    {"X_SystemName","WebRequest"},
+                                    {"B_MRNVisible","0"}};
+
+                            Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParamPurchase, connection, transaction);
+                            if (Results <= 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error(User, "Unable to Delete"));
+                            } 
+                        }
+                        catch(Exception ex)
+                        {
+                            transaction.Rollback();
+                            if (ex.Message.Contains("50"))
+                                return Ok(api.Error(User, "Day Closed"));
+                            else if (ex.Message.Contains("51"))
+                                return Ok(api.Error(User, "Year Closed"));
+                            else if (ex.Message.Contains("52"))
+                                return Ok(api.Error(User, "Year Exists"));
+                            else if (ex.Message.Contains("53"))
+                                return Ok(api.Error(User, "Period Closed"));
+                            else if (ex.Message.Contains("54"))
+                                return Ok(api.Error(User, "Wrong Txn Date"));
+                            else if (ex.Message.Contains("55"))
+                                return Ok(api.Error(User, "Transaction Started"));
+                            return Ok(api.Error(User, ex.Message));
+                        }
+                    }  
+                    //-------------------------------------------^^^^^^^^^^^-----------------------------------------------------                                     
 
                     Results = dLayer.DeleteData("Tvl_Ticketing ", "n_TicketID", nTicketID, "N_CompanyID =" + nCompanyID, connection, transaction);
                 
@@ -426,6 +486,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        transaction.Rollback();
                         return Ok(api.Error(User,"Unable to delete "));
                     }
                 }
