@@ -534,18 +534,7 @@ namespace SmartxAPI.GeneralFunctions
                     if (N_SaveDraft == 0)
                     {
                         try
-                        {
-                            // SortedList PostingMRNParam = new SortedList();
-                            // PostingMRNParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
-                            // PostingMRNParam.Add("N_PurchaseID", N_PurchaseID);
-                            // PostingMRNParam.Add("N_UserID", nUserID);
-                            // PostingMRNParam.Add("X_SystemName", "ERP Cloud");
-                            // PostingMRNParam.Add("X_UseMRN", "");
-                            // PostingMRNParam.Add("N_SaveDraft", N_SaveDraft);
-                            // PostingMRNParam.Add("N_MRNID", 0);
-
-                            // dLayer.ExecuteNonQueryPro("[SP_Inv_MRNposting]", PostingMRNParam, connection, transaction);
-
+                        {                    
                             SortedList PostingMRNParam = new SortedList();
                             PostingMRNParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
                             PostingMRNParam.Add("N_PurchaseID", N_PurchaseID);
@@ -570,21 +559,6 @@ namespace SmartxAPI.GeneralFunctions
                         }
                         catch (Exception ex)
                         {
-                            // transaction.Rollback();
-                            // if (ex.Message.Contains("50"))
-                            //     return Ok(_api.Error(User, "Day Closed"));
-                            // else if (ex.Message.Contains("51"))
-                            //     return Ok(_api.Error(User, "Year Closed"));
-                            // else if (ex.Message.Contains("52"))
-                            //     return Ok(_api.Error(User, "Year Exists"));
-                            // else if (ex.Message.Contains("53"))
-                            //     return Ok(_api.Error(User, "Period Closed"));
-                            // else if (ex.Message.Contains("54"))
-                            //     return Ok(_api.Error(User, "Wrong Txn Date"));
-                            // else if (ex.Message.Contains("55"))
-                            //     return Ok(_api.Error(User, "Transaction Started"));
-                            // return Ok(_api.Error(User, ex.Message));
-
                             Result.Add("b_IsCompleted", 0);
                             if (ex.Message.Contains("50"))
                                 Result.Add("x_Msg", "Day Closed");
@@ -1601,9 +1575,153 @@ namespace SmartxAPI.GeneralFunctions
             Result.Add("n_SalesReturnID", N_InvoiceId);
             Result.Add("x_SalesReturnNo", InvoiceNo);
             // return Ok(_api.Success(Result, "Sales Return Saved"));
-            Result.Add("b_IsCompleted", 0);
+            Result.Add("b_IsCompleted", 1);
             Result.Add("x_Msg", "Sales Return Saved");
             return Result;
+        }
+
+        public SortedList PurchaseReturnSaveData(DataSet ds, ClaimsPrincipal User,IDataAccessLayer dLayer,SqlConnection connection, SqlTransaction transaction)
+        {
+
+            DataTable MasterTable;
+            DataTable DetailTable;
+            MasterTable = ds.Tables["master"];
+            DetailTable = ds.Tables["details"];
+            SortedList Params = new SortedList();
+            SortedList Result = new SortedList();
+
+            string ReturnNo = "";
+            int N_CreditNoteID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CreditNoteId"].ToString());
+            int N_UserID = myFunctions.GetUserID(User);
+            double N_TotalReceived = myFunctions.getVAL(MasterTable.Rows[0]["n_TotalReceived"].ToString());
+            MasterTable.Rows[0]["n_TotalReceived"] = N_TotalReceived;
+            double N_TotalReceivedF = myFunctions.getVAL(MasterTable.Rows[0]["n_TotalReceivedF"].ToString());
+            MasterTable.Rows[0]["n_TotalReceivedF"] = N_TotalReceivedF;
+            var values = MasterTable.Rows[0]["X_CreditNoteNo"].ToString();
+
+            if (!myFunctions.CheckActiveYearTransaction(myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString()), Convert.ToDateTime(MasterTable.Rows[0]["D_RetDate"].ToString()), dLayer, connection, transaction))
+            {
+                object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString()) + " and convert(date ,'" + MasterTable.Rows[0]["D_RetDate"].ToString() + "') between D_Start and D_End", Params, connection, transaction);
+                if (DiffFnYearID != null)
+                {
+                    MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                }
+                else
+                {
+                    // transaction.Rollback();
+                    // return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                    Result.Add("b_IsCompleted", 0);
+                    Result.Add("x_Msg", "Transaction date must be in the active Financial Year.");
+                    return Result;
+                }
+            }
+
+            if (values == "@Auto")
+            {
+                Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
+                Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
+                Params.Add("N_FormID", 80);
+                Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
+                ReturnNo = dLayer.GetAutoNumber("Inv_PurchaseReturnMaster", "X_CreditNoteNo", Params, connection, transaction);
+                if (ReturnNo == "") 
+                { 
+                    // transaction.Rollback();
+                    // return Ok(_api.Warning("Unable to generate Quotation Number")); 
+                    Result.Add("b_IsCompleted", 0);
+                    Result.Add("x_Msg", "Unable to generate Purchase Return Number");
+                    return Result;
+                }
+                MasterTable.Rows[0]["X_CreditNoteNo"] = ReturnNo;
+            }
+
+            if (N_CreditNoteID > 0)
+            {
+                SortedList DeleteParams = new SortedList(){
+                        {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
+                        {"X_TransType","PURCHASE RETURN"},
+                        {"N_VoucherID",N_CreditNoteID}};
+                try
+                {
+                    dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
+                }
+                catch (Exception ex)
+                {
+                    // transaction.Rollback();
+                    // return Ok(_api.Error(User, ex));
+                    transaction.Rollback();
+                    throw ex;
+                }
+            }
+
+            N_CreditNoteID = dLayer.SaveData("Inv_PurchaseReturnMaster", "N_CreditNoteID", MasterTable, connection, transaction);
+            if (N_CreditNoteID <= 0)
+            {
+                //transaction.Rollback();
+                Result.Add("b_IsCompleted", 0);
+                Result.Add("x_Msg", "Unable to save Purchase return");
+                return Result;
+            }
+
+
+            if(!DetailTable.Columns.Contains("N_QtyDisplay"))
+            DetailTable= myFunctions.AddNewColumnToDataTable(DetailTable,"N_QtyDisplay",typeof(double),0);
+            for (int j = 0; j < DetailTable.Rows.Count; j++)
+            {
+                DetailTable.Rows[j]["N_CreditNoteID"] = N_CreditNoteID;
+                // DetailTable.Rows[j]["n_RetQty"] = (myFunctions.getVAL(DetailTable.Rows[j]["n_RetQty"].ToString())) * (myFunctions.getVAL(DetailTable.Rows[j]["N_UnitQty"].ToString()));
+                // DetailTable.Rows[j]["N_QtyDisplay"] = DetailTable.Rows[j]["n_RetQty"];
+            }
+            if(DetailTable.Columns.Contains("N_UnitQty"))
+            DetailTable.Columns.Remove("N_UnitQty");
+
+            int N_QuotationDetailId = dLayer.SaveData("Inv_PurchaseReturnDetails", "n_CreditNoteDetailsID", DetailTable, connection, transaction);
+
+            try
+            {
+                SortedList InsParams = new SortedList(){
+                            {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
+                            {"N_CreditNoteID",N_CreditNoteID}};
+                dLayer.ExecuteNonQueryPro("[SP_PurchaseReturn_Ins]", InsParams, connection, transaction);
+
+                SortedList PostParams = new SortedList(){
+                            {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
+                            {"X_InventoryMode","PURCHASE RETURN"},
+                            {"N_InternalID",N_CreditNoteID},
+                            {"N_UserID",N_UserID}};
+                dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostParams, connection, transaction);
+            }
+            catch (Exception ex)
+            {
+                Result.Add("b_IsCompleted", 0);
+                if (ex.Message.Contains("50"))
+                    Result.Add("x_Msg", "Day Closed");
+                else if (ex.Message.Contains("51"))
+                    Result.Add("x_Msg", "Year Closed");
+                else if (ex.Message.Contains("52"))
+                    Result.Add("x_Msg", "Year Exists");
+                else if (ex.Message.Contains("53"))
+                    Result.Add("x_Msg", "Period Closed");
+                else if (ex.Message.Contains("54"))
+                    Result.Add("x_Msg", "Wrong Txn Date");
+                else if (ex.Message.Contains("55"))
+                    Result.Add("x_Msg", "Transaction Started");
+                else
+                {
+                    transaction.Rollback();
+                    throw ex;
+                }
+                return Result;
+            }
+
+            Result.Add("n_PurchaseReturnID", N_CreditNoteID);
+            Result.Add("x_PurchaseReturnNo", ReturnNo);
+            // transaction.Commit();
+            // return Ok(_api.Success(Result, "Purchase Return Saved"));
+
+            Result.Add("b_IsCompleted", 1);
+            Result.Add("x_Msg", "Purchase Return Saved");
+            return Result;
+
         }
     }
     
@@ -1613,5 +1731,6 @@ namespace SmartxAPI.GeneralFunctions
         public SortedList PurchaseSaveData( DataSet ds, ClaimsPrincipal User,IDataAccessLayer dLayer,SqlConnection connection, SqlTransaction transaction);
         public SortedList SalesSaveData(DataSet ds ,string ipAddress, ClaimsPrincipal User,IDataAccessLayer dLayer,SqlConnection connection, SqlTransaction transaction);
         public SortedList SalesReturnSaveData(DataSet ds, ClaimsPrincipal User,IDataAccessLayer dLayer,SqlConnection connection, SqlTransaction transaction);
+        public SortedList PurchaseReturnSaveData(DataSet ds, ClaimsPrincipal User,IDataAccessLayer dLayer,SqlConnection connection, SqlTransaction transaction);
     }
 }
