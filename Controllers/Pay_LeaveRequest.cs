@@ -563,9 +563,9 @@ namespace SmartxAPI.Controllers
                         res = 0;
                     string sql = "";
                     if (nVacationGroupID > 0)
-                        sql = "SELECT    N_VacTypeID,X_VacCode,X_VacType as Code,N_Accrued as Value,N_Accrued+isnull(" + res.ToString() + ",0) as Avlbl,CONVERT(bit,0) As Mark,B_IsReturn,X_Type,0 as DetailsID  from vw_pay_EmpVacation_Alowance  where (X_Type='A' or X_Type='T') AND  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID and N_VacDays<=0";
+                        sql = "SELECT    N_VacTypeID,X_VacCode,X_VacType as Code,N_Accrued as Value,N_Accrued+(Select ISNULL(sum(N_VacDays),0) as N_VacDays from Pay_VacationDetails where (B_Allowance=1) and  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID and vw_pay_EmpVacation_Alowance.N_VacTypeID=Pay_VacationDetails.N_VacTypeID) as Avlbl,CONVERT(bit,0) As Mark,B_IsReturn,X_Type,0 as DetailsID  from vw_pay_EmpVacation_Alowance  where (X_Type='A' or X_Type='T') AND  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID and N_VacDays<=0";
                     else
-                        sql = "SELECT    N_VacTypeID,X_VacCode,X_VacType as Code,N_Accrued as Value,N_Accrued+isnull(" + res.ToString() + ",0) as Avlbl,CONVERT(bit,0) As Mark,B_IsReturn,X_Type,0 as DetailsID  from vw_pay_EmpVacation_Alowance  where (X_Type='A' or X_Type='T') AND  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID and N_VacDays>0";
+                        sql = "SELECT    N_VacTypeID,X_VacCode,X_VacType as Code,N_Accrued as Value,N_Accrued+(Select ISNULL(sum(N_VacDays),0) as N_VacDays from Pay_VacationDetails where (B_Allowance=1) and  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID and vw_pay_EmpVacation_Alowance.N_VacTypeID=Pay_VacationDetails.N_VacTypeID) as Avlbl,CONVERT(bit,0) As Mark,B_IsReturn,X_Type,0 as DetailsID  from vw_pay_EmpVacation_Alowance  where (X_Type='A' or X_Type='T') AND  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID and N_VacDays>0";
 
                     dt = dLayer.ExecuteDataTable(sql, QueryParams, connection);
 
@@ -897,7 +897,7 @@ namespace SmartxAPI.Controllers
 "                         Pay_VacationDetails ON vw_pay_EmpVacation_Alowance.N_CompanyID = Pay_VacationDetails.N_CompanyID AND vw_pay_EmpVacation_Alowance.N_VacTypeID = Pay_VacationDetails.N_VacTypeID "+
 "WHERE        (vw_pay_EmpVacation_Alowance.X_Type = 'A' OR "+
 "                         vw_pay_EmpVacation_Alowance.X_Type = 'T') AND (vw_pay_EmpVacation_Alowance.N_CompanyID = @nCompanyID) AND (vw_pay_EmpVacation_Alowance.N_EmpId = @nEmpID) AND (vw_pay_EmpVacation_Alowance.N_VacDays <= 0) "+
-"						 and vw_pay_EmpVacation_Alowance.N_EmpId=865 and Pay_VacationDetails.N_FormID=210 "+
+"						 and vw_pay_EmpVacation_Alowance.N_EmpId=@nEmpID and Pay_VacationDetails.N_FormID=210 "+
 "GROUP BY vw_pay_EmpVacation_Alowance.N_VacTypeID, vw_pay_EmpVacation_Alowance.X_VacCode, vw_pay_EmpVacation_Alowance.X_VacType, vw_pay_EmpVacation_Alowance.N_Accrued,  "+
 "                         vw_pay_EmpVacation_Alowance.B_IsReturn, vw_pay_EmpVacation_Alowance.X_Type, Pay_VacationDetails.N_VacDays "; 
                 //"SELECT    N_VacTypeID,X_VacCode,X_VacType as Code,N_Accrued as Value,N_Accrued+isnull(" + res.ToString() + ",0) as Avlbl,CONVERT(bit,0) As Mark,B_IsReturn,X_Type,0 as DetailsID  from vw_pay_EmpVacation_Alowance  where (X_Type='A' or X_Type='T') AND  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID and N_VacDays<=0  Group by N_VacTypeID,X_VacCode,X_VacType,N_Accrued,B_IsReturn,X_Type";

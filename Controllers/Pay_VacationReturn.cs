@@ -68,13 +68,14 @@ namespace SmartxAPI.Controllers
                     dt = myFunctions.AddNewColumnToDataTable(dt, "B_ProcessAdvSalary", typeof(Boolean), 0);
                     foreach (DataRow var in dt.Rows)
                     {
-                        DataTable VacDate = dLayer.ExecuteDataTable("Select Min(D_VacDateFrom) As FromDate ,Max(D_VacDateTo) as ToDate, B_ProcessAdvSalary from Pay_VacationDetails Where N_VacationGroupID =" + var["N_VacationGroupID"].ToString() + " group by B_ProcessAdvSalary", connection);
+                        DataTable VacDate = dLayer.ExecuteDataTable("Select Min(D_VacDateFrom) As FromDate ,Max(D_VacDateTo) as ToDate, isnull(B_ProcessAdvSalary,0) as B_ProcessAdvSalary from Pay_VacationDetails Where N_VacationGroupID =" + var["N_VacationGroupID"].ToString() + " group by B_ProcessAdvSalary", connection);
                         if (VacDate.Rows.Count > 0)
                         {
                             var["D_VacDateFrom"] = Convert.ToDateTime(VacDate.Rows[0]["FromDate"].ToString());
                             var["D_VacDateTo"] = Convert.ToDateTime(VacDate.Rows[0]["ToDate"].ToString());
                             var["X_VacDetails"] = var["X_VacType"].ToString() + " [" + Convert.ToDateTime(VacDate.Rows[0]["FromDate"].ToString()).ToString("dd-MMM-yyyy") + " To " + Convert.ToDateTime(VacDate.Rows[0]["ToDate"].ToString()).ToString("dd-MMM-yyyy") + "]  ";
                             var["D_ReturnDate"] = Convert.ToDateTime(VacDate.Rows[0]["ToDate"].ToString());
+                            var["B_ProcessAdvSalary"] = Convert.ToBoolean(VacDate.Rows[0]["B_ProcessAdvSalary"]);
                         }
                     }
                     dt.AcceptChanges();
