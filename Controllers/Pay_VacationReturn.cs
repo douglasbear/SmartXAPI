@@ -65,7 +65,7 @@ namespace SmartxAPI.Controllers
                     dt = myFunctions.AddNewColumnToDataTable(dt, "D_VacDateTo", typeof(DateTime), null);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "D_ReturnDate", typeof(DateTime), null);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "X_VacDetails", typeof(String), "");
-                    dt = myFunctions.AddNewColumnToDataTable(dt, "B_ProcessAdvSalary", typeof(Boolean), false);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "B_ProcessAdvSalary", typeof(Boolean), 0);
                     foreach (DataRow var in dt.Rows)
                     {
                         DataTable VacDate = dLayer.ExecuteDataTable("Select Min(D_VacDateFrom) As FromDate ,Max(D_VacDateTo) as ToDate, B_ProcessAdvSalary from Pay_VacationDetails Where N_VacationGroupID =" + var["N_VacationGroupID"].ToString() + " group by B_ProcessAdvSalary", connection);
