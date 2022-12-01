@@ -605,7 +605,7 @@ namespace SmartxAPI.Controllers
                        if(nPRSID==0 &&nPickListID==0 ){
                     int nTransferId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TransferId"].ToString());
                     int N_LocationIDFrom = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationIDFrom"].ToString());
-                       
+                 
                     // DateTime dTransdate = Convert.ToDateTime(MasterTable.Rows[0]["D_ReceiptDate"].ToString());
                     Params.Add("@nTransferId", nTransferId);
   
@@ -621,7 +621,11 @@ namespace SmartxAPI.Controllers
                     {
                        DetailGetSql="select * from Vw_WhPickListToTransferDetails where   N_CompanyID="+nCompanyID+" and N_PickListID="+nPickListID+"";
                     }
-
+                    int nPicklstID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PickListID"].ToString());
+                    if(nPicklstID>0 && nPickListID<=0)
+                    {
+                         DetailGetSql="select * from Vw_ProductTransferDetails where   N_CompanyID="+nCompanyID+" and X_ReferenceNo=@xReceiptNo";
+                    }
                     Details = dLayer.ExecuteDataTable(DetailGetSql, Params, connection);
                     if(!Details.Columns.Contains("N_ClassID"))
                     {
