@@ -361,7 +361,7 @@ namespace SmartxAPI.Controllers
                             N_InvoiceDueAmt = myFunctions.getVAL(dr["N_Amount"].ToString()) + myFunctions.getVAL(dr["N_BalanceAmount"].ToString()) + myFunctions.getVAL(dr["N_DiscountAmt"].ToString());
                             N_TotalDueAmt += N_InvoiceDueAmt;
 
-                            if (N_InvoiceDueAmt == 0)
+                            if (N_InvoiceDueAmt == 0 && dr["X_Type"].ToString()== "OP" )
                             {
                                 dr.Delete();
                             }

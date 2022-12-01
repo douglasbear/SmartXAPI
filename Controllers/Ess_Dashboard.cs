@@ -419,7 +419,52 @@ namespace SmartxAPI.Controllers
             }
         }
 
+      
 
+     
+
+
+                [HttpGet("EmpBirthDayList")]
+               public ActionResult EmpBirthDay(int nUserID,int nFnyearID)
+                {
+           try
+            {
+                 using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    DataTable MasterTable = new DataTable();
+                    DataTable DataTable = new DataTable();
+                    SortedList OutPut = new SortedList();
+                   int nCompanyId=myFunctions.GetCompanyID(User);
+
+                   DateTime Start = DateTime.Now;
+                   int day = Start.Day;
+                             Params.Add("@p1", nCompanyId);
+                             Params.Add("@p2", nFnyearID);
+                              Params.Add("@p3", nUserID);
+                            Params.Add("@today", day);
+                  
+                
+                   string sqlCommandText = "select x_EmpName,x_position from vw_PayEmployee where MONTH(vw_PayEmployee.D_DOB) = MONTH(CURRENT_TIMESTAMP) and DAY(vw_PayEmployee.D_DOB) =@today and N_CompanyID=@p1 and B_Inactive=0 and N_EmpID!=@p3 and N_FnYearID=@p2";
+                   string sqlCommandCount ="select count(*) as N_Count from vw_PayEmployee where MONTH(vw_PayEmployee.D_DOB) = MONTH(CURRENT_TIMESTAMP) and DAY(vw_PayEmployee.D_DOB) =@today and N_CompanyID=@p1 and B_Inactive=0 and N_EmpID=@p3 and N_FnYearID=@p2";
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                  object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                   
+                        return Ok(api.Success(OutPut));
+
+
+                }
+            }
+
+             catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+          }
 
 
     }
