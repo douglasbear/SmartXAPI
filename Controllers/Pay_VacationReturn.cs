@@ -44,22 +44,19 @@ namespace SmartxAPI.Controllers
             Params.Add("@nBranchID", nBranchID);
             Params.Add("@nEmpID", nEmpID);
             string strBranch = (bAllBranchData == false) ? " and vw_PayVacationMaster_Disp.N_BranchID=@nBranchID " : "";
-            string sqlCommandText = "SELECT    vw_PayVacationEmployee.[Employee Code] AS X_EmpCode, vw_PayVacationEmployee.Name AS X_Emp_Name, " +
-            "vw_PayVacationEmployee.N_VacationGroupID, vw_PayVacationEmployee.X_VacationGroupCode, vw_PayVacationEmployee.X_VacType, " +
-            "vw_PayVacationEmployee.N_EmpID, vw_PayVacationEmployee.N_Status " +
-"FROM         vw_PayVacationEmployee RIGHT OUTER JOIN " +
-                      "vw_PayVacationMaster_Disp ON vw_PayVacationEmployee.N_EmpID = vw_PayVacationMaster_Disp.N_EmpID AND " +
-                      "vw_PayVacationEmployee.X_VacationGroupCode = vw_PayVacationMaster_Disp.X_VacationGroupCode AND " +
-                      "vw_PayVacationEmployee.N_CompanyID = vw_PayVacationMaster_Disp.N_CompanyID AND " +
-                      "vw_PayVacationEmployee.N_VacationGroupID = vw_PayVacationMaster_Disp.N_VacationGroupID " +
-"WHERE     (vw_PayVacationEmployee.N_VacationStatus = 0) and (vw_PayVacationMaster_Disp.B_IsAdjustEntry = 0)  and vw_PayVacationMaster_Disp.N_CompanyID=@nCompanyID And vw_PayVacationMaster_Disp.N_Transtype =1 and vw_PayVacationMaster_Disp.N_EmpID=@nEmpID and isnull(vw_PayVacationMaster_Disp.B_IsSaveDraft,0)=0 " + strBranch;
+            string sqlCommandText = "Select vw_PayVacationEmployee.[Employee Code] AS X_EmpCode, vw_PayVacationEmployee.Name AS X_Emp_Name, vw_PayVacationEmployee.N_VacationGroupID, vw_PayVacationEmployee.X_VacationGroupCode, " +
+                        " vw_PayVacationEmployee.X_VacType, vw_PayVacationEmployee.N_EmpID, vw_PayVacationEmployee.N_Status, vw_PayVacationEmployee.N_VacationID, vw_PayVacationMaster_Disp.N_VacTypeID " +
+                        " from vw_PayVacationEmployee RIGHT OUTER JOIN " +
+                        " vw_PayVacationMaster_Disp ON vw_PayVacationEmployee.N_EmpID = vw_PayVacationMaster_Disp.N_EmpID AND vw_PayVacationEmployee.X_VacationGroupCode = vw_PayVacationMaster_Disp.X_VacationGroupCode AND " +
+                        " vw_PayVacationEmployee.N_CompanyID = vw_PayVacationMaster_Disp.N_CompanyID AND vw_PayVacationEmployee.N_VacationGroupID = vw_PayVacationMaster_Disp.N_VacationGroupID " +
+                        " where (vw_PayVacationEmployee.N_VacationStatus = 0) and (vw_PayVacationMaster_Disp.B_IsAdjustEntry = 0)  and vw_PayVacationMaster_Disp.N_CompanyID=@nCompanyID And vw_PayVacationMaster_Disp.N_Transtype =1 and vw_PayVacationMaster_Disp.N_EmpID=@nEmpID and isnull(vw_PayVacationMaster_Disp.B_IsSaveDraft,0)=0 " + strBranch;
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    sqlCommandText = "select X_EmpCode,X_Emp_Name,N_VacationGroupID,X_VacationGroupCode,X_VacType,N_EmpID,N_Status from (" + sqlCommandText + ") as dt group by X_EmpCode,X_Emp_Name,N_VacationGroupID,X_VacationGroupCode,X_VacType,N_EmpID,N_Status";
+                    sqlCommandText = "select X_EmpCode,X_Emp_Name,N_VacationGroupID,N_VacationID,X_VacationGroupCode,X_VacType,N_EmpID,N_Status,N_VacTypeID from (" + sqlCommandText + ") as dt group by X_EmpCode,X_Emp_Name,N_VacationGroupID,N_VacationID,X_VacationGroupCode,X_VacType,N_EmpID,N_Status,N_VacTypeID";
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "D_VacDateFrom", typeof(DateTime), null);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "D_VacDateTo", typeof(DateTime), null);
@@ -68,7 +65,7 @@ namespace SmartxAPI.Controllers
                     dt = myFunctions.AddNewColumnToDataTable(dt, "B_ProcessAdvSalary", typeof(Boolean), 0);
                     foreach (DataRow var in dt.Rows)
                     {
-                        DataTable VacDate = dLayer.ExecuteDataTable("Select Min(D_VacDateFrom) As FromDate ,Max(D_VacDateTo) as ToDate, isnull(B_ProcessAdvSalary,0) as B_ProcessAdvSalary from Pay_VacationDetails Where N_VacationGroupID =" + var["N_VacationGroupID"].ToString() + " group by B_ProcessAdvSalary", connection);
+                        DataTable VacDate = dLayer.ExecuteDataTable("Select Min(D_VacDateFrom) As FromDate ,Max(D_VacDateTo) as ToDate, isnull(B_ProcessAdvSalary,0) as B_ProcessAdvSalary from Pay_VacationDetails Where N_VacationID =" + var["N_VacationID"].ToString() + " group by B_ProcessAdvSalary", connection);
                         if (VacDate.Rows.Count > 0)
                         {
                             var["D_VacDateFrom"] = Convert.ToDateTime(VacDate.Rows[0]["FromDate"].ToString());
