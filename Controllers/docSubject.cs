@@ -28,7 +28,7 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 1420;
+            FormID = 1000;
         }
         private readonly string connectionString;
 
