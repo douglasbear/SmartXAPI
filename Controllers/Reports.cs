@@ -462,6 +462,8 @@ namespace SmartxAPI.Controllers
                         if (Timezone != null && Timezone.ToString() != "")
                         {
                             currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
+                            currentTime = currentTime.AddDays(-1);
+                            currentTime = currentTime.AddHours(-1);
                             x_comments = currentTime.ToString();
                         }
                         if (nFormID == 1406)

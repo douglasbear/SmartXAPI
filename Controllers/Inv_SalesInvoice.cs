@@ -150,10 +150,10 @@ namespace SmartxAPI.Controllers
                                 xSortBy = "Cast([Invoice Date] as DateTime ) " + xSortBy.Split(" ")[1];
                                 break;
                             case "x_BillAmt":
-                                xSortBy = "Cast(REPLACE(x_BillAmt,',','') as Numeric(10," + N_decimalPlace + ")) " + xSortBy.Split(" ")[1];
+                                xSortBy = "Cast(REPLACE(x_BillAmt,',','') as Numeric(16," + N_decimalPlace + ")) " + xSortBy.Split(" ")[1];
                                 break;
                             case "n_BalanceAmt":
-                                xSortBy = "Cast(REPLACE(n_BalanceAmt,',','') as Numeric(10," + N_decimalPlace + ")) " + xSortBy.Split(" ")[1];
+                                xSortBy = "Cast(REPLACE(n_BalanceAmt,',','') as Numeric(16," + N_decimalPlace + ")) " + xSortBy.Split(" ")[1];
                                 break;
                             default: break;
                         }
@@ -199,7 +199,7 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10," + N_decimalPlace + ")) ) as TotalAmount from "+viewName+" where  N_Hold=0 " + Pattern + criteria + formIDCndn + cndn + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(16," + N_decimalPlace + ")) ) as TotalAmount from "+viewName+" where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + Pattern + criteria + cndn + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -1790,6 +1790,7 @@ namespace SmartxAPI.Controllers
                       DataTable Details = new DataTable();
                       SortedList ParamList = new SortedList();
                       int nCompanyID=myFunctions.GetCompanyID(User);
+                      int nUserID=myFunctions.GetUserID(User);
                       ParamList.Add("@nCompanyID", nCompanyID);
                       ParamList.Add("@nFnYearID", nFnYearID);
                       string Sql="select * from Inv_Sales where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_IsSaveDraft=1 ";
@@ -1801,6 +1802,28 @@ namespace SmartxAPI.Controllers
                       int N_FormID=64;
                       object nQuotationID;
                       int count=0;
+                             string ipAddress = "";
+                            if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                                ipAddress = Request.Headers["X-Forwarded-For"];
+                            else
+                                ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                            SortedList LogParams = new SortedList();
+                            LogParams.Add("N_CompanyID", nCompanyID);
+                            LogParams.Add("N_FnYearID", nFnYearID);
+                            LogParams.Add("N_TransID", 0);
+                            LogParams.Add("N_FormID", this.N_FormID);
+                            LogParams.Add("N_UserId", nUserID);
+                            //LogParams.Add("N_UserID", nUserID);
+                            LogParams.Add("X_Action", "");
+                            LogParams.Add("X_SystemName", "ERP Cloud");
+                            LogParams.Add("X_IP", ipAddress);
+                            LogParams.Add("X_TransCode", "");
+                            LogParams.Add("X_Remark", " ");
+                            LogParams.Add("BulkDraft", 1);
+                            
+                            dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection,transaction);
+
+
                       if(Details.Rows.Count>0)
                       {
                           count=Details.Rows.Count;
