@@ -328,7 +328,7 @@ namespace SmartxAPI.Controllers
                         }
                         object nUserLimit = dLayer.ExecuteScalar("SELECT N_UserLimit FROM ClientMaster where N_ClientID=@nClientID", userParams, olivoCon, olivoTxn);
                         object nUserCount = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Users where N_ClientID=@nClientID and N_UserType=1", userParams, olivoCon, olivoTxn);
-
+                        
                         if (nGlobalUserID == 0)
                             if (myFunctions.getIntVAL(nUserLimit.ToString()) <= myFunctions.getIntVAL(nUserCount.ToString()))
                             {
