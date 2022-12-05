@@ -106,5 +106,45 @@ namespace SmartxAPI.Controllers
         }
 
 
+
+               [HttpPost("save")]
+      public ActionResult UpdateStatus([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                { 
+                     connection.Open();
+                    DataTable mastertable = new DataTable();
+                    mastertable = ds.Tables["master"];
+                    SortedList OutPut = new SortedList();
+                   SqlTransaction transaction = connection.BeginTransaction();
+         
+                            SortedList Params = new SortedList();
+                            Params.Add("N_CompanyID", myFunctions.getIntVAL(mastertable.Rows[0]["N_CompanyID"].ToString()));
+                            Params.Add("N_FnYearID", myFunctions.getIntVAL(mastertable.Rows[0]["N_FnYearID"].ToString()));
+                            Params.Add("N_BranchID", myFunctions.getIntVAL(mastertable.Rows[0]["N_BranchID"].ToString()));
+                            Params.Add("N_LocationID", myFunctions.getIntVAL(mastertable.Rows[0]["N_LocationID"].ToString()));
+                            try
+                            {
+                             dLayer.ExecuteNonQueryPro("SP_SetupData_cloud", Params, connection, transaction);
+                           transaction.Commit();
+                    return Ok(_api.Success("Product Copied"));
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }            
+                                        
+                  }
+            }
+              catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+        }
+
+
     }
 }
