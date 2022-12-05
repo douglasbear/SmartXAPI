@@ -1319,14 +1319,14 @@ namespace SmartxAPI.Controllers
 
 
                     }
-                    object nEmpLimit =dLayer.ExecuteScalar("select isnull(N_Value,0) from GenSettings where N_ClientID="+myFunctions.GetClientID(User)+" and X_Description='EMPLOYEE LIMIT' ", olivoCon, olivoTxn);
-                          if(nEmpLimit==null){nEmpLimit="0";}
-                        object nEmpCount = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Users where N_ClientID="+myFunctions.GetClientID(User)+" and N_UserType=1", Params, olivoCon, olivoTxn);
-                         if(nEmpID==0)
-                            if (myFunctions.getIntVAL(nEmpLimit.ToString()) <= myFunctions.getIntVAL(nEmpCount.ToString()))
-                            {
-                                return Ok(_api.Warning("Employee limit exeeded !!"));
-                            }
+                    // object nEmpLimit =dLayer.ExecuteScalar("select isnull(N_Value,0) from GenSettings where N_ClientID="+myFunctions.GetClientID(User)+" and X_Description='EMPLOYEE LIMIT' ", olivoCon, olivoTxn);
+                    //       if(nEmpLimit==null){nEmpLimit="0";}
+                    //     object nEmpCount = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Users where N_ClientID="+myFunctions.GetClientID(User)+" and N_UserType=1", Params, olivoCon, olivoTxn);
+                    //      if(nEmpID==0)
+                    //         if (myFunctions.getIntVAL(nEmpLimit.ToString()) <= myFunctions.getIntVAL(nEmpCount.ToString()))
+                    //         {
+                    //             return Ok(_api.Warning("Employee limit exeeded !!"));
+                    //         }
                     
                     // Auto Gen
                     if (xEmpCode == "@Auto")
