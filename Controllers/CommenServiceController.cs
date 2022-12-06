@@ -229,12 +229,7 @@ namespace SmartxAPI.Controllers
                             {
                                 cnn.Open();
                                 if(companyid>0)
-                                { 
-                                   dLayer.ExecuteNonQuery("delete from Sec_UserApps where N_CompanyID="+companyid+" and N_AppID="+appID+" and N_UserID="+myFunctions.GetUserID(User)+"", paramList, cnn);
                                   dLayer.ExecuteNonQuery("insert into Sec_UserApps select "+companyid+",max(N_APPMappingID)+1,"+appID+","+myFunctions.GetUserID(User)+","+GlobalUserID+" from Sec_UserApps", paramList, cnn);
-
-                                }
-                                  
                                 string companySql = "";
                                 if (companyid > 0)
                                     companySql = " and Acc_Company.N_CompanyID=" + companyid + " ";
