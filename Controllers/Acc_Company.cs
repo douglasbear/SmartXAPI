@@ -152,6 +152,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList Output = new SortedList();
+            bool setReadOnly=false;
 
             string sqlCommandText = "SELECT Acc_Company.*,Acc_TaxType.X_TypeName, Gen_TimeZone.X_ZoneName + ' ' + 'GMT' + Gen_TimeZone.X_UtcOffSet AS X_ZoneName, Acc_BankMaster.X_BankName FROM Acc_Company LEFT OUTER JOIN Acc_BankMaster ON Acc_Company.N_CompanyID = Acc_BankMaster.N_CompanyID AND Acc_Company.N_BankID = Acc_BankMaster.N_BankID LEFT OUTER JOIN Gen_TimeZone ON Acc_Company.N_TimeZoneID = Gen_TimeZone.N_TimeZoneID LEFT OUTER JOIN Acc_FnYear ON Acc_Company.N_CompanyID = Acc_FnYear.N_CompanyID LEFT OUTER JOIN Acc_TaxType ON Acc_Company.N_CompanyID = Acc_TaxType.N_CompanyID AND Acc_FnYear.N_TaxType = Acc_TaxType.N_TypeID where Acc_Company.B_Inactive =@p1 and Acc_Company.N_CompanyID=@p2 and Acc_FnYear.N_FnYearID=(select Top(1) N_FnYearID from Acc_FnYear where N_CompanyID=@p2 order by D_Start Desc) and Acc_Company.N_ClientID=@nClientID";
             Params.Add("@p1", 0);
@@ -176,42 +177,47 @@ namespace SmartxAPI.Controllers
                     int N_FnYearID = myFunctions.getIntVAL(FnYearInfo.Rows[0]["N_FnYearID"].ToString());
 
                     DataTable TaxInfo = dLayer.ExecuteDataTable("SELECT  Top(1) Gen_Settings.N_Value AS n_PkeyID, Acc_TaxCategory.X_CategoryName AS x_DisplayName FROM Acc_TaxCategory INNER JOIN Acc_FnYear ON Acc_TaxCategory.N_TaxTypeID = Acc_FnYear.N_TaxType AND Acc_TaxCategory.N_CompanyID = Acc_FnYear.N_CompanyID INNER JOIN Gen_Settings ON Acc_TaxCategory.X_PkeyCode = Gen_Settings.N_Value AND Acc_TaxCategory.N_CompanyID = Gen_Settings.N_CompanyID WHERE (Gen_Settings.N_CompanyID = @p2) AND (Gen_Settings.X_Group = 'Inventory') AND (Gen_Settings.X_Description = 'DefaultTaxCategory') and Acc_FnYear.N_FnYearID=" + N_FnYearID, Params, connection);
-                  
-
+                       Params.Add("@nCompanyID", nCompanyID);
+                     object CompanyCount = dLayer.ExecuteScalar("select count(*) from Acc_VoucherDetails where N_CompanyID= " + nCompanyID, connection);
+                      
+                       if(myFunctions.getIntVAL(CompanyCount.ToString())>0){
+                          setReadOnly=true;
+                       } 
                     DataTable Attachments =new DataTable();
                     
                     SortedList ProParam = new SortedList();
                     ProParam.Add("@CompanyID", nCompanyID);
                    // DataTable Details = dLayer.ExecuteSettingsPro("SP_GenSettings_Disp", QList, myFunctions.GetCompanyID(User), nFnYearID, connection);
-                    Attachments = dLayer.ExecuteDataTablePro("SP_CompanyAttachments",ProParam, connection);
-                    //Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(AdminInfo.Rows[0]["N_CompanyID"].ToString()), myFunctions.getIntVAL(AdminInfo.Rows[0]["N_CompanyID"].ToString()), 113, myFunctions.getIntVAL(AdminInfo.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                    //Attachments = dLayer.ExecuteDataTablePro("SP_CompanyAttachments",ProParam, connection);
+                    Attachments = myAttachments.ViewAttachment(dLayer,nCompanyID,nCompanyID, 113,N_FnYearID, User, connection);
                     Attachments = api.Format(Attachments, "attachments");
-                    Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "FileData", typeof(string), null);
-                    Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "TempFileName", typeof(string), null);
+                    // Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "FileData", typeof(string), null);
+                    // Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "TempFileName", typeof(string), null);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "b_AllowEdit", typeof(bool), setReadOnly);
 
-            if (Attachments.Rows.Count > 0)
-            {
-                Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "n_CompanyID", typeof(int), myFunctions.GetCompanyID(User));
-                Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "n_FnYearID", typeof(int), N_FnYearID);
+            // if (Attachments.Rows.Count > 0)
+            // {
+            //     Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "n_CompanyID", typeof(int), myFunctions.GetCompanyID(User));
+            //     Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "n_FnYearID", typeof(int), N_FnYearID);
                
-            }
+            // }
 
-            foreach (DataRow var in Attachments.Rows)
-            {
-                if (var["x_refName"] != null)
-                {
-                    var path = var["x_refName"].ToString();
-                    if (System.IO.File.Exists(path))
-                    {
-                        Byte[] bytes = System.IO.File.ReadAllBytes(path);
-                        var random = RandomString();
-                        System.IO.File.Copy(path, this.TempFilesPath + random + "." + var["x_Extension"].ToString());
-                        var["TempFileName"] = random + "." + var["x_Extension"].ToString();
-                        var["FileData"] = "data:" + api.GetContentType(path) + ";base64," + Convert.ToBase64String(bytes);
-                    }
-                }
+            // foreach (DataRow var in Attachments.Rows)
+            // {
+            //     if (var["x_refName"] != null)
+            //     {
+            //         var path = var["x_refName"].ToString();
+            //         if (System.IO.File.Exists(path))
+            //         {
+            //             Byte[] bytes = System.IO.File.ReadAllBytes(path);
+            //             var random = RandomString();
+            //             System.IO.File.Copy(path, this.TempFilesPath + random + "." + var["x_Extension"].ToString());
+            //             var["TempFileName"] = random + "." + var["x_Extension"].ToString();
+            //             var["FileData"] = "data:" + api.GetContentType(path) + ";base64," + Convert.ToBase64String(bytes);
+            //         }
+            //     }
 
-            }
+            // }
             Attachments.AcceptChanges();
                  
                     Output.Add("CompanyInfo", dt);
@@ -290,6 +296,7 @@ namespace SmartxAPI.Controllers
                 int n_GBUserID=0;
                 int userID=0;
                 int n_ClientID=0;
+                int appID=0;
 
                 string x_DisplayName = myFunctions.ContainColumn("x_DisplayName", GeneralTable) ? GeneralTable.Rows[0]["x_DisplayName"].ToString() : "";
                 int n_PkeyID = 0;
@@ -373,6 +380,7 @@ namespace SmartxAPI.Controllers
                             DataTable dtClientmaster = dLayer.ExecuteDataTable(sqlClientmaster, Param, cnn);
                             xUsrName = dtClientmaster.Rows[0]["X_ClientName"].ToString();
                             xPhoneNo = dtClientmaster.Rows[0]["X_ContactNumber"].ToString();
+                            //appID = myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_AppID"].ToString());
                             n_userType = myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_DefaultAppID"].ToString());
                            n_ClientID =myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_ClientID"].ToString());
                         }
@@ -393,8 +401,11 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQueryPro("SP_NewAdminCreation", proParams1, connection, transaction);
                                 string usersql = "SELECT N_UserID FROM Sec_User where X_UserID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
                             userID = myFunctions.getIntVAL(dLayer.ExecuteScalar(usersql, connection, transaction).ToString());
-
-                            
+                         using (SqlConnection cnn4 = new SqlConnection(masterDBConnectionString))
+                        {
+                                    cnn4.Open();
+                            appID = myFunctions.getIntVAL(dLayer.ExecuteScalar( "SELECT N_AppID FROM ClientApps where N_ClientID='" +n_ClientID + "'", cnn4).ToString());
+                        }
 
                             SortedList proParams2 = new SortedList(){
                                         {"N_CompanyID",N_CompanyId},
@@ -402,7 +413,7 @@ namespace SmartxAPI.Controllers
                                         {"D_Start",GeneralTable.Rows[0]["d_FromDate"].ToString()},
                                         {"D_End",GeneralTable.Rows[0]["d_ToDate"].ToString()}};
                             N_FnYearId = dLayer.ExecuteScalarPro("SP_FinancialYear_Create", proParams2, connection, transaction);
-
+                        //    dLayer.ExecuteNonQuery("insert into Sec_UserApps select "+N_CompanyId+",max(N_APPMappingID)+1,"+appID+","+userID+","+n_GBUserID+" from Sec_UserApps",connection, transaction);
                             SortedList proParams3 = new SortedList(){
                                         {"N_CompanyID",N_CompanyId},
                                         {"N_FnYearID",N_FnYearId}};

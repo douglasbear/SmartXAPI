@@ -2204,7 +2204,7 @@ namespace SmartxAPI.GeneralFunctions
                 }
             }
 
-            Approvals.Rows[0]["btnSaveText"] = "SGRYE";
+            Approvals.Rows[0]["btnSaveText"] = X_Action;
             Approvals.Rows[0]["nextApprovalLevel"] = N_ApprovalLevelID;
             Approvals.Rows[0]["saveTag"] = N_ProcStatusID;
             Approvals.Rows[0]["approvalID"] = N_ApprovalID;

@@ -19,7 +19,7 @@ using System.IO.Compression;
 using System.Net.Cache;
 using System.Drawing;
 using System.Drawing.Imaging;
-using ZXing;
+using System.Net;
 namespace SmartxAPI.Controllers
 {
     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -240,7 +240,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-        private bool LoadReportDetails(int nFnYearID, int nFormID, int nPkeyID, int nPreview, string xRptname,int nLangId)
+        private bool LoadReportDetails(int nFnYearID, int nFormID, int nPkeyID, int nPreview, string xRptname, int nLangId)
         {
             SortedList QueryParams = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -269,6 +269,7 @@ namespace SmartxAPI.Controllers
                     string TaxType = ObjTaxType.ToString();
 
                     object ObjPath = dLayer.ExecuteScalar("SELECT X_RptFolder FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+
                     if (ObjPath != null)
                     {
                         RPTLocation = reportLocation.Remove(reportLocation.Length - 2, 2) + nLangId + "/";
@@ -377,7 +378,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("getscreenprint")]
-        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, int nPreview, string xrptname, string docNumber, string partyName, bool printSave, bool sendWtsapMessage,int n_LanguageID)
+        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, int nPreview, string xrptname, string docNumber, string partyName, bool printSave, bool sendWtsapMessage, int n_LanguageID)
         {
             SortedList QueryParams = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -408,7 +409,7 @@ namespace SmartxAPI.Controllers
                         }
 
                     }
-                    if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, nPreview, xrptname,n_LanguageID))
+                    if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, nPreview, xrptname, n_LanguageID))
                     {
 
                         var client = new HttpClient(handler);
@@ -450,11 +451,19 @@ namespace SmartxAPI.Controllers
                         DateTime currentTime;
                         string x_comments = "";
                         //Local Time Checking
+                        var clientdata = new WebClient();
+                        string content1 = clientdata.DownloadString("http://worldtimeapi.org/api/timezone/Asia/Kolkata");
+                        string datentime=content1.Substring(0, 12);
+
+
+
                         object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyId, connection, transaction);
                         object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection, transaction);
                         if (Timezone != null && Timezone.ToString() != "")
                         {
                             currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
+                            currentTime = currentTime.AddDays(-1);
+                            currentTime = currentTime.AddHours(-1);
                             x_comments = currentTime.ToString();
                         }
                         if (nFormID == 1406)
@@ -522,25 +531,25 @@ namespace SmartxAPI.Controllers
                         if (nFormID == 1426)
                         {
                             SqlCommand cmd = new SqlCommand("select i_signature from Inv_Deliverynote where N_DeliveryNoteID=" + nPkeyID, connection, transaction);
-                            object output=cmd.ExecuteScalar();
-                            if((cmd.ExecuteScalar().ToString())!="")
+                            object output = cmd.ExecuteScalar();
+                            if ((cmd.ExecuteScalar().ToString()) != "")
                             {
-                            byte[] content = (byte[])cmd.ExecuteScalar();
-                            MemoryStream stream = new MemoryStream(content);
-                            Image Sign = Image.FromStream(stream);
+                                byte[] content = (byte[])cmd.ExecuteScalar();
+                                MemoryStream stream = new MemoryStream(content);
+                                Image Sign = Image.FromStream(stream);
 
-                            using (var b = new Bitmap(Sign.Width, Sign.Height))
-                            {
-                                b.SetResolution(Sign.HorizontalResolution, Sign.VerticalResolution);
-
-                                using (var g = Graphics.FromImage(b))
+                                using (var b = new Bitmap(Sign.Width, Sign.Height))
                                 {
-                                    g.Clear(Color.White);
-                                    g.DrawImageUnscaled(Sign, 0, 0);
+                                    b.SetResolution(Sign.HorizontalResolution, Sign.VerticalResolution);
+
+                                    using (var g = Graphics.FromImage(b))
+                                    {
+                                        g.Clear(Color.White);
+                                        g.DrawImageUnscaled(Sign, 0, 0);
+                                    }
+                                    //b = resizeImage(Sign, new Size(400, 300));
+                                    b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + ".png");
                                 }
-                                //b = resizeImage(Sign, new Size(400, 300));
-                                b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + ".png");
-                            }
                             }
                         }
 
@@ -569,6 +578,7 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                         }
+
 
                         string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
                         var path = client.GetAsync(URL);
@@ -623,6 +633,7 @@ namespace SmartxAPI.Controllers
                             }
 
                         }
+
 
                         // ReportName = FormName + "_" + docNumber + "_" + partyName.Trim()+".pdf";
                         ReportName = FormName + "_" + docNumber + "_" + partyName.Trim() + "_" + random + ".pdf";

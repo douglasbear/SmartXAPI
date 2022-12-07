@@ -31,7 +31,6 @@ namespace SmartxAPI.Controllers
             FormID = 208;
         }
 
-
         [HttpGet("partyList")]
         public ActionResult getPartyList(int nFlag, int nFnYearID, int nBranchID)
         {
@@ -44,17 +43,19 @@ namespace SmartxAPI.Controllers
                     DataTable settings = new DataTable();
                     DataTable details = new DataTable();
                     int nCompanyID = myFunctions.GetCompanyID(User);
-                    string N_TransID="";
+                    string N_TransID = "";
+                    object nBalanceAmount = "";
+                    object netAmount = "";
 
                     SortedList ProParams = new SortedList();
                     ProParams.Add("N_CompanyID", nCompanyID);
                     ProParams.Add("N_Flag", nFlag);
                     ProParams.Add("N_FnYearID", nFnYearID);
-                    ProParams.Add("N_BranchID",nBranchID);
+                    ProParams.Add("N_BranchID", nBranchID);
 
                     SqlTransaction transaction = connection.BeginTransaction();
-                    partylist = dLayer.ExecuteDataTablePro("Sp_Inv_OpeningBalance_CloudView", ProParams, connection,transaction);
-                    details = dLayer.ExecuteDataTablePro("Sp_Inv_OpeningBalance_CloudDispAll", ProParams, connection,transaction);
+                    partylist = dLayer.ExecuteDataTablePro("Sp_Inv_OpeningBalance_CloudView", ProParams, connection, transaction);
+                    details = dLayer.ExecuteDataTablePro("Sp_Inv_OpeningBalance_CloudDispAll", ProParams, connection, transaction);
 
                     settings.Clear();
                     settings.Columns.Add("N_CompanyID");
@@ -64,63 +65,74 @@ namespace SmartxAPI.Controllers
 
                     DataRow row = settings.NewRow();
                     row["N_CompanyID"] = myFunctions.GetCompanyID(User);
-                    row["B_FinancialEntryOpen"] = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Financial", "FinancialEntryOpen", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection,transaction)));
-                    row["B_CustomerPO"] = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "EnableCustomerPO", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection,transaction)));
-                    row["B_VendorPO"] = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("65", "EnableVendorPO", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection,transaction)));
-                     
-                      partylist = _api.Format(partylist);
-                       details = _api.Format(details);
+                    row["B_FinancialEntryOpen"] = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Financial", "FinancialEntryOpen", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection, transaction)));
+                    row["B_CustomerPO"] = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "EnableCustomerPO", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection, transaction)));
+                    row["B_VendorPO"] = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("65", "EnableVendorPO", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection, transaction)));
+
+                    partylist = _api.Format(partylist);
+                    details = _api.Format(details);
 
 
-                     details = myFunctions.AddNewColumnToDataTable(details, "customerFlag", typeof(bool), false);
+                    details = myFunctions.AddNewColumnToDataTable(details, "customerFlag", typeof(bool), false);
 
-                     if(nFlag==0){
-                              foreach (DataRow dtRow in details.Rows)
+                    if (nFlag == 0)
+                    {
+                        foreach (DataRow dtRow in details.Rows)
                         {
-                             bool custFlag=false;
+                            bool custFlag = false;
+
+                            N_TransID = dtRow["N_TransID"].ToString();
+                            if (N_TransID != "" && N_TransID != null)
+                            {
+                                nBalanceAmount = dLayer.ExecuteScalar("select N_BalanceAmount from vw_invReceivables where N_CompanyID=" + nCompanyID + " and N_SalesId = " + N_TransID, connection, transaction);
+                                if (nBalanceAmount == null) { nBalanceAmount = 0; }
+
+                                netAmount = dLayer.ExecuteScalar("select NetAmount from vw_invReceivables where N_CompanyID=" + nCompanyID + " and N_SalesId = " + N_TransID, connection, transaction);
+                                if (netAmount == null) { netAmount = 0; }
+                            }
+
+                            if (myFunctions.getVAL(nBalanceAmount.ToString()) < myFunctions.getVAL(netAmount.ToString()))
+                            {
+                                dtRow["customerFlag"] = true;
+                            }
+                        }
+                    }
+
+                    else
+                    {
+                        foreach (DataRow dtRow in details.Rows)
+                        {
+                            bool custFlag = false;
+
                             N_TransID = dtRow["N_TransID"].ToString();
 
+                            if (N_TransID != "")
+                            {
+                                nBalanceAmount = dLayer.ExecuteScalar("select N_BalanceAmount from vw_InvPayables where N_CompanyID=" + nCompanyID + " and N_PurchaseID = " + N_TransID, connection, transaction);
+                                netAmount = dLayer.ExecuteScalar("select NetAmount from vw_InvPayables where N_CompanyID=" + nCompanyID + " and N_PurchaseID = " + N_TransID, connection, transaction);
 
-                     object nBalanceAmount = dLayer.ExecuteScalar("select N_BalanceAmount from vw_invReceivables where N_CompanyID="+nCompanyID +" and N_SalesId = " + N_TransID, connection, transaction);
-                      object netAmount = dLayer.ExecuteScalar("select NetAmount from vw_invReceivables where N_CompanyID="+nCompanyID +" and N_SalesId = " + N_TransID, connection, transaction);
+                            }
 
-                       if( myFunctions.getVAL(nBalanceAmount.ToString()) < myFunctions.getVAL(netAmount.ToString()))
-                   { 
-                       dtRow["customerFlag"]=true;
-                   }
+                            if (myFunctions.getVAL(nBalanceAmount.ToString()) < myFunctions.getVAL(netAmount.ToString()))
+                            {
+                                dtRow["customerFlag"] = true;
+                            }
                         }
-                     }
-
-                     else{
-                          foreach (DataRow dtRow in details.Rows)
-                        {
-                             bool custFlag=false;
-                            N_TransID = dtRow["N_TransID"].ToString();
+                    }
 
 
-                     object nBalanceAmount = dLayer.ExecuteScalar("select N_BalanceAmount from vw_InvPayables where N_CompanyID="+nCompanyID +" and N_PurchaseID = " + N_TransID, connection, transaction);
-                      object netAmount = dLayer.ExecuteScalar("select NetAmount from vw_InvPayables where N_CompanyID="+nCompanyID +" and N_PurchaseID = " + N_TransID, connection, transaction);
-
-                       if( myFunctions.getVAL(nBalanceAmount.ToString()) < myFunctions.getVAL(netAmount.ToString()))
-                   { 
-                       dtRow["customerFlag"]=true;
-                   }
-                        }
-                     }
-
-                 
 
                     if (partylist.Rows.Count == 0)
-                    { 
+                    {
                         transaction.Rollback();
                         return Ok(_api.Notice("No Results Found"));
                     }
                     else
                     {
                         SortedList Output = new SortedList();
-                        Output.Add("partylist",partylist);
+                        Output.Add("partylist", partylist);
                         // Output.Add("settings",settings);
-                        Output.Add("details",details);
+                        Output.Add("details", details);
                         transaction.Commit();
                         return Ok(_api.Success(Output));
                     }
@@ -128,7 +140,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -147,10 +159,10 @@ namespace SmartxAPI.Controllers
                 int nFnYearID = myFunctions.getIntVAL(PartyListTable.Rows[0]["n_FnYearID"].ToString());
                 int nUserID = myFunctions.GetUserID(User);
                 int nBranchID = myFunctions.getIntVAL(PartyListTable.Rows[0]["n_BranchID"].ToString());
-                int nFlag=myFunctions.getIntVAL(PartyListTable.Rows[0]["nFlag"].ToString());
-                 string xTransType = PartyListTable.Rows[0]["x_TransType"].ToString();
-                  object Count =0;
-                
+                int nFlag = myFunctions.getIntVAL(PartyListTable.Rows[0]["nFlag"].ToString());
+                string xTransType = PartyListTable.Rows[0]["x_TransType"].ToString();
+                object Count = 0;
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -158,35 +170,36 @@ namespace SmartxAPI.Controllers
 
 
 
-                     
 
-                   if(nFlag==0){
-                     
+
+                    if (nFlag == 0)
+                    {
+
                         int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesID", SaveCustTable, connection, transaction);
 
-                         if (nSalesID <= 0)
+                        if (nSalesID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to save"));
+                        }
+
+
+                    }
+                    else
                     {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to save"));
+                        int npurchaseID = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", SaveVendorTable, connection, transaction);
+
+
+                        if (npurchaseID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to save"));
+                        }
+
                     }
 
 
-                   }
-                   else
-                   {
-                     int npurchaseID = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", SaveVendorTable, connection, transaction);
 
-                 
-                     if (npurchaseID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to save"));
-                    }
-
-                   }
-                  
-
-                   
                     for (int j = 0; j < PartyListTable.Rows.Count; j++)
                     {
                         int nPartyID = myFunctions.getIntVAL(PartyListTable.Rows[j]["n_PartyID"].ToString());
