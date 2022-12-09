@@ -75,7 +75,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from Vw_InvTerminal_Disp where N_CompanyID=@p1";
+            string sqlCommandText = "select N_TerminalID,X_TerminalName,X_TerminalCode,N_CompanyID from Vw_InvTerminal_Disp where N_CompanyID=@p1 Group by  N_TerminalID,X_TerminalName,X_TerminalCode,N_CompanyID";
             Params.Add("@p1", nCompanyId);
 
             try
