@@ -325,7 +325,7 @@ namespace SmartxAPI.Controllers
                         
                          DataTable CustomerMaster = dLayer.ExecuteDataTable(
                                 " select N_CompanyID,N_FnYearId,0 as N_CustomerId,'@Auto' as X_CustomerCode,X_CustomerName as X_Customer,"
-                                + "X_PhoneNo1 as X_Phone,X_FaxNo as X_Fax,X_WebSite,D_EntryDate,X_Address,X_Email, N_CurrencyID"
+                                + "X_PhoneNo1 as X_Phone,X_FaxNo as X_Fax,X_WebSite,D_EntryDate,X_Address,X_Email, N_CurrencyID,X_CustomerName_Ar"
                                 + " from Inv_Customer where  N_CustomerID =@nCustomerID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID ", customerParams, connection, transaction);
 
 

@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("list")]
-        public ActionResult GetEndOfServiceList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetEndOfServiceList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy,bool AllBranchesData,int nBranchID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -60,12 +60,26 @@ namespace SmartxAPI.Controllers
                         }
             
                 xSortBy = " order by " + xSortBy;
+ 
         }
-            if (Count == 0)
+
+        if(AllBranchesData==true){
+              if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") X_ServiceEndCode,X_EmpCode,X_EmpName,D_EndDate,X_EndType from vw_EndOfService Where N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
             else
                 sqlCommandText = "select top(" + nSizeperpage + ") X_ServiceEndCode,X_EmpCode,X_EmpName,D_EndDate,X_EndType from vw_EndOfService Where N_CompanyID=@nCompanyID " + Searchkey + " and N_ServiceEndID not in (select top(" + Count + ") N_ServiceEndID from vw_EndOfService where N_CompanyID=@nCompanyID" + xSearchkey + xSortBy + " ) " + xSortBy;
+        }
+
+        else{
+            if (Count == 0)
+            sqlCommandText = "select top(" + nSizeperpage + ") X_ServiceEndCode,X_EmpCode,X_EmpName,D_EndDate,X_EndType from vw_EndOfService Where N_CompanyID=@nCompanyID and N_branchID=@nBranchID" + Searchkey + " " + xSortBy;
+            else 
+            sqlCommandText = "select top(" + nSizeperpage + ") X_ServiceEndCode,X_EmpCode,X_EmpName,D_EndDate,X_EndType from vw_EndOfService Where N_CompanyID=@nCompanyID and N_branchID=@nBranchID" + Searchkey + " and N_ServiceEndID not in (select top(" + Count + ") N_ServiceEndID from vw_EndOfService where N_CompanyID=@nCompanyID and N_branchID=@nBranchID" + xSearchkey + xSortBy + " ) " + xSortBy;
+
+        }
+       
             Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nBranchID", nBranchID);
 
             SortedList OutPut = new SortedList();
             try
