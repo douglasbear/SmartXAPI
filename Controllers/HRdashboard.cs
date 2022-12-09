@@ -31,25 +31,45 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("details")]
-        public ActionResult GetDashboardDetails(int nFnYearId)
+        public ActionResult GetDashboardDetails(int nFnYearId,int nBranchId, bool AllBranchesData)
         {
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
+            string sqlEmpCount="";
+            string sqlEmpOnLeave="";
+            string sqlTerminationTrend="";
+            string sqlEmpOnProbation="";
 
-            string sqlEmpCount = "select (select  count(*) from pay_employee where N_Status not in (2,3) and N_CompanyID = "+nCompanyID+" and N_FnYearId= "+nFnYearId+") as N_ActEmp ,(select  count(*) from pay_employee where N_Status  in (2,3) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+") as N_SepEmp";
+            if(AllBranchesData==true){
+            sqlEmpCount = "select (select  count(*) from pay_employee where N_Status not in (2,3) and N_CompanyID = "+nCompanyID+" and N_FnYearId= "+nFnYearId+") as N_ActEmp ,(select  count(*) from pay_employee where N_Status  in (2,3) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+") as N_SepEmp";
+
+             sqlEmpOnLeave = "select COUNT(*) as N_Count from Pay_VacationDetails where N_VacDays < 0 and B_IsAdjustEntry =0 and (Cast(D_VacDateFrom as DATE)<=Cast(GETDATE() as DATE) and Cast(D_VacDateTo as DATE)>=cast(GETDATE() as DATE)) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
+
+             sqlTerminationTrend = "SELECT  DATEADD(month, DATEDIFF(month, 0, D_EndDate), 0) AS D_MonthStart, YEAR(D_EndDate) [Year], MONTH(D_EndDate) [Month],  DATENAME(MONTH,D_EndDate) [Month Name], COUNT(1) [N_Count] FROM pay_EndOFService where N_CompanyID =  "+nCompanyID+" and N_FnYearId= "+nFnYearId+" GROUP BY DATEADD(month, DATEDIFF(month, 0, D_EndDate), 0) ,YEAR(D_EndDate), MONTH(D_EndDate),  DATENAME(MONTH, D_EndDate),N_FnYearID,N_CompanyID ORDER BY 1,2";
+
+              sqlEmpOnProbation = "select COUNT(*) as N_Count from Pay_Employee where D_ProbationEndDate> GETDATE() and  D_ProbationEndDate < (GETDATE()+14) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
+            }
+            else{
+                 sqlEmpCount = "select (select  count(*) from pay_employee where N_Status not in (2,3) and N_CompanyID = "+nCompanyID+" and N_FnYearId= "+nFnYearId+" and N_BranchID="+nBranchId+") as N_ActEmp ,(select  count(*) from pay_employee where N_Status  in (2,3) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+" and N_BranchID="+nBranchId+") as N_SepEmp";
+
+                  sqlEmpOnLeave = "select COUNT(*) as N_Count from Pay_VacationDetails where N_VacDays < 0 and B_IsAdjustEntry =0 and (Cast(D_VacDateFrom as DATE)<=Cast(GETDATE() as DATE) and Cast(D_VacDateTo as DATE)>=cast(GETDATE() as DATE)) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+" and N_BranchID="+nBranchId+"";
+
+                 sqlTerminationTrend = "SELECT  DATEADD(month, DATEDIFF(month, 0, D_EndDate), 0) AS D_MonthStart, YEAR(D_EndDate) [Year], MONTH(D_EndDate) [Month],  DATENAME(MONTH,D_EndDate) [Month Name], COUNT(1) [N_Count] FROM pay_EndOFService where N_CompanyID =  "+nCompanyID+" and N_FnYearId= "+nFnYearId+" and N_BranchID="+nBranchId+"  GROUP BY DATEADD(month, DATEDIFF(month, 0, D_EndDate), 0) ,YEAR(D_EndDate), MONTH(D_EndDate),  DATENAME(MONTH, D_EndDate),N_FnYearID,N_CompanyID ORDER BY 1,2";
+
+                  sqlEmpOnProbation = "select COUNT(*) as N_Count from Pay_Employee where D_ProbationEndDate> GETDATE() and  D_ProbationEndDate < (GETDATE()+14) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+" and N_BranchID="+nBranchId+"";
+            }
+
             //string sqlPayables= "select sum(N_BalanceAmount) as N_Amount from vw_InvPayables where N_CompanyId = "+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
             string sqlEmpByCountry= "select X_Nationality,count(*) as N_Percentage from Pay_Employee where N_Status not in (2,3) and isnull(X_Nationality,'') <>'' and N_CompanyID ="+nCompanyID+" group by X_Nationality ";
 
             string sqlEmpByDpt = "select X_Department,N_Male,N_Female from vw_DptWiseEmployee where N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
             string sqlEmpByPjct = "select isNull(X_ProjectName,'Others') as X_ProjectName,N_Male,N_Female from vw_PjctWiseEmployee where N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
-           string sqlTerminationTrend = "SELECT  DATEADD(month, DATEDIFF(month, 0, D_EndDate), 0) AS D_MonthStart, YEAR(D_EndDate) [Year], MONTH(D_EndDate) [Month],  DATENAME(MONTH,D_EndDate) [Month Name], COUNT(1) [N_Count] FROM pay_EndOFService where N_CompanyID =  "+nCompanyID+" and N_FnYearId= "+nFnYearId+" GROUP BY DATEADD(month, DATEDIFF(month, 0, D_EndDate), 0) ,YEAR(D_EndDate), MONTH(D_EndDate),  DATENAME(MONTH, D_EndDate),N_FnYearID,N_CompanyID ORDER BY 1,2";
            // string sqlTerminationTrend = "SELECT YEAR(D_EndDate) [Year], MONTH(D_EndDate) [Month],  DATENAME(MONTH,D_EndDate) [Month Name], COUNT(1) [N_Count] FROM pay_EndOFService where N_CompanyID = "+nCompanyID+" and N_FnYearId= "+nFnYearId+" GROUP BY YEAR(D_EndDate), MONTH(D_EndDate),  DATENAME(MONTH, D_EndDate),N_FnYearID,N_CompanyID ORDER BY 1,2";
             string sqlEmpBySalary = "select X_Range, count(*) as N_Count from vw_payEmpSalary where n_companyid = "+nCompanyID+" and X_Range <> 'Other' group by X_Range";
             //"select X_LeadSource,CAST(COUNT(*) as varchar(50)) as N_Percentage from vw_CRMLeads group by X_LeadSource";
-            string sqlEmpOnLeave = "select COUNT(*) as N_Count from Pay_VacationDetails where N_VacDays < 0 and B_IsAdjustEntry =0 and (Cast(D_VacDateFrom as DATE)<=Cast(GETDATE() as DATE) and Cast(D_VacDateTo as DATE)>=cast(GETDATE() as DATE)) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
             //string sqlCurrentSales ="SELECT  DATEADD(month, DATEDIFF(month, 0, D_EndDate), 0) AS D_MonthStart, YEAR(D_EndDate) [Year], MONTH(D_EndDate) [Month],  DATENAME(MONTH,D_EndDate) [Month Name], COUNT(1) [N_Count] FROM pay_EndOFService where N_CompanyID =  "+nCompanyID+" and N_FnYearId= "+nFnYearId+" GROUP BY DATEADD(month, DATEDIFF(month, 0, D_EndDate), 0) ,YEAR(D_EndDate), MONTH(D_EndDate),  DATENAME(MONTH, D_EndDate),N_FnYearID,N_CompanyID ORDER BY 1,2"
-            string sqlEmpOnProbation = "select COUNT(*) as N_Count from Pay_Employee where D_ProbationEndDate> GETDATE() and  D_ProbationEndDate < (GETDATE()+14) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
+            
 
             SortedList Data = new SortedList();
             DataTable EmpCount = new DataTable();
