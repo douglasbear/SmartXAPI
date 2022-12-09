@@ -616,6 +616,25 @@ namespace SmartxAPI.Controllers
 
                     N_DeliveryNoteID = dLayer.SaveData("Inv_DeliveryNote", "N_DeliveryNoteId", MasterTable, connection, transaction);
 
+
+                    if(N_DeliveryNoteID>0)
+                    {
+                             SortedList statusParams = new SortedList();
+                             statusParams.Add("@N_CompanyID", N_CompanyID);
+                             statusParams.Add("@N_TransID", N_DeliveryNoteID);
+                             statusParams.Add("@N_FormID", 884);
+                             statusParams.Add("@N_ForceUpdate", 1);  
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_TxnStatusUpdate", statusParams, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
+                    }
+
                     if (SigEnable)
                     {
                         if (i_Signature.Length > 0)
