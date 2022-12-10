@@ -81,8 +81,8 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from vw_InvSalesman where n_SalesmanID=@p3";
-            // Params.Add("@p1", nCompanyID);
+            string sqlCommandText = "select * from vw_InvSalesman where n_SalesmanID=@p3 and N_CompanyID=@p1";
+            Params.Add("@p1", myFunctions.GetCompanyID(User));
             // Params.Add("@p2", nFnyearID);
             Params.Add("@p3", n_SalesmanID);
 
@@ -174,12 +174,31 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nSalesmanID)
         {
             int Results = 0;
+             object Count =0;
+            int nCompanyID = myFunctions.GetCompanyID(User);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                          object SalesCount = dLayer.ExecuteScalar("select count(N_SalesID) from Inv_Sales Where N_CompanyID=" + nCompanyID + " and  N_SalesmanID=" + nSalesmanID, connection);
+                   object orderCount = dLayer.ExecuteScalar("select count(N_SalesOrderId) from Inv_SalesOrder Where N_CompanyID=" + nCompanyID + " and  N_SalesmanID=" + nSalesmanID, connection);
+                   object quotationCount = dLayer.ExecuteScalar("select count(N_QuotationId) from Inv_SalesQuotation Where N_CompanyID=" + nCompanyID + " and  N_SalesmanID=" + nSalesmanID, connection);
+                   object deliveryCount = dLayer.ExecuteScalar("select count(N_DeliveryNoteId) from Inv_DeliveryNote Where N_CompanyID=" + nCompanyID + " and  N_SalesmanID=" + nSalesmanID, connection);
+                   object leadCount = dLayer.ExecuteScalar("select count(N_LeadID) from CRM_Leads Where N_CompanyID=" + nCompanyID + " and  N_SalesmanID=" + nSalesmanID, connection);
+                   object oppCount = dLayer.ExecuteScalar("select count(N_OpportunityID) from CRM_Opportunity Where N_CompanyID=" + nCompanyID + " and  N_SalesmanID=" + nSalesmanID, connection);
+                   object contactCount = dLayer.ExecuteScalar("select count(N_ContactID) from CRM_Contact Where N_CompanyID=" + nCompanyID + " and  N_SalesmanID=" + nSalesmanID, connection);
+                   object crmcustCount = dLayer.ExecuteScalar("select count(N_CustomerID) from CRM_Customer Where N_CompanyID=" + nCompanyID + " and  N_SalesmanID=" + nSalesmanID, connection);
+                   object receiptCount = dLayer.ExecuteScalar("select count(N_PayReceiptId) from Inv_PayReceipt Where N_CompanyID=" + nCompanyID + " and  N_SalesmanID=" + nSalesmanID, connection);
+                  if( myFunctions.getIntVAL(SalesCount.ToString())>0||myFunctions.getIntVAL(orderCount.ToString())>0||myFunctions.getIntVAL(quotationCount.ToString())>0||myFunctions.getIntVAL(deliveryCount.ToString())>0||
+                     myFunctions.getIntVAL(leadCount.ToString())>0||myFunctions.getIntVAL(oppCount.ToString())>0||myFunctions.getIntVAL(contactCount.ToString())>0||myFunctions.getIntVAL(crmcustCount.ToString())>0||myFunctions.getIntVAL(receiptCount.ToString())>0)
+                   {
+                      return Ok(_api.Error(User, "Can not Delete Sales Man"));
+                   }
+                   else{
                     Results = dLayer.DeleteData("inv_salesman", "N_SalesmanID", nSalesmanID, "", connection);
+
+             
                     if (Results > 0)
                     {
                         return Ok( _api.Success("Sales Executive deleted"));
@@ -188,6 +207,7 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Error(User,"Unable to delete Sales Executive"));
                     }
+                   }
                 }
             }
             catch (Exception ex)
@@ -224,10 +244,5 @@ namespace SmartxAPI.Controllers
 
 
         // }
-
-
-
-
-
-    }
+     }
 }

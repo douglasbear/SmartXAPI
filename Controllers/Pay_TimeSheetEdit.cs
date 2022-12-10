@@ -325,9 +325,14 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_TimesheetEntryEmp", "N_TimesheetID", nTimesheetID, "N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Pay_TimeSheetEntry", "N_TimesheetID", nTimesheetID, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearId, connection, transaction);
                     }
-                    for (int l = 0; l < EmpTable.Rows.Count; l++)
+                    int tempEMP=0;
+                    for (int l = 0; l < DetailTable.Rows.Count; l++)
                     {
-                        dLayer.ExecuteNonQuery("delete from Pay_TimeSheetImport where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and  D_Date >= '" + myFunctions.getDateVAL(dFromDate) + "' and D_Date<=' " + myFunctions.getDateVAL(dToDate) + "' and N_EmpID=" + myFunctions.getIntVAL(EmpTable.Rows[l]["N_EmpID"].ToString()), connection, transaction);
+                        int EmpID=myFunctions.getIntVAL(DetailTable.Rows[l]["N_EmpID"].ToString());
+                        if(EmpID==tempEMP)
+                        continue;
+                        dLayer.ExecuteNonQuery("delete from Pay_TimeSheetImport where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and  D_Date >= '" + myFunctions.getDateVAL(dFromDate) + "' and D_Date<=' " + myFunctions.getDateVAL(dToDate) + "' and N_EmpID=" + EmpID, connection, transaction);
+                        tempEMP=EmpID;
                     }
 
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_BatchCode='" + X_BatchCode + "' and N_FnyearID=" + nFnYearId;
@@ -425,6 +430,43 @@ namespace SmartxAPI.Controllers
             catch (Exception e)
             {
                 return Ok(_api.Error(User,e));
+            }
+        }
+
+
+              [HttpDelete("delete")]
+            public ActionResult DeleteData(int nTimesheetID,int nCompanyID,int nFnYearId)
+        {
+            int Results = 0;
+            string criteria = "";
+            try
+            {
+                SortedList QueryParams = new SortedList();
+                 DataTable TransData = new DataTable();
+                //  MasterTable = ds.Tables["master"];
+                QueryParams.Add("@nCompanyID", nCompanyID);
+                QueryParams.Add("@nTimesheetID", nTimesheetID);
+                 QueryParams.Add("@nFnYearId", nFnYearId);
+               
+               using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    Results = dLayer.DeleteData("Pay_TimesheetEntryEmp", "N_TimesheetID", nTimesheetID,"N_CompanyID=" + nCompanyID, connection);
+
+                    if (Results > 0)
+                    {
+                        dLayer.DeleteData("Pay_TimeSheetEntry", "N_TimesheetID", nTimesheetID, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearId, connection);
+                        return Ok(_api.Success("timeSheetEntry deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error(User, "Unable to delete"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
             }
         }
 

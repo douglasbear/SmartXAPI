@@ -161,6 +161,7 @@ if (xBatch != null)
                                 param.Add("@nEmpID", nodeVar["N_EmpID"].ToString());
                                 param.Add("@nFnYearId", nFnYearID);
                                 param.Add("@nPayID", nodeVar["N_PayID"].ToString());
+                                param.Add("@dDate", dtStartDate);
                                 objRate = dLayer.ExecuteScalar("Select isnull(N_Value,0) as N_Amount from vw_EmpPayInformation Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId and N_EmpID=@nEmpID and N_PayID=@nPayID and D_EffectiveDate=(select MAX(D_EffectiveDate) from vw_EmpPayInformation where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId and N_EmpID=@nEmpID and N_PayID=@nPayID and D_EffectiveDate<=@dDate)", param, connection);
                                 if (objRate != null)
                                 {
@@ -392,11 +393,29 @@ if (xBatch != null)
                 int N_OldTransID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TransID"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
+                    
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@nPayRunID", nPayRunID);
+
+                    if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearId, DateTime.ParseExact(MasterTable.Rows[0]["d_TransDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))  
+                    {
+                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyID+" and convert(date ,'" + MasterTable.Rows[0]["d_TransDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                        if (DiffFnYearID != null)
+                        {
+                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                            nFnYearId = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                            //QueryParams["@nFnYearID"] = nFnYearID;
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                        }
+                    }
+
                     int FormID = 208;
                     int N_IsAuto = 0;
                     int N_TransDetailsID = 0;
@@ -508,10 +527,29 @@ if (xBatch != null)
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (x_Batch like '%" + xSearchkey + "%' or right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) like '%" + xSearchkey + "%' or X_Notes like '%" + xSearchkey + "%' or REPLACE(CONVERT(CHAR(11), D_TransDate, 106),' ','-') like '%" + xSearchkey + "%')";
 
-            if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by X_Batch desc,D_TransDate desc";
-            else
-                xSortBy = " order by " + xSortBy;
+         
+           if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by X_Batch desc";
+           else
+             {
+               switch (xSortBy.Split(" ")[0])
+                    {
+                        case "d_TransDate":
+                            xSortBy = "Cast([d_TransDate] as DateTime ) " + xSortBy.Split(" ")[1];
+                            break;
+                        case "x_PayrunText":
+                            xSortBy = "Cast([x_PayrunText] as Date ) " + xSortBy.Split(" ")[1];
+                            break;
+           
+                            
+                        default: break;
+                        }
+                        xSortBy = " order by " + xSortBy;
+                    }
+           //}
+            //     xSortBy = " order by X_Batch desc,x_PayrunText,D_TransDate desc";
+            // else
+            //     xSortBy = " order by " + xSortBy;
 
 
             if (Count == 0)
@@ -607,14 +645,7 @@ if (xBatch != null)
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
                     return Ok(_api.Success(dt));
-                }
             }
             catch (Exception e)
             {

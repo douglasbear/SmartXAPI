@@ -1,3 +1,5 @@
+
+
 using AutoMapper;
 using SmartxAPI.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -104,6 +106,7 @@ namespace SmartxAPI.Controllers
             string sqlOtherinfo = "select * from vw_SalaryRevision Where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 order by n_type";
 
 
+
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearID);
             Params.Add("@p3", nEmpID);
@@ -121,13 +124,28 @@ namespace SmartxAPI.Controllers
                     dtAccrual = dLayer.ExecuteDataTable(sqlAcrual, Params, connection);
                     dtBenefits = dLayer.ExecuteDataTable(sqlBenefits, Params, connection);
                     dtOtherinfo = dLayer.ExecuteDataTable(sqlOtherinfo, Params, connection);
+                      if(dtOtherinfo.Rows.Count>0)
+                {
+                      if (!dtOtherinfo.Columns.Contains("n_SalaryFrom"))
+                        dtOtherinfo = myFunctions.AddNewColumnToDataTable(dtOtherinfo, "n_SalaryFrom", typeof(string), 0);
+                    if (!dtOtherinfo.Columns.Contains("n_SalaryTo"))
+                        dtOtherinfo = myFunctions.AddNewColumnToDataTable(dtOtherinfo, "n_SalaryTo", typeof(string), 0);
+                  
+                    if (dtOtherinfo.Columns.Contains("N_Value"))
+                    {
+                    dtOtherinfo.Rows[0]["n_SalaryFrom"] = dLayer.ExecuteScalar("Select n_SalaryFrom from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3", Params, connection);
+                    dtOtherinfo.Rows[0]["n_SalaryTo"] = dLayer.ExecuteScalar("Select n_SalaryTo from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3", Params, connection);
 
                 }
+                }
+
+                }
+              
                 dtSalaryHistory = api.Format(dtSalaryHistory, "Salaryhistory");
                 dtAccrual = api.Format(dtAccrual, "Accrual");
                 dtBenefits = api.Format(dtBenefits, "Benefits");
                 dtOtherinfo = api.Format(dtOtherinfo, "Otherinfo");
-
+                
                 DS.Tables.Add(dtSalaryHistory);
                 DS.Tables.Add(dtAccrual);
                 DS.Tables.Add(dtBenefits);
@@ -158,7 +176,7 @@ namespace SmartxAPI.Controllers
 
 
             string sqlAcrual = "Select *,(Select COUNT(*) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@p1 and N_EmpID=@p2";
-            string sqlBenefits = "Select *,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformationAmendments.N_CompanyID AND N_EmpID = vw_EmpPayInformationAmendments.N_EmpID AND N_PayID = vw_EmpPayInformationAmendments.N_PayID AND N_Value = vw_EmpPayInformationAmendments.N_value ) AS N_NoEdit from vw_EmpPayInformationAmendments  Where N_CompanyID=@p1 and N_EmpID=@p2 and N_FnYearID=@p3";
+            string sqlBenefits = "Select *,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformationAmendments.N_CompanyID AND N_EmpID = vw_EmpPayInformationAmendments.N_EmpID AND N_PayID = vw_EmpPayInformationAmendments.N_PayID AND N_Value = vw_EmpPayInformationAmendments.N_value ) AS N_NoEdit from vw_EmpPayInformationAmendments  Where N_CompanyID=@p1 and N_EmpID=@p2 and N_FnYearID=@p3 and N_HistoryID=@p4";
             //string sqlSalaryHistory = "select top 1 * from vw_Pay_EmployeeAdditionalInfo Where N_CompanyID=@p1 and N_HistoryID=@p4";
             string sqlMaster = "select  * from VW_SalaryRivisionDisp Where N_CompanyID=@p1 and x_HistoryCode=" + x_HistoryCode;
             string sqlOtherinfo = "select * from vw_SalaryRevision Where N_CompanyID=@p1 and N_FnYearID=@p3 and N_EmpID=@p2 order by n_type";
@@ -179,11 +197,26 @@ namespace SmartxAPI.Controllers
                     dParamList.Add("@N_FnYearID", nFnYearID);
                     dParamList.Add("@N_EmpID", Convert.ToUInt32(dtMaster.Rows[0]["n_EmpID"].ToString()));
                     dParamList.Add("@Date", Convert.ToDateTime(dtMaster.Rows[0]["D_EffectiveDate"].ToString()));
-
-                    dtSalaryHistory = dLayer.ExecuteDataTablePro("SP_Pay_SalaryRevisionDisp", dParamList, connection);
+                    dParamList.Add("@N_HistoryID",  Convert.ToUInt32(dtMaster.Rows[0]["n_HistoryID"].ToString()));
+               
+                    dtSalaryHistory = dLayer.ExecuteDataTablePro("SP_Pay_SalaryHistoryDisp", dParamList, connection);
                     dtAccrual = dLayer.ExecuteDataTable(sqlAcrual, Params, connection);
                     dtBenefits = dLayer.ExecuteDataTable(sqlBenefits, Params, connection);
                     dtOtherinfo = dLayer.ExecuteDataTable(sqlOtherinfo, Params, connection);
+                     if(dtOtherinfo.Rows.Count>0)
+                {
+                      if (!dtOtherinfo.Columns.Contains("n_SalaryFrom"))
+                        dtOtherinfo = myFunctions.AddNewColumnToDataTable(dtOtherinfo, "n_SalaryFrom", typeof(string), 0);
+                    if (!dtOtherinfo.Columns.Contains("n_SalaryTo"))
+                        dtOtherinfo = myFunctions.AddNewColumnToDataTable(dtOtherinfo, "n_SalaryTo", typeof(string), 0);
+                  
+                    if (dtOtherinfo.Columns.Contains("N_Value"))
+                    {
+                    dtOtherinfo.Rows[0]["n_SalaryFrom"] = dLayer.ExecuteScalar("Select n_SalaryFrom from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p3 and N_EmpID=@p2", Params, connection);
+                    dtOtherinfo.Rows[0]["n_SalaryTo"] = dLayer.ExecuteScalar("Select n_SalaryTo from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p3 and N_EmpID=@p2", Params, connection);
+
+                }
+                }
 
                 }
                 dtSalaryHistory = api.Format(dtSalaryHistory, "Salaryhistory");

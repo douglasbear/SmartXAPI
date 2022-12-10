@@ -20,15 +20,17 @@ namespace SmartxAPI.Controllers
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions api;
+        private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
         private readonly IMyFunctions myFunctions;
         private readonly int N_FormID = 74;
 
-        public InvCustomerProjectsController(IDataAccessLayer dl, IMyFunctions myFun, IApiFunctions apiFun, IConfiguration conf)
+        public InvCustomerProjectsController(IDataAccessLayer dl, IMyFunctions myFun, IApiFunctions apiFun, IConfiguration conf,IMyAttachments myAtt)
         {
             dLayer = dl;
             api = apiFun;
             myFunctions = myFun;
+            myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
@@ -39,7 +41,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p2 order by N_ProjectID desc";
+            string sqlCommandText = "select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p2 and X_ProjectCode is not null  order by N_ProjectID desc";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearID);
             
@@ -98,7 +100,7 @@ namespace SmartxAPI.Controllers
             //  else
             //         Criteria = "and  N_BranchID=" + N_BranchID + " AND ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 ";
 
-            string sqlCommandText = "select * from vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p5" + Criteria +" order by N_ProjectID desc";
+            string sqlCommandText = "select * from vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p5" + Criteria +" and X_ProjectCode is not null order by N_ProjectID desc";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", nCustomerID);
             Params.Add("@p4", nBranchID);
@@ -136,15 +138,18 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, TaskMaster, TaskStatus;
+                DataTable MasterTable, TaskMaster, TaskStatus,JobTable;
                 MasterTable = ds.Tables["master"];
+                JobTable = ds.Tables["jobMaster"];
+                DataTable Attachment = ds.Tables["attachments"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nProjectID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ProjectID"].ToString());
                 int nWTaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_WTaskID"].ToString());
                 string X_ProjectCode = MasterTable.Rows[0]["X_ProjectCode"].ToString();
+                string X_ProjectName = MasterTable.Rows[0]["X_ProjectName"].ToString();
                 object N_WorkFlowID = "";
-
+               
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -153,6 +158,7 @@ namespace SmartxAPI.Controllers
                     // Auto Gen
                     string ProjectCode = "";
                     var values = MasterTable.Rows[0]["X_ProjectCode"].ToString();
+                   
                     if (values == "@Auto")
 
                     {
@@ -197,6 +203,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        if(JobTable.Rows.Count>0)
+                        {
+                          JobTable.Rows[0]["N_ProjectID"] =nProjectID;
+                          int jobID = dLayer.SaveData("Inv_CustomerJobDetails", "N_JobID", JobTable, connection, transaction);
+
+
+                        }
                         if (N_WorkFlowID != null)
                         {
                             if (nWTaskID != myFunctions.getIntVAL(N_WorkFlowID.ToString()))
@@ -204,9 +217,10 @@ namespace SmartxAPI.Controllers
                                 if (nWTaskID > 0)
                                 {
                                     dLayer.DeleteData("Tsk_TaskMaster", "N_ProjectID", nProjectID, "", connection, transaction);
-                                    //dLayer.DeleteData("Tsk_TaskStatus", "N_ProjectID", nProjectID, "", connection, transaction);
 
-                                    TaskMaster = dLayer.ExecuteDataTable("select N_CompanyID,x_tasksummery,x_taskdescription,'' as D_TaskDate,'' as D_DueDate,N_StartDateBefore,N_StartDateUnitID,N_EndDateBefore,N_EndUnitID,N_WTaskDetailID,N_Order,N_TemplateID,N_PriorityID,N_CategoryID from Prj_WorkflowTasks where N_CompanyID=" + nCompanyID + " and N_WTaskID=" + nWTaskID + " order by N_Order", Params, connection, transaction);
+    //dLayer.DeleteData("Tsk_TaskStatus", "N_ProjectID", nProjectID, "", connection, transaction);
+
+                                    TaskMaster = dLayer.ExecuteDataTable("select N_CompanyID,2 as N_StatusID,x_tasksummery,x_taskdescription,'' as D_TaskDate,'' as D_DueDate, "+myFunctions.GetUserID(User)+" as N_CreatorID, "+myFunctions.GetUserID(User)+"  as n_ClosedUserID ,"+myFunctions.GetUserID(User)+"  as n_SubmitterID,"+myFunctions.GetUserID(User)+" as N_CurrentAssignerID,'" + DateTime.Today + "' as D_EntryDate, "+myFunctions.GetUserID(User)+" as N_AssigneeID, N_StartDateBefore,N_StartDateUnitID,N_EndDateBefore,N_EndUnitID,N_WTaskDetailID,N_Order,N_TemplateID,N_PriorityID,N_CategoryID from Prj_WorkflowTasks where N_CompanyID=" + nCompanyID + " and N_WTaskID=" + nWTaskID + " order by N_Order", Params, connection, transaction);
                                     if (TaskMaster.Rows.Count > 0)
                                     {
                                         SortedList AParams = new SortedList();
@@ -220,7 +234,8 @@ namespace SmartxAPI.Controllers
                                         TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "x_TaskCode", typeof(string), "");
                                         TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "n_ProjectID", typeof(int), nProjectID);
                                         TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "B_Closed", typeof(int), 0);
-                                        TaskMaster.Rows[0]["B_Closed"] = 1;
+                                     
+                                        TaskMaster.Rows[0]["B_Closed"] = 0;
                                         foreach (DataRow var in TaskMaster.Rows)
                                         {
                                             TaskCode = dLayer.GetAutoNumber("Tsk_TaskMaster", "X_TaskCode", AParams, connection, transaction);
@@ -277,7 +292,7 @@ namespace SmartxAPI.Controllers
                                             N_TaskID = dLayer.SaveDataWithIndex("Tsk_TaskMaster", "N_TaskID", "", "", j, TaskMaster, connection, transaction);
                                             if (j == 0)
                                             {
-                                                string qry = "Select " + nCompanyID + " as N_CompanyID," + 0 + " as N_TaskStatusID," + N_TaskID + " as N_TaskID," + 0 + " as N_AssigneeID," + 0 + " as N_SubmitterID ,'" + N_CreatorID + "' as  N_CreaterID,'" + DateTime.Today + "' as D_EntryDate,'" + "" + "' as X_Notes ," + 4 + " as N_Status ," + 100 + " as N_WorkPercentage";
+                                                string qry = "Select " + nCompanyID + " as N_CompanyID," + 0 + " as N_TaskStatusID," + N_TaskID + " as N_TaskID,"+myFunctions.GetUserID(User)+" as N_AssigneeID,"+myFunctions.GetUserID(User)+" as N_SubmitterID ,"+myFunctions.GetUserID(User)+" as  N_CreaterID,'" + DateTime.Today + "' as D_EntryDate,'" + "" + "' as X_Notes ," + 4 + " as N_Status ," + 100 + " as N_WorkPercentage";
                                                 DataTable DetailTable = dLayer.ExecuteDataTable(qry, Params, connection, transaction);
                                                 int nID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", DetailTable, connection, transaction);
                                             }
@@ -295,6 +310,19 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                         }
+                           if (Attachment.Rows.Count > 0)
+                    {
+                         try
+                        {
+                           //myAttachments.SaveAttachment(dLayer, Attachment, X_ProjectCode, nProjectID, objCustName.ToString().Trim(), objCustCode.ToString(), N_CustomerID, "Customer Document", User, connection, transaction);
+                           myAttachments.SaveAttachment(dLayer, Attachment, X_ProjectCode, nProjectID, X_ProjectName, X_ProjectCode, nProjectID, "Project Document", User, connection, transaction);
+                              }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, ex));
+                        }
+                    }
                         transaction.Commit();
                         return Ok(api.Success("Project Information Created"));
                     }
@@ -307,7 +335,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nProjectID)
+        public ActionResult DeleteData(int nProjectID,int nFnyearID)
         {
 
             int Results = 0;
@@ -319,6 +347,8 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("inv_CustomerProjects", "N_ProjectID", nProjectID, "", connection, transaction);
+                     myAttachments.DeleteAttachment(dLayer, 1, nProjectID, nProjectID,nFnyearID,74, User, transaction, connection);
+                       
                     transaction.Commit();
                 }
                 if (Results > 0)
@@ -341,54 +371,120 @@ namespace SmartxAPI.Controllers
         }
 
 
-        [HttpGet("Details")]
-        public ActionResult GetCustomerProjectDetails(string xProjectCode, int nFnYearId, int nOpportunityID)
 
+  [HttpGet("details")]
+        public ActionResult GetCustomerProjectDetails(string xProjectCode, int nFnYearId, int nOpportunityID)
         {
+            DataSet ds = new DataSet();
             DataTable dt = new DataTable();
+            DataTable jobMaster = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            if (xProjectCode == null) xProjectCode = "";
             string sqlCommandText = "";
-            //sqlCommandText = "select 0 as N_ProjectID,'@Auto' as X_ProjectCode,* from vw_CRMOpportunity where N_OpportunityID=@nOpportunityID and N_CompanyID=@nCompanyID and N_FnYearID=@YearID";
-            if (nOpportunityID > 0)
+            string sqlJob = "";
+             if (nOpportunityID > 0)
             {
                 sqlCommandText = "select TOP 1 0 as N_ProjectID,'@Auto' as X_ProjectCode,vw_CRMOpportunity.N_CompanyId,vw_CRMOpportunity.N_FnYearID,vw_CRMOpportunity.N_OpportunityID, ISNULL(Inv_Customer.N_CustomerID,0) AS N_CustomerID, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, " +
                 "vw_CRMOpportunity.N_ContactID,vw_CRMOpportunity.X_Contact,vw_CRMOpportunity.X_ProjectName,vw_CRMOpportunity.N_CustomerID AS N_CrmCustomerID,vw_CRMOpportunity.N_WorkType,vw_CRMOpportunity.X_WorkType,vw_CRMOpportunity.N_WTaskID,vw_CRMOpportunity.X_WTask " +
                 "FROM vw_CRMOpportunity LEFT OUTER JOIN Inv_Customer ON vw_CRMOpportunity.N_FnYearId = Inv_Customer.N_FnYearID AND vw_CRMOpportunity.N_CompanyId = Inv_Customer.N_CompanyID AND vw_CRMOpportunity.N_CustomerID = Inv_Customer.N_CrmCompanyID " +
                 "where vw_CRMOpportunity.N_OpportunityID=@nOpportunityID and vw_CRMOpportunity.N_CompanyId=@nCompanyID and vw_CRMOpportunity.N_FnYearID=@YearID";
             }
-            else
-                sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
-
+           else{
+               Params.Add("@xProjectCode", xProjectCode);
+          sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
+          sqlJob = "select * from Vw_JobDetails  where N_CompanyID=@nCompanyID and X_ProjectCode=@xProjectCode";
+                }
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@YearID", nFnYearId);
-            Params.Add("@xProjectCode", xProjectCode);
             Params.Add("@nOpportunityID", nOpportunityID);
-
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
+                    jobMaster = dLayer.ExecuteDataTable(sqlJob, Params, connection);
+                   
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dt.Rows[0]["N_ProjectID"].ToString()), myFunctions.getIntVAL(dt.Rows[0]["N_ProjectID"].ToString()), 74, 0, User, connection);
+                    Attachments = api.Format(Attachments, "attachments");
+                   
+                        dt = api.Format(dt, "master");
+                        jobMaster = api.Format(jobMaster, "jobMaster");
+                        ds.Tables.Add(dt);
+                        ds.Tables.Add(jobMaster);
+                        ds.Tables.Add(Attachments);
 
+                        return Ok(api.Success(ds));
+                    }
+                }
             }
             catch (Exception e)
             {
                 return Ok(api.Error(User, e));
             }
+
         }
+
+
+
+
+
+        // [HttpGet("Details")]
+        // public ActionResult GetCustomerProjectDetails(string xProjectCode, int nFnYearId, int nOpportunityID)
+
+        // {
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
+        //     int nCompanyID = myFunctions.GetCompanyID(User);
+        //     if (xProjectCode == null) xProjectCode = "";
+        //     string sqlCommandText = "";
+        //     //sqlCommandText = "select 0 as N_ProjectID,'@Auto' as X_ProjectCode,* from vw_CRMOpportunity where N_OpportunityID=@nOpportunityID and N_CompanyID=@nCompanyID and N_FnYearID=@YearID";
+        //     if (nOpportunityID > 0)
+        //     {
+        //         sqlCommandText = "select TOP 1 0 as N_ProjectID,'@Auto' as X_ProjectCode,vw_CRMOpportunity.N_CompanyId,vw_CRMOpportunity.N_FnYearID,vw_CRMOpportunity.N_OpportunityID, ISNULL(Inv_Customer.N_CustomerID,0) AS N_CustomerID, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, " +
+        //         "vw_CRMOpportunity.N_ContactID,vw_CRMOpportunity.X_Contact,vw_CRMOpportunity.X_ProjectName,vw_CRMOpportunity.N_CustomerID AS N_CrmCustomerID,vw_CRMOpportunity.N_WorkType,vw_CRMOpportunity.X_WorkType,vw_CRMOpportunity.N_WTaskID,vw_CRMOpportunity.X_WTask " +
+        //         "FROM vw_CRMOpportunity LEFT OUTER JOIN Inv_Customer ON vw_CRMOpportunity.N_FnYearId = Inv_Customer.N_FnYearID AND vw_CRMOpportunity.N_CompanyId = Inv_Customer.N_CompanyID AND vw_CRMOpportunity.N_CustomerID = Inv_Customer.N_CrmCompanyID " +
+        //         "where vw_CRMOpportunity.N_OpportunityID=@nOpportunityID and vw_CRMOpportunity.N_CompanyId=@nCompanyID and vw_CRMOpportunity.N_FnYearID=@YearID";
+        //     }
+          
+        //     else
+        //   sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
+        //            DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_ProjectID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_ProjectID"].ToString()), 74, 0, User, connection);
+        //             Attachments = _api.Format(Attachments, "attachments");
+        //     Params.Add("@nCompanyID", nCompanyID);
+        //     Params.Add("@YearID", nFnYearId);
+        //     Params.Add("@xProjectCode", xProjectCode);
+        //     Params.Add("@nOpportunityID", nOpportunityID);
+            
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+
+        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+        //         }
+        //         if (dt.Rows.Count == 0)
+        //         {
+        //             return Ok(api.Notice("No Results Found"));
+        //         }
+        //         else
+        //         {
+        //             return Ok(api.Success(dt));
+        //         }
+
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(api.Error(User, e));
+        //     }
+        // }
         [HttpGet("AccountList")]
         public ActionResult GetAccountList()
         {
@@ -460,26 +556,27 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             string UserPattern = myFunctions.GetUserPattern(User);
             string Pattern="";
-            if (UserPattern != "")
-            {
-                Pattern = " and Left(X_Pattern,Len(@p3))=@p3";
-                Params.Add("@p3", UserPattern);
-            }
+            // if (UserPattern != "")
+            // {
+            //     Pattern = " and Left(X_Pattern,Len(@p3))=@p3";
+            //     Params.Add("@p3", UserPattern);
+            // }
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (x_projectcode like '%" + xSearchkey + "%'or x_projectname like'%" + xSearchkey + "%' or x_CustomerName like '%" + xSearchkey + "%' or x_District like '%" + xSearchkey + "%' or d_StartDate like '%" + xSearchkey + "%' or n_ContractAmt like '%" + xSearchkey + "%')";
 
+            Searchkey = Searchkey + " and X_ProjectCode is not null ";
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ProjectID desc";
             else
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID,X_Stage,CONVERT(VARCHAR(10), D_EndDate,111) as D_EndDate from vw_InvProjectDashBoard where N_CompanyID=@p1 "+ Pattern  + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,N_StatusID,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID,X_Stage,CONVERT(VARCHAR(10), D_EndDate,111) as D_EndDate,N_LastActionID,X_ClosingRemarks from vw_InvProjectDashBoard where N_CompanyID=@p1 "+ Pattern  + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID,X_Stage,CONVERT(VARCHAR(10), D_EndDate,111) as D_EndDate from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Pattern + Searchkey + " and N_ProjectID not in (select top(" + Count + ") N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Pattern + Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,N_StatusID,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID,X_Stage,CONVERT(VARCHAR(10), D_EndDate,111) as D_EndDate,N_LastActionID,X_ClosingRemarks from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Pattern + Searchkey + " and N_ProjectID not in (select top(" + Count + ") N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Pattern + Searchkey + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();

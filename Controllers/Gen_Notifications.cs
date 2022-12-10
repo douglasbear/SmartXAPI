@@ -76,5 +76,58 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,e));
             }
         }
+
+        [HttpGet("notificationList")]
+        public ActionResult GetNotification()
+        {
+            SortedList Params = new SortedList();
+            DataTable dt = new DataTable();
+
+            int nUserID = myFunctions.GetUserID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+
+            sqlCommandText = "select X_Type, count(*) as N_Count from vw_Gen_Notification where N_CompanyID=@nCompanyID and N_UserID=@nUserID group by X_Type ";
+
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nUserID", nUserID);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount = "select count(*) as N_TotalCount  from vw_Gen_Notification where N_CompanyID=@nCompanyID and N_UserID=@nUserID ";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+
+                    SortedList res = new SortedList();
+                    res.Add("Details", api.Format(dt));
+                    res.Add("TotalCount", TotalCount);
+
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(res));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+
+
+
+
+
+
+
+        
     }
 }

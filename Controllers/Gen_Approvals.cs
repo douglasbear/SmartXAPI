@@ -156,18 +156,26 @@ namespace SmartxAPI.Controllers
 
         [HttpGet("GetApprovalSettings")]
         public ActionResult GetApprovalSettings(int nIsApprovalSystem, int nFormID, int nTransID, int nTransUserID, int nTransStatus, int nTransApprovalLevel, int nNextApprovalLevel, int nApprovalID, int nGroupID, int nFnYearID, int nEmpID, int nActionID)
-        {
-            
-
-
-
+        {        
             try
             {
             using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                connection.Open();
-                SortedList Response = myFunctions.GetApprovals(nIsApprovalSystem, nFormID, nTransID, nTransUserID, nTransStatus, nTransApprovalLevel, nNextApprovalLevel, nApprovalID, nGroupID, nFnYearID, nEmpID, nActionID,User,dLayer, connection);
-                return Ok(api.Success(Response));
+                    connection.Open();
+                    if(nTransID>0)
+                    {
+                        SortedList Params =new SortedList();
+                        Params.Add("@FormID",nFormID);
+                        Params.Add("@TransID",nTransID);
+                        object objFormID = dLayer.ExecuteScalar("select distinct N_FormID from Log_ApprovalProcess where N_TransID=@TransID and X_TransType=( select X_Type from vw_ScreenTables where N_FormID=@FormID)",Params,connection);
+                        if(objFormID!=null)
+                        nFormID = myFunctions.getIntVAL(objFormID.ToString());
+                    }
+                    SortedList Response = myFunctions.GetApprovals(nIsApprovalSystem, nFormID, nTransID, nTransUserID, nTransStatus, nTransApprovalLevel, nNextApprovalLevel, nApprovalID, nGroupID, nFnYearID, nEmpID, nActionID,User,dLayer, connection);
+                    // if(!myFunctions.getBoolVAL(Response["allowWithoutApproval"].ToString()))
+                    //     return Ok(api.Error(User,"Approval not set for this user"));
+
+                    return Ok(api.Success(Response));
                 }
             }
             catch (Exception e)
@@ -297,7 +305,7 @@ string status="";
 if(partyId==null){
     partyId=0;
 }
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID,  ApprovalRow["x_EntryForm"].ToString(), N_PkeyID, ApprovalRow["x_TransCode"].ToString(), 1, ApprovalRow["x_PartyName"].ToString(), myFunctions.getIntVAL(partyId.ToString()), "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID,  ApprovalRow["x_EntryForm"].ToString(), N_PkeyID, ApprovalRow["x_TransCode"].ToString(), 1, ApprovalRow["x_PartyName"].ToString(), myFunctions.getIntVAL(partyId.ToString()), "",0, User, dLayer, connection, transaction);
                         transaction.Commit();
                         
                

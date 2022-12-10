@@ -46,7 +46,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (AssetLedgerID like '%" + xSearchkey + "%' or X_Category like '%" + xSearchkey + "%' or X_ItemName like '%" + xSearchkey + "%' or D_PurchaseDate like '%" + xSearchkey + "%' or N_LifePeriod like '%" + xSearchkey + "%' or N_BookValue like '%" + xSearchkey + "%' or X_PlateNumber like '%" + xSearchkey + "%' or X_SerialNo like '%" + xSearchkey + "%' or X_BranchName like '%" + xSearchkey + "%' or X_EmpCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%' or X_Department like '%" + xSearchkey + "%' or Status like '%" + xSearchkey + "%' or X_MainCategory like '%" + xSearchkey + "%' or X_make like '%" + xSearchkey + "%' or N_Price like '%" + xSearchkey + "%')";
+                Searchkey = "and (X_ItemCode like '%" + xSearchkey + "%' or AssetLedgerID like '%" + xSearchkey + "%' or X_Category like '%" + xSearchkey + "%' or X_ItemName like '%" + xSearchkey + "%' or D_PurchaseDate like '%" + xSearchkey + "%' or N_LifePeriod like '%" + xSearchkey + "%' or N_BookValue like '%" + xSearchkey + "%' or X_PlateNumber like '%" + xSearchkey + "%' or X_SerialNo like '%" + xSearchkey + "%' or X_BranchName like '%" + xSearchkey + "%' or X_EmpCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%' or X_Department like '%" + xSearchkey + "%' or Status like '%" + xSearchkey + "%' or X_MainCategory like '%" + xSearchkey + "%' or X_make like '%" + xSearchkey + "%' or N_Price like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by AssetLedgerID desc";
@@ -103,14 +103,36 @@ namespace SmartxAPI.Controllers
                 DataTable ExpiryTable;
                 ExpiryTable = ds.Tables["expiry"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
+                int nFnyearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                 int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationID"].ToString());
+                 string xItemName = MasterTable.Rows[0]["x_ItemName"].ToString();
                 string xItemCode = MasterTable.Rows[0]["X_ItemCode"].ToString();
-                int nAddlInfoID = myFunctions.getIntVAL(ExpiryTable.Rows[0]["N_AddlInfoID"].ToString());
+                bool bAssetItem= myFunctions.getBoolVAL(MasterTable.Rows[0]["b_AssetItem"].ToString());
+                int nAddlInfoID=0;
+                if(ExpiryTable.Rows.Count>0)
+                    nAddlInfoID = myFunctions.getIntVAL(ExpiryTable.Rows[0]["N_AddlInfoID"].ToString());
+
                 int nItemID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ItemID"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+
+                       if (MasterTable.Columns.Contains("n_FnYearID"))
+                        MasterTable.Columns.Remove("n_FnYearID");
+
+                        if (MasterTable.Columns.Contains("n_LocationID"))
+                        MasterTable.Columns.Remove("n_LocationID");
+
+                        
+                        if (MasterTable.Columns.Contains("x_ItemName"))
+                        MasterTable.Columns.Remove("x_ItemName");
+
+                        
+                        if (MasterTable.Columns.Contains("b_AssetItem"))
+                        MasterTable.Columns.Remove("b_AssetItem");
+
 
                     String DupCriteria = "X_ItemCode= '" + xItemCode + "' and N_CompanyID=" + nCompanyID;
                     nItemID = dLayer.SaveData("Ass_AssetMaster", "N_ItemID", DupCriteria, "", MasterTable, connection, transaction);
@@ -124,18 +146,42 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Ass_AssetAddlInfo", "N_ItemID", nItemID, "N_CompanyID=" + nCompanyID, connection, transaction);
                     }
 
-                    nAddlInfoID = dLayer.SaveData("Ass_AssetAddlInfo", "n_AddlInfoID", ExpiryTable, connection, transaction);
+                    if(ExpiryTable.Rows.Count>0)
+                    {
+                        nAddlInfoID = dLayer.SaveData("Ass_AssetAddlInfo", "n_AddlInfoID", ExpiryTable, connection, transaction);
 
-                    if (nAddlInfoID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(api.Error(User, "Unable to save"));
+                        if (nAddlInfoID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, "Unable to save"));
+                        }
                     }
-                    else
-                    {
-                        transaction.Commit();
-                        return Ok(api.Success(" Saved Successfully"));
+
+                    if(bAssetItem==true){
+                           SortedList ProcParam = new SortedList();
+                        ProcParam.Add("N_CompanyID", nCompanyID);
+                        ProcParam.Add("N_FnYearID", nFnyearID);
+                        ProcParam.Add("N_TransID", nItemID);
+                        ProcParam.Add("N_LocationID", nLocationID);
+                        ProcParam.Add("N_ItemTypeID", 7);
+                        ProcParam.Add("X_ItemName",xItemName);
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_CreateProduct", ProcParam, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, ex));
+                        }
                     }
+
+                    
+                    
+  
+                    transaction.Commit();
+                    return Ok(api.Success(" Saved Successfully"));
+
                 }
             }
             catch (Exception ex)

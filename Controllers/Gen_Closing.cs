@@ -57,7 +57,7 @@ namespace SmartxAPI.Controllers
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(api.Warning("No Results Found"));
+                    return Ok(api.Success(dt));
                 }
                 else
                 {
@@ -94,6 +94,15 @@ namespace SmartxAPI.Controllers
                 {
                     case 1302:
                         sql = "Update CRM_Opportunity set X_ClosingDescription=@Desc, N_ClosingStatusID=@ClosingID where N_OpportunityID=@nPkey and n_CompanyId=@nCompanyID";
+                        break;
+                    case 80:
+                        sql = "Update Inv_SalesQuotation set N_ClosingRsnID=@ClosingID where N_QuotationId=@nPkey and n_CompanyId=@nCompanyID"; 
+                        break;   
+                    case 81:
+                        sql = "Update Inv_SalesOrder set N_ClosingStatusID=@ClosingID where N_SalesOrderId=@nPkey and n_CompanyId=@nCompanyID"; 
+                        break;   
+                    case 82:
+                        sql = "Update Inv_PurchaseOrder set N_ClosingStatusID=@ClosingID where N_POrderID=@nPkey and N_CompanyID=@nCompanyID"; 
                         break;
                     default: return Ok(api.Warning("Invalid Form"));
                 }

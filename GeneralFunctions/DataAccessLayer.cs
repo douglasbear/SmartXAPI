@@ -526,12 +526,14 @@ namespace SmartxAPI.GeneralFunctions
                 paramList.Add("X_TableName", TableName);
                 paramList.Add("X_IDFieldName", IDFieldName);
                 paramList.Add("N_IDFieldValue", IDFieldValue);
-                paramList.Add("X_FieldList", FieldList);
+                paramList.Add("X_FieldList",FieldList );
                 paramList.Add("X_FieldValue", FieldValues);
                 Result = (int)ExecuteScalarPro("SAVE_DATA", paramList, connection, transaction);
                
 
                 // StringBuilder sb = new StringBuilder();
+                // sb.AppendLine(j+" ");
+                // sb.AppendLine(FieldList);
                 // sb.AppendLine(j+" ");
                 // sb.AppendLine(FieldValues);
                 // if (!Directory.Exists(logPath))
@@ -539,7 +541,7 @@ namespace SmartxAPI.GeneralFunctions
 
                 //     File.AppendAllText(logPath + "Sqllog.log", sb.ToString());
                 //     sb.Clear();
- FieldValues = "";
+                FieldValues = "";
                 if (Result <= 0) return 0;
             }
 
@@ -711,6 +713,43 @@ namespace SmartxAPI.GeneralFunctions
             return AutoNumber;
         }
 
+        public string GetAutoNumberLoc(string TableName, String Coloumn, SortedList Params, SqlConnection connection, SqlTransaction transaction)
+        {
+            string AutoNumber = "";
+            string BranchId = "0";
+            if (Params.Contains("N_BranchID")) { BranchId = Params["N_BranchID"].ToString(); }
+            SortedList paramList = new SortedList(){
+                {"N_CompanyID", Params["N_CompanyID"]},
+                {"N_YearID", Params["N_YearID"]},
+                {"N_FormID", Params["N_FormID"]},
+                {"N_BranchID", BranchId}
+                };
+            SortedList validParam = new SortedList(){
+                {"@CompanyID", Params["N_CompanyID"]},
+                {"@FnYearID", Params["N_YearID"]},
+                {"@FormID", Params["N_FormID"]}
+                };
+            object objCount = ExecuteScalar("Select Count(1) from Inv_InvoiceCounter where N_FormID=@FormID and N_CompanyID=@CompanyID and N_FnYearID=@FnYearID", validParam, connection, transaction);
+            if(myFunctions.getIntVAL(objCount.ToString())==0){
+                throw new Exception("Invoice Counter not found");
+            }
+            while (true)
+            {
+                AutoNumber = (string)ExecuteScalarPro("SP_AutoNumberGenerate", paramList, connection, transaction);
+                string sqlCommandText = "select 1 from " + TableName + " where " + Coloumn + " = @p1 and N_CompanyID=@p2 and N_TypeId=@p3";
+                SortedList SqlParams = new SortedList(){
+                    {"@p1",AutoNumber},
+                    {"@p2",Params["N_CompanyID"]},
+                    {"@p3",Params["N_TypeId"]}};
+                object obj = ExecuteScalar(sqlCommandText, SqlParams, connection, transaction);
+
+                if (obj == null)
+                    break;
+
+            }
+            return AutoNumber;
+        }
+
         public bool SaveFiles(DataTable FilesTable, string TableName, string PkeyName, int PkeyVal, string PrependStr, int compID, SqlConnection connection, SqlTransaction transaction)
         {
             try
@@ -738,6 +777,8 @@ namespace SmartxAPI.GeneralFunctions
             }
             return true;
         }
+       
+
 
 
 
@@ -773,6 +814,7 @@ namespace SmartxAPI.GeneralFunctions
         public int ExecuteNonQuery(string sqlCommandText, SqlConnection connection);
 
         public string GetAutoNumber(string TableName, String Coloumn, SortedList Params, SqlConnection connection, SqlTransaction transaction);
+        public string GetAutoNumberLoc(string TableName, String Coloumn, SortedList Params, SqlConnection connection, SqlTransaction transaction);
 
         public int SaveData(string TableName, string IDFieldName, DataTable DataTable, SqlConnection connection, SqlTransaction transaction);
 
@@ -781,6 +823,7 @@ namespace SmartxAPI.GeneralFunctions
 
         public bool SaveFiles(DataTable FilesTable, string TableName, string PkeyName, int PkeyVal, string PrependStr, int CompanyID, SqlConnection connection, SqlTransaction transaction);
         public int SaveImage(string TableName,string FieldName,byte[] image,string keyFeild,int KeyValue,  SqlConnection connection,SqlTransaction transaction);
+        
 
 
     }

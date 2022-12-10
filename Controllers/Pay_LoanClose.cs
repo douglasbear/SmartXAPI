@@ -132,9 +132,9 @@ namespace SmartxAPI.Controllers
                 int nLoanTransID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LoanTransID"].ToString());
                 int nLoanID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LoanID"].ToString());
                 var dDateFrom = MasterTable.Rows[0]["D_PaidDate"].ToString();
-                int nRateOfAmount = myFunctions.getIntVAL(MasterTable.Rows[0]["n_RateOfAmount"].ToString());
-                int nPaidAmount = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PaidAmount"].ToString());
-                int nBalanceAmount = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BalanceAmount"].ToString());
+                double nRateOfAmount = myFunctions.getVAL(MasterTable.Rows[0]["n_RateOfAmount"].ToString());
+                double nPaidAmount = myFunctions.getVAL(MasterTable.Rows[0]["n_PaidAmount"].ToString());
+                double nBalanceAmount = myFunctions.getVAL(MasterTable.Rows[0]["n_BalanceAmount"].ToString());
                 DateTime dStartDate = Convert.ToDateTime(MasterTable.Rows[0]["D_PaidDate"].ToString());
                 MasterTable.Columns.Remove("n_BalanceAmount");
 

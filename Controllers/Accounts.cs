@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("glaccount/list")]
-        public ActionResult GetGLAccountList(int? nFnYearId, string xType, int nCashBahavID)
+        public ActionResult GetGLAccountList(int? nFnYearId, string xType, int nCashBahavID,int nGroupID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
@@ -45,16 +45,22 @@ namespace SmartxAPI.Controllers
             {
                 Params.Add("@nCashBahavID", nCashBahavID);
 
-                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and N_CashBahavID =@nCashBahavID and B_Inactive = 0  order by [Account Code]";
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,X_LedgerName_Ar as account_Ar,N_TransBehavID from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and N_CashBahavID =@nCashBahavID and B_Inactive = 0  order by [Account Code]";
+            }
+            else if(nGroupID > 0)
+            {
+               Params.Add("@nGroupID", nGroupID);
+
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,X_LedgerName_Ar as account_Ar,N_TransBehavID from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and N_GroupID =@nGroupID and B_Inactive = 0  order by [Account Code]";  
             }
             else
             if (xType.ToLower() != "all")
             {
                 Params.Add("@p3", xType);
-                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type =@p3 and B_Inactive = 0  order by [Account Code]";
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,X_LedgerName_Ar as account_Ar,N_TransBehavID from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type =@p3 and B_Inactive = 0  order by [Account Code]";
             }
             else
-                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and B_Inactive = 0  order by [Account Code]";
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,X_LedgerName_Ar as account_Ar,N_TransBehavID from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and B_Inactive = 0  order by [Account Code]";
 
             try
             {
@@ -101,9 +107,9 @@ namespace SmartxAPI.Controllers
                 break;
                 case "inventory": criteria= " and X_Type ='A'";
                 break;
-                case "income": criteria= " and X_Type ='I'";
+                case "income": criteria= " and (X_Type ='I' or X_Type='L' or X_Type='A') ";
                 break;
-                case "cost": criteria= " and X_Type ='E'";
+                case "cost": criteria= " and ( X_Type ='E' OR X_Type ='I' or X_Type='L' or X_Type='A')";
                 break;
                 default: return Ok("Invalid Type");
             }
@@ -203,7 +209,7 @@ namespace SmartxAPI.Controllers
         // }
 
         [HttpGet("balance") ]
-        public ActionResult GetBalance (int nFnYearId, string xLedgerCode)
+        public ActionResult GetBalance (int nFnYearId, int nLedgerID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
@@ -212,11 +218,11 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
-            Params.Add("@p3", xLedgerCode);
+            Params.Add("@p3", nLedgerID);
             
             DataTable dt=new DataTable();
             
-            sqlCommandText="Select isnull(Sum(Acc_VoucherDetails.N_Amount),0) as X_Balance,Acc_MastLedger.X_LedgerCode,isnull(Acc_MastLedger.X_LedgerName,'') as X_LedgerName from Acc_MastLedger left outer  join Acc_VoucherDetails on Acc_VoucherDetails.N_LedgerID = Acc_MastLedger.N_LedgerID and Acc_VoucherDetails.N_CompanyID=Acc_MastLedger.N_CompanyID and Acc_MastLedger.N_FnYearID=Acc_VoucherDetails.N_FnYearID Where Acc_MastLedger.N_CompanyID=@p1 and Acc_MastLedger.X_LedgerCode=@p3 AND Acc_MastLedger.N_FnYearID=@p2 group by Acc_MastLedger.X_LedgerName,Acc_MastLedger.X_LedgerCode";
+            sqlCommandText="Select isnull(Sum(Acc_VoucherDetails.N_Amount),0) as X_Balance,Acc_MastLedger.N_LedgerID,Acc_MastLedger.X_LedgerCode,isnull(Acc_MastLedger.X_LedgerName,'') as X_LedgerName,Acc_MastLedger.N_TransBehavID from Acc_MastLedger left outer  join Acc_VoucherDetails on Acc_VoucherDetails.N_LedgerID = Acc_MastLedger.N_LedgerID and Acc_VoucherDetails.N_CompanyID=Acc_MastLedger.N_CompanyID and Acc_MastLedger.N_FnYearID=Acc_VoucherDetails.N_FnYearID Where Acc_MastLedger.N_CompanyID=@p1 and Acc_MastLedger.N_LedgerID=@p3 AND Acc_MastLedger.N_FnYearID=@p2 group by Acc_MastLedger.X_LedgerName,Acc_MastLedger.N_LedgerID,Acc_MastLedger.X_LedgerCode,Acc_MastLedger.N_TransBehavID";
                 
             try{
                     using (SqlConnection connection = new SqlConnection(connectionString))

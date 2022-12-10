@@ -214,7 +214,8 @@ namespace SmartxAPI.Controllers
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     DateTime dtpModDate = Convert.ToDateTime(MasterTable.Rows[0]["d_ModifiedDate"].ToString());
-
+                    string X_VacType=(MasterRow["X_VacType"].ToString());
+              
                     string x_VacCode = MasterRow["X_VacCode"].ToString();
                     var values = MasterTable.Rows[0]["X_VacCode"].ToString();
                     if (n_VacTypeID > 0)
@@ -223,29 +224,21 @@ namespace SmartxAPI.Controllers
                         object objVacationStarted;
                         MasterTable.Columns.Remove("n_FnYearId");
 
-                        object LastProcessed = null;
-                        LastProcessed = dLayer.ExecuteScalar("select 1 From Pay_VacationDetails Where N_VacTypeID= " + n_VacTypeID + " and N_CompanyID= " + N_CompanyID, connection, transaction);
-                        if (LastProcessed != null)
-                        {
-                            DateTime DtpDate = Convert.ToDateTime(dLayer.ExecuteScalar("select MAX(D_VacSanctionDate) FRom Pay_VacationDetails Where N_VacTypeID= " + n_VacTypeID + " and N_CompanyID= " + N_CompanyID, connection, transaction));
-                            var ProcessDate = DtpDate;
-                            var Moddate = dtpModDate;
-                            if (Moddate < ProcessDate)
-                            {
+                        // object LastProcessed = null;
+                        // LastProcessed = dLayer.ExecuteScalar("select 1 From Pay_VacationDetails Where N_VacTypeID= " + n_VacTypeID + " and N_CompanyID= " + N_CompanyID, connection, transaction);
+                        // if (LastProcessed != null)
+                        // {
+                        //     DateTime DtpDate = Convert.ToDateTime(dLayer.ExecuteScalar("select MAX(D_VacSanctionDate) FRom Pay_VacationDetails Where N_VacTypeID= " + n_VacTypeID + " and N_CompanyID= " + N_CompanyID, connection, transaction));
+                        //     var ProcessDate = DtpDate;
+                        //     var Moddate = dtpModDate;
+                        //     if (Moddate < ProcessDate)
+                        //     {
+                        //          return Ok(_api.Error(User,"Cannot save by this Date!!!!!!"));
 
-                                 return Ok(_api.Error(User,"Cannot save by this Date!!!!!!"));
+                        //     }
+                        // }
 
-                            }
-
-
-                        }
-
-
-                        dLayer.DeleteData("Pay_VacationTypeDetails", "N_VacTypeID", n_VacTypeID, "", connection, transaction);
-                        // dLayer.DeleteData("Pay_VacationType", "N_VacTypeID", n_VacTypeID, "", connection, transaction);
-                      
-
-
+                        dLayer.DeleteData("Pay_VacationTypeDetails", "N_VacTypeID", n_VacTypeID, " N_CompanyID=" +N_CompanyID+"", connection, transaction);
                     }
                     if (x_VacCode == "@Auto")
                     {
@@ -261,10 +254,11 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_VacCode"] = x_VacCode;
                         MasterTable.Columns.Remove("n_FnYearId");
                     }
-                    string DupCriteria = "N_companyID=" + N_CompanyID + " And x_VacCode = '" + values + "' and N_CountryID="+N_CountryID+"";
+                    //string DupCriteria = "N_companyID=" + N_CompanyID + " And x_VacCode = '" + values + "' and N_CountryID="+N_CountryID+"";
+                     string DupCriteria = "N_CompanyID=" + N_CompanyID + " and N_CountryID =" +N_CountryID+ " and (X_VacType='" +X_VacType + "' or X_VacCode='" + values + "') ";
 
 
-                    n_VacTypeID = dLayer.SaveData("Pay_VacationType", "n_VacTypeID", DupCriteria, "", MasterTable, connection, transaction);
+                    n_VacTypeID = dLayer.SaveData("Pay_VacationType", "n_VacTypeID", DupCriteria,"N_CompanyID=" +N_CompanyID+" and N_CountryID = "+N_CountryID+"", MasterTable, connection, transaction);
                     if (n_VacTypeID <= 0)
                     {
                         transaction.Rollback();
