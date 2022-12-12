@@ -60,6 +60,8 @@ namespace SmartxAPI.Controllers
               
 
             DateTime date = DateTime.Today;
+
+            
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnyearID);
             Params.Add("@p3", nEmpID);
