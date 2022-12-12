@@ -360,11 +360,22 @@ namespace SmartxAPI.Controllers
 
                             N_InvoiceDueAmt = myFunctions.getVAL(dr["N_Amount"].ToString()) + myFunctions.getVAL(dr["N_BalanceAmount"].ToString()) + myFunctions.getVAL(dr["N_DiscountAmt"].ToString());
                             N_TotalDueAmt += N_InvoiceDueAmt;
+                            
+                             if( xInvoiceNo!=null)
+                             {
+                                if (N_InvoiceDueAmt == 0 && dr["X_Type"].ToString()== "OP"  )
+                               { 
+                                    dr.Delete();
+                               }
+                             }
+                             else if(  xInvoiceNo==null)
+                             {
+                                 if (N_InvoiceDueAmt == 0  )
+                               { 
+                                    dr.Delete();
+                               }
 
-                            if (N_InvoiceDueAmt == 0)
-                            {
-                                dr.Delete();
-                            }
+                             }
                             else if (n_PayReceiptId > 0)
                              {
                                 if(dr["N_PayreceiptID"].ToString()=="")

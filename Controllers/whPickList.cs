@@ -270,6 +270,15 @@ namespace SmartxAPI.Controllers
                         DetailSql = "select * from vw_WhPickupListDetails where N_CompanyID=@nCompanyID and N_PickID=@nPickListID ";
                     else
                         DetailSql = "select * from vw_WhPickListDetails where N_CompanyID=@nCompanyID and N_PickListID=@nPickListID ";
+                   
+                    object Count = dLayer.ExecuteScalar("select count(*)  from Inv_TransferStock where N_CompanyID=@nCompanyID and N_PickListID ="+myFunctions.getIntVAL(MasterTable.Rows[0]["n_PickListID"].ToString())+" ", Params, connection);
+                    if(myFunctions.getIntVAL(Count.ToString())>0)
+                    {
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_productTransfered", typeof(double), 0);
+                    MasterTable.Rows[0]["n_productTransfered"] = 1;
+                    }
+                   
+
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(MasterTable);

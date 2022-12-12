@@ -1253,6 +1253,12 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                    using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                    {
+                  
+                    olivoCon.Open();
+                   
+                    SqlTransaction olivoTxn = olivoCon.BeginTransaction();
                     SortedList Params = new SortedList();
                     SortedList QueryParams = new SortedList();
 
@@ -1313,6 +1319,15 @@ namespace SmartxAPI.Controllers
 
 
                     }
+                    // object nEmpLimit =dLayer.ExecuteScalar("select isnull(N_Value,0) from GenSettings where N_ClientID="+myFunctions.GetClientID(User)+" and X_Description='EMPLOYEE LIMIT' ", olivoCon, olivoTxn);
+                    //       if(nEmpLimit==null){nEmpLimit="0";}
+                    //     object nEmpCount = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Users where N_ClientID="+myFunctions.GetClientID(User)+" and N_UserType=1", Params, olivoCon, olivoTxn);
+                    //      if(nEmpID==0)
+                    //         if (myFunctions.getIntVAL(nEmpLimit.ToString()) <= myFunctions.getIntVAL(nEmpCount.ToString()))
+                    //         {
+                    //             return Ok(_api.Warning("Employee limit exeeded !!"));
+                    //         }
+                    
                     // Auto Gen
                     if (xEmpCode == "@Auto")
                     {
@@ -1648,10 +1663,10 @@ namespace SmartxAPI.Controllers
                         string xEmail = dtMasterTable.Rows[0]["X_EmailID"].ToString();
                         if (xEmail != "")
                         {
-                            using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
-                            {
-                                olivoCon.Open();
-                                SqlTransaction olivoTxn = olivoCon.BeginTransaction();
+                            // using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                            // {
+                            //     olivoCon.Open();
+                            //     SqlTransaction olivoTxn = olivoCon.BeginTransaction();
                                 string Pwd = myFunctions.EncryptString(xEmail);
                                 int nClientID = myFunctions.GetClientID(User);
                                 object glogalUserID = dLayer.ExecuteScalar("SELECT N_UserID FROM Users where x_EmailID='" + xEmail.ToString() + "' and N_ClientID=" + nClientID, olivoCon, olivoTxn);
@@ -1745,7 +1760,7 @@ namespace SmartxAPI.Controllers
                                         }
                                     }
                                 }
-                            }
+                            // }
                         }
 
                         //ATTACHMENT SAVING
@@ -1755,6 +1770,7 @@ namespace SmartxAPI.Controllers
                         transaction.Commit();
                         return Ok(value: _api.Success("Employee Information Saved"));
                     }
+                }
                 }
             }
             catch (Exception ex)

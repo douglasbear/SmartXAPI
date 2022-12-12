@@ -176,7 +176,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetDeliveryNoteDetails(int nFnYearId, bool bAllBranchData, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nProformaID, int nPickListID, string xSalesOrderID)
+        public ActionResult GetDeliveryNoteDetails(int nFnYearId, bool bAllBranchData, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nProformaID, int nPickListID, string xSalesOrderID,int nTransferId)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             try
@@ -219,7 +219,7 @@ namespace SmartxAPI.Controllers
                          string RentalSql ="";
                         if (nSalesOrderID > 0)
                         {
-                                                 QueryParamsList.Add("@nSalesorderID", nSalesOrderID);
+                        QueryParamsList.Add("@nSalesorderID", nSalesOrderID);
                         Mastersql = "select * from vw_SalesOrdertoDeliveryNote where N_CompanyId=@nCompanyID and N_SalesOrderId=@nSalesorderID";
                         MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -349,7 +349,9 @@ namespace SmartxAPI.Controllers
                     }
                     else if (nPickListID > 0)
                     {
-                        QueryParamsList.Add("@nPickListID", nPickListID);
+                         QueryParamsList.Add("@nPickListID", nPickListID);
+                       
+                       
                         string Mastersql = "select N_CompanyID,N_FnYearID,0 as N_DeliveryNoteId,'@Auto' as X_ReceiptNo,GETDATE() as D_DeliveryDate,GETDATE() as D_EntryDate,N_CustomerId,X_CustomerName,0 as B_BiginingBalEntry,0 as N_DeliveryType,N_LocationID,'DELIVERY' as X_TransType,0 as B_IsSaveDraft,X_LocationName from vw_WhPickListMaster where N_CompanyId=@nCompanyID and N_PickListID=@nPickListID";
                         DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -357,12 +359,27 @@ namespace SmartxAPI.Controllers
                         string DetailSql = "";
                         DetailSql = "select N_CompanyID,0 as N_DeliveryNoteID,0 as N_DeliveryNoteDetailsID,0 as N_SalesQuotationID,N_ItemID,X_ItemName,X_ItemCode,X_BatchCode,D_ExpiryDate,N_ItemUnitID,X_ItemUnit,N_Qty,N_Qty, N_QtyDisplay,0 as N_Sprice,0 as N_IteDiscAmt,2 as N_ClassID,N_Qty as n_QtyDisplay,0 as N_Cost,N_LocationID,X_CustomerSKU,X_Temperature,X_Dimesnsion from vw_WhPickListDetails where N_CompanyId=@nCompanyID and N_PickListID=@nPickListID";
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
-
                         DetailTable = _api.Format(DetailTable, "Details");
                         dsSalesInvoice.Tables.Add(MasterTable);
                         dsSalesInvoice.Tables.Add(DetailTable);
+                                             
                         return Ok(_api.Success(dsSalesInvoice));
                     }
+                    else if(nTransferId>0)
+                        {
+                        QueryParamsList.Add("@nTransferId", nTransferId);
+                        string Mastersql = "select N_CompanyID,N_FnYearID,0 as N_DeliveryNoteId,'@Auto' as X_ReceiptNo,GETDATE() as D_DeliveryDate,GETDATE() as D_EntryDate,N_CustomerId,X_CustomerName,0 as B_BiginingBalEntry,0 as N_DeliveryType,'DELIVERY' as X_TransType,0 as B_IsSaveDraft from vw_ProductTransferToDeliveryNoteMaster where N_CompanyId=@nCompanyID and N_TransferId=@nTransferId";
+                        DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
+                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                        MasterTable = _api.Format(MasterTable, "Master");
+                        string DetailSql = "";
+                        DetailSql = "select N_CompanyID,0 as N_DeliveryNoteID,0 as N_DeliveryNoteDetailsID,0 as N_SalesQuotationID,N_ItemID,description AS X_ItemName,X_BatchCode,D_ExpiryDate,N_ItemUnitID,X_ItemUnit,0 as N_Sprice,0 as N_IteDiscAmt,2 as N_ClassID,N_Qty,N_AvlQty AS N_QtyDisplay,0 as N_Cost,N_LocationIDTo AS N_LocationID ,X_Temperature,X_CustomerSKU,X_Dimesnsion,N_Stock,X_LocationName from vw_ProductTransferToDeliveryNote where N_CompanyId=@nCompanyID and N_TransferId=@nTransferId";
+                        DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+                         DetailTable = _api.Format(DetailTable, "Details");
+                        dsSalesInvoice.Tables.Add(MasterTable);
+                        dsSalesInvoice.Tables.Add(DetailTable);
+                        return Ok(_api.Success(dsSalesInvoice));
+                        }
                     else
                     {
                         QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);
@@ -598,6 +615,25 @@ namespace SmartxAPI.Controllers
                     //Saving Signature
 
                     N_DeliveryNoteID = dLayer.SaveData("Inv_DeliveryNote", "N_DeliveryNoteId", MasterTable, connection, transaction);
+
+
+                    if(N_DeliveryNoteID>0)
+                    {
+                             SortedList statusParams = new SortedList();
+                             statusParams.Add("@N_CompanyID", N_CompanyID);
+                             statusParams.Add("@N_TransID", N_DeliveryNoteID);
+                             statusParams.Add("@N_FormID", 884);
+                             statusParams.Add("@N_ForceUpdate", 1);  
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_TxnStatusUpdate", statusParams, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
+                    }
 
                     if (SigEnable)
                     {
