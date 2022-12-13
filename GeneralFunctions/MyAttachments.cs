@@ -170,11 +170,7 @@ namespace SmartxAPI.GeneralFunctions
                             }
                             else
                             {
-<<<<<<< HEAD
                                 object obj1 = dLayer.ExecuteScalar("select isnull(N_ReminderID,'') from DMS_MasterFiles Where N_AttachmentID = '" + N_AttachmentID + "' and N_CompanyID = " + nCompanyID, connection, transaction);
-=======
-                                object obj1 = dLayer.ExecuteScalar("select N_ReminderID from DMS_MasterFiles Where N_AttachmentID = '" + N_AttachmentID + "' and N_CompanyID = " + nCompanyID, connection, transaction);
->>>>>>> 6d7f27e813a8453980cb4978a9258dc2a250c5c3
                                 if (obj1.ToString() != "" && ExpiryDate != "")
                                 {
                                     dLayer.ExecuteNonQuery("update Gen_Reminder set D_ExpiryDate = '" + Convert.ToDateTime(ExpiryDate).ToString("dd/MMM/yyyy") + "' ,N_RemCategoryID=" + N_remCategory + " where N_ReminderID=" + myFunctions.getIntVAL(obj1.ToString()) + " and N_CompanyID=" + nCompanyID, connection, transaction);
@@ -373,17 +369,10 @@ namespace SmartxAPI.GeneralFunctions
                    // int ReminderId =myReminder.ReminderSet(dLayer,settingsId, partyID, strExpireDate,FormID, nUserID,  User,  connection,transaction);
                     dLayer.ExecuteNonQuery("update DMS_MasterFiles set N_ReminderID=" + ReminderId + " where N_FileID=" + FileID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                 }
-<<<<<<< HEAD
                 else{
                   ReminderId = ReminderSave(dLayer, FormID, partyID, strExpireDate, subject, filename, remCategoryId, 1, settingsId, User, transaction, connection);
                 dLayer.ExecuteNonQuery("insert into DMS_MasterFiles(N_CompanyID,N_FileID,X_FileCode,X_Name,X_Title,X_Contents,N_FolderID,N_UserID,X_refName,N_AttachmentID,N_FormID,N_TransID,N_ReminderID)values(" + nCompanyID + "," + FileID + ",'" + filecode + "','" + filename + "','" + category + "','" + subject + "'," + folderId + "," + nUserID + ",'" + refname + "'," + attachID + "," + FormID + "," + transId +","+ReminderId+ ")", connection, transaction);
                 }// System.IO.File.Copy(sourcepath, destpath + refname, overwriteexisting);
-=======
-                else
-                  ReminderId = ReminderSave(dLayer, FormID, partyID, strExpireDate, subject, filename, remCategoryId, 1, settingsId, User, transaction, connection);
-                dLayer.ExecuteNonQuery("insert into DMS_MasterFiles(N_CompanyID,N_FileID,X_FileCode,X_Name,X_Title,X_Contents,N_FolderID,N_UserID,X_refName,N_AttachmentID,N_FormID,N_TransID)values(" + nCompanyID + "," + FileID + ",'" + filecode + "','" + filename + "','" + category + "','" + subject + "'," + folderId + "," + nUserID + ",'" + refname + "'," + attachID + "," + FormID + "," + transId + ")", connection, transaction);
-                // System.IO.File.Copy(sourcepath, destpath + refname, overwriteexisting);
->>>>>>> 6d7f27e813a8453980cb4978a9258dc2a250c5c3
 
                 var base64Data = Regex.Match(fileData.ToString(), @"data:(?<type>.+?);base64,(?<data>.+)").Groups["data"].Value;
                 byte[] FileBytes = Convert.FromBase64String(base64Data);
