@@ -39,7 +39,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetSalesInvoiceList(int nFnYearId, int nPage, bool bAllBranchData, int nBranchID, int n_LocationID, int nSizeperpage, string xSearchkey, string xSortBy, string screen, int nCustomerID,int nFormID)
+        public ActionResult GetSalesInvoiceList(int nFnYearId, int nPage, bool bAllBranchData, int nBranchID, int n_LocationID, int nSizeperpage, string xSearchkey, string xSortBy, string screen, int nCustomerID,int nFormID, bool showStockInlist)
         {
             try
             {
@@ -61,6 +61,7 @@ namespace SmartxAPI.Controllers
                     int nUserID = myFunctions.GetUserID(User);
                     string Pattern = "";
                     string formIDCndn = "";
+                  
                     if(nFormID>0)
                     {
                         if(nFormID==64)
