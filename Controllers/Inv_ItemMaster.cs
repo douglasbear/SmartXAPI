@@ -211,15 +211,7 @@ namespace SmartxAPI.Controllers
                 // SortedList Result = new SortedList();
                 // Result.Add("details", dt);
                 // Result.Add("qry", query);
-
-                // // if (dt.Rows.Count == 0)
-                // // {
-                // //     return Ok(_api.Warning("No Results Found"));
-                // // }
-                // // else
-                // // {
-                //     return Ok(_api.Success(Result));
-                // // }
+                // return Ok(_api.Success(Result));
 
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
