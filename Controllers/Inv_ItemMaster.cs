@@ -51,7 +51,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial, int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID, bool b_Asn, int nPriceListID, bool isSalesItems, bool isRentalItem, bool rentalItems, bool purchaseRentalItems)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial, int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID, bool b_Asn, int nPriceListID, bool isSalesItems, bool isRentalItem, bool rentalItems, bool purchaseRentalItems,bool showStockInlist)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -70,8 +70,11 @@ namespace SmartxAPI.Controllers
             string xOrder = "";
             string xOrderNew = "";
             //nItemUsedFor -> 1-Purchase, 2-Sales, 3-Both, 4-Raw Material
-
-
+             string showStock="";
+             if(showStockInlist)
+             {
+                showStock= "dbo.SP_GenGetStock(vw_InvItem_Search_cloud.N_ItemID," + nLocationID + ",'', 'location') As N_AvlStock,";
+             }
 
             if (b_whGrn == true && n_CustomerID > 0)
             {
@@ -151,7 +154,7 @@ namespace SmartxAPI.Controllers
 
             // string sqlComandText = " * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
 
-            string sqlComandText = "  vw_InvItem_Search_cloud.*,dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID,vw_InvItem_Search_cloud.N_CompanyID) as N_SellingPrice,dbo.SP_GenGetStock(vw_InvItem_Search_cloud.N_ItemID," + nLocationID + ",'', 'location') As N_AvlStock,Inv_ItemUnit.N_SellingPrice as N_SellingPrice2 FROM vw_InvItem_Search_cloud LEFT OUTER JOIN " +
+            string sqlComandText = "  vw_InvItem_Search_cloud.*,"+showStock+" dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID,vw_InvItem_Search_cloud.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_SellingPrice2 FROM vw_InvItem_Search_cloud LEFT OUTER JOIN " +
              " Inv_ItemUnit ON vw_InvItem_Search_cloud.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search_cloud.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search_cloud.N_CompanyID=@p1 and vw_InvItem_Search_cloud.B_Inactive=@p2 and vw_InvItem_Search_cloud.[Item Code]<> @p3 and vw_InvItem_Search_cloud.N_ItemTypeID<>@p4  and vw_InvItem_Search_cloud.N_ItemID=Inv_ItemUnit.N_ItemID and  vw_InvItem_Search_cloud.N_ClassID!=6 " + ownAssent + RentalItem + RentalPOItem + qry + Category + Condition + itemTypeCondition + warehouseSql + priceListCondition;
 
 
@@ -1428,7 +1431,7 @@ namespace SmartxAPI.Controllers
         // }
 
         [HttpGet("costAndStock")]
-        public ActionResult GetCostAndStock(int nItemID, int nLocationID, string xBatch, DateTime dDate)
+        public ActionResult GetCostAndStock(int nItemID, int nLocationID, string xBatch, DateTime dDate,int nCustomerID)
         {
             DataTable dt = new DataTable();
             string sqlCommandText = "";
@@ -1450,8 +1453,16 @@ namespace SmartxAPI.Controllers
                         else
                             sqlCommandText = "Select vw_InvItem_Search.N_ItemID,dbo.SP_GenGetStockByDate(vw_InvItem_Search.N_ItemID," + nLocationID + ",'" + xBatch + "', 'location','" + myFunctions.getDateVAL(dDate) + "')As N_AvlStock ,dbo.SP_LastPCost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID," + nLocationID + ") As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where N_ItemID=" + nItemID + " and N_CompanyID=" + nCompanyID + " and ISNULL(N_ItemTypeID,0)=0";
                     }
+                  
+
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, connection);
+                      dt = myFunctions.AddNewColumnToDataTable(dt, "N_LastSoldPrice", typeof(double), 0);
+                    object lastSoldPrice=dLayer.ExecuteScalar("select top 1 N_Sprice from vw_Inv_CustomerTransactionByItem where N_CompanyID="+nCompanyID+" and  N_ItemID="+nItemID+" and N_CustomerID="+nCustomerID+" and X_Type='SALES' order by D_SalesDate,N_SalesId desc",connection);
+                    if(lastSoldPrice!=null)
+                    {
+                        dt.Rows[0]["N_LastSoldPrice"]=myFunctions.getVAL(lastSoldPrice.ToString());
+                    }
 
                 }
                 dt = _api.Format(dt);
