@@ -340,7 +340,11 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                             
                         transaction.Commit();
                     }
-                    return Ok(_api.Success("Adjustment saved" + ":" + N_AdjustmentID));
+                       SortedList Result = new SortedList();
+                       Result.Add("AdjustmentNo", AdjustmentNo);
+                       Result.Add("N_AdjustmentID", N_AdjustmentID);
+               
+                    return Ok(_api.Success(Result,"Adjustment saved" + ":" + N_AdjustmentID));
                 }
             }
             catch (Exception ex)

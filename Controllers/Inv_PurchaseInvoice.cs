@@ -351,7 +351,7 @@ namespace SmartxAPI.Controllers
                     if (nPurchaseNO != null)
                     {
                         if (B_MRNVisible)
-                            X_DetailsSql = "SELECT vw_InvPurchaseDetails.*,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID, vw_InvPurchaseDetails.N_CompanyID) AS N_UnitSPrice,Inv_MRN.B_IsDirectMRN, Inv_MRNDetails.N_MRNDetailsID FROM vw_InvPurchaseDetails LEFT OUTER JOIN Inv_MRNDetails ON vw_InvPurchaseDetails.N_CompanyID = Inv_MRNDetails.N_CompanyID AND  vw_InvPurchaseDetails.N_PurchaseDetailsID = Inv_MRNDetails.N_PurchaseDetailsID LEFT OUTER JOIN Inv_PurchaseOrder ON vw_InvPurchaseDetails.N_POrderID = Inv_PurchaseOrder.N_POrderID LEFT OUTER JOIN Inv_MRN ON vw_InvPurchaseDetails.N_RsID = Inv_MRN.N_MRNID  Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID=" + N_PurchaseID + (showAllBranch ? "" : " and vw_InvPurchaseDetails.N_BranchId=@BranchID");
+                            X_DetailsSql = "SELECT vw_InvPurchaseDetails.*,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID, vw_InvPurchaseDetails.N_CompanyID) AS N_UnitSPrice,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID, vw_InvPurchaseDetails.N_CompanyID) AS N_SPrice, Inv_MRN.B_IsDirectMRN, Inv_MRNDetails.N_MRNDetailsID FROM vw_InvPurchaseDetails LEFT OUTER JOIN Inv_MRNDetails ON vw_InvPurchaseDetails.N_CompanyID = Inv_MRNDetails.N_CompanyID AND  vw_InvPurchaseDetails.N_PurchaseDetailsID = Inv_MRNDetails.N_PurchaseDetailsID LEFT OUTER JOIN Inv_PurchaseOrder ON vw_InvPurchaseDetails.N_POrderID = Inv_PurchaseOrder.N_POrderID LEFT OUTER JOIN Inv_MRN ON vw_InvPurchaseDetails.N_RsID = Inv_MRN.N_MRNID  Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID=" + N_PurchaseID + (showAllBranch ? "" : " and vw_InvPurchaseDetails.N_BranchId=@BranchID");
                         else
                             X_DetailsSql = "SELECT vw_InvPurchaseDetails.*, Inv_PurchaseOrder.X_POrderNo, dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID, vw_InvPurchaseDetails.N_CompanyID, '') AS N_UnitLPrice,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID, vw_InvPurchaseDetails.N_CompanyID) AS N_UnitSPrice, Inv_MRNDetails.N_MRNDetailsID FROM vw_InvPurchaseDetails LEFT OUTER JOIN Inv_MRNDetails ON vw_InvPurchaseDetails.N_CompanyID = Inv_MRNDetails.N_CompanyID AND vw_InvPurchaseDetails.N_PurchaseDetailsID = Inv_MRNDetails.N_PurchaseDetailsID LEFT OUTER JOIN Inv_PurchaseOrder ON vw_InvPurchaseDetails.N_POrderID = Inv_PurchaseOrder.N_POrderID Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID=" + N_PurchaseID + (showAllBranch ? "" : " and vw_InvPurchaseDetails.N_BranchId=@BranchID");
                     }
@@ -365,11 +365,11 @@ namespace SmartxAPI.Controllers
 
                         int EnableInvoicebasedtax = myFunctions.getIntVAL(myFunctions.ReturnSettings("65", "EnableInvoicebasedtax", "N_Value", nCompanyID, dLayer, connection));
                         if (N_POrderID > 0 || EnableInvoicebasedtax == 1)
-                            X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID) As N_UnitSPrice,N_MRNID AS N_RsID   from vw_InvMRNDetails Where N_CompanyID=@CompanyID and N_MRNID=" + n_MRNID;
+                            X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID) As N_UnitSPrice,dbo.SP_SellingPrice(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID) As N_SPrice,N_MRNID AS N_RsID   from vw_InvMRNDetails Where N_CompanyID=@CompanyID and N_MRNID=" + n_MRNID;
                         else
                         {
 
-                            X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_UnitSPrice,N_MRNID AS N_RsID   from vw_InvMRNDetailsDirect Where N_CompanyID=@CompanyID and N_MRNID=" + n_MRNID;
+                            X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_SPrice,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_UnitSPrice,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_SPrice, N_MRNID AS N_RsID   from vw_InvMRNDetailsDirect Where N_CompanyID=@CompanyID and N_MRNID=" + n_MRNID;
 
                         }
 
@@ -380,7 +380,7 @@ namespace SmartxAPI.Controllers
                     }
                     //multiple GRN From Invoice
                     if (multipleGrnNo != null && multipleGrnNo != "")
-                        X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_UnitSPrice,N_MrnID AS N_RsID  from vw_InvMRNDetailsDirect Where N_CompanyID=@CompanyID and N_MRNID in (" + multipleGrnNo + ")";
+                        X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_UnitSPrice,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_SPrice,N_MrnID AS N_RsID  from vw_InvMRNDetailsDirect Where N_CompanyID=@CompanyID and N_MRNID in (" + multipleGrnNo + ")";
 
                     dtPurchaseInvoiceDetails = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
 
@@ -1337,18 +1337,8 @@ namespace SmartxAPI.Controllers
                                     {"B_MRNVisible",(B_isDirectMRN && B_MRNVisible) ?"1":"0"}};
                             //{"B_MRNVisible",n_MRNID>0?"1":"0"}};
                             DataTable DetailTable = dLayer.ExecuteDataTable("select N_POrderID from Inv_PurchaseDetails where N_CompanyID=@nCompanyID and N_PurchaseID=@nTransID group by N_POrderID order by N_POrderID", ParamList, connection, transaction);
-                            
-                            try
-                            {
+                    
                             Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
-                            }
-                           catch (Exception ex)
-                        {
-                      
-                                transaction.Rollback();
-                                 return Ok(_api.Error(User, ex));
-                             
-                        }
                             if (Results <= 0)
                             {
                                 transaction.Rollback();

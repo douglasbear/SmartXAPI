@@ -100,7 +100,14 @@ namespace SmartxAPI.GeneralFunctions
                         // Result = 0;
 
                         path = DocumentsFolder + "\\" + payCode;  //+ "\\" + txtVendorCode.Text.Trim();
+                        if(N_AttachmentID<=0)
+                        {
                         N_AttachmentID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select  Isnull(max(N_AttachmentID),0)+1 from Dms_ScreenAttachments", connection, transaction).ToString());
+                       
+                        }
+                        else                        
+                        N_AttachmentID=N_AttachmentID + 1;
+
                         if (dsAttachment.Rows[i]["N_AttachmentID"].ToString() != "" && dsAttachment.Rows[i]["N_AttachmentID"].ToString() != "0")
                         {
                             if (FormID == 113)
@@ -163,17 +170,19 @@ namespace SmartxAPI.GeneralFunctions
                             }
                             else
                             {
-                                object obj1 = dLayer.ExecuteScalar("select N_ReminderID from DMS_MasterFiles Where X_refName = '" + Path.GetFileName(dsAttachment.Rows[i]["X_refName"].ToString()) + "' and N_CompanyID = " + nCompanyID, connection, transaction);
+                                object obj1 = dLayer.ExecuteScalar("select isnull(N_ReminderID,'') from DMS_MasterFiles Where N_AttachmentID = '" + N_AttachmentID + "' and N_CompanyID = " + nCompanyID, connection, transaction);
                                 if (obj1.ToString() != "" && ExpiryDate != "")
                                 {
                                     dLayer.ExecuteNonQuery("update Gen_Reminder set D_ExpiryDate = '" + Convert.ToDateTime(ExpiryDate).ToString("dd/MMM/yyyy") + "' ,N_RemCategoryID=" + N_remCategory + " where N_ReminderID=" + myFunctions.getIntVAL(obj1.ToString()) + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                                    //dLayer.ExecuteNonQuery("update DMS_MasterFiles set D_ExpiryDate = '" + Convert.ToDateTime(ExpiryDate).ToString("dd/MMM/yyyy") + "' ,N_CategoryID=" + N_remCategory + " where N_ReminderID=" + myFunctions.getIntVAL(obj1.ToString()) + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                         
                                 }
                                 else
                                 {
                                     if (ExpiryDate != "")
                                     {
-                                        // int ReminderId = myReminders.ReminderSave(dba1, FormID, partyId, ExpiryDate, dsAttachment.Rows[i]["X_Subject"].ToString(), dsAttachment.Rows[i]["X_Filename"].ToString(), N_remCategory, 1, 0);
-                                        // dLayer.ExecuteNonQuery("update DMS_MasterFiles set N_ReminderID=" + ReminderId + " where X_refName='" + Path.GetFileName(dsAttachment.Rows[i]["X_refName"].ToString()) + "' and N_CompanyID=" + nCompanyID, "TEXT", new DataTable());
+                                    //   int ReminderId = myReminders.ReminderSave(dba1, FormID, partyId, ExpiryDate, dsAttachment.Rows[i]["X_Subject"].ToString(), dsAttachment.Rows[i]["X_Filename"].ToString(), N_remCategory, 1, 0);
+                                    //   dLayer.ExecuteNonQuery("update DMS_MasterFiles set N_ReminderID=" + ReminderId + " where X_refName='" + Path.GetFileName(dsAttachment.Rows[i]["X_refName"].ToString()) + "' and N_CompanyID=" + nCompanyID, "TEXT", new DataTable());
                                     }
                                 }
                             }
@@ -352,16 +361,18 @@ namespace SmartxAPI.GeneralFunctions
                 //  FileInfo flinfo = new FileInfo(fls);
                 string extension = System.IO.Path.GetExtension(filename);
                 string refname = filecode + extension;
+                int ReminderId = 0 ;
                 if (strExpireDate != "")
                 {
                     dLayer.ExecuteNonQuery("insert into DMS_MasterFiles(N_CompanyID,N_FileID,X_FileCode,X_Name,X_Title,X_Contents,N_FolderID,N_UserID,X_refName,N_AttachmentID,N_FormID,D_ExpiryDate,N_CategoryID,N_TransID)values(" + nCompanyID + "," + FileID + ",'" + filecode + "','" + filename + "','" + category + "','" + subject + "'," + folderId + "," + nUserID + ",'" + refname + "'," + attachID + "," + FormID + ",'" + dtExpire.ToString("dd/MMM/yyyy") + "'," + remCategoryId + "," + transId + ")", connection, transaction);
-                    int ReminderId = ReminderSave(dLayer, FormID, partyID, strExpireDate, subject, filename, remCategoryId, 1, settingsId, User, transaction, connection);
+                     ReminderId = ReminderSave(dLayer, FormID, partyID, strExpireDate, subject, filename, remCategoryId, 1, settingsId, User, transaction, connection);
                    // int ReminderId =myReminder.ReminderSet(dLayer,settingsId, partyID, strExpireDate,FormID, nUserID,  User,  connection,transaction);
                     dLayer.ExecuteNonQuery("update DMS_MasterFiles set N_ReminderID=" + ReminderId + " where N_FileID=" + FileID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                 }
-                else
-                    dLayer.ExecuteNonQuery("insert into DMS_MasterFiles(N_CompanyID,N_FileID,X_FileCode,X_Name,X_Title,X_Contents,N_FolderID,N_UserID,X_refName,N_AttachmentID,N_FormID,N_TransID)values(" + nCompanyID + "," + FileID + ",'" + filecode + "','" + filename + "','" + category + "','" + subject + "'," + folderId + "," + nUserID + ",'" + refname + "'," + attachID + "," + FormID + "," + transId + ")", connection, transaction);
-                // System.IO.File.Copy(sourcepath, destpath + refname, overwriteexisting);
+                else{
+                  ReminderId = ReminderSave(dLayer, FormID, partyID, strExpireDate, subject, filename, remCategoryId, 1, settingsId, User, transaction, connection);
+                dLayer.ExecuteNonQuery("insert into DMS_MasterFiles(N_CompanyID,N_FileID,X_FileCode,X_Name,X_Title,X_Contents,N_FolderID,N_UserID,X_refName,N_AttachmentID,N_FormID,N_TransID,N_ReminderID)values(" + nCompanyID + "," + FileID + ",'" + filecode + "','" + filename + "','" + category + "','" + subject + "'," + folderId + "," + nUserID + ",'" + refname + "'," + attachID + "," + FormID + "," + transId +","+ReminderId+ ")", connection, transaction);
+                }// System.IO.File.Copy(sourcepath, destpath + refname, overwriteexisting);
 
                 var base64Data = Regex.Match(fileData.ToString(), @"data:(?<type>.+?);base64,(?<data>.+)").Groups["data"].Value;
                 byte[] FileBytes = Convert.FromBase64String(base64Data);
@@ -670,4 +681,3 @@ namespace SmartxAPI.GeneralFunctions
 
     }
 }
-

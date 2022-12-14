@@ -79,7 +79,7 @@ namespace SmartxAPI.Controllers
 
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_CustPONo like '%" + xSearchkey + "%' or X_OrderNo like '%" + xSearchkey + "%' or [Invoice Date] like '%" + xSearchkey + "%' or D_DeliveryDate like '%" + xSearchkey + "%')";
+                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_CustPONo like '%" + xSearchkey + "%' or X_OrderNo like '%" + xSearchkey + "%' or [Invoice Date] like '%" + xSearchkey + "%' or D_DeliveryDate like '%" + xSearchkey + "%' or X_ActionStatus like '%" + xSearchkey + "%' )";
 
                     if (bAllBranchData == true)
                     {
@@ -128,7 +128,7 @@ namespace SmartxAPI.Controllers
                         if (Count == 0)
                             sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID,X_ActionName,X_ActionStatus,X_StatusColour,X_ClosingRemarks,X_CustomerName_Ar  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=884 " + Pattern + Searchkey + " " + " group by [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID,X_ActionName,X_ActionStatus,X_StatusColour,X_ClosingRemarks,X_CustomerName_Ar" + xSortBy;
                         else
-                            sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID ,X_ActionName,X_ActionStatus,X_StatusColour,X_ClosingRemarks,X_CustomerName_Ar  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=884 " + Pattern + Searchkey + " and N_DeliveryNoteID not in (select top(" + Count + ") N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=884 " + xSortBy + " ) " + "Group By [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID,X_ActionName,X_ActionStatus,X_StatusColour,X_ClosingRemarks,X_CustomerName_Ar" + xSortBy;
+                            sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID ,X_ActionName,X_ActionStatus,X_StatusColour,X_ClosingRemarks,X_CustomerName_Ar  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=884 " + Pattern + Searchkey + " and N_DeliveryNoteID not in (select top(" + Count + ") N_DeliveryNoteID from Inv_DeliveryNote where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=884 " + xSortBy + " ) " + "Group By [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID,X_ActionName,X_ActionStatus,X_StatusColour,X_ClosingRemarks,X_CustomerName_Ar" + xSortBy;
                     }
                       else if (nFormID==1426)
                     {
