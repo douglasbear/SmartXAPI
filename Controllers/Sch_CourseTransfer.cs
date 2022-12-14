@@ -235,13 +235,11 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     int nFormID = myFunctions.getIntVAL(MasterRow["n_FormID"].ToString());
                     int nCourseTo = myFunctions.getIntVAL(MasterRow["n_CourseTo"].ToString());
+                    int n_CourseFrom = myFunctions.getIntVAL(MasterRow["n_CourseFrom"].ToString());
                     string xTransferCode = MasterRow["x_TransferCode"].ToString();
                     int nInactive = 0;
 
-                    if (nCourseTo == 0) {
-                        nCourseTo = myFunctions.getIntVAL(MasterRow["n_CourseFrom"].ToString());
-                        nInactive = 1;
-                    };
+                    if (nCourseTo == n_CourseFrom) nInactive = 1;
 
                     if (xTransferCode == "@Auto")
                     {

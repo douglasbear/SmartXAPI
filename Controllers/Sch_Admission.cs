@@ -191,6 +191,7 @@ namespace SmartxAPI.Controllers
                 int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationID"].ToString());
                 int nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString());
                 int nUserID = myFunctions.GetUserID(User);
+                 var X_AdmissionNo = MasterTable.Rows[0]["X_AdmissionNo"].ToString();
                 int nAdmID=nAdmissionID;              
 
                 if (MasterTable.Columns.Contains("N_BranchID"))
@@ -396,7 +397,10 @@ namespace SmartxAPI.Controllers
                     }
 
                     transaction.Commit();
-                    return Ok(api.Success("Admission Completed"));
+                    SortedList Result = new SortedList();
+                    Result.Add("N_AdmissionID", nAdmissionID);
+                    Result.Add("X_AdmissionNo", X_AdmissionNo);
+                    return Ok(api.Success(Result,"Admission Completed"));
 
                 }
             }
