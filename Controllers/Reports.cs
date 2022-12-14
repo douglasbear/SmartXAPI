@@ -451,9 +451,9 @@ namespace SmartxAPI.Controllers
                         DateTime currentTime;
                         string x_comments = "";
                         //Local Time Checking
-                        var clientdata = new WebClient();
-                        string content1 = clientdata.DownloadString("http://worldtimeapi.org/api/timezone/Asia/Kolkata");
-                        string datentime=content1.Substring(0, 12);
+                        // var clientdata = new WebClient();
+                        // string content1 = clientdata.DownloadString("http://worldtimeapi.org/api/timezone/Asia/Kolkata");
+                        // string datentime=content1.Substring(0, 12);
 
 
 
