@@ -482,8 +482,11 @@ namespace SmartxAPI.GeneralFunctions
                             QueryParams.Add("@Cost",myFunctions.getVAL(DetailTableCopy.Rows[j]["N_Cost"].ToString()));
                             QueryParams.Add("@nCompanyID",myFunctions.getVAL(DetailTableCopy.Rows[j]["N_CompanyID"].ToString()));
                             QueryParams.Add("@nItemID",myFunctions.getVAL(DetailTableCopy.Rows[j]["N_ItemID"].ToString()));
-                            dLayer.ExecuteNonQuery("Update Inv_ItemMaster Set N_PurchaseCost=@Cost Where N_ItemID=@nItemID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-
+                           // dLayer.ExecuteNonQuery("Update Inv_ItemMaster Set N_PurchaseCost=@Cost Where N_ItemID=@nItemID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                             dLayer.ExecuteScalar("UPDATE Inv_ItemMaster SET Inv_ItemMaster.N_PurchaseCost=LastCost.N_LPrice from Inv_ItemMaster INNER JOIN "+
+	                                                " (select TOP 1 N_CompanyID,N_ItemID,N_LPrice from Inv_StockMaster where X_Type='Purchase' and N_ItemID="+myFunctions.getVAL(DetailTableCopy.Rows[j]["N_ItemID"].ToString())+" "+
+                                                    " AND N_CompanyID= "+ myFunctions.getVAL(DetailTableCopy.Rows[j]["N_CompanyID"].ToString()) +" order by D_DateIn desc ,N_StockID desc) AS LastCost ON Inv_ItemMaster.N_CompanyID=LastCost.N_CompanyID AND "+
+                                                    " Inv_ItemMaster.N_ItemID=LastCost.N_ItemID WHERE Inv_ItemMaster.N_CompanyID="+myFunctions.getVAL(DetailTableCopy.Rows[j]["N_CompanyID"].ToString())+" AND Inv_ItemMaster.N_ItemID= "+myFunctions.getVAL(DetailTableCopy.Rows[j]["N_ItemID"].ToString()), connection, transaction);
 
 
 
@@ -556,6 +559,14 @@ namespace SmartxAPI.GeneralFunctions
                             PostingParam.Add("MRN_Flag", Dir_Purchase==0 ? "1" : "0");
 
                             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
+
+                            for (int j = 0; j < DetailTable.Rows.Count; j++)
+                            {
+                                dLayer.ExecuteScalar("UPDATE Inv_ItemMaster SET Inv_ItemMaster.N_PurchaseCost=LastCost.N_LPrice from Inv_ItemMaster INNER JOIN "+
+                                                " (select TOP 1 N_CompanyID,N_ItemID,N_LPrice from Inv_StockMaster where X_Type='Purchase' and N_ItemID="+myFunctions.getVAL(DetailTable.Rows[j]["N_ItemID"].ToString())+" "+
+                                                " AND N_CompanyID= "+ myFunctions.getVAL(DetailTable.Rows[j]["N_CompanyID"].ToString()) +" order by D_DateIn desc ,N_StockID desc) AS LastCost ON Inv_ItemMaster.N_CompanyID=LastCost.N_CompanyID AND "+
+                                                " Inv_ItemMaster.N_ItemID=LastCost.N_ItemID WHERE Inv_ItemMaster.N_CompanyID="+myFunctions.getVAL(DetailTable.Rows[j]["N_CompanyID"].ToString())+" AND Inv_ItemMaster.N_ItemID= "+myFunctions.getVAL(DetailTable.Rows[j]["N_ItemID"].ToString()), connection, transaction);
+                            }
                         }
                         catch (Exception ex)
                         {
