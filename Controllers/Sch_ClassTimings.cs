@@ -160,6 +160,7 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok("Unable to save");
                     }
+                    dLayer.DeleteData("Sch_ClassTimingsDetails", "N_TimingID", N_TimingID, "", connection, transaction);
                     for (int i = 0; i < Details.Rows.Count; i++)
                     {
                         Details.Rows[i]["N_TimingID"] = N_TimingID;

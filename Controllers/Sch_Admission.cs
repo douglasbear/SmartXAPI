@@ -46,7 +46,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_AdmissionNo like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or X_PFamilyName like '%" + xSearchkey + "%' or X_PMotherName like '%" + xSearchkey + "%' or X_GaurdianName like '%" + xSearchkey + "%'  or X_RegNo like '%" + xSearchkey + "%')";
+                Searchkey = "and (X_AdmissionNo like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or D_AdmissionDate like '%" + xSearchkey + "%' or X_StudentMobile like '%" + xSearchkey + "%' or X_GaurdianName like '%" + xSearchkey + "%'  or X_StudentCatName like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_AdmissionID desc";
