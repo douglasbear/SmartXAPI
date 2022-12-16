@@ -73,7 +73,7 @@ namespace SmartxAPI.Controllers
 
 
              if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_ReminderId desc";
+                xSortBy = " order by D_ReminderDate asc";
             else
             
              xSortBy = " order by " + xSortBy;
