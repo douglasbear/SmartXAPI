@@ -174,7 +174,6 @@ namespace SmartxAPI.Controllers
 
                     if (nFlag == 0)
                     {
-
                         int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesID", SaveCustTable, connection, transaction);
 
                         if (nSalesID <= 0)
@@ -183,15 +182,13 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Unable to save"));
                         }
 
-
                     }
                     else
                     {
-                        int npurchaseID = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", SaveVendorTable, connection, transaction);
-
-
+                    
+                       int npurchaseID = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", SaveVendorTable, connection, transaction);
                         if (npurchaseID <= 0)
-                        {
+                        { 
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Unable to save"));
                         }
