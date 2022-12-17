@@ -112,7 +112,7 @@ namespace SmartxAPI.Controllers
                                 netAmount = dLayer.ExecuteScalar("select NetAmount from vw_InvPayables where N_CompanyID=" + nCompanyID + " and N_PurchaseID = " + N_TransID, connection, transaction);
 
                             }
-
+                            if(nBalanceAmount==null){nBalanceAmount="";}if(netAmount==null){netAmount="";}
                             if (myFunctions.getVAL(nBalanceAmount.ToString()) < myFunctions.getVAL(netAmount.ToString()))
                             {
                                 dtRow["customerFlag"] = true;
@@ -152,8 +152,12 @@ namespace SmartxAPI.Controllers
                 DataTable SaveCustTable;
                 DataTable PartyListTable;
                 DataTable SaveVendorTable;
+                DataTable SaveVendorPaymentMasterTable;
+                DataTable SaveVendorPaymentDetailsTable;
                 SaveCustTable = ds.Tables["custdetails"];
                 SaveVendorTable = ds.Tables["vendorDetails"];
+                SaveVendorPaymentMasterTable = ds.Tables["vendorPaymentMaster"];
+                SaveVendorPaymentDetailsTable = ds.Tables["vendorPaymentDetails"];
                 PartyListTable = ds.Tables["partylist"];
                 int nCompanyID = myFunctions.GetCompanyID(User);
                 int nFnYearID = myFunctions.getIntVAL(PartyListTable.Rows[0]["n_FnYearID"].ToString());
@@ -185,8 +189,98 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                    
-                       int npurchaseID = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", SaveVendorTable, connection, transaction);
+
+                        if(SaveVendorPaymentMasterTable.Rows.Count>0)
+                        {
+
+                            //  for (int j = 0; j < SaveVendorPaymentMasterTable.Rows.Count; j++)
+                            // {
+                            //   int  nReceiptID = dLayer.SaveDataWithIndex("Inv_PayReceipt", "N_PayReceiptId", "", "", j, SaveVendorPaymentMasterTable, connection, transaction);
+                            //     if (nReceiptID <= 0)
+                            //     {
+                            //         transaction.Rollback();
+                            //         return Ok(_api.Error(User, "Error"));
+                            //     }
+                            //      if (SaveVendorPaymentMasterTable.Rows[j]["x_VoucherNo"].ToString() == SaveVendorPaymentDetailsTable.Rows[j]["x_VoucherNo"].ToString())
+                            //     {
+                            //         SaveVendorPaymentDetailsTable.Rows[j]["N_PayReceiptId"] = nReceiptID;
+                            //         SaveVendorPaymentDetailsTable.Columns.Remove("x_VoucherNo");
+                                 
+                            //     }
+
+                            //     int nReceiptDetailsID = dLayer.SaveDataWithIndex("Inv_PayReceiptDetails", "N_PayReceiptDetailsId", "", "", j, SaveVendorPaymentDetailsTable, connection, transaction);
+                            //     if (nReceiptDetailsID <= 0)
+                            //     {
+                            //         transaction.Rollback();
+                            //         return Ok(_api.Error(User, "Error"));
+                            //     }
+                            // }
+
+
+
+                        for (int j = 0; j < SaveVendorPaymentMasterTable.Rows.Count; j++)
+                        {
+
+                         
+                        // dLayer.ExecuteNonQuery("delete from Inv_PayReceipt Where X_VoucherNo='"+SaveVendorPaymentMasterTable.Rows[j]["x_VoucherNo"].ToString()+"' and N_CompanyID=@nCompanyID", Params, connection, transaction);
+                       
+
+                        int nReceiptID = dLayer.SaveDataWithIndex("Inv_PayReceipt", "N_PayReceiptId", "", "", j, SaveVendorPaymentMasterTable, connection, transaction);
+                        if (nReceiptID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to save"));
+                        }
+
+                        if (nReceiptID > 0)
+                        {
+                            for (int k = 0; k < SaveVendorPaymentDetailsTable.Rows.Count; k++)
+                            {
+                                if (SaveVendorPaymentDetailsTable.Rows[k]["x_VoucherNo"].ToString() == SaveVendorPaymentMasterTable.Rows[j]["x_VoucherNo"].ToString())
+                                { 
+                                    SaveVendorPaymentDetailsTable.Rows[k]["N_PayReceiptId"] = nReceiptID;
+                                    SaveVendorPaymentDetailsTable.Rows[k]["n_InventoryID"] = nReceiptID;
+                                                                     
+                                    SaveVendorPaymentDetailsTable.Rows[k]["n_Amount"] = -1 * myFunctions.getVAL(SaveVendorPaymentDetailsTable.Rows[k]["n_Amount"].ToString());                                 
+                                    SaveVendorPaymentDetailsTable.Rows[k]["n_AmountF"] = -1 * myFunctions.getVAL(SaveVendorPaymentDetailsTable.Rows[k]["n_AmountF"].ToString());                                        
+                                }
+                            }
+                         }
+                        }
+                        SaveVendorPaymentDetailsTable.Columns.Remove("x_VoucherNo");
+                        int nReceiptDetailsID = dLayer.SaveData("Inv_PayReceiptDetails", "N_PayReceiptDetailsId", SaveVendorPaymentDetailsTable, connection, transaction);
+                        if (nReceiptDetailsID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to save"));
+                        }
+
+
+
+
+
+
+                //         int nReceiptID = dLayer.SaveData("Inv_PayReceipt", "N_PayReceiptId", SaveVendorPaymentMasterTable, connection, transaction);
+                //         if (nReceiptID <= 0)
+                //         {
+                //             transaction.Rollback();
+                //             return Ok(_api.Error(User, "Unable to save"));
+                //         }
+
+                //         SaveVendorPaymentDetailsTable.Rows[i]["N_PayReceiptId"]=nReceiptID;
+                //         int nReceiptDetailsID = dLayer.SaveData("Inv_PayReceiptDetails", "N_PayReceiptDetailsId", SaveVendorPaymentDetailsTable, connection, transaction);
+                //         if (nReceiptDetailsID <= 0)
+                //         {
+                //             transaction.Rollback();
+                //             return Ok(_api.Error(User, "Unable to save"));
+                //         }
+
+
+                         }
+
+                        int npurchaseID = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", SaveVendorTable, connection, transaction);
+
+
                         if (npurchaseID <= 0)
                         { 
                             transaction.Rollback();
