@@ -569,12 +569,12 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             if(inactive)
             {
-            sqlCommandText = "select N_CompanyID,N_FnYearID,N_BranchID,[Customer Name] as X_CustomerName,[Customer Code] as X_CustomerCode,N_CustomerID,N_ServiceCharge,N_ServiceChargeLimit,N_LedgerID,X_LedgerCode,X_LedgerName,N_TaxCategoryID,X_CategoryName,0 as N_Amount,X_TypeName,N_PaymentMethodID as N_TypeID,I_Image,B_Inactive,B_DefaultPay,X_CustomerName_Ar from vw_PaymentType_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and (N_BranchID=@p3 or N_BranchID = @p4)  and N_EnablePopup=1";
+            sqlCommandText = "select N_CompanyID,N_FnYearID,N_BranchID,[Customer Name] as X_CustomerName,[Customer Code] as X_CustomerCode,N_CustomerID,N_ServiceCharge,N_ServiceChargeLimit,N_LedgerID,X_LedgerCode,X_LedgerName,N_TaxCategoryID,X_CategoryName,0 as N_Amount,X_TypeName,N_PaymentMethodID as N_TypeID,I_Image,B_Inactive,B_DefaultPay from vw_PaymentType_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and (N_BranchID=@p3 or N_BranchID = @p4)  and N_EnablePopup=1";
            
             }
             else
             {
-             sqlCommandText = "select N_CompanyID,N_FnYearID,N_BranchID,[Customer Name] as X_CustomerName,[Customer Code] as X_CustomerCode,N_CustomerID,N_ServiceCharge,N_ServiceChargeLimit,N_LedgerID,X_LedgerCode,X_LedgerName,N_TaxCategoryID,X_CategoryName,0 as N_Amount,X_TypeName,N_PaymentMethodID as N_TypeID,I_Image,B_Inactive,B_DefaultPay,X_CustomerName_Ar from vw_PaymentType_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and (N_BranchID=@p3 or N_BranchID = @p4)  and N_EnablePopup=1 and ISNULL(B_Inactive,0)=0 ";
+             sqlCommandText = "select N_CompanyID,N_FnYearID,N_BranchID,[Customer Name] as X_CustomerName,[Customer Code] as X_CustomerCode,N_CustomerID,N_ServiceCharge,N_ServiceChargeLimit,N_LedgerID,X_LedgerCode,X_LedgerName,N_TaxCategoryID,X_CategoryName,0 as N_Amount,X_TypeName,N_PaymentMethodID as N_TypeID,I_Image,B_Inactive,B_DefaultPay from vw_PaymentType_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and (N_BranchID=@p3 or N_BranchID = @p4)  and N_EnablePopup=1 and ISNULL(B_Inactive,0)=0 ";
              
             }
              Params.Add("@p1", nCompanyID);
@@ -645,6 +645,7 @@ namespace SmartxAPI.Controllers
 
             int Results = 0;
              object CustomerCount =0;
+             object GRNCustCount=0;
             try
             {
                 SortedList Params = new SortedList();
@@ -671,6 +672,14 @@ namespace SmartxAPI.Controllers
                    {
                       return Ok(api.Error(User, "Can not Delete Customer"));
                    }
+
+                  GRNCustCount = dLayer.ExecuteScalar("select count(N_GRNID) from wh_GRN  Where N_CompanyID=" + nCompanyID + " and  N_CustomerID=" + nCustomerID,  QueryParams, connection);
+                    if( myFunctions.getIntVAL(GRNCustCount.ToString())>0)
+                   {
+                      return Ok(api.Error(User, "Unable to delete customer! It has been used."));
+                   }
+                   dLayer.ExecuteNonQuery("update Inv_ItemMaster set N_CustomerID=0,x_CustomerSKU=null where N_CompanyID=" + nCompanyID + "  and N_CustomerID=" + nCustomerID, Params, connection);
+
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Inv_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
                   

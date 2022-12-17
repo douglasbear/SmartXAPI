@@ -75,6 +75,10 @@ namespace SmartxAPI.GeneralFunctions
             int b_FreightAmountDirect = myFunctions.getIntVAL(masterRow["b_FreightAmountDirect"].ToString());
             DetailsToImport = ds.Tables["detailsImport"];
             bool B_isImport = false;
+            bool showSellingPrice =false;
+            if(MasterTable.Columns.Contains("showSellingPrice")) 
+               showSellingPrice=myFunctions.getBoolVAL(masterRow["showSellingPrice"].ToString());
+            if(MasterTable.Columns.Contains("showSellingPrice")){MasterTable.Columns.Remove("showSellingPrice");}
 
             if (ds.Tables.Contains("detailsImport"))
                 B_isImport = true;
@@ -500,6 +504,10 @@ namespace SmartxAPI.GeneralFunctions
                     {
                         dLayer.ExecuteScalar("Update Inv_PurchaseOrder Set N_Processed=1 , N_PurchaseID=" + N_PurchaseID + " Where N_POrderID=" + n_POrderID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.ExecuteScalar("Update Inv_MRN Set N_Processed=1 Where N_MRNID=" + n_MRNID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+             
+                        
+                        
+                        
                         // if (B_ServiceSheet)
                         //     dba.ExecuteNonQuery("Update Inv_VendorServiceSheet Set N_Processed=1  Where N_RefID=" + n_POrderID + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID,connection,transaction);
 
@@ -585,6 +593,19 @@ namespace SmartxAPI.GeneralFunctions
                             int tempPOrderID=0;
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
                             {
+                                if(showSellingPrice)
+                                {
+                                   dLayer.ExecuteScalar("Update Inv_ItemMaster Set N_Rate="+DetailTable.Rows[j]["N_Sprice"]+" Where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"] + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                                   dLayer.ExecuteScalar("Update Inv_ItemUnit Set N_SellingPrice="+DetailTable.Rows[j]["N_Sprice"]+" Where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"] + " and N_DefaultType=10 and N_CompanyID=" + nCompanyID, connection, transaction);
+                                   object salesUnitQty= dLayer.ExecuteScalar("select  N_Qty from Inv_ItemUnit  Where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"] + " and N_DefaultType=30 and N_CompanyID=" + nCompanyID, connection, transaction);
+                                   if(salesUnitQty!=null) 
+                                       {
+                                        double sellingPrice=myFunctions.getVAL(salesUnitQty.ToString()) * myFunctions.getVAL(DetailTable.Rows[j]["N_Sprice"].ToString());
+                                        dLayer.ExecuteScalar("Update Inv_ItemUnit Set N_SellingPrice="+sellingPrice+" Where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"] + " and N_DefaultType=30 and N_CompanyID=" + nCompanyID, connection, transaction);
+                                       }
+                                        
+
+                                }
                                 if (n_POrderID > 0 && tempPOrderID!=n_POrderID)
                                 {
                                     if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))

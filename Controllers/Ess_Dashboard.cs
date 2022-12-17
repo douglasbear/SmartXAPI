@@ -10,6 +10,7 @@ using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
+using System.Net;
 
 namespace SmartxAPI.Controllers
 {
@@ -59,7 +60,17 @@ namespace SmartxAPI.Controllers
                 // DateTime dDateTo = Convert.ToDateTime(mstVar["D_PeriodTo"].ToString());
               
 
-            DateTime date = DateTime.Today;
+            DateTime date = new DateTime();
+            string url = "http://worldtimeapi.org/api/timezone/Asia/Kolkata";
+            using (var client = new WebClient())
+            {
+                client.Headers.Add("content-type", "application/json");
+                string response = client.DownloadString(url);
+                response = response.Substring(63, 26);
+                date = DateTime.Parse(response);
+            }
+
+            
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnyearID);
             Params.Add("@p3", nEmpID);
@@ -85,7 +96,8 @@ namespace SmartxAPI.Controllers
                     string sqlDOUT = "SELECT top(1) D_Out as D_Out from Pay_TimeSheetImport  where N_EmpID=@p3 and D_Date=@today and N_CompanyID=@p1 order by N_SheetID desc";
                     object DIN = dLayer.ExecuteScalar(sqlDIN, Params, connection);
                     object DOUT = dLayer.ExecuteScalar(sqlDOUT, Params, connection);
-                    string sqlCommandDailyLogin = "SELECT '" + DIN + "' as D_In,'" + DOUT + "' as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,case when '"+DIN+"'='00:00:00' then  Convert(Time, GetDate()) else '"+DIN+"' end,case when '"+DOUT+"' ='00:00:00' then  Convert(Time, GetDate()) else '"+DOUT+"' end), '19000101')  AS TIME) AS duration from Pay_TimeSheetImport where N_EmpID=@p3 and D_Date=@today";
+                    // string sqlCommandDailyLogin = "SELECT '" + DIN + "' as D_In,'" + DOUT + "' as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,case when '"+DIN+"'='00:00:00' then  Convert(Time, GetDate()) else '"+DIN+"' end,case when '"+DOUT+"' ='00:00:00' then  Convert(Time, GetDate()) else '"+DOUT+"' end), '19000101')  AS TIME) AS duration from Pay_TimeSheetImport where N_EmpID=@p3 and D_Date=@today";
+                    string sqlCommandDailyLogin = "SELECT '" + DIN + "' as D_In,'" + DOUT + "' as D_Out,Convert(Time, GetDate()) as D_Cur, case when '"+DOUT+"'='00:00:00' then '' else cast(dateadd(millisecond, datediff(millisecond,case when '"+DIN+"'='00:00:00' then  Convert(Time, GetDate()) else '"+DIN+"' end,'"+DOUT+"'), '19000101')  AS TIME)end AS duration from Pay_TimeSheetImport where N_EmpID=@p3 and D_Date=@today";
                     string CatID ="select N_CatagoryId from Pay_Employee where N_EmpID=@p3 and N_CompanyID=@p1";
                     CategoryID = dLayer.ExecuteScalar(CatID, Params, connection);
                     EmployeeDetails = dLayer.ExecuteDataTable(sqlCommandEmployeeDetails, Params, connection);
