@@ -59,7 +59,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "select * from vw_RecRegistrartion where N_CompanyID=@p1  and x_RecruitmentCode=@p2";
             string sqlCommandEducation = "select * from Rec_CandidateEducation where N_CompanyID=@p1  and N_RecruitmentID=@p3";
             string sqlCommandPaymentHistory = "select * from Rec_EmploymentHistory where N_CompanyID=@p1  and N_RecruitmentID=@p3";
-            string sqlCommandOptions = "select * from vw_GenStatusDetails where N_CompanyID=@p1  and N_ActionID=@p4 and N_userID in (0,"+N_UserID+")";
+            string sqlCommandOptions = "select * from vw_GenStatusDetails where N_CompanyID=@p1  and N_CurrentActionID=@p4 and N_userID in (0,"+N_UserID+")";
             string sqlmailData = "select * from vw_Genmail where N_CompanyID=@p1  and N_ActionID=" + n_MainActionID;
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", x_RecruitmentCode);
@@ -165,7 +165,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nFormID", nFormID);
             string sqlCommandText = "";
             if (nActionID > 0)
-                sqlCommandText = "select * from vw_GenStatusDetails where N_CompanyID=@nCompanyID and N_ActionID=@nActionID and N_FormID=@nFormID";
+                sqlCommandText = "select * from vw_GenStatusDetails where N_CompanyID=@nCompanyID and N_CurrentActionID=@nActionID and N_FormID=@nFormID";
             else
                 sqlCommandText = "select * from vw_GenStatusDetails where N_CompanyID=@nCompanyID  and N_FormID=@nFormID and B_IsDefault=1";
             try
