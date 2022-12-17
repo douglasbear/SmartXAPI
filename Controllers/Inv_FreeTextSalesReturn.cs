@@ -179,6 +179,15 @@ namespace SmartxAPI.Controllers
                         }
                         MasterTable.Rows[0]["X_ReceiptNo"] = X_ReceiptNo;
                     }
+                    
+                     object DupCount = dLayer.ExecuteScalar("Select COUNT(X_ReceiptNo) from Inv_Sales where X_ReceiptNo ='" + DocNo + "' and N_CompanyID=" + nCompanyID + "and N_FnYearID=" + nFnYearID , Params, connection, transaction);
+                       
+                       if (myFunctions.getVAL(DupCount.ToString()) >= 1)
+                       {
+                        transaction.Rollback();   
+                        return Ok(_api.Error(User, "Invoice Number Already Exist"));
+                       }
+                       
                     nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesID", MasterTable, connection, transaction);
 
                     if (nSalesID <= 0)
