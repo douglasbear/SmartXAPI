@@ -645,6 +645,7 @@ namespace SmartxAPI.Controllers
 
             int Results = 0;
              object CustomerCount =0;
+             object GRNCustCount=0;
             try
             {
                 SortedList Params = new SortedList();
@@ -671,6 +672,14 @@ namespace SmartxAPI.Controllers
                    {
                       return Ok(api.Error(User, "Can not Delete Customer"));
                    }
+
+                  GRNCustCount = dLayer.ExecuteScalar("select count(N_GRNID) from wh_GRN  Where N_CompanyID=" + nCompanyID + " and  N_CustomerID=" + nCustomerID,  QueryParams, connection);
+                    if( myFunctions.getIntVAL(GRNCustCount.ToString())>0)
+                   {
+                      return Ok(api.Error(User, "Unable to delete customer! It has been used."));
+                   }
+                   dLayer.ExecuteNonQuery("update Inv_ItemMaster set N_CustomerID=0,x_CustomerSKU=null where N_CompanyID=" + nCompanyID + "  and N_CustomerID=" + nCustomerID, Params, connection);
+
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Inv_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
                   
