@@ -333,17 +333,35 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nApprovalID)
         {
             int Results = 0;
+             int nCompanyID=myFunctions.GetCompanyID(User);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     
                     connection.Open();
-                    Results = dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID, "", connection);
+                     SqlTransaction transaction = connection.BeginTransaction();
+                     if ( nApprovalID > 0)
+                    {
+                        object appCount = dLayer.ExecuteScalar("select COUNT(*) From Sec_ApprovalSettings_EmployeeDetails where N_ApprovalID =" + nApprovalID + " and N_CompanyID =" + nCompanyID, connection, transaction);
+                        appCount = appCount == null ? 0 : appCount;
+                        if (myFunctions.getIntVAL(appCount.ToString()) > 0){
+                            return Ok(_api.Error(User, "Already In Use !!"));
+                        }
+                    }
+                       if ( nApprovalID > 0)
+                    {
+                        object appCount = dLayer.ExecuteScalar("select COUNT(*) From Sec_ApprovalSettings_General where N_ApprovalID =" + nApprovalID + " and N_CompanyID =" + nCompanyID, connection, transaction);
+                        appCount = appCount == null ? 0 : appCount;
+                        if (myFunctions.getIntVAL(appCount.ToString()) > 0){
+                            return Ok(_api.Error(User, "Already In Use !!"));
+                        }
+                    }
+                    Results = dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID,"N_CompanyID =" + nCompanyID , connection,transaction);
                     if (Results > 0)
                     {
-                    
-                        dLayer.DeleteData("Gen_ApprovalCodesDetails", "N_ApprovalID", nApprovalID, "", connection);
+                      transaction.Commit();
+                        dLayer.DeleteData("Gen_ApprovalCodesDetails", "N_ApprovalID", nApprovalID, "N_CompanyID =" + nCompanyID , connection,transaction);
                         return Ok(_api.Success("Approval Code deleted"));
                     }
                     else
