@@ -1347,7 +1347,6 @@ namespace SmartxAPI.Controllers
                             } 
 
                             myAttachments.DeleteAttachment(dLayer, 1, nPurchaseID, VendorID, nFnYearID, N_FormID, User, transaction, connection);
-
                             for (int i = 0; i < DetailTable.Rows.Count; i++)
                             {
                                  dLayer.ExecuteScalar("UPDATE Inv_ItemMaster SET Inv_ItemMaster.N_PurchaseCost=LastCost.N_LPrice from Inv_ItemMaster INNER JOIN "+
@@ -1355,7 +1354,6 @@ namespace SmartxAPI.Controllers
                                                 " AND N_CompanyID= "+ myFunctions.getVAL(DetailsTable.Rows[i]["N_CompanyID"].ToString()) +" order by D_DateIn desc ,N_StockID desc) AS LastCost ON Inv_ItemMaster.N_CompanyID=LastCost.N_CompanyID AND "+
                                                 " Inv_ItemMaster.N_ItemID=LastCost.N_ItemID WHERE Inv_ItemMaster.N_CompanyID="+myFunctions.getVAL(DetailsTable.Rows[i]["N_CompanyID"].ToString())+" AND Inv_ItemMaster.N_ItemID= "+myFunctions.getVAL(DetailsTable.Rows[i]["N_ItemID"].ToString()), connection, transaction);
                             }
-
                             //StatusUpdate
                             int tempPOrderID=0;
                             for (int j = 0; j < DetailTable.Rows.Count; j++)

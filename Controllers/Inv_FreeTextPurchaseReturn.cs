@@ -64,14 +64,14 @@ namespace SmartxAPI.Controllers
                         xCriteria = " N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_BranchID=@p3 and N_CompanyID=@p1";
 
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate ,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays,X_VendorName_Ar from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate ,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays,X_VendorName_Ar from vw_InvFreeTextPurchaseReturn_Search where " + xCriteria + Searchkey;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays,X_VendorName_Ar from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey + " ) ";
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays,X_VendorName_Ar from vw_InvFreeTextPurchaseReturn_Search where " + xCriteria + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvFreeTextPurchaseReturn_Search where " + xCriteria + Searchkey + " ) ";
 
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_InvFreeTextPurchaseReturn_Search where " + xCriteria + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

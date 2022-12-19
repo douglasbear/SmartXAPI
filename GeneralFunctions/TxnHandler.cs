@@ -567,7 +567,6 @@ namespace SmartxAPI.GeneralFunctions
                             PostingParam.Add("MRN_Flag", Dir_Purchase==0 ? "1" : "0");
 
                             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
-
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
                             {
                                 dLayer.ExecuteScalar("UPDATE Inv_ItemMaster SET Inv_ItemMaster.N_PurchaseCost=LastCost.N_LPrice from Inv_ItemMaster INNER JOIN "+
