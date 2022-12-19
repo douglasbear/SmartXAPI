@@ -551,6 +551,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
                     DataRow Master = MasterTable.Rows[0];
+                    DataRow MasterRow = MasterTable.Rows[0];
                     double nAmount = 0, nAmountF = 0;
                     var xVoucherNo = Master["x_VoucherNo"].ToString();
                     var xType = Master["x_Type"].ToString();
@@ -565,6 +566,13 @@ namespace SmartxAPI.Controllers
                     int N_SaveDraft = myFunctions.getIntVAL(Master["b_IssaveDraft"].ToString());
                     int nUserID = myFunctions.GetUserID(User);
                     int N_NextApproverID = 0;
+                              
+                    int N_FormID = 0;
+                   if (MasterTable.Columns.Contains("N_FormID"))
+                    {
+                        N_FormID = myFunctions.getIntVAL(MasterRow["N_FormID"].ToString());
+                    }
+
 
                     if (!myFunctions.CheckActiveYearTransaction(nCompanyId, nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_Date"].ToString(),
                      "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
@@ -694,6 +702,8 @@ namespace SmartxAPI.Controllers
                     MasterTable.AcceptChanges();
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+                      if (MasterTable.Columns.Contains("N_FormID"))
+                        MasterTable.Columns.Remove("N_FormID");
 
                     PayReceiptId = dLayer.SaveData("Inv_PayReceipt", "n_PayReceiptId", MasterTable, connection, transaction);
                     if (PayReceiptId <= 0)
@@ -835,14 +845,23 @@ namespace SmartxAPI.Controllers
                             }
                         }
 
-
+                    }
 
                         SortedList Result = new SortedList();
                         Result.Add("n_SalesReceiptID", PayReceiptId);
                         Result.Add("x_SalesReceiptNo", xVoucherNo);
-                        return Ok(api.Success(Result, "Customer Payment Saved"));
-                    }
-                    else { return Ok(api.Error(User, "Unable To Save Customer Payment")); }
+                        
+                     if (N_FormID == 66)
+                            {
+                          return Ok(api.Success(Result, "Customer Payment Saved"));
+                            }
+
+                       else if (N_FormID == 1492) 
+                        {
+                            return Ok(api.Success(Result,"Fee Payment Saved Successfully"));
+                        }
+                    else {
+                         return Ok(api.Error(User, "Unable To Save Customer Payment")); }
                 }
 
             }

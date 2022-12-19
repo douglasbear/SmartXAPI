@@ -102,6 +102,14 @@ namespace SmartxAPI.Controllers
                         Code = dLayer.GetAutoNumber("Sch_FeeCodes", "X_FeeCode", Params, connection, transaction);
                         if (Code == "") { transaction.Rollback();return Ok(_api.Error(User,"Unable to generate Course Code")); }
                         MasterTable.Rows[0]["X_FeeCode"] = Code;
+                        
+                    object descCount = dLayer.ExecuteScalar("Select count(*) From Sch_FeeCodes Where X_FeeDescription ='" + MasterTable.Rows[0]["X_FeeDescription"].ToString() + "' and N_CompanyID= " + nCompanyID , Params, connection, transaction);
+                     
+                       if (myFunctions.getIntVAL(descCount.ToString()) >0)
+                        {
+                             transaction.Rollback();
+                             return Ok(_api.Error(User, "fee code already exist"));
+                        }
                     }
                     MasterTable.Columns.Remove("n_FnYearId");
 
@@ -129,6 +137,8 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User,"Unable to save"));
                     }
                     
+
+
                     SortedList ProductParams = new SortedList();
                     ProductParams.Add("@N_CompanyID", nCompanyID);
                     ProductParams.Add("@N_FeeCodeID", nFeeCodeID);
