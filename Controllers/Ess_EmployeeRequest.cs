@@ -352,6 +352,10 @@ namespace SmartxAPI.Controllers
                             MasterTable.Rows[0]["n_RequestTypeID"]=N_RequestTypeID;
                             MasterTable.AcceptChanges();
                         }
+                    else
+                    {
+                        N_RequestTypeID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select max(isnull(N_RequestTypeID,0))+1 as N_RequestTypeID from Pay_EmployeeRequestType where N_CompanyID=@nCompanyID", Params, connection, transaction).ToString());
+                    }
                     }    
                          if (N_RequestTypeID > 0) 
                     {  
