@@ -98,7 +98,7 @@ namespace SmartxAPI.Controllers
             string Condition = "";
             if (query != "" && query != null)
             {
-                qry = " and (Description like @query or [Item Code] like @query or  X_BarCode like @query or [Part No] like @query ) ";
+                qry = " and (Description like @query or [Item Code] like @query or  X_BarCode like @query or [Part No] like @query or description_Ar like @query) ";
                 Params.Add("@query", "%" + query + "%");
             }
             if (xBarcode != "" && xBarcode != null)
@@ -165,7 +165,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult EmpMaintenanceList(int nCompanyId, int nFnYearID, bool bAllBranchData, int nBranchID, int nLocationID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult EmpMaintenanceList(int nCompanyId, int nFnYearID, bool bAllBranchData, int nBranchID, int nLocationID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nFormID)
         {
             try
             {
@@ -189,7 +189,8 @@ namespace SmartxAPI.Controllers
 
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=@p1 and N_FnYearID=@p2 ", Params, connection));
-
+                    if(nFormID==367)
+                    {
                     if (!CheckClosedYear)
                     {
                         if (bAllBranchData)
@@ -203,6 +204,25 @@ namespace SmartxAPI.Controllers
                             Criteria = "and N_PurchaseType=0 and X_TransType=@p4  and ( N_LocationFrom=" + nLocationID + " or N_LocationFrom in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID=" + nLocationID + "))";
                         else
                             Criteria = "and N_PurchaseType=0 and X_TransType=@p4  and ( N_LocationFrom=" + nLocationID + " or N_LocationFrom in (select N_LocationID from Inv_Location where n_CompanyID=@p1 and N_WarehouseID=" + nLocationID + "))";
+                    }
+                    }
+                    else
+                    {
+                          if (!CheckClosedYear)
+                    {
+                        if (bAllBranchData)
+                            Criteria = "and B_YearEndProcess=0 and N_Type=1 and ( N_EntryLocationID=" + nLocationID + " )";
+                        else
+                            Criteria = "and B_YearEndProcess=0 and N_Type=1 and ( N_EntryLocationID=" + nLocationID + ")";
+                    }
+                    else
+                    {
+                        if (bAllBranchData)
+                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FormID=1442  and ( N_EntryLocationID=" + nLocationID + ")";
+                        else
+                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4 N_FormID=1442   and ( N_EntryLocationID=" + nLocationID + " )";
+                    }
+
                     }
 
 
@@ -423,6 +443,8 @@ namespace SmartxAPI.Controllers
                                 return Ok(_api.Error(User, ex));
                             }
                         }
+                        if(nLocationIDfrom>0)
+                        {
                         object nTypeID = dLayer.ExecuteScalar("select N_TypeID from Inv_Location where N_LocationID=" + nLocationIDfrom + "  and N_CompanyID=" + nCompanyID + " ", Params, connection, transaction);
                         if (myFunctions.getIntVAL(nTypeID.ToString()) == 6)
                         {
@@ -431,6 +453,7 @@ namespace SmartxAPI.Controllers
                             {
                                 dLayer.ExecuteNonQuery("UPDATE Inv_Location  set B_InActive=1 where  N_CompanyID=" + nCompanyID + "  and N_LocationID=" + nLocationIDfrom, Params, connection, transaction);
                             }
+                        }
                         }
                         if(myFunctions.getIntVAL(MasterTable.Rows[0]["n_PRSID"].ToString())>0)
                         {
@@ -536,7 +559,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("viewdetails")]
-        public ActionResult viewDetails(string xReceiptNo, int nBranchID, int nFnYearID,int nPRSID )
+        public ActionResult viewDetails(string xReceiptNo, int nBranchID, int nFnYearID,int nPRSID,int nPickListID )
         {
             try
             {
@@ -563,30 +586,45 @@ namespace SmartxAPI.Controllers
                     // else
                     //     xCondition="X_ReceiptNo=@xReceiptNo and N_CompanyId=@nCompanyID and N_BranchID=@nBranchID";
 
-                    Mastersql = "Select Inv_TransferStock.*,Inv_warehouseMasterFrom.X_LocationName As X_WarehouseNameFrom,Inv_warehouseMasterFrom.X_LocationCode As X_LocationCodeFrom,Inv_warehouseMasterTo.X_LocationName As X_WarehouseNameTo,Inv_warehouseMasterTo.X_LocationCode As X_LocationCodeTo,Inv_PRS.X_PRSNo,Inv_PRS.X_Purpose,Inv_PRS.N_PRSID,Inv_Department.N_DepartmentID,Inv_Department.X_DepartmentCode,Inv_Department.X_Department from Inv_TransferStock  left outer Join Inv_Location As Inv_warehouseMasterFrom on Inv_TransferStock.N_LocationIDFrom = Inv_warehouseMasterFrom.N_LocationID And Inv_TransferStock.N_CompanyID = Inv_warehouseMasterFrom.N_CompanyID  left outer  Join Inv_Location As Inv_warehouseMasterTo on Inv_TransferStock.N_LocationIDTo  = Inv_warehouseMasterTo.N_LocationID And Inv_TransferStock.N_CompanyID = Inv_warehouseMasterTo.N_CompanyID " +
-                   "left outer join Inv_PRS on Inv_TransferStock.N_PRSID=Inv_PRS.N_PRSID left outer join Inv_Department On Inv_PRS.N_DepartmentID=Inv_Department.N_DepartmentID Where  Inv_TransferStock.N_CompanyID=" + nCompanyID + " and Inv_TransferStock.X_ReferenceNo='" + xReceiptNo + "' and Inv_TransferStock.N_FnYearId=" + nFnYearID + "";
+                    Mastersql = "Select Inv_TransferStock.*,Inv_warehouseMasterFrom.X_LocationName As X_WarehouseNameFrom,Inv_warehouseMasterFrom.X_LocationCode As X_LocationCodeFrom,Inv_warehouseMasterTo.X_LocationName As X_WarehouseNameTo,Inv_warehouseMasterTo.X_LocationCode As X_LocationCodeTo,Inv_PRS.X_PRSNo,Inv_PRS.X_Purpose,Inv_PRS.N_PRSID,Inv_Department.N_DepartmentID,Inv_Department.X_DepartmentCode,Inv_Department.X_Department,Wh_PickList.X_PickListCode from Inv_TransferStock  left outer Join Inv_Location As Inv_warehouseMasterFrom on Inv_TransferStock.N_LocationIDFrom = Inv_warehouseMasterFrom.N_LocationID And Inv_TransferStock.N_CompanyID = Inv_warehouseMasterFrom.N_CompanyID  left outer  Join Inv_Location As Inv_warehouseMasterTo on Inv_TransferStock.N_LocationIDTo  = Inv_warehouseMasterTo.N_LocationID And Inv_TransferStock.N_CompanyID = Inv_warehouseMasterTo.N_CompanyID " +
+                   "left outer join Inv_PRS on Inv_TransferStock.N_PRSID=Inv_PRS.N_PRSID left outer join Wh_PickList on Inv_TransferStock.N_PickListID=Wh_PickList.N_PickListID And Inv_TransferStock.N_CompanyID = Wh_PickList.N_CompanyID left outer join Inv_Department On Inv_PRS.N_DepartmentID=Inv_Department.N_DepartmentID Where  Inv_TransferStock.N_CompanyID=" + nCompanyID + " and Inv_TransferStock.X_ReferenceNo='" + xReceiptNo + "' and Inv_TransferStock.N_FnYearId=" + nFnYearID + "";
                    if(nPRSID >0)
                    {
                     Mastersql="select * from VW_TransferReqToTransfer where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+" and N_PRSID="+nPRSID+"";
 
                    }
+                     if(nPickListID >0)
+                   {
+                    Mastersql="select * from Vw_WhPickListToTransfer where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+" and N_PickListID="+nPickListID+"";
+
+                   }
+
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     MasterTable = _api.Format(MasterTable, "Master");
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                       if(nPRSID==0){
+                       if(nPRSID==0 &&nPickListID==0 ){
                     int nTransferId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TransferId"].ToString());
                     int N_LocationIDFrom = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationIDFrom"].ToString());
-                       
+                 
                     // DateTime dTransdate = Convert.ToDateTime(MasterTable.Rows[0]["D_ReceiptDate"].ToString());
                     Params.Add("@nTransferId", nTransferId);
   
                     DetailGetSql = "Select vw_InvTransferStockDetails.*,dbo.[SP_BatchStock](vw_InvTransferStockDetails.N_ItemID," + N_LocationIDFrom + ",vw_InvTransferStockDetails.X_BatchCode,0) As N_Stock ,dbo.SP_Cost_Loc(vw_InvTransferStockDetails.N_ItemID,vw_InvTransferStockDetails.N_CompanyID,''," + N_LocationIDFrom + ") As N_LPrice,dbo.SP_SellingPrice(vw_InvTransferStockDetails.N_ItemID,vw_InvTransferStockDetails.N_CompanyID) As N_UnitSPrice " +
                     " from vw_InvTransferStockDetails  Where vw_InvTransferStockDetails.N_CompanyID=" + nCompanyID + " and vw_InvTransferStockDetails.N_TransferId=" + nTransferId + "";
                        }
-                  
+                    //convert-----
                     if(nPRSID>0)
                     {
                        DetailGetSql="select * from VW_TransferReqToTransferDetails where   N_CompanyID="+nCompanyID+" and N_PRSID="+nPRSID+"";
+                    }
+                    if(nPickListID>0)
+                    {
+                       DetailGetSql="select * from Vw_WhPickListToTransferDetails where   N_CompanyID="+nCompanyID+" and N_PickListID="+nPickListID+"";
+                    }
+                    int nPicklstID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PickListID"].ToString());
+                    if(nPicklstID>0 && nPickListID<=0)
+                    {
+                         DetailGetSql="select * from Vw_ProductTransferDetails where   N_CompanyID="+nCompanyID+" and X_ReferenceNo=@xReceiptNo";
                     }
                     Details = dLayer.ExecuteDataTable(DetailGetSql, Params, connection);
                     if(!Details.Columns.Contains("N_ClassID"))

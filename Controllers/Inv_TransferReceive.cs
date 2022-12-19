@@ -229,7 +229,7 @@ namespace SmartxAPI.Controllers
                 //      {
                 //                transaction.Rollback();
                 //         return Ok(_api.Error(User, "Unable To Save"));
-                //     }
+                //     }  
 
                     nReceivableId = dLayer.SaveData("Inv_ReceivableStock", "N_ReceivableId", MasterTable, connection, transaction);
                     if (nReceivableId <= 0)

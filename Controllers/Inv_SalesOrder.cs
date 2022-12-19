@@ -114,7 +114,7 @@ namespace SmartxAPI.Controllers
                         criteria = "and MONTH(Cast(D_OrderDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_OrderDate)= YEAR(CURRENT_TIMESTAMP)";
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([Order No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or X_ProjectName like '%" + xSearchkey + "%' or X_PrjType like '%" + xSearchkey + "%')";
+                        Searchkey = "and ([Order No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or x_CustomerPO like '%" + xSearchkey + "%' or X_ProjectName like '%" + xSearchkey + "%' or X_PrjType like '%" + xSearchkey + "%')";
 
                     if ((xSortBy == null || xSortBy.Trim() == "") && salesOrder == false)
                     {
@@ -495,6 +495,7 @@ namespace SmartxAPI.Controllers
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "customer_PONo", typeof(string), "");
                     DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "X_UpdatedSPrice", typeof(string), "");
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "b_taskFlag", typeof(bool), true);
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_CustomerName_Ar", typeof(string), "");
                    // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_", typeof(string), "");
                     if(nFormID==1546){
                       if (DetailTable.Rows.Count > 0){
@@ -512,7 +513,8 @@ namespace SmartxAPI.Controllers
               
                     if (DetailTable.Rows.Count != 0)
                     {
-                        MasterTable.Rows[0]["x_CustomerName"] = DetailTable.Rows[0]["x_CustomerName"];
+                        MasterTable.Rows[0]["x_CustomerName"]= DetailTable.Rows[0]["x_CustomerName"];
+                        MasterTable.Rows[0]["x_CustomerName_Ar"]=DetailTable.Rows[0]["x_CustomerName_Ar"];
                         MasterTable.Rows[0]["customer_PONo"] = DetailTable.Rows[0]["customer_PONo"];
                     }
                     SortedList Param = new SortedList();

@@ -315,6 +315,7 @@ namespace SmartxAPI.Controllers
                         if (nGlobalUserID != 0)
                         {
                             skipUserSql = " and N_UserID<>@nGlobalUserID";
+
                         }
                         object userCountWithUserID = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Users where X_UserID=@xUserID " + skipUserSql, userParams, olivoCon, olivoTxn);
                         if (myFunctions.getIntVAL(userCountWithUserID.ToString()) > 0)
@@ -330,7 +331,7 @@ namespace SmartxAPI.Controllers
                         object nUserLimit =dLayer.ExecuteScalar("select isnull(N_Value,0) from GenSettings where N_ClientID="+nClientID+" and X_Description='USER LIMIT' ", olivoCon, olivoTxn);
                          if(nUserLimit==null){nUserLimit="0";}
                         object nUserCount = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Users where N_ClientID=@nClientID and N_UserType=1", userParams, olivoCon, olivoTxn);
-
+                        
                         if (nGlobalUserID == 0)
                             if (myFunctions.getIntVAL(nUserLimit.ToString()) <= myFunctions.getIntVAL(nUserCount.ToString()))
                             {
@@ -356,17 +357,20 @@ namespace SmartxAPI.Controllers
                         DataRow MasterRow = MasterTable.Rows[0];
 
                         object xPwd = ".";
+                        object nUserType;
                         if (nGlobalUserID > 0)
                         {
                             xPwd = dLayer.ExecuteScalar("SELECT X_Password FROM Users where x_EmailID=@xEmailID and N_ClientID=@nClientID and N_UserID=@nGlobalUserID", userParams, olivoCon, olivoTxn);
-                            globalUser.Rows[0]["n_ActiveAppID"] = MasterTable.Rows[0]["n_AppID"].ToString();
+                            globalUser.Rows[0]["n_ActiveAppID"] = apps.Rows[0]["n_AppID"].ToString();
+                            nUserType =dLayer.ExecuteScalar("SELECT N_UserType FROM Users where x_EmailID=@xEmailID and N_ClientID=@nClientID and N_UserID=@nGlobalUserID", userParams, olivoCon, olivoTxn);
+                            globalUser.Rows[0]["N_UserType"] = myFunctions.getIntVAL(nUserType.ToString());
                         }
                         else
                         {
                             MasterTable.Rows[0]["b_Active"] = 0;
                             globalUser.Rows[0]["b_Inactive"] = 1;
                             globalUser.Rows[0]["b_EmailVerified"] = 0;
-                            globalUser.Rows[0]["n_ActiveAppID"] = MasterTable.Rows[0]["n_AppID"].ToString();
+                            globalUser.Rows[0]["n_ActiveAppID"] = apps.Rows[0]["n_AppID"].ToString();
                         }
 
                         MasterTable.Rows[0]["x_Password"] = xPwd;

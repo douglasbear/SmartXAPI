@@ -104,10 +104,16 @@ namespace SmartxAPI.Controllers
                         cndn = "and N_CustomerID=@nCustomerID ";
 
                     if (screen == "Invoice")
-                        criteria = " and MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP) ";
+                        criteria = " and MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP) and b_IsSaveDraft=0";
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
+                    {
+                      if(!B_ReduceTime)
                         Searchkey = " and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_OrderNo like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or cast([Invoice Date] as VarChar) like '%" + xSearchkey + "%' or x_CustPONo like '%"+xSearchkey+"%' or X_BillAmt like '%" + xSearchkey + "%' or X_ProjectCode like '%" +xSearchkey + "%')";
+                      else
+                        Searchkey = " and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%'  or cast([Invoice Date] as VarChar) like '%" + xSearchkey + "%'  or X_BillAmt like '%" + xSearchkey + "%')";
+                    }
+                  
                     if (CheckClosedYear == false)
                     {
                         if (bAllBranchData == true && bLocationChange==true)
@@ -144,10 +150,10 @@ namespace SmartxAPI.Controllers
                                 xSortBy = "Cast([Invoice Date] as DateTime ) " + xSortBy.Split(" ")[1];
                                 break;
                             case "x_BillAmt":
-                                xSortBy = "Cast(REPLACE(x_BillAmt,',','') as Numeric(10," + N_decimalPlace + ")) " + xSortBy.Split(" ")[1];
+                                xSortBy = "Cast(REPLACE(x_BillAmt,',','') as Numeric(16," + N_decimalPlace + ")) " + xSortBy.Split(" ")[1];
                                 break;
                             case "n_BalanceAmt":
-                                xSortBy = "Cast(REPLACE(n_BalanceAmt,',','') as Numeric(10," + N_decimalPlace + ")) " + xSortBy.Split(" ")[1];
+                                xSortBy = "Cast(REPLACE(n_BalanceAmt,',','') as Numeric(16," + N_decimalPlace + ")) " + xSortBy.Split(" ")[1];
                                 break;
                             default: break;
                         }
@@ -156,7 +162,7 @@ namespace SmartxAPI.Controllers
 
 
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from "+viewName+" where N_Hold=0 " +Pattern+ criteria + formIDCndn + cndn + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from "+viewName+" where N_Hold=0" +Pattern+ criteria + formIDCndn + cndn + Searchkey + " " + xSortBy;
                     else
                         sqlCommandText = "select top(" + nSizeperpage + ") * from "+viewName+" where isnull(N_Hold,0)=0 " + Pattern + criteria + formIDCndn + cndn + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from "+viewName+" where isnull(N_Hold,0)=0 " + Pattern+ criteria + formIDCndn + cndn + Searchkey + xSortBy + " ) " + xSortBy;
 
@@ -193,7 +199,13 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10," + N_decimalPlace + ")) ) as TotalAmount from "+viewName+" where  N_Hold=0 " + Pattern + criteria + formIDCndn + cndn + Searchkey + "";
+                    if(screen == "Invoice"){
+                     sqlCommandCount= "SELECT COUNT(*) as N_Count,sum(Cast(REPLACE(TotalAmount,',','') as Numeric(10,2)) ) AS  TotalAmount  FROM Vw_SalesRevenew_Cloud WHERE MONTH(Cast(D_SalesDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast(D_SalesDate as DateTime)) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID =@p1 and N_FnyearID=@P2";
+                    }
+                    else{
+                     sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(16," + N_decimalPlace + ")) ) as TotalAmount from "+viewName+" where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + Pattern + criteria + cndn + formIDCndn + Searchkey + "";
+                    }
+                    
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -1784,6 +1796,7 @@ namespace SmartxAPI.Controllers
                       DataTable Details = new DataTable();
                       SortedList ParamList = new SortedList();
                       int nCompanyID=myFunctions.GetCompanyID(User);
+                      int nUserID=myFunctions.GetUserID(User);
                       ParamList.Add("@nCompanyID", nCompanyID);
                       ParamList.Add("@nFnYearID", nFnYearID);
                       string Sql="select * from Inv_Sales where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_IsSaveDraft=1 ";
@@ -1795,6 +1808,28 @@ namespace SmartxAPI.Controllers
                       int N_FormID=64;
                       object nQuotationID;
                       int count=0;
+                             string ipAddress = "";
+                            if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                                ipAddress = Request.Headers["X-Forwarded-For"];
+                            else
+                                ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                            SortedList LogParams = new SortedList();
+                            LogParams.Add("N_CompanyID", nCompanyID);
+                            LogParams.Add("N_FnYearID", nFnYearID);
+                            LogParams.Add("N_TransID", 0);
+                            LogParams.Add("N_FormID", this.N_FormID);
+                            LogParams.Add("N_UserId", nUserID);
+                            //LogParams.Add("N_UserID", nUserID);
+                            LogParams.Add("X_Action", "");
+                            LogParams.Add("X_SystemName", "ERP Cloud");
+                            LogParams.Add("X_IP", ipAddress);
+                            LogParams.Add("X_TransCode", "");
+                            LogParams.Add("X_Remark", " ");
+                            LogParams.Add("BulkDraft", 1);
+                            
+                            dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection,transaction);
+
+
                       if(Details.Rows.Count>0)
                       {
                           count=Details.Rows.Count;
@@ -1886,7 +1921,7 @@ namespace SmartxAPI.Controllers
                                 {"@nFnYearID",nFnYearID},
                                 {"@nSalesID",nInvoiceID}};
 
-                    DataTable DetailTable = dLayer.ExecuteDataTable("select n_SalesOrderID,n_SalesQuotationID from Inv_SalesDetails where N_CompanyID=@nCompanyID and N_SalesID=@nSalesID group by n_SalesOrderID,n_SalesQuotationID order by n_SalesOrderID,n_SalesQuotationID", Params, connection);
+                    DataTable DetailTable = dLayer.ExecuteDataTable("select n_SalesOrderID,n_SalesQuotationID,N_DeliveryNoteID from Inv_SalesDetails where N_CompanyID=@nCompanyID and N_SalesID=@nSalesID group by n_SalesOrderID,n_SalesQuotationID,N_DeliveryNoteID order by n_SalesOrderID,n_SalesQuotationID,N_DeliveryNoteID", Params, connection);
                     
                     object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection);
                     object objCustCode = dLayer.ExecuteScalar("Select X_CustomerCode From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection);
@@ -2007,12 +2042,12 @@ namespace SmartxAPI.Controllers
 
 
                             //StatusUpdate
-                            int tempQtn=0,tempSO=0;
+                            int tempQtn=0,tempSO=0,tempDevnote=0;
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
                             {
                                 int nSOID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
                                 int nSQID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesQuotationID"].ToString());
-
+                                int nDeliveryNoteID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_DeliveryNoteID"].ToString());
                                 if (nSOID > 0 && tempSO!=nSOID)
                                 {
                                     if(!myFunctions.UpdateTxnStatus(nCompanyID,nSOID,81,true,dLayer,connection,transaction))
@@ -2031,7 +2066,17 @@ namespace SmartxAPI.Controllers
                                         return Ok(_api.Error(User, "Unable To Update Txn Status"));
                                     }
                                 }
-                                tempQtn=nSQID;
+                                tempDevnote=nSQID;
+
+                                if (nDeliveryNoteID > 0 )
+                                {
+                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,nDeliveryNoteID,884,true,dLayer,connection,transaction))
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                    }
+                                }
+                                tempQtn=tempDevnote;
                             };
 
                             transaction.Commit();
@@ -2372,7 +2417,7 @@ namespace SmartxAPI.Controllers
         public ActionResult ProductList(int nFnYearID, int nCustomerID, bool bAllbranchData, int nBranchID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
-
+           
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             Params.Add("@nCompanyID", nCompanyID);
@@ -2382,9 +2427,37 @@ namespace SmartxAPI.Controllers
 
             string sqlCommandText = "";
             if (bAllbranchData)
-                sqlCommandText = "Select N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId,X_CustPONo from vw_Inv_DeliveryNotePending  Where N_CompanyID=@nCompanyID and N_DeliveryNoteID NOT IN (select isnull(N_DeliveryNoteID,0) from Inv_SalesDetails where N_CompanyId=@nCompanyID)  and N_CustomerID=@nCustomerID Group By N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId,X_CustPONo";
+                sqlCommandText = " SELECT        Inv_DeliveryNote.N_CustomerId, Inv_DeliveryNote.N_CompanyId, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, Inv_CustomerProjects.X_ProjectName, Inv_DeliveryNote.N_SalesOrderID, "
+                                + "Inv_DeliveryNote.N_DeliveryNoteId, Inv_DeliveryNote.N_BranchId, Inv_DeliveryNote.X_CustPONo, Inv_DeliveryNote.X_ReceiptNo AS X_DeliveryNoteNo "
+                                + " FROM            Inv_DeliveryNote INNER JOIN  "
+                                + " Inv_DeliveryNoteDetails ON Inv_DeliveryNoteDetails.N_CompanyID = Inv_DeliveryNote.N_CompanyId AND Inv_DeliveryNoteDetails.N_DeliveryNoteID = Inv_DeliveryNote.N_DeliveryNoteId LEFT OUTER JOIN "
+                                + "Inv_Customer ON Inv_DeliveryNote.N_CompanyId = Inv_Customer.N_CompanyID AND Inv_DeliveryNote.N_CustomerId = Inv_Customer.N_CustomerID AND  "
+                                + "Inv_DeliveryNote.N_FnYearId = Inv_Customer.N_FnYearID LEFT OUTER JOIN "
+                                + "Inv_CustomerProjects ON Inv_DeliveryNote.N_ProjectID = Inv_CustomerProjects.N_ProjectID AND Inv_DeliveryNote.N_CompanyId = Inv_CustomerProjects.N_CompanyID "
+                                + "WHERE        (Inv_DeliveryNote.N_CompanyId = @nCompanyID) AND (Inv_DeliveryNote.N_CustomerId = @nCustomerID) AND (isnull(Inv_DeliveryNote.B_IsSaveDraft,0) = 0) AND (Inv_DeliveryNoteDetails.N_DeliveryNoteDetailsID NOT IN "
+                                + "    (SELECT        ISNULL(N_DeliveryNoteDtlsID, 0) AS N_DeliveryNoteDtlsID "
+                                +"     FROM            Inv_SalesDetails  "
+                                +"   WHERE        (N_CompanyID = @nCompanyID)  "
+                                 +"   GROUP BY N_DeliveryNoteDtlsID))  "
+                                +" Group by Inv_DeliveryNote.N_CustomerId, Inv_DeliveryNote.N_CompanyId, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, Inv_CustomerProjects.X_ProjectName, Inv_DeliveryNote.N_SalesOrderID,  "
+                                +"       Inv_DeliveryNote.N_DeliveryNoteId, Inv_DeliveryNote.N_BranchId, Inv_DeliveryNote.X_CustPONo, Inv_DeliveryNote.X_ReceiptNo "
+                                 +" order by Inv_DeliveryNote.X_ReceiptNo"; 
             else
-                sqlCommandText = "Select N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId,X_CustPONo from vw_Inv_DeliveryNotePending  Where N_CompanyID=@nCompanyID and N_BranchID=" + nBranchID + "  and N_CustomerID=@nCustomerID and N_DeliveryNoteID NOT IN (select isnull(N_DeliveryNoteID,0) from Inv_SalesDetails where N_CompanyId=@nCompanyID)  Group By N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId,X_CustPONo";
+                sqlCommandText = " SELECT        Inv_DeliveryNote.N_CustomerId, Inv_DeliveryNote.N_CompanyId, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, Inv_CustomerProjects.X_ProjectName, Inv_DeliveryNote.N_SalesOrderID, "
+                                + "Inv_DeliveryNote.N_DeliveryNoteId, Inv_DeliveryNote.N_BranchId, Inv_DeliveryNote.X_CustPONo, Inv_DeliveryNote.X_ReceiptNo AS X_DeliveryNoteNo "
+                                + " FROM            Inv_DeliveryNote INNER JOIN  "
+                                + " Inv_DeliveryNoteDetails ON Inv_DeliveryNoteDetails.N_CompanyID = Inv_DeliveryNote.N_CompanyId AND Inv_DeliveryNoteDetails.N_DeliveryNoteID = Inv_DeliveryNote.N_DeliveryNoteId LEFT OUTER JOIN "
+                                + "Inv_Customer ON Inv_DeliveryNote.N_CompanyId = Inv_Customer.N_CompanyID AND Inv_DeliveryNote.N_CustomerId = Inv_Customer.N_CustomerID AND  "
+                                + "Inv_DeliveryNote.N_FnYearId = Inv_Customer.N_FnYearID LEFT OUTER JOIN "
+                                + "Inv_CustomerProjects ON Inv_DeliveryNote.N_ProjectID = Inv_CustomerProjects.N_ProjectID AND Inv_DeliveryNote.N_CompanyId = Inv_CustomerProjects.N_CompanyID "
+                                + "WHERE        (Inv_DeliveryNote.N_CompanyId = @nCompanyID) AND (Inv_DeliveryNote.N_CustomerId = @nCustomerID) AND (isnull(Inv_DeliveryNote.B_IsSaveDraft,0) = 0)  AND (Inv_DeliveryNote.N_BranchID = "+nBranchID+") AND (Inv_DeliveryNoteDetails.N_DeliveryNoteDetailsID NOT IN "
+                                + "    (SELECT        ISNULL(N_DeliveryNoteDtlsID, 0) AS N_DeliveryNoteDtlsID "
+                                +"     FROM            Inv_SalesDetails  "
+                                +"   WHERE        (N_CompanyID = @nCompanyID)  "
+                                 +"   GROUP BY N_DeliveryNoteDtlsID))  "
+                                +" Group by Inv_DeliveryNote.N_CustomerId, Inv_DeliveryNote.N_CompanyId, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, Inv_CustomerProjects.X_ProjectName, Inv_DeliveryNote.N_SalesOrderID,  "
+                                +"       Inv_DeliveryNote.N_DeliveryNoteId, Inv_DeliveryNote.N_BranchId, Inv_DeliveryNote.X_CustPONo, Inv_DeliveryNote.X_ReceiptNo "
+                                 +" order by Inv_DeliveryNote.X_ReceiptNo";
 
             try
             {

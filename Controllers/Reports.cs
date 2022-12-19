@@ -462,6 +462,8 @@ namespace SmartxAPI.Controllers
                         if (Timezone != null && Timezone.ToString() != "")
                         {
                             currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
+                            currentTime = currentTime.AddDays(-1);
+                            currentTime = currentTime.AddHours(-1);
                             x_comments = currentTime.ToString();
                         }
                         if (nFormID == 1406)
@@ -557,7 +559,7 @@ namespace SmartxAPI.Controllers
                             foreach (DataRow var in dt.Rows)
                             {
                                 SqlCommand cmd = new SqlCommand("Select isnull(i_sign,'') as  i_sign from vw_Log_ApprovalAppraisal where N_ActionID=" + var["N_ActionID"].ToString(), connection, transaction);
-                                if ((cmd.ExecuteScalar().ToString()) != "")
+                                if ((cmd.ExecuteScalar().ToString()) != "" && cmd.ExecuteScalar().ToString()!= "0x")
                                 {
                                     byte[] content = (byte[])cmd.ExecuteScalar();
                                     MemoryStream stream = new MemoryStream(content);

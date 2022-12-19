@@ -11,7 +11,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
 using System.Net;
+<<<<<<< HEAD
 using Newtonsoft.Json;
+=======
+>>>>>>> d9fbc602bf7b8aa8ab5775c31960198a70d42d9d
 
 namespace SmartxAPI.Controllers
 {
@@ -67,7 +70,21 @@ namespace SmartxAPI.Controllers
                 date = Convert.ToDateTime(obj.datetime);
             }
 
+<<<<<<< HEAD
             //DateTime date = DateTime.Today;
+=======
+            DateTime date = new DateTime();
+            string url = "http://worldtimeapi.org/api/timezone/Asia/Kolkata";
+            using (var client = new WebClient())
+            {
+                client.Headers.Add("content-type", "application/json");
+                string response = client.DownloadString(url);
+                response = response.Substring(63, 26);
+                date = DateTime.Parse(response);
+            }
+
+            
+>>>>>>> d9fbc602bf7b8aa8ab5775c31960198a70d42d9d
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnyearID);
             Params.Add("@p3", nEmpID);
@@ -93,8 +110,14 @@ namespace SmartxAPI.Controllers
                     string sqlDOUT = "SELECT top(1) D_Out as D_Out from Pay_TimeSheetImport  where N_EmpID=@p3 and D_Date=@today and N_CompanyID=@p1 order by N_SheetID desc";
                     object DIN = dLayer.ExecuteScalar(sqlDIN, Params, connection);
                     object DOUT = dLayer.ExecuteScalar(sqlDOUT, Params, connection);
+<<<<<<< HEAD
                     string sqlCommandDailyLogin = "SELECT '" + DIN + "' as D_In,'" + DOUT + "' as D_Out,Convert(Time, GetDate()) as D_Cur, case when '" + DOUT + "'='00:00:00' then '' else cast(dateadd(millisecond, datediff(millisecond,case when '" + DIN + "'='00:00:00' then  Convert(Time, GetDate()) else '" + DIN + "' end,'" + DOUT + "'), '19000101')  AS TIME)end AS duration from Pay_TimeSheetImport where N_EmpID=@p3 and D_Date=@today";
                     string CatID = "select N_CatagoryId from Pay_Employee where N_EmpID=@p3 and N_CompanyID=@p1";
+=======
+                    // string sqlCommandDailyLogin = "SELECT '" + DIN + "' as D_In,'" + DOUT + "' as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,case when '"+DIN+"'='00:00:00' then  Convert(Time, GetDate()) else '"+DIN+"' end,case when '"+DOUT+"' ='00:00:00' then  Convert(Time, GetDate()) else '"+DOUT+"' end), '19000101')  AS TIME) AS duration from Pay_TimeSheetImport where N_EmpID=@p3 and D_Date=@today";
+                    string sqlCommandDailyLogin = "SELECT '" + DIN + "' as D_In,'" + DOUT + "' as D_Out,Convert(Time, GetDate()) as D_Cur, case when '"+DOUT+"'='00:00:00' then '' else cast(dateadd(millisecond, datediff(millisecond,case when '"+DIN+"'='00:00:00' then  Convert(Time, GetDate()) else '"+DIN+"' end,'"+DOUT+"'), '19000101')  AS TIME)end AS duration from Pay_TimeSheetImport where N_EmpID=@p3 and D_Date=@today";
+                    string CatID ="select N_CatagoryId from Pay_Employee where N_EmpID=@p3 and N_CompanyID=@p1";
+>>>>>>> d9fbc602bf7b8aa8ab5775c31960198a70d42d9d
                     CategoryID = dLayer.ExecuteScalar(CatID, Params, connection);
                     EmployeeDetails = dLayer.ExecuteDataTable(sqlCommandEmployeeDetails, Params, connection);
                     EmployeeDetails = api.Format(EmployeeDetails, "EmployeeDetails");
@@ -431,7 +454,52 @@ namespace SmartxAPI.Controllers
             }
         }
 
+      
 
+     
+
+
+                [HttpGet("EmpBirthDayList")]
+               public ActionResult EmpBirthDay(int nUserID,int nFnyearID)
+                {
+           try
+            {
+                 using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    DataTable MasterTable = new DataTable();
+                    DataTable DataTable = new DataTable();
+                    SortedList OutPut = new SortedList();
+                   int nCompanyId=myFunctions.GetCompanyID(User);
+
+                   DateTime Start = DateTime.Now;
+                   int day = Start.Day;
+                             Params.Add("@p1", nCompanyId);
+                             Params.Add("@p2", nFnyearID);
+                              Params.Add("@p3", nUserID);
+                            Params.Add("@today", day);
+                  
+                
+                   string sqlCommandText = "select x_EmpName,x_position from vw_PayEmployee where MONTH(vw_PayEmployee.D_DOB) = MONTH(CURRENT_TIMESTAMP) and DAY(vw_PayEmployee.D_DOB) =@today and N_CompanyID=@p1 and B_Inactive=0 and N_EmpID!=@p3 and N_FnYearID=@p2";
+                   string sqlCommandCount ="select count(*) as N_Count from vw_PayEmployee where MONTH(vw_PayEmployee.D_DOB) = MONTH(CURRENT_TIMESTAMP) and DAY(vw_PayEmployee.D_DOB) =@today and N_CompanyID=@p1 and B_Inactive=0 and N_EmpID=@p3 and N_FnYearID=@p2";
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                  object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                   
+                        return Ok(api.Success(OutPut));
+
+
+                }
+            }
+
+             catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+          }
 
 
     }

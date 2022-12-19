@@ -22,8 +22,8 @@ namespace SmartxAPI.Controllers
         private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
         private readonly int FormID;
-
-        public Inv_SalesReturn(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
+        private readonly ITxnHandler txnHandler;
+        public Inv_SalesReturn(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt,ITxnHandler txn)
         {
             _api = api;
             dLayer = dl;
@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 55;
-
+             txnHandler=txn;
         }
 
 
@@ -390,161 +390,202 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
-
-
-        //Save....
+         //Save....
         [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
+            SortedList Result = new SortedList();
+            int n_IsCompleted=0;
+            string x_Message="";
 
             try
             {
-                DataTable MasterTable;
-                DataTable DetailTable;
-                MasterTable = ds.Tables["master"];
-                DetailTable = ds.Tables["details"];
-                DataTable Attachment = ds.Tables["attachments"];
-                SortedList Params = new SortedList();
-                // Auto Gen
-                string InvoiceNo = "";
-                DataRow masterRow = MasterTable.Rows[0];
-                var values = masterRow["X_DebitNoteNo"].ToString();
-                int UserID = myFunctions.GetUserID(User);
-                int N_CompanyID = myFunctions.GetCompanyID(User);
-                int N_InvoiceId = 0;
-                int nFnYearID = 0;
-
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction;
                     transaction = connection.BeginTransaction();
-                    int N_DebitNoteId = myFunctions.getIntVAL(masterRow["N_DebitNoteId"].ToString());
-                    int N_CustomerID = myFunctions.getIntVAL(masterRow["n_CustomerID"].ToString());
-                    int N_SalesId = myFunctions.getIntVAL(masterRow["N_SalesId"].ToString());
-                    int N_DeliveryNote = 0;
-                    double N_TotalPaid = myFunctions.getVAL(MasterTable.Rows[0]["N_TotalPaidAmount"].ToString());
-                    MasterTable.Rows[0]["N_TotalPaidAmount"] = N_TotalPaid;
-                    double N_TotalPaidF = myFunctions.getVAL(MasterTable.Rows[0]["n_TotalPaidAmountF"].ToString());
-                    MasterTable.Rows[0]["n_TotalPaidAmountF"] = N_TotalPaidF;
 
-                     if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_ReturnDate"].ToString(), "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                    Result=txnHandler.SalesReturnSaveData( ds,User, dLayer,  connection, transaction);
+
+                    n_IsCompleted=myFunctions.getIntVAL(Result["b_IsCompleted"].ToString());
+                    x_Message=Result["x_Msg"].ToString();
+                       
+                    if(n_IsCompleted==1)
                     {
-                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_ReturnDate"].ToString() + "') between D_Start and D_End", connection, transaction);
-                        if (DiffFnYearID != null)
-                        {
-                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
-                            nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
-                            //QueryParams["@nFnYearID"] = nFnYearID;
-                        }
-                        else
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
-                        }
+                        transaction.Commit();
+                        return Ok(_api.Success(Result, x_Message));
                     }
-
-                    if (values == "@Auto")
-                    {
-                        Params.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
-                        Params.Add("N_YearID", nFnYearID);
-                        Params.Add("N_FormID", this.FormID);
-                        Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
-                        InvoiceNo = dLayer.GetAutoNumber("Inv_SalesReturnMaster", "X_DebitNoteNo", Params, connection, transaction);
-                        if (InvoiceNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Return Number")); }
-                        MasterTable.Rows[0]["X_DebitNoteNo"] = InvoiceNo;
-                    }
-
-                    if (N_DebitNoteId > 0)
-                    {
-                        SortedList DeleteParams = new SortedList(){
-                                {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
-                                {"X_TransType","SALES RETURN"},
-                                {"N_VoucherID",N_DebitNoteId}};
-                        try
-                        {
-                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
-
-
-                            for (int j = 1; j < DetailTable.Rows.Count; j++)
-                            {
-                                dLayer.ExecuteNonQuery("Update Inv_StockMaster_IMEI Set N_Status = 1 Where N_IMEI='" + DetailTable.Rows[j]["N_IMEI"] + "' and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_Status=0", connection, transaction);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, ex));
-                        }
-                        // string sqlCommandText = "";
-                        // SortedList DeleteParams = new SortedList();
-
-                        // sqlCommandText = "SP_Delete_Trans_With_SaleAccounts  @N_CompanyId,'SALES RETURN',@N_DebitNoteId";
-                        // DeleteParams.Add("@N_CompanyId",myFunctions.getIntVAL(masterRow["n_CompanyId"].ToString()));
-                        // DeleteParams.Add("@N_DebitNoteId", N_DebitNoteId);
-
-                        // dLayer.ExecuteDataTable(sqlCommandText, DeleteParams, connection);
-
-                    }
-
-                    // dLayer.setTransaction();
-                    MasterTable.Columns.Remove("n_ProjectID");
-                    N_InvoiceId = dLayer.SaveData("Inv_SalesReturnMaster", "N_DebitNoteId", MasterTable, connection, transaction);
-                    if (N_InvoiceId <= 0)
+                    else
                     {
                         transaction.Rollback();
+                        return Ok(_api.Error(User, x_Message));
                     }
-                    for (int j = 0; j < DetailTable.Rows.Count; j++)
-                    {
-                        DetailTable.Rows[j]["N_DebitNoteId"] = N_InvoiceId;
-                    }
-                    int N_InvoiceDetailId = dLayer.SaveData("Inv_SalesReturnDetails", "N_DebitnoteDetailsID", DetailTable, connection, transaction);
-
-                    SortedList CustomerParams = new SortedList();
-                    CustomerParams.Add("@nCustomerID", N_CustomerID);
-                    DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID=@nCustomerID", CustomerParams, connection, transaction);
-                    if (CustomerInfo.Rows.Count > 0)
-                    {
-                        try
-                        {
-                            myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_DebitNoteId, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), CustomerInfo.Rows[0]["X_CustomerCode"].ToString(), N_CustomerID, "Customer Document", User, connection, transaction);
-                        }
-                        catch (Exception ex)
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, ex));
-                        }
-                    }
-
-                    SortedList InsParams = new SortedList();
-                    InsParams.Add("N_CompanyID", N_CompanyID);
-                    InsParams.Add("N_DebitNoteId", N_InvoiceId);
-                    InsParams.Add("N_DeliveryNote", N_DeliveryNote);
-
-                    dLayer.ExecuteNonQueryPro("SP_SalesReturn_Ins_New", InsParams, connection, transaction);
-
-                    SortedList StockPostingParams = new SortedList();
-                    StockPostingParams.Add("N_CompanyID", N_CompanyID);
-                    StockPostingParams.Add("X_InventoryMode", "SALES RETURN");
-                    StockPostingParams.Add("N_InternalID", N_InvoiceId);
-                    StockPostingParams.Add("N_UserID", UserID);
-
-                    dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", StockPostingParams, connection, transaction);
-
-                    transaction.Commit();
                 }
-                SortedList Result = new SortedList();
-                Result.Add("n_SalesReturnID", N_InvoiceId);
-                Result.Add("x_SalesReturnNo", InvoiceNo);
-                return Ok(_api.Success(Result, "Sales Return Saved"));
-
-            }
+                     
+            }       
             catch (Exception ex)
             {
-                return Ok(ex);
+                return Ok(_api.Error(User, ex));
             }
+
         }
+
+
+        // //Save....
+        // [HttpPost("Save")]
+        // public ActionResult SaveData([FromBody] DataSet ds)
+        // {
+
+        //     try
+        //     {
+        //         DataTable MasterTable;
+        //         DataTable DetailTable;
+        //         MasterTable = ds.Tables["master"];
+        //         DetailTable = ds.Tables["details"];
+        //         DataTable Attachment = ds.Tables["attachments"];
+        //         SortedList Params = new SortedList();
+        //         // Auto Gen
+        //         string InvoiceNo = "";
+        //         DataRow masterRow = MasterTable.Rows[0];
+        //         var values = masterRow["X_DebitNoteNo"].ToString();
+        //         int UserID = myFunctions.GetUserID(User);
+        //         int N_CompanyID = myFunctions.GetCompanyID(User);
+        //         int N_InvoiceId = 0;
+        //         int nFnYearID = 0;
+
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             SqlTransaction transaction;
+        //             transaction = connection.BeginTransaction();
+        //             int N_DebitNoteId = myFunctions.getIntVAL(masterRow["N_DebitNoteId"].ToString());
+        //             int N_CustomerID = myFunctions.getIntVAL(masterRow["n_CustomerID"].ToString());
+        //             int N_SalesId = myFunctions.getIntVAL(masterRow["N_SalesId"].ToString());
+        //             int N_DeliveryNote = 0;
+        //             double N_TotalPaid = myFunctions.getVAL(MasterTable.Rows[0]["N_TotalPaidAmount"].ToString());
+        //             MasterTable.Rows[0]["N_TotalPaidAmount"] = N_TotalPaid;
+        //             double N_TotalPaidF = myFunctions.getVAL(MasterTable.Rows[0]["n_TotalPaidAmountF"].ToString());
+        //             MasterTable.Rows[0]["n_TotalPaidAmountF"] = N_TotalPaidF;
+
+        //              if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_ReturnDate"].ToString(), "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+        //             {
+        //                 object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_ReturnDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+        //                 if (DiffFnYearID != null)
+        //                 {
+        //                     MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+        //                     nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+        //                     //QueryParams["@nFnYearID"] = nFnYearID;
+        //                 }
+        //                 else
+        //                 {
+        //                     transaction.Rollback();
+        //                     return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+        //                 }
+        //             }
+
+        //             if (values == "@Auto")
+        //             {
+        //                 Params.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+        //                 Params.Add("N_YearID", nFnYearID);
+        //                 Params.Add("N_FormID", this.FormID);
+        //                 Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
+        //                 InvoiceNo = dLayer.GetAutoNumber("Inv_SalesReturnMaster", "X_DebitNoteNo", Params, connection, transaction);
+        //                 if (InvoiceNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Return Number")); }
+        //                 MasterTable.Rows[0]["X_DebitNoteNo"] = InvoiceNo;
+        //             }
+
+        //             if (N_DebitNoteId > 0)
+        //             {
+        //                 SortedList DeleteParams = new SortedList(){
+        //                         {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
+        //                         {"X_TransType","SALES RETURN"},
+        //                         {"N_VoucherID",N_DebitNoteId}};
+        //                 try
+        //                 {
+        //                     dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+
+
+        //                     for (int j = 1; j < DetailTable.Rows.Count; j++)
+        //                     {
+        //                         dLayer.ExecuteNonQuery("Update Inv_StockMaster_IMEI Set N_Status = 1 Where N_IMEI='" + DetailTable.Rows[j]["N_IMEI"] + "' and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_Status=0", connection, transaction);
+        //                     }
+        //                 }
+        //                 catch (Exception ex)
+        //                 {
+        //                     transaction.Rollback();
+        //                     return Ok(_api.Error(User, ex));
+        //                 }
+        //                 // string sqlCommandText = "";
+        //                 // SortedList DeleteParams = new SortedList();
+
+        //                 // sqlCommandText = "SP_Delete_Trans_With_SaleAccounts  @N_CompanyId,'SALES RETURN',@N_DebitNoteId";
+        //                 // DeleteParams.Add("@N_CompanyId",myFunctions.getIntVAL(masterRow["n_CompanyId"].ToString()));
+        //                 // DeleteParams.Add("@N_DebitNoteId", N_DebitNoteId);
+
+        //                 // dLayer.ExecuteDataTable(sqlCommandText, DeleteParams, connection);
+
+        //             }
+
+        //             // dLayer.setTransaction();
+        //             MasterTable.Columns.Remove("n_ProjectID");
+        //             N_InvoiceId = dLayer.SaveData("Inv_SalesReturnMaster", "N_DebitNoteId", MasterTable, connection, transaction);
+        //             if (N_InvoiceId <= 0)
+        //             {
+        //                 transaction.Rollback();
+        //             }
+        //             for (int j = 0; j < DetailTable.Rows.Count; j++)
+        //             {
+        //                 DetailTable.Rows[j]["N_DebitNoteId"] = N_InvoiceId;
+        //             }
+        //             int N_InvoiceDetailId = dLayer.SaveData("Inv_SalesReturnDetails", "N_DebitnoteDetailsID", DetailTable, connection, transaction);
+
+        //             SortedList CustomerParams = new SortedList();
+        //             CustomerParams.Add("@nCustomerID", N_CustomerID);
+        //             DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID=@nCustomerID", CustomerParams, connection, transaction);
+        //             if (CustomerInfo.Rows.Count > 0)
+        //             {
+        //                 try
+        //                 {
+        //                     myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_DebitNoteId, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), CustomerInfo.Rows[0]["X_CustomerCode"].ToString(), N_CustomerID, "Customer Document", User, connection, transaction);
+        //                 }
+        //                 catch (Exception ex)
+        //                 {
+        //                     transaction.Rollback();
+        //                     return Ok(_api.Error(User, ex));
+        //                 }
+        //             }
+
+        //             SortedList InsParams = new SortedList();
+        //             InsParams.Add("N_CompanyID", N_CompanyID);
+        //             InsParams.Add("N_DebitNoteId", N_InvoiceId);
+        //             InsParams.Add("N_DeliveryNote", N_DeliveryNote);
+
+        //             dLayer.ExecuteNonQueryPro("SP_SalesReturn_Ins_New", InsParams, connection, transaction);
+
+        //             SortedList StockPostingParams = new SortedList();
+        //             StockPostingParams.Add("N_CompanyID", N_CompanyID);
+        //             StockPostingParams.Add("X_InventoryMode", "SALES RETURN");
+        //             StockPostingParams.Add("N_InternalID", N_InvoiceId);
+        //             StockPostingParams.Add("N_UserID", UserID);
+
+        //             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", StockPostingParams, connection, transaction);
+
+        //             transaction.Commit();
+        //         }
+        //         SortedList Result = new SortedList();
+        //         Result.Add("n_SalesReturnID", N_InvoiceId);
+        //         Result.Add("x_SalesReturnNo", InvoiceNo);
+        //         return Ok(_api.Success(Result, "Sales Return Saved"));
+
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return Ok(ex);
+        //     }
+        // }
+
+        
         //Delete....
         [HttpDelete()]
         public ActionResult DeleteData(int? nCompanyId, int? nDebitNoteId)

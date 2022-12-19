@@ -130,6 +130,9 @@ namespace SmartxAPI.Controllers
                             case "leave adjustment":
                                 xTableName = "Mig_LeaveAdjustment";
                                 break;
+                            case "recruitment":
+                                xTableName = "Mig_Recruitment";
+                                break;
                             case "vendor balances":
                                 xTableName = "Mig_VendorOpening";
                                 break;
@@ -300,7 +303,7 @@ namespace SmartxAPI.Controllers
                             ValidationParam.Add("X_Type", dt.TableName);
                             try
                             {
-                              dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
+                             dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
                             }
                             catch (Exception ex)
                             {

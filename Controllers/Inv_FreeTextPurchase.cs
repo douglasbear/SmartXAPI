@@ -68,16 +68,16 @@ namespace SmartxAPI.Controllers
                     }
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ( [Invoice No] like '%" + xSearchkey + "%' or [Invoice Date] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%' or InvoiceNetAmt like '%" + xSearchkey + "%' or x_Description like '%" + xSearchkey + "%' or n_InvDueDays like '%" + xSearchkey + "%' ) ";
+                        Searchkey = "and ( [Invoice No] like '%" + xSearchkey + "%' or [Invoice Date] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%' or InvoiceNetAmt like '%" + xSearchkey + "%' or x_Description like '%" + xSearchkey + "%' or n_InvDueDays like '%" + xSearchkey + "%' or x_ProjectCode like '%" + xSearchkey + "%' ) ";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_PurchaseID desc";
                     else
                         xSortBy = " order by " + xSortBy;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate ,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays,x_ProjectCode from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate ,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays,x_ProjectCode,X_VendorName_Ar from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays,x_ProjectCode from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey + "and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey + " ) ";
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays,x_ProjectCode,X_VendorName_Ar from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey + "and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey + " ) ";
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
