@@ -66,9 +66,9 @@ namespace SmartxAPI.Controllers
                     else
                         xSortBy = " order by " + xSortBy;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Customer] as X_Customer,[Invoice No] as invoiceNo,-1*cast(X_BillAmt as Numeric(16,2)) as X_BillAmt,n_InvDueDays from vw_InvSalesInvoiceNo_Search_cloud where " + xCriteria + Searchkey;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Customer] as X_Customer,[Invoice No] as invoiceNo,X_BillAmt,n_InvDueDays from vw_FreetextSaleReturn_Search_Cloud where " + xCriteria + Searchkey;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Customer] as X_Customer,[Invoice No] as invoiceNo,-1*cast(X_BillAmt as Numeric(16,2)) as X_BillAmt,n_InvDueDays from vw_InvSalesInvoiceNo_Search_cloud where " + xCriteria + Searchkey + "and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search_cloud where " + xCriteria + Searchkey + " ) ";
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Customer] as X_Customer,[Invoice No] as invoiceNo,X_BillAmt,n_InvDueDays from vw_FreetextSaleReturn_Search_Cloud where " + xCriteria + Searchkey + "and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_FreetextSaleReturn_Search_Cloud where " + xCriteria + Searchkey + " ) ";
 
                     SortedList OutPut = new SortedList();
 
@@ -343,23 +343,32 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-
+                            string X_SalesDetails = "Select * From Vw_FreeTextSalesDetailsTOReturn Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_SalesID=" + N_SalesID + " ";
+                            ReturnDetails = dLayer.ExecuteDataTable(X_SalesDetails, Params, connection);
                             Master.Rows[0]["N_FreeTextReturnID"] = N_SalesID;
                             Master.Rows[0]["N_SalesID"] = 0;
                             Master.Rows[0]["X_ReceiptNo"] = "@Auto";
                             Master.AcceptChanges();
 
                         }
+                    Master = _api.Format(Master, "Master");
+
+ReturnDetails = _api.Format(ReturnDetails, "Details");
+                    dt.Tables.Add(ReturnDetails);
+                    dt.Tables.Add(Master);
+                    return Ok(_api.Success(dt));
 
 
                     }
                     Master = _api.Format(Master, "Master");
 
+                    // X_DetailsSql = "select * from Vw_FreeTextSalesDetailsTOReturn_Disp Where N_CompanyID=" + nCompanyId + " and  N_FnYearID=" + nFnYearId + " and N_SalesID=" + N_SalesID;
                     X_DetailsSql = "Select Inv_SalesDetails.*,Acc_MastLedger.*,Acc_TaxCategory_1.N_Amount as N_TaxPerc1, Acc_TaxCategory_1.X_DisplayName, Acc_TaxCategory_1.N_PkeyID as N_TaxId1, Acc_TaxCategory.N_PkeyID AS N_TaxId2,  Acc_TaxCategory.N_Amount AS N_TaxPerc2, Acc_TaxCategory.X_DisplayName AS X_displayName2" +
                                    " from Inv_SalesDetails LEFT OUTER JOIN Acc_TaxCategory ON Inv_SalesDetails.N_TaxCategoryID2 = Acc_TaxCategory.N_PkeyID AND Inv_SalesDetails.N_CompanyID = Acc_TaxCategory.N_CompanyID LEFT OUTER JOIN Acc_TaxCategory AS Acc_TaxCategory_1 ON Inv_SalesDetails.N_TaxCategoryID1 = Acc_TaxCategory_1.N_PkeyID AND" +
                                   " Inv_SalesDetails.N_CompanyID = Acc_TaxCategory_1.N_CompanyID " +
                                   " Left Outer JOIN Acc_MastLedger On Inv_SalesDetails.N_LedgerID= Acc_MastLedger.N_LedgerID and Inv_SalesDetails.N_CompanyID = Acc_MastLedger.N_CompanyID" +
                                   " Where Inv_SalesDetails.N_CompanyID=" + nCompanyId + " and  Acc_MastLedger.N_FnYearID=" + nFnYearId + " and Inv_SalesDetails.N_SalesID=" + N_SalesID;
+                    
                     Details = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
 
 
