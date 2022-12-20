@@ -1368,7 +1368,6 @@ namespace SmartxAPI.Controllers
                                                 " AND N_CompanyID= "+ myFunctions.getVAL(DetailsTable.Rows[i]["N_CompanyID"].ToString()) +" order by D_DateIn desc ,N_StockID desc) AS LastCost ON Inv_ItemMaster.N_CompanyID=LastCost.N_CompanyID AND "+
                                                 " Inv_ItemMaster.N_ItemID=LastCost.N_ItemID WHERE Inv_ItemMaster.N_CompanyID="+myFunctions.getVAL(DetailsTable.Rows[i]["N_CompanyID"].ToString())+" AND Inv_ItemMaster.N_ItemID= "+myFunctions.getVAL(DetailsTable.Rows[i]["N_ItemID"].ToString()), connection, transaction);
                             }
-
                             //StatusUpdate
                             int tempPOrderID=0;
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
