@@ -66,7 +66,7 @@ namespace SmartxAPI.Controllers
             {
                 client.Headers.Add("content-type", "application/json");
                 string response = client.DownloadString(url);
-                response = response.Substring(63, 26);
+                response = response.Substring(62, 26);
                 date = DateTime.Parse(response);
             }
 
