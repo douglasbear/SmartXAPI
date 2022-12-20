@@ -35,13 +35,14 @@ namespace SmartxAPI.Controllers
 
         //List
         [HttpGet("list")]
-        public ActionResult GetAllTaxTypes(int? nCompanyID)
+        public ActionResult GetAllTaxTypes(int? nCompanyID, int nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select *  from vw_TaxCategory_Disp where N_CompanyID=@p1";
+            string sqlCommandText = "select * from vw_TaxCategory_Disp where N_CompanyID=@p1 and N_FnYearID=@p2";
             Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nFnYearID);
 
             try
             {
