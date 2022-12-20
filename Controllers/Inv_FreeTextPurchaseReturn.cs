@@ -351,19 +351,27 @@ namespace SmartxAPI.Controllers
                                 Master.Rows[0]["X_InvoiceNo"] = "@Auto";
                                 Master.AcceptChanges();
                             }
-                            string X_PurchaseDetails = "Select * From vw_Inv_Purchasedetails Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_FreeTextReturnID=" + N_PurchaseID + " ";
+                            string X_PurchaseDetails = "Select * From vw_Inv_FreeTextPurchaseToReturnDetails Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_FreeTextReturnID=" + N_PurchaseID + " ";
                             ReturnDetails = dLayer.ExecuteDataTable(X_PurchaseDetails, Params, connection);
 
                         }
                         else
                         {
-
+ string X_PurchaseDetails = "Select * From vw_Inv_FreeTextPurchaseToReturnDetails Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_PurchaseID=" + N_PurchaseID + " ";
+                            ReturnDetails = dLayer.ExecuteDataTable(X_PurchaseDetails, Params, connection);
                             Master.Rows[0]["N_FreeTextReturnID"] = N_PurchaseID;
                             Master.Rows[0]["N_PurchaseID"] = 0;
                             Master.Rows[0]["X_InvoiceNo"] = "@Auto";
                             Master.AcceptChanges();
 
                         }
+
+                        Master = _api.Format(Master, "Master");
+
+ReturnDetails = _api.Format(ReturnDetails, "Details");
+                    dt.Tables.Add(ReturnDetails);
+                    dt.Tables.Add(Master);
+                    return Ok(_api.Success(dt));
 
 
                     }
