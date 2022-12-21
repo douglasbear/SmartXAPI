@@ -60,15 +60,15 @@ namespace SmartxAPI.Controllers
                 // DateTime dDateTo = Convert.ToDateTime(mstVar["D_PeriodTo"].ToString());
               
 
-            DateTime date = new DateTime();
-            string url = "http://worldtimeapi.org/api/timezone/Asia/Kolkata";
-            using (var client = new WebClient())
-            {
-                client.Headers.Add("content-type", "application/json");
-                string response = client.DownloadString(url);
-                response = response.Substring(62, 26);
-                date = DateTime.Parse(response);
-            }
+            DateTime date = DateTime.Now;
+            // string url = "http://worldtimeapi.org/api/timezone/Asia/Kolkata";
+            // using (var client = new WebClient())
+            // {
+            //     client.Headers.Add("content-type", "application/json");
+            //     string response = client.DownloadString(url);
+            //     response = response.Substring(62, 26);
+            //     date = DateTime.Parse(response);
+            // }
 
             
             Params.Add("@p1", nCompanyID);
