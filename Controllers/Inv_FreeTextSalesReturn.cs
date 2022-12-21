@@ -318,31 +318,31 @@ namespace SmartxAPI.Controllers
                     if (xPath != null && xPath != "")
                     {
                         object returnID = dLayer.ExecuteScalar("Select N_SalesID from Vw_FreeTextSalesToReturn  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_FreeTextReturnID=" + N_SalesID + " ", Params, connection);
-                        if (returnID != null)
-                        {
-                            object salesAmount = dLayer.ExecuteScalar("Select N_BillAmt from Vw_FreeTextSalesToReturn  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='" + xTransType + "' and X_ReceiptNo='" + xInvoiceNO + "' ", Params, connection);
-                            object returnAmout = dLayer.ExecuteScalar("Select Sum(N_BillAmt)  from Vw_FreeTextSalesToReturn  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='DEBIT NOTE' and N_FreeTextReturnID=" + N_SalesID + " ", Params, connection);
+                        // if (returnID != null)
+                        // {
+                        //     object salesAmount = dLayer.ExecuteScalar("Select N_BillAmt from Vw_FreeTextSalesToReturn  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='" + xTransType + "' and X_ReceiptNo='" + xInvoiceNO + "' ", Params, connection);
+                        //     object returnAmout = dLayer.ExecuteScalar("Select Sum(N_BillAmt)  from Vw_FreeTextSalesToReturn  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='DEBIT NOTE' and N_FreeTextReturnID=" + N_SalesID + " ", Params, connection);
 
-                            if (myFunctions.getVAL(salesAmount.ToString()) == myFunctions.getVAL(returnAmout.ToString()))
-                            {
-                                Master.Rows[0]["N_FreeTextReturnID"] = N_SalesID;
-                                Master.Rows[0]["isReturnDone"] = true;
-                                Master.AcceptChanges();
+                        //     if (myFunctions.getVAL(salesAmount.ToString()) == myFunctions.getVAL(returnAmout.ToString()))
+                        //     {
+                        //         Master.Rows[0]["N_FreeTextReturnID"] = N_SalesID;
+                        //         Master.Rows[0]["isReturnDone"] = true;
+                        //         Master.AcceptChanges();
 
-                            }
-                            else
-                            {
-                                Master.Rows[0]["N_FreeTextReturnID"] = N_SalesID;
-                                Master.Rows[0]["N_SalesID"] = 0;
-                                Master.Rows[0]["X_ReceiptNo"] = "@Auto";
-                                Master.AcceptChanges();
-                            }
-                            string X_SalesDetails = "Select * From Vw_FreeTextSalesDetailsTOReturn Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_FreeTextReturnID=" + N_SalesID + " ";
-                            ReturnDetails = dLayer.ExecuteDataTable(X_SalesDetails, Params, connection);
+                        //     }
+                        //     else
+                        //     {
+                        //         Master.Rows[0]["N_FreeTextReturnID"] = N_SalesID;
+                        //         Master.Rows[0]["N_SalesID"] = 0;
+                        //         Master.Rows[0]["X_ReceiptNo"] = "@Auto";
+                        //         Master.AcceptChanges();
+                        //     }
+                        //     string X_SalesDetails = "Select * From Vw_FreeTextSalesDetailsTOReturn Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_FreeTextReturnID=" + N_SalesID + " ";
+                        //     ReturnDetails = dLayer.ExecuteDataTable(X_SalesDetails, Params, connection);
 
-                        }
-                        else
-                        {
+                        // }
+                        // else
+                        // {
                             string X_SalesDetails = "Select * From Vw_FreeTextSalesDetailsTOReturn Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_SalesID=" + N_SalesID + " ";
                             ReturnDetails = dLayer.ExecuteDataTable(X_SalesDetails, Params, connection);
                             Master.Rows[0]["N_FreeTextReturnID"] = N_SalesID;
@@ -350,7 +350,7 @@ namespace SmartxAPI.Controllers
                             Master.Rows[0]["X_ReceiptNo"] = "@Auto";
                             Master.AcceptChanges();
 
-                        }
+                        // }
                     Master = _api.Format(Master, "Master");
 
 ReturnDetails = _api.Format(ReturnDetails, "Details");
