@@ -56,16 +56,15 @@ namespace SmartxAPI.Controllers
             string sqlPendingLeaveApproval = "select count(*) from (select N_VacationGroupID From vw_PayVacationList where N_CompanyID=@p1 and B_IsAdjustEntry<>1 and N_VacationGroupID in ( select N_TransID from vw_ApprovalPending where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type='LEAVE REQUEST' and N_NextApproverID=@p4) group by N_VacationGroupID) as tbl";
             string sqlLastApproval = "SELECT      Top(1) vw_ApprovalSummary.*,vw_PayVacationDetails_Disp.VacTypeId ,vw_PayVacationDetails_Disp.[Vacation Type], vw_PayVacationDetails_Disp.D_VacDateFrom, vw_PayVacationDetails_Disp.D_VacDateTo, vw_PayVacationDetails_Disp.N_VacDays FROM vw_ApprovalSummary INNER JOIN vw_PayVacationDetails_Disp ON vw_ApprovalSummary.N_CompanyID = vw_PayVacationDetails_Disp.N_CompanyID AND  vw_ApprovalSummary.N_FnYearID = vw_PayVacationDetails_Disp.N_FnYearID AND vw_ApprovalSummary.N_TransID = vw_PayVacationDetails_Disp.N_VacationGroupID AND vw_ApprovalSummary.X_Type='LEAVE REQUEST' where vw_ApprovalSummary.N_CompanyID=@p1 and vw_ApprovalSummary.N_ActionUserID=@p4 and vw_ApprovalSummary.N_ProcStatusID<>6 and vw_ApprovalSummary.N_ActionUserID<>vw_ApprovalSummary.N_ReqUserID and vw_ApprovalSummary.X_Type='LEAVE REQUEST'  ORDER BY vw_ApprovalSummary.X_ActionDate DESC";
 
-            //Current Date 
-            DateTime date = new DateTime();
-            string url = "http://worldtimeapi.org/api/timezone/Asia/Kolkata";
-            using (var client = new WebClient())
-            {
-                client.Headers.Add("content-type", "application/json");
-                string response = client.DownloadString(url);
-                dynamic obj = JsonConvert.DeserializeObject(response);
-                date = Convert.ToDateTime(obj.datetime);
-            }
+            DateTime date = DateTime.Now;
+            // string url = "http://worldtimeapi.org/api/timezone/Asia/Kolkata";
+            // using (var client = new WebClient())
+            // {
+            //     client.Headers.Add("content-type", "application/json");
+            //     string response = client.DownloadString(url);
+            //     response = response.Substring(62, 26);
+            //     date = DateTime.Parse(response);
+            // }
 
             //DateTime date = DateTime.Today;
             Params.Add("@p1", nCompanyID);
