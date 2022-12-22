@@ -238,6 +238,11 @@ namespace SmartxAPI.Controllers
                     int n_CourseFrom = myFunctions.getIntVAL(MasterRow["n_CourseFrom"].ToString());
                     string xTransferCode = MasterRow["x_TransferCode"].ToString();
                     int nInactive = 0;
+                      int N_FormID = 0;
+                   if (MasterTable.Columns.Contains("N_FormID"))
+                    {
+                        N_FormID = myFunctions.getIntVAL(MasterRow["N_FormID"].ToString());
+                    }
 
                     if (nCourseTo == n_CourseFrom) nInactive = 1;
 
@@ -283,9 +288,21 @@ namespace SmartxAPI.Controllers
                     Result.Add("n_TransferID", nTransferID);
                     Result.Add("x_TransferCode", xTransferCode);
                     Result.Add("n_TransferStudentID", nTransferStudentID);
+                     if (N_FormID == 1520)
+                            {
+                    return Ok(api.Success(Result, "Course Transfer Saved"));
+                            }
 
-                    return Ok(api.Success(Result, "Course Transfer saved"));
+                     else if (N_FormID == 1648) 
+                        {
+                     return Ok(api.Success(Result,"Transfer Certificate Saved Successfully"));
+                        }
+                    else {
+                         return Ok(api.Success(Result, "Course Transfer saved")); }
                 }
+
+                    
+                
             }
             catch (Exception ex)
             {
@@ -294,15 +311,17 @@ namespace SmartxAPI.Controllers
         }
       
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCompanyID, int nAcYearID, int nTransferID)
+        public ActionResult DeleteData(int nCompanyID, int nAcYearID, int nTransferID,int nFormID)
         {
             int Results = 0;
+             
             try
             {
                 SortedList QueryParams = new SortedList();
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nAcYearID", nAcYearID);
                 QueryParams.Add("@nTransferID", nTransferID);
+
                 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -310,7 +329,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable StudentTable = new DataTable();
                     DataTable MasterTable = new DataTable();
-
+ 
                     StudentTable = dLayer.ExecuteDataTable("SELECT Sch_CourseTransferStudents.N_CompanyID, Sch_CourseTransferStudents.N_AcYearID, Sch_CourseTransferStudents.N_TransferID, Sch_CourseTransferStudents.N_TransferStudentID, " +
                                                             "Sch_CourseTransferStudents.N_StudentID, Sch_CourseTransferStudents.N_BatchFrom, Sch_CourseTransferStudents.N_BatchTo, Sch_Admission.N_ClassID " +
                                                             "FROM Sch_CourseTransferStudents LEFT OUTER JOIN " +
@@ -336,8 +355,18 @@ namespace SmartxAPI.Controllers
                     if (Results > 0)
                     {
                         dLayer.DeleteData("Sch_CourseTransferStudents", "N_TransferID", nTransferID, "", connection);
+                          if (nFormID == 1520)
+                            {
+                          return Ok(api.Success( "Course Transfer deleted"));
+                            }
+
+                       else if (nFormID == 1648) 
+                        {
+                            return Ok(api.Success("Transfer Certificate deleted Successfully"));
+                        }
                         return Ok(api.Success("Course Transfer deleted"));
                     }
+                    
                     else
                     {
                         return Ok(api.Error(User,"Unable to delete"));
