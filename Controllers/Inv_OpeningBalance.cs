@@ -205,8 +205,8 @@ namespace SmartxAPI.Controllers
                                     SaveCustomerPaymentDetailsTable.Rows[k]["N_PayReceiptId"] = nReceiptID;
                                     SaveCustomerPaymentDetailsTable.Rows[k]["n_InventoryID"] = nReceiptID;
                                                                      
-                                    SaveCustomerPaymentDetailsTable.Rows[k]["n_Amount"] = -1 * myFunctions.getVAL(SaveCustomerPaymentDetailsTable.Rows[k]["n_Amount"].ToString());                                 
-                                    SaveCustomerPaymentDetailsTable.Rows[k]["n_AmountF"] = -1 * myFunctions.getVAL(SaveCustomerPaymentDetailsTable.Rows[k]["n_AmountF"].ToString());                                        
+                                    // SaveCustomerPaymentDetailsTable.Rows[k]["n_Amount"] = -1 * myFunctions.getVAL(SaveCustomerPaymentDetailsTable.Rows[k]["n_Amount"].ToString());                                 
+                                    // SaveCustomerPaymentDetailsTable.Rows[k]["n_AmountF"] = -1 * myFunctions.getVAL(SaveCustomerPaymentDetailsTable.Rows[k]["n_AmountF"].ToString());                                        
                                 }
                             }
                          }
@@ -253,8 +253,8 @@ namespace SmartxAPI.Controllers
                                     SaveVendorPaymentDetailsTable.Rows[k]["N_PayReceiptId"] = nReceiptID;
                                     SaveVendorPaymentDetailsTable.Rows[k]["n_InventoryID"] = nReceiptID;
                                                                      
-                                    SaveVendorPaymentDetailsTable.Rows[k]["n_Amount"] = -1 * myFunctions.getVAL(SaveVendorPaymentDetailsTable.Rows[k]["n_Amount"].ToString());                                 
-                                    SaveVendorPaymentDetailsTable.Rows[k]["n_AmountF"] = -1 * myFunctions.getVAL(SaveVendorPaymentDetailsTable.Rows[k]["n_AmountF"].ToString());                                        
+                                    // SaveVendorPaymentDetailsTable.Rows[k]["n_Amount"] = -1 * myFunctions.getVAL(SaveVendorPaymentDetailsTable.Rows[k]["n_Amount"].ToString());                                 
+                                    // SaveVendorPaymentDetailsTable.Rows[k]["n_AmountF"] = -1 * myFunctions.getVAL(SaveVendorPaymentDetailsTable.Rows[k]["n_AmountF"].ToString());                                        
                                 }
                             }
                          }
@@ -314,7 +314,7 @@ namespace SmartxAPI.Controllers
                         ProcParam.Add("N_UserID", nUserID);
                         ProcParam.Add("N_PartyID", nPartyID);
                         ProcParam.Add("N_BranchID", nBranchID);
-                        ProcParam.Add("X_EntryFrom", "Customer Opening Balance");
+                        ProcParam.Add("X_EntryFrom", "cob");
                         try
                         {
                             dLayer.ExecuteNonQueryPro("SP_Acc_BeginingBalancePosting_Ins", ProcParam, connection, transaction);
