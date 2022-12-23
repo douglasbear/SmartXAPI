@@ -369,7 +369,7 @@ namespace SmartxAPI.Controllers
                         else
                         {
 
-                            X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID) As N_SPrice,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_UnitSPrice,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_SPrice, N_MRNID AS N_RsID   from vw_InvMRNDetailsDirect Where N_CompanyID=@CompanyID and N_MRNID=" + n_MRNID;
+                            X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_SPrice,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_UnitSPrice,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_SPrice, N_MRNID AS N_RsID   from vw_InvMRNDetailsDirect Where N_CompanyID=@CompanyID and N_MRNID=" + n_MRNID;
 
                         }
 
@@ -1337,7 +1337,7 @@ namespace SmartxAPI.Controllers
                                     {"B_MRNVisible",(B_isDirectMRN && B_MRNVisible) ?"1":"0"}};
                             //{"B_MRNVisible",n_MRNID>0?"1":"0"}};
                             DataTable DetailTable = dLayer.ExecuteDataTable("select N_POrderID from Inv_PurchaseDetails where N_CompanyID=@nCompanyID and N_PurchaseID=@nTransID group by N_POrderID order by N_POrderID", ParamList, connection, transaction);
-                    
+                            DataTable DetailsTable = dLayer.ExecuteDataTable("select N_CompanyID,N_ItemID from Inv_PurchaseDetails where N_CompanyID=@nCompanyID and N_PurchaseID=@nTransID group by N_CompanyID,N_ItemID ", ParamList, connection, transaction);
                             Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
                             if (Results <= 0)
                             {
@@ -1346,7 +1346,15 @@ namespace SmartxAPI.Controllers
                             } 
 
                             myAttachments.DeleteAttachment(dLayer, 1, nPurchaseID, VendorID, nFnYearID, N_FormID, User, transaction, connection);
-
+                           
+                            for (int i = 0; i < DetailTable.Rows.Count; i++)
+                            {
+                                 dLayer.ExecuteScalar("UPDATE Inv_ItemMaster SET Inv_ItemMaster.N_PurchaseCost=LastCost.N_LPrice from Inv_ItemMaster INNER JOIN "+
+                                                " (select TOP 1 N_CompanyID,N_ItemID,N_LPrice from Inv_StockMaster where X_Type='Purchase' and N_ItemID="+myFunctions.getVAL(DetailsTable.Rows[i]["N_ItemID"].ToString())+" "+
+                                                " AND N_CompanyID= "+ myFunctions.getVAL(DetailsTable.Rows[i]["N_CompanyID"].ToString()) +" order by D_DateIn desc ,N_StockID desc) AS LastCost ON Inv_ItemMaster.N_CompanyID=LastCost.N_CompanyID AND "+
+                                                " Inv_ItemMaster.N_ItemID=LastCost.N_ItemID WHERE Inv_ItemMaster.N_CompanyID="+myFunctions.getVAL(DetailsTable.Rows[i]["N_CompanyID"].ToString())+" AND Inv_ItemMaster.N_ItemID= "+myFunctions.getVAL(DetailsTable.Rows[i]["N_ItemID"].ToString()), connection, transaction);
+                            }
+                            
                             //StatusUpdate
                             int tempPOrderID=0;
                             for (int j = 0; j < DetailTable.Rows.Count; j++)

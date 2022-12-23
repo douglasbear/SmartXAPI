@@ -75,7 +75,9 @@ namespace SmartxAPI.GeneralFunctions
             int b_FreightAmountDirect = myFunctions.getIntVAL(masterRow["b_FreightAmountDirect"].ToString());
             DetailsToImport = ds.Tables["detailsImport"];
             bool B_isImport = false;
-            bool showSellingPrice =myFunctions.getBoolVAL(masterRow["showSellingPrice"].ToString());
+            bool showSellingPrice =false;
+            if(MasterTable.Columns.Contains("showSellingPrice")) 
+               showSellingPrice=myFunctions.getBoolVAL(masterRow["showSellingPrice"].ToString());
             if(MasterTable.Columns.Contains("showSellingPrice")){MasterTable.Columns.Remove("showSellingPrice");}
 
             if (ds.Tables.Contains("detailsImport"))
@@ -566,6 +568,15 @@ namespace SmartxAPI.GeneralFunctions
                             PostingParam.Add("MRN_Flag", Dir_Purchase==0 ? "1" : "0");
 
                             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
+                            
+                            for (int j = 0; j < DetailTable.Rows.Count; j++)
+                            {
+                                dLayer.ExecuteScalar("UPDATE Inv_ItemMaster SET Inv_ItemMaster.N_PurchaseCost=LastCost.N_LPrice from Inv_ItemMaster INNER JOIN "+
+                                                " (select TOP 1 N_CompanyID,N_ItemID,N_LPrice from Inv_StockMaster where X_Type='Purchase' and N_ItemID="+myFunctions.getVAL(DetailTable.Rows[j]["N_ItemID"].ToString())+" "+
+                                                " AND N_CompanyID= "+ myFunctions.getVAL(DetailTable.Rows[j]["N_CompanyID"].ToString()) +" order by D_DateIn desc ,N_StockID desc) AS LastCost ON Inv_ItemMaster.N_CompanyID=LastCost.N_CompanyID AND "+
+                                                " Inv_ItemMaster.N_ItemID=LastCost.N_ItemID WHERE Inv_ItemMaster.N_CompanyID="+myFunctions.getVAL(DetailTable.Rows[j]["N_CompanyID"].ToString())+" AND Inv_ItemMaster.N_ItemID= "+myFunctions.getVAL(DetailTable.Rows[j]["N_ItemID"].ToString()), connection, transaction);
+                            }
+
                         }
                         catch (Exception ex)
                         {
@@ -596,7 +607,18 @@ namespace SmartxAPI.GeneralFunctions
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
                             {
                                 if(showSellingPrice)
+                                {
                                    dLayer.ExecuteScalar("Update Inv_ItemMaster Set N_Rate="+DetailTable.Rows[j]["N_Sprice"]+" Where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"] + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                                   dLayer.ExecuteScalar("Update Inv_ItemUnit Set N_SellingPrice="+DetailTable.Rows[j]["N_Sprice"]+" Where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"] + " and N_DefaultType=10 and N_CompanyID=" + nCompanyID, connection, transaction);
+                                   object salesUnitQty= dLayer.ExecuteScalar("select  N_Qty from Inv_ItemUnit  Where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"] + " and N_DefaultType=30 and N_CompanyID=" + nCompanyID, connection, transaction);
+                                   if(salesUnitQty!=null) 
+                                       {
+                                        double sellingPrice=myFunctions.getVAL(salesUnitQty.ToString()) * myFunctions.getVAL(DetailTable.Rows[j]["N_Sprice"].ToString());
+                                        dLayer.ExecuteScalar("Update Inv_ItemUnit Set N_SellingPrice="+sellingPrice+" Where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"] + " and N_DefaultType=30 and N_CompanyID=" + nCompanyID, connection, transaction);
+                                       }
+                                        
+
+                                }
                                 if (n_POrderID > 0 && tempPOrderID!=n_POrderID)
                                 {
                                     if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
