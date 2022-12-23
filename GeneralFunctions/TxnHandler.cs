@@ -191,6 +191,19 @@ namespace SmartxAPI.GeneralFunctions
                                 PostingParam.Add("MRN_Flag", Dir_Purchase==0 ? "1" : "0");
 
                                 dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
+
+                                SortedList StockOutParam = new SortedList();
+                                StockOutParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+
+                                dLayer.ExecuteNonQueryPro("SP_StockOutUpdate", StockOutParam, connection, transaction);
+
+                                for (int j = 0; j < DetailTable.Rows.Count; j++)
+                                {
+                                    dLayer.ExecuteScalar("UPDATE Inv_ItemMaster SET Inv_ItemMaster.N_PurchaseCost=LastCost.N_LPrice from Inv_ItemMaster INNER JOIN "+
+                                                    " (select TOP 1 N_CompanyID,N_ItemID,N_LPrice from Inv_StockMaster where X_Type='Purchase' and N_ItemID="+myFunctions.getVAL(DetailTable.Rows[j]["N_ItemID"].ToString())+" "+
+                                                    " AND N_CompanyID= "+ myFunctions.getVAL(DetailTable.Rows[j]["N_CompanyID"].ToString()) +" order by D_DateIn desc ,N_StockID desc) AS LastCost ON Inv_ItemMaster.N_CompanyID=LastCost.N_CompanyID AND "+
+                                                    " Inv_ItemMaster.N_ItemID=LastCost.N_ItemID WHERE Inv_ItemMaster.N_CompanyID="+myFunctions.getVAL(DetailTable.Rows[j]["N_CompanyID"].ToString())+" AND Inv_ItemMaster.N_ItemID= "+myFunctions.getVAL(DetailTable.Rows[j]["N_ItemID"].ToString()), connection, transaction);
+                                }
                             }
                             catch (Exception ex)
                             {
@@ -353,6 +366,13 @@ namespace SmartxAPI.GeneralFunctions
                         dLayer.ExecuteNonQuery("Delete From Inv_Purchase Where (N_PurchaseID = " + N_PurchaseID + " OR (N_PurchaseType =5 and N_PurchaseRefID =  " + N_PurchaseID + ")) and N_CompanyID = " + nCompanyID, connection, transaction);
 
                         dLayer.ExecuteNonQuery("Delete from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+
+                        SortedList StockUpdateParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+	                            {"N_TransID",n_MRNID},
+	                            {"X_TransType", "PURCHASE"}};
+
+                        dLayer.ExecuteNonQueryPro("SP_StockDeleteUpdate", StockUpdateParams, connection, transaction);
                     }
                     MasterTable.Rows[0]["n_userID"] = myFunctions.GetUserID(User);
 
@@ -568,6 +588,11 @@ namespace SmartxAPI.GeneralFunctions
                             PostingParam.Add("MRN_Flag", Dir_Purchase==0 ? "1" : "0");
 
                             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
+
+                            SortedList StockOutParam = new SortedList();
+                            StockOutParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+
+                            dLayer.ExecuteNonQueryPro("SP_StockOutUpdate", StockOutParam, connection, transaction);
                             
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
                             {
@@ -1519,6 +1544,13 @@ namespace SmartxAPI.GeneralFunctions
 
             if (N_DebitNoteId > 0)
             {
+                SortedList StockUpdateParams = new SortedList(){
+                                {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
+	                            {"N_TransID",N_DebitNoteId},
+	                            {"X_TransType", "SALES RETURN"}};
+
+                dLayer.ExecuteNonQueryPro("SP_StockDeleteUpdate", StockUpdateParams, connection, transaction);
+
                 SortedList DeleteParams = new SortedList(){
                         {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
                         {"X_TransType","SALES RETURN"},
@@ -1603,6 +1635,11 @@ namespace SmartxAPI.GeneralFunctions
             StockPostingParams.Add("N_UserID", UserID);
 
             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", StockPostingParams, connection, transaction);
+
+            SortedList StockOutParam = new SortedList();
+            StockOutParam.Add("N_CompanyID", N_CompanyID);
+
+            dLayer.ExecuteNonQueryPro("SP_StockOutUpdate", StockOutParam, connection, transaction);
 
             //transaction.Commit();
 
