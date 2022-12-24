@@ -1328,6 +1328,14 @@ namespace SmartxAPI.Controllers
                     {
                         if (ButtonTag == "6" || ButtonTag == "0")
                         {
+
+                            SortedList StockUpdateParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+	                            {"N_TransID",nMRNID},
+	                            {"X_TransType", "PURCHASE"}};
+
+                            dLayer.ExecuteNonQueryPro("SP_StockDeleteUpdate", StockUpdateParams, connection, transaction);
+
                             SortedList DeleteParams = new SortedList(){
                                     {"N_CompanyID",nCompanyID},
                                     {"X_TransType","PURCHASE"},
@@ -1346,6 +1354,11 @@ namespace SmartxAPI.Controllers
                             } 
 
                             myAttachments.DeleteAttachment(dLayer, 1, nPurchaseID, VendorID, nFnYearID, N_FormID, User, transaction, connection);
+
+                            SortedList StockOutParam = new SortedList();
+                            StockOutParam.Add("N_CompanyID", nCompanyID);
+
+                            dLayer.ExecuteNonQueryPro("SP_StockOutUpdate", StockOutParam, connection, transaction);
                            
                             for (int i = 0; i < DetailTable.Rows.Count; i++)
                             {
