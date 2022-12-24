@@ -195,6 +195,18 @@ namespace SmartxAPI.Controllers
                     }
                     mst.AcceptChanges();
                     mst = _api.Format(mst);
+
+                       foreach (DataRow Kvar in mst.Rows)
+                            {
+                                if (myFunctions.getBoolVAL(Kvar["B_ExcludeInSalary"].ToString()) == true && Kvar["details"] == null)
+                                {
+                                    Kvar.Delete();
+                                    continue;
+                                }
+                            }
+                            mst.AcceptChanges();
+
+
                     if (mst.Rows.Count == 0)
                     {
                         return Ok(_api.Notice("No Results Found"));

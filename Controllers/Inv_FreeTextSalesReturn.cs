@@ -66,14 +66,14 @@ namespace SmartxAPI.Controllers
                     else
                         xSortBy = " order by " + xSortBy;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Customer] as X_Customer,[Invoice No] as invoiceNo,X_BillAmt,n_InvDueDays,X_CustomerName_Ar from vw_InvSalesInvoiceNo_Search_cloud where " + xCriteria + Searchkey;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Customer] as X_Customer,[Invoice No] as invoiceNo,X_BillAmt,n_InvDueDays,X_CustomerName_Ar from vw_FreetextSaleReturn_Search_Cloud where " + xCriteria + Searchkey;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Customer] as X_Customer,[Invoice No] as invoiceNo,X_BillAmt,n_InvDueDays,X_CustomerName_Ar from vw_InvSalesInvoiceNo_Search_cloud where " + xCriteria + Searchkey + "and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search_cloud where " + xCriteria + Searchkey + " ) ";
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Customer] as X_Customer,[Invoice No] as invoiceNo,X_BillAmt,n_InvDueDays,X_CustomerName_Ar from vw_FreetextSaleReturn_Search_Cloud where " + xCriteria + Searchkey + "and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search_cloud where " + xCriteria + Searchkey + " ) ";
 
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesInvoiceNo_Search_cloud where " + xCriteria + Searchkey;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_FreetextSaleReturn_Search_Cloud where " + xCriteria + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -179,6 +179,15 @@ namespace SmartxAPI.Controllers
                         }
                         MasterTable.Rows[0]["X_ReceiptNo"] = X_ReceiptNo;
                     }
+                    
+                     object DupCount = dLayer.ExecuteScalar("Select COUNT(X_ReceiptNo) from Inv_Sales where X_ReceiptNo ='" + DocNo + "' and N_CompanyID=" + nCompanyID + "and N_FnYearID=" + nFnYearID , Params, connection, transaction);
+                       
+                       if (myFunctions.getVAL(DupCount.ToString()) >= 1)
+                       {
+                        transaction.Rollback();   
+                        return Ok(_api.Error(User, "Invoice Number Already Exist"));
+                       }
+                       
                     nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesID", MasterTable, connection, transaction);
 
                     if (nSalesID <= 0)
@@ -309,48 +318,57 @@ namespace SmartxAPI.Controllers
                     if (xPath != null && xPath != "")
                     {
                         object returnID = dLayer.ExecuteScalar("Select N_SalesID from Vw_FreeTextSalesToReturn  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_FreeTextReturnID=" + N_SalesID + " ", Params, connection);
-                        if (returnID != null)
-                        {
-                            object salesAmount = dLayer.ExecuteScalar("Select N_BillAmt from Vw_FreeTextSalesToReturn  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='" + xTransType + "' and X_ReceiptNo='" + xInvoiceNO + "' ", Params, connection);
-                            object returnAmout = dLayer.ExecuteScalar("Select Sum(N_BillAmt)  from Vw_FreeTextSalesToReturn  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='DEBIT NOTE' and N_FreeTextReturnID=" + N_SalesID + " ", Params, connection);
+                        // if (returnID != null)
+                        // {
+                        //     object salesAmount = dLayer.ExecuteScalar("Select N_BillAmt from Vw_FreeTextSalesToReturn  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='" + xTransType + "' and X_ReceiptNo='" + xInvoiceNO + "' ", Params, connection);
+                        //     object returnAmout = dLayer.ExecuteScalar("Select Sum(N_BillAmt)  from Vw_FreeTextSalesToReturn  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='DEBIT NOTE' and N_FreeTextReturnID=" + N_SalesID + " ", Params, connection);
 
-                            if (myFunctions.getVAL(salesAmount.ToString()) == myFunctions.getVAL(returnAmout.ToString()))
-                            {
-                                Master.Rows[0]["N_FreeTextReturnID"] = N_SalesID;
-                                Master.Rows[0]["isReturnDone"] = true;
-                                Master.AcceptChanges();
+                        //     if (myFunctions.getVAL(salesAmount.ToString()) == myFunctions.getVAL(returnAmout.ToString()))
+                        //     {
+                        //         Master.Rows[0]["N_FreeTextReturnID"] = N_SalesID;
+                        //         Master.Rows[0]["isReturnDone"] = true;
+                        //         Master.AcceptChanges();
 
-                            }
-                            else
-                            {
-                                Master.Rows[0]["N_FreeTextReturnID"] = N_SalesID;
-                                Master.Rows[0]["N_SalesID"] = 0;
-                                Master.Rows[0]["X_ReceiptNo"] = "@Auto";
-                                Master.AcceptChanges();
-                            }
-                            string X_SalesDetails = "Select * From Vw_FreeTextSalesDetailsTOReturn Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_FreeTextReturnID=" + N_SalesID + " ";
+                        //     }
+                        //     else
+                        //     {
+                        //         Master.Rows[0]["N_FreeTextReturnID"] = N_SalesID;
+                        //         Master.Rows[0]["N_SalesID"] = 0;
+                        //         Master.Rows[0]["X_ReceiptNo"] = "@Auto";
+                        //         Master.AcceptChanges();
+                        //     }
+                        //     string X_SalesDetails = "Select * From Vw_FreeTextSalesDetailsTOReturn Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_FreeTextReturnID=" + N_SalesID + " ";
+                        //     ReturnDetails = dLayer.ExecuteDataTable(X_SalesDetails, Params, connection);
+
+                        // }
+                        // else
+                        // {
+                            string X_SalesDetails = "Select * From Vw_FreeTextSalesDetailsTOReturn Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_SalesID=" + N_SalesID + " ";
                             ReturnDetails = dLayer.ExecuteDataTable(X_SalesDetails, Params, connection);
-
-                        }
-                        else
-                        {
-
                             Master.Rows[0]["N_FreeTextReturnID"] = N_SalesID;
                             Master.Rows[0]["N_SalesID"] = 0;
                             Master.Rows[0]["X_ReceiptNo"] = "@Auto";
                             Master.AcceptChanges();
 
-                        }
+                        // }
+                    Master = _api.Format(Master, "Master");
+
+ReturnDetails = _api.Format(ReturnDetails, "Details");
+                    dt.Tables.Add(ReturnDetails);
+                    dt.Tables.Add(Master);
+                    return Ok(_api.Success(dt));
 
 
                     }
                     Master = _api.Format(Master, "Master");
 
+                    // X_DetailsSql = "select * from Vw_FreeTextSalesDetailsTOReturn_Disp Where N_CompanyID=" + nCompanyId + " and  N_FnYearID=" + nFnYearId + " and N_SalesID=" + N_SalesID;
                     X_DetailsSql = "Select Inv_SalesDetails.*,Acc_MastLedger.*,Acc_TaxCategory_1.N_Amount as N_TaxPerc1, Acc_TaxCategory_1.X_DisplayName, Acc_TaxCategory_1.N_PkeyID as N_TaxId1, Acc_TaxCategory.N_PkeyID AS N_TaxId2,  Acc_TaxCategory.N_Amount AS N_TaxPerc2, Acc_TaxCategory.X_DisplayName AS X_displayName2" +
                                    " from Inv_SalesDetails LEFT OUTER JOIN Acc_TaxCategory ON Inv_SalesDetails.N_TaxCategoryID2 = Acc_TaxCategory.N_PkeyID AND Inv_SalesDetails.N_CompanyID = Acc_TaxCategory.N_CompanyID LEFT OUTER JOIN Acc_TaxCategory AS Acc_TaxCategory_1 ON Inv_SalesDetails.N_TaxCategoryID1 = Acc_TaxCategory_1.N_PkeyID AND" +
                                   " Inv_SalesDetails.N_CompanyID = Acc_TaxCategory_1.N_CompanyID " +
                                   " Left Outer JOIN Acc_MastLedger On Inv_SalesDetails.N_LedgerID= Acc_MastLedger.N_LedgerID and Inv_SalesDetails.N_CompanyID = Acc_MastLedger.N_CompanyID" +
                                   " Where Inv_SalesDetails.N_CompanyID=" + nCompanyId + " and  Acc_MastLedger.N_FnYearID=" + nFnYearId + " and Inv_SalesDetails.N_SalesID=" + N_SalesID;
+                    
                     Details = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
 
 
