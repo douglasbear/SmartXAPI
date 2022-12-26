@@ -1180,19 +1180,19 @@ namespace SmartxAPI.Controllers
                     }
 
                     dbName = connection.Database;
-                    if (MainMenuID != 340)
+object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
+                    object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection);
+                    if (Timezone != null && Timezone.ToString() != "")
                     {
-                        //Local Time Checking
-                        if (MainMenuID != 340)
+                        try
                         {
-                            object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
-                            object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection);
-                            if (Timezone != null && Timezone.ToString() != "")
-                            {
-                                currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
-                                x_comments = currentTime.ToString();
-                            }
+                            currentTime = TimeZoneInfo.ConvertTime(Localtime(), TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
                         }
+                        catch
+                        {
+                            currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
+                        }
+                        x_comments = currentTime.ToString();
                     }
                 }
 
@@ -1598,7 +1598,20 @@ namespace SmartxAPI.Controllers
         //     }
 
         // }
-
+public DateTime Localtime()
+        {
+            //Local Time Checking
+            DateTime dt;
+            string url = "http://worldtimeapi.org/api/timezone/Asia/Kolkata";
+            using (var client = new WebClient())
+            {
+                client.Headers.Add("content-type", "application/json");
+                string response = client.DownloadString(url);
+                response = response.Substring(63, 26);
+                dt = DateTime.Parse(response);
+            }
+            return dt;
+        }
 
         private static Random random = new Random();
         public string RandomString(int length = 6)
