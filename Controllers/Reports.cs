@@ -1180,19 +1180,14 @@ namespace SmartxAPI.Controllers
                     }
 
                     dbName = connection.Database;
-object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
-                    object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection);
-                    if (Timezone != null && Timezone.ToString() != "")
+                    if (MainMenuID != 340)
                     {
-                        try
+                        object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
+                        object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection);
+                        if (Timezone != null && Timezone.ToString() != "")
                         {
-                            currentTime = TimeZoneInfo.ConvertTime(Localtime(), TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
+                            x_comments = Localtime().ToString("dd/MM/yyyy");
                         }
-                        catch
-                        {
-                            currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
-                        }
-                        x_comments = currentTime.ToString();
                     }
                 }
 
@@ -1598,7 +1593,7 @@ object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from ac
         //     }
 
         // }
-public DateTime Localtime()
+        public DateTime Localtime()
         {
             //Local Time Checking
             DateTime dt;
