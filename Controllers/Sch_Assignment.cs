@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetAssignmentList(int? nCompanyId, int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nFormID ,int nStudentID, bool isParent)
+        public ActionResult GetAssignmentList(int? nCompanyId, int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nFormID ,int nStudentID, bool isParent,bool isTeacher,int nTeacherID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -53,9 +53,14 @@ namespace SmartxAPI.Controllers
             vwname="vw_Sch_AssignmentDetails";
             crieteria=" and N_StudentID="+nStudentID+" and isnull(B_IsSaveDraft,0)=0 ";
             }
+
+            if(isTeacher==true){
+                vwname="Vw_AssignmentByTeacher";
+                 crieteria=" and N_teacherID="+nTeacherID;
+            }
          
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_AssignmentCode like '%" + xSearchkey + "%' or X_Title like '%" + xSearchkey + "%' or X_Subject like '%" + xSearchkey + "%' or X_ClassDivision like '%" + xSearchkey + "%')";
+                Searchkey = "and (X_AssignmentCode like '%" + xSearchkey + "%' or X_Title like '%" + xSearchkey + "%' or X_Subject like '%" + xSearchkey + "%' or X_ClassDivision like '%" + xSearchkey + "%' or X_ActionStatus like '%" +xSearchkey+ "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by X_AssignmentCode desc";
@@ -288,7 +293,10 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Sch_Assignment", "n_AssignmentID", nAssignmentID, "N_CompanyID =" + nCompanyID, connection, transaction);                        
                     }
                     MasterTable.Columns.Remove("n_FnYearId");
+                    
+                     
                     nAssignmentID = dLayer.SaveData("Sch_Assignment", "n_AssignmentID", MasterTable, connection, transaction);
+                   
                     if (nAssignmentID <= 0)
                     {
                         transaction.Rollback();
@@ -298,7 +306,10 @@ namespace SmartxAPI.Controllers
                     {
                         DetailTable.Rows[j]["n_AssignmentID"] = nAssignmentID;
                     }
+                       if (DetailTable.Rows.Count > 0)
+                    {
                     int nAssignStudentID = dLayer.SaveData("Sch_AssignmentStudents", "N_AssignStudentID", DetailTable, connection, transaction);
+
                     if (nAssignStudentID <= 0)
                     {
                       
@@ -306,6 +317,7 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok("Unable to save ");
                                
+                    }
                     }
                     myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["X_AssignmentCode"].ToString() + "-" + MasterTable.Rows[0]["X_Title"].ToString(), 0, MasterTable.Rows[0]["X_Title"].ToString(), MasterTable.Rows[0]["X_AssignmentCode"].ToString(), nAssignmentID, "Assignment Document", User, connection, transaction);
                     transaction.Commit();

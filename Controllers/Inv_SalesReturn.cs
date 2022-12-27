@@ -606,7 +606,21 @@ namespace SmartxAPI.Controllers
                     if (objPaymentProcessed == null)
                         objPaymentProcessed = 0;
                     if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) == 0)
+                    {
+                        SortedList StockUpdateParams = new SortedList(){
+                                {"N_CompanyID",nCompanyId},
+	                            {"N_TransID",nDebitNoteId},
+	                            {"X_TransType", "SALES RETURN"}};
+
+                        dLayer.ExecuteNonQueryPro("SP_StockDeleteUpdate", StockUpdateParams, connection);
+
                         dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                        SortedList StockOutParam = new SortedList();
+                        StockOutParam.Add("N_CompanyID", nCompanyId);
+
+                        dLayer.ExecuteNonQueryPro("SP_StockOutUpdate", StockOutParam, connection);
+                    }
                     else
                         return Ok(_api.Error(User, "Payment processed! Unable to delete"));
 

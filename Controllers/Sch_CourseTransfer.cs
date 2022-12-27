@@ -23,9 +23,6 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
 
-        private readonly int nFormID =1520 ;
-
-
         public Sch_CourseTransfer(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
@@ -35,7 +32,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetDashboardList(int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetDashboardList(int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nFormID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -66,12 +63,13 @@ namespace SmartxAPI.Controllers
             }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Sch_CourseTransfer where N_CompanyID=@nCompanyID and N_AcYearID=@nAcYearID  " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Sch_CourseTransfer where N_CompanyID=@nCompanyID and N_AcYearID=@nAcYearID and N_FormID=@nFormID  " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Sch_CourseTransfer where N_CompanyID=@nCompanyID and N_AcYearID=@nAcYearID " + Searchkey + " and N_TransferID not in (select top(" + Count + ") N_TransferID from Vw_Sch_CourseTransfer where N_CompanyID=@nCompanyID and N_AcYearID=@nAcYearID " + xSortBy + " ) " + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Sch_CourseTransfer where N_CompanyID=@nCompanyID and N_AcYearID=@nAcYearID and N_FormID=@nFormID " + Searchkey + " and N_TransferID not in (select top(" + Count + ") N_TransferID from Vw_Sch_CourseTransfer where N_CompanyID=@nCompanyID and N_AcYearID=@nAcYearID and N_FormID=@nFormID " + xSortBy + " ) " + " " + xSortBy;
 
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nAcYearID", nAcYearID);
+            Params.Add("@nFormID", nFormID);
 
             try
             {
@@ -81,7 +79,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    sqlCommandCount = "select count(*) as N_Count  from Vw_Sch_CourseTransfer where N_CompanyID=@nCompanyID and N_AcYearID=@nAcYearID " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count  from Vw_Sch_CourseTransfer where N_CompanyID=@nCompanyID and N_AcYearID=@nAcYearID and N_FormID=@nFormID " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -108,7 +106,7 @@ namespace SmartxAPI.Controllers
             SortedList param = new SortedList();           
             DataTable dt=new DataTable();
             
-            string sqlCommandText="select * from vw_SchFeeReceived where N_CompanyId=@p1 and N_FnYearId=@p2 and N_ClassID=@p3";
+            string sqlCommandText="select * from vw_SchFeeReceived where N_CompanyId=@p1 and N_FnYearId=@p2 and N_ClassID=@p3 and isNull(N_Inactive,0)=0";
 
             param.Add("@p1", nCompanyID);        
             param.Add("@p2", nFnYearID);      
@@ -233,8 +231,15 @@ namespace SmartxAPI.Controllers
 
                     int nTransferID = myFunctions.getIntVAL(MasterRow["n_TransferID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
+                    int nAcYearID = myFunctions.getIntVAL(MasterRow["n_AcYearID"].ToString());
                     int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+                    int nFormID = myFunctions.getIntVAL(MasterRow["n_FormID"].ToString());
+                    int nCourseTo = myFunctions.getIntVAL(MasterRow["n_CourseTo"].ToString());
+                    int n_CourseFrom = myFunctions.getIntVAL(MasterRow["n_CourseFrom"].ToString());
                     string xTransferCode = MasterRow["x_TransferCode"].ToString();
+                    int nInactive = 0;
+
+                    if (nCourseTo == n_CourseFrom) nInactive = 1;
 
                     if (xTransferCode == "@Auto")
                     {
@@ -261,8 +266,13 @@ namespace SmartxAPI.Controllers
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["n_TransferID"] = nTransferID;
+
+                        int nBatchTo = myFunctions.getIntVAL(DetailTable.Rows[j]["n_BatchTo"].ToString());
+                        int nStudentID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_StudentID"].ToString());
+                        dLayer.ExecuteNonQuery("update Sch_Admission Set N_DivisionID="+ nBatchTo +", N_ClassID="+ nCourseTo +", N_Inactive="+ nInactive +" where N_AdmissionID="+ nStudentID +" and N_CompanyID="+ nCompanyID + "and N_AcYearID=" + nAcYearID , Params, connection, transaction);
                     }
                     int nTransferStudentID = dLayer.SaveData("Sch_CourseTransferStudents", "N_TransferStudentID", DetailTable, connection, transaction);
+
                     if (nTransferStudentID <= 0)
                     {
                         transaction.Rollback();
@@ -293,12 +303,35 @@ namespace SmartxAPI.Controllers
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nAcYearID", nAcYearID);
                 QueryParams.Add("@nTransferID", nTransferID);
+                
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable StudentTable = new DataTable();
+                    DataTable MasterTable = new DataTable();
+
+                    StudentTable = dLayer.ExecuteDataTable("SELECT Sch_CourseTransferStudents.N_CompanyID, Sch_CourseTransferStudents.N_AcYearID, Sch_CourseTransferStudents.N_TransferID, Sch_CourseTransferStudents.N_TransferStudentID, " +
+                                                            "Sch_CourseTransferStudents.N_StudentID, Sch_CourseTransferStudents.N_BatchFrom, Sch_CourseTransferStudents.N_BatchTo, Sch_Admission.N_ClassID " +
+                                                            "FROM Sch_CourseTransferStudents LEFT OUTER JOIN " +
+                                                            "Sch_Admission ON Sch_CourseTransferStudents.N_CompanyID = Sch_Admission.N_CompanyID AND Sch_CourseTransferStudents.N_AcYearID = Sch_Admission.N_AcYearID AND " +
+                                                            "Sch_CourseTransferStudents.N_StudentID = Sch_Admission.N_AdmissionID where Sch_CourseTransferStudents.N_CompanyID="+ nCompanyID +" and Sch_CourseTransferStudents.N_AcYearID="+ nAcYearID +" and Sch_CourseTransferStudents.N_TransferID="+ nTransferID, QueryParams, connection, transaction);
+                    MasterTable = dLayer.ExecuteDataTable("select * from Sch_CourseTransfer where N_CompanyID="+ nCompanyID +" and N_AcYearID="+ nAcYearID +" and N_TransferID="+ nTransferID, QueryParams, connection, transaction);
+                    
+                    int nClassID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CourseFrom"].ToString());
+
+                    for (int j = 0; j < StudentTable.Rows.Count; j++)
+                    {
+                        int nStudentID = myFunctions.getIntVAL(StudentTable.Rows[j]["N_StudentID"].ToString());
+                        int nDivisionID = myFunctions.getIntVAL(StudentTable.Rows[j]["N_BatchFrom"].ToString());
+                        if (StudentTable.Rows[j]["N_ClassID"].ToString() == MasterTable.Rows[0]["N_CourseTo"].ToString())
+                        {
+                            dLayer.ExecuteNonQuery("update Sch_Admission Set N_DivisionID="+ nDivisionID +", N_ClassID="+ nClassID +", N_Inactive=0 where N_AdmissionID="+ nStudentID +" and N_CompanyID="+ nCompanyID + "and N_AcYearID=" + nAcYearID , QueryParams, connection, transaction);
+                        }
+                    };
+                    transaction.Commit();
 
                     Results = dLayer.DeleteData("Sch_CourseTransfer", "N_TransferID", nTransferID, "", connection);
-
 
                     if (Results > 0)
                     {
@@ -309,7 +342,6 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(api.Error(User,"Unable to delete"));
                     }
-
                 }
             }
             catch (Exception ex)

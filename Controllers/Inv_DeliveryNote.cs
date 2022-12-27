@@ -79,7 +79,7 @@ namespace SmartxAPI.Controllers
 
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_CustPONo like '%" + xSearchkey + "%' or X_OrderNo like '%" + xSearchkey + "%' or [Invoice Date] like '%" + xSearchkey + "%' or D_DeliveryDate like '%" + xSearchkey + "%')";
+                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_CustPONo like '%" + xSearchkey + "%' or X_OrderNo like '%" + xSearchkey + "%' or [Invoice Date] like '%" + xSearchkey + "%' or D_DeliveryDate like '%" + xSearchkey + "%' or X_ActionStatus like '%" + xSearchkey + "%' )";
 
                     if (bAllBranchData == true)
                     {
@@ -128,7 +128,7 @@ namespace SmartxAPI.Controllers
                         if (Count == 0)
                             sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID,X_ActionName,X_ActionStatus,X_StatusColour,X_ClosingRemarks,X_CustomerName_Ar  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=884 " + Pattern + Searchkey + " " + " group by [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID,X_ActionName,X_ActionStatus,X_StatusColour,X_ClosingRemarks,X_CustomerName_Ar" + xSortBy;
                         else
-                            sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID ,X_ActionName,X_ActionStatus,X_StatusColour,X_ClosingRemarks,X_CustomerName_Ar  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=884 " + Pattern + Searchkey + " and N_DeliveryNoteID not in (select top(" + Count + ") N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=884 " + xSortBy + " ) " + "Group By [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID,X_ActionName,X_ActionStatus,X_StatusColour,X_ClosingRemarks,X_CustomerName_Ar" + xSortBy;
+                            sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID ,X_ActionName,X_ActionStatus,X_StatusColour,X_ClosingRemarks,X_CustomerName_Ar  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=884 " + Pattern + Searchkey + " and N_DeliveryNoteID not in (select top(" + Count + ") N_DeliveryNoteID from Inv_DeliveryNote where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=884 " + xSortBy + " ) " + "Group By [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID,X_ActionName,X_ActionStatus,X_StatusColour,X_ClosingRemarks,X_CustomerName_Ar" + xSortBy;
                     }
                       else if (nFormID==1426)
                     {
@@ -615,6 +615,25 @@ namespace SmartxAPI.Controllers
                     //Saving Signature
 
                     N_DeliveryNoteID = dLayer.SaveData("Inv_DeliveryNote", "N_DeliveryNoteId", MasterTable, connection, transaction);
+
+
+                    if(N_DeliveryNoteID>0)
+                    {
+                             SortedList statusParams = new SortedList();
+                             statusParams.Add("@N_CompanyID", N_CompanyID);
+                             statusParams.Add("@N_TransID", N_DeliveryNoteID);
+                             statusParams.Add("@N_FormID", 884);
+                             statusParams.Add("@N_ForceUpdate", 1);  
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_TxnStatusUpdate", statusParams, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
+                    }
 
                     if (SigEnable)
                     {

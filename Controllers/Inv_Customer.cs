@@ -302,7 +302,7 @@ namespace SmartxAPI.Controllers
                                     }else
                                  {
                     //string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_CustomerCode='" + CustomerCode + "'";
-                   string  DupCriteria = "x_CustomerName='" + x_CustomerName + "' and N_CompanyID=" + nCompanyID;
+                   string  DupCriteria = "x_CustomerName='" + x_CustomerName.Replace("'", "''") + "' and N_CompanyID=" + nCompanyID;
                    string  X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
                         nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
                      }
@@ -325,7 +325,7 @@ namespace SmartxAPI.Controllers
                         
                          DataTable CustomerMaster = dLayer.ExecuteDataTable(
                                 " select N_CompanyID,N_FnYearId,0 as N_CustomerId,'@Auto' as X_CustomerCode,X_CustomerName as X_Customer,"
-                                + "X_PhoneNo1 as X_Phone,X_FaxNo as X_Fax,X_WebSite,D_EntryDate,X_Address,X_Email, N_CurrencyID"
+                                + "X_PhoneNo1 as X_Phone,X_FaxNo as X_Fax,X_WebSite,D_EntryDate,X_Address,X_Email, N_CurrencyID,X_CustomerName_Ar"
                                 + " from Inv_Customer where  N_CustomerID =@nCustomerID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID ", customerParams, connection, transaction);
 
 
@@ -645,6 +645,7 @@ namespace SmartxAPI.Controllers
 
             int Results = 0;
              object CustomerCount =0;
+             object GRNCustCount=0;
             try
             {
                 SortedList Params = new SortedList();
@@ -671,6 +672,14 @@ namespace SmartxAPI.Controllers
                    {
                       return Ok(api.Error(User, "Can not Delete Customer"));
                    }
+
+                  GRNCustCount = dLayer.ExecuteScalar("select count(N_GRNID) from wh_GRN  Where N_CompanyID=" + nCompanyID + " and  N_CustomerID=" + nCustomerID,  QueryParams, connection);
+                    if( myFunctions.getIntVAL(GRNCustCount.ToString())>0)
+                   {
+                      return Ok(api.Error(User, "Unable to delete customer! It has been used."));
+                   }
+                   dLayer.ExecuteNonQuery("update Inv_ItemMaster set N_CustomerID=0,x_CustomerSKU=null where N_CompanyID=" + nCompanyID + "  and N_CustomerID=" + nCustomerID, Params, connection);
+
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Inv_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
                   

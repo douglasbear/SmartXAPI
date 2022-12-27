@@ -451,9 +451,9 @@ namespace SmartxAPI.Controllers
                         DateTime currentTime;
                         string x_comments = "";
                         //Local Time Checking
-                        var clientdata = new WebClient();
-                        string content1 = clientdata.DownloadString("http://worldtimeapi.org/api/timezone/Asia/Kolkata");
-                        string datentime=content1.Substring(0, 12);
+                        // var clientdata = new WebClient();
+                        // string content1 = clientdata.DownloadString("http://worldtimeapi.org/api/timezone/Asia/Kolkata");
+                        // string datentime=content1.Substring(0, 12);
 
 
 
@@ -559,7 +559,7 @@ namespace SmartxAPI.Controllers
                             foreach (DataRow var in dt.Rows)
                             {
                                 SqlCommand cmd = new SqlCommand("Select isnull(i_sign,'') as  i_sign from vw_Log_ApprovalAppraisal where N_ActionID=" + var["N_ActionID"].ToString(), connection, transaction);
-                                if ((cmd.ExecuteScalar().ToString()) != "")
+                                if ((cmd.ExecuteScalar().ToString()) != "" && cmd.ExecuteScalar().ToString()!= "0x")
                                 {
                                     byte[] content = (byte[])cmd.ExecuteScalar();
                                     MemoryStream stream = new MemoryStream(content);

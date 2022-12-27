@@ -75,6 +75,10 @@ namespace SmartxAPI.GeneralFunctions
             int b_FreightAmountDirect = myFunctions.getIntVAL(masterRow["b_FreightAmountDirect"].ToString());
             DetailsToImport = ds.Tables["detailsImport"];
             bool B_isImport = false;
+            bool showSellingPrice =false;
+            if(MasterTable.Columns.Contains("showSellingPrice")) 
+               showSellingPrice=myFunctions.getBoolVAL(masterRow["showSellingPrice"].ToString());
+            if(MasterTable.Columns.Contains("showSellingPrice")){MasterTable.Columns.Remove("showSellingPrice");}
 
             if (ds.Tables.Contains("detailsImport"))
                 B_isImport = true;
@@ -187,6 +191,19 @@ namespace SmartxAPI.GeneralFunctions
                                 PostingParam.Add("MRN_Flag", Dir_Purchase==0 ? "1" : "0");
 
                                 dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
+
+                                SortedList StockOutParam = new SortedList();
+                                StockOutParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+
+                                dLayer.ExecuteNonQueryPro("SP_StockOutUpdate", StockOutParam, connection, transaction);
+
+                                for (int j = 0; j < DetailTable.Rows.Count; j++)
+                                {
+                                    dLayer.ExecuteScalar("UPDATE Inv_ItemMaster SET Inv_ItemMaster.N_PurchaseCost=LastCost.N_LPrice from Inv_ItemMaster INNER JOIN "+
+                                                    " (select TOP 1 N_CompanyID,N_ItemID,N_LPrice from Inv_StockMaster where X_Type='Purchase' and N_ItemID="+myFunctions.getVAL(DetailTable.Rows[j]["N_ItemID"].ToString())+" "+
+                                                    " AND N_CompanyID= "+ myFunctions.getVAL(DetailTable.Rows[j]["N_CompanyID"].ToString()) +" order by D_DateIn desc ,N_StockID desc) AS LastCost ON Inv_ItemMaster.N_CompanyID=LastCost.N_CompanyID AND "+
+                                                    " Inv_ItemMaster.N_ItemID=LastCost.N_ItemID WHERE Inv_ItemMaster.N_CompanyID="+myFunctions.getVAL(DetailTable.Rows[j]["N_CompanyID"].ToString())+" AND Inv_ItemMaster.N_ItemID= "+myFunctions.getVAL(DetailTable.Rows[j]["N_ItemID"].ToString()), connection, transaction);
+                                }
                             }
                             catch (Exception ex)
                             {
@@ -349,6 +366,13 @@ namespace SmartxAPI.GeneralFunctions
                         dLayer.ExecuteNonQuery("Delete From Inv_Purchase Where (N_PurchaseID = " + N_PurchaseID + " OR (N_PurchaseType =5 and N_PurchaseRefID =  " + N_PurchaseID + ")) and N_CompanyID = " + nCompanyID, connection, transaction);
 
                         dLayer.ExecuteNonQuery("Delete from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+
+                        SortedList StockUpdateParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+	                            {"N_TransID",n_MRNID},
+	                            {"X_TransType", "PURCHASE"}};
+
+                        dLayer.ExecuteNonQueryPro("SP_StockDeleteUpdate", StockUpdateParams, connection, transaction);
                     }
                     MasterTable.Rows[0]["n_userID"] = myFunctions.GetUserID(User);
 
@@ -482,7 +506,11 @@ namespace SmartxAPI.GeneralFunctions
                             QueryParams.Add("@Cost",myFunctions.getVAL(DetailTableCopy.Rows[j]["N_Cost"].ToString()));
                             QueryParams.Add("@nCompanyID",myFunctions.getVAL(DetailTableCopy.Rows[j]["N_CompanyID"].ToString()));
                             QueryParams.Add("@nItemID",myFunctions.getVAL(DetailTableCopy.Rows[j]["N_ItemID"].ToString()));
-                            dLayer.ExecuteNonQuery("Update Inv_ItemMaster Set N_PurchaseCost=@Cost Where N_ItemID=@nItemID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                            //dLayer.ExecuteNonQuery("Update Inv_ItemMaster Set N_PurchaseCost=@Cost Where N_ItemID=@nItemID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                            // dLayer.ExecuteNonQuery("UPDATE Inv_ItemMaster SET Inv_ItemMaster.N_PurchaseCost=LastCost.N_LPrice from Inv_ItemMaster INNER JOIN "+
+	                        //                         " (select TOP 1 N_CompanyID,N_ItemID,N_LPrice from Inv_StockMaster where X_Type='Purchase' and N_ItemID=@nItemID AND N_CompanyID=@nCompanyID "+
+	                        //                         " order by D_DateIn desc ,N_StockID desc) AS LastCost ON Inv_ItemMaster.N_CompanyID=LastCost.N_CompanyID AND "+
+                            //                         " Inv_ItemMaster.N_ItemID=LastCost.N_ItemID WHERE Inv_ItemMaster.N_CompanyID=@nCompanyID AND Inv_ItemMaster.N_ItemID=@nItemID ", QueryParams, connection, transaction);
 
 
 
@@ -500,6 +528,10 @@ namespace SmartxAPI.GeneralFunctions
                     {
                         dLayer.ExecuteScalar("Update Inv_PurchaseOrder Set N_Processed=1 , N_PurchaseID=" + N_PurchaseID + " Where N_POrderID=" + n_POrderID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.ExecuteScalar("Update Inv_MRN Set N_Processed=1 Where N_MRNID=" + n_MRNID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+             
+                        
+                        
+                        
                         // if (B_ServiceSheet)
                         //     dba.ExecuteNonQuery("Update Inv_VendorServiceSheet Set N_Processed=1  Where N_RefID=" + n_POrderID + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID,connection,transaction);
 
@@ -556,6 +588,19 @@ namespace SmartxAPI.GeneralFunctions
                             PostingParam.Add("MRN_Flag", Dir_Purchase==0 ? "1" : "0");
 
                             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
+
+                            SortedList StockOutParam = new SortedList();
+                            StockOutParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+
+                            dLayer.ExecuteNonQueryPro("SP_StockOutUpdate", StockOutParam, connection, transaction);
+                            
+                            for (int j = 0; j < DetailTable.Rows.Count; j++)
+                            {
+                                dLayer.ExecuteScalar("UPDATE Inv_ItemMaster SET Inv_ItemMaster.N_PurchaseCost=LastCost.N_LPrice from Inv_ItemMaster INNER JOIN "+
+                                                " (select TOP 1 N_CompanyID,N_ItemID,N_LPrice from Inv_StockMaster where X_Type='Purchase' and N_ItemID="+myFunctions.getVAL(DetailTable.Rows[j]["N_ItemID"].ToString())+" "+
+                                                " AND N_CompanyID= "+ myFunctions.getVAL(DetailTable.Rows[j]["N_CompanyID"].ToString()) +" order by D_DateIn desc ,N_StockID desc) AS LastCost ON Inv_ItemMaster.N_CompanyID=LastCost.N_CompanyID AND "+
+                                                " Inv_ItemMaster.N_ItemID=LastCost.N_ItemID WHERE Inv_ItemMaster.N_CompanyID="+myFunctions.getVAL(DetailTable.Rows[j]["N_CompanyID"].ToString())+" AND Inv_ItemMaster.N_ItemID= "+myFunctions.getVAL(DetailTable.Rows[j]["N_ItemID"].ToString()), connection, transaction);
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -585,6 +630,19 @@ namespace SmartxAPI.GeneralFunctions
                             int tempPOrderID=0;
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
                             {
+                                if(showSellingPrice)
+                                {
+                                   dLayer.ExecuteScalar("Update Inv_ItemMaster Set N_Rate="+DetailTable.Rows[j]["N_Sprice"]+" Where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"] + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                                   dLayer.ExecuteScalar("Update Inv_ItemUnit Set N_SellingPrice="+DetailTable.Rows[j]["N_Sprice"]+" Where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"] + " and N_DefaultType=10 and N_CompanyID=" + nCompanyID, connection, transaction);
+                                   object salesUnitQty= dLayer.ExecuteScalar("select  N_Qty from Inv_ItemUnit  Where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"] + " and N_DefaultType=30 and N_CompanyID=" + nCompanyID, connection, transaction);
+                                   if(salesUnitQty!=null) 
+                                       {
+                                        double sellingPrice=myFunctions.getVAL(salesUnitQty.ToString()) * myFunctions.getVAL(DetailTable.Rows[j]["N_Sprice"].ToString());
+                                        dLayer.ExecuteScalar("Update Inv_ItemUnit Set N_SellingPrice="+sellingPrice+" Where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"] + " and N_DefaultType=30 and N_CompanyID=" + nCompanyID, connection, transaction);
+                                       }
+                                        
+
+                                }
                                 if (n_POrderID > 0 && tempPOrderID!=n_POrderID)
                                 {
                                     if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
@@ -1485,6 +1543,13 @@ namespace SmartxAPI.GeneralFunctions
 
             if (N_DebitNoteId > 0)
             {
+                SortedList StockUpdateParams = new SortedList(){
+                                {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
+	                            {"N_TransID",N_DebitNoteId},
+	                            {"X_TransType", "SALES RETURN"}};
+
+                dLayer.ExecuteNonQueryPro("SP_StockDeleteUpdate", StockUpdateParams, connection, transaction);
+
                 SortedList DeleteParams = new SortedList(){
                         {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
                         {"X_TransType","SALES RETURN"},
@@ -1569,6 +1634,11 @@ namespace SmartxAPI.GeneralFunctions
             StockPostingParams.Add("N_UserID", UserID);
 
             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", StockPostingParams, connection, transaction);
+
+            SortedList StockOutParam = new SortedList();
+            StockOutParam.Add("N_CompanyID", N_CompanyID);
+
+            dLayer.ExecuteNonQueryPro("SP_StockOutUpdate", StockOutParam, connection, transaction);
 
             //transaction.Commit();
 

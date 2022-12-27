@@ -89,16 +89,16 @@ namespace SmartxAPI.Controllers
             if (Count == 0)
             {
                 if (nPartyType ==1)
-                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount],X_Notes,N_BillAmtF from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6  and N_TransType=@p4  and N_PartyType=@p5 " + Searchkey + " " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount],X_Notes,N_BillAmtF,X_CustomerName_Ar from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6  and N_TransType=@p4  and N_PartyType=@p5 " + Searchkey + " " + xSortBy;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt as netAmount,X_Notes from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6  and N_TransType=@p4  and N_PartyType=@p5 " + Searchkey + " " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt as netAmount,X_Notes,X_VendorName_Ar from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6  and N_TransType=@p4  and N_PartyType=@p5 " + Searchkey + " " + xSortBy;
             }
             else
             {
                 if (nPartyType ==1)
-                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount],X_Notes,N_BillAmtF from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6  " + Searchkey + " and N_TransType=@p4  and N_PartyType=@p5 and [Invoice No] not in (select top(" + Count + ") [Invoice No] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 and N_TransType=@p4  and N_PartyType=@p5 " + xSortBy + " ) " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount],X_Notes,N_BillAmtF,X_CustomerName_Ar from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6  " + Searchkey + " and N_TransType=@p4  and N_PartyType=@p5 and [Invoice No] not in (select top(" + Count + ") [Invoice No] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 and N_TransType=@p4  and N_PartyType=@p5 " + xSortBy + " ) " + xSortBy;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt as netAmount,X_Notes from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 " + Searchkey + " and N_TransType=@p4  and N_PartyType=@p5 and [Invoice No] not in (select top(" + Count + ") [Invoice No] from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 and N_TransType=@p4  and N_PartyType=@p5 " + xSortBy + " ) " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt as netAmount,X_Notes,X_VendorName_Ar from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 " + Searchkey + " and N_TransType=@p4  and N_PartyType=@p5 and [Invoice No] not in (select top(" + Count + ") [Invoice No] from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 and N_TransType=@p4  and N_PartyType=@p5 " + xSortBy + " ) " + xSortBy;
             }
             Params.Add("@p1", nCompanyID);
             Params.Add("@p4", N_TransType);
@@ -340,7 +340,11 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                             
                         transaction.Commit();
                     }
-                    return Ok(_api.Success("Adjustment saved" + ":" + N_AdjustmentID));
+                       SortedList Result = new SortedList();
+                       Result.Add("AdjustmentNo", AdjustmentNo);
+                       Result.Add("N_AdjustmentID", N_AdjustmentID);
+               
+                    return Ok(_api.Success(Result,"Adjustment saved" + ":" + N_AdjustmentID));
                 }
             }
             catch (Exception ex)
