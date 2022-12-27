@@ -1331,12 +1331,30 @@ namespace SmartxAPI.GeneralFunctions
                     }
                     catch (Exception ex)
                     {
-                        transaction.Rollback();
+                        //transaction.Rollback();
                         // return Ok(_api.Error(User, ex));
-                        // Result.Add("b_IsCompleted", 0);
+                         Result.Add("b_IsCompleted", 0);
                         // Result.Add("x_Msg", ex);
                         // return Result;
-                        throw ex;
+                        if (ex.Message.Contains("50"))
+                            Result.Add("x_Msg", "Day Closed");
+                        else if (ex.Message.Contains("51"))
+                            Result.Add("x_Msg", "Year Closed");
+                        else if (ex.Message.Contains("52"))
+                            Result.Add("x_Msg", "Year Exists");
+                        else if (ex.Message.Contains("53"))
+                            Result.Add("x_Msg", "Period Closed");
+                        else if (ex.Message.Contains("54"))
+                            Result.Add("x_Msg", "Wrong Txn Date");
+                        else if (ex.Message.Contains("55"))
+                            Result.Add("x_Msg", "Transaction Started");
+                        else
+                        {
+                            transaction.Rollback();
+                            throw ex;
+                        }
+
+                        return Result;
                     }
                     bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
                     if (B_AmtpaidEnable)
