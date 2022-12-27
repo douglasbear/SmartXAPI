@@ -347,52 +347,7 @@ namespace SmartxAPI.Controllers
         }
 
         
-//  [HttpDelete("appRemove")]
-//         public ActionResult DeleteData(int nClientID,int nAppID,int nUserID,int nCompanyId)
-//         {
 
-//             int Results = 0;
-//             int nCompanyID=myFunctions.GetCompanyID(User);
-//             try
-//             {                        
-//                 SortedList Params = new SortedList();
-//                  Params.Add("@nClientID", nClientID);
-//                  Params.Add("@nAppID", nAppID);
-//                  Params.Add("@nUserID", nUserID);
-//                  Params.Add("@nCompanyId",nCompanyId);
-//                  using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
-//                 {
-//                     connection.Open();
-//                     SqlTransaction transaction;
-//                     transaction = connection.BeginTransaction();
-
-//                     Results=dLayer.ExecuteNonQuery("delete from ClientApps where  n_AppID=" + nAppID + " and n_ClientID=" + nClientID, connection, transaction);
-    
-//                 }
-//                  using (SqlConnection connect = new SqlConnection(connectionString))
-//                 {
-//                     connect.Open();
-//                     SqlTransaction transaction = connect.BeginTransaction();
-//                     Results=dLayer.ExecuteNonQuery("delete from Sec_UserApps where n_AppID=" + nAppID + " and n_UserID=" + nUserID + " and n_CompanyId=" + nCompanyId, connect, transaction);
-//                     transaction.Commit();
-//                         if (Results > 0)
-//                     {
-//                         transaction.Commit();
-//                         return Ok(_api.Success("Add New App removed"));
-//                     }
-//                     else
-//                     {
-//                          transaction.Rollback();
-//                         return Ok(_api.Error(User,"Unable to delete Add New App"));
-//                     }
-//                 }
-
-//             }
-//             catch (Exception ex)
-//             {
-//                 return Ok(_api.Error(User,ex));
-//             }
-//         }
 
 [HttpDelete("appRemove")]
         public ActionResult DeleteData(int nClientID,int nAppID,int nUserID,int nCompanyId)
