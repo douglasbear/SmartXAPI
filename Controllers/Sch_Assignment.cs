@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetAssignmentList(int? nCompanyId, int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nFormID ,int nStudentID, bool isParent,bool isTeacher,int nTeacherID)
+        public ActionResult GetAssignmentList(int? nCompanyId, int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nFormID ,int nStudentID, bool isParent,bool isTeacher,int nTeacherID,bool tchExam)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -56,6 +56,11 @@ namespace SmartxAPI.Controllers
 
             if(isTeacher==true){
                 vwname="Vw_AssignmentByTeacher";
+                 crieteria=" and N_teacherID="+nTeacherID;
+            }
+
+            if(tchExam==true){
+                vwname="Vw_ExamByTeacher";
                  crieteria=" and N_teacherID="+nTeacherID;
             }
          
