@@ -1180,7 +1180,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     dbName = connection.Database;
-                    if (MainMenuID != 340)
+                    if (x_comments=="")
                     {
                         object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
                         object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection);
