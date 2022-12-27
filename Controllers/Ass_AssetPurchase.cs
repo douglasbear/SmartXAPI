@@ -193,12 +193,13 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("assetList")]
-        public ActionResult ListAssetName(bool isRentalItem)
+        public ActionResult ListAssetName(bool isRentalItem,bool isSales)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             string RentalItem="";
+            string salesItem="";
              Params.Add("@nCompanyID",nCompanyID);
             // Params.Add("@nFnYearID",nFnYearID);
 
@@ -208,7 +209,11 @@ namespace SmartxAPI.Controllers
                        RentalItem=RentalItem+ " and N_ItemID NOT IN (select isnull(N_AssItemID,0) from inv_itemmaster where N_CompanyId=@nCompanyID)";
                     }
 
-            string sqlCommandText = "Select * from Vw_AssetDashboard Where N_CompanyID=@nCompanyID"+RentalItem;
+            if(isSales){
+                salesItem=salesItem+ " and N_status<>2 and N_status<>5";
+            }        
+
+            string sqlCommandText = "Select * from Vw_AssetDashboard Where N_CompanyID=@nCompanyID"+RentalItem+salesItem;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

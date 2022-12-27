@@ -185,18 +185,18 @@ namespace SmartxAPI.Controllers
                     if (nParentGroup > 0)
                     {
 
-                        object GroupCodeCount = dLayer.ExecuteScalar("select COUNT(convert(numeric,X_GroupCode)) From Acc_MastGroup where N_CompanyID =@p1 and  N_ParentGroup =@p5 and N_FnYearID=@p2", Params, connection);
+                        object GroupCodeCount = dLayer.ExecuteScalar("select COUNT(convert(numeric,X_GroupCode)) From Acc_MastGroup where N_CompanyID =@p1 and  N_ParentGroup =@p5 and N_FnYearID=@p2", Params, connection,transaction);
                         if (GroupCodeCount == null)
                             return Ok(api.Error(User, "Error"));
 
-                        object GroupCodeObj = dLayer.ExecuteScalar("Select X_GroupCode from Acc_MastGroup Where N_GroupID =@p5 and N_CompanyID= @p1 and N_FnYearID =@p2", Params, connection);
+                        object GroupCodeObj = dLayer.ExecuteScalar("Select X_GroupCode from Acc_MastGroup Where N_GroupID =@p5 and N_CompanyID= @p1 and N_FnYearID =@p2", Params, connection,transaction);
 
                         int count = myFunctions.getIntVAL(GroupCodeCount.ToString());
                         while (true)
                         {
                             count += 1;
                             X_GroupCode = GroupCodeObj.ToString() + count.ToString("00");
-                            object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_MastGroup Where X_GroupCode ='" + X_GroupCode + "' and N_CompanyID= @p1 and N_FnYearID =@p2", Params, connection);
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_MastGroup Where X_GroupCode ='" + X_GroupCode + "' and N_CompanyID= @p1 and N_FnYearID =@p2", Params, connection,transaction);
                             if (N_Result == null)
                                 break;
                         }
