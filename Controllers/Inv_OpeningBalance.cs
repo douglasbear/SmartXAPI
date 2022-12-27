@@ -228,8 +228,10 @@ namespace SmartxAPI.Controllers
 
                       foreach (DataRow deleteItem in DeleteData.Rows)
                     {
+                        if (DeleteData.Columns.Contains("N_SalesID"))
+                        {
                         dLayer.ExecuteNonQuery("delete from  Inv_Sales  where N_CompanyID=" + nCompanyID + " and N_SalesID=" + myFunctions.getIntVAL(deleteItem["n_SalesId"].ToString()) + "", connection, transaction);
-                       
+                        }
                     }
                    }
 
@@ -288,7 +290,11 @@ namespace SmartxAPI.Controllers
 
                       foreach (DataRow deleteItem in DeleteData.Rows)
                     {
+                        if (DeleteData.Columns.Contains("N_PurchaseID"))
+                        {
                         dLayer.ExecuteNonQuery("delete from  Inv_Purchase  where N_CompanyID=" + nCompanyID + " and N_PurchaseID=" + myFunctions.getIntVAL(deleteItem["N_PurchaseID"].ToString()) + "", connection, transaction);
+                       
+                        }
                        
                     }
                    }
