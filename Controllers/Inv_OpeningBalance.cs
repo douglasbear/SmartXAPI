@@ -44,8 +44,10 @@ namespace SmartxAPI.Controllers
                     DataTable details = new DataTable();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     string N_TransID = "";
+                    string N_PayReceiptDetailsID = "";
                     object nBalanceAmount = "";
                     object netAmount = "";
+                    object adjustedCount = "";
 
                     SortedList ProParams = new SortedList();
                     ProParams.Add("N_CompanyID", nCompanyID);
@@ -74,6 +76,7 @@ namespace SmartxAPI.Controllers
 
 
                     details = myFunctions.AddNewColumnToDataTable(details, "customerFlag", typeof(bool), false);
+                    details = myFunctions.AddNewColumnToDataTable(details, "advAdjustmentFlag", typeof(bool), false);
 
                     if (nFlag == 0)
                     {
@@ -82,6 +85,7 @@ namespace SmartxAPI.Controllers
                             bool custFlag = false;
 
                             N_TransID = dtRow["N_TransID"].ToString();
+                            N_PayReceiptDetailsID = dtRow["N_PayReceiptDetailsID"].ToString();
                             if (N_TransID != "" && N_TransID != null)
                             {
                                 nBalanceAmount = dLayer.ExecuteScalar("select N_BalanceAmount from vw_invReceivables where N_CompanyID=" + nCompanyID + " and N_SalesId = " + N_TransID, connection, transaction);
@@ -89,13 +93,32 @@ namespace SmartxAPI.Controllers
 
                                 netAmount = dLayer.ExecuteScalar("select NetAmount from vw_invReceivables where N_CompanyID=" + nCompanyID + " and N_SalesId = " + N_TransID, connection, transaction);
                                 if (netAmount == null) { netAmount = 0; }
+
+
+                                if(N_PayReceiptDetailsID!= "" && N_PayReceiptDetailsID != null)
+                                {
+                                adjustedCount = dLayer.ExecuteScalar("select Count(*) from Inv_PayReceiptDetails where N_CompanyID=" + nCompanyID + " and X_TransType='SA' and N_InventoryId = " + N_TransID, connection, transaction);
+                                if (adjustedCount == null) { adjustedCount = 0; }
+                                }
+
+
                             }
 
-                            if (myFunctions.getVAL(nBalanceAmount.ToString()) < myFunctions.getVAL(netAmount.ToString()))
+                            if (myFunctions.getVAL(nBalanceAmount.ToString()) < myFunctions.getVAL(netAmount.ToString()) && myFunctions.getIntVAL(N_PayReceiptDetailsID.ToString())<=0)
                             {
                                 dtRow["customerFlag"] = true;
                             }
+
+                            if (myFunctions.getVAL(adjustedCount.ToString()) >1)
+                            {
+                                dtRow["advAdjustmentFlag"] = true;
+                            }
+
+
                         }
+                  
+
+
                     }
 
                     else
@@ -105,17 +128,25 @@ namespace SmartxAPI.Controllers
                             bool custFlag = false;
 
                             N_TransID = dtRow["N_TransID"].ToString();
-
+                            N_PayReceiptDetailsID = dtRow["N_PayReceiptDetailsID"].ToString();
                             if (N_TransID != "")
                             {
                                 nBalanceAmount = dLayer.ExecuteScalar("select N_BalanceAmount from vw_InvPayables where N_CompanyID=" + nCompanyID + " and N_PurchaseID = " + N_TransID, connection, transaction);
                                 netAmount = dLayer.ExecuteScalar("select NetAmount from vw_InvPayables where N_CompanyID=" + nCompanyID + " and N_PurchaseID = " + N_TransID, connection, transaction);
-
+                                if(N_PayReceiptDetailsID!= "" && N_PayReceiptDetailsID != null)
+                                {
+                                adjustedCount = dLayer.ExecuteScalar("select Count(*) from Inv_PayReceiptDetails where N_CompanyID=" + nCompanyID + " and X_TransType='PA' and N_InventoryId = " + N_TransID, connection, transaction);
+                                if (adjustedCount == null) { adjustedCount = 0; }
+                                }
                             }
                             if(nBalanceAmount==null){nBalanceAmount="";}if(netAmount==null){netAmount="";}
-                            if (myFunctions.getVAL(nBalanceAmount.ToString()) < myFunctions.getVAL(netAmount.ToString()))
+                            if (myFunctions.getVAL(nBalanceAmount.ToString()) < myFunctions.getVAL(netAmount.ToString()) && myFunctions.getIntVAL(N_PayReceiptDetailsID.ToString())<=0)
                             {
                                 dtRow["customerFlag"] = true;
+                            }
+                               if (myFunctions.getVAL(adjustedCount.ToString()) >1)
+                            {
+                                dtRow["advAdjustmentFlag"] = true;
                             }
                         }
                     }
@@ -156,6 +187,7 @@ namespace SmartxAPI.Controllers
                 DataTable SaveVendorPaymentDetailsTable;
                 DataTable SaveCustomerPaymentMasterTable;
                 DataTable SaveCustomerPaymentDetailsTable;
+                DataTable DeleteData;
                 SaveCustTable = ds.Tables["custdetails"];
                 SaveVendorTable = ds.Tables["vendorDetails"];
                 SaveVendorPaymentMasterTable = ds.Tables["vendorPaymentMaster"];
@@ -163,6 +195,7 @@ namespace SmartxAPI.Controllers
                 SaveCustomerPaymentMasterTable = ds.Tables["customerPaymentMaster"];
                 SaveCustomerPaymentDetailsTable = ds.Tables["customerPaymentDetails"];
                 PartyListTable = ds.Tables["partylist"];
+                DeleteData = ds.Tables["DeleteData"];
                 int nCompanyID = myFunctions.GetCompanyID(User);
                 int nFnYearID = myFunctions.getIntVAL(PartyListTable.Rows[0]["n_FnYearID"].ToString());
                 int nUserID = myFunctions.GetUserID(User);
@@ -219,6 +252,20 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Unable to save"));
                         }
                         }
+
+                    if (DeleteData.Rows.Count > 0)
+                    {
+               
+
+                      foreach (DataRow deleteItem in DeleteData.Rows)
+                    {
+                        if (DeleteData.Columns.Contains("N_SalesID"))
+                        {
+                        dLayer.ExecuteNonQuery("delete from  Inv_Sales  where N_CompanyID=" + nCompanyID + " and N_SalesID=" + myFunctions.getIntVAL(deleteItem["n_SalesId"].ToString()) + "", connection, transaction);
+                        }
+                    }
+                   }
+
                         int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesID", SaveCustTable, connection, transaction);
 
                         if (nSalesID <= 0)
@@ -267,29 +314,21 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Unable to save"));
                         }
 
-
-
-
-
-
-                //         int nReceiptID = dLayer.SaveData("Inv_PayReceipt", "N_PayReceiptId", SaveVendorPaymentMasterTable, connection, transaction);
-                //         if (nReceiptID <= 0)
-                //         {
-                //             transaction.Rollback();
-                //             return Ok(_api.Error(User, "Unable to save"));
-                //         }
-
-                //         SaveVendorPaymentDetailsTable.Rows[i]["N_PayReceiptId"]=nReceiptID;
-                //         int nReceiptDetailsID = dLayer.SaveData("Inv_PayReceiptDetails", "N_PayReceiptDetailsId", SaveVendorPaymentDetailsTable, connection, transaction);
-                //         if (nReceiptDetailsID <= 0)
-                //         {
-                //             transaction.Rollback();
-                //             return Ok(_api.Error(User, "Unable to save"));
-                //         }
-
-
                          }
+                          if (DeleteData.Rows.Count > 0)
+                    {
+               
 
+                      foreach (DataRow deleteItem in DeleteData.Rows)
+                    {
+                        if (DeleteData.Columns.Contains("N_PurchaseID"))
+                        {
+                        dLayer.ExecuteNonQuery("delete from  Inv_Purchase  where N_CompanyID=" + nCompanyID + " and N_PurchaseID=" + myFunctions.getIntVAL(deleteItem["N_PurchaseID"].ToString()) + "", connection, transaction);
+                       
+                        }
+                       
+                    }
+                   }
                         int npurchaseID = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", SaveVendorTable, connection, transaction);
 
 
