@@ -117,14 +117,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
                     dt = api.Format(dt);
-                    if (dt.Rows.Count == 0)
-                    {
-                        return Ok(api.Warning("No Results Found"));
-                    }
-                    else
-                    {
-                        return Ok(api.Success(dt));
-                    }
+                    return Ok(api.Success(dt));
 
                 }
                 
