@@ -82,7 +82,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nClassID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ClassID"].ToString());
-
+                string xclass = MasterTable.Rows[0]["X_Class"].ToString();
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -99,6 +99,12 @@ namespace SmartxAPI.Controllers
                         Code = dLayer.GetAutoNumber("Sch_Class", "X_ClassCode", Params, connection, transaction);
                         if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Course Code")); }
                         MasterTable.Rows[0]["X_ClassCode"] = Code;
+                         object courseCount = dLayer.ExecuteScalar("select COUNT(*) from Sch_Class  where N_CompanyID="+ nCompanyID +" and  x_class='"+xclass+"'", Params, connection, transaction);
+                         
+                           if (myFunctions.getIntVAL(courseCount.ToString()) > 0){
+                             return Ok(api.Error(User, "Course Already exist"));
+                           }
+                            
                     }
                     MasterTable.Columns.Remove("n_FnYearId");
 

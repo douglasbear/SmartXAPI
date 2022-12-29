@@ -374,6 +374,13 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteScalar("Update Inv_PurchaseOrder Set N_Processed=1  Where N_POrderID=" + n_POrderID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                         }
 
+                        SortedList StockUpdateParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+	                            {"N_TransID",N_GRNID},
+	                            {"X_TransType", "GRN"}};
+
+                        dLayer.ExecuteNonQueryPro("SP_StockDeleteUpdate", StockUpdateParams, connection, transaction);
+
                         SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",masterRow["n_CompanyId"].ToString()},
                                 {"X_TransType","GRN"},
@@ -435,6 +442,11 @@ namespace SmartxAPI.Controllers
                             PostingParam.Add("N_UserID", nUserID);
                             PostingParam.Add("X_SystemName", "ERP Cloud");
                             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
+
+                            SortedList StockOutParam = new SortedList();
+                            StockOutParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+
+                            dLayer.ExecuteNonQueryPro("SP_StockOutUpdate", StockOutParam, connection, transaction);
                         }
                         catch (Exception ex)
                         {
@@ -560,6 +572,14 @@ namespace SmartxAPI.Controllers
 
                     if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) == 0)
                     {
+
+                          SortedList StockUpdateParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+	                            {"N_TransID",nGRNID},
+	                            {"X_TransType", "GRN"}};
+
+                        dLayer.ExecuteNonQueryPro("SP_StockDeleteUpdate", StockUpdateParams, connection, transaction);
+
                         SortedList DeleteParams = new SortedList(){
                             {"N_CompanyID",nCompanyID},
                             {"X_TransType","GRN"},
@@ -567,7 +587,7 @@ namespace SmartxAPI.Controllers
                             {"N_UserID",nUserID},
                             {"X_SystemName","WebRequest"},
                             {"@B_MRNVisible","0"}};
-DataTable DetailTable = dLayer.ExecuteDataTable("SELECT Inv_PurchaseOrderDetails.N_POrderID FROM Inv_PurchaseOrderDetails INNER JOIN Inv_MRNDetails ON Inv_PurchaseOrderDetails.N_CompanyID = Inv_MRNDetails.N_CompanyID AND Inv_PurchaseOrderDetails.N_POrderDetailsID = Inv_MRNDetails.N_POrderDetailsID where Inv_MRNDetails.N_CompanyID=@nCompanyID and Inv_MRNDetails.N_MRNID=@nTransID  group by Inv_PurchaseOrderDetails.N_POrderID", ParamList, connection, transaction);
+                        DataTable DetailTable = dLayer.ExecuteDataTable("SELECT Inv_PurchaseOrderDetails.N_POrderID FROM Inv_PurchaseOrderDetails INNER JOIN Inv_MRNDetails ON Inv_PurchaseOrderDetails.N_CompanyID = Inv_MRNDetails.N_CompanyID AND Inv_PurchaseOrderDetails.N_POrderDetailsID = Inv_MRNDetails.N_POrderDetailsID where Inv_MRNDetails.N_CompanyID=@nCompanyID and Inv_MRNDetails.N_MRNID=@nTransID  group by Inv_PurchaseOrderDetails.N_POrderID", ParamList, connection, transaction);
                     
                         Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
                         if (Results <= 0)
@@ -575,6 +595,11 @@ DataTable DetailTable = dLayer.ExecuteDataTable("SELECT Inv_PurchaseOrderDetails
                             transaction.Rollback();
                             return Ok(_api.Error(User,"Unable to Delete Goods Receive Note"));
                         }
+
+                        SortedList StockOutParam = new SortedList();
+                        StockOutParam.Add("N_CompanyID", nCompanyID);
+
+                        dLayer.ExecuteNonQueryPro("SP_StockOutUpdate", StockOutParam, connection, transaction);
 
                         myAttachments.DeleteAttachment(dLayer, 1, nGRNID, VendorID, nFnYearID, nFormID, User, transaction, connection);
                             int tempPOrderID=0;

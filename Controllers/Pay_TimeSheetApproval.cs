@@ -125,9 +125,9 @@ namespace SmartxAPI.Controllers
                     string empSql = "";
 
                     if (b_AllBranchData == true)
-                        empSql = "select N_CompanyID,N_EmpID,N_BranchID,N_Status,N_FnYearID,N_CatagoryId,X_DefEmpCode,X_Position,X_Department,N_DepartmentID,N_PositionID,Name as X_EmpName,[Employee Code] as X_EmpCode from vw_PayEmployee_Disp where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and (N_Status = 0 OR N_Status = 1) group by N_CompanyID,N_EmpID,N_BranchID,N_Status,N_FnYearID,N_CatagoryId,X_DefEmpCode,X_Position,X_Department,N_DepartmentID,N_PositionID,Name,[Employee Code]  order by X_EmpCode";
+                        empSql = "select N_CompanyID,N_EmpID,N_BranchID,N_Status,N_FnYearID,N_CatagoryId,X_DefEmpCode,X_Position,X_Department,N_DepartmentID,N_PositionID,Name as X_EmpName,[Employee Code] as X_EmpCode from vw_PayEmployee_Disp where isnull(B_ExcludeInAttendance,0)=0 and  N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and (N_Status = 0 OR N_Status = 1) group by N_CompanyID,N_EmpID,N_BranchID,N_Status,N_FnYearID,N_CatagoryId,X_DefEmpCode,X_Position,X_Department,N_DepartmentID,N_PositionID,Name,[Employee Code]  order by X_EmpCode";
                     else
-                        empSql = "select N_CompanyID,N_EmpID,N_BranchID,N_Status,N_FnYearID,N_CatagoryId,X_DefEmpCode,X_Position,X_Department,N_DepartmentID,N_PositionID,Name as X_EmpName,[Employee Code] as X_EmpCode from vw_PayEmployee_Disp where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and (N_Status = 0 OR N_Status = 1) group by N_CompanyID,N_EmpID,N_BranchID,N_Status,N_FnYearID,N_CatagoryId,X_DefEmpCode,X_Position,X_Department,N_DepartmentID,N_PositionID,Name,[Employee Code]  order by X_EmpCode";
+                        empSql = "select N_CompanyID,N_EmpID,N_BranchID,N_Status,N_FnYearID,N_CatagoryId,X_DefEmpCode,X_Position,X_Department,N_DepartmentID,N_PositionID,Name as X_EmpName,[Employee Code] as X_EmpCode from vw_PayEmployee_Disp where isnull(B_ExcludeInAttendance,0)=0 and  N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and (N_Status = 0 OR N_Status = 1) group by N_CompanyID,N_EmpID,N_BranchID,N_Status,N_FnYearID,N_CatagoryId,X_DefEmpCode,X_Position,X_Department,N_DepartmentID,N_PositionID,Name,[Employee Code]  order by X_EmpCode";
 
                     EmpTable = dLayer.ExecuteDataTable(empSql, Params, connection);
                     if (EmpTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -139,8 +139,8 @@ namespace SmartxAPI.Controllers
                     defaultPaycode.Columns.Add("X_DefaultAbsentCode");
                     //defaultPaycode.Columns.Add("txtAdjustment");
 
-                    object additions = dLayer.ExecuteScalar("Select X_Description from Pay_PayMaster Where N_PayID =" + nAdditionPayID + "and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", Params, connection);
-                    object deductions = dLayer.ExecuteScalar("Select X_Description from Pay_PayMaster Where N_PayID =" + nDeductionPayID + "and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", Params, connection);
+                    object additions = dLayer.ExecuteScalar("Select X_Description from Pay_PayMaster Where N_PayID =" + nDeductionPayID + "and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", Params, connection);
+                    object deductions = dLayer.ExecuteScalar("Select X_Description from Pay_PayMaster Where N_PayID =" + nAdditionPayID + "and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", Params, connection);
                     object AbsentCode = dLayer.ExecuteScalar("Select X_VacType from Pay_VacationType Where N_VacTypeID =" + nDefaultAbsentID + "and N_CompanyID= " + nCompanyID, Params, connection);
                     //object obj = dLayer.ExecuteScalar("Select X_Description from vw_PayCodelist_MonthWise Where N_PayRunID =" + payRunID + " and N_CompanyID= " + nCompanyID + " and N_EmpID=" + nEmpID, Params, connection);
 
@@ -1128,7 +1128,7 @@ namespace SmartxAPI.Controllers
                             if (MasterDetailTable.Rows[j]["N_EmpID"].ToString() != var1["N_EmpID"].ToString()) continue;
 
                             var1["N_TransID"] = N_AddOrDedID;
-                            var1["N_RefID"] = nTimesheetmasterID;
+                            var1["N_RefID"] = N_TimeSheetApproveID;
                         }
                     }
 

@@ -1200,22 +1200,20 @@ namespace SmartxAPI.Controllers
                     }
 
                     dbName = connection.Database;
-                    // if (MainMenuID != 340)
-                    // {
-                    //     //Local Time Checking
-                    //     if (MainMenuID != 340)
-                    //     {
-                    //         object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
-                    //         object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection);
-                    //         if (Timezone != null && Timezone.ToString() != "")
-                    //         {
-                    //             currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
-                    //             x_comments = currentTime.ToString();
-                    //         }
-                    //     }
-                    // }
-                   
-
+                    object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
+                    object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection);
+                    if (Timezone != null && Timezone.ToString() != "")
+                    {
+                        try
+                        {
+                            currentTime = TimeZoneInfo.ConvertTime(Localtime(), TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
+                        }
+                        catch
+                        {
+                            currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
+                        }
+                        x_comments = currentTime.ToString();
+                    }
                 }
 
 
@@ -1623,7 +1621,6 @@ namespace SmartxAPI.Controllers
         //     }
 
         // }
-
 
         private static Random random = new Random();
         public string RandomString(int length = 6)

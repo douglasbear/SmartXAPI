@@ -112,7 +112,7 @@ namespace SmartxAPI.Controllers
                                 netAmount = dLayer.ExecuteScalar("select NetAmount from vw_InvPayables where N_CompanyID=" + nCompanyID + " and N_PurchaseID = " + N_TransID, connection, transaction);
 
                             }
-
+                            if(nBalanceAmount==null){nBalanceAmount="";}if(netAmount==null){netAmount="";}
                             if (myFunctions.getVAL(nBalanceAmount.ToString()) < myFunctions.getVAL(netAmount.ToString()))
                             {
                                 dtRow["customerFlag"] = true;
@@ -152,8 +152,16 @@ namespace SmartxAPI.Controllers
                 DataTable SaveCustTable;
                 DataTable PartyListTable;
                 DataTable SaveVendorTable;
+                DataTable SaveVendorPaymentMasterTable;
+                DataTable SaveVendorPaymentDetailsTable;
+                DataTable SaveCustomerPaymentMasterTable;
+                DataTable SaveCustomerPaymentDetailsTable;
                 SaveCustTable = ds.Tables["custdetails"];
                 SaveVendorTable = ds.Tables["vendorDetails"];
+                SaveVendorPaymentMasterTable = ds.Tables["vendorPaymentMaster"];
+                SaveVendorPaymentDetailsTable = ds.Tables["vendorPaymentDetails"];
+                SaveCustomerPaymentMasterTable = ds.Tables["customerPaymentMaster"];
+                SaveCustomerPaymentDetailsTable = ds.Tables["customerPaymentDetails"];
                 PartyListTable = ds.Tables["partylist"];
                 int nCompanyID = myFunctions.GetCompanyID(User);
                 int nFnYearID = myFunctions.getIntVAL(PartyListTable.Rows[0]["n_FnYearID"].ToString());
@@ -175,6 +183,42 @@ namespace SmartxAPI.Controllers
                     if (nFlag == 0)
                     {
 
+                         if(SaveCustomerPaymentMasterTable.Rows.Count>0)
+                        {
+
+                        for (int j = 0; j < SaveCustomerPaymentMasterTable.Rows.Count; j++)
+                        {
+
+                        int nReceiptID = dLayer.SaveDataWithIndex("Inv_PayReceipt", "N_PayReceiptId", "", "", j, SaveCustomerPaymentMasterTable, connection, transaction);
+                        if (nReceiptID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to save"));
+                        }
+
+                        if (nReceiptID > 0)
+                        {
+                            for (int k = 0; k < SaveCustomerPaymentDetailsTable.Rows.Count; k++)
+                            {
+                                if (SaveCustomerPaymentDetailsTable.Rows[k]["x_VoucherNo"].ToString() == SaveCustomerPaymentMasterTable.Rows[j]["x_VoucherNo"].ToString())
+                                { 
+                                    SaveCustomerPaymentDetailsTable.Rows[k]["N_PayReceiptId"] = nReceiptID;
+                                    SaveCustomerPaymentDetailsTable.Rows[k]["n_InventoryID"] = nReceiptID;
+                                                                     
+                                    // SaveCustomerPaymentDetailsTable.Rows[k]["n_Amount"] = -1 * myFunctions.getVAL(SaveCustomerPaymentDetailsTable.Rows[k]["n_Amount"].ToString());                                 
+                                    // SaveCustomerPaymentDetailsTable.Rows[k]["n_AmountF"] = -1 * myFunctions.getVAL(SaveCustomerPaymentDetailsTable.Rows[k]["n_AmountF"].ToString());                                        
+                                }
+                            }
+                         }
+                        }
+                        SaveCustomerPaymentDetailsTable.Columns.Remove("x_VoucherNo");
+                        int nReceiptDetailsID = dLayer.SaveData("Inv_PayReceiptDetails", "N_PayReceiptDetailsId", SaveCustomerPaymentDetailsTable, connection, transaction);
+                        if (nReceiptDetailsID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to save"));
+                        }
+                        }
                         int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesID", SaveCustTable, connection, transaction);
 
                         if (nSalesID <= 0)
@@ -183,15 +227,74 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Unable to save"));
                         }
 
-
                     }
                     else
                     {
+
+                        if(SaveVendorPaymentMasterTable.Rows.Count>0)
+                        {
+
+                        for (int j = 0; j < SaveVendorPaymentMasterTable.Rows.Count; j++)
+                        {
+
+                        int nReceiptID = dLayer.SaveDataWithIndex("Inv_PayReceipt", "N_PayReceiptId", "", "", j, SaveVendorPaymentMasterTable, connection, transaction);
+                        if (nReceiptID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to save"));
+                        }
+
+                        if (nReceiptID > 0)
+                        {
+                            for (int k = 0; k < SaveVendorPaymentDetailsTable.Rows.Count; k++)
+                            {
+                                if (SaveVendorPaymentDetailsTable.Rows[k]["x_VoucherNo"].ToString() == SaveVendorPaymentMasterTable.Rows[j]["x_VoucherNo"].ToString())
+                                { 
+                                    SaveVendorPaymentDetailsTable.Rows[k]["N_PayReceiptId"] = nReceiptID;
+                                    SaveVendorPaymentDetailsTable.Rows[k]["n_InventoryID"] = nReceiptID;
+                                                                     
+                                    // SaveVendorPaymentDetailsTable.Rows[k]["n_Amount"] = -1 * myFunctions.getVAL(SaveVendorPaymentDetailsTable.Rows[k]["n_Amount"].ToString());                                 
+                                    // SaveVendorPaymentDetailsTable.Rows[k]["n_AmountF"] = -1 * myFunctions.getVAL(SaveVendorPaymentDetailsTable.Rows[k]["n_AmountF"].ToString());                                        
+                                }
+                            }
+                         }
+                        }
+                        SaveVendorPaymentDetailsTable.Columns.Remove("x_VoucherNo");
+                        int nReceiptDetailsID = dLayer.SaveData("Inv_PayReceiptDetails", "N_PayReceiptDetailsId", SaveVendorPaymentDetailsTable, connection, transaction);
+                        if (nReceiptDetailsID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to save"));
+                        }
+
+
+
+
+
+
+                //         int nReceiptID = dLayer.SaveData("Inv_PayReceipt", "N_PayReceiptId", SaveVendorPaymentMasterTable, connection, transaction);
+                //         if (nReceiptID <= 0)
+                //         {
+                //             transaction.Rollback();
+                //             return Ok(_api.Error(User, "Unable to save"));
+                //         }
+
+                //         SaveVendorPaymentDetailsTable.Rows[i]["N_PayReceiptId"]=nReceiptID;
+                //         int nReceiptDetailsID = dLayer.SaveData("Inv_PayReceiptDetails", "N_PayReceiptDetailsId", SaveVendorPaymentDetailsTable, connection, transaction);
+                //         if (nReceiptDetailsID <= 0)
+                //         {
+                //             transaction.Rollback();
+                //             return Ok(_api.Error(User, "Unable to save"));
+                //         }
+
+
+                         }
+
                         int npurchaseID = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", SaveVendorTable, connection, transaction);
 
 
                         if (npurchaseID <= 0)
-                        {
+                        { 
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Unable to save"));
                         }
@@ -211,7 +314,7 @@ namespace SmartxAPI.Controllers
                         ProcParam.Add("N_UserID", nUserID);
                         ProcParam.Add("N_PartyID", nPartyID);
                         ProcParam.Add("N_BranchID", nBranchID);
-                        ProcParam.Add("X_EntryFrom", "Customer Opening Balance");
+                        ProcParam.Add("X_EntryFrom", "cob");
                         try
                         {
                             dLayer.ExecuteNonQueryPro("SP_Acc_BeginingBalancePosting_Ins", ProcParam, connection, transaction);

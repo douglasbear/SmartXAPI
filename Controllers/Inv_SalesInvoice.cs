@@ -119,22 +119,22 @@ namespace SmartxAPI.Controllers
                     {
                         if (bAllBranchData == true && bLocationChange==true)
                         {
-                            Searchkey = Searchkey + " and  X_TransType = '" + X_TransType + "' and N_SalesType = 0 and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1 ";//and B_YearEndProcess=0";
+                            Searchkey = Searchkey + " and  X_TransType = '" + X_TransType + "' and N_SalesType = 0  and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1 ";//and B_YearEndProcess=0";
                         }
                         else
                         {
-                            Searchkey = Searchkey + " and  X_TransType = '" + X_TransType + "' and N_SalesType = 0 and N_CompanyID=" + nCompanyId + " and N_BranchID=" + nBranchID; //+ " and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1 and N_LocationID=" + n_LocationID;//+" and B_YearEndProcess=0";
+                            Searchkey = Searchkey + " and  X_TransType = '" + X_TransType + "' and N_SalesType = 0  and N_BranchID=" + nBranchID; //+ " and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1 and N_LocationID=" + n_LocationID;//+" and B_YearEndProcess=0";
                         }
                     }
                     else
                     {
                         if (bAllBranchData == true && bLocationChange==true)
                         {
-                            Searchkey = Searchkey + " and X_TransType = '" + X_TransType + "' and N_SalesType = 0 and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1";
+                            Searchkey = Searchkey + " and X_TransType = '" + X_TransType + "' and N_SalesType = 0  and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1";
                         }
                         else
                         {
-                            Searchkey = Searchkey + " and X_TransType = '" + X_TransType + "' and N_SalesType = 0 and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and N_BranchID=" + nBranchID + " and N_LocationID =" + n_LocationID + " and isnull(N_Hold,0)<>1";
+                            Searchkey = Searchkey + " and X_TransType = '" + X_TransType + "' and N_SalesType = 0  and N_FnYearID=" + nFnYearId + " and N_BranchID=" + nBranchID + " and N_LocationID =" + n_LocationID + " and isnull(N_Hold,0)<>1";
                         }
                     }
                     if (xSortBy == null || xSortBy.Trim() == "")
@@ -201,10 +201,10 @@ namespace SmartxAPI.Controllers
                     }
 
                     if(screen == "Invoice"){
-                     sqlCommandCount= "SELECT COUNT(*) as N_Count,sum(Cast(REPLACE(TotalAmount,',','') as Numeric(10,2)) ) AS  TotalAmount  FROM Vw_SalesRevenew_Cloud WHERE MONTH(Cast(D_SalesDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast(D_SalesDate as DateTime)) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID =@p1 and N_FnyearID=@P2";
+                     sqlCommandCount= "SELECT COUNT(*) as N_Count,sum(Cast(REPLACE(TotalAmount,',','') as Numeric(10,2)) ) AS  TotalAmount  FROM Vw_SalesRevenew_Cloud WHERE MONTH(Cast(D_SalesDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast(D_SalesDate as DateTime)) = YEAR(CURRENT_TIMESTAMP) and N_FnyearID=@P2";
                     }
                     else{
-                     sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(16," + N_decimalPlace + ")) ) as TotalAmount from "+viewName+" where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + Pattern + criteria + cndn + formIDCndn + Searchkey + "";
+                     sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(16," + N_decimalPlace + ")) ) as TotalAmount from "+viewName+" where N_FnYearID=@p2 and N_Hold=0 " + Pattern + criteria + cndn + formIDCndn + Searchkey + "";
                     }
                     
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
@@ -2435,13 +2435,13 @@ namespace SmartxAPI.Controllers
                                 + "Inv_Customer ON Inv_DeliveryNote.N_CompanyId = Inv_Customer.N_CompanyID AND Inv_DeliveryNote.N_CustomerId = Inv_Customer.N_CustomerID AND  "
                                 + "Inv_DeliveryNote.N_FnYearId = Inv_Customer.N_FnYearID LEFT OUTER JOIN "
                                 + "Inv_CustomerProjects ON Inv_DeliveryNote.N_ProjectID = Inv_CustomerProjects.N_ProjectID AND Inv_DeliveryNote.N_CompanyId = Inv_CustomerProjects.N_CompanyID "
-                                + "WHERE        (Inv_DeliveryNote.N_CompanyId = @nCompanyID) AND (Inv_DeliveryNote.N_CustomerId = @nCustomerID) AND (isnull(Inv_DeliveryNote.B_IsSaveDraft,0) = 0) AND (Inv_DeliveryNoteDetails.N_DeliveryNoteDetailsID NOT IN "
+                                + "WHERE        (Inv_DeliveryNote.N_CompanyId = @nCompanyID) AND (Inv_DeliveryNote.N_CustomerId = @nCustomerID) AND (isnull(Inv_DeliveryNote.B_IsSaveDraft,0) = 0) AND (isnull(Inv_DeliveryNote.B_BeginingBalEntry,0) = 0) AND (Inv_DeliveryNoteDetails.N_DeliveryNoteDetailsID NOT IN "
                                 + "    (SELECT        ISNULL(N_DeliveryNoteDtlsID, 0) AS N_DeliveryNoteDtlsID "
                                 +"     FROM            Inv_SalesDetails  "
                                 +"   WHERE        (N_CompanyID = @nCompanyID)  "
                                  +"   GROUP BY N_DeliveryNoteDtlsID))  "
                                 +" Group by Inv_DeliveryNote.N_CustomerId, Inv_DeliveryNote.N_CompanyId, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, Inv_CustomerProjects.X_ProjectName, Inv_DeliveryNote.N_SalesOrderID,  "
-                                +"       Inv_DeliveryNote.N_DeliveryNoteId, Inv_DeliveryNote.N_BranchId, Inv_DeliveryNote.X_CustPONo, Inv_DeliveryNote.X_ReceiptNo "
+                                +"       Inv_DeliveryNote.N_DeliveryNoteId, Inv_DeliveryNote.N_BranchId, Inv_DeliveryNote.X_CustPONo, Inv_DeliveryNote.X_ReceiptNo,Inv_DeliveryNote.B_BeginingBalEntry "
                                  +" order by Inv_DeliveryNote.X_ReceiptNo"; 
             else
                 sqlCommandText = " SELECT        Inv_DeliveryNote.N_CustomerId, Inv_DeliveryNote.N_CompanyId, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, Inv_CustomerProjects.X_ProjectName, Inv_DeliveryNote.N_SalesOrderID, "
@@ -2451,13 +2451,13 @@ namespace SmartxAPI.Controllers
                                 + "Inv_Customer ON Inv_DeliveryNote.N_CompanyId = Inv_Customer.N_CompanyID AND Inv_DeliveryNote.N_CustomerId = Inv_Customer.N_CustomerID AND  "
                                 + "Inv_DeliveryNote.N_FnYearId = Inv_Customer.N_FnYearID LEFT OUTER JOIN "
                                 + "Inv_CustomerProjects ON Inv_DeliveryNote.N_ProjectID = Inv_CustomerProjects.N_ProjectID AND Inv_DeliveryNote.N_CompanyId = Inv_CustomerProjects.N_CompanyID "
-                                + "WHERE        (Inv_DeliveryNote.N_CompanyId = @nCompanyID) AND (Inv_DeliveryNote.N_CustomerId = @nCustomerID) AND (isnull(Inv_DeliveryNote.B_IsSaveDraft,0) = 0)  AND (Inv_DeliveryNote.N_BranchID = "+nBranchID+") AND (Inv_DeliveryNoteDetails.N_DeliveryNoteDetailsID NOT IN "
+                                + "WHERE        (Inv_DeliveryNote.N_CompanyId = @nCompanyID) AND (Inv_DeliveryNote.N_CustomerId = @nCustomerID) AND (isnull(Inv_DeliveryNote.B_BeginingBalEntry,0) = 0) AND (isnull(Inv_DeliveryNote.B_IsSaveDraft,0) = 0)  AND (Inv_DeliveryNote.N_BranchID = "+nBranchID+") AND (Inv_DeliveryNoteDetails.N_DeliveryNoteDetailsID NOT IN "
                                 + "    (SELECT        ISNULL(N_DeliveryNoteDtlsID, 0) AS N_DeliveryNoteDtlsID "
                                 +"     FROM            Inv_SalesDetails  "
                                 +"   WHERE        (N_CompanyID = @nCompanyID)  "
                                  +"   GROUP BY N_DeliveryNoteDtlsID))  "
                                 +" Group by Inv_DeliveryNote.N_CustomerId, Inv_DeliveryNote.N_CompanyId, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, Inv_CustomerProjects.X_ProjectName, Inv_DeliveryNote.N_SalesOrderID,  "
-                                +"       Inv_DeliveryNote.N_DeliveryNoteId, Inv_DeliveryNote.N_BranchId, Inv_DeliveryNote.X_CustPONo, Inv_DeliveryNote.X_ReceiptNo "
+                                +"       Inv_DeliveryNote.N_DeliveryNoteId, Inv_DeliveryNote.N_BranchId, Inv_DeliveryNote.X_CustPONo, Inv_DeliveryNote.X_ReceiptNo,Inv_DeliveryNote.B_BeginingBalEntry "
                                  +" order by Inv_DeliveryNote.X_ReceiptNo";
 
             try

@@ -348,11 +348,59 @@ namespace SmartxAPI.Controllers
 
         
 
-        
 
+[HttpDelete("appRemove")]
+        public ActionResult DeleteData(int nClientID,int nAppID,int nUserID,int nCompanyId)
+        {
 
+            int Results = 0;
+            SortedList Params = new SortedList();
+                 Params.Add("@nClientID", nClientID);
+                 Params.Add("@nAppID", nAppID);
+                 Params.Add("@nUserID", nUserID);
+                 Params.Add("@nCompanyId",nCompanyId);
+            int nCompanyID=myFunctions.GetCompanyID(User);
+            try
+            {                        
+                
+                 using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction;
+                    transaction = connection.BeginTransaction();
+                     Results=dLayer.ExecuteNonQuery("delete from ClientApps where  n_AppID=" + nAppID + " and n_ClientID=" + nClientID, connection, transaction);
+                   
+                   using (SqlConnection olivoCon = new SqlConnection(connectionString))
+                    {
+                        olivoCon.Open();
+                        dLayer.ExecuteNonQuery("delete from Sec_UserApps where n_AppID=" + nAppID + " and N_UserID in (SELECT Sec_User.N_UserID from Acc_Company INNER JOIN  Sec_User ON Acc_Company.N_CompanyID = Sec_User.N_CompanyID where Acc_Company.N_ClientID=" + nClientID +")", olivoCon);
+                      }
+               
+                   
+                   if (Results > 0)
+                    {
+                        transaction.Commit();
+                        return Ok(_api.Success("App removed"));
+                    }
+                    else
+                    {
+                         transaction.Rollback();
+                        return Ok(_api.Error(User,"Unable to delete Add New App"));
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User,ex));
+            }
+        }
     }
 }
+
+
+        
+
 
 
 
