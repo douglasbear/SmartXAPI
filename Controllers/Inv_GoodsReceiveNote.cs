@@ -86,7 +86,7 @@ namespace SmartxAPI.Controllers
             if (xSearchkey != null && xSearchkey.Trim() != "")
 
             
-                Searchkey = "and ([MRN No] like '%" + xSearchkey + "%' or X_VendorName like '%" + xSearchkey + "%' or x_InvoiceNo like '%" + xSearchkey + "%' or D_MRNDate like '%" + xSearchkey + "%' or X_VendorInvoice like '%" + xSearchkey +"%' or x_Description like '%" + xSearchkey + "%' )";
+                Searchkey = "and ([MRN No] like '%" + xSearchkey + "%' or X_VendorName like '%" + xSearchkey + "%' or x_InvoiceNo like '%" + xSearchkey + "%' or D_MRNDate like '%" + xSearchkey + "%' or X_VendorInvoice like '%" + xSearchkey +"%' or x_Description like '%" + xSearchkey + "%' or orderNo like '%" + xSearchkey + "%')";
 
                         if (bAllBranchData == true)
                         {
@@ -572,7 +572,8 @@ namespace SmartxAPI.Controllers
 
                     if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) == 0)
                     {
-                        SortedList StockUpdateParams = new SortedList(){
+
+                          SortedList StockUpdateParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
 	                            {"N_TransID",nGRNID},
 	                            {"X_TransType", "GRN"}};
