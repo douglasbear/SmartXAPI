@@ -367,14 +367,23 @@ namespace SmartxAPI.Controllers
                                 {
                                     dr.Delete();
                                 }
-                                else
-                               if (dr["X_Type"].ToString() != "OP")
+                                
+                              else if (dr["X_Type"].ToString() != "OP")
                                 {
                                     if (N_InvoiceDueAmt == 0)
                                     {
                                         dr.Delete();
                                     }
+                                    else if (n_PayReceiptId > 0)
+                                    {
+                                     if (dr["N_PayreceiptID"].ToString() == "")
+                                    {
+                                        dr.Delete();
+                                    }
+                                    }
+                                    
                                 }
+                             
 
 
 

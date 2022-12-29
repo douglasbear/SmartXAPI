@@ -102,14 +102,15 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listDetails")]
-        public ActionResult CustomerListInner()
+        public ActionResult CustomerListInner(int nFnyearId)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
            
-            string sqlCommandText = "select  * from vw_CRMCustomer where N_CompanyID=@p1";
+            string sqlCommandText = "select  * from vw_CRMCustomer where N_CompanyID=@p1 and N_FnyearID=@p2";
             Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnyearId);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

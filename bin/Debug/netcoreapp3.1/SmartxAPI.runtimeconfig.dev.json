@@ -3,6 +3,7 @@
     "additionalProbingPaths": [
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
       "C:\\Users\\SANJAY\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\SANJAY\\.nuget\\packages"
@@ -10,17 +11,33 @@
 >>>>>>> 77ee6a2d94a223b6cb391f2ddfe02cf08bc00a93
 <<<<<<< HEAD
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\aswin\\.nuget\\packages"
+=======
+      "C:\\Users\\Dell\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\Dell\\.nuget\\packages"
+>>>>>>> 53eacbcb439452bd2a0948503d58a21ea5b3d4db
+=======
+=======
+>>>>>>> ac259e4a3838ab25658d898f0bc71069f58b51f2
+>>>>>>> 7cc843fd1491489292837ea7fa0f821bfd53028e
       "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\rathe\\.nuget\\packages"
 =======
       "C:\\Users\\Administrator\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Administrator\\.nuget\\packages"
 >>>>>>> 405762ab0debe90bab2447dabb836c1287cc3105
+<<<<<<< HEAD
+>>>>>>> ec9d4da797ea7e85a6d8c9f08eb5018794a524bd
+=======
 =======
       "C:\\Users\\user\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\user\\.nuget\\packages",
       "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
 >>>>>>> 090d80289d655324e5f81f7b0f5f701d0862167d
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
       "C:\\Users\\SANJAY\\.dotnet\\store\\|arch|\\|tfm|",
@@ -29,6 +46,9 @@
 =======
 >>>>>>> ac259e4a3838ab25658d898f0bc71069f58b51f2
 >>>>>>> 77ee6a2d94a223b6cb391f2ddfe02cf08bc00a93
+=======
+>>>>>>> ac259e4a3838ab25658d898f0bc71069f58b51f2
+>>>>>>> 7cc843fd1491489292837ea7fa0f821bfd53028e
     ]
   }
 }

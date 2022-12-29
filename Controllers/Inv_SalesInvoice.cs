@@ -123,7 +123,7 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            Searchkey = Searchkey + " and  X_TransType = '" + X_TransType + "' and N_SalesType = 0  and N_BranchID=" + nBranchID; //+ " and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1 and N_LocationID=" + n_LocationID;//+" and B_YearEndProcess=0";
+                            Searchkey = Searchkey + " and  X_TransType = '" + X_TransType + "' and N_SalesType = 0  and N_BranchID=" + nBranchID + " and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1 and N_LocationID=" + n_LocationID;//+" and B_YearEndProcess=0";
                         }
                     }
                     else
@@ -770,7 +770,7 @@ namespace SmartxAPI.Controllers
                     //sales return count(draft and non draft)
                     object objSalesReturn = dLayer.ExecuteScalar("select X_DebitNoteNo from Inv_SalesReturnMaster where N_SalesId =@nSalesID and isnull(B_IsSaveDraft,0)=0 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
 
-                    object DNQty = dLayer.ExecuteScalar("Select SUM(N_Qty) from vw_InvSalesReturn_Display Where N_CompanyID=" + nCompanyId + " and N_SalesID=@nSalesID", QueryParamsList, Con);
+                    object DNQty = dLayer.ExecuteScalar("Select SUM(N_RetQty) from  VW_SALESRETURN_DETAILS_CLOUD where N_CompanyID=" + nCompanyId + " and N_SalesID=@nSalesID", QueryParamsList, Con);
                     object OrderQty1 = dLayer.ExecuteScalar("Select SUM(N_Qty) from Inv_SalesDetails Where N_CompanyID=" + nCompanyId + "and N_SalesID=@nSalesID", QueryParamsList, Con);
                     if (DNQty != null && OrderQty1 != null)
                     {
