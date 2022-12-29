@@ -1200,7 +1200,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     dbName = connection.Database;
-object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
+                    object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
                     object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection);
                     if (Timezone != null && Timezone.ToString() != "")
                     {
@@ -1621,7 +1621,6 @@ object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from ac
         //     }
 
         // }
-
 
         private static Random random = new Random();
         public string RandomString(int length = 6)
