@@ -92,14 +92,9 @@ namespace SmartxAPI.Controllers
                     string sqlDOUT = "SELECT top(1) D_Out as D_Out from Pay_TimeSheetImport  where N_EmpID=@p3 and D_Date=@today and N_CompanyID=@p1 order by N_SheetID desc";
                     object DIN = dLayer.ExecuteScalar(sqlDIN, Params, connection);
                     object DOUT = dLayer.ExecuteScalar(sqlDOUT, Params, connection);
-<<<<<<< HEAD
-                    string sqlCommandDailyLogin = "SELECT '" + DIN + "' as D_In,'" + DOUT + "' as D_Out,Convert(Time, GetDate()) as D_Cur, case when '" + DOUT + "'='00:00:00' then '' else cast(dateadd(millisecond, datediff(millisecond,case when '" + DIN + "'='00:00:00' then  Convert(Time, GetDate()) else '" + DIN + "' end,'" + DOUT + "'), '19000101')  AS TIME)end AS duration from Pay_TimeSheetImport where N_EmpID=@p3 and D_Date=@today";
-                    string CatID = "select N_CatagoryId from Pay_Employee where N_EmpID=@p3 and N_CompanyID=@p1";
-=======
                     // string sqlCommandDailyLogin = "SELECT '" + DIN + "' as D_In,'" + DOUT + "' as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,case when '"+DIN+"'='00:00:00' then  Convert(Time, GetDate()) else '"+DIN+"' end,case when '"+DOUT+"' ='00:00:00' then  Convert(Time, GetDate()) else '"+DOUT+"' end), '19000101')  AS TIME) AS duration from Pay_TimeSheetImport where N_EmpID=@p3 and D_Date=@today";
                     string sqlCommandDailyLogin = "SELECT '" + DIN + "' as D_In,'" + DOUT + "' as D_Out,Convert(Time, GetDate()) as D_Cur, case when '"+DOUT+"'='00:00:00' then '' else cast(dateadd(millisecond, datediff(millisecond,case when '"+DIN+"'='00:00:00' then  Convert(Time, GetDate()) else '"+DIN+"' end,'"+DOUT+"'), '19000101')  AS TIME)end AS duration from Pay_TimeSheetImport where N_EmpID=@p3 and D_Date=@today";
                     string CatID ="select N_CatagoryId from Pay_Employee where N_EmpID=@p3 and N_CompanyID=@p1";
->>>>>>> ac259e4a3838ab25658d898f0bc71069f58b51f2
                     CategoryID = dLayer.ExecuteScalar(CatID, Params, connection);
                     EmployeeDetails = dLayer.ExecuteDataTable(sqlCommandEmployeeDetails, Params, connection);
                     EmployeeDetails = api.Format(EmployeeDetails, "EmployeeDetails");
