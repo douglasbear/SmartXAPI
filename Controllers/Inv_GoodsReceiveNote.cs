@@ -572,7 +572,8 @@ namespace SmartxAPI.Controllers
 
                     if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) == 0)
                     {
-                        SortedList StockUpdateParams = new SortedList(){
+
+                          SortedList StockUpdateParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
 	                            {"N_TransID",nGRNID},
 	                            {"X_TransType", "GRN"}};

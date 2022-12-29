@@ -181,7 +181,6 @@ namespace SmartxAPI.GeneralFunctions
 
                                 dLayer.ExecuteNonQueryPro("[SP_Inv_MRNprocessing]", PostingMRNParam, connection, transaction);
 
-
                                 SortedList PostingParam = new SortedList();
                                 PostingParam.Add("N_CompanyID", nCompanyID);
                                 PostingParam.Add("X_InventoryMode", "PURCHASE");
@@ -1765,7 +1764,7 @@ namespace SmartxAPI.GeneralFunctions
             int N_QuotationDetailId = dLayer.SaveData("Inv_PurchaseReturnDetails", "n_CreditNoteDetailsID", DetailTable, connection, transaction);
 
             try
-            {
+            { 
                 SortedList InsParams = new SortedList(){
                             {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
                             {"N_CreditNoteID",N_CreditNoteID}};
