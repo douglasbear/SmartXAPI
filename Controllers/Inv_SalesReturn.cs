@@ -318,8 +318,8 @@ namespace SmartxAPI.Controllers
 
                         // SalesReturnDetails = new DataTable();
                         SalesReturnDetails = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
-                          SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "B_Invoice", typeof(int), 1);
-                        SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "N_UserID", typeof(int), myFunctions.GetUserID(User));
+                         if(!SalesReturn.Columns.Contains("B_Invoice")) {SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "B_Invoice", typeof(int), 1);}
+                        if(!SalesReturn.Columns.Contains("N_UserID")) {SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "N_UserID", typeof(int), myFunctions.GetUserID(User));}
                         if (SalesReturnDetails.Columns.Contains("N_RetQty"))
                         {
                             foreach (DataRow var1 in SalesReturnDetails.Rows)
