@@ -14,9 +14,9 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("sync")]
+    [Route("freetext-sales")]
     [ApiController]
-    public class Api_Sales : ControllerBase
+    public class Api_FTSales : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
@@ -24,7 +24,7 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly ISec_UserRepo _repository;
 
-        public Api_Sales(ISec_UserRepo repository, IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Api_FTSales(ISec_UserRepo repository, IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             _repository = repository;
             api = apifun;
@@ -33,41 +33,8 @@ namespace SmartxAPI.Controllers
             connectionString =
             conf.GetConnectionString("SmartxConnection");
         }
-        [HttpGet("GetAPIKey")]
-        public string GetAPIKey(string username, string password)
-        {
-            string tocken = "";
-            try
-            {
-                SortedList Params = new SortedList();
-                var genpassword = myFunctions.EncryptString(password);
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    object N_UserID = dLayer.ExecuteScalar("select N_UserID from sec_user where  X_UserID='" + username + "' and x_password='" + genpassword + "'", connection, transaction);
-                    if (N_UserID != null)
-                    {
-                        tocken = Generatetocken();
-                        dLayer.ExecuteNonQuery("Update sec_user Set X_Token= '" + tocken + "' where N_UserID = " + N_UserID, Params, connection, transaction);
-                        transaction.Commit();
-                    }
-                    else
-                    {
-                        transaction.Rollback();
-                        tocken = "Invalid Username or Password";
-                    }
-                }
-                return tocken;
-            }
-            catch (Exception e)
-            {
-                return "Error";
-            }
-        }
-
-        //Save....
-        [HttpPost("FTSales")]
+        
+        [HttpPost()]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
@@ -114,7 +81,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Sales Invoice Saved"));
+                        return Ok(api.Success("Freetext Sales Saved"));
                     }
                 }
             }
@@ -122,16 +89,6 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(User, ex));
             }
-        }
-        private string Generatetocken()
-        {
-            Guid g = Guid.NewGuid();
-            string GuidString = Convert.ToBase64String(g.ToByteArray());
-            GuidString = GuidString.Replace("=", "");
-            GuidString = GuidString.Replace("+", "");
-            GuidString = GuidString.Replace("/", "");
-            return GuidString;
-
         }
     }
 }
