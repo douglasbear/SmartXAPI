@@ -89,7 +89,7 @@ namespace SmartxAPI.Controllers
                     if (dt.Rows.Count > 0)
                     {
                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_CompanyID", typeof(int), dt.Rows[0]["N_CompanyID"]);
-                        dLayer.ExecuteNonQuery("delete from Mig_SalesInvoice", Params, connection, transaction);
+                        // dLayer.ExecuteNonQuery("delete from Mig_SalesInvoice", Params, connection, transaction);
                         nSalesID = dLayer.SaveData("Mig_SalesInvoice", "pkey_code", MasterTable, connection, transaction);
                         // object N_FnyearID = dLayer.ExecuteScalar("select MAX(N_FnyearID) from Acc_Fnyear where N_CompanyID=" + dt.Rows[0]["N_CompanyID"], connection, transaction);
                         // Params.Add("N_CompanyID", dt.Rows[0]["N_CompanyID"]);
