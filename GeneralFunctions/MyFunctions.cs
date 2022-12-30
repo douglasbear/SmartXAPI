@@ -959,8 +959,11 @@ namespace SmartxAPI.GeneralFunctions
             int nNextApprovalID = nTransApprovalLevel + 1;
             string xLastUserName = "", xEntryTime = "";
             int nTempStatusID = 0;
+            object nActiveID=0;
 
             int loggedInUserID = this.GetUserID(User);
+
+             int GUserID = this.GetGlobalUserID(User);
 
             /* Approval Response Set */
             SortedList Response = new SortedList();
@@ -994,10 +997,18 @@ namespace SmartxAPI.GeneralFunctions
             ApprovalParams.Add("@nTransStatus", nTransStatus);
             ApprovalParams.Add("@nGroupID", nGroupID);
             ApprovalParams.Add("@loggedInUserID", loggedInUserID);
+             ApprovalParams.Add("@GUserID", GUserID);
 
             object objUserCategory = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User where N_CompanyID=" + nCompanyID + " and N_UserID=" + loggedInUserID, ApprovalParams, connection);
 
             objUserCategory = objUserCategory != null ? objUserCategory : 0;
+
+              using (SqlConnection olivCnn = new SqlConnection(masterDBConnectionString))
+                {
+                    olivCnn.Open();
+                    nActiveID = dLayer.ExecuteScalar("select N_ActiveAppID from users where N_UserID=@GUserID",ApprovalParams,olivCnn);
+
+                }
 
 
             if (nApprovalID == 0)
@@ -1042,24 +1053,24 @@ namespace SmartxAPI.GeneralFunctions
                 nIsApprovalSystem = 1;
                 Response["isApprovalSystem"] = nIsApprovalSystem;                
             }
-            // else
-            // {
-            //     if(nActionID>0)
-            //     {
-            //         Response["btnSaveText"] = "Save";
-            //         Response["btnDeleteText"] = "Delete";
-            //         Response["saveEnabled"] = false;
-            //         Response["deleteEnabled"] = false; 
-            //         Response["saveTag"] = 0;
-            //         Response["deleteTag"] = 0;
-            //         Response["isApprovalSystem"] = 0;
-            //         Response["ApprovalID"] = 0;
-            //         Response["isEditable"] = false;
-            //         Response["lblVisible"] = true;
-            //         Response["lblText"] = "Approval not set for this user";
-            //         return Response;
-            //     }              
-            // }
+            else
+            {
+                if(getIntVAL(nActiveID.ToString()) == 2)
+                {
+                    Response["btnSaveText"] = "Save";
+                    Response["btnDeleteText"] = "Delete";
+                    Response["saveEnabled"] = false;
+                    Response["deleteEnabled"] = false; 
+                    Response["saveTag"] = 0;
+                    Response["deleteTag"] = 0;
+                    Response["isApprovalSystem"] = 0;
+                    Response["ApprovalID"] = 0;
+                    Response["isEditable"] = false;
+                    Response["lblVisible"] = true;
+                    Response["lblText"] = "Approval not set for this user";
+                    return Response;
+                }              
+            }
             if (nTransID > 0)
             {
                 object objApprovalPresent = dLayer.ExecuteScalar("select COUNT(*) from Gen_ApprovalCodesTrans where N_FormID=" + nFormID + " and N_CompanyID=" + nCompanyID + " and N_TransID=" + nTransID, ApprovalParams, connection);
