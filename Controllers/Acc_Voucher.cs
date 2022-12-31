@@ -21,14 +21,17 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly IMyAttachments myAttachments;
+        private readonly int FormID;
 
 
-        public Acc_PaymentVoucher(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Acc_PaymentVoucher(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf,IMyAttachments myAtt)
         {
             api = apifun;
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString(myCompanyID._ConnectionString);
+              myAttachments = myAtt;
         }
 
 
@@ -144,6 +147,7 @@ namespace SmartxAPI.Controllers
         {
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
+            DataSet ds=new DataSet();
 
             string sqlCommandText = "select * from Acc_VoucherMaster_CloudDisplay "+
                                     " Where X_VoucherNo=@VoucherNo and N_CompanyID=@CompanyID and X_TransType=@TransType  " + 
@@ -201,9 +205,15 @@ namespace SmartxAPI.Controllers
                     Acc_CostCentreTrans = dLayer.ExecuteDataTablePro("SP_Acc_Voucher_Disp", ProParams, connection);
                     Acc_CostCentreTrans = api.Format(Acc_CostCentreTrans, "costCenterTrans");
                     dt.Tables.Add(Acc_CostCentreTrans);
+                    
 
+                    // DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(VoucherDetails.Rows[0]["N_VoucherID"].ToString()), myFunctions.getIntVAL(VoucherDetails.Rows[0]["N_VoucherID"].ToString()), this.FormID, myFunctions.getIntVAL(VoucherDetails.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                    // Attachments = api.Format(Attachments, "attachments");
+                    // dt.Tables.Add(Attachments);
+                    // dt.Tables.Add(VoucherDetails);
 
                 }
+                
                 return Ok(api.Success(dt));
 
             }
@@ -240,6 +250,7 @@ namespace SmartxAPI.Controllers
                 DataTable Approvals;
                 Approvals = ds.Tables["approval"];
                 DataRow ApprovalRow = Approvals.Rows[0];
+                 DataTable Attachment = ds.Tables["attachments"];
 
                 DataRow masterRow = MasterTable.Rows[0];
                 var xVoucherNo = masterRow["x_VoucherNo"].ToString();
@@ -508,8 +519,22 @@ namespace SmartxAPI.Controllers
                         }
 
                     }
+                       SortedList VoucherParams = new SortedList();
+                           VoucherParams.Add("@N_VoucherID", N_VoucherID);
 
-                    
+                     DataTable VoucherInfo = dLayer.ExecuteDataTable("Select X_VoucherNo from Acc_VoucherMaster_Details_Segments where N_VoucherID=@N_VoucherID", VoucherParams, connection, transaction);
+                        if (VoucherInfo.Rows.Count > 0)
+                        {
+                            try
+                            {
+                                myAttachments.SaveAttachment(dLayer, Attachment, xVoucherNo, N_VoucherID, VoucherInfo.Rows[0]["X_FileName"].ToString().Trim(), VoucherInfo.Rows[0]["X_VoucherNo"].ToString(), N_VoucherID, "Voucher Document", User, connection, transaction);
+                            }
+                             catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error(User, ex));
+                            }
+                        }
                     //return Ok(api.Success("Data Saved"));
                     // return Ok(api.Success("Data Saved" + ":" + xVoucherNo));
                     SortedList Result = new SortedList();
