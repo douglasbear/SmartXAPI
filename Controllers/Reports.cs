@@ -680,15 +680,15 @@ namespace SmartxAPI.Controllers
         public DateTime Localtime()
         {
             //Local Time Checking
-            DateTime dt;
-            string url = "http://worldtimeapi.org/api/timezone/Asia/Kolkata";
-            using (var client = new WebClient())
-            {
-                client.Headers.Add("content-type", "application/json");
-                string response = client.DownloadString(url);
-                response = response.Substring(63, 26);
-                dt = DateTime.Parse(response);
-            }
+            DateTime dt=DateTime.UtcNow;;
+            // string url = "http://worldtimeapi.org/api/timezone/Asia/Kolkata";
+            // using (var client = new WebClient())
+            // {
+            //     client.Headers.Add("content-type", "application/json");
+            //     string response = client.DownloadString(url);
+            //     response = response.Substring(63, 26);
+            //     dt = DateTime.Parse(response);
+            // }
             return dt;
         }
 
