@@ -151,7 +151,7 @@ namespace SmartxAPI.Controllers
 
       
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nPkeyId,int nCompanyID, int nFnYearID)
+        public ActionResult DeleteData(int nPkeyId,int nCompanyID, int nFnYearID,int formID)
         {
 
              int Results = 0;
@@ -171,6 +171,15 @@ namespace SmartxAPI.Controllers
                     if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
                         return Ok(api.Error(User,"Year is closed, Cannot create new Entry..."));
                     SqlTransaction transaction = connection.BeginTransaction();
+
+                    if(formID==1658){
+                      object count = dLayer.ExecuteScalar("Select count(*) from Pay_EmpBussinessTripRequest Where  N_CompanyID= " + nCompanyID + " and N_TravelTypeID=" + nPkeyId, connection, transaction);
+                          if(myFunctions.getIntVAL(count.ToString())>0){
+                         return Ok(api.Warning("Unable To delete"));
+                    }
+
+                    }
+
                     Results = dLayer.DeleteData("Gen_LookupTable", "N_PkeyId", nPkeyId, "", connection, transaction);
                     transaction.Commit();
                 }
