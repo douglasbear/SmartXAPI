@@ -263,6 +263,12 @@ namespace SmartxAPI.Controllers
                     int N_MainLocationID = 0;
                     string xTerminalCode ="@Auto";
                     int nFormID = 0;
+                    if(!MasterTable.Columns.Contains("n_TypeId"))
+                    {
+                            MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"n_TypeId",typeof(int),0);
+                            MasterTable.AcceptChanges();
+                    }
+
 
                     if (myFunctions.getIntVAL(MasterTable.Rows[0]["n_TypeId"].ToString())==5)
                         nFormID = 1637;

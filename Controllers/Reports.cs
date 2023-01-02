@@ -346,6 +346,13 @@ namespace SmartxAPI.Controllers
                             TaxAmount = dLayer.ExecuteScalar("select isnull(N_TaxAmtF,0) as N_TaxAmtF from Inv_SalesReturnMaster where N_CompanyID=@nCompanyId and N_DebitNoteId=" + nPkeyID, QueryParams, connection, transaction);
                             SalesDate = dLayer.ExecuteScalar("select D_ReturnDate from Inv_SalesReturnMaster where N_CompanyID=@nCompanyId and N_DebitNoteId=" + nPkeyID, QueryParams, connection, transaction);
                         }
+                        else if (nFormID == 1492)
+                        {
+                            Total = dLayer.ExecuteScalar("select SUM(N_AmountPaidF) from vw_InvCustomerPayment_rpt where N_CompanyID=@nCompanyId and N_PayReceiptId=" + nPkeyID, QueryParams, connection, transaction);
+                            TaxAmount = dLayer.ExecuteScalar("select isnull(N_TaxAmt1F,0) as N_TaxAmtF from Inv_PayReceipt where N_CompanyID=@nCompanyId and N_PayReceiptId=" + nPkeyID, QueryParams, connection, transaction);
+                            SalesDate = dLayer.ExecuteScalar("select D_Date from Inv_PayReceipt where N_CompanyID=@nCompanyId and N_PayReceiptId=" + nPkeyID, QueryParams, connection, transaction);
+                            Total = myFunctions.getVAL(Total.ToString()) + myFunctions.getVAL(TaxAmount.ToString());
+                        }
                         DateTime dt = DateTime.Parse(SalesDate.ToString());
                         string Amount = Convert.ToDecimal(Total).ToString("0.00");
                         string VatAmount = Convert.ToDecimal(TaxAmount.ToString()).ToString("0.00");
@@ -450,20 +457,19 @@ namespace SmartxAPI.Controllers
 
                         DateTime currentTime;
                         string x_comments = "";
-                        //Local Time Checking
-                        // var clientdata = new WebClient();
-                        // string content1 = clientdata.DownloadString("http://worldtimeapi.org/api/timezone/Asia/Kolkata");
-                        // string datentime=content1.Substring(0, 12);
-
-
 
                         object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyId, connection, transaction);
                         object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection, transaction);
                         if (Timezone != null && Timezone.ToString() != "")
                         {
-                            currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
-                            currentTime = currentTime.AddDays(-1);
-                            currentTime = currentTime.AddHours(-1);
+                            try
+                            {
+                                currentTime = TimeZoneInfo.ConvertTime(Localtime(), TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
+                            }
+                            catch
+                            {
+                                currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
+                            }
                             x_comments = currentTime.ToString();
                         }
                         if (nFormID == 1406)
@@ -559,7 +565,7 @@ namespace SmartxAPI.Controllers
                             foreach (DataRow var in dt.Rows)
                             {
                                 SqlCommand cmd = new SqlCommand("Select isnull(i_sign,'') as  i_sign from vw_Log_ApprovalAppraisal where N_ActionID=" + var["N_ActionID"].ToString(), connection, transaction);
-                                if ((cmd.ExecuteScalar().ToString()) != "" && cmd.ExecuteScalar().ToString()!= "0x")
+                                if ((cmd.ExecuteScalar().ToString()) != "" && cmd.ExecuteScalar().ToString() != "0x")
                                 {
                                     byte[] content = (byte[])cmd.ExecuteScalar();
                                     MemoryStream stream = new MemoryStream(content);
@@ -670,6 +676,20 @@ namespace SmartxAPI.Controllers
                 img.Save("C://OLIVOSERVER2020/Barcode/" + Data + ".png", ImageFormat.Png);
             }
             return true;
+        }
+        public DateTime Localtime()
+        {
+            //Local Time Checking
+            DateTime dt=DateTime.UtcNow;;
+            // string url = "http://worldtimeapi.org/api/timezone/Asia/Kolkata";
+            // using (var client = new WebClient())
+            // {
+            //     client.Headers.Add("content-type", "application/json");
+            //     string response = client.DownloadString(url);
+            //     response = response.Substring(63, 26);
+            //     dt = DateTime.Parse(response);
+            // }
+            return dt;
         }
 
         public bool sendmail(string url, string mail)
@@ -1192,6 +1212,7 @@ namespace SmartxAPI.Controllers
                 }
 
 
+
                 var handler = new HttpClientHandler
                 {
                     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
@@ -1207,6 +1228,8 @@ namespace SmartxAPI.Controllers
                     reportName = rptArray[1].ToString();
                     actReportLocation = actReportLocation + rptArray[0].ToString() + "/";
                 }
+                DateTime dtn = Localtime();
+
 
                 //string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;
                 string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention + "&N_FormID=0&QRUrl=&N_PkeyID=0&partyName=&docNumber=&formName=";
@@ -1593,20 +1616,6 @@ namespace SmartxAPI.Controllers
         //     }
 
         // }
-        public DateTime Localtime()
-        {
-            //Local Time Checking
-            DateTime dt;
-            string url = "http://worldtimeapi.org/api/timezone/Asia/Kolkata";
-            using (var client = new WebClient())
-            {
-                client.Headers.Add("content-type", "application/json");
-                string response = client.DownloadString(url);
-                response = response.Substring(63, 26);
-                dt = DateTime.Parse(response);
-            }
-            return dt;
-        }
 
         private static Random random = new Random();
         public string RandomString(int length = 6)

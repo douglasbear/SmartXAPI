@@ -255,16 +255,28 @@ namespace SmartxAPI.Controllers
 
                     if (DeleteData.Rows.Count > 0)
                     {
-               
-
-                      foreach (DataRow deleteItem in DeleteData.Rows)
-                    {
-                        if (DeleteData.Columns.Contains("N_SalesID"))
+                    
+                      int N_VoucherID=0;
+                       foreach (DataRow deleteItem in DeleteData.Rows)
+                      {
+                        if(myFunctions.getIntVAL(deleteItem["n_PayReceiptDetailsID"].ToString())>0)
                         {
-                        dLayer.ExecuteNonQuery("delete from  Inv_Sales  where N_CompanyID=" + nCompanyID + " and N_SalesID=" + myFunctions.getIntVAL(deleteItem["n_SalesId"].ToString()) + "", connection, transaction);
+
+                         N_VoucherID =myFunctions.getIntVAL(dLayer.ExecuteScalar("select  N_VoucherID from Acc_VoucherMaster where X_TransType = 'OB' and N_CompanyID = "+nCompanyID+" and N_FnYearID = "+nFnYearID+" and N_BranchID = "+nBranchID+"", connection, transaction).ToString());
+                         dLayer.ExecuteNonQuery("delete from  Inv_PayReceiptDetails  where N_CompanyID=" + nCompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(deleteItem["n_TransID"].ToString()) + " and N_PayReceiptDetailsID=" + myFunctions.getIntVAL(deleteItem["N_PayReceiptDetailsID"].ToString()) + "", connection, transaction);
+                         dLayer.ExecuteNonQuery("delete from  Inv_PayReceipt  where N_CompanyID=" + nCompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(deleteItem["n_TransID"].ToString()) + "", connection, transaction);
+                         dLayer.ExecuteNonQuery("DELETE FROM acc_vouchermaster_details  WHERE  n_companyid = "+nCompanyID+"   AND n_voucherid = "+N_VoucherID+" AND  n_branchid = "+nBranchID+"   AND n_acctype = 2 and N_InventoryID="+myFunctions.getIntVAL(deleteItem["n_TransID"].ToString())+"",connection, transaction);
                         }
+                        else if (DeleteData.Columns.Contains("N_SalesID"))
+                        {
+                         N_VoucherID =myFunctions.getIntVAL(dLayer.ExecuteScalar("select  N_VoucherID from Acc_VoucherMaster where X_TransType = 'OB' and N_CompanyID = "+nCompanyID+" and N_FnYearID = "+nFnYearID+" and N_BranchID = "+nBranchID+"", connection, transaction).ToString());
+                         dLayer.ExecuteNonQuery("delete from  Inv_Sales  where N_CompanyID=" + nCompanyID + " and N_SalesID=" + myFunctions.getIntVAL(deleteItem["n_SalesId"].ToString()) + "", connection, transaction);
+                         dLayer.ExecuteNonQuery("DELETE FROM acc_vouchermaster_details  WHERE  n_companyid = "+nCompanyID+"   AND n_voucherid = "+N_VoucherID+" AND  n_branchid = "+nBranchID+"   AND n_acctype = 2 and N_InventoryID="+myFunctions.getIntVAL(deleteItem["n_SalesId"].ToString())+"",connection, transaction);
+	
+                    
+                        }
+                      }
                     }
-                   }
 
                         int nSalesID = dLayer.SaveData("Inv_Sales", "N_SalesID", SaveCustTable, connection, transaction);
 
@@ -318,13 +330,22 @@ namespace SmartxAPI.Controllers
                           if (DeleteData.Rows.Count > 0)
                     {
                
-
+                     int N_VoucherID=0;  
                       foreach (DataRow deleteItem in DeleteData.Rows)
                     {
-                        if (DeleteData.Columns.Contains("N_PurchaseID"))
+                        if(myFunctions.getIntVAL(deleteItem["n_PayReceiptDetailsID"].ToString())>0)
                         {
-                        dLayer.ExecuteNonQuery("delete from  Inv_Purchase  where N_CompanyID=" + nCompanyID + " and N_PurchaseID=" + myFunctions.getIntVAL(deleteItem["N_PurchaseID"].ToString()) + "", connection, transaction);
-                       
+
+                         N_VoucherID =myFunctions.getIntVAL(dLayer.ExecuteScalar("select  N_VoucherID from Acc_VoucherMaster where X_TransType = 'OB' and N_CompanyID = "+nCompanyID+" and N_FnYearID = "+nFnYearID+" and N_BranchID = "+nBranchID+"", connection, transaction).ToString());
+                         dLayer.ExecuteNonQuery("delete from  Inv_PayReceiptDetails  where N_CompanyID=" + nCompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(deleteItem["n_TransID"].ToString()) + " and N_PayReceiptDetailsID=" + myFunctions.getIntVAL(deleteItem["N_PayReceiptDetailsID"].ToString()) + "", connection, transaction);
+                         dLayer.ExecuteNonQuery("delete from  Inv_PayReceipt  where N_CompanyID=" + nCompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(deleteItem["n_TransID"].ToString()) + " ", connection, transaction);
+                         dLayer.ExecuteNonQuery("DELETE FROM acc_vouchermaster_details  WHERE  n_companyid = "+nCompanyID+"   AND n_voucherid = "+N_VoucherID+" AND  n_branchid = "+nBranchID+"   AND n_acctype = 2 and N_InventoryID="+myFunctions.getIntVAL(deleteItem["n_TransID"].ToString())+"",connection, transaction);
+                        }
+                        else if (DeleteData.Columns.Contains("N_PurchaseID"))
+                        {
+                            N_VoucherID =myFunctions.getIntVAL(dLayer.ExecuteScalar("select  N_VoucherID from Acc_VoucherMaster where X_TransType = 'OB' and N_CompanyID = "+nCompanyID+" and N_FnYearID = "+nFnYearID+" and N_BranchID = "+nBranchID+"", connection, transaction).ToString());
+                            dLayer.ExecuteNonQuery("delete from  Inv_Purchase  where N_CompanyID=" + nCompanyID + " and N_PurchaseID=" + myFunctions.getIntVAL(deleteItem["N_PurchaseID"].ToString()) + "", connection, transaction);
+                             dLayer.ExecuteNonQuery("DELETE FROM acc_vouchermaster_details  WHERE  n_companyid = "+nCompanyID+"   AND n_voucherid = "+N_VoucherID+" AND  n_branchid = "+nBranchID+"   AND n_acctype = 2 and N_InventoryID="+myFunctions.getIntVAL(deleteItem["N_PurchaseID"].ToString())+"",connection, transaction);
                         }
                        
                     }

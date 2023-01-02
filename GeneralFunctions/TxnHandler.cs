@@ -181,7 +181,6 @@ namespace SmartxAPI.GeneralFunctions
 
                                 dLayer.ExecuteNonQueryPro("[SP_Inv_MRNprocessing]", PostingMRNParam, connection, transaction);
 
-
                                 SortedList PostingParam = new SortedList();
                                 PostingParam.Add("N_CompanyID", nCompanyID);
                                 PostingParam.Add("X_InventoryMode", "PURCHASE");
@@ -630,6 +629,7 @@ namespace SmartxAPI.GeneralFunctions
                             int tempPOrderID=0;
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
                             {
+                                
                                 if(showSellingPrice)
                                 {
                                    dLayer.ExecuteScalar("Update Inv_ItemMaster Set N_Rate="+DetailTable.Rows[j]["N_Sprice"]+" Where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"] + " and N_CompanyID=" + nCompanyID, connection, transaction);
@@ -643,9 +643,9 @@ namespace SmartxAPI.GeneralFunctions
                                         
 
                                 }
-                                if (n_POrderID > 0 && tempPOrderID!=n_POrderID)
+                                if (myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString())> 0 && tempPOrderID!=myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString()))
                                 {
-                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
+                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString()),82,false,dLayer,connection,transaction))
                                     {
                                         // xturn Ok(_api.Error(User, "Unable To Update Txn Status"));
 
@@ -654,7 +654,7 @@ namespace SmartxAPI.GeneralFunctions
                                         return Result;
                                     }
                                 }
-                                tempPOrderID=n_POrderID;
+                                tempPOrderID=myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString());
                             };
                     }
                     SortedList VendorParams = new SortedList();
@@ -1765,7 +1765,7 @@ namespace SmartxAPI.GeneralFunctions
             int N_QuotationDetailId = dLayer.SaveData("Inv_PurchaseReturnDetails", "n_CreditNoteDetailsID", DetailTable, connection, transaction);
 
             try
-            {
+            { 
                 SortedList InsParams = new SortedList(){
                             {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
                             {"N_CreditNoteID",N_CreditNoteID}};
