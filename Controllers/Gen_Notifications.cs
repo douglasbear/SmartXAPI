@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("notificationList")]
-        public ActionResult GetNotification()
+        public ActionResult GetNotification(int nLanguageID)
         {
             SortedList Params = new SortedList();
             DataTable dt = new DataTable();
@@ -88,10 +88,11 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string sqlCommandCount = "";
 
-            sqlCommandText = "select X_Type, count(*) as N_Count from vw_Gen_Notification where N_CompanyID=@nCompanyID and N_UserID=@nUserID group by X_Type ";
+            sqlCommandText = "select X_Type, count(*) as N_Count from vw_Gen_Notification where N_CompanyID=@nCompanyID and N_UserID=@nUserID and N_LanguageID=@nLanguageID group by X_Type ";
 
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nUserID", nUserID);
+            Params.Add("@nLanguageID", nLanguageID);
 
             try
             {
@@ -99,7 +100,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_TotalCount  from vw_Gen_Notification where N_CompanyID=@nCompanyID and N_UserID=@nUserID ";
+                    sqlCommandCount = "select count(*) as N_TotalCount  from vw_Gen_Notification where N_CompanyID=@nCompanyID and N_UserID=@nUserID and N_LanguageID=@nLanguageID ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
 
                     SortedList res = new SortedList();
