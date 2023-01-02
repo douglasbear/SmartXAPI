@@ -97,13 +97,14 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable;
-                MasterTable = ds.Tables["master"];
+                MasterTable = ds.Tables["details"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationID"].ToString());
                 int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                 int nUserID = myFunctions.GetUserID(User);
                 int nMigSalesID=0;
+                DateTime d_InvoiceDate = Convert.ToDateTime(MasterTable.Rows[0]["d_InvoiceDate"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -113,11 +114,16 @@ namespace SmartxAPI.Controllers
                     MasterTable.Columns.Remove("n_FnYearId");
                     MasterTable.Columns.Remove("n_LocationID");
                     MasterTable.Columns.Remove("n_BranchID");
+                    MasterTable.Columns.Remove("d_InvoiceDate");
                     
                     dLayer.ExecuteNonQuery("delete from Mig_SalesInvoice where N_CompanyID= "+nCompanyID+"", Params, connection, transaction);                        
 
                     string DupCriteria = "";
                     string X_Criteria = "";
+
+                    foreach (DataRow drow in MasterTable.Rows){
+                        drow["Invoice_Date"] = d_InvoiceDate;
+                    }
 
                     nMigSalesID = dLayer.SaveData("Mig_SalesInvoice", "Invoice_Number",DupCriteria,X_Criteria, MasterTable, connection, transaction);
 
