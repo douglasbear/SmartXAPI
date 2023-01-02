@@ -58,7 +58,7 @@ namespace SmartxAPI.Controllers
             env = envn;
         }
         [HttpGet("list")]
-        public ActionResult GetReportList(int? nMenuId, int? nLangId)
+        public ActionResult GetReportList(int? nMenuId, int? nLangId, int? nBranchID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -72,6 +72,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nLangId", nLangId);
             Params.Add("@nUserCatID", myFunctions.GetUserCategoryList(User));
             Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+            Params.Add("@nBranchID", nBranchID);
 
             try
             {
@@ -84,8 +85,13 @@ namespace SmartxAPI.Controllers
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     DataTable dt1 = new DataTable();
+                    object B_Consolidated = dLayer.ExecuteScalar("select isnull(B_DefaultBranch,0) from Acc_BranchMaster where N_CompanyID=@nCompanyID and N_branchID=@nBranchID", Params, connection);
 
-                    string sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_LinkCompID,X_LinkField,B_Range from vw_WebReportMenus where N_LanguageId=@nLangId group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_ListOrder,N_LinkCompID,X_LinkField,B_Range order by N_ListOrder";
+                    string sqlCommandText1 = "";
+                    if (myFunctions.getBoolVAL(B_Consolidated.ToString()))
+                        sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_LinkCompID,X_LinkField,B_Range,isnull(B_Consolidated,0) as B_Consolidated from vw_WebReportMenus where N_LanguageId=@nLangId group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_ListOrder,N_LinkCompID,X_LinkField,B_Range,B_Consolidated order by N_ListOrder";
+                    else
+                        sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_LinkCompID,X_LinkField,B_Range,isnull(B_Consolidated,0) as B_Consolidated from vw_WebReportMenus where N_LanguageId=@nLangId and B_Consolidated<>1 group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_ListOrder,N_LinkCompID,X_LinkField,B_Range,B_Consolidated order by N_ListOrder";
                     dt1 = dLayer.ExecuteDataTable(sqlCommandText1, Params, connection);
 
                     dt.Columns.Add("ChildMenus", typeof(DataTable));
@@ -462,14 +468,8 @@ namespace SmartxAPI.Controllers
                         object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection, transaction);
                         if (Timezone != null && Timezone.ToString() != "")
                         {
-                            try
-                            {
-                                currentTime = TimeZoneInfo.ConvertTime(Localtime(), TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
-                            }
-                            catch
-                            {
-                                currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
-                            }
+
+                            currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
                             x_comments = currentTime.ToString();
                         }
                         if (nFormID == 1406)
@@ -676,20 +676,6 @@ namespace SmartxAPI.Controllers
                 img.Save("C://OLIVOSERVER2020/Barcode/" + Data + ".png", ImageFormat.Png);
             }
             return true;
-        }
-        public DateTime Localtime()
-        {
-            //Local Time Checking
-            DateTime dt;
-            string url = "http://worldtimeapi.org/api/timezone/Asia/Kolkata";
-            using (var client = new WebClient())
-            {
-                client.Headers.Add("content-type", "application/json");
-                string response = client.DownloadString(url);
-                response = response.Substring(63, 26);
-                dt = DateTime.Parse(response);
-            }
-            return dt;
         }
 
         public bool sendmail(string url, string mail)
@@ -1200,13 +1186,13 @@ namespace SmartxAPI.Controllers
                     }
 
                     dbName = connection.Database;
-                    if (x_comments=="")
+                    if (x_comments == "")
                     {
                         object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
                         object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection);
                         if (Timezone != null && Timezone.ToString() != "")
                         {
-                            x_comments = Localtime().ToString("dd/MM/yyyy");
+                            x_comments = DateTime.Now.ToString("dd/MM/yyyy");
                         }
                     }
                 }
@@ -1228,7 +1214,6 @@ namespace SmartxAPI.Controllers
                     reportName = rptArray[1].ToString();
                     actReportLocation = actReportLocation + rptArray[0].ToString() + "/";
                 }
-                DateTime dtn = Localtime();
 
 
                 //string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;
