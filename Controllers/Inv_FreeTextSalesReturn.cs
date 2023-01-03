@@ -465,6 +465,14 @@ ReturnDetails = _api.Format(ReturnDetails, "Details");
                     SqlTransaction transaction = connection.BeginTransaction();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     var nUserID = myFunctions.GetUserID(User);
+                    
+                       object objPaymentProcessed = dLayer.ExecuteScalar("Select Isnull(N_PayReceiptId,0) from Inv_PayReceiptDetails where N_InventoryId=" + nSalesID + " and X_TransType='DEBIT NOTE'", connection, transaction);
+                      if (objPaymentProcessed == null)
+                        objPaymentProcessed = 0;
+                        
+                      if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) != 0){
+                        return Ok(_api.Error(User, "Payment processed! Unable to delete"));
+                    }
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
                                 {"X_TransType",X_TransType},

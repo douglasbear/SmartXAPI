@@ -393,6 +393,18 @@ namespace SmartxAPI.Controllers
                     {
                          Master.Rows[0]["IsReturnDone"] = false;
                     }
+
+                    object count = dLayer.ExecuteScalar("select count(*) from Inv_Sales where N_FreeTextReturnID =" + N_SalesID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "", Params, connection);
+
+                    if (myFunctions.getVAL(count.ToString())>0)
+                    {
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "ReturnDone", typeof(bool), true);
+                     }
+                     else{
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "ReturnDone", typeof(bool), false);
+                     }
+
+
                     Master.AcceptChanges();
 
 

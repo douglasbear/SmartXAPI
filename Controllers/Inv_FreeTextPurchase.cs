@@ -349,8 +349,11 @@ namespace SmartxAPI.Controllers
 
                         return Ok(_api.Error(User, ex));
                     }
+                    SortedList Result = new SortedList();
+                        Result.Add("N_PurchaseID", nPurchaseID);
+                        Result.Add("x_InvoiceNo", X_InvoiceNo);
                     transaction.Commit();
-                    return Ok(_api.Success("Successfully saved"));
+                    return Ok(_api.Success(Result,"Successfully saved"));
                 }
             }
             catch (Exception ex)
@@ -407,6 +410,16 @@ namespace SmartxAPI.Controllers
                     {
                          Master.Rows[0]["IsReturnDone"] = false;
                     }
+
+                    object count = dLayer.ExecuteScalar("select count(*) from Inv_Purchase where N_FreeTextReturnID =" + N_PurchaseID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "", Params, connection);
+
+                     if (myFunctions.getVAL(count.ToString())>0){
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "ReturnDone", typeof(bool), true);
+                     }
+                     else{
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "ReturnDone", typeof(bool), false);
+                     }
+
                     Master.AcceptChanges();
 
 
