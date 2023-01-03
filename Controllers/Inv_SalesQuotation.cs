@@ -583,7 +583,7 @@ namespace SmartxAPI.Controllers
                         QuotationNo = dLayer.GetAutoNumber("Inv_SalesQuotation", "x_QuotationNo", Params, connection, transaction);
                         if (QuotationNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
-
+                                                                                                                                                 
                     }
 
                     if (N_QuotationID > 0)
