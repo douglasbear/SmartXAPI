@@ -497,10 +497,18 @@ namespace SmartxAPI.Controllers
                             PostingParams.Add("N_InternalID", N_VoucherID);
                             PostingParams.Add("N_UserID", nUserId);
                             PostingParams.Add("X_SystemName", "ERP Cloud");
+                            try
+                            {
                             object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
                             }
-                        
-                            transaction.Commit();
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                if (ex.Message == "51")
+                                    return Ok(api.Error(User, "Year Closed"));
+                                else return Ok(api.Error(User, ex));
+                            }
+                            }
                         }
                         
                         else

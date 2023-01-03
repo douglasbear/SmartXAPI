@@ -542,11 +542,37 @@ namespace SmartxAPI.Controllers
                     // Auto Gen
                     string QuotationNo = MasterTable.Rows[0]["x_QuotationNo"].ToString();
                     DataRow Master = MasterTable.Rows[0];
+                   if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_QuotationDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                  {
+                   object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_QuotationDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                  if (DiffFnYearID != null)
+                   {
+                    MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                    N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                  
+                  }
+                  else
+                  {
+                    // transaction.Rollback();
+                    // return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                    // Result.Add("b_IsCompleted", 0);
+                    // Result.Add("x_Msg", "Transaction date must be in the active Financial Year.");
+                      return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                   }
+                  }
+                 object B_YearEndProcess=dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_QuotationDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                if(myFunctions.getBoolVAL(B_YearEndProcess.ToString()))
+                {
+                     return Ok(_api.Error(User, "Year Closed"));
+                }
 
                     SortedList CustParams = new SortedList();
                     CustParams.Add("@nCompanyID", N_CompanyID);
                     CustParams.Add("@nFnYearID", N_FnYearID);
                     object objCustName;
+
+                  
+
                     if (N_CrmCompanyID > 0)
                     {
                         CustParams.Add("@N_CRMCustomerID", N_CrmCompanyID);
