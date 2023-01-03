@@ -65,7 +65,7 @@ namespace SmartxAPI.Controllers
                     workingHoursSql = "Select * from Pay_WorkingHours Where N_CompanyID =" + nCompanyID + "and N_CatagoryID=" + categoryID + " order by N_WHID";
                     WorkingHours = dLayer.ExecuteDataTable(workingHoursSql, Params, Con);
                     WorkingHours = _api.Format(WorkingHours,"WorkingHours");
-                    if (WorkingHours.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                    if (WorkingHours.Rows.Count == 0) { return Ok(_api.Success(WorkingHours)); }
 
                     //Additional Business Hours
                     AdditionalWorkingHourssql = "Select * from Pay_AdditionalWorkingDays Where N_CompanyID =" + nCompanyID + "and N_CatagoryID=" + categoryID + " order by N_ID";

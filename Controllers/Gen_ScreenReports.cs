@@ -290,7 +290,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("viewdetails")]
-        public ActionResult GetTableViewDetails(int nMenuID, int nUserID)
+        public ActionResult GetTableViewDetails(int nMenuID, int nUserID,int nLangID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataSet dt = new DataSet();
@@ -306,6 +306,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nUserID);
             Params.Add("@p3", nMenuID);
+            Params.Add("@p4", nLangID);
 
             try
             {
@@ -321,11 +322,11 @@ namespace SmartxAPI.Controllers
 
                     MasterTable = _api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
-                    DetailSql = "select * from Sec_TableViewDetails where N_CompanyID=@p1 and N_UserID=@p2 and N_MenuID=@p3";
+                    DetailSql = "select * from vw_ListSettings where N_CompanyID=@p1 and N_UserID=@p2 and N_MenuID=@p3 and N_LanguageId=@p4";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     if (DetailTable.Rows.Count == 0)
                     {
-                        DetailSql = "select * from Sec_TableViewDetails where N_CompanyID=@p1 and N_UserID=0 and N_MenuID=@p3";
+                        DetailSql = "select * from vw_ListSettings where N_CompanyID=@p1 and N_UserID=0 and N_MenuID=@p3 and N_LanguageId=@p4";
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     }
 

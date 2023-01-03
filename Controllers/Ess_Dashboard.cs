@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
 using System.Net;
+using Newtonsoft.Json;
 
 namespace SmartxAPI.Controllers
 {
@@ -38,7 +39,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
-            object CategoryID="";
+            object CategoryID = "";
 
             string sqlCommandEmployeeDetails = "select * from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3";
             // string sqlCommandLoan = "select SUM(N_LoanAmount) as N_LoanAmount from Pay_LoanIssue where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 group by N_CompanyID,N_EmpID";
@@ -54,23 +55,18 @@ namespace SmartxAPI.Controllers
             string WorkerHours = "select top(7) D_Date,N_EmpID,convert(varchar(5),DateDiff(s, D_In, D_Out)/3600)+':'+convert(varchar(5),DateDiff(s, D_In, D_Out)%3600/60)+':'+convert(varchar(5),(DateDiff(s, D_In, D_Out)%60)) as [hh:mm:ss] from Pay_TimeSheetImport where N_EmpID = @p3 order by D_Date desc";
             string sqlPendingLeaveApproval = "select count(*) from (select N_VacationGroupID From vw_PayVacationList where N_CompanyID=@p1 and B_IsAdjustEntry<>1 and N_VacationGroupID in ( select N_TransID from vw_ApprovalPending where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type='LEAVE REQUEST' and N_NextApproverID=@p4) group by N_VacationGroupID) as tbl";
             string sqlLastApproval = "SELECT      Top(1) vw_ApprovalSummary.*,vw_PayVacationDetails_Disp.VacTypeId ,vw_PayVacationDetails_Disp.[Vacation Type], vw_PayVacationDetails_Disp.D_VacDateFrom, vw_PayVacationDetails_Disp.D_VacDateTo, vw_PayVacationDetails_Disp.N_VacDays FROM vw_ApprovalSummary INNER JOIN vw_PayVacationDetails_Disp ON vw_ApprovalSummary.N_CompanyID = vw_PayVacationDetails_Disp.N_CompanyID AND  vw_ApprovalSummary.N_FnYearID = vw_PayVacationDetails_Disp.N_FnYearID AND vw_ApprovalSummary.N_TransID = vw_PayVacationDetails_Disp.N_VacationGroupID AND vw_ApprovalSummary.X_Type='LEAVE REQUEST' where vw_ApprovalSummary.N_CompanyID=@p1 and vw_ApprovalSummary.N_ActionUserID=@p4 and vw_ApprovalSummary.N_ProcStatusID<>6 and vw_ApprovalSummary.N_ActionUserID<>vw_ApprovalSummary.N_ReqUserID and vw_ApprovalSummary.X_Type='LEAVE REQUEST'  ORDER BY vw_ApprovalSummary.X_ActionDate DESC";
-          
 
-            //    DateTime Start = new DateTime(Convert.ToDateTime(dDateFrom.ToString()));
-                // DateTime dDateTo = Convert.ToDateTime(mstVar["D_PeriodTo"].ToString());
-              
+            DateTime date = DateTime.Now;
+            // string url = "http://worldtimeapi.org/api/timezone/Asia/Kolkata";
+            // using (var client = new WebClient())
+            // {
+            //     client.Headers.Add("content-type", "application/json");
+            //     string response = client.DownloadString(url);
+            //     response = response.Substring(62, 26);
+            //     date = DateTime.Parse(response);
+            // }
 
-            DateTime date = new DateTime();
-            string url = "http://worldtimeapi.org/api/timezone/Asia/Kolkata";
-            using (var client = new WebClient())
-            {
-                client.Headers.Add("content-type", "application/json");
-                string response = client.DownloadString(url);
-                response = response.Substring(63, 26);
-                date = DateTime.Parse(response);
-            }
-
-            
+            //DateTime date = DateTime.Today;
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnyearID);
             Params.Add("@p3", nEmpID);
@@ -103,28 +99,30 @@ namespace SmartxAPI.Controllers
                     EmployeeDetails = dLayer.ExecuteDataTable(sqlCommandEmployeeDetails, Params, connection);
                     EmployeeDetails = api.Format(EmployeeDetails, "EmployeeDetails");
                     EmployeeDetails = myFunctions.AddNewColumnToDataTable(EmployeeDetails, "EmployeeImage", typeof(string), null);
-                   if( EmployeeDetails.Rows.Count>0){
-                    if (EmployeeDetails.Rows[0]["i_Employe_Image"] != null)
+                    if (EmployeeDetails.Rows.Count > 0)
                     {
-                        DataRow dataRow = EmployeeDetails.Rows[0];
-                        string ImageData = dataRow["i_Employe_Image"].ToString();
-                        if (ImageData != "")
+                        if (EmployeeDetails.Rows[0]["i_Employe_Image"] != null)
                         {
-                            byte[] Image = (byte[])dataRow["i_Employe_Image"];
-                            EmployeeDetails.Rows[0]["EmployeeImage"] = "data:image/png;base64," + Convert.ToBase64String(Image, 0, Image.Length);
-                            EmployeeDetails.Columns.Remove("i_Employe_Image");
+                            DataRow dataRow = EmployeeDetails.Rows[0];
+                            string ImageData = dataRow["i_Employe_Image"].ToString();
+                            if (ImageData != "")
+                            {
+                                byte[] Image = (byte[])dataRow["i_Employe_Image"];
+                                EmployeeDetails.Rows[0]["EmployeeImage"] = "data:image/png;base64," + Convert.ToBase64String(Image, 0, Image.Length);
+                                EmployeeDetails.Columns.Remove("i_Employe_Image");
+                            }
+                            EmployeeDetails.AcceptChanges();
                         }
-                        EmployeeDetails.AcceptChanges();
-                    }}
+                    }
                     object EnableLeaveData = dLayer.ExecuteScalar(EnableLeave, Params, connection);
-                   // object EnableLeaveData = "";
+                    // object EnableLeaveData = "";
                     object Loan = dLayer.ExecuteScalar(sqlCommandLoan, Params, connection);
                     object TotalVacation = null;
                     if (EnableLeaveData.ToString() == "1")
                         TotalVacation = dLayer.ExecuteScalar(sqlCommandVacation, Params, connection);
                     object PendingVacation = dLayer.ExecuteScalar(sqlCommandPendingVacation, Params, connection);
                     object PendingLeaveApproval = dLayer.ExecuteScalar(sqlPendingLeaveApproval, Params, connection);
-                    
+
 
                     DashboardDetails = myFunctions.AddNewColumnToDataTable(DashboardDetails, "Loan", typeof(string), Loan);
                     DashboardDetails = myFunctions.AddNewColumnToDataTable(DashboardDetails, "Vacation", typeof(string), TotalVacation);
@@ -149,58 +147,58 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                //     ShiftSchedule = dLayer.ExecuteDataTable(sqlEmpShiftSchedule, Params, connection);
-                //     ShiftSchedule = api.Format(ShiftSchedule, "ShiftSchedule");
+                    //     ShiftSchedule = dLayer.ExecuteDataTable(sqlEmpShiftSchedule, Params, connection);
+                    //     ShiftSchedule = api.Format(ShiftSchedule, "ShiftSchedule");
 
-                // DateTime Start = DateTime.Now;
-                // DateTime End = Start.AddDays(9);
-                 
+                    // DateTime Start = DateTime.Now;
+                    // DateTime End = Start.AddDays(9);
 
-                //  double a = (End - Start).TotalDays;
-                //      bool dayFlag = false;
 
-                //  if(ShiftSchedule.Rows.Count !=10){
-                   
-                //       for (int j = 0; j <= a; j++) {
-                //             dayFlag = false;
-                //             DateTime NewDate = Convert.ToDateTime(Start).AddDays(j);
-                //             var Date = myFunctions.getDateVAL(NewDate).ToString();
-                //             foreach (DataRow var in ShiftSchedule.Rows)
-                //             {
-                //                         DateTime sheduleDate = Convert.ToDateTime(var["D_Date"]);
-                //                         var empDate =myFunctions.getDateVAL(sheduleDate).ToString();
-                //                         if( Date == empDate)
-                //                         {
-                //                             dayFlag=true;
-                //                         }
-                //             }
-                //            if(dayFlag==false)
-                //            {
-                //                 DayOfWeek dow = NewDate.DayOfWeek; 
-                //                 string str = dow.ToString();
-                //                 Params.Add("@p6",str);
-                //                 Params.Add("@p7",CategoryID);
-                //                 string qry="select N_CompanyID,D_In1,D_Out1,D_In2,D_Out2,'"+NewDate+"' as  D_Date   from Pay_WorkingHours where N_CompanyID=@p1 and X_Day=@p6 and N_CatagoryID=@p7";
+                    //  double a = (End - Start).TotalDays;
+                    //      bool dayFlag = false;
 
-                //                   scheduledDate = dLayer.ExecuteDataTable(qry, Params, connection);
-                //                   DataRow row1 = scheduledDate.NewRow();
-                //             row["D_Date"] = 0;
-                //             row["N_CompanyID"] = scheduledDate.Rows[0]["N_CompanyID"];
-                //             row["D_In1"] = scheduledDate.Rows[0]["D_In1"];
-                //             row["D_Out1"] = scheduledDate.Rows[0]["D_Out1"];
-                //              row["D_In2"] = scheduledDate.Rows[0]["D_In2"];
-                //               row["D_Out2"] = scheduledDate.Rows[0]["D_Out2"];
-                //             row["D_Date"] = scheduledDate.Rows[0]["D_Date"];
-                //             scheduledDate.Rows.Add(row1);
-          
-                //                    scheduledDate.Rows.Clear();
-                //                    ShiftSchedule.AcceptChanges();
-                //              }
-             
-                //       }
-                         
-                             
-                //  }
+                    //  if(ShiftSchedule.Rows.Count !=10){
+
+                    //       for (int j = 0; j <= a; j++) {
+                    //             dayFlag = false;
+                    //             DateTime NewDate = Convert.ToDateTime(Start).AddDays(j);
+                    //             var Date = myFunctions.getDateVAL(NewDate).ToString();
+                    //             foreach (DataRow var in ShiftSchedule.Rows)
+                    //             {
+                    //                         DateTime sheduleDate = Convert.ToDateTime(var["D_Date"]);
+                    //                         var empDate =myFunctions.getDateVAL(sheduleDate).ToString();
+                    //                         if( Date == empDate)
+                    //                         {
+                    //                             dayFlag=true;
+                    //                         }
+                    //             }
+                    //            if(dayFlag==false)
+                    //            {
+                    //                 DayOfWeek dow = NewDate.DayOfWeek; 
+                    //                 string str = dow.ToString();
+                    //                 Params.Add("@p6",str);
+                    //                 Params.Add("@p7",CategoryID);
+                    //                 string qry="select N_CompanyID,D_In1,D_Out1,D_In2,D_Out2,'"+NewDate+"' as  D_Date   from Pay_WorkingHours where N_CompanyID=@p1 and X_Day=@p6 and N_CatagoryID=@p7";
+
+                    //                   scheduledDate = dLayer.ExecuteDataTable(qry, Params, connection);
+                    //                   DataRow row1 = scheduledDate.NewRow();
+                    //             row["D_Date"] = 0;
+                    //             row["N_CompanyID"] = scheduledDate.Rows[0]["N_CompanyID"];
+                    //             row["D_In1"] = scheduledDate.Rows[0]["D_In1"];
+                    //             row["D_Out1"] = scheduledDate.Rows[0]["D_Out1"];
+                    //              row["D_In2"] = scheduledDate.Rows[0]["D_In2"];
+                    //               row["D_Out2"] = scheduledDate.Rows[0]["D_Out2"];
+                    //             row["D_Date"] = scheduledDate.Rows[0]["D_Date"];
+                    //             scheduledDate.Rows.Add(row1);
+
+                    //                    scheduledDate.Rows.Clear();
+                    //                    ShiftSchedule.AcceptChanges();
+                    //              }
+
+                    //       }
+
+
+                    //  }
 
 
 
@@ -371,17 +369,17 @@ namespace SmartxAPI.Controllers
 
 
 
-           [HttpGet("EmphiftDetails")]
+        [HttpGet("EmphiftDetails")]
         public ActionResult EmphiftDetails(int nEmpID, int nFnyearID)
         {
-            DataSet dt=new DataSet();
+            DataSet dt = new DataSet();
             DataTable MasterTable = new DataTable();
-             DataTable ScheduledDate = new DataTable();
+            DataTable ScheduledDate = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
-            object CategoryID="";
-            string Sql="";
-              string sqlCommandText ="select N_CompanyID,D_Date,D_In1,D_Out1,D_In2,D_Out2 from Pay_Empshiftdetails where N_EmpID=@p3 and N_CompanyID=@p1 and D_Date > getDate() and D_Date <(getDate()+9) order by D_Date asc";
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            object CategoryID = "";
+            string Sql = "";
+            string sqlCommandText = "select N_CompanyID,D_Date,D_In1,D_Out1,D_In2,D_Out2 from Pay_Empshiftdetails where N_EmpID=@p3 and N_CompanyID=@p1 and D_Date > getDate() and D_Date <(getDate()+9) order by D_Date asc";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnyearID);
             Params.Add("@p3", nEmpID);
@@ -390,44 +388,46 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                     
-             string CatID ="select N_CatagoryId from Pay_Employee where N_EmpID=@p3 and N_CompanyID=@p1";
-             CategoryID = dLayer.ExecuteScalar(CatID, Params, connection);
 
-                     MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    string CatID = "select N_CatagoryId from Pay_Employee where N_EmpID=@p3 and N_CompanyID=@p1";
+                    CategoryID = dLayer.ExecuteScalar(CatID, Params, connection);
 
-                                    
-                 DateTime Start = DateTime.Now;
-                 DateTime End = Start.AddDays(9);
+                    MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                 double a = (End - Start).TotalDays;
-                 bool dayFlag = false;
-                  Params.Add("@p7",CategoryID);
 
-                 if(MasterTable.Rows.Count ==0){
-                   
-                    for (int j = 0; j <= a; j++) {
-                             dayFlag = false;
-                             DateTime NewDate = Convert.ToDateTime(Start).AddDays(j);
-                             var Date = myFunctions.getDateVAL(NewDate).ToString();
-                                 DayOfWeek dow = NewDate.DayOfWeek; 
-                                 string str = dow.ToString();
-                               string qry="select N_CompanyID,D_In1,D_Out1,D_In2,D_Out2,'"+NewDate+"' as  D_Date   from Pay_WorkingHours where N_CompanyID=@p1 and X_Day='"+str+"' and N_CatagoryID=@p7";
-                                Sql = Sql == "" ? qry : Sql + " UNION " + qry;
+                    DateTime Start = DateTime.Now;
+                    DateTime End = Start.AddDays(9);
 
-                       }
-                         MasterTable = dLayer.ExecuteDataTable(Sql, Params, connection);
-                                  
-                  }
-                
-                     MasterTable = api.Format(MasterTable, "Master");
+                    double a = (End - Start).TotalDays;
+                    bool dayFlag = false;
+                    Params.Add("@p7", CategoryID);
+
+                    if (MasterTable.Rows.Count == 0)
+                    {
+
+                        for (int j = 0; j <= a; j++)
+                        {
+                            dayFlag = false;
+                            DateTime NewDate = Convert.ToDateTime(Start).AddDays(j);
+                            var Date = myFunctions.getDateVAL(NewDate).ToString();
+                            DayOfWeek dow = NewDate.DayOfWeek;
+                            string str = dow.ToString();
+                            string qry = "select N_CompanyID,D_In1,D_Out1,D_In2,D_Out2,'" + NewDate + "' as  D_Date   from Pay_WorkingHours where N_CompanyID=@p1 and X_Day='" + str + "' and N_CatagoryID=@p7";
+                            Sql = Sql == "" ? qry : Sql + " UNION " + qry;
+
+                        }
+                        MasterTable = dLayer.ExecuteDataTable(Sql, Params, connection);
+
+                    }
+
+                    MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
                 }
-                return Ok(api.Success(dt));               
+                return Ok(api.Success(dt));
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -437,7 +437,7 @@ namespace SmartxAPI.Controllers
 
 
                 [HttpGet("EmpBirthDayList")]
-               public ActionResult EmpBirthDay(int nUserID,int nFnyearID)
+               public ActionResult EmpBirthDay(int nUserID,int nFnyearID, int day)
                 {
            try
             {
@@ -451,12 +451,12 @@ namespace SmartxAPI.Controllers
                     SortedList OutPut = new SortedList();
                    int nCompanyId=myFunctions.GetCompanyID(User);
 
-                   DateTime Start = DateTime.Now;
-                   int day = Start.Day;
+                //    DateTime Start = DateTime.Now;
+                //    int day = Start.Day;
                              Params.Add("@p1", nCompanyId);
                              Params.Add("@p2", nFnyearID);
-                              Params.Add("@p3", nUserID);
-                            Params.Add("@today", day);
+                             Params.Add("@p3", nUserID);
+                             Params.Add("@today", day);
                   
                 
                    string sqlCommandText = "select x_EmpName,x_position from vw_PayEmployee where MONTH(vw_PayEmployee.D_DOB) = MONTH(CURRENT_TIMESTAMP) and DAY(vw_PayEmployee.D_DOB) =@today and N_CompanyID=@p1 and B_Inactive=0 and N_EmpID!=@p3 and N_FnYearID=@p2";

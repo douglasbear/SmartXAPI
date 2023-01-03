@@ -308,7 +308,7 @@ namespace SmartxAPI.Controllers
                
                 int n_AppID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_AppID"].ToString());
                 int n_ClientID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ClientID"].ToString());
-                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_AppUrl", typeof(string), null);
+                //MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_AppUrl", typeof(string), null);
                 MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_DbUri", typeof(string), "SmartxConnection");
                 MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_UserLimit", typeof(int), 1);
                 MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_Sector", typeof(string), "Service");

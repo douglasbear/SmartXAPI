@@ -28,6 +28,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
     <PackageReference Include="QRCoder" Version="1.4.1" />
     <PackageReference Include="Spire.Barcode" Version="6.3.1" />
     <PackageReference Include="Spire.PDF" Version="8.5.0" />

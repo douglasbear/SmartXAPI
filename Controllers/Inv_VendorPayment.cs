@@ -122,9 +122,9 @@ namespace SmartxAPI.Controllers
 
 
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and  (X_type='PP' OR X_type='PA') and amount is not null " + Pattern + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID <> 91 and  (X_type='PP' OR X_type='PA') and amount is not null " + Pattern + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and (X_type='PP' OR X_type='PA') and amount is not null " + Pattern + Searchkey + " and n_PayReceiptID not in (select top(" + Count + ") n_PayReceiptID from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_YearEndProcess=0  and amount is not null " + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID <> 91 and (X_type='PP' OR X_type='PA') and amount is not null " + Pattern + Searchkey + " and n_PayReceiptID not in (select top(" + Count + ") n_PayReceiptID from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_YearEndProcess=0  and amount is not null " + xSortBy + " ) " + xSortBy;
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
                     SortedList OutPut = new SortedList();
@@ -139,7 +139,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(Amount,',','') as Numeric(20," + N_decimalPlace + ")) ) as TotalAmount from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and (X_type='PP' OR X_type='PA') and amount is not null " + Pattern + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(Amount,',','') as Numeric(20," + N_decimalPlace + ")) ) as TotalAmount from vw_InvPayment_Search where N_CompanyID=@p1  and N_FormID <> 91 and  N_FnYearID=@p2 and (X_type='PP' OR X_type='PA') and amount is not null " + Pattern + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";

@@ -318,20 +318,27 @@ namespace SmartxAPI.Controllers
 
                         // SalesReturnDetails = new DataTable();
                         SalesReturnDetails = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
+                         if(!SalesReturn.Columns.Contains("B_Invoice")) {SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "B_Invoice", typeof(int), 1);}
+                        if(!SalesReturn.Columns.Contains("N_UserID")) {SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "N_UserID", typeof(int), myFunctions.GetUserID(User));}
                         if (SalesReturnDetails.Columns.Contains("N_RetQty"))
                         {
                             foreach (DataRow var1 in SalesReturnDetails.Rows)
                             {
                                 if (var1["N_RetQty"] != null && var1["N_RetQty"].ToString() != "")
                                 {
-                                    if (var1["N_Qty"].ToString() != var1["N_RetQty"].ToString())
+                                    if (var1["n_Qty"].ToString() != var1["N_RetStockQty"].ToString())
                                     {
-                                        var1["n_Qty"] = (myFunctions.getIntVAL(var1["N_Qty"].ToString()) - myFunctions.getIntVAL(var1["N_RetQty"].ToString())).ToString();
+                                        var1["n_QtyDisplay"] = (myFunctions.getIntVAL(var1["N_QtyDisplay"].ToString()) - myFunctions.getIntVAL(var1["N_RetQty"].ToString())).ToString();
                                         var1["n_RetQty"] = 0.00;
                                         SalesReturn.Rows[0]["N_DebitNoteId"] = 0;
                                         SalesReturn.Rows[0]["X_DebitNoteNo"] = "@Auto";
-                                        SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "B_Invoice", typeof(int), 1);
-                                        SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "N_UserID", typeof(int), myFunctions.GetUserID(User));
+                                      
+                                    }
+                                    else if(var1["n_Qty"].ToString() == var1["N_RetStockQty"].ToString())
+                                    {
+                                        var1.Delete();
+                                        SalesReturn.Rows[0]["N_DebitNoteId"] = 0;
+                                        SalesReturn.Rows[0]["X_DebitNoteNo"] = "@Auto";
                                     }
 
                                 }
@@ -606,7 +613,21 @@ namespace SmartxAPI.Controllers
                     if (objPaymentProcessed == null)
                         objPaymentProcessed = 0;
                     if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) == 0)
+                    {
+                        SortedList StockUpdateParams = new SortedList(){
+                                {"N_CompanyID",nCompanyId},
+	                            {"N_TransID",nDebitNoteId},
+	                            {"X_TransType", "SALES RETURN"}};
+
+                        dLayer.ExecuteNonQueryPro("SP_StockDeleteUpdate", StockUpdateParams, connection);
+
                         dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                        SortedList StockOutParam = new SortedList();
+                        StockOutParam.Add("N_CompanyID", nCompanyId);
+
+                        dLayer.ExecuteNonQueryPro("SP_StockOutUpdate", StockOutParam, connection);
+                    }
                     else
                         return Ok(_api.Error(User, "Payment processed! Unable to delete"));
 

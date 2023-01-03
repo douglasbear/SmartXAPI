@@ -37,7 +37,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
-            string sqlCommandText="Select [Loan ID],[Employee No],Name,Position,[Loan Amount],[Issue Date],[Status],RefundAmoount AS N_RefundAmount,N_LoanTransID from vw_PayLoanIssue_Status Where N_CompanyID=@nCompanyID and N_LoanStatus=0 order by D_LoanIssueDate DESC";
+            string sqlCommandText="Select [Loan ID],[Employee No],Name,Position,[Loan Amount],[Issue Date],[Status],isnull(RefundAmoount,0) AS N_RefundAmount,N_LoanTransID from vw_PayLoanIssue_Status Where N_CompanyID=@nCompanyID and N_LoanStatus=0 order by D_LoanIssueDate DESC";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

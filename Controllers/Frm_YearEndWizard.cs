@@ -232,7 +232,7 @@ namespace SmartxAPI.Controllers
                             {"N_TaxType", n_TaxTypeID}
                         };
                         nFnYearID = myFunctions.getIntVAL(dLayer.ExecuteScalarPro("SP_FinancialYear_Create_wizard", Params2, connection, transaction).ToString());
-                        dLayer.ExecuteScalar("update Acc_FnYear set D_Start = '2022-01-01 00:00:00' where D_Start='2022-01-01 23:59:00'", Params, connection, transaction);
+                        //g65dLayer.ExecuteScalar("update Acc_FnYear set D_Start = '2023-01-01 00:00:00' where D_Start='2023-01-01 23:59:00'", Params, connection, transaction);
                     }
                     if (b_closeYear)
                     {

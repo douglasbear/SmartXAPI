@@ -57,21 +57,18 @@ namespace SmartxAPI.Controllers
                         xSortBy = " order by N_PurchaseID desc";
                     else
                         xSortBy = " order by " + xSortBy;
-
                     if (bAllBranchData)
                         xCriteria = " N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyID=@p1";
                     else
                         xCriteria = " N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_BranchID=@p3 and N_CompanyID=@p1";
-
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate ,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays,X_VendorName_Ar from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate ,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays,X_VendorName_Ar from vw_InvFreeTextPurchaseReturn_Search where " + xCriteria + Searchkey;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays,X_VendorName_Ar from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey + " ) ";
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays,X_VendorName_Ar from vw_InvFreeTextPurchaseReturn_Search where " + xCriteria + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvFreeTextPurchaseReturn_Search where " + xCriteria + Searchkey + " ) ";
 
                     SortedList OutPut = new SortedList();
-
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_InvFreeTextPurchaseReturn_Search where " + xCriteria + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -83,7 +80,6 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Success(OutPut));
                     }
-
                 }
             }
             catch (Exception e)
@@ -331,39 +327,47 @@ namespace SmartxAPI.Controllers
                     Master = myFunctions.AddNewColumnToDataTable(Master, "isReturnDone", typeof(bool), false);
                     if (xPath != null && xPath != "")
                     {
-                        object returnID = dLayer.ExecuteScalar("Select N_PurchaseID from vw_Inv_FreeTextPurchase_Disp  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_FreeTextReturnID=" + N_PurchaseID + " ", Params, connection);
-                        if (returnID!=null)
-                        {
-                            object purchaseAmount = dLayer.ExecuteScalar("Select N_InvoiceAmt from vw_Inv_FreeTextPurchase_Disp  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='" + xTransType + "' and X_InvoiceNo='" + xInvoiceNO + "' ", Params, connection);
-                            object returnAmout = dLayer.ExecuteScalar("Select Sum(N_InvoiceAmt)  from vw_Inv_FreeTextPurchase_Disp  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='CREDIT NOTE' and N_FreeTextReturnID=" + N_PurchaseID + " ", Params, connection);
+                        // object returnID = dLayer.ExecuteScalar("Select N_PurchaseID from vw_Inv_FreeTextPurchase_Disp  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_FreeTextReturnID=" + N_PurchaseID + " ", Params, connection);
+                        // if (returnID!=null)
+                        // {
+                        //     object purchaseAmount = dLayer.ExecuteScalar("Select N_InvoiceAmt from vw_Inv_FreeTextPurchase_Disp  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='" + xTransType + "' and X_InvoiceNo='" + xInvoiceNO + "' ", Params, connection);
+                        //     object returnAmout = dLayer.ExecuteScalar("Select Sum(N_InvoiceAmt)  from vw_Inv_FreeTextPurchase_Disp  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='CREDIT NOTE' and N_FreeTextReturnID=" + N_PurchaseID + " ", Params, connection);
 
-                            if (myFunctions.getVAL(purchaseAmount.ToString()) == myFunctions.getVAL(returnAmout.ToString()))
-                            {
-                                Master.Rows[0]["N_FreeTextReturnID"] = N_PurchaseID;
-                                Master.Rows[0]["isReturnDone"] = true;
-                                Master.AcceptChanges();
+                        //     if (myFunctions.getVAL(purchaseAmount.ToString()) == myFunctions.getVAL(returnAmout.ToString()))
+                        //     {
+                        //         Master.Rows[0]["N_FreeTextReturnID"] = N_PurchaseID;
+                        //         Master.Rows[0]["isReturnDone"] = true;
+                        //         Master.AcceptChanges();
 
-                            }
-                            else
-                            {
-                                Master.Rows[0]["N_FreeTextReturnID"] = N_PurchaseID;
-                                Master.Rows[0]["N_PurchaseID"] = 0;
-                                Master.Rows[0]["X_InvoiceNo"] = "@Auto";
-                                Master.AcceptChanges();
-                            }
-                            string X_PurchaseDetails = "Select * From vw_Inv_Purchasedetails Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_FreeTextReturnID=" + N_PurchaseID + " ";
+                        //     }
+                        //     else
+                        //     {
+                        //         Master.Rows[0]["N_FreeTextReturnID"] = N_PurchaseID;
+                        //         Master.Rows[0]["N_PurchaseID"] = 0;
+                        //         Master.Rows[0]["X_InvoiceNo"] = "@Auto";
+                        //         Master.AcceptChanges();
+                        //     }
+                        //     string X_PurchaseDetails = "Select * From vw_Inv_FreeTextPurchaseToReturnDetails Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_FreeTextReturnID=" + N_PurchaseID + " ";
+                        //     ReturnDetails = dLayer.ExecuteDataTable(X_PurchaseDetails, Params, connection);
+
+                        // }
+                        // else
+                        // {
+ string X_PurchaseDetails = "Select * From vw_Inv_FreeTextPurchaseToReturnDetails Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_PurchaseID=" + N_PurchaseID + " ";
                             ReturnDetails = dLayer.ExecuteDataTable(X_PurchaseDetails, Params, connection);
-
-                        }
-                        else
-                        {
-
                             Master.Rows[0]["N_FreeTextReturnID"] = N_PurchaseID;
                             Master.Rows[0]["N_PurchaseID"] = 0;
                             Master.Rows[0]["X_InvoiceNo"] = "@Auto";
                             Master.AcceptChanges();
 
-                        }
+                        // }
+
+                        Master = _api.Format(Master, "Master");
+
+ReturnDetails = _api.Format(ReturnDetails, "Details");
+                    dt.Tables.Add(ReturnDetails);
+                    dt.Tables.Add(Master);
+                    return Ok(_api.Success(dt));
 
 
                     }

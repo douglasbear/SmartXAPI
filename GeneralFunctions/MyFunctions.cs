@@ -959,8 +959,11 @@ namespace SmartxAPI.GeneralFunctions
             int nNextApprovalID = nTransApprovalLevel + 1;
             string xLastUserName = "", xEntryTime = "";
             int nTempStatusID = 0;
+            object nActiveID=0;
 
             int loggedInUserID = this.GetUserID(User);
+
+             int GUserID = this.GetGlobalUserID(User);
 
             /* Approval Response Set */
             SortedList Response = new SortedList();
@@ -994,10 +997,18 @@ namespace SmartxAPI.GeneralFunctions
             ApprovalParams.Add("@nTransStatus", nTransStatus);
             ApprovalParams.Add("@nGroupID", nGroupID);
             ApprovalParams.Add("@loggedInUserID", loggedInUserID);
+             ApprovalParams.Add("@GUserID", GUserID);
 
             object objUserCategory = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User where N_CompanyID=" + nCompanyID + " and N_UserID=" + loggedInUserID, ApprovalParams, connection);
 
             objUserCategory = objUserCategory != null ? objUserCategory : 0;
+
+              using (SqlConnection olivCnn = new SqlConnection(masterDBConnectionString))
+                {
+                    olivCnn.Open();
+                    nActiveID = dLayer.ExecuteScalar("select N_ActiveAppID from users where N_UserID=@GUserID",ApprovalParams,olivCnn);
+
+                }
 
 
             if (nApprovalID == 0)
@@ -1042,24 +1053,24 @@ namespace SmartxAPI.GeneralFunctions
                 nIsApprovalSystem = 1;
                 Response["isApprovalSystem"] = nIsApprovalSystem;                
             }
-            // else
-            // {
-            //     if(nActionID>0)
-            //     {
-            //         Response["btnSaveText"] = "Save";
-            //         Response["btnDeleteText"] = "Delete";
-            //         Response["saveEnabled"] = false;
-            //         Response["deleteEnabled"] = false; 
-            //         Response["saveTag"] = 0;
-            //         Response["deleteTag"] = 0;
-            //         Response["isApprovalSystem"] = 0;
-            //         Response["ApprovalID"] = 0;
-            //         Response["isEditable"] = false;
-            //         Response["lblVisible"] = true;
-            //         Response["lblText"] = "Approval not set for this user";
-            //         return Response;
-            //     }              
-            // }
+            else
+            {
+                if(getIntVAL(nActiveID.ToString()) == 2)
+                {
+                    Response["btnSaveText"] = "Save";
+                    Response["btnDeleteText"] = "Delete";
+                    Response["saveEnabled"] = false;
+                    Response["deleteEnabled"] = false; 
+                    Response["saveTag"] = 0;
+                    Response["deleteTag"] = 0;
+                    Response["isApprovalSystem"] = 0;
+                    Response["ApprovalID"] = 0;
+                    Response["isEditable"] = false;
+                    Response["lblVisible"] = true;
+                    Response["lblText"] = "Approval not set for this user";
+                    return Response;
+                }              
+            }
             if (nTransID > 0)
             {
                 object objApprovalPresent = dLayer.ExecuteScalar("select COUNT(*) from Gen_ApprovalCodesTrans where N_FormID=" + nFormID + " and N_CompanyID=" + nCompanyID + " and N_TransID=" + nTransID, ApprovalParams, connection);
@@ -1734,8 +1745,8 @@ namespace SmartxAPI.GeneralFunctions
                 using (SqlConnection olivCnn = new SqlConnection(masterDBConnectionString))
                 {
                     olivCnn.Open();
-                    companyemail = dLayer.ExecuteScalar("select X_Value from GenSettings where N_ClientID=-1 and X_Description='OlivoEmailAddress'", olivCnn);
-                    companypassword = dLayer.ExecuteScalar("select X_Value from GenSettings where N_ClientID=-1 and X_Description='OlivoEmailPassword'", olivCnn);
+                    companyemail = dLayer.ExecuteScalar("select X_Value from GenSettings where N_ClientID=0 and X_Description='OlivoEmailAddress'", olivCnn);
+                    companypassword = dLayer.ExecuteScalar("select X_Value from GenSettings where N_ClientID=0 and X_Description='OlivoEmailPassword'", olivCnn);
 
                 }
                 if (ToMail.ToString() != "")
@@ -3116,12 +3127,12 @@ namespace SmartxAPI.GeneralFunctions
             return 0;
         }
 
-        //public bool UserCreate(int nCompanyID, int nBranchID,int nLocationID, string xPartyName, int N_ActiveAppID,int N_UserType, string type, string partyCode, int partyID, bool active,string xEmail,int nLoginFlag,ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, SqlConnection olivoCon, SqlTransaction olivoTxn)
+        //public bool UserCreate(int nCompanyID, int nBranchID,int nLocationID, string xPartyName, int N_ActiveAppID,int N_UserType, string type, string partyCode, int partyID, bool active,string xEmail,ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, SqlConnection olivoCon, SqlTransaction olivoTxn)
         // {            
         //         string Pwd = this.EncryptString(xEmail);
         //         int nClientID = this.GetClientID(User);
-        //         object glogalUserID = dLayer.ExecuteScalar("SELECT N_UserID FROM Users where x_EmailID='" + xEmail.ToString() + "' and N_ClientID=" + nClientID, olivoCon, olivoTxn);
-        //         if (glogalUserID == null)
+        //         object globalUserID = dLayer.ExecuteScalar("SELECT N_UserID FROM Users where x_EmailID='" + xEmail.ToString() + "", olivoCon, olivoTxn);
+        //         if (globalUserID == null)
         //         {
         //             DataTable dtGobal = new DataTable();
         //             dtGobal.Clear();
@@ -3156,22 +3167,34 @@ namespace SmartxAPI.GeneralFunctions
         //         }
         //         object objUserID =null;
 
-        //         if(nLoginFlag==1)
-        //             objUserID= dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_LoginFlag=" + nLoginFlag + " and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
-        //         else if(nLoginFlag==2)
-        //             objUserID= dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_LoginFlag=" + nLoginFlag + " and N_EmpID="+partyID+" and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
-        //         else if(nLoginFlag==3)
-        //             objUserID= dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_LoginFlag=" + nLoginFlag + " and N_TeacherID="+partyID+" and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
-        //         else if(nLoginFlag==4)
-        //             objUserID= dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_LoginFlag=" + nLoginFlag + " and N_ParentID="+partyID+" and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
-        //         else if(nLoginFlag==5)
-        //             objUserID= dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_LoginFlag=" + nLoginFlag + " and N_StudentID="+partyID+" and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
+        //         // if(N_UserType==1)
+        //         //     objUserID= dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + " and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
+        //         // else if(N_UserType==2)
+        //         //     objUserID= dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + " and N_EmpID="+partyID+" and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
+        //         // else if(N_UserType==3)
+        //         //     objUserID= dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + " and N_TeacherID="+partyID+" and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
+        //         // else if(N_UserType==4)
+        //         //     objUserID= dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + " and N_ParentID="+partyID+" and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
+        //         // else if(N_UserType==5)
+        //         //     objUserID= dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + " and N_StudentID="+partyID+" and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
+
+        //         objUserID= dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + " and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
 
         //         if (objUserID == null)
         //         {
         //             object objUserCat =null;
-        //             if(nLoginFlag==3 || nLoginFlag==4 || nLoginFlag==5)
-        //                 objUserCat= dLayer.ExecuteScalar("Select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + "  and N_AppID=19", connection, transaction);
+        //             if(N_UserType==1)
+        //                 objUserCat= dLayer.ExecuteScalar("Select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + "  and N_AppID=1", connection, transaction);
+        //             else if(N_UserType==2)
+        //                 objUserCat= dLayer.ExecuteScalar("Select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + "  and N_AppID=2", connection, transaction);
+        //             else if(N_UserType==3)
+        //                 objUserCat= dLayer.ExecuteScalar("Select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + "  and N_AppID=21", connection, transaction);
+        //             else if(N_UserType==4)
+        //                 objUserCat= dLayer.ExecuteScalar("Select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + "  and N_AppID=20", connection, transaction);
+        //             else if(N_UserType==5)
+        //                 objUserCat= dLayer.ExecuteScalar("Select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + "  and N_AppID=22", connection, transaction);
+                    
+
         //             if (objUserCat != null)
         //             {
         //                 object objUserCheck = dLayer.ExecuteScalar("Select X_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and X_UserID='" + xEmail.ToString() + "' and N_EmpID=" + nEmpID + " and N_UserCategoryID=" + myFunctions.getIntVAL(objUserCat.ToString()), connection, transaction);
