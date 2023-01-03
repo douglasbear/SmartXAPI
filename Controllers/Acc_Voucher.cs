@@ -207,10 +207,9 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(Acc_CostCentreTrans);
                     
 
-                    // DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(VoucherDetails.Rows[0]["N_VoucherID"].ToString()), myFunctions.getIntVAL(VoucherDetails.Rows[0]["N_VoucherID"].ToString()), this.FormID, myFunctions.getIntVAL(VoucherDetails.Rows[0]["N_FnYearID"].ToString()), User, connection);
-                    // Attachments = api.Format(Attachments, "attachments");
-                    // dt.Tables.Add(Attachments);
-                    // dt.Tables.Add(VoucherDetails);
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(VoucherDetails.Rows[0]["N_VoucherID"].ToString()), myFunctions.getIntVAL(VoucherDetails.Rows[0]["N_VoucherID"].ToString()), this.FormID, myFunctions.getIntVAL(VoucherDetails.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                    Attachments = api.Format(Attachments, "attachments");
+                    dt.Tables.Add(Attachments);
 
                 }
                 
@@ -522,12 +521,12 @@ namespace SmartxAPI.Controllers
                        SortedList VoucherParams = new SortedList();
                            VoucherParams.Add("@N_VoucherID", N_VoucherID);
 
-                     DataTable VoucherInfo = dLayer.ExecuteDataTable("Select X_VoucherNo from Acc_VoucherMaster_Details_Segments where N_VoucherID=@N_VoucherID", VoucherParams, connection, transaction);
+                     DataTable VoucherInfo = dLayer.ExecuteDataTable("Select X_VoucherNo,X_TransType from Acc_VoucherMaster where N_VoucherID=@N_VoucherID", VoucherParams, connection, transaction);
                         if (VoucherInfo.Rows.Count > 0)
                         {
                             try
                             {
-                                myAttachments.SaveAttachment(dLayer, Attachment, xVoucherNo, N_VoucherID, VoucherInfo.Rows[0]["X_FileName"].ToString().Trim(), VoucherInfo.Rows[0]["X_VoucherNo"].ToString(), N_VoucherID, "Voucher Document", User, connection, transaction);
+                                myAttachments.SaveAttachment(dLayer, Attachment, xVoucherNo, N_VoucherID, VoucherInfo.Rows[0]["X_TransType"].ToString().Trim(), VoucherInfo.Rows[0]["X_VoucherNo"].ToString(), N_VoucherID, "Voucher Document", User, connection, transaction);
                             }
                              catch (Exception ex)
                             {
@@ -599,6 +598,8 @@ namespace SmartxAPI.Controllers
                             Params.Add("X_TransType", xTransType);
                             Params.Add("N_VoucherID", nVoucherID);
                             Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", Params, connection, transaction);
+
+                               myAttachments.DeleteAttachment(dLayer, 1, 0, nVoucherID, nFnYearID, this.FormID, User, transaction, connection);
 
                             // if (Results > 0)
                             // {
