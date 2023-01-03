@@ -1651,7 +1651,7 @@ namespace SmartxAPI.GeneralFunctions
             StockPostingParams.Add("N_InternalID", N_InvoiceId);
             StockPostingParams.Add("N_UserID", UserID);
 
-            dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", StockPostingParams, connection, transaction);
+            //dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", StockPostingParams, connection, transaction);
 
             SortedList StockOutParam = new SortedList();
             StockOutParam.Add("N_CompanyID", N_CompanyID);
