@@ -34,13 +34,47 @@ namespace SmartxAPI.Controllers
             conf.GetConnectionString("SmartxConnection");
         }
         
+        [HttpGet("details")]
+        public ActionResult ContactListDetails(DateTime invoicedate)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+
+            string sqlCommandText = "select * from Mig_SalesInvoice where N_CompanyID=@p1 and invoice_date<=@p2";
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", invoicedate);
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+
         [HttpPost("import")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
             {
                 DataTable MasterTable;
-                DataTable dt;
                 MasterTable = ds.Tables["master"];
                 int nSalesID = 0;
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -48,24 +82,24 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
-                     if (MasterTable.Rows.Count > 0)
+                    if (MasterTable.Rows.Count > 0)
                     {
-                         dLayer.ExecuteNonQuery("delete from Mig_SalesInvoice", Params, connection, transaction);
+                        Params.Add("N_CompanyID", MasterTable.Rows[0]["N_CompanyID"]);
+                        Params.Add("N_FnyearID", MasterTable.Rows[0]["N_FnyearID"]);
+                        Params.Add("N_UserID", MasterTable.Rows[0]["N_UserID"]);
+                        Params.Add("N_BranchID", MasterTable.Rows[0]["N_BranchID"]);
+                        Params.Add("N_LocationID", MasterTable.Rows[0]["N_LocationID"]);
+                        MasterTable.Columns.Remove("N_FnyearID");
+                        MasterTable.Columns.Remove("N_BranchID");
+                        MasterTable.Columns.Remove("N_UserID");
+                        MasterTable.Columns.Remove("N_LocationID");
+
+                        dLayer.ExecuteNonQuery("delete from Mig_SalesInvoice where B_Skipped<>1", Params, connection, transaction);
                         nSalesID = dLayer.SaveData("Mig_SalesInvoice", "pkey_code", MasterTable, connection, transaction);
-                        // object N_FnyearID = dLayer.ExecuteScalar("select MAX(N_FnyearID) from Acc_Fnyear where N_CompanyID=" + dt.Rows[0]["N_CompanyID"], connection, transaction);
-                         Params.Add("N_CompanyID", MasterTable.Rows[0]["N_CompanyID"]);
-                         Params.Add("N_FnyearID", MasterTable.Rows[0]["N_UserID"]);
-                         Params.Add("N_UserID", MasterTable.Rows[0]["N_UserID"]);
-                         Params.Add("N_BranchID", MasterTable.Rows[0]["N_BranchID"]);
-                         Params.Add("N_LocationID", MasterTable.Rows[0]["N_LocationID"]);
-                         dLayer.ExecuteNonQueryPro("SP_SalesInvoiceImport", Params, connection, transaction);
-                        dLayer.ExecuteNonQuery("Update sec_user Set X_Token= '' where N_UserID = " + MasterTable.Rows[0]["N_UserID"], Params, connection, transaction);
+
+                        dLayer.ExecuteNonQueryPro("SP_SalesInvoiceImport", Params, connection, transaction);
 
                     }
-                    else
-                        return Ok(api.Error(User, "Invalid Token"));
-
-
 
                     if (nSalesID <= 0)
                     {
@@ -75,7 +109,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Freetext Sales Saved"));
+                        return Ok(api.Success("Imported"));
                     }
                 }
             }
