@@ -158,5 +158,53 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+
+          [HttpDelete("delete")]
+        public ActionResult DeleteData(int nSalesId,bool bPaid,string Status)
+        {
+          
+            int Results = 0;
+            int nCompanyID=myFunctions.GetCompanyID(User);
+            int N_AcYearID=0;
+         
+            try
+            {                        
+                SortedList Params = new SortedList();
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    
+                    Results = dLayer.DeleteData("Sch_Sales ", "N_SalesId", nSalesId, "N_CompanyID =" + nCompanyID, connection, transaction);
+                    
+                      if (bPaid == false && Status == "Not Paid")//unchecked
+                    {
+                       Results= dLayer.ExecuteNonQuery("Update Sch_Sales set B_IsRemoved=1 where N_CompanyID = " + nCompanyID + " and N_FnYearId= " +  N_AcYearID + " and N_SalesId=" + nSalesId + "",  Params,connection,transaction);
+                          SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"X_TransType","SALES"},
+                                {"N_VoucherID",nSalesId}};
+                    }
+                    if (Results > 0)
+                    {
+                        transaction.Commit();
+                        return Ok(_api.Success("Fee details deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error(User,"Unable to delete Fee details"));
+                    }
+                    }
+                
+
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User,ex));
+            }
+
+
+
+        }
     }
 }
