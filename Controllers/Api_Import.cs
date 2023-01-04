@@ -35,13 +35,11 @@ namespace SmartxAPI.Controllers
         }
         
         [HttpGet("details")]
-        public ActionResult ContactListDetails(DateTime invoicedate)
+        public ActionResult ContactListDetails(int nCompanyId,DateTime invoicedate)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId = myFunctions.GetCompanyID(User);
-
-            string sqlCommandText = "select * from Mig_SalesInvoice where N_CompanyID=@p1 and invoice_date<=@p2";
+            string sqlCommandText = "select * from Mig_SalesInvoice where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", invoicedate);
 
