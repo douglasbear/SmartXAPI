@@ -550,13 +550,13 @@ namespace SmartxAPI.Controllers
                     if (N_CrmCompanyID > 0)
                     {
                         CustParams.Add("@N_CRMCustomerID", N_CrmCompanyID);
-                        objCustName = dLayer.ExecuteScalar("Select X_Customer From Crm_Customer where N_CustomerID=@N_CRMCustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
+                        objCustName = dLayer.ExecuteScalar("Select X_Customer From Crm_Customer where N_CustomerID=@N_CRMCustomerID and N_CompanyID=@nCompanyID  ", CustParams, connection, transaction);
                     }
                     else
                     if (N_ContactID > 0)
                     {
                         CustParams.Add("@N_ContactID", N_ContactID);
-                        objCustName = dLayer.ExecuteScalar("Select X_Contact From Crm_Contact where N_ContactID=@N_ContactID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
+                        objCustName = dLayer.ExecuteScalar("Select X_Contact From Crm_Contact where N_ContactID=@N_ContactID and N_CompanyID=@nCompanyID  ", CustParams, connection, transaction);
                     }
                     else
                     {
@@ -583,7 +583,7 @@ namespace SmartxAPI.Controllers
                         QuotationNo = dLayer.GetAutoNumber("Inv_SalesQuotation", "x_QuotationNo", Params, connection, transaction);
                         if (QuotationNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
-
+                                                                                                                                                 
                     }
 
                     if (N_QuotationID > 0)

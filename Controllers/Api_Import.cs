@@ -87,6 +87,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_UserID", MasterTable.Rows[0]["N_UserID"]);
                         Params.Add("N_BranchID", MasterTable.Rows[0]["N_BranchID"]);
                         Params.Add("N_LocationID", MasterTable.Rows[0]["N_LocationID"]);
+                        Params.Add("X_Transtype", "FTSALES");
                         MasterTable.Columns.Remove("N_FnyearID");
                         MasterTable.Columns.Remove("N_BranchID");
                         MasterTable.Columns.Remove("N_UserID");
