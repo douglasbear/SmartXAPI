@@ -366,6 +366,23 @@ namespace SmartxAPI.Controllers
                         Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Invoice Processed");
                     }
 
+
+                    object objxDraftSalesNo = myFunctions.checkDraftProcessed("Inv_Sales", "X_ReceiptNo", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=1", Params, dLayer, connection);
+                    if (objxDraftSalesNo.ToString() != "")
+                    {
+                        Master.Rows[0]["B_SalesProcessed"] = 1;
+                        Master.Rows[0]["X_SalesReceiptNo"] = objxDraftSalesNo;
+                        if (Master.Columns.Contains("TxnStatus"))
+                            Master.Columns.Remove("TxnStatus");
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Invoice Processed");
+                    }
+
+
+
+
+
+
+
                     }
                   
 
