@@ -787,6 +787,7 @@ namespace SmartxAPI.Controllers
 
                         if (Results > 0)
                         {
+                            dLayer.ExecuteNonQuery("delete from sec_userapps WHERE N_UserID=@p2 and N_CompanyID = @p1  ",Params, connection);
                             olivoTxn.Commit();
                             return Ok(_api.Success("User deleted"));
                         }
