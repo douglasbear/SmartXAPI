@@ -1420,9 +1420,9 @@ namespace SmartxAPI.Controllers
 
             string sqlCommandText = "";
             if (bAllbranchData)
-                sqlCommandText = "Select N_MRNID,X_MRNNo,D_MRNDate,X_VendorName,N_CompanyID,N_FnYearID,N_VendorID,X_VendorInvoice from vw_Inv_PendingPurchases_rpt  Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_VendorID=@nVendorID  GROUP BY N_MRNID,X_MRNNO,D_MRNDate,X_VendorName,N_CompanyID,N_FnYearID,N_VendorID,X_VendorInvoice ";
+                sqlCommandText = "Select N_MRNID,X_MRNNo,D_MRNDate,X_VendorName,N_CompanyID,N_VendorID,X_VendorInvoice from vw_Inv_PendingPurchases_rpt  Where N_CompanyID=@nCompanyID and N_VendorID=@nVendorID  GROUP BY N_MRNID,X_MRNNO,D_MRNDate,X_VendorName,N_CompanyID,N_VendorID,X_VendorInvoice ";
             else
-               sqlCommandText = "Select N_MRNID,X_MRNNo,D_MRNDate,X_VendorName,N_CompanyID,N_FnYearID,N_VendorID,X_VendorInvoice from vw_Inv_PendingPurchases_rpt  Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_VendorID=@nVendorID  GROUP BY N_MRNID,X_MRNNO,D_MRNDate,X_VendorName,N_CompanyID,N_FnYearID,N_VendorID,X_VendorInvoice ";
+               sqlCommandText = "Select N_MRNID,X_MRNNo,D_MRNDate,X_VendorName,N_CompanyID,N_VendorID,X_VendorInvoice from vw_Inv_PendingPurchases_rpt  Where N_CompanyID=@nCompanyID  and N_VendorID=@nVendorID  GROUP BY N_MRNID,X_MRNNO,D_MRNDate,X_VendorName,N_CompanyID,N_VendorID,X_VendorInvoice ";
 
             try
             {

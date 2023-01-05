@@ -629,6 +629,7 @@ namespace SmartxAPI.GeneralFunctions
                             int tempPOrderID=0;
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
                             {
+                                
                                 if(showSellingPrice)
                                 {
                                    dLayer.ExecuteScalar("Update Inv_ItemMaster Set N_Rate="+DetailTable.Rows[j]["N_Sprice"]+" Where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"] + " and N_CompanyID=" + nCompanyID, connection, transaction);
@@ -642,9 +643,9 @@ namespace SmartxAPI.GeneralFunctions
                                         
 
                                 }
-                                if (n_POrderID > 0 && tempPOrderID!=n_POrderID)
+                                if (myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString())> 0 && tempPOrderID!=myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString()))
                                 {
-                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
+                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString()),82,false,dLayer,connection,transaction))
                                     {
                                         // xturn Ok(_api.Error(User, "Unable To Update Txn Status"));
 
@@ -653,7 +654,7 @@ namespace SmartxAPI.GeneralFunctions
                                         return Result;
                                     }
                                 }
-                                tempPOrderID=n_POrderID;
+                                tempPOrderID=myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString());
                             };
                     }
                     SortedList VendorParams = new SortedList();
@@ -1522,7 +1523,7 @@ namespace SmartxAPI.GeneralFunctions
             double N_TotalPaidF = myFunctions.getVAL(MasterTable.Rows[0]["n_TotalPaidAmountF"].ToString());
             MasterTable.Rows[0]["n_TotalPaidAmountF"] = N_TotalPaidF;
 
-            if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_ReturnDate"].ToString(), "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+            if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_ReturnDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
             {
                 object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_ReturnDate"].ToString() + "') between D_Start and D_End", connection, transaction);
                 if (DiffFnYearID != null)
