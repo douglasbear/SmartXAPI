@@ -149,6 +149,7 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                    int nCurrentBranch = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CurentBranchID"].ToString());
                     string xBranchCode = MasterTable.Rows[0]["x_BranchCode"].ToString();
                     int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                     string xLocationCode = MasterTable.Rows[0]["x_BranchCode"].ToString();
@@ -169,6 +170,9 @@ namespace SmartxAPI.Controllers
 
                     if (MasterTable.Columns.Contains("n_FnYearID"))
                         MasterTable.Columns.Remove("n_FnYearID");
+                     if (MasterTable.Columns.Contains("n_CurentBranchID"))
+                        MasterTable.Columns.Remove("n_CurentBranchID");
+
                     MasterTable.AcceptChanges();
                     if (xBranchCode == "@Auto")
                     {
@@ -214,6 +218,18 @@ namespace SmartxAPI.Controllers
                     }
                 
                     nBranchID = dLayer.SaveData("Acc_BranchMaster", "N_BranchID", MasterTable, connection, transaction);
+                    if (xTerminalCode == "@Auto" && nCurrentBranch >0)
+                    {
+                    int invoiceCounterInsert = dLayer.ExecuteNonQuery("insert into Inv_InvoiceCounter " +
+                                    "select N_CompanyID,N_FormID, X_Prefix,N_StartNo,(N_StartNo-1) AS N_LastUsedNo,B_AutoInvoiceEnabled,N_MenuID,N_FnYearID,B_Yearwise,"+nBranchID+",N_MinimumLen,B_Suffix, X_Suffix, B_ResetYearly, X_Type, X_Type2  from Inv_InvoiceCounter "+
+                                    "where N_BranchID=" + nCurrentBranch + " and N_CompanyID=" + nCompanyID , Params, connection, transaction);
+
+                                if (invoiceCounterInsert <= 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Warning("invoice counter failed"));
+                                }
+                    }
                     if (nBranchID <= 0)
                     {
 
@@ -294,7 +310,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nBranchID)
+        public ActionResult DeleteData(int nBranchID,int nFnYearID)
         {
             int Results = 0;
 
@@ -307,6 +323,7 @@ namespace SmartxAPI.Controllers
 
                     // dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     Params.Add("@nBranchID", nBranchID);
+                    int nCompanyId = myFunctions.GetCompanyID(User);
                     object count = dLayer.ExecuteScalar("select count(*) as N_Count from Vw_Acc_BranchMaster_Disp where N_BranchID=@nBranchID and N_CompanyID=N_CompanyID", Params, connection);
                     int N_Count = myFunctions.getIntVAL(count.ToString());
                     if (N_Count <= 0)
@@ -314,7 +331,7 @@ namespace SmartxAPI.Controllers
                         Results = dLayer.DeleteData("Acc_BranchMaster", "N_BranchID", nBranchID, "", connection);
 
                         Results = dLayer.DeleteData("Inv_Location", "N_BranchID", nBranchID, "B_IsDefault=1", connection);
-
+                        Results = dLayer.DeleteData("inv_invoiceCounter", "N_BranchID", nBranchID,"N_CompanyID="+nCompanyId , connection);
 
                     }
                     else
