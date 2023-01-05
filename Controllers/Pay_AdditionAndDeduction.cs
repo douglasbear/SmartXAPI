@@ -523,7 +523,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult PayyAddDedList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult PayyAddDedList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nFnYearID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -558,10 +558,10 @@ namespace SmartxAPI.Controllers
             }
             if (Count == 0)
                         {
-                            sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,x_Batch,right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) as x_PayrunText,D_TransDate,X_Notes from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId " + Searchkey + " " + xSortBy;
+                            sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,x_Batch,right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) as x_PayrunText,D_TransDate,X_Notes from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID " + Searchkey + " " + xSortBy;
                         }
                         else
-                            sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,x_Batch,right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) as x_PayrunText,D_TransDate,X_Notes from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId " + Searchkey + " and N_PayRunID not in (select top(" + Count + ") N_PayRunID from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId " +Searchkey + xSortBy + " ) " + xSortBy;
+                            sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,x_Batch,right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) as x_PayrunText,D_TransDate,X_Notes from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID " + Searchkey + " and N_PayRunID not in (select top(" + Count + ") N_PayRunID from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId  and N_FnYearID=@nFnYearID " +Searchkey + xSortBy + " ) " + xSortBy;
                    
 
             // if (Count == 0)
@@ -570,7 +570,7 @@ namespace SmartxAPI.Controllers
             //     sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,x_Batch,right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) as x_PayrunText,D_TransDate,X_Notes from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId " + Searchkey + " and  N_PayRunID not in (select top(" + Count + ") N_PayRunID from Pay_MonthlyAddOrDed  where N_CompanyID=@nCompanyId ) " + Searchkey + xSortBy;
 
             Params.Add("@nCompanyId", nCompanyId);
-            // Params.Add("@nFnYearId", nFnYearId);
+            Params.Add("@nFnYearID", nFnYearID);
             SortedList OutPut = new SortedList();
 
             try
@@ -579,7 +579,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId " + Searchkey;
+                    sqlCommandCount = "select count(*) as N_Count  from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
