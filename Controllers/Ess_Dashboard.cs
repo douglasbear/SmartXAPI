@@ -437,7 +437,7 @@ namespace SmartxAPI.Controllers
 
 
                 [HttpGet("EmpBirthDayList")]
-               public ActionResult EmpBirthDay(int nUserID,int nFnyearID, int day)
+               public ActionResult EmpBirthDay(int nUserID,int nFnyearID, int day,bool bAllBranchData,int nBranchID)
                 {
            try
             {
@@ -450,17 +450,22 @@ namespace SmartxAPI.Controllers
                     DataTable DataTable = new DataTable();
                     SortedList OutPut = new SortedList();
                    int nCompanyId=myFunctions.GetCompanyID(User);
-
+                   string criteria="";
+           
+          
                 //    DateTime Start = DateTime.Now;
                 //    int day = Start.Day;
                              Params.Add("@p1", nCompanyId);
                              Params.Add("@p2", nFnyearID);
                              Params.Add("@p3", nUserID);
+                            Params.Add("@p4", nBranchID);
                              Params.Add("@today", day);
                   
-                
-                   string sqlCommandText = "select x_EmpName,x_position from vw_PayEmployee where MONTH(vw_PayEmployee.D_DOB) = MONTH(CURRENT_TIMESTAMP) and DAY(vw_PayEmployee.D_DOB) =@today and N_CompanyID=@p1 and B_Inactive=0 and N_EmpID!=@p3 and N_FnYearID=@p2";
-                   string sqlCommandCount ="select count(*) as N_Count from vw_PayEmployee where MONTH(vw_PayEmployee.D_DOB) = MONTH(CURRENT_TIMESTAMP) and DAY(vw_PayEmployee.D_DOB) =@today and N_CompanyID=@p1 and B_Inactive=0 and N_EmpID=@p3 and N_FnYearID=@p2";
+                 if (bAllBranchData == false)
+                criteria=" and N_BranchID =@p4";
+
+                   string sqlCommandText = "select x_EmpName,x_position from vw_PayEmployee where MONTH(vw_PayEmployee.D_DOB) = MONTH(CURRENT_TIMESTAMP) and DAY(vw_PayEmployee.D_DOB) =@today and N_CompanyID=@p1 and B_Inactive=0 and N_EmpID!=@p3 and N_FnYearID=@p2"+criteria;
+                   string sqlCommandCount ="select count(*) as N_Count from vw_PayEmployee where MONTH(vw_PayEmployee.D_DOB) = MONTH(CURRENT_TIMESTAMP) and DAY(vw_PayEmployee.D_DOB) =@today and N_CompanyID=@p1 and B_Inactive=0 and N_EmpID=@p3 and N_FnYearID=@p2"+criteria;
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                   object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));

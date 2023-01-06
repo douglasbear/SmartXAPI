@@ -510,6 +510,34 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["n_POType"] = 121;
 
                     transaction = connection.BeginTransaction();
+                  if (!myFunctions.CheckActiveYearTransaction(nCompanyId,myFunctions.getIntVAL(Master["n_FnYearId"].ToString()), DateTime.ParseExact(MasterTable.Rows[0]["D_PorderDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                  {
+                   object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyId+" and convert(date ,'" + MasterTable.Rows[0]["D_PorderDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                  if (DiffFnYearID != null)
+                   {
+                     Master["n_FnYearId"] = DiffFnYearID.ToString();
+                    MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                    //N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                  
+                  }
+                  else
+                  {
+                    // transaction.Rollback();
+                    // return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                    // Result.Add("b_IsCompleted", 0);
+                    // Result.Add("x_Msg", "Transaction date must be in the active Financial Year.");
+                      return Ok(api.Error(User, "Transaction date must be in the active Financial Year."));
+                   }
+                }
+                 object B_YearEndProcess=dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID="+nCompanyId+" and convert(date ,'" + MasterTable.Rows[0]["D_POrderDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                 if(myFunctions.getBoolVAL(B_YearEndProcess.ToString()))
+                 {
+                     return Ok(api.Error(User, "Year Closed"));
+                 }
+
+
+
+
 
                     if (X_POrderNo == "@Auto")
                     {

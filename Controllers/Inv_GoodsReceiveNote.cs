@@ -345,6 +345,14 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
                         }
                     }
+
+                object B_YearEndProcess=dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID="+nCompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_MRNDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                 if(myFunctions.getBoolVAL(B_YearEndProcess.ToString()))
+                 {
+                     return Ok(_api.Error(User, "Year Closed"));
+                 }
+
+
                     if (N_GRNID > 0)
                     {
                         if (CheckProcessed(N_GRNID))

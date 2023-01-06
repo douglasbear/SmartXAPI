@@ -556,16 +556,18 @@ namespace SmartxAPI.Controllers
                 }
                 xSortBy = " order by " + xSortBy;
             }
-            //}
-            //     xSortBy = " order by X_Batch desc,x_PayrunText,D_TransDate desc";
-            // else
-            //     xSortBy = " order by " + xSortBy;
-
-
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,x_Batch,right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) as x_PayrunText,D_TransDate,X_Notes from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId " + Searchkey + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,x_Batch,right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) as x_PayrunText,D_TransDate,X_Notes from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId " + Searchkey + " and  N_PayRunID not in (select top(" + Count + ") N_PayRunID from Pay_MonthlyAddOrDed  where N_CompanyID=@nCompanyId ) " + Searchkey + xSortBy;
+                        {
+                            sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,x_Batch,right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) as x_PayrunText,D_TransDate,X_Notes from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId " + Searchkey + " " + xSortBy;
+                        }
+                        else
+                            sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,x_Batch,right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) as x_PayrunText,D_TransDate,X_Notes from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId " + Searchkey + " and N_PayRunID not in (select top(" + Count + ") N_PayRunID from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId " +Searchkey + xSortBy + " ) " + xSortBy;
+                   
+
+            // if (Count == 0)
+            //     sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,x_Batch,right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) as x_PayrunText,D_TransDate,X_Notes from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId " + Searchkey + xSortBy;
+            // else
+            //     sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,x_Batch,right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) as x_PayrunText,D_TransDate,X_Notes from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId " + Searchkey + " and  N_PayRunID not in (select top(" + Count + ") N_PayRunID from Pay_MonthlyAddOrDed  where N_CompanyID=@nCompanyId ) " + Searchkey + xSortBy;
 
             Params.Add("@nCompanyId", nCompanyId);
             // Params.Add("@nFnYearId", nFnYearId);
