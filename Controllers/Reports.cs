@@ -58,7 +58,7 @@ namespace SmartxAPI.Controllers
             env = envn;
         }
         [HttpGet("list")]
-        public ActionResult GetReportList(int? nMenuId, int? nLangId)
+        public ActionResult GetReportList(int? nMenuId, int? nLangId, int? nBranchID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -72,6 +72,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nLangId", nLangId);
             Params.Add("@nUserCatID", myFunctions.GetUserCategoryList(User));
             Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+            Params.Add("@nBranchID", nBranchID);
 
             try
             {
@@ -84,8 +85,13 @@ namespace SmartxAPI.Controllers
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     DataTable dt1 = new DataTable();
+                    object B_Consolidated = dLayer.ExecuteScalar("select isnull(B_DefaultBranch,0) from Acc_BranchMaster where N_CompanyID=@nCompanyID and N_branchID=@nBranchID", Params, connection);
 
-                    string sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_LinkCompID,X_LinkField,B_Range from vw_WebReportMenus where N_LanguageId=@nLangId group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_ListOrder,N_LinkCompID,X_LinkField,B_Range order by N_ListOrder";
+                    string sqlCommandText1 = "";
+                    if (myFunctions.getBoolVAL(B_Consolidated.ToString()))
+                        sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_LinkCompID,X_LinkField,B_Range,isnull(B_Consolidated,0) as B_Consolidated from vw_WebReportMenus where N_LanguageId=@nLangId group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_ListOrder,N_LinkCompID,X_LinkField,B_Range,B_Consolidated order by N_ListOrder";
+                    else
+                        sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_LinkCompID,X_LinkField,B_Range,isnull(B_Consolidated,0) as B_Consolidated from vw_WebReportMenus where N_LanguageId=@nLangId and B_Consolidated<>1 group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_ListOrder,N_LinkCompID,X_LinkField,B_Range,B_Consolidated order by N_ListOrder";
                     dt1 = dLayer.ExecuteDataTable(sqlCommandText1, Params, connection);
 
                     dt.Columns.Add("ChildMenus", typeof(DataTable));
@@ -346,6 +352,13 @@ namespace SmartxAPI.Controllers
                             TaxAmount = dLayer.ExecuteScalar("select isnull(N_TaxAmtF,0) as N_TaxAmtF from Inv_SalesReturnMaster where N_CompanyID=@nCompanyId and N_DebitNoteId=" + nPkeyID, QueryParams, connection, transaction);
                             SalesDate = dLayer.ExecuteScalar("select D_ReturnDate from Inv_SalesReturnMaster where N_CompanyID=@nCompanyId and N_DebitNoteId=" + nPkeyID, QueryParams, connection, transaction);
                         }
+                        else if (nFormID == 1492)
+                        {
+                            Total = dLayer.ExecuteScalar("select SUM(N_AmountPaidF) from vw_InvCustomerPayment_rpt where N_CompanyID=@nCompanyId and N_PayReceiptId=" + nPkeyID, QueryParams, connection, transaction);
+                            TaxAmount = dLayer.ExecuteScalar("select isnull(N_TaxAmt1F,0) as N_TaxAmtF from Inv_PayReceipt where N_CompanyID=@nCompanyId and N_PayReceiptId=" + nPkeyID, QueryParams, connection, transaction);
+                            SalesDate = dLayer.ExecuteScalar("select D_Date from Inv_PayReceipt where N_CompanyID=@nCompanyId and N_PayReceiptId=" + nPkeyID, QueryParams, connection, transaction);
+                            Total = myFunctions.getVAL(Total.ToString()) + myFunctions.getVAL(TaxAmount.ToString());
+                        }
                         DateTime dt = DateTime.Parse(SalesDate.ToString());
                         string Amount = Convert.ToDecimal(Total).ToString("0.00");
                         string VatAmount = Convert.ToDecimal(TaxAmount.ToString()).ToString("0.00");
@@ -450,20 +463,13 @@ namespace SmartxAPI.Controllers
 
                         DateTime currentTime;
                         string x_comments = "";
-                        //Local Time Checking
-                        // var clientdata = new WebClient();
-                        // string content1 = clientdata.DownloadString("http://worldtimeapi.org/api/timezone/Asia/Kolkata");
-                        // string datentime=content1.Substring(0, 12);
-
-
 
                         object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyId, connection, transaction);
                         object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection, transaction);
                         if (Timezone != null && Timezone.ToString() != "")
                         {
+
                             currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
-                            currentTime = currentTime.AddDays(-1);
-                            currentTime = currentTime.AddHours(-1);
                             x_comments = currentTime.ToString();
                         }
                         if (nFormID == 1406)
@@ -559,7 +565,7 @@ namespace SmartxAPI.Controllers
                             foreach (DataRow var in dt.Rows)
                             {
                                 SqlCommand cmd = new SqlCommand("Select isnull(i_sign,'') as  i_sign from vw_Log_ApprovalAppraisal where N_ActionID=" + var["N_ActionID"].ToString(), connection, transaction);
-                                if ((cmd.ExecuteScalar().ToString()) != "" && cmd.ExecuteScalar().ToString()!= "0x")
+                                if ((cmd.ExecuteScalar().ToString()) != "" && cmd.ExecuteScalar().ToString() != "0x")
                                 {
                                     byte[] content = (byte[])cmd.ExecuteScalar();
                                     MemoryStream stream = new MemoryStream(content);
@@ -1180,16 +1186,17 @@ namespace SmartxAPI.Controllers
                     }
 
                     dbName = connection.Database;
-                    if (x_comments=="")
+                    if (x_comments == "")
                     {
                         object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
                         object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection);
                         if (Timezone != null && Timezone.ToString() != "")
                         {
-                            x_comments = Localtime().ToString("dd/MM/yyyy");
+                            x_comments = DateTime.Now.ToString("dd/MM/yyyy");
                         }
                     }
                 }
+
 
 
                 var handler = new HttpClientHandler
@@ -1207,6 +1214,7 @@ namespace SmartxAPI.Controllers
                     reportName = rptArray[1].ToString();
                     actReportLocation = actReportLocation + rptArray[0].ToString() + "/";
                 }
+
 
                 //string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;
                 string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention + "&N_FormID=0&QRUrl=&N_PkeyID=0&partyName=&docNumber=&formName=";
@@ -1593,20 +1601,6 @@ namespace SmartxAPI.Controllers
         //     }
 
         // }
-        public DateTime Localtime()
-        {
-            //Local Time Checking
-            DateTime dt;
-            string url = "http://worldtimeapi.org/api/timezone/Asia/Kolkata";
-            using (var client = new WebClient())
-            {
-                client.Headers.Add("content-type", "application/json");
-                string response = client.DownloadString(url);
-                response = response.Substring(63, 26);
-                dt = DateTime.Parse(response);
-            }
-            return dt;
-        }
 
         private static Random random = new Random();
         public string RandomString(int length = 6)

@@ -86,7 +86,7 @@ namespace SmartxAPI.Controllers
             if (xSearchkey != null && xSearchkey.Trim() != "")
 
             
-                Searchkey = "and ([MRN No] like '%" + xSearchkey + "%' or X_VendorName like '%" + xSearchkey + "%' or x_InvoiceNo like '%" + xSearchkey + "%' or D_MRNDate like '%" + xSearchkey + "%' or X_VendorInvoice like '%" + xSearchkey +"%' or x_Description like '%" + xSearchkey + "%' )";
+                Searchkey = "and ([MRN No] like '%" + xSearchkey + "%' or X_VendorName like '%" + xSearchkey + "%' or x_InvoiceNo like '%" + xSearchkey + "%' or D_MRNDate like '%" + xSearchkey + "%' or X_VendorInvoice like '%" + xSearchkey +"%' or x_Description like '%" + xSearchkey + "%' or orderNo like '%" + xSearchkey + "%')";
 
                         if (bAllBranchData == true)
                         {
@@ -345,6 +345,14 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
                         }
                     }
+
+                object B_YearEndProcess=dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID="+nCompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_MRNDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                 if(myFunctions.getBoolVAL(B_YearEndProcess.ToString()))
+                 {
+                     return Ok(_api.Error(User, "Year Closed"));
+                 }
+
+
                     if (N_GRNID > 0)
                     {
                         if (CheckProcessed(N_GRNID))
@@ -572,7 +580,8 @@ namespace SmartxAPI.Controllers
 
                     if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) == 0)
                     {
-                        SortedList StockUpdateParams = new SortedList(){
+
+                          SortedList StockUpdateParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
 	                            {"N_TransID",nGRNID},
 	                            {"X_TransType", "GRN"}};
