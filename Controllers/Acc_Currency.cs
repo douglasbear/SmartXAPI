@@ -222,12 +222,13 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nCurrencyId)
         {
              int Results=0;
+             int nCompanyId=myFunctions.GetCompanyID(User);
             try
             {
                                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                Results=dLayer.DeleteData("Acc_CurrencyMaster","N_CurrencyID",nCurrencyId,"",connection);
+                Results=dLayer.DeleteData("Acc_CurrencyMaster","N_CurrencyID",nCurrencyId,"N_CompanyID="+nCompanyId,connection);
                 if(Results>0){
                     return Ok(api.Success("Currency deleted" ));
                 }else{
