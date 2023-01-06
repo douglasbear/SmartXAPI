@@ -202,7 +202,7 @@ namespace SmartxAPI.Controllers
                     if (nSalesID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to save Purchase Invoice!"));
+                        return Ok(_api.Error(User, "Unable to save free text sales!"));
                     }
 
                     dtsaleamountdetails.Rows[0]["N_SalesId"] = nSalesID;
@@ -322,7 +322,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     transaction.Commit();
-                    return Ok(_api.Success("Sales invoice saved"));
+                    return Ok(_api.Success("free text Sales saved"));
 
                 }
             }
@@ -404,6 +404,11 @@ namespace SmartxAPI.Controllers
                         Master = myFunctions.AddNewColumnToDataTable(Master, "ReturnDone", typeof(bool), false);
                      }
 
+                      object isReturn = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_Sales where N_FreeTextReturnID =" + N_SalesID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "", Params, connection);
+
+                      Master = myFunctions.AddNewColumnToDataTable(Master, "x_InvoiceNo", typeof(string), isReturn);
+
+
 
                     Master.AcceptChanges();
 
@@ -466,6 +471,15 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     var nUserID = myFunctions.GetUserID(User);
+                      SortedList Params = new SortedList();
+
+                       object count = dLayer.ExecuteScalar("select count(*) from Inv_Sales where N_FreeTextReturnID =" + nSalesID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
+                     if (myFunctions.getVAL(count.ToString())>0)
+                     {
+                         return Ok(_api.Error(User, "Unable to delete Free text sales"));
+                     }
+
+
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
                                 {"X_TransType",X_TransType},
@@ -477,10 +491,10 @@ namespace SmartxAPI.Controllers
                     if (Results <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to delete Sales"));
+                        return Ok(_api.Error(User, "Unable to delete Free text Sales"));
                     }
                     transaction.Commit();
-                    return Ok(_api.Success("Sales  deleted"));
+                    return Ok(_api.Success("Free text Sales deleted"));
                 }
             }
             catch (Exception ex)

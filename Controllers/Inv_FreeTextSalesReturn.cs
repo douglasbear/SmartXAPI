@@ -275,7 +275,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     transaction.Commit();
-                    return Ok(_api.Success("Sales invoice saved"));
+                    return Ok(_api.Success("Free text sales return saved"));
 
                 }
             }
@@ -312,7 +312,15 @@ namespace SmartxAPI.Controllers
                     Master = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
                     if (Master.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     N_SalesID = myFunctions.getIntVAL(Master.Rows[0]["N_SalesID"].ToString());
-
+                    
+                    string paymentcount = dLayer.ExecuteScalar("select count(*) from Inv_PayReceiptDetails where N_CompanyID=" + nCompanyId + " and N_InventoryId=" + N_SalesID + "and x_TransType='DEBIT NOTE'", connection).ToString();
+                    
+                     if (myFunctions.getVAL(paymentcount.ToString())>0){
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "paymentDone", typeof(bool), true);
+                     }
+                       else{
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "paymentDone", typeof(bool), false);
+                     }
 
                     //---covertchanges 
                     if (xPath != null && xPath != "")
@@ -487,7 +495,7 @@ ReturnDetails = _api.Format(ReturnDetails, "Details");
                         return Ok(_api.Error(User, "Unable to delete Sales return"));
                     }
                     transaction.Commit();
-                    return Ok(_api.Success("Sales Return deleted"));
+                    return Ok(_api.Success("Free text Sales Return deleted"));
                 }
             }
             catch (Exception ex)

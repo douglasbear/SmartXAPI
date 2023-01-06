@@ -86,7 +86,7 @@ namespace SmartxAPI.Controllers
                     N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = " and (Memo like '%" + xSearchkey + "%' or [Vendor Name] like '%" + xSearchkey + "%' or Cast(Date as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%" + xSearchkey + "%' or Amount like '%" + xSearchkey + "%')";
+                        Searchkey = " and (Memo like '%" + xSearchkey + "%' or [Vendor Name] like '%" + xSearchkey + "%' or Cast(Date as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%" + xSearchkey + "%' or Amount like '%" + xSearchkey + "%' or x_ProjectCode like '%" + xSearchkey + "%'  or X_ProjectName like '%" + xSearchkey + "%')";
 
                    if (bAllBranchData == true)
                         {
@@ -113,6 +113,12 @@ namespace SmartxAPI.Controllers
                                 break;
                             case "amount":
                                 xSortBy = "Cast(REPLACE(Amount,',','') as Numeric(20," + N_decimalPlace + ")) " + xSortBy.Split(" ")[1];
+                                break;
+                            case "x_ProjectName":
+                               xSortBy = "[x_ProjectName] " + xSortBy.Split(" ")[1];
+                                break;
+                            case "x_ProjectCode":
+                               xSortBy = "[x_ProjectCode] " + xSortBy.Split(" ")[1];
                                 break;
                             default: break;
                         }
