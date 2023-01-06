@@ -228,7 +228,7 @@ namespace SmartxAPI.Controllers
                                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                Results=dLayer.DeleteData("Acc_CurrencyMaster","N_CurrencyID",nCurrencyId,"N_CompanyID="+nCompanyId,connection);
+                Results=dLayer.DeleteData("Acc_CurrencyMaster","N_CurrencyID",nCurrencyId,"",connection);
                 if(Results>0){
                     return Ok(api.Success("Currency deleted" ));
                 }else{
