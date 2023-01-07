@@ -135,6 +135,7 @@ namespace SmartxAPI.Controllers
                     double N_BillAmt = myFunctions.getVAL(MasterTable.Rows[0]["N_BillAmt"].ToString());
                     string xTransType = "FTSALES";
                     DocNo = MasterRow["X_ReceiptNo"].ToString();
+                    DataTable Attachment = ds.Tables["attachments"];
                     
 
                      if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_SalesDate"].ToString()), dLayer, connection, transaction))
@@ -308,8 +309,25 @@ namespace SmartxAPI.Controllers
                         costcenter.Rows.Add(row);
                     }
 
-                    int N_SegmentId = dLayer.SaveData("Inv_CostCentreTransactions", "N_CostCenterTransID", "", "", costcenter, connection, transaction);
+                     SortedList freeTextSalesParams = new SortedList();
+                           freeTextSalesParams.Add("@N_SalesId", nSalesID);
 
+                     DataTable freeTextSalesInfo = dLayer.ExecuteDataTable("Select X_ReceiptNo,X_TransType from Inv_Sales where N_SalesId=@N_SalesId", freeTextSalesParams, connection, transaction);
+                        if (freeTextSalesInfo.Rows.Count > 0)
+                        {
+                            try
+                            {
+                                myAttachments.SaveAttachment(dLayer, Attachment, X_ReceiptNo, nSalesID, freeTextSalesInfo.Rows[0]["X_TransType"].ToString().Trim(), freeTextSalesInfo.Rows[0]["X_ReceiptNo"].ToString(), nSalesID, "Free Text Sales Document", User, connection, transaction);
+                            }
+                             catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
+                        }
+
+                    int N_SegmentId = dLayer.SaveData("Inv_CostCentreTransactions", "N_CostCenterTransID", "", "", costcenter, connection, transaction);
+                
 
                     try
                     {
@@ -427,7 +445,10 @@ namespace SmartxAPI.Controllers
 
                     Acc_CostCentreTrans = _api.Format(Acc_CostCentreTrans, "costCenterTrans");
                     dt.Tables.Add(Acc_CostCentreTrans);
-
+                  
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_SalesID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_SalesID"].ToString()), this.FormID, myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                    Attachments = _api.Format(Attachments, "attachments");
+                    dt.Tables.Add(Attachments);
 
                     dt.Tables.Add(Details);
                     dt.Tables.Add(Master);
