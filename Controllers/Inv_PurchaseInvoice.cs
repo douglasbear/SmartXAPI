@@ -319,7 +319,7 @@ namespace SmartxAPI.Controllers
                     }
                     if (multipleGrnNo != null && multipleGrnNo != "")
                     {
-                        X_MasterSql = "select * from vw_Inv_MRNAsInvoiceMaster where N_CompanyID=@CompanyID and N_MRNID in (" + multipleGrnNo + ") and N_FnYearID=@YearID and B_IsSaveDraft<>1 " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                        X_MasterSql = "select * from vw_Inv_MRNAsInvoiceMaster where N_CompanyID=@CompanyID and N_MRNID in (" + multipleGrnNo + ") and B_IsSaveDraft<>1 " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
 
                     }
 
