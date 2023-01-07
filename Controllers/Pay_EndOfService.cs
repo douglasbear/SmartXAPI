@@ -263,6 +263,7 @@ namespace SmartxAPI.Controllers
                 string PayrunID = dDateEnd.Year.ToString("00##") + dDateEnd.Month.ToString("0#");
                 string X_SalBatch="";
                 bool B_SalProcessed =false;
+                int nTransID=0;
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -367,7 +368,7 @@ namespace SmartxAPI.Controllers
                         PayMasterTable.Rows[0]["D_SalFromDate"] = firstDayOfMonth;
                         PayMasterTable.Rows[0]["D_SalToDate"] = lastDayOfMonth;
 
-                        int nTransID = dLayer.SaveData("Pay_PaymentMaster", "N_TransID", "", "", PayMasterTable, connection, transaction);
+                         nTransID = dLayer.SaveData("Pay_PaymentMaster", "N_TransID", "", "", PayMasterTable, connection, transaction);
                         if (nTransID <= 0)
                         {
                             transaction.Rollback();
@@ -484,14 +485,14 @@ namespace SmartxAPI.Controllers
 
                         DataRow row = dtPayDetails.NewRow();
                         row["N_CompanyID"] = nCompanyID;
-                        row["N_TransID"] = nServiceEndID;
+                        row["N_TransID"] = nTransID;
                         row["N_EmpID"] = nEmpID;
                         row["N_PayID"] = PayID;
                         row["N_PayFactor"] = 0;
                         row["N_PayRate"] = nPayRate;
                         row["N_SalaryPayMethod"] = nSalaryPayMethod;
                         row["B_BeginingBalEntry"] = 0;
-                        row["N_FormID"] = this.N_FormID;
+                        row["N_FormID"] = 190;
                         dtPayDetails.Rows.Add(row);
 
                         int nTransDetailID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", "", "", dtPayDetails, connection, transaction);
