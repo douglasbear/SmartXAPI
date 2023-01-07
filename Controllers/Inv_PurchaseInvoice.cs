@@ -111,11 +111,11 @@ namespace SmartxAPI.Controllers
                     {
                         if (bAllBranchData == true)
                         {
-                            Searchkey = Searchkey + " and X_TransType='" + X_TransType + "' and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess=0 and N_PurchaseType = 0 ";
+                            Searchkey = Searchkey + " and X_TransType='" + X_TransType + "' and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess=1 and N_PurchaseType = 0 ";
                         }
                         else
                         {
-                            Searchkey = Searchkey + "and X_TransType='" + X_TransType + "' and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess=0 and N_PurchaseType = 0  and N_BranchID=" + nBranchID + "";
+                            Searchkey = Searchkey + "and X_TransType='" + X_TransType + "' and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess=1 and N_PurchaseType = 0  and N_BranchID=" + nBranchID + "";
                         }
                     }
                     if (xSortBy == null || xSortBy.Trim() == "")
