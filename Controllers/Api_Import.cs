@@ -92,12 +92,11 @@ namespace SmartxAPI.Controllers
                         MasterTable.Columns.Remove("N_BranchID");
                         MasterTable.Columns.Remove("N_UserID");
                         MasterTable.Columns.Remove("N_LocationID");
+                        
 
-                        dLayer.ExecuteNonQuery("delete from Mig_SalesInvoice where B_Skipped<>1", Params, connection, transaction);
+                        dLayer.ExecuteNonQuery("delete from Mig_SalesInvoice", Params, connection, transaction);
                         nSalesID = dLayer.SaveData("Mig_SalesInvoice", "pkey_code", MasterTable, connection, transaction);
-
                         dLayer.ExecuteNonQueryPro("SP_SalesInvoiceImport", Params, connection, transaction);
-
                     }
 
                     if (nSalesID <= 0)
