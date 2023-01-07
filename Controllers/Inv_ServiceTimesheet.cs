@@ -276,8 +276,14 @@ namespace SmartxAPI.Controllers
                     ProcParams.Add("@N_CompanyId", myFunctions.GetCompanyID(User));
                     ProcParams.Add("@N_FnyearID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()));
                     ProcParams.Add("@N_BranchID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString()));
+                                                 
+                    ///ProcParams.Add("@D_DateFrom", DateTime.ParseExact(MasterTable.Rows[0]["D_DateFrom"].ToString(), "yyyy-MM-dd hh:mm:ss ",System.Globalization.CultureInfo.InvariantCulture));
+                   // ProcParams.Add("@D_DateTo",  DateTime.ParseExact(MasterTable.Rows[0]["D_DateTo"].ToString(), "yyyy-MM-dd hh:mm:ss",System.Globalization.CultureInfo.InvariantCulture));
+
+                                                     
                     ProcParams.Add("@D_DateFrom", MasterTable.Rows[0]["D_DateFrom"].ToString());
                     ProcParams.Add("@D_DateTo", MasterTable.Rows[0]["D_DateTo"].ToString());
+
                     ProcParams.Add("@N_LocationID", nLocationID);
                     ProcParams.Add("@N_UserID", myFunctions.GetUserID(User));
                     ProcParams.Add("@X_Type", xType);
