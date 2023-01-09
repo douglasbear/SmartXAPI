@@ -284,7 +284,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_ApprovalDescription like '%"+ xSearchkey +"%')";
+                Searchkey = "and (X_ApprovalDescription like '%"+ xSearchkey +"%' or X_ApprovalCode like '%"+ xSearchkey +"%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ApprovalID desc";
@@ -295,7 +295,7 @@ namespace SmartxAPI.Controllers
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from Gen_ApprovalCodes where N_CompanyID=@p1 " + Searchkey +" "+ xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Gen_ApprovalCodes where N_CompanyID=@p1 " + Searchkey +"  N_ApprovalID not in (select top(" + Count + ") N_ApprovalID from Gen_ApprovalCodes  where N_CompanyID=@p1) "  + Searchkey +" "+ xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Gen_ApprovalCodes where N_CompanyID=@p1 " + Searchkey +" and  N_ApprovalID not in (select top(" + Count + ") N_ApprovalID from Gen_ApprovalCodes  where N_CompanyID=@p1) "  + Searchkey +" "+ xSortBy;
 
             Params.Add("@p1", nCompanyId);
             // Params.Add("@nFnYearId", nFnYearId);

@@ -523,7 +523,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult PayyAddDedList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nFnYearID)
+        public ActionResult PayyAddDedList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nFnYearID,bool bAllBranchData,int nBranchID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -556,6 +556,17 @@ namespace SmartxAPI.Controllers
                 }
                 xSortBy = " order by " + xSortBy;
             }
+
+
+               if (bAllBranchData == true)
+                        {
+                            Searchkey = Searchkey + " ";
+                        }
+                        else
+                        {
+                            Searchkey = Searchkey + " and N_BranchID=" + nBranchID + " ";
+                        }    
+
             if (Count == 0)
                         {
                             sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,x_Batch,right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) as x_PayrunText,D_TransDate,X_Notes from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID " + Searchkey + " " + xSortBy;
