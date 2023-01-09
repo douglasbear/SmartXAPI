@@ -123,7 +123,7 @@ namespace SmartxAPI.Controllers
                     string X_Criteria = "";
 
                     foreach (DataRow drow in MasterTable.Rows){
-                        drow["Invoice_Date"] = Invoice_Date;
+                        drow["Invoice_Date"] = d_InvoiceDate;
                     }
 
                     nMigSalesID = dLayer.SaveData("Mig_SalesInvoice", "Invoice_Number",DupCriteria,X_Criteria, MasterTable, connection, transaction);
