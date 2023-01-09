@@ -54,9 +54,9 @@ namespace SmartxAPI.Controllers
             }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_WhPickListMaster where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and isnull(N_FormID,0)=@nFormID " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_WhPickListMaster where N_CompanyID=@nCompanyID  and isnull(N_FormID,0)=@nFormID " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_WhPickListMaster where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and isnull(N_FormID,0)=@nFormID " + Searchkey + " and N_PickListID not in (select top(" + Count + ") N_PickListID from vw_WhPickListMaster where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_WhPickListMaster where N_CompanyID=@nCompanyID  and isnull(N_FormID,0)=@nFormID " + Searchkey + " and N_PickListID not in (select top(" + Count + ") N_PickListID from vw_WhPickListMaster where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + Searchkey + xSortBy + " ) " + xSortBy;
 
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
@@ -101,7 +101,7 @@ namespace SmartxAPI.Controllers
                 query = " and X_PickListCode=" + xbarcode;
 
 
-            string sqlCommandText = "select * from vw_WhPickList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and isnull(N_FormID,0)<>"+nFormID+" and N_PickListID not in (select isnull(n_RefID,0) from vw_WhPickList where N_CompanyID=@nCompanyID)" + query;
+            string sqlCommandText = "select * from vw_WhPickList where N_CompanyID=@nCompanyID and isnull(N_FormID,0)<>"+nFormID+" and N_PickListID not in (select isnull(n_RefID,0) from vw_WhPickList where N_CompanyID=@nCompanyID)" + query;
 
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
