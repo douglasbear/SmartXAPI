@@ -346,14 +346,15 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("summaryType")]
-        public ActionResult GetPayCodeForTypes()
+        public ActionResult GetPayCodeForTypes(int nFnYearId)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearId", nFnYearId);
             // string sqlCommandText = "Select * from Pay_PayType where N_CompanyID=@nCompanyID and N_PerPayMethod=0 or N_PerPayMethod=3 or N_PerPayMethod=30 and n_PerPayPayment=5 order by N_PayTypeID";
-            string sqlCommandText="SELECT Pay_PayMaster.*,Pay_PayMaster.N_PayID as N_PayCodeID,Pay_PayType.N_PerPayMethod, Pay_PayType.N_PerPayPayment FROM Pay_PayMaster LEFT OUTER JOIN Pay_PayType ON Pay_PayMaster.N_CompanyID = Pay_PayType.N_CompanyID AND Pay_PayMaster.N_PayTypeID = Pay_PayType.N_PayTypeID  where Pay_PayMaster.N_CompanyID=@nCompanyID";
+            string sqlCommandText="SELECT Pay_PayMaster.*,Pay_PayMaster.N_PayID as N_PayCodeID,Pay_PayType.N_PerPayMethod, Pay_PayType.N_PerPayPayment FROM Pay_PayMaster LEFT OUTER JOIN Pay_PayType ON Pay_PayMaster.N_CompanyID = Pay_PayType.N_CompanyID AND Pay_PayMaster.N_PayTypeID = Pay_PayType.N_PayTypeID  where Pay_PayMaster.N_CompanyID=@nCompanyID and Pay_PayMaster.N_FnYearID=@nFnYearId";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
