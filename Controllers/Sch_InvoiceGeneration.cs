@@ -105,6 +105,7 @@ namespace SmartxAPI.Controllers
                 int nUserID = myFunctions.GetUserID(User);
                 int nMigSalesID=0;
                 DateTime d_InvoiceDate = Convert.ToDateTime(MasterTable.Rows[0]["d_InvoiceDate"].ToString());
+                DateTime Invoice_Date = Convert.ToDateTime(MasterTable.Rows[0]["Invoice_Date"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -122,7 +123,7 @@ namespace SmartxAPI.Controllers
                     string X_Criteria = "";
 
                     foreach (DataRow drow in MasterTable.Rows){
-                        drow["Invoice_Date"] = d_InvoiceDate;
+                        drow["Invoice_Date"] = Invoice_Date;
                     }
 
                     nMigSalesID = dLayer.SaveData("Mig_SalesInvoice", "Invoice_Number",DupCriteria,X_Criteria, MasterTable, connection, transaction);
@@ -153,6 +154,92 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,ex));
             }
         }
+
+
+          [HttpGet("details")]
+        public ActionResult invoiceDetails(int nFnYearID,DateTime d_FromDate,DateTime d_ToDate)
+        {
+
+            DataTable details = new DataTable();
+
+            DataSet DS = new DataSet();
+            SortedList Params = new SortedList();
+            SortedList dParamList = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+
+           
+            string Detailssql = "Select * from vw_schInvoiceGeneration Where N_CompanyID = @p1 and N_FnYearId = @p2 and d_salesDate>= @d_FromDate and d_salesDate<= @d_ToDate";
+
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearID);
+             Params.Add("@d_FromDate", d_FromDate);
+             Params.Add("@d_ToDate", d_ToDate);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    details = dLayer.ExecuteDataTable(Detailssql, Params, connection);
+
+                }
+                if(details.Rows.Count==0)
+                {
+                    return Ok(api.Success(details));
+                }
+                else
+                {
+                    return Ok(api.Success(details));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+
+
+        [HttpPost("delete")]
+        public ActionResult DeleteData([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable MasterTable;
+                     MasterTable = ds.Tables["details"];
+                     SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    
+                    //     if (ds.Rows.Count > 0)
+                    // {
+               
+
+                      foreach (DataRow deleteItem in MasterTable.Rows)
+                    {
+                           dLayer.ExecuteNonQuery("delete from  inv_salesDetails  where N_CompanyID=" + nCompanyID + " and N_SalesID=" + myFunctions.getIntVAL(deleteItem["n_SalesID"].ToString()) + "", connection, transaction); 
+                        dLayer.ExecuteNonQuery("delete from  Inv_Sales  where N_CompanyID=" + nCompanyID + " and N_SalesID=" + myFunctions.getIntVAL(deleteItem["n_SalesID"].ToString()) + "",connection, transaction);
+                        dLayer.ExecuteNonQuery("update  sch_sales set N_RefSalesID=0 where N_CompanyID=" + nCompanyID + " and N_RefSalesID=" + myFunctions.getIntVAL(deleteItem["n_SalesID"].ToString()) + "", connection, transaction);
+                    }
+                //    }
+
+                    Params.Add("@p1", nCompanyID);
+                    // Params.Add("@p2", nFnYearID);
+
+           
+                    
+                    transaction.Commit();
+                    return Ok(api.Success("Invoice Deleted"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(User, ex));
+            }
+
+        }
+     
 
            
       
