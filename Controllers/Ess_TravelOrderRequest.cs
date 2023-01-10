@@ -140,12 +140,12 @@ namespace SmartxAPI.Controllers
                     
 
                 dt = api.Format(dt,"master");
-
+                ds.Tables.Add(dt);
                 
                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dt.Rows[0]["N_RequestID"].ToString()), myFunctions.getIntVAL(dt.Rows[0]["N_RequestID"].ToString()), this.FormID, myFunctions.getIntVAL(dt.Rows[0]["N_FnYearID"].ToString()), User, connection);
                     Attachments = api.Format(Attachments, "attachments");
                     ds.Tables.Add(Attachments);
-                    ds.Tables.Add(dt);
+                   
                 }
                    
                 if (dt.Rows.Count == 0)
