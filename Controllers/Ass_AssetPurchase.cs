@@ -305,6 +305,7 @@ namespace SmartxAPI.Controllers
             TransactionTable = ds.Tables["transactions"];
             AssMasterTable = ds.Tables["assetmaster"];
             SortedList Params = new SortedList();
+            DataTable Attachment = ds.Tables["attachments"];
             // Auto Gen
             try
             {
@@ -580,6 +581,22 @@ namespace SmartxAPI.Controllers
                             // }
                         }
                     }
+                      SortedList assetPurchaseParams = new SortedList();
+                           assetPurchaseParams.Add("@N_AssetInventoryID", N_AssetInventoryID);
+
+                     DataTable  assetPurchaseInfo = dLayer.ExecuteDataTable("Select X_InvoiceNo from Ass_PurchaseMaster where N_AssetInventoryID=@N_AssetInventoryID", assetPurchaseParams, connection, transaction);
+                        if (assetPurchaseInfo.Rows.Count > 0)
+                        {
+                            try
+                            {
+                                myAttachments.SaveAttachment(dLayer, Attachment, X_InvoiceNo, N_AssetInventoryID, assetPurchaseInfo.Rows[0]["X_InvoiceNo"].ToString(), assetPurchaseInfo.Rows[0]["X_InvoiceNo"].ToString(), N_AssetInventoryID, "Asset Purchase Document", User, connection, transaction);
+                            }
+                             catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
+                        }
 
                     SortedList PostingParam = new SortedList();
                     PostingParam.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
@@ -648,6 +665,11 @@ namespace SmartxAPI.Controllers
 
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
+
+                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_AssetInventoryID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_AssetInventoryID"].ToString()), this.N_FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                    Attachments = _api.Format(Attachments, "attachments");
+                    dt.Tables.Add(Attachments);
+
                     dt.Tables.Add(MasterTable);
                     dt.Tables.Add(DetailTable);
                     return Ok(_api.Success(dt));
