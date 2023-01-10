@@ -1766,7 +1766,7 @@ namespace SmartxAPI.GeneralFunctions
 
             try
             { 
-                SortedList InsParams = new SortedList(){
+                SortedList InsParams = new SortedList(){ 
                             {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
                             {"N_CreditNoteID",N_CreditNoteID}};
                 dLayer.ExecuteNonQueryPro("[SP_PurchaseReturn_Ins]", InsParams, connection, transaction);

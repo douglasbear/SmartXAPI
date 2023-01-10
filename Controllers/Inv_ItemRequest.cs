@@ -101,7 +101,7 @@ namespace SmartxAPI.Controllers
                     {
                         if(FormID==1592)
                         { 
-                         sqlCondition= "N_CompanyID=@nCompanyId and B_YearEndProcess=0 and N_FormID=@FormID and (N_LocationIDFrom ="+nLocationID+" or N_LocationID="+nLocationID+" ) ";
+                         sqlCondition= "N_CompanyID=@nCompanyId and N_FormID=@FormID and (N_LocationIDFrom ="+nLocationID+" or N_LocationID="+nLocationID+" ) ";
                         }
                         else
                         {

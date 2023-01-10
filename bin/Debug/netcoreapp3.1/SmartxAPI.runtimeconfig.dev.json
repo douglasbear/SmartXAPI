@@ -3,6 +3,12 @@
     "additionalProbingPaths": [
 <<<<<<< HEAD
 <<<<<<< HEAD
+      "C:\\Users\\Administrator\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\Administrator\\.nuget\\packages"
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -66,10 +72,30 @@
       "C:\\Users\\SANJAY\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\SANJAY\\.nuget\\packages"
 >>>>>>> 0e522d7020d475bd0adf975438394ca09bd921ce
+<<<<<<< HEAD
 =======
       "C:\\Users\\olivouser2\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\olivouser2\\.nuget\\packages"
 >>>>>>> d1094bcf1bf2c0a5de4411d1247bc7f4e0eb0ef3
+=======
+      "C:\\Users\\SANJAY\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\SANJAY\\.nuget\\packages"
+>>>>>>> 817c631dc596c19582aaf1c9aae0d5887a77292b
+=======
+>>>>>>> 6806095306ed043d15f8c98864e25f217491ebd9
+<<<<<<< HEAD
+>>>>>>> 29381ade6547397592765f323664fb991dca1f3e
+=======
+      "C:\\Users\\user\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\user\\.nuget\\packages",
+      "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+>>>>>>> 7cfccc39f5e1c1ac2d1fc17acfeec303d0986f4e
+=======
+=======
+      "C:\\Users\\sreej\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\sreej\\.nuget\\packages"
+>>>>>>> 37427417031f17d680a0a409bccef1cdb3b9bbae
+>>>>>>> c5b34f7bd880f567142075dacfe4328f12e44cb7
     ]
   }
 }

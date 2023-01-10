@@ -341,7 +341,7 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                         transaction.Commit();
                     }
                        SortedList Result = new SortedList();
-                       Result.Add("AdjustmentNo", AdjustmentNo);
+                       Result.Add("AdjustmentNo", MasterTable.Rows[0]["X_VoucherNo"] );
                        Result.Add("N_AdjustmentID", N_AdjustmentID);
                
                     return Ok(_api.Success(Result,"Adjustment saved" + ":" + N_AdjustmentID));

@@ -135,6 +135,7 @@ namespace SmartxAPI.Controllers
                     double N_BillAmt = myFunctions.getVAL(MasterTable.Rows[0]["N_BillAmt"].ToString());
                     string xTransType = "FTSALES";
                     DocNo = MasterRow["X_ReceiptNo"].ToString();
+                    DataTable Attachment = ds.Tables["attachments"];
                     
 
                      if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_SalesDate"].ToString()), dLayer, connection, transaction))
@@ -202,7 +203,7 @@ namespace SmartxAPI.Controllers
                     if (nSalesID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to save Purchase Invoice!"));
+                        return Ok(_api.Error(User, "Unable to save free text sales!"));
                     }
 
                     dtsaleamountdetails.Rows[0]["N_SalesId"] = nSalesID;
@@ -308,8 +309,25 @@ namespace SmartxAPI.Controllers
                         costcenter.Rows.Add(row);
                     }
 
-                    int N_SegmentId = dLayer.SaveData("Inv_CostCentreTransactions", "N_CostCenterTransID", "", "", costcenter, connection, transaction);
+                     SortedList freeTextSalesParams = new SortedList();
+                           freeTextSalesParams.Add("@N_SalesId", nSalesID);
 
+                     DataTable freeTextSalesInfo = dLayer.ExecuteDataTable("Select X_ReceiptNo,X_TransType from Inv_Sales where N_SalesId=@N_SalesId", freeTextSalesParams, connection, transaction);
+                        if (freeTextSalesInfo.Rows.Count > 0)
+                        {
+                            try
+                            {
+                                myAttachments.SaveAttachment(dLayer, Attachment, X_ReceiptNo, nSalesID, freeTextSalesInfo.Rows[0]["X_TransType"].ToString().Trim(), freeTextSalesInfo.Rows[0]["X_ReceiptNo"].ToString(), nSalesID, "Free Text Sales Document", User, connection, transaction);
+                            }
+                             catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
+                        }
+
+                    int N_SegmentId = dLayer.SaveData("Inv_CostCentreTransactions", "N_CostCenterTransID", "", "", costcenter, connection, transaction);
+                
 
                     try
                     {
@@ -322,7 +340,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     transaction.Commit();
-                    return Ok(_api.Success("Sales invoice saved"));
+                    return Ok(_api.Success("free text Sales saved"));
 
                 }
             }
@@ -393,6 +411,23 @@ namespace SmartxAPI.Controllers
                     {
                          Master.Rows[0]["IsReturnDone"] = false;
                     }
+
+                    object count = dLayer.ExecuteScalar("select count(*) from Inv_Sales where N_FreeTextReturnID =" + N_SalesID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "", Params, connection);
+
+                    if (myFunctions.getVAL(count.ToString())>0)
+                    {
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "ReturnDone", typeof(bool), true);
+                     }
+                     else{
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "ReturnDone", typeof(bool), false);
+                     }
+
+                      object isReturn = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_Sales where N_FreeTextReturnID =" + N_SalesID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "", Params, connection);
+
+                      Master = myFunctions.AddNewColumnToDataTable(Master, "x_InvoiceNo", typeof(string), isReturn);
+
+
+
                     Master.AcceptChanges();
 
 
@@ -427,7 +462,10 @@ namespace SmartxAPI.Controllers
 
                     Acc_CostCentreTrans = _api.Format(Acc_CostCentreTrans, "costCenterTrans");
                     dt.Tables.Add(Acc_CostCentreTrans);
-
+                  
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_SalesID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_SalesID"].ToString()), this.FormID, myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                    Attachments = _api.Format(Attachments, "attachments");
+                    dt.Tables.Add(Attachments);
 
                     dt.Tables.Add(Details);
                     dt.Tables.Add(Master);
@@ -454,6 +492,15 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     var nUserID = myFunctions.GetUserID(User);
+                      SortedList Params = new SortedList();
+
+                       object count = dLayer.ExecuteScalar("select count(*) from Inv_Sales where N_FreeTextReturnID =" + nSalesID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
+                     if (myFunctions.getVAL(count.ToString())>0)
+                     {
+                         return Ok(_api.Error(User, "Unable to delete Free text sales"));
+                     }
+
+
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
                                 {"X_TransType",X_TransType},
@@ -465,10 +512,10 @@ namespace SmartxAPI.Controllers
                     if (Results <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to delete Sales"));
+                        return Ok(_api.Error(User, "Unable to delete Free text Sales"));
                     }
                     transaction.Commit();
-                    return Ok(_api.Success("Sales  deleted"));
+                    return Ok(_api.Success("Free text Sales deleted"));
                 }
             }
             catch (Exception ex)
