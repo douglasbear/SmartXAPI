@@ -172,7 +172,7 @@ namespace SmartxAPI.Controllers
             int nCompanyId = myFunctions.GetCompanyID(User);
 
            
-            string Detailssql = "Select * from vw_schInvoiceGeneration Where N_CompanyID = @p1 and N_FnYearId = @p2 and d_salesDate>= @d_FromDate and d_salesDate<= @d_ToDate";
+            string Detailssql = "Select * from vw_schInvoiceGeneration Where N_CompanyID = @p1 and N_FnYearId = @p2 and d_salesDate>= @d_FromDate and d_salesDate<= @d_ToDate and ISNULL(N_PayReceiptId,0)=0 ";
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearID);
@@ -215,16 +215,31 @@ namespace SmartxAPI.Controllers
                      SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
-                    
+                    int nUserID = myFunctions.GetUserID(User);
+                    int Results=0;
                     //     if (ds.Rows.Count > 0)
                     // {
                
 
                       foreach (DataRow deleteItem in MasterTable.Rows)
                     {
-                           dLayer.ExecuteNonQuery("delete from  inv_salesDetails  where N_CompanyID=" + nCompanyID + " and N_SalesID=" + myFunctions.getIntVAL(deleteItem["n_SalesID"].ToString()) + "", connection, transaction); 
-                        dLayer.ExecuteNonQuery("delete from  Inv_Sales  where N_CompanyID=" + nCompanyID + " and N_SalesID=" + myFunctions.getIntVAL(deleteItem["n_SalesID"].ToString()) + "",connection, transaction);
+                        //    dLayer.ExecuteNonQuery("delete from  inv_salesDetails  where N_CompanyID=" + nCompanyID + " and N_SalesID=" + myFunctions.getIntVAL(deleteItem["n_SalesID"].ToString()) + "", connection, transaction); 
+                        // dLayer.ExecuteNonQuery("delete from  Inv_Sales  where N_CompanyID=" + nCompanyID + " and N_SalesID=" + myFunctions.getIntVAL(deleteItem["n_SalesID"].ToString()) + "",connection, transaction);
                         dLayer.ExecuteNonQuery("update  sch_sales set N_RefSalesID=0 where N_CompanyID=" + nCompanyID + " and N_RefSalesID=" + myFunctions.getIntVAL(deleteItem["n_SalesID"].ToString()) + "", connection, transaction);
+
+                            SortedList DeleteParams = new SortedList(){
+                                        {"N_CompanyID",nCompanyID},
+                                        {"N_UserID",nUserID}, 
+                                        {"X_TransType","SALES"},
+                                        {"X_SystemName","WebRequest"},
+                                        {"N_VoucherID",myFunctions.getIntVAL(deleteItem["n_SalesID"].ToString())}}; 
+
+                                Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                                if (Results <= 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(api.Error(User, "Unable to delete sales Invoice"));
+                                }
                     }
                 //    }
 
