@@ -21,13 +21,15 @@ namespace SmartxAPI.Controllers
 
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        public Inv_FreeTextPurchaseReturn(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        private readonly IMyAttachments myAttachments;
+        public Inv_FreeTextPurchaseReturn(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             _api = api;
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 384;
+            myAttachments = myAtt;
 
         }
 
@@ -114,6 +116,7 @@ namespace SmartxAPI.Controllers
                     int nPurchaseMapID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FreeTextReturnID"].ToString());
                     string xTransType = "CREDIT NOTE";
                     DocNo = MasterRow["X_InvoiceNo"].ToString();
+                    DataTable Attachment = ds.Tables["attachments"];
 
 
                      if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_InvoiceDate"].ToString()), dLayer, connection, transaction))
@@ -243,6 +246,24 @@ namespace SmartxAPI.Controllers
                         row["N_ProjectID"] = myFunctions.getIntVAL(dRow["N_Segment_3"].ToString());
                         costcenter.Rows.Add(row);
                     }
+                      
+                          SortedList freeTextPurchaseReturnParams = new SortedList();
+                           freeTextPurchaseReturnParams.Add("@N_PurchaseID", nPurchaseID);
+
+                     DataTable freeTextPurchaseReturnInfo = dLayer.ExecuteDataTable("Select X_InvoiceNo,X_TransType from Inv_Purchase where N_PurchaseID=@N_PurchaseID", freeTextPurchaseReturnParams, connection, transaction);
+                        if (freeTextPurchaseReturnInfo.Rows.Count > 0)
+                        {
+                            try
+                            {
+                                myAttachments.SaveAttachment(dLayer, Attachment, X_InvoiceNo, nPurchaseID, freeTextPurchaseReturnInfo.Rows[0]["X_TransType"].ToString().Trim(), freeTextPurchaseReturnInfo.Rows[0]["X_InvoiceNo"].ToString(), nPurchaseID, "Free Text Purchase Return Document", User, connection, transaction);
+                            }
+                             catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
+                        }
+
                     int N_SegmentId = dLayer.SaveData("Inv_CostCentreTransactions", "N_CostCenterTransID", "", "", costcenter, connection, transaction);
                     SortedList PostingParam = new SortedList();
                     PostingParam.Add("N_CompanyID", nCompanyID);
@@ -479,6 +500,10 @@ ReturnDetails = _api.Format(ReturnDetails, "Details");
 
                     Acc_CostCentreTrans = _api.Format(Acc_CostCentreTrans, "costCenterTrans");
                     dt.Tables.Add(Acc_CostCentreTrans);
+
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_PurchaseID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_PurchaseID"].ToString()), this.FormID, myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                    Attachments = _api.Format(Attachments, "attachments");
+                    dt.Tables.Add(Attachments);
 
                     dt.Tables.Add(Details);
                     dt.Tables.Add(Master);
