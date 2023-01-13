@@ -556,7 +556,7 @@ namespace SmartxAPI.Controllers
             int nCompanyId=myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
             
-            sqlCommandText = "select N_CompanyID,N_AcYearID,X_FeeDescription,N_Amount,N_DiscountAmt,N_FeeCodeID,N_FrequencyID,N_Frequency,N_Installment from vw_SchStudentFee where N_CompanyID=@p1 and N_AcYearID=@p2 and N_ClassID=@p3 and N_StudentTypeID=@p4 order by N_Sort ASC";
+            sqlCommandText = "select N_CompanyID,N_AcYearID,X_FeeDescription,N_Amount,N_DiscountAmt,N_FeeCodeID,N_FrequencyID,N_Frequency,N_Installment from vw_SchStudentFee where N_CompanyID=@p1 and N_AcYearID=@p2 and N_ClassID=@p3 and N_StudentTypeID=@p4";
             
             Params.Add("@p1", nCompanyId);  
             Params.Add("@p2", nAcYearID);
