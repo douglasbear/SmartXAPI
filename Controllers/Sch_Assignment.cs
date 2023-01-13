@@ -118,7 +118,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult BusRegDetails(string xAssignmentCode,int nFnYearID)
+        public ActionResult BusRegDetails(string xAssignmentCode,int nFnYearID,int nClassID)
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
@@ -129,6 +129,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyId);  
             Params.Add("@p2", xAssignmentCode);
              Params.Add("@nFnYearID", nFnYearID);
+              Params.Add("@nClassID", nClassID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
