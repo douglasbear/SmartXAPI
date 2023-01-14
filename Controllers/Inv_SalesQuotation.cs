@@ -366,6 +366,23 @@ namespace SmartxAPI.Controllers
                         Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Invoice Processed");
                     }
 
+
+                    object objxDraftSalesNo = myFunctions.checkDraftProcessed("Inv_Sales", "X_ReceiptNo", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=1", Params, dLayer, connection);
+                    if (objxDraftSalesNo.ToString() != "")
+                    {
+                        Master.Rows[0]["B_SalesProcessed"] = 1;
+                        Master.Rows[0]["X_SalesReceiptNo"] = objxDraftSalesNo;
+                        if (Master.Columns.Contains("TxnStatus"))
+                            Master.Columns.Remove("TxnStatus");
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Invoice Processed");
+                    }
+
+
+
+
+
+
+
                     }
                   
 
@@ -377,7 +394,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nDefSPriceID", N_DefSPriceID);
                     Params.Add("@dQuotationDate", myFunctions.getDateVAL(quotationDate));
                     // string sqlCommandText2 = "Select *,dbo.SP_GenGetStock(vw_InvQuotationDetails.N_ItemID,@nLocationID,'','location') As N_Stock ,dbo.[SP_Stock](vw_InvQuotationDetails.N_ItemID) As N_StockAll ,dbo.SP_Cost(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID,'') As N_LPrice,dbo.SP_SellingPrice(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID) As N_SPrice,dbo.SP_SellingPrice_Select(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID,@nDefSPriceID,@nBranchID) As N_UnitSPrice,dbo.SP_GetQuotationCount(@nCompanyID,vw_InvQuotationDetails.N_ItemID,@dQuotationDate) As QuotedQty  from vw_InvQuotationDetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nQuotationID";
-                    string sqlCommandText2 = "Select *,dbo.SP_SellingPrice(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID) As N_SPrice,dbo.SP_SellingPrice_Select(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID,@nDefSPriceID,@nBranchID) As N_UnitSPrice,dbo.SP_GenGetStock(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_LocationID,'', 'location') As n_Stock  from vw_InvQuotationDetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nQuotationID";
+                    string sqlCommandText2 = "Select *,dbo.SP_SellingPrice(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID) As N_SPrice,dbo.SP_SellingPrice_Select(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID,@nDefSPriceID,@nBranchID) As N_UnitSPrice,dbo.SP_GenGetStock(vw_InvQuotationDetails.N_ItemID,@nLocationID,'', 'location') As n_Stock  from vw_InvQuotationDetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nQuotationID";
                     if (n_OpportunityID > 0)
                         sqlCommandText2 = "select * from vw_OpportunityToQuotationDetails Where N_CompanyID=@nCompanyID and n_OpportunityID=" + n_OpportunityID;
                     if (n_RFQDecisionID > 0)
@@ -542,11 +559,37 @@ namespace SmartxAPI.Controllers
                     // Auto Gen
                     string QuotationNo = MasterTable.Rows[0]["x_QuotationNo"].ToString();
                     DataRow Master = MasterTable.Rows[0];
+                   if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_QuotationDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                  {
+                   object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_QuotationDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                  if (DiffFnYearID != null)
+                   {
+                    MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                    N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                  
+                  }
+                  else
+                  {
+                    // transaction.Rollback();
+                    // return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                    // Result.Add("b_IsCompleted", 0);
+                    // Result.Add("x_Msg", "Transaction date must be in the active Financial Year.");
+                      return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                   }
+                  }
+                 object B_YearEndProcess=dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_QuotationDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                if(myFunctions.getBoolVAL(B_YearEndProcess.ToString()))
+                {
+                     return Ok(_api.Error(User, "Year Closed"));
+                }
 
                     SortedList CustParams = new SortedList();
                     CustParams.Add("@nCompanyID", N_CompanyID);
                     CustParams.Add("@nFnYearID", N_FnYearID);
                     object objCustName;
+
+                  
+
                     if (N_CrmCompanyID > 0)
                     {
                         CustParams.Add("@N_CRMCustomerID", N_CrmCompanyID);

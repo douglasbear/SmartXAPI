@@ -507,10 +507,18 @@ namespace SmartxAPI.Controllers
                             PostingParams.Add("N_InternalID", N_VoucherID);
                             PostingParams.Add("N_UserID", nUserId);
                             PostingParams.Add("X_SystemName", "ERP Cloud");
+                            try
+                            {
                             object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
                             }
-                        
-                            transaction.Commit();
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                if (ex.Message == "51")
+                                    return Ok(api.Error(User, "Year Closed"));
+                                else return Ok(api.Error(User, ex));
+                            }
+                            }
                         }
                         
                         else
@@ -538,6 +546,7 @@ namespace SmartxAPI.Controllers
                         }
                     //return Ok(api.Success("Data Saved"));
                     // return Ok(api.Success("Data Saved" + ":" + xVoucherNo));
+                    transaction.Commit();
                     SortedList Result = new SortedList();
                     Result.Add("n_VoucherID", N_VoucherID);
                     Result.Add("x_POrderNo", xVoucherNo);

@@ -34,7 +34,7 @@ namespace SmartxAPI.Controllers
 
         //Filling Fee schedules from Sch_Sales
         [HttpGet("feeSchedules")]
-        public ActionResult FeeScheduleFilling(int n_BranchID, int N_LocationID,int N_FnYearID , DateTime d_Date)
+        public ActionResult FeeScheduleFilling(int n_BranchID, int N_LocationID,int N_FnYearID , DateTime d_Date,string xSortBy)
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
@@ -44,6 +44,10 @@ namespace SmartxAPI.Controllers
 
             if(d_Date!=null)
                 sqlCondition= " and Sch_Sales.D_SalesDate <= @d_Date";
+
+                if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by Invoice_Date";
+
 
             string sqlCommandText = "SELECT     Sch_Sales.D_SalesDate AS Invoice_Date, ROW_NUMBER() over(order by Sch_Sales.N_SalesID)+(select ISNULL(MAX(N_SalesID),0) from Inv_Sales where N_CompanyID=@N_CompanyID) AS Invoice_Number, "+
 				                            " Inv_Customer.X_CustomerName AS Customer_Name,vw_InvItemMaster.X_ItemName AS Item_Name,vw_InvItemMaster.X_ItemUnit AS unit,1 AS Qty,Sch_Sales.N_SalesAmt AS Price,'' AS Tax_Perc,Sch_Sales.N_DiscountAmt AS Discount, "+
@@ -58,7 +62,7 @@ namespace SmartxAPI.Controllers
 					                        " Sch_Admission ON Sch_Admission.N_CompanyID=Sch_Sales.N_CompanyId AND Sch_Admission.N_AcYearID=Sch_Sales.N_FnYearId AND Sch_Admission.N_CustomerID=Sch_Sales.N_CustomerID INNER JOIN "+						                    
 						                    " Sch_Class ON Sch_Admission.N_CompanyID=Sch_Class.N_CompanyId AND Sch_Admission.N_ClassID=Sch_Class.N_ClassID INNER JOIN "+
 						                    " Sch_ClassDivision ON Sch_Admission.N_CompanyID=Sch_ClassDivision.N_CompanyID AND Sch_Admission.N_DivisionID=Sch_ClassDivision.N_ClassDivisionID"+
-	                                    " WHERE Sch_Sales.N_CompanyID=@N_CompanyID and Sch_Sales.N_FnYearID=@N_AcYearID and ISNULL(Sch_Sales.N_RefSalesID,0)=0 " + sqlCondition + "";
+	                                    " WHERE Sch_Sales.N_CompanyID=@N_CompanyID and Sch_Sales.N_FnYearID=@N_AcYearID and ISNULL(Sch_Sales.N_RefSalesID,0)=0 " + sqlCondition + "" + xSortBy+"";
 
             Params.Add("@N_CompanyID", nCompanyId);  
             Params.Add("@N_BranchID", n_BranchID);
@@ -105,6 +109,7 @@ namespace SmartxAPI.Controllers
                 int nUserID = myFunctions.GetUserID(User);
                 int nMigSalesID=0;
                 DateTime d_InvoiceDate = Convert.ToDateTime(MasterTable.Rows[0]["d_InvoiceDate"].ToString());
+                DateTime Invoice_Date = Convert.ToDateTime(MasterTable.Rows[0]["Invoice_Date"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -153,6 +158,107 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,ex));
             }
         }
+
+
+          [HttpGet("details")]
+        public ActionResult invoiceDetails(int nFnYearID,DateTime d_FromDate,DateTime d_ToDate)
+        {
+
+            DataTable details = new DataTable();
+
+            DataSet DS = new DataSet();
+            SortedList Params = new SortedList();
+            SortedList dParamList = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+
+           
+            string Detailssql = "Select * from vw_schInvoiceGeneration Where N_CompanyID = @p1 and N_FnYearId = @p2 and d_salesDate>= @d_FromDate and d_salesDate<= @d_ToDate and ISNULL(N_PayReceiptId,0)=0 ";
+
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearID);
+             Params.Add("@d_FromDate", d_FromDate);
+             Params.Add("@d_ToDate", d_ToDate);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    details = dLayer.ExecuteDataTable(Detailssql, Params, connection);
+
+                }
+                if(details.Rows.Count==0)
+                {
+                    return Ok(api.Success(details));
+                }
+                else
+                {
+                    return Ok(api.Success(details));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+
+
+        [HttpPost("delete")]
+        public ActionResult DeleteData([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable MasterTable;
+                     MasterTable = ds.Tables["details"];
+                     SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    int nUserID = myFunctions.GetUserID(User);
+                    int Results=0;
+                    //     if (ds.Rows.Count > 0)
+                    // {
+               
+
+                      foreach (DataRow deleteItem in MasterTable.Rows)
+                    {
+                        //    dLayer.ExecuteNonQuery("delete from  inv_salesDetails  where N_CompanyID=" + nCompanyID + " and N_SalesID=" + myFunctions.getIntVAL(deleteItem["n_SalesID"].ToString()) + "", connection, transaction); 
+                        // dLayer.ExecuteNonQuery("delete from  Inv_Sales  where N_CompanyID=" + nCompanyID + " and N_SalesID=" + myFunctions.getIntVAL(deleteItem["n_SalesID"].ToString()) + "",connection, transaction);
+                        dLayer.ExecuteNonQuery("update  sch_sales set N_RefSalesID=0 where N_CompanyID=" + nCompanyID + " and N_RefSalesID=" + myFunctions.getIntVAL(deleteItem["n_SalesID"].ToString()) + "", connection, transaction);
+
+                            SortedList DeleteParams = new SortedList(){
+                                        {"N_CompanyID",nCompanyID},
+                                        {"N_UserID",nUserID}, 
+                                        {"X_TransType","SALES"},
+                                        {"X_SystemName","WebRequest"},
+                                        {"N_VoucherID",myFunctions.getIntVAL(deleteItem["n_SalesID"].ToString())}}; 
+
+                                Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                                if (Results <= 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(api.Error(User, "Unable to delete sales Invoice"));
+                                }
+                    }
+                //    }
+
+                    Params.Add("@p1", nCompanyID);
+                    // Params.Add("@p2", nFnYearID);
+
+           
+                    
+                    transaction.Commit();
+                    return Ok(api.Success("Invoice Deleted"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(User, ex));
+            }
+
+        }
+     
 
            
       

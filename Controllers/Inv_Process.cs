@@ -56,9 +56,9 @@ namespace SmartxAPI.Controllers
             if (b_IsProcess == true)
             {
                 if (Count == 0)
-                    sqlCommandText = "select top(" + nSizeperpage + ")  * from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build' and  B_IsProcess=1  " + Searchkey;
+                    sqlCommandText = "select top(" + nSizeperpage + ")  * from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build' " + Searchkey;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build'  and  B_IsProcess=1 " + Searchkey + "and N_AssemblyID not in (select top(" + Count + ") N_AssemblyID from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build' ) " + Searchkey;
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build'" + Searchkey + "and N_AssemblyID not in (select top(" + Count + ") N_AssemblyID from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build' ) " + Searchkey;
 
             }
             else
@@ -325,6 +325,29 @@ namespace SmartxAPI.Controllers
 
                     SqlTransaction transaction = connection.BeginTransaction();
                     DocNo = MasterRow["X_ReferenceNo"].ToString();
+                  if (!myFunctions.CheckActiveYearTransaction(nCompanyID,nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_Date"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                 
+                  {
+                   object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_Date"].ToString() + "') between D_Start and D_End", connection, transaction);
+                  if (DiffFnYearID != null)
+                   {
+                     MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                    nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                   
+                  }
+                  else
+                  {
+                
+                      return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                   }
+                 }
+                 object B_YearEndProcess=dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID="+nCompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_Date"].ToString() + "') between D_Start and D_End", connection, transaction);
+                 if(myFunctions.getBoolVAL(B_YearEndProcess.ToString()))
+                 {
+                     return Ok(_api.Error(User, "Year Closed"));
+                 }
+
+
                     if (X_ReferenceNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
@@ -679,6 +702,29 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
 
+            //  if (!myFunctions.CheckActiveYearTransaction(nCompanyID,nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["d_ReleaseDate"].ToString()), dLayer, connection, transaction))
+            //       {
+            //        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyID+" and convert(date ,'" + MasterTable.Rows[0]["d_ReleaseDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+            //       if (DiffFnYearID != null)
+            //        {
+            //          MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+            //         nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                   
+            //       }
+            //       else
+            //       {
+                
+            //           return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+            //        }
+            //      }
+            //      object B_YearEndProcess=dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID="+nCompanyID+" and convert(date ,'" + MasterTable.Rows[0]["d_ReleaseDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+            //      if(myFunctions.getBoolVAL(B_YearEndProcess.ToString()))
+            //      {
+            //          return Ok(_api.Error(User, "Year Closed"));
+            //      }
+
+
+
                     if (!B_IsProcess)
                     {
                         object result = dLayer.ExecuteScalar("[SP_BuildorUnbuild] 'deleteAdd'," + n_AssemblyID.ToString() + "," + N_locationID.ToString() + ",'PRODUCTION RELEASE'", connection, transaction);
@@ -710,7 +756,7 @@ namespace SmartxAPI.Controllers
                         return Ok("Unable to save");
 
                     }
-                    string qry1 = "update Inv_AssemblyDetails set B_IsProcess=0  where N_AssemblyID=" + n_AssemblyID + " and N_CompanyID=" + nCompanyID;
+                    string qry1 = "update Inv_AssemblyDetails set B_IsProcess=0  where N_AssemblyID=" + n_AssemblyID + " and N_CompanyID=" + nCompanyID ;
                     object Result1 = dLayer.ExecuteNonQuery(qry1, Params, connection, transaction);
                     if (myFunctions.getIntVAL(Result1.ToString()) <= 0)
                     {

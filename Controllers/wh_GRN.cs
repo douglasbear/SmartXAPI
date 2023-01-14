@@ -260,8 +260,6 @@ namespace SmartxAPI.Controllers
 
                     if (nGrnID > 0)
                     {
-
-
                         SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
                                 {"X_TransType","WHGRN"},
@@ -351,13 +349,13 @@ namespace SmartxAPI.Controllers
                         StockPosting.Add("X_SystemName", "ERP Cloud");
                         dLayer.ExecuteNonQueryPro("[SP_Inv_AllocateNegStock_WHGRN]", StockPosting, connection, transaction);
 
-                        // SortedList PostingParam = new SortedList();
-                        // PostingParam.Add("N_CompanyID", nCompanyID);
-                        // PostingParam.Add("X_InventoryMode", "GRN");
-                        // PostingParam.Add("N_InternalID", nGrnID);
-                        // PostingParam.Add("N_UserID", N_UserID);
-                        // PostingParam.Add("X_SystemName", "ERP Cloud");
-                        // dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
+                        SortedList PostingParam = new SortedList();
+                        PostingParam.Add("N_CompanyID", nCompanyID);
+                        PostingParam.Add("X_InventoryMode", "GRN");
+                        PostingParam.Add("N_InternalID", nGrnID);
+                        PostingParam.Add("N_UserID", N_UserID);
+                        PostingParam.Add("X_SystemName", "ERP Cloud");
+                        dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
                     }
                     catch (Exception ex)
                     {

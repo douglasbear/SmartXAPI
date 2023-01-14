@@ -365,8 +365,11 @@ namespace SmartxAPI.Controllers
 
                         return Ok(_api.Error(User, ex));
                     }
+                    SortedList Result = new SortedList();
+                        Result.Add("N_PurchaseID", nPurchaseID);
+                        Result.Add("x_InvoiceNo", X_InvoiceNo);
                     transaction.Commit();
-                    return Ok(_api.Success("Successfully saved"));
+                    return Ok(_api.Success(Result,"Successfully saved"));
                 }
             }
             catch (Exception ex)
@@ -424,6 +427,20 @@ namespace SmartxAPI.Controllers
                     {
                          Master.Rows[0]["IsReturnDone"] = false;
                     }
+
+                    object count = dLayer.ExecuteScalar("select count(*) from Inv_Purchase where N_FreeTextReturnID =" + N_PurchaseID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "", Params, connection);
+
+                     if (myFunctions.getVAL(count.ToString())>0){
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "ReturnDone", typeof(bool), true);
+                     }
+                     else{
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "ReturnDone", typeof(bool), false);
+                     }
+
+                     object isReturn = dLayer.ExecuteScalar("select x_InvoiceNo from Inv_Purchase where N_FreeTextReturnID =" + N_PurchaseID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "", Params, connection);
+
+                      Master = myFunctions.AddNewColumnToDataTable(Master, "x_ReceiptNo", typeof(string), isReturn);
+
                     Master.AcceptChanges();
 
 
@@ -506,10 +523,10 @@ namespace SmartxAPI.Controllers
                     if (Results <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to delete Purchase"));
+                        return Ok(_api.Error(User, "Unable to delete Free text Purchase"));
                     }
                     transaction.Commit();
-                    return Ok(_api.Success(" Purchase deleted"));
+                    return Ok(_api.Success("Free text Purchase deleted"));
                 }
             }
             catch (Exception ex)
