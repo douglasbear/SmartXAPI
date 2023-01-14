@@ -295,7 +295,7 @@ namespace SmartxAPI.Controllers
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from Gen_ApprovalCodes where N_CompanyID=@p1 " + Searchkey +" "+ xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Gen_ApprovalCodes where N_CompanyID=@p1 " + Searchkey +" and  N_ApprovalID not in (select top(" + Count + ") N_ApprovalID from Gen_ApprovalCodes  where N_CompanyID=@p1) "  + Searchkey +" "+ xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Gen_ApprovalCodes where N_CompanyID=@p1 " + Searchkey +" and  N_ApprovalID not in (select top(" + Count + ") N_ApprovalID from Gen_ApprovalCodes  where N_CompanyID=@p1 " +Searchkey + xSortBy + ") "  + Searchkey +" "+ xSortBy;
 
             Params.Add("@p1", nCompanyId);
             // Params.Add("@nFnYearId", nFnYearId);
