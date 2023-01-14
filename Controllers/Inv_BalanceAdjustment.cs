@@ -330,14 +330,34 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                     }
                     else
                     {
-                        SortedList PostingParams = new SortedList(){
+                        try
+                        {
+                            SortedList PostingParams = new SortedList(){
                                 {"N_CompanyID",N_CompanyID},
                                 {"X_InventoryMode",X_Trasnaction},
                                 {"N_InternalID",N_AdjustmentID},
                                 {"N_UserID",myFunctions.GetUserID(User)}
                                 };
                             dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
-                            
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            if (ex.Message == "50")
+                                return Ok(_api.Error(User, "Day Closed"));
+                            else if (ex.Message == "51")
+                                return Ok(_api.Error(User, "Year Closed"));
+                            else if (ex.Message == "52")
+                                return Ok(_api.Error(User, "Year Exists"));
+                            else if (ex.Message == "53")
+                                return Ok(_api.Error(User, "Period Closed"));
+                            else if (ex.Message == "54")
+                                return Ok(_api.Error(User, "Wrong Txn Date"));
+                            else if (ex.Message == "55")
+                                return Ok(_api.Error(User, "Quantity exceeds!"));
+                            else
+                                return Ok(_api.Error(User, ex));
+                        }
                         transaction.Commit();
                     }
                        SortedList Result = new SortedList();
