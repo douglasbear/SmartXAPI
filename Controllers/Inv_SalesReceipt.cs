@@ -893,7 +893,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete()]
-        public ActionResult DeleteData(int nPayReceiptId, string xType, int nFnYearID, int nCompanyID, string comments)
+        public ActionResult DeleteData(int nPayReceiptId, string xType, int nFnYearID, int nCompanyID, string comments, int nFormID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             try
@@ -993,17 +993,20 @@ namespace SmartxAPI.Controllers
                             }
                         }
                         transaction.Commit();
-                        return Ok(api.Success("Sales Receipt " + status + " Successfully"));
+                        if (nFormID == 66)
+                            return Ok(api.Success("Sales Receipt " + status + " Successfully"));
+                        else
+                            return Ok(api.Success("Fee Payment " + status + " Successfully"));
                     }
                     else
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User, "Unable to delete Sales Receipt"));
+                        return Ok(api.Error(User, "Unable to Delete "));
                     }
 
                 }
 
-                return Ok(api.Success("Unable to Delete Sales Receipt "));
+                return Ok(api.Success("Unable to Delete "));
 
             }
             catch (Exception ex)
