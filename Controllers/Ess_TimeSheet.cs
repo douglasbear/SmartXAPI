@@ -138,10 +138,13 @@ namespace SmartxAPI.Controllers
                             days = DateTime.DaysInMonth(payDate.Year, payDate.Month) - myFunctions.getIntVAL(Periodvalue.ToString());
                             toDate = dtStartDate.AddDays(myFunctions.getIntVAL(days.ToString()) - 1);
                             int lastdays = myFunctions.getIntVAL(Periodvalue.ToString());
-                            fromDate = dtStartDate.AddDays(-lastdays);
+                            dDateFrom = dtStartDate.AddDays(-lastdays);
                         }
                     }
 
+                    //DateTime.ParseExact(fromDate.ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture).ToString("yyyy-MM-dd");
+                    //DateTime.ParseExact(toDate.ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture).ToString("yyyy-MM-dd");;
+                    //DateTime.ParseExact(fromDate(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
                     QueryParams.Add("N_CompanyID", companyid);
                     QueryParams.Add("N_FnYear", nFnYear);
                     QueryParams.Add("D_DateFrom", fromDate);
@@ -153,6 +156,10 @@ namespace SmartxAPI.Controllers
                     Master.Add("fromDate", fromDate);
                     Master.Add("toDate", toDate);
                     Master.Add("days", days);
+                    //DateTime.ParseExact(fromDate.ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture);
+            
+                    DateTime.ParseExact(fromDate.ToString(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+                    DateTime.ParseExact(toDate.ToString(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
                     Details = dLayer.ExecuteDataTablePro("SP_Pay_TimeSheet", QueryParams, connection);
 
 

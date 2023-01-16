@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetAdmissionList(int? nCompanyId, int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nRegID)
+        public ActionResult GetAdmissionList(int? nCompanyId, int nAcYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nRegID,int nInactive)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -62,12 +62,26 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
             }
 
+            if(nInactive==0){
+                if (Count == 0)
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchAdmission_Dashboard where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID and isNull(N_Inactive,0)=0 " + Searchkey + " " + xSortBy;
+                else
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchAdmission_Dashboard where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID and isNull(N_Inactive,0)=0 " + Searchkey + " and N_AdmissionID not in (select top(" + Count + ") N_AdmissionID from vw_SchAdmission where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID and isNull(N_Inactive,0)=0 " + xSortBy + " ) " + " " + xSortBy;
+            }        
+            else if(nInactive==2){
+                if (Count == 0)
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchAdmission_Dashboard where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID and isNull(N_Inactive,0)=2 " + Searchkey + " " + xSortBy;
+                else
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchAdmission_Dashboard where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID and isNull(N_Inactive,0)=2 " + Searchkey + " and N_AdmissionID not in (select top(" + Count + ") N_AdmissionID from vw_SchAdmission where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID and isNull(N_Inactive,0)=2 " + xSortBy + " ) " + " " + xSortBy;
+            }        
+            else{
+                if (Count == 0)
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchAdmission_Dashboard where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID and isNull(N_Inactive,0)=1 " + Searchkey + " " + xSortBy;
+                else
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchAdmission_Dashboard where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID and isNull(N_Inactive,0)=1 " + Searchkey + " and N_AdmissionID not in (select top(" + Count + ") N_AdmissionID from vw_SchAdmission where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID and isNull(N_Inactive,0)=1 " + xSortBy + " ) " + " " + xSortBy;
+            }  
 
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchAdmission_Dashboard where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID and isNull(N_Inactive,0)=0 " + Searchkey + " " + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SchAdmission_Dashboard where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID and isNull(N_Inactive,0)=0 " + Searchkey + " and N_AdmissionID not in (select top(" + Count + ") N_AdmissionID from vw_SchAdmission where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID and isNull(N_Inactive,0)=0 " + xSortBy + " ) " + " " + xSortBy;
-
+       
             Params.Add("@nCompanyId", nCompanyID);
             Params.Add("@nAcYearID", nAcYearID);
 
@@ -85,7 +99,8 @@ namespace SmartxAPI.Controllers
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(api.Warning("No Results Found"));
+                        //return Ok(api.Warning("No Results Found"));
+                        return Ok(api.Success(OutPut));
                     }
                     else
                     {

@@ -149,7 +149,7 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQueryPro("[SP_StudentAdmFee_InvoiceGenerate]", InsertParam, connection, transaction);
 
                         transaction.Commit();
-                        return Ok(api.Success("Course Created"));
+                        return Ok(api.Success("Invoice Successfully Generated"));
                     }
                 }
             }
