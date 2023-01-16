@@ -697,6 +697,7 @@ namespace SmartxAPI.Controllers
                     string nStatus = DetailTable.Rows[0]["N_Status"].ToString();
                     int masterStatus = myFunctions.getIntVAL(DetailTable.Rows[0]["N_Status"].ToString());
                     int nParentyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ParentID"].ToString());
+                    double n_UsedWorkHours = myFunctions.getVAL(DetailTable.Rows[0]["n_UsedWorkHours"].ToString());
                     double n_WeightPercentage = myFunctions.getVAL(MasterTable.Rows[0]["n_WeightPercentage"].ToString());
                     double workPercentage = myFunctions.getIntVAL(DetailTable.Rows[0]["x_WorkPercentage"].ToString());
                     double TaskPercentage = 0.00;
@@ -704,6 +705,10 @@ namespace SmartxAPI.Controllers
                     if (DetailTable.Columns.Contains("x_WorkPercentage"))
                     {
                         DetailTable.Columns.Remove("x_WorkPercentage");
+                    }
+                      if (DetailTable.Columns.Contains("n_UsedWorkHours"))
+                    {
+                        DetailTable.Columns.Remove("n_UsedWorkHours");
                     }
                     //Percentage Calculation
 
@@ -790,11 +795,20 @@ namespace SmartxAPI.Controllers
                     }
                     else if (nStatus == "4" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() != DetailTable.Rows[0]["N_SubmitterID"].ToString()))
                     {
+                        if (n_UsedWorkHours>0)
+                        {
+                          DetailTable.Rows[0]["N_UsedTime"] = n_UsedWorkHours;
+                        }
+                      
                         DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_SubmitterID"].ToString();
 
                     }
                     if (nStatus == "4" && (DetailTable.Rows[0]["N_SubmitterID"].ToString() == DetailTable.Rows[0]["N_ClosedUserID"].ToString()))
                     {
+                        if (n_UsedWorkHours>0)
+                        {
+                          DetailTable.Rows[0]["N_UsedTime"] = n_UsedWorkHours;
+                        }
                         masterStatus = 9;
                     }
 
@@ -867,7 +881,7 @@ namespace SmartxAPI.Controllers
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET x_SolutionNotes='" + MasterTable.Rows[0]["x_SolutionNotes"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     if (MasterTable.Columns.Contains("N_WorkHours"))
                     {
-                        if (myFunctions.getIntVAL(MasterTable.Rows[0]["N_WorkHours"].ToString()) > 0)
+                        if (myFunctions.getVAL(MasterTable.Rows[0]["N_WorkHours"].ToString()) > 0)
                         {
                             dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_WorkHours=" + MasterTable.Rows[0]["N_WorkHours"] + " where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
 
