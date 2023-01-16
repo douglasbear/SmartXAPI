@@ -821,7 +821,8 @@ namespace SmartxAPI.Controllers
                     dtPayment = dLayer.ExecuteDataTable(qry1, QueryParamsList, Con);
                     string InvoiceNos = "";
                     foreach (DataRow var in dtPayment.Rows)
-                        InvoiceNos += var["X_VoucherNo"].ToString() + " , ";
+                        // InvoiceNos += var["X_VoucherNo"].ToString() + " , ";
+                        InvoiceNos += var["X_VoucherNo"].ToString();
                     myFunctions.AddNewColumnToDataTable(masterTable, "X_SalesReceiptNos", typeof(string), InvoiceNos);
 
 

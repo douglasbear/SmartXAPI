@@ -393,6 +393,8 @@ namespace SmartxAPI.Controllers
             {
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
+                
+                nCompanyID = myFunctions.GetCompanyID(User);
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nFnYearID", nFnYearID);
                 QueryParams.Add("@nFormID", 52);
@@ -406,7 +408,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Year is closed, Cannot create new Vendor..."));
 
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Inv_Vendor", "N_VendorID", nVendorID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Inv_Vendor", "N_VendorID", nVendorID, "N_CompanyID="+nCompanyID, connection, transaction);
                     myAttachments.DeleteAttachment(dLayer, 1, 0, nVendorID, nFnYearID, this.FormID, User, transaction, connection);
                     transaction.Commit();
                 }
