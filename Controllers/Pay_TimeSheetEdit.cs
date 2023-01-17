@@ -57,9 +57,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ")  * from vw_TimeSheetEntry where N_CompanyID=@p1  " + Searchkey;
+                sqlCommandText = "select top(" + nSizeperpage + ")  * from vw_TimeSheetEntry where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_TimeSheetEntry where N_CompanyID=@p1 " + Searchkey + "and N_TimeSheetID not in (select top(" + Count + ") N_TimeSheetID from vw_TimeSheetEntry where N_CompanyID=@p1 ) " + Searchkey;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_TimeSheetEntry where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "and N_TimeSheetID not in (select top(" + Count + ") N_TimeSheetID from vw_TimeSheetEntry where N_CompanyID=@p1 and N_FnYearID=@p2 ) " + Searchkey;
 
 
             SortedList OutPut = new SortedList();
@@ -243,9 +243,9 @@ namespace SmartxAPI.Controllers
 
 
                     if (b_AllBranchData == true)
-                        empSql = "select N_CompanyID,N_FnYearID,N_EmpId,X_EmpCode,X_EmpName,X_DepartMent,X_Position,N_PositionID,N_DepartmentID,N_CatagoryID AS N_CatID from vw_PayEmployee where isnull(B_ExcludeInAttendance,0)=0 and  N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_HireDate<='" + dtpSalaryToDate + "' and ISNULL(D_TerminationDate,GETDATE())>='" + dtpSalaryFromdate + "' and N_EmpID NOT IN (select N_EmpID from Pay_TimesheetEntryEmp where N_CompanyID=" + nCompanyID + " and N_TimesheetID>0 and D_DateFrom<='" + dtpSalaryFromdate + "' and D_DateTo>='" + dtpSalaryToDate + "')  order by X_EmpCode";
+                        empSql = "select N_CompanyID,N_FnYearID,N_EmpId,X_EmpCode,X_EmpName,X_DepartMent,X_Position,N_PositionID,N_DepartmentID,N_CatagoryID AS N_CatID from vw_PayEmployee where isnull(B_ExcludeInAttendance,0)=0 and  N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_HireDate<='" + dtpSalaryToDate + "' and ISNULL(D_TerminationDate,'" + dtpSalaryFromdate + "')>='" + dtpSalaryFromdate + "' and N_EmpID NOT IN (select N_EmpID from Pay_TimesheetEntryEmp where N_CompanyID=" + nCompanyID + " and N_TimesheetID>0 and D_DateFrom<='" + dtpSalaryFromdate + "' and D_DateTo>='" + dtpSalaryToDate + "')  order by X_EmpCode";
                     else
-                        empSql = "select N_CompanyID,N_FnYearID,N_EmpId,X_EmpCode,X_EmpName,X_DepartMent,X_Position,N_PositionID,N_DepartmentID,N_CatagoryID AS N_CatID from vw_PayEmployee where isnull(B_ExcludeInAttendance,0)=0 and  N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_HireDate<='" + dtpSalaryToDate + "' and N_BranchID=" + nBranchID + "  and ISNULL(D_TerminationDate,GETDATE())>='" + dtpSalaryFromdate + "' and N_EmpID NOT IN (select N_EmpID from Pay_TimesheetEntryEmp where N_CompanyID=" + nCompanyID + " and N_TimesheetID>0 and D_DateFrom<='" + dtpSalaryFromdate + "' and D_DateTo>='" + dtpSalaryToDate + "') order by X_EmpCode";
+                        empSql = "select N_CompanyID,N_FnYearID,N_EmpId,X_EmpCode,X_EmpName,X_DepartMent,X_Position,N_PositionID,N_DepartmentID,N_CatagoryID AS N_CatID from vw_PayEmployee where isnull(B_ExcludeInAttendance,0)=0 and  N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_HireDate<='" + dtpSalaryToDate + "' and N_BranchID=" + nBranchID + "  and ISNULL(D_TerminationDate,'" + dtpSalaryFromdate + "')>='" + dtpSalaryFromdate + "' and N_EmpID NOT IN (select N_EmpID from Pay_TimesheetEntryEmp where N_CompanyID=" + nCompanyID + " and N_TimesheetID>0 and D_DateFrom<='" + dtpSalaryFromdate + "' and D_DateTo>='" + dtpSalaryToDate + "') order by X_EmpCode";
 
                     EmpTable = dLayer.ExecuteDataTable(empSql, Params, connection);
                     if (EmpTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
