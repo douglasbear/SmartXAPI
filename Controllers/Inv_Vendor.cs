@@ -473,7 +473,8 @@ namespace SmartxAPI.Controllers
                           
                         }
 
-                          object VendorCount = dLayer.ExecuteScalar("select Isnull(Count(N_PurchaseID),0) from Inv_Purchase where N_VendorID=@nVendorID and N_CompanyID=@p1", Params, connection);
+                          object VendorCount = dLayer.ExecuteScalar("select Isnull(Count(N_PurchaseID),0) from Inv_Purchase  INNER JOIN  Acc_FnYear ON Inv_Purchase.N_FnYearID = Acc_FnYear.N_FnYearID AND Inv_Purchase.N_CompanyID = Acc_FnYear.N_CompanyID  where Inv_Purchase.N_VendorID=@nVendorID and Inv_Purchase.N_CompanyID=@p1 and ISNULL(Acc_FnYear.B_PreliminaryYear,0)=0", Params, connection);
+                    
                           object vendorCounts = dLayer.ExecuteScalar("select Isnull(Count(N_PayReceiptId),0) from Inv_PayReceipt where N_PartyID=@nVendorID and N_CompanyID=@p1", Params, connection);
 
                          if (myFunctions.getIntVAL(VendorCount.ToString()) > 0 || myFunctions.getIntVAL(vendorCounts.ToString()) > 0)
