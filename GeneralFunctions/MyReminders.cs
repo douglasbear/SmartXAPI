@@ -111,15 +111,15 @@ namespace SmartxAPI.GeneralFunctions
             }
             return 0;
         }
-        public  void ReminderDelete(IDataAccessLayer dLayer, int ReminderID,SqlConnection connection, SqlTransaction transaction)
+        public  void ReminderDelete(IDataAccessLayer dLayer, int ReminderID, int nCompanyID,SqlConnection connection, SqlTransaction transaction)
         {
-            dLayer.DeleteData("Gen_Reminder", "N_ReminderId", ReminderID, "N_ReminderId=" + ReminderID.ToString() + " and N_CompanyID=" + myCompanyID._CompanyID ,connection, transaction);
+            dLayer.DeleteData("Gen_Reminder", "N_ReminderId", ReminderID, "N_ReminderId=" + ReminderID.ToString() + " and N_CompanyID=" +nCompanyID ,connection, transaction);
         }
-        public  void ReminderDelete(IDataAccessLayer dLayer, int PartyID,int FormID,SqlConnection connection, SqlTransaction transaction)
+        public  void ReminderDelete(IDataAccessLayer dLayer, int PartyID,int FormID,int nCompanyID,SqlConnection connection, SqlTransaction transaction)
         {
             dLayer.ExecuteNonQuery("delete from Gen_Reminder where N_FormID=" + FormID + " and N_PartyID=" + PartyID + " and N_CompanyID=" + myCompanyID._CompanyID + " and B_IsAttachment=0",connection, transaction);
         }
-        public  void ReminderDelete(IDataAccessLayer dLayer, int PartyID, int FormID,int settingsid,SqlConnection connection, SqlTransaction transaction)
+        public  void ReminderDelete(IDataAccessLayer dLayer, int PartyID, int FormID,int nCompanyID,int settingsid,SqlConnection connection, SqlTransaction transaction)
         {
             dLayer.ExecuteNonQuery("delete from Gen_Reminder where N_FormID=" + FormID + " and N_PartyID=" + PartyID + " and N_CompanyID=" + myCompanyID._CompanyID + " and B_IsAttachment=1 and N_SettingsID="+ settingsid ,connection, transaction);
         }
@@ -129,9 +129,9 @@ namespace SmartxAPI.GeneralFunctions
         public void ReminderSet(IDataAccessLayer dLayer,int settingsID, int partyId, string dateval,int formId,int UserID, ClaimsPrincipal User, SqlConnection connection, SqlTransaction transaction);
         public  DataSet ReminderSettings(IDataAccessLayer dLayer, int settingsID,int formId, ClaimsPrincipal User, SqlConnection connection, SqlTransaction transaction);
         public int ReminderSave(IDataAccessLayer dLayer,  DataTable dsAttachment, SqlConnection connection, SqlTransaction transaction);
-        public  void ReminderDelete(IDataAccessLayer dLayer, int ReminderID,SqlConnection connection, SqlTransaction transaction);
-        public  void ReminderDelete(IDataAccessLayer dLayer, int PartyID,int FormID,SqlConnection connection, SqlTransaction transaction);
-        public  void ReminderDelete(IDataAccessLayer dLayer, int PartyID, int FormID,int settingsid,SqlConnection connection, SqlTransaction transaction);
+        public  void ReminderDelete(IDataAccessLayer dLayer, int ReminderID,int nCompanyID,SqlConnection connection, SqlTransaction transaction);
+        public  void ReminderDelete(IDataAccessLayer dLayer, int PartyID,int FormID,int nCompanyID,SqlConnection connection, SqlTransaction transaction);
+        public  void ReminderDelete(IDataAccessLayer dLayer, int PartyID, int FormID,int nCompanyID,int settingsid,SqlConnection connection, SqlTransaction transaction);
     
     }
 }
