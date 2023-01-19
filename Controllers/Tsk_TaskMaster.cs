@@ -1152,11 +1152,9 @@ namespace SmartxAPI.Controllers
             int N_UserID = myFunctions.GetUserID(User);
             int nCompanyId = myFunctions.GetCompanyID(User);
             DateTime datetime = DateTime.Now;
-            string x_SubjectClosed="";
-            string x_SubjectCompleted="";
-            string x_SubjectSubmitted="";
+            string X_Body="";
             int N_StatusID=0;
-            string sqlCommandText = "select * from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyId + " and N_CreaterID=" + N_UserID + " and  N_Status in(4,5,9) and Cast(D_EntryDate as DATE) =  Cast('" + datetime + "' as DATE)";
+            string sqlCommandText = "select * from vw_TaskDetailsRPT where N_CompanyID=" + nCompanyId + " and N_AssigneeID=" + N_UserID + " and Cast(D_EntryDate as DATE) =  Cast('" + datetime + "' as DATE) and N_CompletedPercentage>0";
             string sqlmailData = "select * from Gen_MailTemplates where N_CompanyID=" + nCompanyId + " and x_templatename='Daily Task'";
 
             try
@@ -1171,25 +1169,22 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        double TotalWorkHrs=0;
                         MailData = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                         foreach(DataRow dr in MailData.Rows)
                         {
-                            N_StatusID=myFunctions.getIntVAL(dr["N_Status"].ToString());
-                            if(N_StatusID==4)
-                                x_SubjectCompleted=x_SubjectCompleted+"*"+dr["x_tasksummery"]+"<br>";
-                                else if(N_StatusID==9)
-                                x_SubjectSubmitted=x_SubjectSubmitted+"*"+dr["x_tasksummery"]+"<br>";
-                                else if(N_StatusID==5)
-                                x_SubjectClosed=x_SubjectClosed+"*"+dr["x_tasksummery"]+"<br>";
+                           
+                                X_Body=X_Body+"*"+dr["X_TaskSummery"] + "- "+dr["N_CompletedPercentage"]+"%<br>";
+                                X_Body=X_Body + dr["N_WorkedTime"] + " Hrs ("+dr["N_WorkHours"]+" Hrs)<br>";
+                                TotalWorkHrs=TotalWorkHrs+ myFunctions.getVAL(dr["N_WorkedTime"].ToString());
                         }
+                        X_Body=X_Body + "<br>Total hours Worked : " + TotalWorkHrs + " Hrs";
                         string x_body=(MasterTable.Rows[0]["x_body"]).ToString();
-                        x_body= x_body.Replace("@Submitted",x_SubjectCompleted);
-                        x_body= x_body.Replace("@Completed",x_SubjectCompleted);
-                        x_body=x_body.Replace("@Closed",x_SubjectClosed);
-                        x_body=x_body.Replace("@Date",datetime.ToString("dd-MM-yyyy"));
+                        x_body= x_body.Replace("@Body",X_Body);                      
+                        x_body= x_body.Replace("@Date",datetime.ToString("dd-MM-yyyy"));                      
                         MasterTable.Rows[0]["x_body"]=x_body;
                         string x_Subject=(MasterTable.Rows[0]["x_Subject"]).ToString();
-                        x_Subject=x_Subject.Replace("@Month",datetime.ToString("MMMM"));
+                        x_Subject=x_Subject.Replace("@Month",datetime.ToString("MMM").ToUpper());
                         MasterTable.Rows[0]["x_Subject"]=x_Subject;
 
 
