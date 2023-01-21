@@ -158,8 +158,8 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string Code = "";
-                    var values = MasterTable.Rows[0]["X_RegistrationCode"].ToString();
-                    if (values == "@Auto")
+                    var xRegistrationCode = MasterTable.Rows[0]["X_RegistrationCode"].ToString();
+                    if (xRegistrationCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                          Params.Add("N_YearID", nFnYearId);
@@ -245,7 +245,10 @@ namespace SmartxAPI.Controllers
                     }
 
                     transaction.Commit();
-                    return Ok(api.Success("Bus Registration Completed"));
+                    SortedList Result = new SortedList();
+                    Result.Add("n_RegistrationID", nRegistrationID);
+                    Result.Add("x_RegistrationCode", xRegistrationCode);
+                    return Ok(api.Success(Result, "Bus Registration Completed"));
 
                 }
             }

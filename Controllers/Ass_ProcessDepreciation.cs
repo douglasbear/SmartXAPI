@@ -116,7 +116,7 @@ namespace SmartxAPI.Controllers
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok();
+                        return Ok(_api.Success(OutPut));
                     }
                     else
                     {
