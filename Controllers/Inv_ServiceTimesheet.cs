@@ -252,10 +252,14 @@ namespace SmartxAPI.Controllers
                     DataTable ItemTable = new DataTable();
                     DataTable DetailTable = new DataTable();
                     DataTable ProcTable = new DataTable();
+                    SortedList DetailParams = new SortedList();
+                 
 
                     string Mastersql = "";
                     string Itemsql = "";
                     string DetailSql = "";
+
+                    
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     Params.Add("@xServiceSheetCode", xServiceSheetCode);
@@ -306,6 +310,23 @@ namespace SmartxAPI.Controllers
                             // }
                         }
                     }
+
+
+                    Object RSCount=dLayer.ExecuteScalar("select count(*) from Inv_Sales where N_ServiceSheetID="+nServiceSheetID+" and N_CompanyID="+ myFunctions.GetCompanyID(User), Params, connection);
+                    int nRSCount = myFunctions.getIntVAL(RSCount.ToString());
+                    if (nRSCount > 0)
+                    {
+                       
+                        if (MasterTable.Rows.Count > 0)
+                        {
+                            MasterTable.Columns.Add("b_RSProcessed");
+                            MasterTable.Rows[0]["b_RSProcessed"]=true;
+                            
+                          
+                        }
+
+
+                    }    
                     DetailTable = _api.Format(DetailTable, "Details");
 
                     dt.Tables.Add(MasterTable);
