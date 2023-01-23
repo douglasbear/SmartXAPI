@@ -37,7 +37,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
             string crieteria = "";
-              DayOfWeek dayOfWk = DateTime.Today.DayOfWeek;
+              DayOfWeek dayOfWk = dDate.DayOfWeek;
            
                      
          
@@ -102,13 +102,13 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("timeTable")]
-        public ActionResult GetTimeTableDetails(int nAcYearID,int nBranchID,bool bAllBranchData,int nTeacherID)
+        public ActionResult GetTimeTableDetails(int nAcYearID,int nBranchID,bool bAllBranchData,int nTeacherID,DateTime dDate)
         {
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
             string crieteria = "";
-            DayOfWeek dayOfWk = DateTime.Today.DayOfWeek;
+            DayOfWeek dayOfWk = dDate.DayOfWeek;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

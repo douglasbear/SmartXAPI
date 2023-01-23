@@ -222,6 +222,7 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nCurrencyId)
         {
              int Results=0;
+             int nCompanyId=myFunctions.GetCompanyID(User);
             try
             {
                                 using (SqlConnection connection = new SqlConnection(connectionString))

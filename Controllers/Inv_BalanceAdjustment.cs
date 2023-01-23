@@ -37,7 +37,7 @@ namespace SmartxAPI.Controllers
 
         //List
         [HttpGet("list")]
-        public ActionResult GetBalanceDetails(int nFnyearID, int nPartyType, int nPartyID, int N_TransType, int nPage, int nSizeperpage,string xSearchkey, string xSortBy,bool bAllBranchData,int nBranchID)
+        public ActionResult GetBalanceDetails(int nFnyearID, int nPartyType, int nPartyID, int N_TransType, int nPage, int nSizeperpage,string xSearchkey, string xSortBy,bool bAllBranchData,int nBranchID, int nFormID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -89,21 +89,22 @@ namespace SmartxAPI.Controllers
             if (Count == 0)
             {
                 if (nPartyType ==1)
-                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount],X_Notes,N_BillAmtF,X_CustomerName_Ar from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6  and N_TransType=@p4  and N_PartyType=@p5 " + Searchkey + " " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount],X_Notes,N_BillAmtF,X_CustomerName_Ar from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6  and N_TransType=@p4  and N_PartyType=@p5 and N_FormID=@p7 " + Searchkey + " " + xSortBy;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt as netAmount,X_Notes,X_VendorName_Ar from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6  and N_TransType=@p4  and N_PartyType=@p5 " + Searchkey + " " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt as netAmount,X_Notes,X_VendorName_Ar from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6  and N_TransType=@p4  and N_PartyType=@p5 and N_FormID=@p7 " + Searchkey + " " + xSortBy;
             }
             else
             {
                 if (nPartyType ==1)
-                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount],X_Notes,N_BillAmtF,X_CustomerName_Ar from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6  " + Searchkey + " and N_TransType=@p4  and N_PartyType=@p5 and [Invoice No] not in (select top(" + Count + ") [Invoice No] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 and N_TransType=@p4  and N_PartyType=@p5 " + xSortBy + " ) " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount],X_Notes,N_BillAmtF,X_CustomerName_Ar from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 and N_FormID=@p7  " + Searchkey + " and N_TransType=@p4  and N_PartyType=@p5 and [Invoice No] not in (select top(" + Count + ") [Invoice No] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 and N_TransType=@p4 and N_PartyType=@p5 and N_FormID=@p7 " + xSortBy + " ) " + xSortBy;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt as netAmount,X_Notes,X_VendorName_Ar from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 " + Searchkey + " and N_TransType=@p4  and N_PartyType=@p5 and [Invoice No] not in (select top(" + Count + ") [Invoice No] from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 and N_TransType=@p4  and N_PartyType=@p5 " + xSortBy + " ) " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt as netAmount,X_Notes,X_VendorName_Ar from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 and N_FormID=@p7 " + Searchkey + " and N_TransType=@p4  and N_PartyType=@p5 and [Invoice No] not in (select top(" + Count + ") [Invoice No] from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 and N_TransType=@p4 and N_PartyType=@p5 and N_FormID=@p7 " + xSortBy + " ) " + xSortBy;
             }
             Params.Add("@p1", nCompanyID);
             Params.Add("@p4", N_TransType);
             Params.Add("@p5", nPartyType);
             Params.Add("@p6", nFnyearID);
+            Params.Add("@p7", nFormID);
             SortedList OutPut = new SortedList();
 
             try
@@ -113,9 +114,9 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     if (nPartyType ==1)
-                        sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE([Net Amount],',','') as Numeric(10,2)) ) as TotalAmount from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6  and N_TransType=@p4 and N_PartyType=@p5 " + Searchkey + "";
+                        sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE([Net Amount],',','') as Numeric(10,2)) ) as TotalAmount from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6  and N_TransType=@p4 and N_PartyType=@p5 and N_FormID=@p7 " + Searchkey + "";
                     else
-                        sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(Netamt,',','') as Numeric(10,2)) ) as TotalAmount from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 and N_TransType=@p4 and N_PartyType=@p5 " + Searchkey + "";
+                        sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(Netamt,',','') as Numeric(10,2)) ) as TotalAmount from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 and N_TransType=@p4 and N_PartyType=@p5 and N_FormID=@p7 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount="0";
                     string TotalSum="0";
@@ -244,7 +245,10 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                     int N_TransType = myFunctions.getIntVAL(MasterRow["n_TransType"].ToString());
                     int N_PartyType = myFunctions.getIntVAL(MasterRow["n_PartyType"].ToString());
                     string X_Trasnaction = "";
-                    int N_FormID =0;
+                    int N_FormID = myFunctions.getIntVAL(MasterRow["n_FormID"].ToString());
+                    int N_IsImport = 0;
+
+                    if (N_FormID==1515) N_IsImport = 1;
 
                      if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_AdjustmentDate"].ToString(), "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
                     {
@@ -260,27 +264,6 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
                         }
-                    }
-
-
-
-                    if (N_PartyType == 0)//Vendor
-                    {
-                        if (N_TransType == 1)
-                            {X_Trasnaction = "VENDOR CREDIT NOTE";
-                            N_FormID=507;}
-                        else if (N_TransType == 0)
-                            {X_Trasnaction = "VENDOR DEBIT NOTE";
-                            N_FormID=508;}
-                    }
-                    if (N_PartyType == 1)//customer
-                    {
-                        if (N_TransType == 1)
-                           { X_Trasnaction = "CUSTOMER CREDIT NOTE";
-                            N_FormID=504;}
-                        else if (N_TransType == 0)
-                            {X_Trasnaction = "CUSTOMER DEBIT NOTE";
-                            N_FormID=505;}
                     }
 
                     // Auto Gen
@@ -330,18 +313,39 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                     }
                     else
                     {
-                        SortedList PostingParams = new SortedList(){
+                        try
+                        {
+                            SortedList PostingParams = new SortedList(){
                                 {"N_CompanyID",N_CompanyID},
                                 {"X_InventoryMode",X_Trasnaction},
                                 {"N_InternalID",N_AdjustmentID},
-                                {"N_UserID",myFunctions.GetUserID(User)}
+                                {"N_UserID",myFunctions.GetUserID(User)},
+                                {"N_IsImport",N_IsImport}
                                 };
                             dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
-                            
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            if (ex.Message == "50")
+                                return Ok(_api.Error(User, "Day Closed"));
+                            else if (ex.Message == "51")
+                                return Ok(_api.Error(User, "Year Closed"));
+                            else if (ex.Message == "52")
+                                return Ok(_api.Error(User, "Year Exists"));
+                            else if (ex.Message == "53")
+                                return Ok(_api.Error(User, "Period Closed"));
+                            else if (ex.Message == "54")
+                                return Ok(_api.Error(User, "Wrong Txn Date"));
+                            else if (ex.Message == "55")
+                                return Ok(_api.Error(User, "Quantity exceeds!"));
+                            else
+                                return Ok(_api.Error(User, ex));
+                        }
                         transaction.Commit();
                     }
                        SortedList Result = new SortedList();
-                       Result.Add("AdjustmentNo", AdjustmentNo);
+                       Result.Add("AdjustmentNo", MasterTable.Rows[0]["X_VoucherNo"] );
                        Result.Add("N_AdjustmentID", N_AdjustmentID);
                
                     return Ok(_api.Success(Result,"Adjustment saved" + ":" + N_AdjustmentID));

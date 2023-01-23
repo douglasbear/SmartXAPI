@@ -577,6 +577,7 @@ namespace SmartxAPI.Controllers
                     DataTable rentalItem = ds.Tables["segmentTable"];
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
+                            SortedList Result = new SortedList();
 
 
                     int n_SalesOrderId = myFunctions.getIntVAL(MasterRow["n_SalesOrderId"].ToString());
@@ -595,8 +596,30 @@ namespace SmartxAPI.Controllers
                     {
                         N_FormID = myFunctions.getIntVAL(MasterRow["N_FormID"].ToString());
                     }
-
-
+                   if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_OrderDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                  {
+                   object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_OrderDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                  if (DiffFnYearID != null)
+                   {
+                    MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                    N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                  
+                  }
+                  else
+                  {
+                    // transaction.Rollback();
+                    // return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                    // Result.Add("b_IsCompleted", 0);
+                    // Result.Add("x_Msg", "Transaction date must be in the active Financial Year.");
+                      return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                   }
+                 }
+                 MasterTable.AcceptChanges();
+                object B_YearEndProcess=dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_OrderDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                if(myFunctions.getBoolVAL(B_YearEndProcess.ToString()))
+                {
+                     return Ok(_api.Error(User, "Year Closed"));
+                }
                     if (x_OrderNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
@@ -834,7 +857,7 @@ namespace SmartxAPI.Controllers
 
 
                     transaction.Commit();
-                    SortedList Result = new SortedList();
+                    // SortedList Result = new SortedList();
                     Result.Add("n_SalesOrderID", n_SalesOrderId);
                     Result.Add("x_SalesOrderNo", x_OrderNo);
 

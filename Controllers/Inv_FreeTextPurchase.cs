@@ -185,6 +185,7 @@ namespace SmartxAPI.Controllers
                     string X_InvoiceNo = MasterTable.Rows[0]["X_InvoiceNo"].ToString();
                     string xTransType = "FTPURCHASE";
                     DocNo = MasterRow["X_InvoiceNo"].ToString();
+                    DataTable Attachment = ds.Tables["attachments"];
 
 
 
@@ -333,7 +334,22 @@ namespace SmartxAPI.Controllers
 
                     int N_SegmentId = dLayer.SaveData("Inv_CostCentreTransactions", "N_CostCenterTransID", "", "", costcenter, connection, transaction);
 
+                    SortedList freeTextPurchaseParams = new SortedList();
+                           freeTextPurchaseParams.Add("@N_PurchaseID", nPurchaseID);
 
+                     DataTable freeTextPurchaseInfo = dLayer.ExecuteDataTable("Select X_InvoiceNo,X_TransType from Inv_Purchase where N_PurchaseID=@N_PurchaseID", freeTextPurchaseParams, connection, transaction);
+                        if (freeTextPurchaseInfo.Rows.Count > 0)
+                        {
+                            try
+                            {
+                                myAttachments.SaveAttachment(dLayer, Attachment, X_InvoiceNo, nPurchaseID, freeTextPurchaseInfo.Rows[0]["X_TransType"].ToString().Trim(), freeTextPurchaseInfo.Rows[0]["X_InvoiceNo"].ToString(), nPurchaseID, "Free Text Purchase Document", User, connection, transaction);
+                            }
+                             catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
+                        }
                     SortedList PostingParam = new SortedList();
                     PostingParam.Add("N_CompanyID", nCompanyID);
                     PostingParam.Add("X_InventoryMode", xTransType);
@@ -349,8 +365,11 @@ namespace SmartxAPI.Controllers
 
                         return Ok(_api.Error(User, ex));
                     }
+                    SortedList Result = new SortedList();
+                        Result.Add("N_PurchaseID", nPurchaseID);
+                        Result.Add("x_InvoiceNo", X_InvoiceNo);
                     transaction.Commit();
-                    return Ok(_api.Success("Successfully saved"));
+                    return Ok(_api.Success(Result,"Successfully saved"));
                 }
             }
             catch (Exception ex)
@@ -371,6 +390,7 @@ namespace SmartxAPI.Controllers
                     DataTable Master = new DataTable();
                     DataTable Details = new DataTable();
                     DataTable Acc_CostCentreTrans = new DataTable();
+                     DataTable FreeTextPurchaseDetails = new DataTable();
                     int N_PurchaseID = 0;
                     string X_MasterSql = "";
                     string X_DetailsSql = "";
@@ -407,6 +427,20 @@ namespace SmartxAPI.Controllers
                     {
                          Master.Rows[0]["IsReturnDone"] = false;
                     }
+
+                    object count = dLayer.ExecuteScalar("select count(*) from Inv_Purchase where N_FreeTextReturnID =" + N_PurchaseID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "", Params, connection);
+
+                     if (myFunctions.getVAL(count.ToString())>0){
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "ReturnDone", typeof(bool), true);
+                     }
+                     else{
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "ReturnDone", typeof(bool), false);
+                     }
+
+                     object isReturn = dLayer.ExecuteScalar("select x_InvoiceNo from Inv_Purchase where N_FreeTextReturnID =" + N_PurchaseID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "", Params, connection);
+
+                      Master = myFunctions.AddNewColumnToDataTable(Master, "x_ReceiptNo", typeof(string), isReturn);
+
                     Master.AcceptChanges();
 
 
@@ -447,7 +481,12 @@ namespace SmartxAPI.Controllers
 
                     Acc_CostCentreTrans = _api.Format(Acc_CostCentreTrans, "costCenterTrans");
                     dt.Tables.Add(Acc_CostCentreTrans);
+                   
 
+                   DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_PurchaseID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_PurchaseID"].ToString()), this.FormID, myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                    Attachments = _api.Format(Attachments, "attachments");
+                    dt.Tables.Add(Attachments);
+                    
                     dt.Tables.Add(Details);
                     dt.Tables.Add(Master);
                     return Ok(_api.Success(dt));
@@ -484,10 +523,10 @@ namespace SmartxAPI.Controllers
                     if (Results <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to delete Purchase"));
+                        return Ok(_api.Error(User, "Unable to delete Free text Purchase"));
                     }
                     transaction.Commit();
-                    return Ok(_api.Success(" Purchase deleted"));
+                    return Ok(_api.Success("Free text Purchase deleted"));
                 }
             }
             catch (Exception ex)

@@ -193,7 +193,7 @@ namespace SmartxAPI.Data
                                 DataTable globalInfo = dLayer.ExecuteDataTable(sqlGUserInfo, cnn2);
                                 if (globalInfo.Rows.Count > 0)
                                 {
-                                    loginRes.Warning = userNotifications(myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString()),cnn2);
+                                    loginRes.Warning = userNotifications(myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString()),AppID,cnn2);
                                     object AllowMultipleCompany=true;
                                     object numberOfCompanies = dLayer.ExecuteScalar("select count(*)   from Acc_Company where N_ClientID="+myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString())+"", Params, connection);
                                     object companyLimit = dLayer.ExecuteScalar("select isnull(N_Value,0) from GenSettings where N_ClientID="+myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString())+" and X_Description='COMPANY LIMIT'", Params, cnn2);
@@ -490,12 +490,12 @@ namespace SmartxAPI.Data
             }
         }
 
-        private string userNotifications(int nClientID,SqlConnection cnn)
+        private string userNotifications(int nClientID,int appID,SqlConnection cnn)
         {
             try
             {
                 string Message = "";
-                    int DaysToExpire = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_ExpiryDate)),0) as expiry from ClientApps where N_ClientID=" + nClientID, cnn).ToString());
+                    int DaysToExpire = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_ExpiryDate)),0) as expiry from ClientApps where N_ClientID=" + nClientID+" and N_AppID="+appID+"", cnn).ToString());
 
                     if (DaysToExpire <= 10)
                     {

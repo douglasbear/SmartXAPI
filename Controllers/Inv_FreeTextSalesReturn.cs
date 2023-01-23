@@ -127,6 +127,7 @@ namespace SmartxAPI.Controllers
                     double N_BillAmt = myFunctions.getVAL(MasterTable.Rows[0]["N_BillAmt"].ToString());
                     string xTransType = "DEBIT NOTE";
                     DocNo = MasterRow["X_ReceiptNo"].ToString();
+                    DataTable Attachment = ds.Tables["attachments"];
 
                      if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_SalesDate"].ToString()), dLayer, connection, transaction))
                     {
@@ -263,6 +264,26 @@ namespace SmartxAPI.Controllers
                         row["N_ProjectID"] = myFunctions.getIntVAL(dRow["N_Segment_3"].ToString());
                         costcenter.Rows.Add(row);
                     }
+
+                     SortedList freeTextSalesReturnParams = new SortedList();
+                           freeTextSalesReturnParams.Add("@N_SalesId", nSalesID);
+
+                     DataTable freeTextSalesReturnInfo = dLayer.ExecuteDataTable("Select X_ReceiptNo,X_TransType from Inv_Sales where N_SalesId=@N_SalesId", freeTextSalesReturnParams, connection, transaction);
+                        if (freeTextSalesReturnInfo.Rows.Count > 0)
+                        {
+                            try
+                            {
+                                myAttachments.SaveAttachment(dLayer, Attachment, X_ReceiptNo, nSalesID, freeTextSalesReturnInfo.Rows[0]["X_TransType"].ToString().Trim(), freeTextSalesReturnInfo.Rows[0]["X_ReceiptNo"].ToString(), nSalesID, "Free Text Sales Return Document", User, connection, transaction);
+                            }
+                             catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
+                        }
+
+
+
                     int N_SegmentId = dLayer.SaveData("Inv_CostCentreTransactions", "N_CostCenterTransID", "", "", costcenter, connection, transaction);
                     try
                     {
@@ -275,7 +296,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     transaction.Commit();
-                    return Ok(_api.Success("Sales invoice saved"));
+                    return Ok(_api.Success("Free text sales return saved"));
 
                 }
             }
@@ -312,7 +333,15 @@ namespace SmartxAPI.Controllers
                     Master = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
                     if (Master.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     N_SalesID = myFunctions.getIntVAL(Master.Rows[0]["N_SalesID"].ToString());
-
+                    
+                    string paymentcount = dLayer.ExecuteScalar("select count(*) from Inv_PayReceiptDetails where N_CompanyID=" + nCompanyId + " and N_InventoryId=" + N_SalesID + "and x_TransType='DEBIT NOTE'", connection).ToString();
+                    
+                     if (myFunctions.getVAL(paymentcount.ToString())>0){
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "paymentDone", typeof(bool), true);
+                     }
+                       else{
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "paymentDone", typeof(bool), false);
+                     }
 
                     //---covertchanges 
                     if (xPath != null && xPath != "")
@@ -437,6 +466,9 @@ ReturnDetails = _api.Format(ReturnDetails, "Details");
 
                     Acc_CostCentreTrans = _api.Format(Acc_CostCentreTrans, "costCenterTrans");
                     dt.Tables.Add(Acc_CostCentreTrans);
+                   DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_SalesID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_SalesID"].ToString()), this.FormID, myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                    Attachments = _api.Format(Attachments, "attachments");
+                    dt.Tables.Add(Attachments);
 
 
 
@@ -465,6 +497,14 @@ ReturnDetails = _api.Format(ReturnDetails, "Details");
                     SqlTransaction transaction = connection.BeginTransaction();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     var nUserID = myFunctions.GetUserID(User);
+                    
+                       object objPaymentProcessed = dLayer.ExecuteScalar("Select Isnull(N_PayReceiptId,0) from Inv_PayReceiptDetails where N_InventoryId=" + nSalesID + " and X_TransType='DEBIT NOTE'", connection, transaction);
+                      if (objPaymentProcessed == null)
+                        objPaymentProcessed = 0;
+                        
+                      if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) != 0){
+                        return Ok(_api.Error(User, "Payment processed! Unable to delete"));
+                    }
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
                                 {"X_TransType",X_TransType},
@@ -479,7 +519,7 @@ ReturnDetails = _api.Format(ReturnDetails, "Details");
                         return Ok(_api.Error(User, "Unable to delete Sales return"));
                     }
                     transaction.Commit();
-                    return Ok(_api.Success("Sales Return deleted"));
+                    return Ok(_api.Success("Free text Sales Return deleted"));
                 }
             }
             catch (Exception ex)

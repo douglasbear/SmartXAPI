@@ -81,9 +81,9 @@ namespace SmartxAPI.Controllers
 
             int Count = (nPage - 1) * nSizeperpage;
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_CustomerID,N_AssetInventoryID,N_FnYearID,N_BranchID,X_InvoiceNo,D_InvoiceDate,X_CustomerName,X_Type from vw_InvAssetInventoryReceiptNo_Search where "+sqlCondition+" " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_CustomerID,N_AssetInventoryID,N_FnYearID,N_BranchID,X_InvoiceNo,D_InvoiceDate,X_CustomerName,X_Type,x_BillAmt,X_Description from vw_InvAssetInventoryReceiptNo_Search where "+sqlCondition+" " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_CustomerID,N_AssetInventoryID,N_FnYearID,N_BranchID,X_InvoiceNo,D_InvoiceDate,X_CustomerName,X_Type from vw_InvAssetInventoryReceiptNo_Search where "+sqlCondition+" " + Searchkey + " and N_AssetInventoryID not in (select top(" + Count + ") N_AssetInventoryID from vw_InvAssetInventoryReceiptNo_Search where "+sqlCondition+" " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_CustomerID,N_AssetInventoryID,N_FnYearID,N_BranchID,X_InvoiceNo,D_InvoiceDate,X_CustomerName,X_Type,x_BillAmt,X_Description from vw_InvAssetInventoryReceiptNo_Search where "+sqlCondition+" " + Searchkey + " and N_AssetInventoryID not in (select top(" + Count + ") N_AssetInventoryID from vw_InvAssetInventoryReceiptNo_Search where "+sqlCondition+" " + xSortBy + " ) " + xSortBy;
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
@@ -198,6 +198,14 @@ namespace SmartxAPI.Controllers
                         ReturnNo =  dLayer.GetAutoNumber("Ass_SalesMaster","X_InvoiceNo", Params,connection,transaction);
                         if(ReturnNo==""){transaction.Rollback(); return Ok(_api.Warning("Unable to generate Invoice Number"));}
                         MasterTable.Rows[0]["X_InvoiceNo"] = ReturnNo;
+                    }
+
+
+                        if (N_AssetInventoryID > 0)
+                    {
+                        dLayer.DeleteData("Ass_SalesMaster", "N_AssetInventoryID", N_AssetInventoryID, "N_CompanyID=" + nCompanyID + " and N_AssetInventoryID=" + N_AssetInventoryID, connection, transaction);
+                        dLayer.DeleteData("Ass_SalesDetails", "N_AssetInventoryID", N_AssetInventoryID, "N_CompanyID=" + nCompanyID + " and N_AssetInventoryID=" + N_AssetInventoryID, connection, transaction);
+                        dLayer.DeleteData("Ass_Transactions", "N_AssetInventoryID", N_AssetInventoryID, "N_CompanyID=" + nCompanyID + " and N_AssetInventoryID=" + N_AssetInventoryID, connection, transaction);
                     }
 
                     if(N_AssetInventoryID>0)
@@ -450,7 +458,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User,ex));
                         }
                     }
-                    if (Results >= 0)
+                        if (Results >= 0)
                     {
                         transaction.Commit();
                         return Ok(_api.Success("Asset Sales deleted"));
@@ -460,7 +468,6 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User,"Unable to delete Asset Sales"));
                     }
-
 
                 }
             }

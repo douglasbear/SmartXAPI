@@ -193,12 +193,13 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("assetList")]
-        public ActionResult ListAssetName(bool isRentalItem)
+        public ActionResult ListAssetName(bool isRentalItem,bool isSales)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             string RentalItem="";
+            string salesItem="";
              Params.Add("@nCompanyID",nCompanyID);
             // Params.Add("@nFnYearID",nFnYearID);
 
@@ -208,7 +209,11 @@ namespace SmartxAPI.Controllers
                        RentalItem=RentalItem+ " and N_ItemID NOT IN (select isnull(N_AssItemID,0) from inv_itemmaster where N_CompanyId=@nCompanyID)";
                     }
 
-            string sqlCommandText = "Select * from Vw_AssetDashboard Where N_CompanyID=@nCompanyID"+RentalItem;
+            if(isSales){
+                salesItem=salesItem+ " and N_status<>2 and N_status<>5";
+            }        
+
+            string sqlCommandText = "Select * from Vw_AssetDashboard Where N_CompanyID=@nCompanyID"+RentalItem+salesItem;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -300,6 +305,7 @@ namespace SmartxAPI.Controllers
             TransactionTable = ds.Tables["transactions"];
             AssMasterTable = ds.Tables["assetmaster"];
             SortedList Params = new SortedList();
+            DataTable Attachment = ds.Tables["attachments"];
             // Auto Gen
             try
             {
@@ -313,11 +319,30 @@ namespace SmartxAPI.Controllers
                     int TypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TypeID"].ToString());
                     int POrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString());
                     int N_UserID = myFunctions.GetUserID(User);
+                     int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                    int N_CompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
 
                     if (FormID == 1293) xTransType = "AR";
                     else xTransType = "AP";
 
                     var X_InvoiceNo = MasterTable.Rows[0]["X_InvoiceNo"].ToString();
+
+                    if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["d_InvoiceDate"].ToString(), "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                    {
+                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=" + MasterTable.Rows[0]["n_CompanyId"] + " and convert(date ,'" + MasterTable.Rows[0]["d_InvoiceDate"].ToString() + "') between D_Start and D_End", Params, connection, transaction);
+                        if (DiffFnYearID != null)
+                        {
+                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                            N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                            Params["@nFnYearID"] = N_FnYearID;
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                        }
+                    }
+
                     if (X_InvoiceNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
@@ -556,6 +581,22 @@ namespace SmartxAPI.Controllers
                             // }
                         }
                     }
+                      SortedList assetPurchaseParams = new SortedList();
+                           assetPurchaseParams.Add("@N_AssetInventoryID", N_AssetInventoryID);
+
+                     DataTable  assetPurchaseInfo = dLayer.ExecuteDataTable("Select X_InvoiceNo from Ass_PurchaseMaster where N_AssetInventoryID=@N_AssetInventoryID", assetPurchaseParams, connection, transaction);
+                        if (assetPurchaseInfo.Rows.Count > 0)
+                        {
+                            try
+                            {
+                                myAttachments.SaveAttachment(dLayer, Attachment, X_InvoiceNo, N_AssetInventoryID, assetPurchaseInfo.Rows[0]["X_InvoiceNo"].ToString(), assetPurchaseInfo.Rows[0]["X_InvoiceNo"].ToString(), N_AssetInventoryID, "Asset Purchase Document", User, connection, transaction);
+                            }
+                             catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
+                        }
 
                     SortedList PostingParam = new SortedList();
                     PostingParam.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
@@ -624,6 +665,11 @@ namespace SmartxAPI.Controllers
 
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
+
+                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_AssetInventoryID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_AssetInventoryID"].ToString()), this.N_FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                    Attachments = _api.Format(Attachments, "attachments");
+                    dt.Tables.Add(Attachments);
+
                     dt.Tables.Add(MasterTable);
                     dt.Tables.Add(DetailTable);
                     return Ok(_api.Success(dt));
