@@ -2028,19 +2028,21 @@ namespace SmartxAPI.Controllers
                                 ipAddress = Request.Headers["X-Forwarded-For"];
                             else
                                 ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                            SortedList LogParams = new SortedList();
-                            LogParams.Add("N_CompanyID", nCompanyID);
-                            LogParams.Add("N_FnYearID", nFnYearID);
-                            LogParams.Add("N_TransID", nInvoiceID);
-                            LogParams.Add("N_FormID", this.N_FormID);
-                            LogParams.Add("N_UserId", nUserID);
-                            //LogParams.Add("N_UserID", nUserID);
-                            LogParams.Add("X_Action", xButtonAction);
-                            LogParams.Add("X_SystemName", "ERP Cloud");
-                            LogParams.Add("X_IP", ipAddress);
-                            LogParams.Add("X_TransCode", InvoiceNO);
-                            LogParams.Add("X_Remark", " ");
-                            dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);
+                            // SortedList LogParams = new SortedList();
+                            // LogParams.Add("N_CompanyID", nCompanyID);
+                            // LogParams.Add("N_FnYearID", nFnYearID);
+                            // LogParams.Add("N_TransID", nInvoiceID);
+                            // LogParams.Add("N_FormID", this.N_FormID);
+                            // LogParams.Add("N_UserId", nUserID);
+                            // //LogParams.Add("N_UserID", nUserID);
+                            // LogParams.Add("X_Action", xButtonAction);
+                            // LogParams.Add("X_SystemName", "ERP Cloud");
+                            // LogParams.Add("X_IP", ipAddress);
+                            // LogParams.Add("X_TransCode", InvoiceNO);
+                            // LogParams.Add("X_Remark", " ");
+                            // dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);
+                            DataTable MasterTable =new DataTable();
+                            myFunctions.LogScreenActivitys(nFnYearID,nInvoiceID,InvoiceNO.ToString(),this.N_FormID,xButtonAction,ipAddress,User,MasterTable,dLayer,connection,transaction);
 
 
                             //StatusUpdate

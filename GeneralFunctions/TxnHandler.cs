@@ -1056,18 +1056,9 @@ namespace SmartxAPI.GeneralFunctions
                 //     ipAddress = Request.Headers["X-Forwarded-For"];
                 // else
                 //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                SortedList LogParams = new SortedList();
-                LogParams.Add("N_CompanyID", N_CompanyID);
-                LogParams.Add("N_FnYearID", N_FnYearID);
-                LogParams.Add("N_TransID", N_SalesID);
-                LogParams.Add("N_FormID", 64);
-                LogParams.Add("N_UserId", N_UserID);
-                LogParams.Add("X_Action", xButtonAction);
-                LogParams.Add("X_SystemName", "ERP Cloud");
-                LogParams.Add("X_IP", ipAddress);
-                LogParams.Add("X_TransCode", InvoiceNo);
-                LogParams.Add("X_Remark", " ");
-                dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);              
+                DataTable Log = dLayer.ExecuteDataTable("select [Invoice No],[Invoice Date],Customer,[Customer Code],X_LocationName,X_BranchName,X_BillAmt,X_PayMode,B_IsSaveDraft,B_IsProforma from vw_InvSalesInvoiceNo_Search_cloud where N_SalesId="+N_SalesID + " and N_CompanyID=" + N_CompanyID ,CustParams,connection,transaction);
+                myFunctions.LogScreenActivitys(N_FnYearID,N_SalesID,InvoiceNo,64,xButtonAction,ipAddress,User,Log,dLayer,connection,transaction);
+                   
 
                 DataRow Rowloyalitypoints = null;
                 if (ds.Tables.Contains("loyalitypoints"))
