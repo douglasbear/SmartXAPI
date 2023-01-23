@@ -731,7 +731,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nPOrderID, int nBranchID, int nFnYearID)
+        public ActionResult DeleteData(int nPOrderID, int nBranchID, int nFnYearID,int FormID)
         {
             int Results = 0;
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -788,6 +788,15 @@ namespace SmartxAPI.Controllers
                             myAttachments.DeleteAttachment(dLayer, 1, nPOrderID, VendorID, nFnYearID, this.FormID, User, transaction, connection);
 
                             transaction.Commit();
+                          if (FormID == 82)
+                            {
+                          return Ok(api.Success( " Purchase Order deleted"));
+                            }
+
+                       else if (FormID == 1586) 
+                        {
+                            return Ok(api.Success("Rental Purchase Order deleted Successfully"));
+                        }
                             return Ok(api.Success("Purchase Order deleted"));
 
                         }

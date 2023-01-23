@@ -534,6 +534,24 @@ namespace SmartxAPI.Controllers
 
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, NewParams, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
+
+                    Object CTSCount=dLayer.ExecuteScalar("select count(*) from Inv_ServiceTimesheet where N_SOID="+N_SOrderID+" and N_CompanyID="+nCompanyID, Params, connection);
+                    int nCTSCount = myFunctions.getIntVAL(CTSCount.ToString());
+                    if (nCTSCount > 0)
+                    {
+                       
+                        if (MasterTable.Rows.Count > 0)
+                        {
+                            MasterTable.Columns.Add("b_CTSProcessed");
+                            MasterTable.Rows[0]["b_CTSProcessed"]=true;
+                            
+                          
+                        }
+
+
+                    }     
+
+
                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesOrderId"].ToString()), this.FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
                     Attachments = _api.Format(Attachments, "attachments");
 
