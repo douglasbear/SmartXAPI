@@ -53,7 +53,7 @@ namespace SmartxAPI.Controllers
             {
                 xSortBy = " order by " + xSortBy;
             }
-            string selection="X_EntryForm, X_DocNo, X_ActionUser, X_ActionType, D_ActionDate,X_IP X_SystemName, , X_Remarks,   REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(X_DataLog, ':::', ' - '),'~~~',CHAR(13)+CHAR(10)) ,'N_',''),'X_',''),'D_',''),'B_',''),'_',' ') as X_DataLog";
+            string selection="X_EntryForm, X_DocNo, X_ActionUser, X_ActionType, D_ActionDate,X_IP, X_SystemName,  X_Remarks,   REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(X_DataLog, ':::', ' - '),'~~~',CHAR(13)+CHAR(10)) ,'N_',''),'X_',''),'D_',''),'B_',''),'_',' ') as X_DataLog";
 
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") "+selection+" from Log_ScreenActivity where N_CompanyID=@p1 and N_FnYearID=@nFnYearId " + Searchkey + " " + xSortBy;
