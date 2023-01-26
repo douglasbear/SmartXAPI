@@ -43,9 +43,23 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    string menus = "select X_TableViewCode,N_TableViewID,N_MenuID as formID,X_TitleLanControlNo as titleLbl,X_MenuLanControlNo as menuLbl,B_IsDefault as isDefault,B_SearchEnabled as searchEnabled,B_AttachementSearch as attachementSearch,X_PKey,N_Type,N_Order,X_PCode from Gen_TableView where N_MenuID=@nMenuID order by N_Order";
+                    // string menus = "select X_TableViewCode,N_TableViewID,N_MenuID as formID,X_TitleLanControlNo as titleLbl,X_MenuLanControlNo as menuLbl,B_IsDefault as isDefault,B_SearchEnabled as searchEnabled,B_AttachementSearch as attachementSearch,X_PKey,N_Type,N_Order,X_PCode from Gen_TableView where N_MenuID=@nMenuID order by N_Order";
+
+                    string menus = "select * from "+
+                    "(select X_TableViewCode,N_TableViewID,N_MenuID as formID,X_TitleLanControlNo as titleLbl,X_MenuLanControlNo as menuLbl, "+
+                    "B_IsDefault as isDefault,B_SearchEnabled as searchEnabled,B_AttachementSearch as attachementSearch,X_PKey,N_Type,N_Order,X_PCode from "+
+                    "Gen_TableView where N_MenuID=@nMenuID  "+
+                    "and N_Type not in(select N_Type from Gen_TableView where N_MenuID=@nMenuID and N_CompanyID=@nCompanyID and N_UserID=@nUserID) "+
+                    "union all "+
+                    "select X_TableViewCode,N_TableViewID,N_MenuID as formID,X_TitleLanControlNo as titleLbl,X_MenuLanControlNo as menuLbl, "+
+                    "B_IsDefault as isDefault,B_SearchEnabled as searchEnabled,B_AttachementSearch as attachementSearch,X_PKey,N_Type,N_Order,X_PCode from "+
+                    "Gen_TableView where N_MenuID=@nMenuID  and N_CompanyID=@nCompanyID and N_UserID=@nUserID) as Tbl_Gen_TableView "+
+                    "order by N_Order ";
+
                     SortedList TviewParams = new SortedList();
                     TviewParams.Add("@nMenuID", nMenuID);
+                    TviewParams.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    TviewParams.Add("@nUserID", myFunctions.GetUserID(User));
 
                     DataTable tableViewResult = dLayer.ExecuteDataTable(menus, TviewParams, connection);
 
@@ -229,7 +243,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("viewdetails")]
-        public ActionResult GetTableViewDetails(int nMenuID, int nTableViewID,int nTypeID,int nUserID)
+        public ActionResult GetTableViewDetails(int nMenuID, int nTableViewID, int nTypeID, int nUserID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataSet dt = new DataSet();
@@ -246,7 +260,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nUserID", nUserID);
 
 
-            string DefaultMastersql= "",DefaultDetailSql= "",Mastersql= "",DetailSql = "";
+            string DefaultMastersql = "", DefaultDetailSql = "", Mastersql = "", DetailSql = "";
 
             DefaultMastersql = "select b_AttachementSearch,n_MenuID,n_Type,n_UserID,n_CompanyID,n_TableViewID from Gen_TableView where N_CompanyID=-1 and N_UserID=0 and N_MenuID=@nMenuID and N_Type=@nTypeID";
             DefaultDetailSql = "select * from vw_Gen_TableViewDetails where N_CompanyID=-1 and N_MenuID=@nMenuID and N_Type=@nTypeID and N_TableViewID=(select max(N_TableViewID) as N_TableViewID from Gen_TableView where N_CompanyID=-1 and N_UserID=0 and N_MenuID=@nMenuID and N_Type=@nTypeID)";
@@ -268,7 +282,8 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(DefaultMasterTable);
                     dt.Tables.Add(DefaultDetailTable);
 
-                    if(DefaultMasterTable.Rows.Count==0){
+                    if (DefaultMasterTable.Rows.Count == 0)
+                    {
                         return Ok(_api.Error(User, "Listing Configuration not found"));
                     }
 
@@ -297,6 +312,7 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
                 int nCompanyID = myFunctions.GetCompanyID(User);
+                int nUserID = myFunctions.GetUserID(User);
                 int nMenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_MenuID"].ToString());
                 int nTypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_Type"].ToString());
                 int nTableViewID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TableViewID"].ToString());
@@ -307,18 +323,75 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
+                    string masterSql = "SELECT " + nCompanyID + " as N_CompanyID,(select max(N_TableViewID)+1 from Gen_TableView ) as X_TableViewCode,0 as N_TableViewID, N_MenuID, X_TitleLanControlNo, X_MenuLanControlNo, X_ActionBtnLanControlNo, " +
+                    " B_IsDefault, X_DataSource, X_DefaultCriteria, X_BranchCriteria, X_LocationCriteria, X_PKey, X_PCode," + nUserID + " as N_UserID, B_SearchEnabled, B_AttachementSearch, " +
+                    " X_TotalField, N_Type, N_Order, X_DefaultSortField FROM Gen_TableView where N_CompanyID=-1 and N_MenuID=" + nMenuID + " and N_Type=" + nTypeID + " and N_UserID=0";
+                    MasterTable = dLayer.ExecuteDataTable(masterSql, Params, connection,transaction);
+                    dLayer.ExecuteScalar("delete from Gen_TableViewDetails where N_TableViewID in (select N_TableViewID from Gen_TableView where N_CompanyID=" + nCompanyID + " and N_MenuID=" + nMenuID + " and N_Type=" + nTypeID + " and N_UserID=" + nUserID + ") and N_CompanyID=" + nCompanyID, connection, transaction);
+                    dLayer.ExecuteScalar("delete from Gen_TableView where N_CompanyID=" + nCompanyID + " and N_MenuID=" + nMenuID + " and N_Type=" + nTypeID + " and N_UserID=" + nUserID, connection, transaction);
 
+                    int newTableViewID = dLayer.SaveData("Gen_TableView", "N_TableViewID", MasterTable, connection, transaction);
+                    if (newTableViewID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok("Unable to save configurations");
+                    }
 
-
+                    if (DetailTable.Columns.Contains("n_MenuID"))
+                    {
+                        DetailTable.Columns.Remove("n_MenuID");
+                    }
+                    if (DetailTable.Columns.Contains("n_Type"))
+                    {
+                        DetailTable.Columns.Remove("n_Type");
+                    }
+                    foreach (DataRow Avar in DetailTable.Rows)
+                    {
+                        Avar["N_CompanyID"] = nCompanyID;
+                        Avar["n_TableViewID"] = newTableViewID;
+                        Avar["n_TableViewDetailsID"] = 0;
+                    }
+                    DetailTable.AcceptChanges();
+                    int newTableViewDetailID = dLayer.SaveData("Gen_TableViewDetails", "n_TableViewDetailsID", DetailTable, connection, transaction);
+                    if (newTableViewDetailID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok("Unable to save configurations");
+                    }
                     transaction.Commit();
-                    return Ok(_api.Success("Table View Saved"));
+                    return Ok(_api.Success("Listing Configuration Updated"));
                 }
             }
             catch (Exception ex)
             {
                 return Ok(_api.Error(User, ex));
             }
-        }    
+        }
+
+        [HttpDelete("reset")]
+        public ActionResult DeleteData(int nMenuID, int nType)
+        {
+            int nUserID = myFunctions.GetCompanyID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dLayer.ExecuteScalar("delete from Gen_TableViewDetails where N_TableViewID in (select N_TableViewID from Gen_TableView where N_CompanyID=" + nCompanyID + " and N_MenuID=" + nMenuID + " and N_Type=" + nType + " and N_UserID=" + nUserID + ") and N_CompanyID=" + nCompanyID, connection);
+                    dLayer.ExecuteScalar("delete from Gen_TableView where N_CompanyID=" + nCompanyID + " and N_MenuID=" + nMenuID + " and N_Type=" + nType + " and N_UserID=" + nUserID, connection);
+
+
+                }
+                
+                 return Ok(_api.Success("Listing Configuration Restored"));
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+
+        }
 
 
     }
