@@ -1074,7 +1074,7 @@ namespace SmartxAPI.GeneralFunctions
                     Response["deleteTag"] = 0;
                     Response["isApprovalSystem"] = 0;
                     Response["ApprovalID"] = 0;
-                    Response["isEditable"] = false;
+                    Response["isEditable"] = true;
                     Response["lblVisible"] = true;
                     Response["lblText"] = "Approval not set for this user";
                     return Response;

@@ -62,7 +62,7 @@ namespace SmartxAPI.Controllers
 
                   sqlEmpOnProbation = "select COUNT(*) as N_Count from Pay_Employee where D_ProbationEndDate> GETDATE() and  D_ProbationEndDate < (GETDATE()+14) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+" and N_BranchID="+nBranchId+"";
 
-                  sqlReminderCount = "select COUNT(*) as N_Count from vw_Gen_ReminderDashboard where N_CompanyID = "+nCompanyID+" and N_BranchID="+nBranchId+" and N_LanguageID= " +nLanguageID+ "";
+                  sqlReminderCount = "select COUNT(*) as N_Count from vw_Gen_ReminderDashboard where N_CompanyID = "+nCompanyID+"  and N_LanguageID= " +nLanguageID+ "";
             }
 
             //string sqlPayables= "select sum(N_BalanceAmount) as N_Amount from vw_InvPayables where N_CompanyId = "+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
