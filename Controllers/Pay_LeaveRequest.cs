@@ -977,11 +977,27 @@ namespace SmartxAPI.Controllers
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
                     // myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString())
                     int N_IsApprovalSystem = Approvals.Rows.Count > 0 ? myFunctions.getIntVAL(Approvals.Rows[0]["isApprovalSystem"].ToString()) : 0;
+
+                    // object objProcessed = dLayer.ExecuteScalar("Select Isnull(N_VacationID,0) from Pay_VacationReturn where N_CompanyID="+myFunctions.GetCompanyID(User)+" and N_VacationGroupID="+n_VacationGroupID, connection, transaction);
+                    // if (objProcessed == null) objProcessed = 0;
+                    // if (myFunctions.getIntVAL(objProcessed.ToString()) != 0)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(api.Error(User, "Vacation Return requested! Unable to delete Leave Request"));
+                    // };
+
                     if (TransRow["B_IsAdjustEntry"].ToString()=="False")
                     {
                         string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "LEAVE REQUEST", n_VacationGroupID, TransRow["X_VacationGroupCode"].ToString(), ProcStatus, "Pay_VacationMaster", X_Criteria, objEmpName.ToString(), User, dLayer, connection, transaction);
                         if (status != "Error")
                         {
+                            object objProcessed = dLayer.ExecuteScalar("Select Isnull(N_VacationID,0) from Pay_VacationReturn where N_CompanyID="+myFunctions.GetCompanyID(User)+" and N_VacationGroupID="+n_VacationGroupID, connection, transaction);
+                            if (objProcessed == null) objProcessed = 0;
+                            if (myFunctions.getIntVAL(objProcessed.ToString()) != 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error(User, "Vacation Return requested! Unable to delete Leave Request"));
+                            };
                             if (ButtonTag == "6" || ButtonTag == "0")
                             {
                                 dLayer.DeleteData("Pay_VacationDetails", "N_VacationGroupID", n_VacationGroupID, "N_CompanyID=" + nCompanyID, connection, transaction);
