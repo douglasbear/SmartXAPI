@@ -172,7 +172,7 @@ namespace SmartxAPI.Controllers
             int nCompanyId = myFunctions.GetCompanyID(User);
 
            
-            string Detailssql = "Select * from vw_schInvoiceGeneration Where N_CompanyID = @p1 and N_FnYearId = @p2 and d_salesDate>= @d_FromDate and d_salesDate<= @d_ToDate and ISNULL(N_PayReceiptId,0)=0 ";
+            string Detailssql = "Select * from vw_schInvoiceGeneration Where N_CompanyID = @p1 and N_FnYearId = @p2 and d_salesDate>= @d_FromDate and d_salesDate<= @d_ToDate and ISNULL(N_PayReceiptId,0)=0 order by d_InvoiceDate";
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearID);

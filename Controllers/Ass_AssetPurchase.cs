@@ -167,7 +167,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
-            string sqlCommandText = "SELECT N_CompanyID, N_FnYearID, N_POrderID, X_POrderNo, D_POrderDate, N_VendorID, N_TotAmt, B_IsSaveDraft, N_POType, X_VendorCode, X_VendorName, N_Processed FROM vw_Ass_POSearch WHERE (N_POType = 266) AND (N_Processed = 0) AND (B_IsSaveDraft <> 1) GROUP BY N_CompanyID, N_FnYearID, N_POrderID, X_POrderNo, D_POrderDate, N_VendorID, N_TotAmt, B_IsSaveDraft, N_POType, X_VendorCode, X_VendorName, N_Processed";
+            string sqlCommandText = "SELECT N_CompanyID, N_FnYearID, N_POrderID, X_POrderNo, D_POrderDate, N_VendorID, N_TotAmt, B_IsSaveDraft, N_POType, X_VendorCode, X_VendorName, N_Processed,N_ProductTypeID FROM vw_Ass_POSearch WHERE (N_ProductTypeID = 276) AND (N_Processed = 0) AND (B_IsSaveDraft <> 1) and N_POrderID not in (select N_POrderID from Ass_PurchaseMaster) GROUP BY N_CompanyID, N_FnYearID, N_POrderID, X_POrderNo, D_POrderDate, N_VendorID, N_TotAmt, B_IsSaveDraft, N_POType, X_VendorCode, X_VendorName, N_Processed,N_ProductTypeID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

@@ -128,8 +128,8 @@ namespace SmartxAPI.Controllers
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
-
                     int N_NextApproverID = 0;
+                    object saveDraft = 0;
 
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nFnYearID", N_FnYearID);
@@ -156,6 +156,8 @@ namespace SmartxAPI.Controllers
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_VacationReturn", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "VACATION RETURN", N_PkeyID, X_VacationReturnCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
                        // myAttachments.SaveAttachment(dLayer, Attachment, xVacationReturnCode, N_VacationReturnID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
+                        saveDraft = dLayer.ExecuteScalar("select ISNULL(B_IsSaveDraft,0) from Pay_VacationReturn where N_VacationReturnID=" +N_VacationReturnID+ " and N_CompanyID= @nCompanyID", QueryParams, connection, transaction);
+                        dLayer.ExecuteNonQuery("update Pay_VacationDetails set B_IsSaveDraft=" + Convert.ToInt32(saveDraft) + " where N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + " and N_VoucherID="+N_VacationReturnID, Params, connection, transaction);
                         transaction.Commit();
                         //myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_VacationReturnID, "VACATION RETURN", X_VacationReturnCode, dLayer, connection, transaction, User);
                         return Ok(_api.Success("Request Approved " + "-" + X_VacationReturnCode));
@@ -183,6 +185,8 @@ namespace SmartxAPI.Controllers
                     }
 
                     N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "VACATION RETURN", N_VacationReturnID, X_VacationReturnCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
+                    saveDraft = dLayer.ExecuteScalar("select ISNULL(B_IsSaveDraft,0) from Pay_VacationReturn where N_VacationReturnID=" +N_VacationReturnID+ "and N_CompanyID= @nCompanyID", QueryParams, connection, transaction);
+
                      
                     SortedList VacationParams = new SortedList();
                            VacationParams.Add("@nVacationReturnID", N_VacationReturnID);
@@ -205,12 +209,14 @@ namespace SmartxAPI.Controllers
 
                     //     DataTable VacationInfo = dLayer.ExecuteDataTable("Select X_VacationReturnCode,X_CustomerName from Pay_VacationReturn where N_VacationReturnID=@nVacationReturnID", VacationParams, connection, transaction);
                       
-                    if (N_VacationReturnID > 0)
+                    if (N_VacationReturnID > 0) 
                         dLayer.ExecuteNonQuery("delete from Pay_VacationDetails where N_VoucherID=" + N_VacationReturnID.ToString() + "and N_FormID=463 and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearId=" + N_FnYearID, connection, transaction);
+                    
                     if (DetailTable.Rows.Count > 0)
                     {
                         DetailTable.Rows[0]["n_VoucherID"] = N_VacationReturnID.ToString();
                         DetailTable.Rows[0]["n_FormID"] = "463";
+                        DetailTable.Rows[0]["B_IsSaveDraft"] = saveDraft;
                         DetailTable.AcceptChanges();
                         if((Convert.ToDateTime(MasterTable.Rows[0]["d_ReturnDate"].ToString()))  >(Convert.ToDateTime(DetailTable.Rows[0]["d_VacDateTo"].ToString()) ))
                         {
@@ -261,10 +267,10 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
 
             if (bAllBranchData == true)
-            { sqlCommandText = "SELECT        vw_PayVacationReturn.*,vw_PayVacationReturn.ReturnId as N_VacationReturnID, vw_PayVacationDetails_Disp.VacTypeId as n_VacTypeID, vw_PayVacationDetails_Disp.N_VacDays as n_Delay,vw_PayVacationDetails_Disp.[Vacation Type] as x_VacTypeName FROM vw_PayVacationReturn LEFT OUTER JOIN vw_PayVacationDetails_Disp ON vw_PayVacationReturn.N_VacationGroupID = vw_PayVacationDetails_Disp.N_VacationGroupID AND vw_PayVacationReturn.N_FnYearID = vw_PayVacationDetails_Disp.N_FnYearID AND vw_PayVacationReturn.ReturnId = vw_PayVacationDetails_Disp.N_VoucherID Where  vw_PayVacationReturn.N_FnyearID=@nFnYearID and   vw_PayVacationReturn.N_CompanyID=@nCompanyID and vw_PayVacationReturn.x_VacationReturnCode=@xVacationReturnCode and N_FormID=@nFormID"; }
+            { sqlCommandText = "SELECT        vw_PayVacationReturn.*,vw_PayVacationReturn.ReturnId as N_VacationReturnID, vw_PayVacationDetails_Disp_New.VacTypeId as n_VacTypeID, vw_PayVacationDetails_Disp_New.N_VacDays as n_Delay,vw_PayVacationDetails_Disp_New.[Vacation Type] as x_VacTypeName FROM vw_PayVacationReturn LEFT OUTER JOIN vw_PayVacationDetails_Disp_New ON vw_PayVacationReturn.N_VacationGroupID = vw_PayVacationDetails_Disp_New.N_VacationGroupID AND vw_PayVacationReturn.N_FnYearID = vw_PayVacationDetails_Disp_New.N_FnYearID AND vw_PayVacationReturn.ReturnId = vw_PayVacationDetails_Disp_New.N_VoucherID Where  vw_PayVacationReturn.N_FnyearID=@nFnYearID and   vw_PayVacationReturn.N_CompanyID=@nCompanyID and vw_PayVacationReturn.x_VacationReturnCode=@xVacationReturnCode and vw_PayVacationReturn.N_FormID=@nFormID"; }
             else
             {
-                sqlCommandText = "SELECT        vw_PayVacationReturn.*,vw_PayVacationReturn.ReturnId as N_VacationReturnID, vw_PayVacationDetails_Disp.VacTypeId as n_VacTypeID, vw_PayVacationDetails_Disp.N_VacDays as n_Delay,vw_PayVacationDetails_Disp.[Vacation Type] as x_VacTypeName FROM vw_PayVacationReturn LEFT OUTER JOIN vw_PayVacationDetails_Disp ON vw_PayVacationReturn.N_VacationGroupID = vw_PayVacationDetails_Disp.N_VacationGroupID AND vw_PayVacationReturn.N_FnYearID = vw_PayVacationDetails_Disp.N_FnYearID AND vw_PayVacationReturn.ReturnId = vw_PayVacationDetails_Disp.N_VoucherID Where  vw_PayVacationReturn.N_FnyearID=@nFnYearID and  vw_PayVacationReturn.N_CompanyID=@nCompanyID and vw_PayVacationReturn.N_BranchID=@nBranchID  and vw_PayVacationReturn.x_VacationReturnCode=@xVacationReturnCode and N_FormID=@nFormID";
+                sqlCommandText = "SELECT        vw_PayVacationReturn.*,vw_PayVacationReturn.ReturnId as N_VacationReturnID, vw_PayVacationDetails_Disp_New.VacTypeId as n_VacTypeID, vw_PayVacationDetails_Disp_New.N_VacDays as n_Delay,vw_PayVacationDetails_Disp_New.[Vacation Type] as x_VacTypeName FROM vw_PayVacationReturn LEFT OUTER JOIN vw_PayVacationDetails_Disp_New ON vw_PayVacationReturn.N_VacationGroupID = vw_PayVacationDetails_Disp_New.N_VacationGroupID AND vw_PayVacationReturn.N_FnYearID = vw_PayVacationDetails_Disp_New.N_FnYearID AND vw_PayVacationReturn.ReturnId = vw_PayVacationDetails_Disp_New.N_VoucherID Where  vw_PayVacationReturn.N_FnyearID=@nFnYearID and  vw_PayVacationReturn.N_CompanyID=@nCompanyID and vw_PayVacationReturn.N_BranchID=@nBranchID  and vw_PayVacationReturn.x_VacationReturnCode=@xVacationReturnCode and vw_PayVacationReturn.N_FormID=@nFormID";
                 Params.Add("@nBranchID", nBranchID);
             }
             try
@@ -433,6 +439,9 @@ namespace SmartxAPI.Controllers
                                 dLayer.DeleteData("Pay_VacationDetails", "N_VacationGroupID", myFunctions.getIntVAL(TransRow["N_VacationGroupID"].ToString()), "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_VoucherID=" + nVacationReturnID, connection, transaction);
 
                             dLayer.DeleteData("Pay_VacationReturn", "N_VacationReturnID", nVacationReturnID, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction);
+                        } else {
+                            object saveDraft = dLayer.ExecuteScalar("select ISNULL(B_IsSaveDraft,0) from Pay_VacationReturn where N_VacationReturnID=" +nVacationReturnID+ " and N_CompanyID="+myFunctions.GetCompanyID(User), ParamList, connection, transaction);
+                            dLayer.ExecuteNonQuery("update Pay_VacationDetails set B_IsSaveDraft=" + Convert.ToInt32(saveDraft) + " where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID + " and N_VoucherID="+nVacationReturnID, ParamList, connection, transaction);
                         }
 
                         transaction.Commit();

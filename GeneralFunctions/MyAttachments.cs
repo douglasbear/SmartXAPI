@@ -116,6 +116,11 @@ namespace SmartxAPI.GeneralFunctions
                             }
                             else
                             {
+                                if (dsAttachment.Rows[i]["X_Filename"].ToString() != dsAttachment.Rows[i]["X_File"].ToString())
+                                {
+                                    dLayer.ExecuteScalar("delete from Gen_Reminder where N_ReminderId in (Select N_ReminderId From DMS_MasterFiles Where N_AttachmentID = "+myFunctions.getIntVAL(dsAttachment.Rows[i]["N_AttachmentID"].ToString())+" and N_CompanyID = " + nCompanyID + ")  and  N_CompanyID=" + nCompanyID, connection, transaction);
+                                    dLayer.DeleteData("DMS_MasterFiles", "N_AttachmentID", myFunctions.getIntVAL(dsAttachment.Rows[i]["N_AttachmentID"].ToString()), "", connection, transaction);
+                                }
                                 dLayer.DeleteData("Dms_ScreenAttachments", "N_AttachmentID", myFunctions.getIntVAL(dsAttachment.Rows[i]["N_AttachmentID"].ToString()), "", connection, transaction);
                             }
                             N_AttachmentID = myFunctions.getIntVAL(dsAttachment.Rows[i]["N_AttachmentID"].ToString());
@@ -168,24 +173,24 @@ namespace SmartxAPI.GeneralFunctions
 
                                 }
                             }
-                            else
-                            {
-                                object obj1 = dLayer.ExecuteScalar("select isnull(N_ReminderID,'') from DMS_MasterFiles Where N_AttachmentID = '" + N_AttachmentID + "' and N_CompanyID = " + nCompanyID, connection, transaction);
-                                if (obj1.ToString() != "" && ExpiryDate != "")
-                                {
-                                    dLayer.ExecuteNonQuery("update Gen_Reminder set D_ExpiryDate = '" + Convert.ToDateTime(ExpiryDate).ToString("dd/MMM/yyyy") + "' ,N_RemCategoryID=" + N_remCategory + " where N_ReminderID=" + myFunctions.getIntVAL(obj1.ToString()) + " and N_CompanyID=" + nCompanyID, connection, transaction);
-                                    //dLayer.ExecuteNonQuery("update DMS_MasterFiles set D_ExpiryDate = '" + Convert.ToDateTime(ExpiryDate).ToString("dd/MMM/yyyy") + "' ,N_CategoryID=" + N_remCategory + " where N_ReminderID=" + myFunctions.getIntVAL(obj1.ToString()) + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                            // else
+                            // {
+                            //     object obj1 = dLayer.ExecuteScalar("select isnull(N_ReminderID,0) from DMS_MasterFiles Where N_AttachmentID = '" + N_AttachmentID + "' and N_CompanyID = " + nCompanyID, connection, transaction);
+                            //     if (obj1.ToString() != "" && ExpiryDate != "" && obj1 !=null)
+                            //     {
+                            //         dLayer.ExecuteNonQuery("update Gen_Reminder set D_ExpiryDate = '" + Convert.ToDateTime(ExpiryDate).ToString("dd/MMM/yyyy") + "' ,N_RemCategoryID=" + N_remCategory + " where N_ReminderID=" + myFunctions.getIntVAL(obj1.ToString()) + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                            //         //dLayer.ExecuteNonQuery("update DMS_MasterFiles set D_ExpiryDate = '" + Convert.ToDateTime(ExpiryDate).ToString("dd/MMM/yyyy") + "' ,N_CategoryID=" + N_remCategory + " where N_ReminderID=" + myFunctions.getIntVAL(obj1.ToString()) + " and N_CompanyID=" + nCompanyID, connection, transaction);
                          
-                                }
-                                else
-                                {
-                                    if (ExpiryDate != "")
-                                    {
-                                    //   int ReminderId = myReminders.ReminderSave(dba1, FormID, partyId, ExpiryDate, dsAttachment.Rows[i]["X_Subject"].ToString(), dsAttachment.Rows[i]["X_Filename"].ToString(), N_remCategory, 1, 0);
-                                    //   dLayer.ExecuteNonQuery("update DMS_MasterFiles set N_ReminderID=" + ReminderId + " where X_refName='" + Path.GetFileName(dsAttachment.Rows[i]["X_refName"].ToString()) + "' and N_CompanyID=" + nCompanyID, "TEXT", new DataTable());
-                                    }
-                                }
-                            }
+                            //     }
+                            //     else
+                            //     {
+                            //         if (ExpiryDate != "")
+                            //         {
+                            //         //   int ReminderId = myReminders.ReminderSave(dba1, FormID, partyId, ExpiryDate, dsAttachment.Rows[i]["X_Subject"].ToString(), dsAttachment.Rows[i]["X_Filename"].ToString(), N_remCategory, 1, 0);
+                            //         //   dLayer.ExecuteNonQuery("update DMS_MasterFiles set N_ReminderID=" + ReminderId + " where X_refName='" + Path.GetFileName(dsAttachment.Rows[i]["X_refName"].ToString()) + "' and N_CompanyID=" + nCompanyID, "TEXT", new DataTable());
+                            //         }
+                            //     }
+                            // }
                         }
 
                         string FieldList = "";
@@ -219,13 +224,13 @@ namespace SmartxAPI.GeneralFunctions
 
                     // if (FormID != 113)
                     // {
-                        if (ExpiryDate == "")
-                        {
-                            if (dsAttachment.Columns.Contains("D_ExpiryDate"))
-                                dsAttachment.Columns.Remove("D_ExpiryDate");
-                            if (dsAttachment.Columns.Contains("N_RemCategoryID"))
-                                dsAttachment.Columns.Remove("N_RemCategoryID");
-                        }
+                        // if (ExpiryDate == "")
+                        // {
+                        //     if (dsAttachment.Columns.Contains("D_ExpiryDate"))
+                        //         dsAttachment.Columns.Remove("D_ExpiryDate");
+                        //     if (dsAttachment.Columns.Contains("N_RemCategoryID"))
+                        //         dsAttachment.Columns.Remove("N_RemCategoryID");
+                        // }
                         if (dsAttachment.Columns.Contains("FileData"))
                             dsAttachment.Columns.Remove("FileData");
                         if (dsAttachment.Columns.Contains("x_RemCategory"))
@@ -361,16 +366,23 @@ namespace SmartxAPI.GeneralFunctions
                 //  FileInfo flinfo = new FileInfo(fls);
                 string extension = System.IO.Path.GetExtension(filename);
                 string refname = filecode + extension;
-                int ReminderId = 0 ;
+                int ReminderId,nreminderID = 0 ;
                 if (strExpireDate != "")
-                {
-                    dLayer.ExecuteNonQuery("insert into DMS_MasterFiles(N_CompanyID,N_FileID,X_FileCode,X_Name,X_Title,X_Contents,N_FolderID,N_UserID,X_refName,N_AttachmentID,N_FormID,D_ExpiryDate,N_CategoryID,N_TransID)values(" + nCompanyID + "," + FileID + ",'" + filecode + "','" + filename + "','" + category + "','" + subject + "'," + folderId + "," + nUserID + ",'" + refname + "'," + attachID + "," + FormID + ",'" + dtExpire.ToString("dd/MMM/yyyy") + "'," + remCategoryId + "," + transId + ")", connection, transaction);
-                     ReminderId = ReminderSave(dLayer, FormID, partyID, strExpireDate, subject, filename, remCategoryId, 1, settingsId, User, transaction, connection);
+                { 
+                     dLayer.ExecuteNonQuery("insert into DMS_MasterFiles(N_CompanyID,N_FileID,X_FileCode,X_Name,X_Title,X_Contents,N_FolderID,N_UserID,X_refName,N_AttachmentID,N_FormID,D_ExpiryDate,N_CategoryID,N_TransID)values(" + nCompanyID + "," + FileID + ",'" + filecode + "','" + filename + "','" + category + "','" + subject + "'," + folderId + "," + nUserID + ",'" + refname + "'," + attachID + "," + FormID + ",'" + dtExpire.ToString("dd/MMM/yyyy") + "'," + remCategoryId + "," + transId + ")", connection, transaction);
+                     //nreminderID=myFunctions.getIntVAL(dLayer.ExecuteScalar("Select N_AttachmentID from DMS_MasterFiles where N_CompanyID=" + nCompanyID+" and n_UserID="+nUserID+" and N_TransID="+transId, connection, transaction).ToString());
+                    //  object obj = dLayer.ExecuteScalar("Select N_FileID From DMS_MasterFiles Where N_ReminderID ="+nreminderID+" and N_CompanyID =" + nCompanyID, connection, transaction);
+                    //             if (obj != null)
+                    //             {
+                    //  dLayer.DeleteData("DMS_MasterFiles", "N_FileID", myFunctions.getIntVAL(obj.ToString()),"N_CompanyID="+ nCompanyID, connection, transaction);
+                    //  }
+                        
+                     ReminderId = ReminderSave(dLayer, FormID, partyID, strExpireDate, subject, filename, remCategoryId, 1, settingsId,nreminderID, User, transaction, connection);
                    // int ReminderId =myReminder.ReminderSet(dLayer,settingsId, partyID, strExpireDate,FormID, nUserID,  User,  connection,transaction);
                     dLayer.ExecuteNonQuery("update DMS_MasterFiles set N_ReminderID=" + ReminderId + " where N_FileID=" + FileID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                 }
                 else{
-                  ReminderId = ReminderSave(dLayer, FormID, partyID, strExpireDate, subject, filename, remCategoryId, 1, settingsId, User, transaction, connection);
+                  ReminderId = ReminderSave(dLayer, FormID, partyID, strExpireDate, subject, filename, remCategoryId, 1, settingsId,nreminderID, User, transaction, connection);
                 dLayer.ExecuteNonQuery("insert into DMS_MasterFiles(N_CompanyID,N_FileID,X_FileCode,X_Name,X_Title,X_Contents,N_FolderID,N_UserID,X_refName,N_AttachmentID,N_FormID,N_TransID,N_ReminderID)values(" + nCompanyID + "," + FileID + ",'" + filecode + "','" + filename + "','" + category + "','" + subject + "'," + folderId + "," + nUserID + ",'" + refname + "'," + attachID + "," + FormID + "," + transId +","+ReminderId+ ")", connection, transaction);
                 }// System.IO.File.Copy(sourcepath, destpath + refname, overwriteexisting);
 
@@ -387,7 +399,7 @@ namespace SmartxAPI.GeneralFunctions
 
         }
 
-        public int ReminderSave(IDataAccessLayer dLayer, int N_FormID, int partyId, string dateval, string strSubject, string Title, int CategoryID, int Isattachment, int settingsId, ClaimsPrincipal User, SqlTransaction transaction, SqlConnection connection)
+        public int ReminderSave(IDataAccessLayer dLayer, int N_FormID, int partyId, string dateval, string strSubject, string Title, int CategoryID, int Isattachment, int settingsId,int nreminderID,ClaimsPrincipal User, SqlTransaction transaction, SqlConnection connection)
         {
 
             int nUserID = myFunctions.GetUserID(User);
@@ -443,6 +455,8 @@ namespace SmartxAPI.GeneralFunctions
                 dtSave.Rows.Add(row);
 
             object Result = 0;
+            //dLayer.DeleteData("Gen_Reminder", "N_PartyID", partyId, "N_FormID=" + N_FormID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+             //dLayer.DeleteData("Gen_Reminder", "N_PartyID="+ N_FormID + "' and N_FormID= "+ N_FormID + "' and  N_CompanyID=" + myFunctions.GetCompanyID(User), connection, transaction);
             Result=dLayer.SaveData("Gen_Reminder", "N_ReminderId", dtSave, connection, transaction);
             if (myFunctions.getIntVAL(Result.ToString()) > 0)
             {
@@ -546,7 +560,7 @@ namespace SmartxAPI.GeneralFunctions
                                     object objReminder = dLayer.ExecuteScalar("Select N_ReminderID From DMS_MasterFiles Where N_FileID=" + myFunctions.getIntVAL(obj.ToString()) + " and N_CompanyID =" + nCompanyID, connection, transaction);
                                     dLayer.DeleteData("DMS_MasterFiles", "N_FileID", myFunctions.getIntVAL(obj.ToString()), "X_refName='" + Path.GetFileName(dsAttachment.Rows[i]["X_refName"].ToString()) + "' and N_CompanyID=" + nCompanyID, connection, transaction);
                                     if (objReminder != null)
-                                        myReminder.ReminderDelete(dLayer, myFunctions.getIntVAL(objReminder.ToString()), connection, transaction);
+                                        myReminder.ReminderDelete(dLayer, myFunctions.getIntVAL(objReminder.ToString()),nCompanyID, connection, transaction);
                                     File.Delete(dsAttachment.Rows[i]["X_refName"].ToString());
                                 }
                             }
@@ -624,7 +638,7 @@ namespace SmartxAPI.GeneralFunctions
                                 object objReminder = dLayer.ExecuteScalar("Select N_ReminderID From DMS_MasterFiles Where N_FileID=" + myFunctions.getIntVAL(obj.ToString()) + " and N_CompanyID =" + nCompanyID, connection, transaction);
                                 dLayer.DeleteData("DMS_MasterFiles", "N_FileID", myFunctions.getIntVAL(obj.ToString()), "X_refName='" + Path.GetFileName(dsAttachment.Rows[0]["X_refName"].ToString()) + "' and N_CompanyID=" + nCompanyID, connection, transaction);
                                 if (objReminder != null)
-                                    myReminder.ReminderDelete(dLayer, myFunctions.getIntVAL(objReminder.ToString()), connection, transaction);
+                                    myReminder.ReminderDelete(dLayer, myFunctions.getIntVAL(objReminder.ToString()),nCompanyID, connection, transaction);
                                 //   dba.ExecuteNonQuery("delete from DMS_MasterFiles where X_refName='" + dr.Cells["dgvRefname"].FormattedValue.ToString() + "' and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable());
                                 File.Delete(dsAttachment.Rows[0]["X_refName"].ToString());
                             }
