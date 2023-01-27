@@ -371,7 +371,7 @@ namespace SmartxAPI.Controllers
         [HttpDelete("reset")]
         public ActionResult DeleteData(int nMenuID, int nType)
         {
-            int nUserID = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
             try
             {
