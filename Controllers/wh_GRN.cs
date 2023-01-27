@@ -241,6 +241,7 @@ namespace SmartxAPI.Controllers
                     var values = MasterTable.Rows[0]["X_GRNNo"].ToString();
                     string i_Signature = "";
                     bool SigEnable = false;
+                    string i_signature2="";
 
 
                     if (values == "@Auto")
@@ -294,6 +295,20 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
+                         Byte[] ImageBitmap2 = new Byte[i_signature2.Length];
+                         if (MasterTable.Columns.Contains("i_signature2"))
+                    {
+                        if (!MasterRow["i_signature2"].ToString().Contains("undefined") && !MasterRow["i_signature2"].ToString().Contains("ZGF0YTppbWFnZS9wbmc7YmFzZTY0LHVuZGVmaW5lZA=="))
+                        {
+                            i_signature2 = Regex.Replace(MasterRow["i_signature2"].ToString(), @"^data:image\/[a-zA-Z]+;base64,", string.Empty);
+                            if (myFunctions.ContainColumn("i_signature2", MasterTable))
+                                MasterTable.Columns.Remove("i_signature2");
+                            ImageBitmap2 = new Byte[i_signature2.Length];
+                            ImageBitmap2 = Convert.FromBase64String(i_signature2);
+                            SigEnable = true;
+                        }
+                    }
+
 
                     nGrnID = dLayer.SaveData("wh_GRN", "N_GRNID", MasterTable, connection, transaction);
                     //Saving Signature
@@ -314,11 +329,39 @@ namespace SmartxAPI.Controllers
                                     g.DrawImageUnscaled(Sign, 0, 0);
                                 }
                                 b.Save(stream,ImageFormat.Png);
+                               
                             }
-                            byte[] bmpBytes = stream.ToArray();
-                            dLayer.SaveImage("wh_GRN", "i_signature", bmpBytes, "N_GRNID", nGrnID, connection, transaction);
+
+                               byte[] bmpBytes = stream.ToArray();
+                                dLayer.SaveImage("wh_GRN", "i_signature", bmpBytes, "N_GRNID", nGrnID, connection, transaction);
                         }
-                    }
+
+                        if(i_signature2.Length > 0){
+                            MemoryStream stream2 = new MemoryStream(ImageBitmap2);
+                            Image Sign2 = Image.FromStream(stream2);
+
+                            using (var b = new Bitmap(Sign2.Width, Sign2.Height))
+                            {
+                                b.SetResolution(Sign2.HorizontalResolution, Sign2.VerticalResolution);
+
+                                using (var g = Graphics.FromImage(b))
+                                {
+                                    g.Clear(Color.White);
+                                    g.DrawImageUnscaled(Sign2, 0, 0);
+                                }
+                                b.Save(stream2,ImageFormat.Png);
+                               
+                            }
+
+                             byte[] bmpBytes2 = stream2.ToArray();
+                           
+                             dLayer.SaveImage("wh_GRN", "i_signature2", bmpBytes2, "N_GRNID", nGrnID, connection, transaction);
+
+                          
+                        }   
+                            
+                        }
+                    
 
 
                     if (nGrnID <= 0)

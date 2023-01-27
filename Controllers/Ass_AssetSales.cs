@@ -205,6 +205,7 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("Ass_SalesMaster", "N_AssetInventoryID", N_AssetInventoryID, "N_CompanyID=" + nCompanyID + " and N_AssetInventoryID=" + N_AssetInventoryID, connection, transaction);
                         dLayer.DeleteData("Ass_SalesDetails", "N_AssetInventoryID", N_AssetInventoryID, "N_CompanyID=" + nCompanyID + " and N_AssetInventoryID=" + N_AssetInventoryID, connection, transaction);
+                        dLayer.DeleteData("Ass_Transactions", "N_AssetInventoryID", N_AssetInventoryID, "N_CompanyID=" + nCompanyID + " and N_AssetInventoryID=" + N_AssetInventoryID, connection, transaction);
                     }
 
                     if(N_AssetInventoryID>0)

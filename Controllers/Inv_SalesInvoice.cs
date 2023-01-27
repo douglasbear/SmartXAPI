@@ -342,7 +342,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesInvoiceDetails(int nCompanyId, bool bAllBranchData, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID, string xDeliveryNoteID,int nServiceSheetID, string xServiceSheetID)
+        public ActionResult GetSalesInvoiceDetails(int nCompanyId, bool bAllBranchData, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID, string xDeliveryNoteID,int nServiceSheetID, string xServiceSheetID,string xSchSalesID)
         {
             if (xInvoiceNo != null)
                 xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
@@ -733,6 +733,26 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Success(dsSalesInvoice));
 
                     }
+                    else if (xSchSalesID !="" && xSchSalesID!=null)
+                    {
+
+                        string[] X_SchID = xSchSalesID.Split(",");
+                        int N_SchID = myFunctions.getIntVAL(X_SchID[0].ToString());
+                        string Mastersql = "select * from Vw_FeeDetailsToSalesMaster where N_SchSalesID="+N_SchID+" and N_CompanyID="+nCompanyId+"";
+                        DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
+                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                        MasterTable = _api.Format(MasterTable, "Master");
+                      
+                        string DetailSql = "";
+                        DetailSql = "select * from Vw_FeeDetailsToSalesDetails where N_CompanyId=@nCompanyID and  N_SchSalesID in ("+xSchSalesID+")";
+                        DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+                        DetailTable = _api.Format(DetailTable, "Details");
+                        dsSalesInvoice.Tables.Add(MasterTable);
+                        dsSalesInvoice.Tables.Add(DetailTable);
+                        return Ok(_api.Success(dsSalesInvoice));
+
+                    }
+
                     else
                     {
                         QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);
