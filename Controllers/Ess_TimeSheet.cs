@@ -9,6 +9,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
+using System.Net.Mail;
+using System.Net.Http;
 
 namespace SmartxAPI.Controllers
 {
@@ -25,6 +27,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int N_FormID = 1305;
+        private static TimeZoneInfo India_Standard_Time = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
 
 
         public Ess_TimeSheet(IDataAccessLayer dl, IApiFunctions apiFun, IMyFunctions myFun, IConfiguration conf)
@@ -85,6 +88,8 @@ namespace SmartxAPI.Controllers
         public ActionResult GetAttendanceDetails(int nEmployeeID, int nFnYear, string payText, DateTime payDate, DateTime dDateFrom, DateTime dDateTo)
         {
             DataTable Details = new DataTable();
+
+
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
@@ -150,6 +155,42 @@ namespace SmartxAPI.Controllers
                     Master.Add("days", days);
                     Details = dLayer.ExecuteDataTablePro("SP_Pay_TimeSheet", QueryParams, connection);
 
+
+
+                    if (Details.Rows.Count > 0)
+                    {
+
+
+                        var rows = Details.AsEnumerable().Where(r => r.Field<int>("B_HolidayFlag") == 1 || r.Field<int>("B_IsVacation") == 1);
+
+                        DataTable HolyDays = Details.Clone();
+
+                        foreach (var row in rows)
+                        {
+                            HolyDays.ImportRow(row);
+                        }
+
+
+                        foreach (DataRow row in HolyDays.Rows)
+                        {
+
+                            for (int i = Details.Rows.Count - 1; i >= 0; i--)
+                            {
+                                if (row["d_date"].ToString() == Details.Rows[i]["d_date"].ToString() && (Details.Rows[i]["B_HolidayFlag"].ToString() == "0" && row["B_HolidayFlag"].ToString() == "1"))
+                                {
+                                    Details.Rows[i].Delete();
+                                    Details.AcceptChanges();
+                                }
+                                if (row["d_date"].ToString() == Details.Rows[i]["d_date"].ToString() && (Details.Rows[i]["B_IsVacation"].ToString() == "0" && row["B_IsVacation"].ToString() == "1"))
+                                {
+                                    Details.Rows[i].Delete();
+                                    Details.AcceptChanges();
+                                }
+                                Details.AcceptChanges();
+                            }
+                        }
+                    }
+                    Details.AcceptChanges();
                     Double N_WorkHours = 0, N_WorkdHrs = 0, N_Deduction = 0, N_compensated = 0, NetDeduction = 0, Addition = 0, ExtraHour = 0;
                     if (Details.Rows.Count == 0)
                     {
@@ -210,7 +251,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -238,6 +279,19 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nEmpID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_EmpID"].ToString());
+                string userIDIndex = MasterTable.Rows[0]["userIDIndex"].ToString();
+                string Punchtype = MasterTable.Rows[0]["punchType"].ToString();
+
+                if (MasterTable.Columns.Contains("Punchtype"))
+                    MasterTable.Columns.Remove("Punchtype");
+                if (MasterTable.Columns.Contains("n_CompanyId"))
+                    MasterTable.Columns.Remove("n_CompanyId");
+                if (MasterTable.Columns.Contains("n_FnYearId"))
+                    MasterTable.Columns.Remove("n_FnYearId");
+                if (MasterTable.Columns.Contains("n_EmpID"))
+                    MasterTable.Columns.Remove("n_EmpID");
+
+
                 DataRow masterRow = MasterTable.Rows[0];
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -248,55 +302,89 @@ namespace SmartxAPI.Controllers
                     int nTimesheetID = 0;
                     string defultTime = "00:00:00";
                     string currentTime = DateTime.Now.ToString("HH:mm:ss");
-                    DateTime date = DateTime.Today;
+                    //DateTime date = DateTime.Now;
 
+                    object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection, transaction);
+                    object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection, transaction);
 
-                    string d_in = Convert.ToDateTime(masterRow["d_In"].ToString()).ToString("HH:mm:ss");
-                    string d_out = Convert.ToDateTime(masterRow["d_Out"].ToString()).ToString("HH:mm:ss");
-                    string d_Shift2_In = Convert.ToDateTime(masterRow["d_Shift2_In"].ToString()).ToString("HH:mm:ss");
-                    string d_Shift2_Out = Convert.ToDateTime(masterRow["d_Shift2_Out"].ToString()).ToString("HH:mm:ss");
+                    DateTime dateTime_Indian = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, India_Standard_Time);
+                    DateTime date = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, Timezone.ToString());
+                    date=date.AddDays(-1);
+                    date=date.AddHours(-1);
 
-                    if (d_in == defultTime)
-                    {
-                        masterRow["d_In"] = currentTime;
-                    }
-                    else if (d_out == defultTime)
-                    {
-                        masterRow["d_out"] = currentTime;
-                    }
-                    else if (d_Shift2_In == defultTime)
-                    {
-                        masterRow["d_Shift2_In"] = currentTime;
-                    }
-                    else if (d_Shift2_Out == defultTime)
-                    {
-                        masterRow["d_Shift2_Out"] = currentTime;
-                    }
-                    masterRow["d_Date"] = date.ToString();
+                    masterRow["transactionTime"] = date.ToString();
+                    masterRow["serverRecordTime"] = date.ToString();
+
                     MasterTable.AcceptChanges();
 
-                    nTimesheetID = dLayer.SaveData("Pay_TimeSheetImport", "N_SheetID", MasterTable, connection, transaction);
+                    nTimesheetID = dLayer.SaveData("Pay_TimeSheetLog", "indexKey", MasterTable, connection, transaction);
+
+
                     if (nTimesheetID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User,"Unable to save"));
+                        return Ok(api.Error(User, "Unable to save"));
                     }
                     else
                     {
+
+                        SortedList postingParams = new SortedList();
+                        postingParams.Add("D_Date", date);
+                        postingParams.Add("N_UserID", userIDIndex);
+                        postingParams.Add("N_CompanyID", nCompanyID);
+                        dLayer.ExecuteScalarPro("SP_Pay_TimesheetLog", postingParams, connection, transaction);
+
+                        //Time Updates
+                        if (Punchtype == "IN")
+                            dLayer.ExecuteNonQuery("update Pay_TimeSheetImport set D_Out='00:00:00.0000000' where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + date.ToString("yyyy-M-dd") + "'", Params, connection, transaction);
+                        if (Punchtype == "OUT")
+                            dLayer.ExecuteNonQuery("update Pay_TimeSheetImport set D_Out='" + date.ToString() + "' where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + date.ToString("yyyy-M-dd") + "'", Params, connection, transaction);
+
+                        //Whatsapp
+                        object N_WhatsappMSG = dLayer.ExecuteScalar("select N_Value from Gen_Settings where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_Group='1334' and X_Description='Whatsapp Message'", Params, connection, transaction);
+                        if (N_WhatsappMSG != null)
+                        {
+                            if (N_WhatsappMSG.ToString() == "1")
+                            {
+                                string Company = myFunctions.GetCompanyName(User);
+                                object WhatsappAPI = dLayer.ExecuteScalar("select X_Value from Gen_Settings where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_Group='1334' and X_Description='Whatsapp Message'", Params, connection, transaction);
+                                object Employee = dLayer.ExecuteScalar("select x_empname from vw_PayEmployee where n_companyid=" + myFunctions.GetCompanyID(User) + " and  n_empid=" + nEmpID, Params, connection, transaction);
+                                object Receip = dLayer.ExecuteScalar("select x_phone1 from acc_company where n_companyid=" + myFunctions.GetCompanyID(User), Params, connection, transaction);
+                                string body = "";
+                                if (Punchtype == "IN")
+                                    body = Employee + "%0AIN @ " + date.ToString("hh:mm tt");
+                                if (Punchtype == "OUT")
+                                    body = Employee + "%0AOUT @ " + date.ToString("hh:mm tt");
+
+
+                                string URLAPI = "https://api.textmebot.com/send.php?recipient=" + Receip + "&apikey=" + WhatsappAPI + "&text=" + body;
+                                var handler = new HttpClientHandler
+                                {
+                                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
+                                };
+                                var client = new HttpClient(handler);
+                                var clientFile = new HttpClient(handler);
+                                var MSG = client.GetAsync(URLAPI);
+                                MSG.Wait();
+
+                            }
+                        }
+
+
                         SortedList QueryParams = new SortedList();
 
                         QueryParams.Add("@nCompanyID", nCompanyID);
                         QueryParams.Add("@nFnYear", nFnYearId);
                         QueryParams.Add("@nDate", date);
                         QueryParams.Add("@nEmpID", nEmpID);
-                        string sqlCommandDailyLogin = "SELECT isNull(MAX(D_In),'00:00:00') as D_In,isNull(MAX(D_Out),'00:00:00') as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,MAX(D_In),case when Max(D_Out)='00:00:00.0000000' then  Convert(Time, GetDate()) else Max(D_Out) end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
+                        string sqlCommandDailyLogin = "SELECT isNull(MAX(D_In),'00:00:00') as D_In,isNull(MAX(D_Out),'00:00:00') as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,MAX(D_In),case when Max(D_Out)='00:00:00.0000000' then  Convert(Time, '" + date + "') else Max(D_Out) end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
 
                         // DataTable Details = dLayer.ExecuteDataTable("select * from Pay_TimeSheetImport where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID", QueryParams, connection, transaction);
                         DataTable Details = dLayer.ExecuteDataTable(sqlCommandDailyLogin, QueryParams, connection, transaction);
                         if (Details.Rows.Count == 0)
                         {
                             transaction.Rollback();
-                            return Ok(api.Error(User,"Unable to save"));
+                            return Ok(api.Error(User, "Unable to save"));
                         }
                         else
                         {
@@ -310,7 +398,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
         }
 
@@ -318,8 +406,8 @@ namespace SmartxAPI.Controllers
         [HttpGet("dayAttendanceDetails")]
         public ActionResult GetDayAttendance(int nEmpID, int nFnYear)
         {
-            DataTable Details = new DataTable();
-            DateTime date = DateTime.Today;
+            //DataTable Details = new DataTable();
+            //DateTime date = DateTime.Today;
 
             int companyid = myFunctions.GetCompanyID(User);
             try
@@ -327,40 +415,41 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+
+                    // SortedList QueryParams = new SortedList();
+
+                    // QueryParams.Add("@nCompanyID", companyid);
+                    // QueryParams.Add("@nFnYear", nFnYear);
+                    // QueryParams.Add("@nDate", date);
+                    // QueryParams.Add("@nEmpID", nEmpID);
+                    // //string sqlCommandDailyLogin = "SELECT isNull(MAX(D_In),'00:00:00') as D_In,isNull(MAX(D_Out),'00:00:00') as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,MAX(D_In),case when Max(D_Out)='00:00:00.0000000' then  Convert(Time, GetDate()) else Max(D_Out) end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
+                    // string sqlDIN = "SELECT isNull(MIN(D_In),'00:00:00') as D_In from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID and D_In<> '00:00:00'";
+                    // //string sqlDOUT = "SELECT isNull(MAX(D_Out),'00:00:00') as D_Out from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID and D_Out<> '00:00:00'";
+                    // string sqlDOUT = "SELECT top(1) D_Out as D_Out from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID order by N_SheetID desc";
+                    // object DIN = dLayer.ExecuteScalar(sqlDIN, QueryParams, connection);
+                    // object DOUT = dLayer.ExecuteScalar(sqlDOUT, QueryParams, connection);
+
+                    // string sqlCommandDailyLogin = "SELECT top(1) '" + DIN + "' as D_In,'" + DOUT + "' as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,'" + DIN + "',case when '" + DOUT + "'='00:00:00.0000000' then  Convert(Time, GetDate()) else '" + DOUT + "' end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
+
+                    // Details = dLayer.ExecuteDataTable(sqlCommandDailyLogin, QueryParams, connection);
+                    // Details = myFunctions.AddNewColumnToDataTable(Details, "workHours", typeof(string), "00:00:00");
+
+                    //New Details
+                    object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + companyid, connection, transaction);
+                    object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection, transaction);
+
+                    DateTime dateTime_Indian = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, India_Standard_Time);
+                    DateTime date = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, Timezone.ToString());
 
                     SortedList QueryParams = new SortedList();
-
                     QueryParams.Add("@nCompanyID", companyid);
                     QueryParams.Add("@nFnYear", nFnYear);
                     QueryParams.Add("@nDate", date);
                     QueryParams.Add("@nEmpID", nEmpID);
                     string sqlCommandDailyLogin = "SELECT isNull(MAX(D_In),'00:00:00') as D_In,isNull(MAX(D_Out),'00:00:00') as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,MAX(D_In),case when Max(D_Out)='00:00:00.0000000' then  Convert(Time, GetDate()) else Max(D_Out) end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
 
-                    Details = dLayer.ExecuteDataTable(sqlCommandDailyLogin, QueryParams, connection);
-                    // Details = dLayer.ExecuteDataTable("select * from Pay_TimeSheetImport where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID", QueryParams, connection);
-
-                    Details = myFunctions.AddNewColumnToDataTable(Details, "workHours", typeof(string), "00:00:00");
-
-                    // object workHours = dLayer.ExecuteScalar("Select N_Workhours from Pay_EmpShiftDetails  Where N_CompanyID=" + companyid + " and N_EmpID=" + nEmpID + " and D_Date='" + date + "' and N_ShiftID=(select Max(N_ShiftID) from Pay_EmpShiftDetails Where N_CompanyID=" + companyid + " and N_EmpID=" + nEmpID + " and D_Date='" + date + "')",connection);
-                    //     if (workHours != 0)
-                    //     {
-                    //         DataRow drow3 = dsShiftTime.Tables["Inv_ShiftTime"].Rows[0];
-                    //         N_CatID = myFunctions.getIntVAL(drow3["N_GroupID"].ToString());
-
-                    //         D_In1 = drow3["D_In1"].ToString();
-                    //         D_Out1 = drow3["D_Out1"].ToString();
-                    //         D_In2 = drow3["D_In2"].ToString();
-                    //         D_Out2 = drow3["D_Out2"].ToString();
-                    //     }
-                    //     else
-                    //     {
-                    //         N_CatID = CategoryID;
-
-                    //         D_In1 = pObjCon.ExecuteSclar("select D_In1 from Pay_WorkingHours where DATEPART(DW, '" + DateString + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + N_CatID + " and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable()).ToString();
-                    //         D_Out1 = pObjCon.ExecuteSclar("select D_Out1 from Pay_WorkingHours where DATEPART(DW, '" + DateString + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + N_CatID + " and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable()).ToString();
-                    //         D_In2 = pObjCon.ExecuteSclar("select D_In2 from Pay_WorkingHours where DATEPART(DW, '" + DateString + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + N_CatID + " and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable()).ToString();
-                    //         D_Out2 = pObjCon.ExecuteSclar("select D_Out2 from Pay_WorkingHours where DATEPART(DW, '" + DateString + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + N_CatID + " and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable()).ToString();
-                    //     }
+                    DataTable Details = dLayer.ExecuteDataTable(sqlCommandDailyLogin, QueryParams, connection, transaction);
 
                     if (Details.Rows.Count == 0)
                     {
@@ -376,7 +465,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -419,14 +508,14 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_workLocation", "n_LocationID", n_LocationID, "", connection, transaction);
                     }
 
-                     MasterTable.Columns.Remove("N_FnYearID");
-                     MasterTable.Columns.Remove("N_EmpID");
+                    MasterTable.Columns.Remove("N_FnYearID");
+                    MasterTable.Columns.Remove("N_EmpID");
 
                     n_LocationID = dLayer.SaveData("Pay_workLocation", "n_LocationID", MasterTable, connection, transaction);
                     if (n_LocationID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User,"Unable to save"));
+                        return Ok(api.Error(User, "Unable to save"));
                     }
                     else
                     {
@@ -437,20 +526,20 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
         }
-    [HttpGet("locationList")]
+        [HttpGet("locationList")]
         public ActionResult GetSalaryPayBatch()
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             Params.Add("@nCompanyID", nCompanyID);
-          
 
 
-            string sqlCommandText = "Select * from Pay_WorkLocation Where  N_CompanyID=@nCompanyID " ;
+
+            string sqlCommandText = "Select * from Pay_WorkLocation Where  N_CompanyID=@nCompanyID ";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -470,7 +559,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -549,27 +638,27 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
         [HttpGet("timesheetLog")]
-        public ActionResult GetTimesheetLog(string xEmpCode,DateTime dEventDate)
+        public ActionResult GetTimesheetLog(string xEmpCode, DateTime dEventDate)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             Params.Add("@nEmpCode", xEmpCode);
             Params.Add("@dEventDate", dEventDate);
             // string sqlCommandText="select * from Pay_TimesheetReport where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID and D_EventDate=@dEventDate order by D_In,D_Out";
-            string sqlCommandText="select UserID as X_EmpCode ,cast(TransactionTime as date) as date,CAST(TransactionTime AS TIME) as time from Pay_TimesheetLog where cast(TransactionTime as date)=@dEventDate and UserID=@nEmpCode order by TransactionTime asc";
+            string sqlCommandText = "select UserID as X_EmpCode ,cast(TransactionTime as date) as date,CAST(TransactionTime AS TIME) as time from Pay_TimesheetLog where cast(TransactionTime as date)=@dEventDate and UserID=@nEmpCode order by TransactionTime asc";
             SortedList OutPut = new SortedList();
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
-                    string sqlCommandCount="select count(1) as N_Count from Pay_TimesheetLog where cast(TransactionTime as date)=@dEventDate and UserID=@nEmpCode";
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    string sqlCommandCount = "select count(1) as N_Count from Pay_TimesheetLog where cast(TransactionTime as date)=@dEventDate and UserID=@nEmpCode";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
 
@@ -577,7 +666,7 @@ namespace SmartxAPI.Controllers
                     {
                         DataRow drow = Summary.Rows[0];
                         TotalCount = drow["N_Count"].ToString();
-                      
+
                     }
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -594,7 +683,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 

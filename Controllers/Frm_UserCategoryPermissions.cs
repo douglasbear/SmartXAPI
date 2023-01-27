@@ -98,6 +98,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     Params.Add("@nCompanyID", nCompanyID);
                     string userCategoryID = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User Where N_CompanyID =" + nCompanyID + " and N_UserID=" + myFunctions.GetUserID(User) + "", Params, connection).ToString();
+                    userCategoryID=userCategoryID+","+nUserCategoryID;
                     object x_UserCategory = dLayer.ExecuteScalar("Select X_UserCategory from Sec_UserCategory Where N_UserCategoryID in  (" + userCategoryID + ")", Params, connection);
                     if (x_UserCategory != null)
                     {
@@ -110,7 +111,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        sqlCommandText = "Select * from vw_UserMenus_Disp Where  N_LanguageID=" + nLanguageID + "  and N_ParentMenuID = 0 and X_ControlNo = '0' and N_UserCategoryID in (" + userCategoryID + ") and N_CompanyID=" + nCompanyID + "";
+                        sqlCommandText = "Select X_Text,N_LanguageID,N_CompanyID,X_MenuName,N_MenuID from vw_UserMenus_Disp Where  N_LanguageID=" + nLanguageID + "  and N_ParentMenuID = 0 and X_ControlNo = '0' and N_UserCategoryID in (" + userCategoryID + ") and N_CompanyID=" + nCompanyID + " group by X_Text,N_LanguageID,N_CompanyID,X_MenuName,N_MenuID";
                     }
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
@@ -132,7 +133,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("fillData")]
-        public ActionResult GetScreen(string perModules, string permUserCategory, int nLanguageID)
+        public ActionResult GetScreen(string perModules, string permUserCategory, int nLanguageID,int nUserCategoryID)
         {
             try
             {
@@ -140,8 +141,8 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     DataSet dt = new DataSet();
-                    string x_UserCategoryName = "";
-                    int userCategoryID = myFunctions.GetUserCategory(User);
+                    //string x_UserCategoryName = "";
+                    string x_UserCategoryName = myFunctions.GetUserCategoryList(User);
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     Params.Add("@nCompanyID", nCompanyID);
@@ -149,12 +150,15 @@ namespace SmartxAPI.Controllers
                     Boolean bool2 = false;
 
 
-                    object x_UserCategory = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User Where N_UserCategoryID =" + userCategoryID + "", Params, connection);
+                    // string x_UserCategory = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User Where N_UserCategoryID =" + userCategoryID + "", Params, connection).ToString();
+                 
 
-                    if (x_UserCategory != null)
-                    {
-                        x_UserCategoryName = x_UserCategory.ToString();
-                    }
+                    // if (x_UserCategory != null)
+                    // {
+                    //     x_UserCategoryName = x_UserCategory.ToString();
+                    // }
+                     x_UserCategoryName=x_UserCategoryName+","+nUserCategoryID;
+
 
 
                     DataTable SecUserPermissions = new DataTable();
@@ -172,6 +176,8 @@ namespace SmartxAPI.Controllers
                     secParams.Add("@nMenuID", N_MenuID);
                     secParams.Add("@nLanguageID", nLanguageID);
                     secParams.Add("@nIsCategoryID", 1);
+                    secParams.Add("@userGroupCategoryID", nUserCategoryID);
+                    
 
                     string SecAllSql = "SP_Sec_UserMenus_Sel @nCompanyID,@xUserCategory,@nMenuID,@nLanguageID,@nIsCategoryID";
                     SecAllMenus = dLayer.ExecuteDataTable(SecAllSql, secParams, connection);
@@ -213,7 +219,10 @@ namespace SmartxAPI.Controllers
                                 Rows["b_Save"] = Convert.ToBoolean(KRows["b_Save"].ToString());
 
                                 Rows["b_Visible"] = Convert.ToBoolean(KRows["b_Visible"].ToString());
+                              
+                                    SecAllMenus.AcceptChanges();
                             }
+                                SecAllMenus.AcceptChanges();
 
 
 
@@ -226,7 +235,7 @@ namespace SmartxAPI.Controllers
 
                     foreach (DataRow PRows in SecAllMenus.Rows)
                     {
-                        if (PRows["x_Text"].ToString() == "Seperator")
+                        if (PRows["X_Text"].ToString() == "Seperator" || PRows["X_Text"].ToString() == "seprator" || PRows["X_Text"].ToString() == "Seperator ")
                         {
                             PRows.Delete();
                             continue;
@@ -289,9 +298,11 @@ namespace SmartxAPI.Controllers
                         foreach (DataRow Rows in DetailTable.Rows)
                         {
                             dLayer.DeleteData("Sec_userPrevileges", "N_UserCategoryID", N_UserCategoryID, "N_MenuID=" + Rows["n_MenuID"].ToString(), connection, transaction);
-
+                            
                         }
                     }
+                    //  transaction.Commit();
+                    //   return Ok(_api.Success("Saved"));
 
                     if (DetailTable.Rows.Count > 0)
                     {
@@ -306,8 +317,7 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    if (flag == 1)
-                    {
+                    
                         DataTable dt = new DataTable();
                         dt.Clear();
                         dt.Columns.Add("N_InternalID");
@@ -337,7 +347,7 @@ namespace SmartxAPI.Controllers
                         }
 
 
-                    }
+                    
                     if (N_IsAdmin == 1)
                     {
                         dLayer.ExecuteNonQuery("delete from Sec_UserPrevileges where N_UserCategoryID not in (select N_UserCategoryID from Sec_UserCategory where X_UserCategory in ('Olivo','Administrator') and N_CompanyID=" + nCompanyID + ") and N_MenuID not in (select N_MenuID from Sec_UserPrevileges where N_UserCategoryID=" + N_UserCategoryID + ")and N_MenuID in (select N_MenuID from Sec_Menus where N_ParentMenuID=" + N_MenuID + ")", Params, connection, transaction);

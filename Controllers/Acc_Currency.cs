@@ -198,7 +198,7 @@ namespace SmartxAPI.Controllers
                       MasterTable.Columns.Remove("n_BranchId");
 
                     string X_CurrencyName= MasterTable.Rows[0]["X_CurrencyName"].ToString();
-                    string DupCriteria = "X_CurrencyName='" + X_CurrencyName + "'";
+                    string DupCriteria = "X_CurrencyName='" + X_CurrencyName + "' and N_CompanyID=" + nCompanyID;
 
                     nCurrencyID = dLayer.SaveData("Acc_CurrencyMaster", "N_CurrencyID",DupCriteria,"", MasterTable, connection, transaction);
                     if (nCurrencyID <= 0)
@@ -222,6 +222,7 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nCurrencyId)
         {
              int Results=0;
+             int nCompanyId=myFunctions.GetCompanyID(User);
             try
             {
                                 using (SqlConnection connection = new SqlConnection(connectionString))

@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
             }
             else
             {
-                Pattern = " and N_UserID=" + nUserID;
+                Pattern = " and N_CreatedUser=" + nUserID;
 
             }
             int Count= (nPage - 1) * nSizeperpage;
@@ -65,9 +65,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1 and N_FnYearId=@p3 " + Pattern + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1  " + Pattern + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1 and N_FnYearId=@p3 " + Pattern + Searchkey + " and N_CustomerID not in (select top("+ Count +") N_CustomerID from vw_CRMCustomer where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1  " + Pattern + Searchkey + " and N_CustomerID not in (select top("+ Count +") N_CustomerID from vw_CRMCustomer where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", nFnYearId);
             SortedList OutPut = new SortedList();
@@ -80,7 +80,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMCustomer where N_CompanyID=@p1 and N_FnYearId=@p3 " + Pattern;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMCustomer where N_CompanyID=@p1  " + Pattern;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -102,14 +102,15 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listDetails")]
-        public ActionResult CustomerListInner()
+        public ActionResult CustomerListInner(int nFnyearId)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
            
-            string sqlCommandText = "select  * from vw_CRMCustomer where N_CompanyID=@p1";
+            string sqlCommandText = "select  * from vw_CRMCustomer where N_CompanyID=@p1 ";
             Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnyearId);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -117,14 +118,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
                     dt = api.Format(dt);
-                    if (dt.Rows.Count == 0)
-                    {
-                        return Ok(api.Warning("No Results Found"));
-                    }
-                    else
-                    {
-                        return Ok(api.Success(dt));
-                    }
+                    return Ok(api.Success(dt));
 
                 }
                 
@@ -235,12 +229,36 @@ namespace SmartxAPI.Controllers
                 QueryParams.Add("@nFormID", 1305);
                 QueryParams.Add("@nCustomerID", nCustomerID);
 
+
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("CRM_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
-                    transaction.Commit();
+
+                    object NCustomerID = dLayer.ExecuteScalar("select N_CrmCompanyID from Inv_Customer where N_CrmCompanyID=@nCustomerID", QueryParams, connection, transaction);
+                    NCustomerID = NCustomerID == null ? 0 : NCustomerID;
+                     if (myFunctions.getIntVAL(NCustomerID.ToString()) > 0)
+                  
+                  
+                    {
+                     return Ok(api.Error(User, "Unable to delete Customer"));
+                    }
+
+                     object NSOCustomerID = dLayer.ExecuteScalar("select N_CrmCompanyID from Inv_SalesQuotation where N_CrmCompanyID=@nCustomerID", QueryParams, connection, transaction);
+                     NSOCustomerID = NSOCustomerID == null ? 0 : NSOCustomerID;
+                     if (myFunctions.getIntVAL(NSOCustomerID.ToString()) > 0)
+                     {
+                     return Ok(api.Error(User, "Unable to delete Customer"));
+                    }
+                    
+                    else
+                     {
+                 Results = dLayer.DeleteData("CRM_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
+                 transaction.Commit();
+                     }
+                  
                 }
                 if (Results > 0)
                 {

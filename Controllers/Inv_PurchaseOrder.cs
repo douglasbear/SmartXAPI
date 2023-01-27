@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetPurchaseOrderList(int? nCompanyId, int nFnYearId, bool bAllBranchData, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetPurchaseOrderList(int? nCompanyId, int nFnYearId, bool bAllBranchData, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,string screen,int nFormID)
         {
             try
             {
@@ -49,9 +49,39 @@ namespace SmartxAPI.Controllers
                     string sqlCommandText = "";
                     string sqlCommandCount = "";
                     string Searchkey = "";
+                    string criteria = "";
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    int N_decimalPlace = 2;
+                    // string UserPattern = myFunctions.GetUserPattern(User);
+                    int nUserID = myFunctions.GetUserID(User);
+                    N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Purchase", "Decimal_Place", "N_Value", nCompanyID, dLayer, connection));
+                    N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
+                //     // string Pattern = "";
+                // if (UserPattern != "")
+                // {
+                //     Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
+                //     Params.Add("@UserPattern",UserPattern);
+
+                // }
+                // else
+                // {
+                //     object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId,Params,connection);
+
+                //     if(myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                //     Pattern = " and N_CreatedUser=" + nUserID;
+                // }
+
+
+
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
+
+                     if (screen == "Order")
+                        criteria = "and MONTH(Cast(D_POrderDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_POrderDate)= YEAR(CURRENT_TIMESTAMP)";
+                    if (screen == "DelayedOrder")
+                        criteria = "and MONTH(Cast(D_POrderDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_POrderDate)= YEAR(CURRENT_TIMESTAMP) and ISNULL(N_Processed,0)=0 and (D_ExDelvDate < getDate())";
+
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([Order No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%' or Cast([Order Date] as VarChar) like '%" + xSearchkey + "%'or N_Amount like '%" + xSearchkey + "%' or X_Description like '%" + xSearchkey + "%')";
+                        Searchkey = "and ([Order No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%' or Cast([Order Date] as VarChar) like '%" + xSearchkey + "%'or N_Amount like '%" + xSearchkey + "%' or X_Description like '%" + xSearchkey + "%' or X_ActionStatus like '%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_POrderID desc";
@@ -66,7 +96,7 @@ namespace SmartxAPI.Controllers
                                 xSortBy = "Cast([Order Date] as DateTime ) " + xSortBy.Split(" ")[1];
                                 break;
                             case "n_Amount":
-                                xSortBy = "Cast(REPLACE(n_Amount,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
+                                xSortBy = "Cast(REPLACE(n_Amount,',','') as Numeric(10,"+N_decimalPlace+")) " + xSortBy.Split(" ")[1];
                                 break;
                             default: break;
                         }
@@ -96,16 +126,18 @@ namespace SmartxAPI.Controllers
                     }
 
                     if (Count == 0)
-                        sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p7 "  + criteria+ Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_POrderID not in(select top(" + Count + ") N_POrderID from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p7 "  + criteria+ Searchkey + " and N_POrderID not in(select top(" + Count + ") N_POrderID from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p7  " +criteria+ xSortBy + " ) " + xSortBy;
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
+                    Params.Add("@p7", nFormID);
+                 
                     SortedList OutPut = new SortedList();
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p7 " +criteria+ Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -188,8 +220,10 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listDetails")]
-        public ActionResult GetPurchaseOrderDetails(int nCompanyId, string xPOrderId, int nFnYearId, string nLocationID, string xPRSNo, bool bAllBranchData, int nBranchID)
+        public ActionResult GetPurchaseOrderDetails(int nCompanyId, string xPOrderId, int nFnYearId, string nLocationID, string xPRSNo, bool bAllBranchData, int nBranchID,int nQuotationID,int nVendorID,int nSalesOrderId)
         {
+              if (xPOrderId != null)
+                xPOrderId = xPOrderId.Replace("%2F", "/");
             bool B_PRSVisible = false;
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
@@ -197,41 +231,35 @@ namespace SmartxAPI.Controllers
             DataTable DetailTable = new DataTable();
             DataTable DataTable = new DataTable();
             if (xPRSNo == null) xPRSNo = "";
+            if (xPOrderId == null) xPOrderId = "";
             string Mastersql = "";
 
+         
+
+
+           
            if (bAllBranchData == true)
             {
-                Mastersql = "SELECT Inv_PurchaseOrder.N_CompanyID, Inv_PurchaseOrder.N_FnYearID, Inv_PurchaseOrder.N_DiscountDisplay, Inv_PurchaseOrder.N_TaxPercentage, Inv_PurchaseOrder.N_TaxCategoryID,Inv_PurchaseOrder.N_POrderID, Inv_PurchaseOrder.X_POrderNo, Inv_PurchaseOrder.N_VendorID, Inv_PurchaseOrder.D_EntryDate, Inv_PurchaseOrder.D_POrderDate," +
-                            "Inv_PurchaseOrder.N_InvoiceAmt, Inv_PurchaseOrder.N_DiscountAmt, Inv_PurchaseOrder.N_CashPaid, Inv_PurchaseOrder.N_FreightAmt, Inv_PurchaseOrder.N_userID, Inv_PurchaseOrder.N_Processed, Inv_PurchaseOrder.N_PurchaseID, Inv_PurchaseOrder.N_LocationID, Inv_PurchaseOrder.X_Description, Inv_PurchaseOrder.N_BranchID, " +
-                            "Inv_PurchaseOrder.B_CancelOrder, Inv_PurchaseOrder.D_ExDelvDate, Inv_PurchaseOrder.N_ProjectID, Inv_PurchaseOrder.X_Currency, Inv_PurchaseOrder.N_ExchangeRate, Inv_PurchaseOrder.X_QutationNo, Inv_PurchaseOrder.X_PaymentMode, Inv_PurchaseOrder.X_DeliveryPlace, Inv_PurchaseOrder.N_ApproveLevel, Inv_PurchaseOrder.N_ProcStatus, " +
-                            "Inv_PurchaseOrder.N_QuotationID, Inv_PurchaseOrder.N_InvoiceAmtF, Inv_PurchaseOrder.N_DiscountAmtF, Inv_PurchaseOrder.N_CashPaidF, Inv_PurchaseOrder.N_FreightAmtF, Inv_PurchaseOrder.N_CurrencyID, Inv_PurchaseOrder.B_IsSaveDraft, Inv_PurchaseOrder.N_DeliveryPlaceID, Inv_PurchaseOrder.X_TandC, Inv_PurchaseOrder.X_Attention, " +
-                            "Inv_PurchaseOrder.N_TaxAmt, Inv_PurchaseOrder.N_TaxAmtF, Inv_PurchaseOrder.N_InvDueDays, Inv_PurchaseOrder.N_NextApprovalID, Inv_PurchaseOrder.N_ApprovalLevelId, Inv_PurchaseOrder.N_POType, Inv_PurchaseOrder.X_Comments ,Inv_CustomerProjects.X_ProjectName,Inv_PurchaseOrder.N_WSID, Inv_PurchaseOrder.N_SOId, Inv_PurchaseOrder.N_POTypeID, " +
-                            "Inv_PurchaseOrder.D_ContractEndDate, Inv_PurchaseOrder.D_MailDate, Inv_PurchaseOrder.N_MailUserID, Inv_Location.X_LocationName, Gen_Defaults.X_TypeName, Inv_Vendor.X_VendorName, Inv_Purchase.X_InvoiceNo, Acc_TaxCategory_1.X_DisplayName, Acc_CurrencyMaster.X_CurrencyName, Acc_CurrencyMaster.B_default, Inv_PurchaseOrder.N_TaxCategoryID2, " +
-                            "Inv_PurchaseOrder.N_TaxPercentage2, Acc_TaxCategory.X_DisplayName AS X_DisplayName2 FROM Inv_Purchase RIGHT OUTER JOIN Inv_PurchaseOrder LEFT OUTER JOIN Acc_TaxCategory ON Inv_PurchaseOrder.N_CompanyID = Acc_TaxCategory.N_CompanyID AND Inv_PurchaseOrder.N_TaxCategoryID2 = Acc_TaxCategory.N_PkeyID ON " +
-                            "Inv_Purchase.N_POrderID = Inv_PurchaseOrder.N_POrderID AND Inv_Purchase.N_CompanyID = Inv_PurchaseOrder.N_CompanyID AND Inv_Purchase.N_FnYearID = Inv_PurchaseOrder.N_FnYearID AND Inv_Purchase.N_BranchId = Inv_PurchaseOrder.N_BranchID LEFT OUTER JOIN Acc_CurrencyMaster RIGHT OUTER JOIN " +
-                            "Inv_Vendor ON Acc_CurrencyMaster.N_CompanyID = Inv_Vendor.N_CompanyID AND Acc_CurrencyMaster.N_CurrencyID = Inv_Vendor.N_CurrencyID ON Inv_PurchaseOrder.N_CompanyID = Inv_Vendor.N_CompanyID AND Inv_PurchaseOrder.N_VendorID = Inv_Vendor.N_VendorID AND Inv_PurchaseOrder.N_FnYearID = Inv_Vendor.N_FnYearID LEFT OUTER JOIN " +
-                            "Gen_Defaults ON Inv_PurchaseOrder.N_POType = Gen_Defaults.N_TypeId LEFT OUTER JOIN Inv_Location ON Inv_PurchaseOrder.N_LocationID = Inv_Location.N_LocationID LEFT OUTER JOIN Inv_CustomerProjects on Inv_PurchaseOrder.N_ProjectID=Inv_CustomerProjects.N_ProjectID and Inv_PurchaseOrder.N_CompanyID=Inv_CustomerProjects.N_CompanyID   LEFT OUTER JOIN Acc_TaxCategory AS Acc_TaxCategory_1 ON Inv_PurchaseOrder.N_CompanyID = Acc_TaxCategory_1.N_CompanyID AND Inv_PurchaseOrder.N_TaxCategoryID = Acc_TaxCategory_1.N_PkeyID " +
-                            " Where Inv_PurchaseOrder.N_CompanyID=@p1 and Inv_PurchaseOrder.N_FnYearID=@p2 and Inv_PurchaseOrder.X_POrderNo=@p3";
+               
+                if(nSalesOrderId>0)
+                    Mastersql = "SELECT * from vw_RentalOrderMasterToPurchaseRO Where N_CompanyID=@p1  and N_SalesOrderId=@p8";
+                else
+                    Mastersql = "SELECT * from vw_Inv_PurchaseOrderMaster Where N_CompanyID=@p1 and N_FnYearID=@p2 and X_POrderNo=@p3";
             }
             else
             {
-                Mastersql = "SELECT Inv_PurchaseOrder.N_CompanyID, Inv_PurchaseOrder.N_DiscountDisplay, Inv_PurchaseOrder.N_TaxPercentage, Inv_PurchaseOrder.N_TaxCategoryID, Inv_PurchaseOrder.N_FnYearID, Inv_PurchaseOrder.N_POrderID, Inv_PurchaseOrder.X_POrderNo, Inv_PurchaseOrder.N_VendorID, Inv_PurchaseOrder.D_EntryDate, Inv_PurchaseOrder.D_POrderDate, " +
-                            "Inv_PurchaseOrder.N_InvoiceAmt, Inv_PurchaseOrder.N_DiscountAmt, Inv_PurchaseOrder.N_CashPaid, Inv_PurchaseOrder.N_FreightAmt, Inv_PurchaseOrder.N_userID, Inv_PurchaseOrder.N_Processed, Inv_PurchaseOrder.N_PurchaseID, Inv_PurchaseOrder.N_LocationID, Inv_PurchaseOrder.X_Description, Inv_PurchaseOrder.N_BranchID, " +
-                            "Inv_PurchaseOrder.B_CancelOrder, Inv_PurchaseOrder.D_ExDelvDate, Inv_PurchaseOrder.N_ProjectID, Inv_PurchaseOrder.X_Currency, Inv_PurchaseOrder.N_ExchangeRate, Inv_PurchaseOrder.X_QutationNo, Inv_PurchaseOrder.X_PaymentMode,Inv_CustomerProjects.X_ProjectName,Inv_PurchaseOrder.X_DeliveryPlace, Inv_PurchaseOrder.N_ApproveLevel, Inv_PurchaseOrder.N_ProcStatus, " +
-                            "Inv_PurchaseOrder.N_QuotationID, Inv_PurchaseOrder.N_InvoiceAmtF, Inv_PurchaseOrder.N_DiscountAmtF, Inv_PurchaseOrder.N_CashPaidF, Inv_PurchaseOrder.N_FreightAmtF, Inv_PurchaseOrder.N_CurrencyID, Inv_PurchaseOrder.B_IsSaveDraft, Inv_PurchaseOrder.N_DeliveryPlaceID, Inv_PurchaseOrder.X_TandC, Inv_PurchaseOrder.X_Attention, " +
-                            "Inv_PurchaseOrder.N_TaxAmt, Inv_PurchaseOrder.N_TaxAmtF, Inv_PurchaseOrder.N_InvDueDays, Inv_PurchaseOrder.N_NextApprovalID, Inv_PurchaseOrder.N_ApprovalLevelId, Inv_PurchaseOrder.N_POType, Inv_PurchaseOrder.X_Comments, Inv_PurchaseOrder.N_WSID, Inv_PurchaseOrder.N_SOId, Inv_PurchaseOrder.N_POTypeID, " +
-                            "Inv_PurchaseOrder.D_ContractEndDate, Inv_PurchaseOrder.D_MailDate, Inv_PurchaseOrder.N_MailUserID, Inv_Location.X_LocationName, Gen_Defaults.X_TypeName, Inv_Vendor.X_VendorName, Inv_Purchase.X_InvoiceNo, Acc_TaxCategory_1.X_DisplayName, Acc_CurrencyMaster.X_CurrencyName, Acc_CurrencyMaster.B_default, Acc_TaxCategory.X_DisplayName AS X_DisplayName2 " +
-                            "FROM Inv_Purchase RIGHT OUTER JOIN Inv_PurchaseOrder LEFT OUTER JOIN Acc_TaxCategory ON Inv_PurchaseOrder.N_CompanyID = Acc_TaxCategory.N_CompanyID AND Inv_PurchaseOrder.N_TaxCategoryID2 = Acc_TaxCategory.N_PkeyID ON Inv_Purchase.N_POrderID = Inv_PurchaseOrder.N_POrderID AND Inv_Purchase.N_CompanyID = Inv_PurchaseOrder.N_CompanyID AND " +
-                            "Inv_Purchase.N_FnYearID = Inv_PurchaseOrder.N_FnYearID AND Inv_Purchase.N_BranchId = Inv_PurchaseOrder.N_BranchID LEFT OUTER JOIN Acc_CurrencyMaster RIGHT OUTER JOIN Inv_Vendor ON Acc_CurrencyMaster.N_CurrencyID = Inv_Vendor.N_CurrencyID AND Acc_CurrencyMaster.N_CompanyID = Inv_Vendor.N_CompanyID ON Inv_PurchaseOrder.N_CompanyID = Inv_Vendor.N_CompanyID AND Inv_PurchaseOrder.N_VendorID = Inv_Vendor.N_VendorID AND " +
-                            "Inv_PurchaseOrder.N_FnYearID = Inv_Vendor.N_FnYearID LEFT OUTER JOIN Gen_Defaults ON Inv_PurchaseOrder.N_POType = Gen_Defaults.N_TypeId LEFT OUTER JOIN Inv_CustomerProjects on Inv_PurchaseOrder.N_ProjectID=Inv_CustomerProjects.N_ProjectID and Inv_PurchaseOrder.N_CompanyID=Inv_CustomerProjects.N_CompanyID  LEFT OUTER JOIN Inv_Location ON Inv_PurchaseOrder.N_LocationID = Inv_Location.N_LocationID LEFT OUTER JOIN Acc_TaxCategory AS Acc_TaxCategory_1 ON Inv_PurchaseOrder.N_CompanyID = Acc_TaxCategory_1.N_CompanyID AND Inv_PurchaseOrder.N_TaxCategoryID = Acc_TaxCategory_1.N_PkeyID " +
-                            "Where Inv_PurchaseOrder.N_CompanyID=@p1 and Inv_PurchaseOrder.X_POrderNo=@p3 and Inv_PurchaseOrder.N_BranchID=@nBranchID and Inv_PurchaseOrder.N_FnYearID=@p2";
+                if(nSalesOrderId>0)
+                    Mastersql = "SELECT * from vw_RentalOrderMasterToPurchaseRO Where N_CompanyID=@p1  and N_SalesOrderId=@p8 and N_BranchID=@nBranchID";
+                else
+                    Mastersql = "SELECT * from vw_Inv_PurchaseOrderMaster Where N_CompanyID=@p1 and X_POrderNo=@p3 and N_BranchID=@nBranchID and N_FnYearID=@p2";
+
                 Params.Add("@nBranchID", nBranchID);
             }
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
-            Params.Add("@p3", xPOrderId);
-
+            Params.Add("@p3", xPOrderId);   
+            Params.Add("@p8", nSalesOrderId); 
 
             try
             {
@@ -240,11 +268,14 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
-                    int N_POrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString());
-                    object InPurchase = dLayer.ExecuteScalar("select 1 from Inv_Purchase where N_CompanyID=" + nCompanyId + " and N_POrderID=" + N_POrderID, Params, connection);
-                    if (InPurchase != null)
-                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), "Invoice Processed");
-
+                    int N_POrderID = 0 ;
+                    if(MasterTable.Rows.Count>0)
+                    { 
+                        N_POrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString());
+                        object InPurchase = dLayer.ExecuteScalar("select 1 from Inv_Purchase where N_CompanyID=" + nCompanyId + " and N_POrderID=" + N_POrderID, Params, connection);
+                        if (InPurchase != null)
+                            MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), "Invoice Processed");
+                    }
 
                     MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
@@ -253,8 +284,10 @@ namespace SmartxAPI.Controllers
 
 
                     string DetailSql = "";
-                    bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", "X_UserCategory", dLayer, connection);
-                    bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Administrator", "X_UserCategory", dLayer, connection);
+
+
+                    bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Admin", "X_UserCategory", dLayer, connection);
+                    bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Admin", "X_UserCategory", dLayer, connection);
                     if (MaterailRequestVisible || PurchaseRequestVisible)
                     {
                         B_PRSVisible = true;
@@ -262,6 +295,17 @@ namespace SmartxAPI.Controllers
                         prsCol.DefaultValue = B_PRSVisible;
                         DataTable.Columns.Add(prsCol);
                     }
+
+                    if(nSalesOrderId>0)
+                    {
+
+                     DetailSql = "select * from vw_RentalOrderDetailsToRPO where N_CompanyID=@p1  and N_SalesOrderId=@p8 and N_ItemTypeID in (9)";
+
+                    }
+                    else
+                    {
+
+                   
                     if (B_PRSVisible)
                         if (xPRSNo != "")
                         {
@@ -269,7 +313,14 @@ namespace SmartxAPI.Controllers
                             Params.Add("@p4", nLocationID);
                             Params.Add("@p5", N_POrderID);
                         }
-                        else
+                        else if(nVendorID>0 && nQuotationID>0){
+                                DetailSql = "Select *,dbo.SP_GenGetStock(vw_RFQToPODetails.N_ItemID,@p4,'','Location') As N_Stock,dbo.SP_Cost(vw_RFQToPODetails.N_ItemID,vw_RFQToPODetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_RFQToPODetails.N_ItemID,vw_RFQToPODetails.N_CompanyID) As N_UnitSPrice from vw_RFQToPODetails Where N_CompanyID=@p1 and N_VendorID=@p5 and N_QuotationID=@p6";
+                                Params.Add("@p6", nQuotationID);
+                                Params.Add("@p5", nVendorID);
+                                Params.Add("@p4", nLocationID);
+                            
+
+                        }else
                         {
                             if (bAllBranchData == true)
                             {
@@ -289,6 +340,7 @@ namespace SmartxAPI.Controllers
                     {
 
                         if (bAllBranchData == true)
+
                         {
                             DetailSql = "Select *,dbo.SP_GenGetStock(vw_InvPurchaseOrderDetails.N_ItemID,@p4,'','Location') As N_Stock,dbo.SP_Cost(vw_InvPurchaseOrderDetails.N_ItemID,vw_InvPurchaseOrderDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseOrderDetails.N_ItemID,vw_InvPurchaseOrderDetails.N_CompanyID) As N_UnitSPrice from vw_InvPurchaseOrderDetails Where N_CompanyID=@p1 and N_POrderID=@p5";
                             Params.Add("@p4", nLocationID);
@@ -303,13 +355,99 @@ namespace SmartxAPI.Controllers
                         }
                     }
                     //DetailSql="Select * from Inv_PurchaseOrderDetails Where N_CompanyID=@p1 and N_POrderID=@p5";
-
+                    }
 
 
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = api.Format(DetailTable, "Details");
-                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_VendorID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString()), this.FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
+
+                    bool InvoiceProcessed=false;
+                    if (MasterTable.Rows.Count > 0)
+                    {
+                        if(myFunctions.getIntVAL(MasterTable.Rows[0]["N_Processed"].ToString())==1)
+                        {
+                            object InvoiceNotProcessed=false;
+                            for(int i=0;i<DetailTable.Rows.Count;i++)
+                            {
+                                Object POQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseOrderdetails where n_porderid="+N_POrderID+" and N_PorderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
+                                Object InvQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseDetails where n_porderid="+N_POrderID+" and N_POrderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
+                                if(POQty!=null && InvQty!=null)
+                                {
+                                    if(myFunctions.getVAL(POQty.ToString())!= myFunctions.getVAL(InvQty.ToString()))
+                                    {
+                                    // InvoiceNotProcessed = true;
+                                        MasterTable.Rows[0]["N_Processed"]=0;
+                                        InvoiceProcessed=false;
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        MasterTable.Rows[0]["N_Processed"]=1;
+                                        InvoiceProcessed=true;
+                                    }
+                                }
+                                else
+                                {
+                                    MasterTable.Rows[0]["N_Processed"]=1;
+                                    InvoiceProcessed=true;
+                                }
+                            }
+                        }
+
+                        if(!InvoiceProcessed)
+                        {
+                            object GRNNotProcessed=false;
+                            for(int i=0;i<DetailTable.Rows.Count;i++)
+                            {
+                                Object POQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseOrderdetails where n_porderid="+N_POrderID+" and N_PorderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
+                                Object GRNQty=dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_MRNDetails where N_PONo="+N_POrderID+" and N_PorderDetailsID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString())+" and N_CompanyID="+nCompanyId, Params, connection);
+                                if(POQty!=null && GRNQty!=null)
+                                {
+                                    if(myFunctions.getVAL(POQty.ToString())!= myFunctions.getVAL(GRNQty.ToString()))
+                                    {
+                                        //GRNNotProcessed = true;
+                                        MasterTable.Rows[0]["N_Processed"]=0;
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        MasterTable.Rows[0]["N_Processed"]=1;
+                                    }
+                                }
+                                else
+                                {
+                                    MasterTable.Rows[0]["N_Processed"]=1;
+                                }
+                            }
+                        }
+                    }
+
+                    Object PoCount=dLayer.ExecuteScalar("select count(*) from Inv_MRNDetails where N_PONo="+N_POrderID+" and N_CompanyID="+nCompanyId, Params, connection);
+                    int nPoCount = myFunctions.getIntVAL(PoCount.ToString());
+                    if (nPoCount > 0)
+                    {
+                       
+                        if (MasterTable.Rows.Count > 0)
+                        {
+                            MasterTable.Columns.Add("b_GRNProcessed");
+                            MasterTable.Rows[0]["b_GRNProcessed"]=true;
+                            
+                          
+                        }
+
+
+                    }     
+                    // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "GRNNotProcessed", typeof(bool),GRNNotProcessed);
+                    // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "InvoiceNotProcessed", typeof(bool),InvoiceNotProcessed);
+
+                     DataTable Attachments =new DataTable();
+                    if(MasterTable.Rows.Count>0 && MasterTable.Columns.Contains("N_VendorID"))
+                    {
+
+                   
+                    Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_VendorID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString()), this.FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
                     Attachments = api.Format(Attachments, "attachments");
+                    }
 
                     dt.Tables.Add(Attachments);
                     dt.Tables.Add(DetailTable);
@@ -330,11 +468,18 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 DataTable DetailTable;
+                DataTable DetailsToImport;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
                 DataTable Attachment = ds.Tables["attachments"];
+                DetailsToImport = ds.Tables["detailsImport"];
+                bool B_isImport = false;
                 SortedList Params = new SortedList();
                 int N_POrderID = 0; var X_POrderNo = "";
+
+                if (ds.Tables.Contains("detailsImport"))
+                    B_isImport = true;
+                
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -365,6 +510,34 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["n_POType"] = 121;
 
                     transaction = connection.BeginTransaction();
+                  if (!myFunctions.CheckActiveYearTransaction(nCompanyId,myFunctions.getIntVAL(Master["n_FnYearId"].ToString()), DateTime.ParseExact(MasterTable.Rows[0]["D_PorderDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                  {
+                   object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyId+" and convert(date ,'" + MasterTable.Rows[0]["D_PorderDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                  if (DiffFnYearID != null)
+                   {
+                     Master["n_FnYearId"] = DiffFnYearID.ToString();
+                    MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                    //N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                  
+                  }
+                  else
+                  {
+                    // transaction.Rollback();
+                    // return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                    // Result.Add("b_IsCompleted", 0);
+                    // Result.Add("x_Msg", "Transaction date must be in the active Financial Year.");
+                      return Ok(api.Error(User, "Transaction date must be in the active Financial Year."));
+                   }
+                }
+                 object B_YearEndProcess=dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID="+nCompanyId+" and convert(date ,'" + MasterTable.Rows[0]["D_POrderDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                 if(myFunctions.getBoolVAL(B_YearEndProcess.ToString()))
+                 {
+                     return Ok(api.Error(User, "Year Closed"));
+                 }
+
+
+
+
 
                     if (X_POrderNo == "@Auto")
                     {
@@ -432,6 +605,7 @@ namespace SmartxAPI.Controllers
                             //         }
                             //     }
                             // }
+
                             SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyId},
                                 {"X_TransType","Purchase Order"},
@@ -447,6 +621,51 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(api.Error(User, "Error"));
                     }
+
+                    if (B_isImport)
+                    {
+                        foreach (DataColumn col in DetailsToImport.Columns)
+                        {
+                            col.ColumnName = col.ColumnName.Replace(" ", "_");
+                            col.ColumnName = col.ColumnName.Replace("*", "");
+                            col.ColumnName = col.ColumnName.Replace("/", "_");
+                        }
+
+                        DetailsToImport.Columns.Add("N_MasterID");
+                        DetailsToImport.Columns.Add("X_Type");
+                        DetailsToImport.Columns.Add("N_CompanyID");
+                        DetailsToImport.Columns.Add("PkeyID");
+                        foreach (DataRow dtRow in DetailsToImport.Rows)
+                        {
+                            dtRow["N_MasterID"] = N_POrderID;
+                            dtRow["N_CompanyID"] = nCompanyId;
+                            dtRow["PkeyID"] = 0;
+                        }
+
+                        dLayer.ExecuteNonQuery("delete from Mig_PurchaseOrder ", connection, transaction);
+                        dLayer.SaveData("Mig_PurchaseOrder", "PkeyID", "", "", DetailsToImport, connection, transaction);
+
+                        SortedList ProParam = new SortedList();
+                        ProParam.Add("N_CompanyID", nCompanyId);
+                        ProParam.Add("N_PKeyID", N_POrderID);
+
+                        SortedList ValidationParam = new SortedList();
+                        ValidationParam.Add("N_CompanyID", myFunctions.getIntVAL(Master["n_CompanyId"].ToString()));
+                        ValidationParam.Add("N_FnYearID", Master["n_FnYearId"].ToString());
+                        ValidationParam.Add("X_Type", "purchase order");
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error(User, ex));
+                            }
+                         
+                        ProParam.Add("X_Type", "purchase order");
+                        DetailTable = dLayer.ExecuteDataTablePro("SP_ScreenDataImport", ProParam, connection,transaction);
+                    }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         int UnitID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit where N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_ItemID"].ToString()) + " and N_CompanyID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_CompanyID"].ToString()) + " and X_ItemUnit='" + DetailTable.Rows[j]["X_ItemUnit"].ToString() + "'", connection, transaction).ToString());
@@ -456,6 +675,14 @@ namespace SmartxAPI.Controllers
                     DetailTable.Columns.Remove("X_ItemUnit");
                     int N_PurchaseOrderDetailId = dLayer.SaveData("Inv_PurchaseOrderDetails", "n_POrderDetailsID", DetailTable, connection, transaction);
 
+                                if (N_POrderID > 0)
+                                {
+                                    if(!myFunctions.UpdateTxnStatus(nCompanyId,N_POrderID,82,false,dLayer,connection,transaction))
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(api.Error(User, "Unable To Update Txn Status"));
+                                    }
+                                }
                     SortedList VendorParams = new SortedList();
                     VendorParams.Add("@nVendorID", N_VendorID);
                     DataTable VendorInfo = dLayer.ExecuteDataTable("Select X_VendorCode,X_VendorName from Inv_Vendor where N_VendorID=@nVendorID", VendorParams, connection, transaction);
@@ -537,7 +764,11 @@ namespace SmartxAPI.Controllers
                     if (objPurchaseProcessed == null)
                         objPurchaseProcessed = 0;
 
-                    if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) == 0)
+                    object objGRNProcessed = dLayer.ExecuteScalar("Select Isnull(N_MRNID,0) from Inv_MRN where N_CompanyID=" + nCompanyID + " and N_POrderID=" + nPOrderID + " and ISNULL(B_IsSaveDraft,0) = 0", connection, transaction);
+                    if (objGRNProcessed == null)
+                        objGRNProcessed = 0;
+
+                    if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) == 0 && myFunctions.getIntVAL(objGRNProcessed.ToString()) == 0)
                     {
                         SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
@@ -566,6 +797,8 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) > 0)
                             return Ok(api.Error(User, "Purchase invoice processed! Unable to delete"));
+                        else if (myFunctions.getIntVAL(objGRNProcessed.ToString()) > 0)
+                            return Ok(api.Error(User, "Goods Receive Note processed! Unable to delete"));
                         else
                             return Ok(api.Error(User, "Unable to delete!"));
 
@@ -607,5 +840,38 @@ namespace SmartxAPI.Controllers
 
         }
 
+        [HttpGet("purchaseOrderNo")]
+        public ActionResult GetInvPurchaseOrderNo( DateTime dDateFrom, DateTime dDateTo, int nFormID )
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                   
+                    string sqlCommandText = "";
+
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nFormID);
+                    Params.Add("@p3", dDateFrom);
+                    Params.Add("@p4", dDateTo);
+    
+                    sqlCommandText = "select * from vw_PurchaseOrderReceive	where N_CompanyID=@p1 and ((D_ReceiveDate<=@p3) or (D_ReceiveDate>=@p3 AND D_ReceiveDate<=@p4) AND ISNULL(D_ReceiveReturnDate,@p4)>=@p4) and N_POrderID NOT IN (select N_POID from Inv_ServiceTimesheet where N_FormID=@p2 and N_CompanyID=@p1 and D_DateFrom=@p3 and D_DateTo=@p4)";
+
+                    SortedList OutPut = new SortedList();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    OutPut.Add("Details", api.Format(dt));
+                    return Ok(api.Success(OutPut));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
     }
 }

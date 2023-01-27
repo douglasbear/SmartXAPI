@@ -40,7 +40,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
-            string sqlCommandText = "Select N_CompanyID,N_PositionID,N_EmpID,N_SalaryGradeID,B_Edit,Code,Description,X_GradeCode,X_Gradename from vw_PayPosition_DispAdvanced Where N_CompanyID=@nCompanyID Group By N_CompanyID,N_PositionID,N_EmpID,N_SalaryGradeID,B_Edit,Code,Description,X_GradeCode,X_Gradename";
+            string sqlCommandText = "Select N_CompanyID,N_PositionID,N_EmpID,isNull(N_SalaryGradeID,0) as N_SalaryGradeID,B_Edit,Code,Description,isNull(X_GradeCode,'') as X_GradeCode,isNull(X_Gradename,'') as X_Gradename from vw_PayPosition_DispAdvanced Where N_CompanyID=@nCompanyID Group By N_CompanyID,N_PositionID,N_EmpID,N_SalaryGradeID,B_Edit,Code,Description,X_GradeCode,X_Gradename";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -121,6 +121,9 @@ namespace SmartxAPI.Controllers
                         {
                             dLayer.ExecuteNonQuery("DELETE FROM Pay_Supervisor WHERE N_CompanyID =" + N_CompanyID + " and x_SupervisorCode= "+X_PositionCode+" and N_PositionID="+N_PositionID+"", Params, connection, transaction);
                             N_SupervisorID = dLayer.SaveData("Pay_Supervisor", "N_SupervisorID", dtSupervisor, connection, transaction);
+                            //  object N_EmpID=dLayer.ExecuteScalar("select N_EmpID  from ")
+
+
                         }
                         else
                             dLayer.DeleteData("Pay_Supervisor", "N_SupervisorID", N_SupervisorID, "N_CompanyID=" + N_CompanyID + "", connection, transaction);
@@ -277,7 +280,6 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-
 
     }
 }
