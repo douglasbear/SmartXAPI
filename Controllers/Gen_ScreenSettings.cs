@@ -172,81 +172,35 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    DataTable MasterTable;
                     DataTable DetailTable;
 
-
-                    MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
-                    DataRow MasterRow = MasterTable.Rows[0];
+
                     int nCompanyID = myFunctions.GetCompanyID(User);
 
                     SortedList Params = new SortedList();
 
-                    int N_UserCategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserCategoryID"].ToString());
-                    int N_MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MenuID"].ToString());
-                    int flag = myFunctions.getIntVAL(MasterTable.Rows[0]["flag"].ToString());
-                    int N_IsAdmin = myFunctions.getIntVAL(MasterTable.Rows[0]["n_IsAdmin"].ToString());
-
-                    dLayer.DeleteData("Sec_userPrevileges", "N_UserCategoryID", N_UserCategoryID, "N_MenuID=" + N_MenuID, connection, transaction);
-                    if (DetailTable.Rows.Count > 0)
-                    {
-                        foreach (DataRow Rows in DetailTable.Rows)
-                        {
-                            dLayer.DeleteData("Sec_userPrevileges", "N_UserCategoryID", N_UserCategoryID, "N_MenuID=" + Rows["n_MenuID"].ToString(), connection, transaction);
-
-                        }
-                    }
-                    //  transaction.Commit();
-                    //   return Ok(_api.Success("Saved"));
-
+                    int N_InternalID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_InternalID"].ToString());
+                    int N_MenuID = myFunctions.getIntVAL(DetailTable.Rows[0]["n_MenuID"].ToString());
+                   
+                   
+                    dLayer.DeleteData("Sec_GeneralScreenSettings", "N_InternalID", N_InternalID, "N_MenuID=" + N_MenuID, connection, transaction);
                     if (DetailTable.Rows.Count > 0)
                     {
 
-                        int nInternalID = dLayer.SaveData("Sec_UserPrevileges", "N_InternalID", DetailTable, connection, transaction);
+                        N_InternalID = dLayer.SaveData("Sec_GeneralScreenSettings", "N_InternalID", DetailTable, connection, transaction);
 
-                        if (nInternalID <= 0)
+                        if (N_InternalID <= 0)
                         {
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Unable to save"));
                         }
                     }
-
-
-
-                    DataTable dt = new DataTable();
-                    dt.Clear();
-                    dt.Columns.Add("N_InternalID");
-                    dt.Columns.Add("N_MenuID");
-                    dt.Columns.Add("N_UserCategoryID");
-                    dt.Columns.Add("B_Visible");
-                    dt.Columns.Add("B_Save");
-                    dt.Columns.Add("B_Edit");
-                    dt.Columns.Add("B_Delete");
-
-
-                    DataRow row = dt.NewRow();
-                    row["N_InternalID"] = 0;
-                    row["N_MenuID"] = N_MenuID;
-                    row["N_UserCategoryID"] = N_UserCategoryID;
-                    row["B_Visible"] = 1;
-                    row["B_Save"] = 0;
-                    row["B_Edit"] = 0;
-                    row["B_Delete"] = 0;
-                    dt.Rows.Add(row);
-
-                    int N_InternalID = dLayer.SaveData("Sec_UserPrevileges", "N_InternalID", dt, connection, transaction);
+                   
                     if (N_InternalID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to save"));
-                    }
-
-
-
-                    if (N_IsAdmin == 1)
-                    {
-                        dLayer.ExecuteNonQuery("delete from Sec_UserPrevileges where N_UserCategoryID not in (select N_UserCategoryID from Sec_UserCategory where X_UserCategory in ('Olivo','Administrator') and N_CompanyID=" + nCompanyID + ") and N_MenuID not in (select N_MenuID from Sec_UserPrevileges where N_UserCategoryID=" + N_UserCategoryID + ")and N_MenuID in (select N_MenuID from Sec_Menus where N_ParentMenuID=" + N_MenuID + ")", Params, connection, transaction);
                     }
                     transaction.Commit();
                 }
