@@ -590,31 +590,65 @@ namespace SmartxAPI.Controllers
                         var path = client.GetAsync(URL);
 
                         //WHATSAPP MODE
-                        if (nFormID == 64 || nFormID == 894 && sendWtsapMessage)
+                        DataTable Whatsapp = dLayer.ExecuteDataTable("select * from vw_GeneralScreenSettings where N_CompanyID=" + nCompanyId + " and N_FnyearID=" + nFnYearID + " and N_MenuID=" + nFormID, QueryParams, connection, transaction);
+                        if (Whatsapp.Rows.Count > 0)
                         {
-                            object N_WhatsappMSG = dLayer.ExecuteScalar("select N_Value from Gen_Settings where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_Group='64' and X_Description='Whatsapp Message'", QueryParams, connection, transaction);
-                            if (N_WhatsappMSG != null)
+                            if (myFunctions.getBoolVAL(Whatsapp.Rows[0]["B_AutoSend"].ToString()))
                             {
-                                if (N_WhatsappMSG.ToString() == "1")
+                                string Company = myFunctions.GetCompanyName(User);
+                                string FILEPATH = AppURL + "/temp/" + FormName + "_" + docNumber + "_" + partyName.Trim() + "_" + random + ".pdf";
+                                object WhatsappAPI = Whatsapp.Rows[0]["X_WhatsappKey"].ToString();
+                                object Currency = dLayer.ExecuteScalar("select x_currency from acc_company  where n_companyid=" + nCompanyId, QueryParams, connection, transaction);
+                                string Body = Whatsapp.Rows[0]["X_Body"].ToString();
+                                string body = Body + " %0A%0ARegards, %0A" + Company;
+                                object Mobile = "";
+                                if (nFormID == 64)
+                                    Mobile = dLayer.ExecuteScalar("select x_Phoneno1 from vw_InvSalesInvoiceNo_Search_Cloud where n_salesid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                else if (nFormID == 80)
+                                    Mobile = dLayer.ExecuteScalar("select x_Phone from VW_InvSalesQuotationMaster where n_quotationid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                else if (nFormID == 81)
+                                    Mobile = dLayer.ExecuteScalar("select x_Phoneno1 from vw_InvSalesOrder where n_salesorderID=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+
+                                string URLAPI = "https://api.textmebot.com/send.php?recipient=+" + Mobile + "&apikey=" + WhatsappAPI + "&text=" + body;
+                                if (Whatsapp.Rows[0]["B_AttachPdf"].ToString() == "1")
                                 {
-                                    string Company = myFunctions.GetCompanyName(User);
-                                    string FILEPATH = AppURL + "/temp/" + FormName + "_" + docNumber + "_" + partyName.Trim() + "_" + random + ".pdf";
-                                    object WhatsappAPI = dLayer.ExecuteScalar("select X_Value from Gen_Settings where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_Group='64' and X_Description='Whatsapp Message'", QueryParams, connection, transaction);
-                                    object Currency = dLayer.ExecuteScalar("select x_currency from acc_company  where n_companyid=" + nCompanyId, QueryParams, connection, transaction);
-                                    DataTable dt = dLayer.ExecuteDataTable("select * from vw_InvSalesInvoiceNo_Search_Cloud where n_salesid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
-                                    string body = "Dear " + dt.Rows[0]["Customer"].ToString() + ",%0A%0A*_Thank you for your purchase._*%0A%0ADoc No : " + dt.Rows[0]["Invoice No"].ToString() + "%0ATotal Amount : " + dt.Rows[0]["n_BillAmtF"].ToString() + "%0ADiscount : " + dt.Rows[0]["n_DiscountDisplay"].ToString() + "%0AVAT Amount : " + dt.Rows[0]["n_TaxAmtF"].ToString() + "%0ARound Off : " + dt.Rows[0]["n_DiscountAmtF"].ToString() + "%0ANet Amount : " + dt.Rows[0]["x_BillAmt"].ToString() + " " + Currency + " %0A%0ARegards, %0A" + Company;
-                                    string URLAPI = "https://api.textmebot.com/send.php?recipient=" + dt.Rows[0]["x_Phoneno1"].ToString() + "&apikey=" + WhatsappAPI + "&text=" + body;
-                                    string URLFILE = "https://api.textmebot.com/send.php?recipient=" + dt.Rows[0]["x_Phoneno1"].ToString() + "&apikey=" + WhatsappAPI + "&document=" + FILEPATH;
+                                    string URLFILE = "https://api.textmebot.com/send.php?recipient=+" + Mobile + "&apikey=" + WhatsappAPI + "&document=" + FILEPATH;
                                     var MSGFile = clientFile.GetAsync(URLFILE);
                                     MSGFile.Wait();
-                                    var MSG = client.GetAsync(URLAPI);
-                                    MSG.Wait();
-
                                 }
+                                var MSG = client.GetAsync(URLAPI);
+                                MSG.Wait();
+
+
                             }
-
-
                         }
+
+
+                        // if (nFormID == 64 || nFormID == 894 && sendWtsapMessage)
+                        // {
+                        //     object N_WhatsappMSG = dLayer.ExecuteScalar("select N_Value from Gen_Settings where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_Group='64' and X_Description='Whatsapp Message'", QueryParams, connection, transaction);
+                        //     if (N_WhatsappMSG != null)
+                        //     {
+                        //         if (N_WhatsappMSG.ToString() == "1")
+                        //         {
+                        //             string Company = myFunctions.GetCompanyName(User);
+                        //             string FILEPATH = AppURL + "/temp/" + FormName + "_" + docNumber + "_" + partyName.Trim() + "_" + random + ".pdf";
+                        //             object WhatsappAPI = dLayer.ExecuteScalar("select X_Value from Gen_Settings where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_Group='64' and X_Description='Whatsapp Message'", QueryParams, connection, transaction);
+                        //             object Currency = dLayer.ExecuteScalar("select x_currency from acc_company  where n_companyid=" + nCompanyId, QueryParams, connection, transaction);
+                        //             DataTable dt = dLayer.ExecuteDataTable("select * from vw_InvSalesInvoiceNo_Search_Cloud where n_salesid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                        //             string body = "Dear " + dt.Rows[0]["Customer"].ToString() + ",%0A%0A*_Thank you for your purchase._*%0A%0ADoc No : " + dt.Rows[0]["Invoice No"].ToString() + "%0ATotal Amount : " + dt.Rows[0]["n_BillAmtF"].ToString() + "%0ADiscount : " + dt.Rows[0]["n_DiscountDisplay"].ToString() + "%0AVAT Amount : " + dt.Rows[0]["n_TaxAmtF"].ToString() + "%0ARound Off : " + dt.Rows[0]["n_DiscountAmtF"].ToString() + "%0ANet Amount : " + dt.Rows[0]["x_BillAmt"].ToString() + " " + Currency + " %0A%0ARegards, %0A" + Company;
+                        //             string URLAPI = "https://api.textmebot.com/send.php?recipient=" + dt.Rows[0]["x_Phoneno1"].ToString() + "&apikey=" + WhatsappAPI + "&text=" + body;
+                        //             string URLFILE = "https://api.textmebot.com/send.php?recipient=" + dt.Rows[0]["x_Phoneno1"].ToString() + "&apikey=" + WhatsappAPI + "&document=" + FILEPATH;
+                        //             var MSGFile = clientFile.GetAsync(URLFILE);
+                        //             MSGFile.Wait();
+                        //             var MSG = client.GetAsync(URLAPI);
+                        //             MSG.Wait();
+
+                        //         }
+                        //     }
+
+
+                        // }
                         if (nFormID == 80)
                         {
                             SortedList Params = new SortedList();
