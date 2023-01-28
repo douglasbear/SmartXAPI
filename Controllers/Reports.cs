@@ -600,6 +600,8 @@ namespace SmartxAPI.Controllers
                                 object WhatsappAPI = Whatsapp.Rows[0]["X_WhatsappKey"].ToString();
                                 object Currency = dLayer.ExecuteScalar("select x_currency from acc_company  where n_companyid=" + nCompanyId, QueryParams, connection, transaction);
                                 string Body = Whatsapp.Rows[0]["X_Body"].ToString();
+                                Body=Body.Replace("</p>","");
+                                Body=Body.Replace("<p>","%0A");
                                 string body = Body + " %0A%0ARegards, %0A" + Company;
                                 object Mobile = "";
                                 if (nFormID == 64)
