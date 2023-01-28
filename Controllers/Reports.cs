@@ -20,6 +20,7 @@ using System.Net.Cache;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Net;
+using System.Threading;
 namespace SmartxAPI.Controllers
 {
     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -426,7 +427,7 @@ namespace SmartxAPI.Controllers
                     {
 
                         var client = new HttpClient(handler);
-                        var clientFile = new HttpClient(handler);
+
                         var dbName = connection.Database;
                         var random = RandomString();
                         if (TableName != "" && critiria != "")
@@ -600,8 +601,8 @@ namespace SmartxAPI.Controllers
                                 object WhatsappAPI = Whatsapp.Rows[0]["X_WhatsappKey"].ToString();
                                 object Currency = dLayer.ExecuteScalar("select x_currency from acc_company  where n_companyid=" + nCompanyId, QueryParams, connection, transaction);
                                 string Body = Whatsapp.Rows[0]["X_Body"].ToString();
-                                Body=Body.Replace("</p>","");
-                                Body=Body.Replace("<p>","%0A");
+                                Body = Body.Replace("</p>", "");
+                                Body = Body.Replace("<p>", "%0A");
                                 string body = Body + " %0A%0ARegards, %0A" + Company;
                                 object Mobile = "";
                                 if (nFormID == 64)
@@ -611,15 +612,21 @@ namespace SmartxAPI.Controllers
                                 else if (nFormID == 81)
                                     Mobile = dLayer.ExecuteScalar("select x_Phoneno1 from vw_InvSalesOrder where n_salesorderID=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
 
+
+                                var clientFile = new HttpClient(handler);
                                 string URLAPI = "https://api.textmebot.com/send.php?recipient=+" + Mobile + "&apikey=" + WhatsappAPI + "&text=" + body;
+                                var FileMSG = clientFile.GetAsync(URLAPI);
+                                FileMSG.Wait();
+                                Thread.Sleep(5000);
                                 if (myFunctions.getBoolVAL(Whatsapp.Rows[0]["B_AttachPdf"].ToString()))
                                 {
                                     string URLFILE = "https://api.textmebot.com/send.php?recipient=+" + Mobile + "&apikey=" + WhatsappAPI + "&document=" + FILEPATH;
-                                    var MSGFile = clientFile.GetAsync(URLFILE);
-                                    MSGFile.Wait();
+                                    var MSG1 = client.GetAsync(URLFILE);
+                                    MSG1.Wait();
                                 }
-                                var MSG = client.GetAsync(URLAPI);
-                                MSG.Wait();
+
+
+
 
 
                             }
