@@ -612,7 +612,7 @@ namespace SmartxAPI.Controllers
                                     Mobile = dLayer.ExecuteScalar("select x_Phoneno1 from vw_InvSalesOrder where n_salesorderID=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
 
                                 string URLAPI = "https://api.textmebot.com/send.php?recipient=+" + Mobile + "&apikey=" + WhatsappAPI + "&text=" + body;
-                                if (Whatsapp.Rows[0]["B_AttachPdf"].ToString() == "1")
+                                if (myFunctions.getBoolVAL(Whatsapp.Rows[0]["B_AttachPdf"].ToString()))
                                 {
                                     string URLFILE = "https://api.textmebot.com/send.php?recipient=+" + Mobile + "&apikey=" + WhatsappAPI + "&document=" + FILEPATH;
                                     var MSGFile = clientFile.GetAsync(URLFILE);
