@@ -640,12 +640,13 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCustomerID, int nCompanyID, int nFnYearID)
+        public ActionResult DeleteData(int nCustomerID, int nCompanyID, int nFnYearID,int nCrmCustomerID)
         {
 
             int Results = 0;
              object CustomerCount =0;
              object GRNCustCount=0;
+              object crmcustomer=0;
             try
             {
                 SortedList Params = new SortedList();
@@ -655,6 +656,7 @@ namespace SmartxAPI.Controllers
                 QueryParams.Add("@nFnYearID", nFnYearID);
                 QueryParams.Add("@nFormID", 51);
                 QueryParams.Add("@nCustomerID", nCustomerID);
+                 QueryParams.Add("@nCrmCustomerID", nCrmCustomerID);
                   string sqlCommandCount = "";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -680,7 +682,14 @@ namespace SmartxAPI.Controllers
                    }
                    dLayer.ExecuteNonQuery("update Inv_ItemMaster set N_CustomerID=0,x_CustomerSKU=null where N_CompanyID=" + nCompanyID + "  and N_CustomerID=" + nCustomerID, Params, connection);
 
+                    crmcustomer = dLayer.ExecuteScalar("select count(N_customerID) from Inv_SalesQuotation  Where N_CompanyID=" + nCompanyID + " and  N_CrmCompanyID=" + nCrmCustomerID,  QueryParams, connection);
+
                     SqlTransaction transaction = connection.BeginTransaction();
+                    if( myFunctions.getIntVAL(crmcustomer.ToString())<=0)
+                   {
+                     dLayer.DeleteData("CRM_Customer", "N_CustomerID", nCrmCustomerID, "", connection, transaction);
+                   }
+
                     Results = dLayer.DeleteData("Inv_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
                   
                     myAttachments.DeleteAttachment(dLayer, 1, 0, nCustomerID, nFnYearID, 51, User, transaction, connection);
