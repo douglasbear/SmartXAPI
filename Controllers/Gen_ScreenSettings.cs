@@ -88,6 +88,9 @@ namespace SmartxAPI.Controllers
                     SecAllMenus.Columns.Add("X_TemplateName", typeof(System.String));
                     SecAllMenus.Columns.Add("B_AttachPdf", typeof(System.Boolean));
                     SecAllMenus.Columns.Add("B_AutoSend", typeof(System.Boolean));
+                    SecAllMenus.Columns.Add("X_Email", typeof(System.String));
+                    SecAllMenus.Columns.Add("X_Password", typeof(System.String));
+
 
                     // if (SecAllMenus.Rows.Count > 0)
                     // {
@@ -115,6 +118,8 @@ namespace SmartxAPI.Controllers
                                 Rows["X_TemplateName"] = KRows["X_TemplateName"].ToString();
                                 Rows["B_AttachPdf"] = Convert.ToBoolean(KRows["B_AttachPdf"].ToString());
                                 Rows["B_AutoSend"] = Convert.ToBoolean(KRows["B_AutoSend"].ToString());
+                                Rows["X_Email"] =KRows["X_Email"].ToString();
+                                Rows["X_Password"] = KRows["X_Password"].ToString();
 
 
                                 SecAllMenus.AcceptChanges();
