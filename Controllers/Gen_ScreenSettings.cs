@@ -88,19 +88,6 @@ namespace SmartxAPI.Controllers
                     SecScreensettings.Columns.Add("B_AttachPdf", typeof(System.Boolean));
                     SecScreensettings.Columns.Add("B_AutoSend", typeof(System.Boolean));
 
-                    // if (SecAllMenus.Rows.Count > 0)
-                    // {
-                    //     foreach (DataRow Rows in SecAllMenus.Rows)
-                    //     {
-
-                    //         Rows["b_Delete"] = bool2;
-                    //         Rows["b_Edit"] = bool2;
-                    //         Rows["b_Save"] = bool2;
-
-                    //         Rows["b_Visible"] = bool2;
-                    //     }
-                    // }
-                    // SecAllMenus.AcceptChanges();
                     foreach (DataRow Rows in SecAllMenus.Rows)
                     {
 
