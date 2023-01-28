@@ -523,6 +523,7 @@ namespace SmartxAPI.Controllers
 
                     bool B_SRS = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("729", "SRSinDeliveryNote", "N_Value", N_CompanyID, dLayer, connection, transaction)));
                     string i_Signature = "";
+                    string i_signature2 = "";
                     bool SigEnable = false;
 
                   if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_DeliveryDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
@@ -619,6 +620,20 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
+                     Byte[] ImageBitmap2 = new Byte[i_signature2.Length];
+                    if (MasterTable.Columns.Contains("i_signature2"))
+                    {
+                        if (!MasterRow["i_signature2"].ToString().Contains("undefined"))
+                        {
+                            i_signature2 = Regex.Replace(MasterRow["i_signature2"].ToString(), @"^data:image\/[a-zA-Z]+;base64,", string.Empty);
+                            if (myFunctions.ContainColumn("i_signature2", MasterTable))
+                                MasterTable.Columns.Remove("i_signature2");
+                            ImageBitmap2 = new Byte[i_signature2.Length];
+                            ImageBitmap2 = Convert.FromBase64String(i_signature2);
+                            SigEnable = true;
+                        }
+                    }
+
                     //Saving Signature
 
                     N_DeliveryNoteID = dLayer.SaveData("Inv_DeliveryNote", "N_DeliveryNoteId", MasterTable, connection, transaction);
@@ -646,6 +661,8 @@ namespace SmartxAPI.Controllers
                     {
                         if (i_Signature.Length > 0)
                             dLayer.SaveImage("Inv_DeliveryNote", "i_signature", ImageBitmap, "N_DeliveryNoteId", N_DeliveryNoteID, connection, transaction);
+                             if (i_signature2.Length > 0)
+                            dLayer.SaveImage("Inv_DeliveryNote", "i_signature2", ImageBitmap2, "N_DeliveryNoteId", N_DeliveryNoteID, connection, transaction);
                     }
 
                     if (N_DeliveryNoteID <= 0)

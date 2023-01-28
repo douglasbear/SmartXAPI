@@ -508,7 +508,27 @@ namespace SmartxAPI.Controllers
                                         g.Clear(Color.White);
                                         g.DrawImageUnscaled(Sign, 0, 0);
                                     }
-                                    b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + ".png");
+                                    b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + "-wch.png");
+                                }
+                            }
+
+                             SqlCommand cmd2 = new SqlCommand("select i_signature2 from Wh_GRN where N_GRNID=" + nPkeyID, connection, transaction);
+                            if ((cmd2.ExecuteScalar().ToString()) != "")
+                            {
+                                byte[] content = (byte[])cmd2.ExecuteScalar();
+                                MemoryStream stream = new MemoryStream(content);
+                                Image Sign = Image.FromStream(stream);
+
+                                using (var b = new Bitmap(Sign.Width, Sign.Height))
+                                {
+                                    b.SetResolution(Sign.HorizontalResolution, Sign.VerticalResolution);
+
+                                    using (var g = Graphics.FromImage(b))
+                                    {
+                                        g.Clear(Color.White);
+                                        g.DrawImageUnscaled(Sign, 0, 0);
+                                    }
+                                    b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + "-wrec.png");
                                 }
                             }
                         }
@@ -530,17 +550,14 @@ namespace SmartxAPI.Controllers
                                         g.Clear(Color.White);
                                         g.DrawImageUnscaled(Sign, 0, 0);
                                     }
-                                    b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + ".png");
+                                    b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + "-ch.png");
                                 }
                             }
-                        }
-                        if (nFormID == 1426)
-                        {
-                            SqlCommand cmd = new SqlCommand("select i_signature from Inv_Deliverynote where N_DeliveryNoteID=" + nPkeyID, connection, transaction);
-                            object output = cmd.ExecuteScalar();
-                            if ((cmd.ExecuteScalar().ToString()) != "")
+
+                            SqlCommand cmd1 = new SqlCommand("select i_signature2 from Inv_Deliverynote where N_DeliveryNoteID=" + nPkeyID, connection, transaction);
+                            if ((cmd1.ExecuteScalar().ToString()) != "")
                             {
-                                byte[] content = (byte[])cmd.ExecuteScalar();
+                                byte[] content = (byte[])cmd1.ExecuteScalar();
                                 MemoryStream stream = new MemoryStream(content);
                                 Image Sign = Image.FromStream(stream);
 
@@ -553,11 +570,34 @@ namespace SmartxAPI.Controllers
                                         g.Clear(Color.White);
                                         g.DrawImageUnscaled(Sign, 0, 0);
                                     }
-                                    //b = resizeImage(Sign, new Size(400, 300));
-                                    b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + ".png");
+                                    b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + "-rc.png");
                                 }
                             }
                         }
+                        // if (nFormID == 1426)
+                        // {
+                        //     SqlCommand cmd = new SqlCommand("select i_signature from Inv_Deliverynote where N_DeliveryNoteID=" + nPkeyID, connection, transaction);
+                        //     object output = cmd.ExecuteScalar();
+                        //     if ((cmd.ExecuteScalar().ToString()) != "")
+                        //     {
+                        //         byte[] content = (byte[])cmd.ExecuteScalar();
+                        //         MemoryStream stream = new MemoryStream(content);
+                        //         Image Sign = Image.FromStream(stream);
+
+                        //         using (var b = new Bitmap(Sign.Width, Sign.Height))
+                        //         {
+                        //             b.SetResolution(Sign.HorizontalResolution, Sign.VerticalResolution);
+
+                        //             using (var g = Graphics.FromImage(b))
+                        //             {
+                        //                 g.Clear(Color.White);
+                        //                 g.DrawImageUnscaled(Sign, 0, 0);
+                        //             }
+                        //             //b = resizeImage(Sign, new Size(400, 300));
+                        //             b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + ".png");
+                        //         }
+                        //     }
+                        // }
 
                         if (nFormID == 1454)
                         {
