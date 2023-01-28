@@ -78,15 +78,16 @@ namespace SmartxAPI.Controllers
                     PostingParam.Add("@nCompanyID", nCompanyID);
                     PostingParam.Add("@xUserCategory", permUserCategory);
                     PostingParam.Add("@nMenuID", N_MenuID);
-                    string SecUsersql = "select * from vw_GeneralScreenSettings where N_CompanyID=@nCompanyID and N_MenuID=@nMenuID";
+                    string SecUsersql = "select * from vw_GeneralScreenSettings where N_CompanyID=@nCompanyID";
                     SecScreensettings = dLayer.ExecuteDataTable(SecUsersql, PostingParam, connection);
                     SecScreensettings = _api.Format(SecScreensettings, "SecScreensettings");
-                    SecScreensettings.Columns.Add("X_WhatsappNumber", typeof(System.String));
-                    SecScreensettings.Columns.Add("X_WhatsappKey", typeof(System.String));
-                    SecScreensettings.Columns.Add("N_TemplateID", typeof(System.Int32));
-                    SecScreensettings.Columns.Add("X_TemplateName", typeof(System.String));
-                    SecScreensettings.Columns.Add("B_AttachPdf", typeof(System.Boolean));
-                    SecScreensettings.Columns.Add("B_AutoSend", typeof(System.Boolean));
+
+                    SecAllMenus.Columns.Add("X_WhatsappNumber", typeof(System.String));
+                    SecAllMenus.Columns.Add("X_WhatsappKey", typeof(System.String));
+                    SecAllMenus.Columns.Add("N_TemplateID", typeof(System.Int32));
+                    SecAllMenus.Columns.Add("X_TemplateName", typeof(System.String));
+                    SecAllMenus.Columns.Add("B_AttachPdf", typeof(System.Boolean));
+                    SecAllMenus.Columns.Add("B_AutoSend", typeof(System.Boolean));
 
                     // if (SecAllMenus.Rows.Count > 0)
                     // {
