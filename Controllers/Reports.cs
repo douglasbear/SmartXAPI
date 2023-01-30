@@ -591,7 +591,7 @@ namespace SmartxAPI.Controllers
                         var path = client.GetAsync(URL);
 
                         //WHATSAPP MODE
-                        DataTable Whatsapp = dLayer.ExecuteDataTable("select * from vw_GeneralScreenSettings where N_CompanyID=" + nCompanyId + " and N_FnyearID=" + nFnYearID + " and N_MenuID=" + nFormID, QueryParams, connection, transaction);
+                        DataTable Whatsapp = dLayer.ExecuteDataTable("select * from vw_GeneralScreenSettings where N_CompanyID=" + nCompanyId + " and N_FnyearID=" + nFnYearID + " and N_MenuID=" + nFormID + " and N_Type=2", QueryParams, connection, transaction);
                         if (Whatsapp.Rows.Count > 0)
                         {
                             if (myFunctions.getBoolVAL(Whatsapp.Rows[0]["B_AutoSend"].ToString()) && printSave)
@@ -602,17 +602,11 @@ namespace SmartxAPI.Controllers
                                 object Currency = dLayer.ExecuteScalar("select x_currency from acc_company  where n_companyid=" + nCompanyId, QueryParams, connection, transaction);
                                 string Body = Whatsapp.Rows[0]["X_Body"].ToString();
                                 Body = Body.Replace("</p>", "");
-                                Body = Body.Replace("<br> ", "");
+                                Body = Body.Replace("<br>", "");
                                 Body = Body.Replace("<p>", "%0A");
                                 string body = Body + " %0A%0ARegards, %0A" + Company;
                                 object Mobile = "";
-                                if (nFormID == 64)
-                                    Mobile = dLayer.ExecuteScalar("select x_Phoneno1 from vw_InvSalesInvoiceNo_Search_Cloud where n_salesid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
-                                else if (nFormID == 80)
-                                    Mobile = dLayer.ExecuteScalar("select x_Phone from VW_InvSalesQuotationMaster where n_quotationid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
-                                else if (nFormID == 81)
-                                    Mobile = dLayer.ExecuteScalar("select x_Phoneno1 from vw_InvSalesOrder where n_salesorderID=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
-
+                                Mobile = dLayer.ExecuteScalar("select "+ Whatsapp.Rows[0]["X_Pkey"].ToString()+" from "+ Whatsapp.Rows[0]["X_Datatable"].ToString()+" where n_salesid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
 
                                 var clientFile = new HttpClient(handler);
                                 string URLAPI = "https://api.textmebot.com/send.php?recipient=+" + Mobile + "&apikey=" + WhatsappAPI + "&text=" + body;
