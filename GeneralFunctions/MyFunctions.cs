@@ -2681,7 +2681,7 @@ namespace SmartxAPI.GeneralFunctions
             return 0;
         }
 
-        public bool LogScreenActivitys(int nFnYearID, int nTransID, string xTransCode, int nFormID, string xAction, string ipAddress, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
+        public bool LogScreenActivitys(int nFnYearID, int nTransID, string xTransCode, int nFormID, string xAction, string ipAddress,string X_Description, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             try
             {
@@ -2702,7 +2702,7 @@ namespace SmartxAPI.GeneralFunctions
                 string PartyNameFeild = keyFeild.Split(",").Length>0?keyFeild.Split(",")[0]:"";
                 string DocDateFeild =keyFeild.Split(",").Length>1?keyFeild.Split(",")[1]:"";
                 string PartyName = "";
-                DateTime DocDate;
+                DateTime DocDate = new DateTime();
 
                 if (LogTable.Rows.Count > 0)
                 {
@@ -2749,6 +2749,9 @@ namespace SmartxAPI.GeneralFunctions
                 LogParams.Add("X_IP", ipAddress);
                 LogParams.Add("X_TransCode", xTransCode);
                 LogParams.Add("X_Remark", " ");
+                LogParams.Add("X_PartyName", PartyName);
+                LogParams.Add("D_DocDate",DocDate);
+                LogParams.Add("X_Description", X_Description);
                 LogParams.Add("X_Log", xAction.ToLower() == "delete" ? "Entry Deleted" : FieldValues);
 
                 dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);
@@ -2968,7 +2971,7 @@ namespace SmartxAPI.GeneralFunctions
         public bool CreatePortalUser(int nCompanyID, int nBranchID, string xPartyName, string emailID, string type, string partyCode, int partyID, bool active, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public bool SendMailWithAttachments(int nFormID, int nFnYearID, int nPkeyID, int nPartyID, string partyName, string Subject, string docNumber, string mail, string xBody, IDataAccessLayer dLayer, ClaimsPrincipal User);
         public bool UpdateTxnStatus(int nCompanyID, int nTransID, int nFormID, bool forceUpdate, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
-        public bool LogScreenActivitys(int nFnYearID, int nTransID, string xTransCode, int nFormID, string xAction, string ipAddress, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
+        public bool LogScreenActivitys(int nFnYearID, int nTransID, string xTransCode, int nFormID, string xAction, string ipAddress,string X_Description, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
 public bool QryToExcel(ClaimsPrincipal User, string _fillquery, string _filename,SortedList _params, IDataAccessLayer dLayer, SqlConnection connection);
     }
 }
