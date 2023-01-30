@@ -2127,7 +2127,7 @@ namespace SmartxAPI.Controllers
                             // LogParams.Add("X_Remark", " ");
                             // dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);
                             DataTable MasterTable =new DataTable();
-                            myFunctions.LogScreenActivitys(nFnYearID,nInvoiceID,InvoiceNO.ToString(),this.N_FormID,xButtonAction,ipAddress,User,MasterTable,dLayer,connection,transaction);
+                            myFunctions.LogScreenActivitys(nFnYearID,nInvoiceID,InvoiceNO.ToString(),this.N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
 
                             //StatusUpdate

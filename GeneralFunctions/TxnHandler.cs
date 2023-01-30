@@ -1056,8 +1056,7 @@ namespace SmartxAPI.GeneralFunctions
                 //     ipAddress = Request.Headers["X-Forwarded-For"];
                 // else
                 //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                DataTable Log = dLayer.ExecuteDataTable("select [Invoice No],[Invoice Date],Customer,[Customer Code],X_LocationName,X_BranchName,X_BillAmt,X_PayMode,B_IsSaveDraft,B_IsProforma from vw_InvSalesInvoiceNo_Search_cloud where N_SalesId="+N_SalesID + " and N_CompanyID=" + N_CompanyID ,CustParams,connection,transaction);
-                myFunctions.LogScreenActivitys(N_FnYearID,N_SalesID,InvoiceNo,64,xButtonAction,ipAddress,User,Log,dLayer,connection,transaction);
+                myFunctions.LogScreenActivitys(N_FnYearID,N_SalesID,InvoiceNo,64,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
                    
 
                 DataRow Rowloyalitypoints = null;

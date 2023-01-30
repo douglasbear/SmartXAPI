@@ -9,6 +9,7 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
+using System.Linq;
 
 namespace SmartxAPI.Controllers
 {
@@ -45,15 +46,15 @@ namespace SmartxAPI.Controllers
                 {
                     // string menus = "select X_TableViewCode,N_TableViewID,N_MenuID as formID,X_TitleLanControlNo as titleLbl,X_MenuLanControlNo as menuLbl,B_IsDefault as isDefault,B_SearchEnabled as searchEnabled,B_AttachementSearch as attachementSearch,X_PKey,N_Type,N_Order,X_PCode from Gen_TableView where N_MenuID=@nMenuID order by N_Order";
 
-                    string menus = "select * from "+
-                    "(select X_TableViewCode,N_TableViewID,N_MenuID as formID,X_TitleLanControlNo as titleLbl,X_MenuLanControlNo as menuLbl, "+
-                    "B_IsDefault as isDefault,B_SearchEnabled as searchEnabled,B_AttachementSearch as attachementSearch,X_PKey,N_Type,N_Order,X_PCode from "+
-                    "Gen_TableView where N_MenuID=@nMenuID  "+
-                    "and N_Type not in(select N_Type from Gen_TableView where N_MenuID=@nMenuID and N_CompanyID=@nCompanyID and N_UserID=@nUserID) "+
-                    "union all "+
-                    "select X_TableViewCode,N_TableViewID,N_MenuID as formID,X_TitleLanControlNo as titleLbl,X_MenuLanControlNo as menuLbl, "+
-                    "B_IsDefault as isDefault,B_SearchEnabled as searchEnabled,B_AttachementSearch as attachementSearch,X_PKey,N_Type,N_Order,X_PCode from "+
-                    "Gen_TableView where N_MenuID=@nMenuID  and N_CompanyID=@nCompanyID and N_UserID=@nUserID) as Tbl_Gen_TableView "+
+                    string menus = "select * from " +
+                    "(select X_TableViewCode,N_TableViewID,N_MenuID as formID,X_TitleLanControlNo as titleLbl,X_MenuLanControlNo as menuLbl, " +
+                    "B_IsDefault as isDefault,B_SearchEnabled as searchEnabled,B_AttachementSearch as attachementSearch,X_PKey,N_Type,N_Order,X_PCode from " +
+                    "Gen_TableView where N_MenuID=@nMenuID  " +
+                    "and N_Type not in(select N_Type from Gen_TableView where N_MenuID=@nMenuID and N_CompanyID=@nCompanyID and N_UserID=@nUserID) " +
+                    "union all " +
+                    "select X_TableViewCode,N_TableViewID,N_MenuID as formID,X_TitleLanControlNo as titleLbl,X_MenuLanControlNo as menuLbl, " +
+                    "B_IsDefault as isDefault,B_SearchEnabled as searchEnabled,B_AttachementSearch as attachementSearch,X_PKey,N_Type,N_Order,X_PCode from " +
+                    "Gen_TableView where N_MenuID=@nMenuID  and N_CompanyID=@nCompanyID and N_UserID=@nUserID) as Tbl_Gen_TableView " +
                     "order by N_Order ";
 
                     SortedList TviewParams = new SortedList();
@@ -69,7 +70,7 @@ namespace SmartxAPI.Controllers
                     foreach (DataRow dRow in tableViewResult.Rows)
                     {
                         TviewParams["@nTableViewID"] = dRow["N_TableViewID"].ToString();
-                        string tableHeaderSql = "select X_FieldName as dataField,X_LanControlNo as text,B_EditLink as editLink,B_Sort as sort,X_HeaderAlign as headerAlign,X_Align as align,N_RefFormID,isnull(B_IsHidden,0) as hidden,X_DataType as formatTo from Gen_TableViewDetails where N_TableViewID=@nTableViewID order by N_Order";
+                        string tableHeaderSql = "select X_FieldName as dataField,X_LanControlNo as text,B_EditLink as editLink,B_Sort as sort,X_HeaderAlign as headerAlign,X_Align as align,N_RefFormID,isnull(B_IsHidden,0) as hidden,X_DataType as formatTo,B_SystemField from Gen_TableViewDetails where N_TableViewID=@nTableViewID order by N_Order";
 
                         DataTable tableColumnResult = dLayer.ExecuteDataTable(tableHeaderSql, TviewParams, connection);
                         dRow["columns"] = tableColumnResult;
@@ -88,7 +89,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetDashboardList(int nFnYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nBranchID, bool bAllBranchData, int nFormID, int nTableViewID)
+        public ActionResult GetDashboardList(int nFnYearID, int nPage, int nSizeperpage, string xSearchkey, string xSearchField, string xSortBy, int nBranchID, bool bAllBranchData, int nFormID, int nTableViewID, bool export)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             SortedList OutPut = new SortedList();
@@ -124,7 +125,7 @@ namespace SmartxAPI.Controllers
                     DataTable SortList = dLayer.ExecuteDataTable(SortListSql, Params, connection);
                     foreach (DataRow cRow in SortList.Rows)
                     {
-                        if (xSearchkey != null && xSearchkey.Trim() != "")
+                        if (xSearchkey != null && xSearchkey.Trim() != "" && xSearchField == "All")
                         {
                             if (myFunctions.getBoolVAL(cRow["B_Search"].ToString()))
                             {
@@ -134,6 +135,10 @@ namespace SmartxAPI.Controllers
 
                         FieldList = FieldList + "," + cRow["X_FieldName"].ToString();
 
+                    }
+                    if (xSearchField != "All")
+                    {
+                        Searchkey = Searchkey + " or " + xSearchField + " like '%" + xSearchkey + "%'";
                     }
 
                     if (Searchkey.Length > 3)
@@ -223,16 +228,29 @@ namespace SmartxAPI.Controllers
                     else
                         sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + " and " + PKey + " not in " + "(select top(" + Count + ") " + PKey + " from " + DataSource + Criterea + SortBy + " ) " + SortBy;
 
+                    if (export)
+                    {
+                        sqlCommandText = "select " + FieldList + " from " + DataSource + Criterea + SortBy;
+                        string fileName = "Exported_List_" + RandomString();
+                        myFunctions.QryToExcel(User, sqlCommandText, fileName, Params, dLayer, connection);
+                        fileName = fileName + ".xls";
+                        return Ok(_api.Success(new SortedList() { { "FileName", fileName } }));
+                    }
+                    else
+                    {
 
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                        dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from " + DataSource + Criterea;
+                        sqlCommandCount = "select count(*) as N_Count  from " + DataSource + Criterea;
 
-                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                    OutPut.Add("Details", _api.Format(dt));
-                    OutPut.Add("TotalCount", TotalCount);
+                        object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                        OutPut.Add("Details", _api.Format(dt));
+                        OutPut.Add("TotalCount", TotalCount);
 
-                    return Ok(_api.Success(OutPut));
+                        return Ok(_api.Success(OutPut));
+                    }
+
+
 
                 }
             }
@@ -262,10 +280,10 @@ namespace SmartxAPI.Controllers
 
             string DefaultMastersql = "", DefaultDetailSql = "", Mastersql = "", DetailSql = "";
 
-            DefaultMastersql = "select b_AttachementSearch,n_MenuID,n_Type,n_UserID,n_CompanyID,n_TableViewID from Gen_TableView where N_CompanyID=-1 and N_UserID=0 and N_MenuID=@nMenuID and N_Type=@nTypeID";
+            DefaultMastersql = "select b_AttachementSearch,n_MenuID,n_Type,n_UserID,n_CompanyID,n_TableViewID,X_DefaultSortField from Gen_TableView where N_CompanyID=-1 and N_UserID=0 and N_MenuID=@nMenuID and N_Type=@nTypeID";
             DefaultDetailSql = "select * from vw_Gen_TableViewDetails where N_CompanyID=-1 and N_MenuID=@nMenuID and N_Type=@nTypeID and N_TableViewID=(select max(N_TableViewID) as N_TableViewID from Gen_TableView where N_CompanyID=-1 and N_UserID=0 and N_MenuID=@nMenuID and N_Type=@nTypeID)";
 
-            Mastersql = "select b_AttachementSearch,n_MenuID,n_Type,n_UserID,n_CompanyID,n_TableViewID from Gen_TableView where N_CompanyID=@nCompanyID and N_UserID=@nUserID and N_MenuID=@nMenuID and N_Type=@nTypeID";
+            Mastersql = "select b_AttachementSearch,n_MenuID,n_Type,n_UserID,n_CompanyID,n_TableViewID,X_DefaultSortField from Gen_TableView where N_CompanyID=@nCompanyID and N_UserID=@nUserID and N_MenuID=@nMenuID and N_Type=@nTypeID";
             DetailSql = "select * from vw_Gen_TableViewDetails where N_CompanyID=@nCompanyID and N_MenuID=@nMenuID and N_Type=@nTypeID and N_TableViewID=(select max(N_TableViewID) as N_TableViewID from Gen_TableView where N_CompanyID=@nCompanyID and N_UserID=@nUserID and N_MenuID=@nMenuID and N_Type=@nTypeID)";
 
 
@@ -316,6 +334,8 @@ namespace SmartxAPI.Controllers
                 int nMenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_MenuID"].ToString());
                 int nTypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_Type"].ToString());
                 int nTableViewID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TableViewID"].ToString());
+                string xSortFeild = MasterTable.Rows[0]["x_Sort"].ToString();
+                string xSortBy = MasterTable.Rows[0]["x_SortBy"].ToString();
 
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -323,10 +343,11 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
+                    string SortFeild = xSortFeild == "Created_Time_ID" ? " X_DefaultSortField" : "'" + xSortFeild + " " + xSortBy + "' as X_DefaultSortField";
                     string masterSql = "SELECT " + nCompanyID + " as N_CompanyID,(select max(N_TableViewID)+1 from Gen_TableView ) as X_TableViewCode,0 as N_TableViewID, N_MenuID, X_TitleLanControlNo, X_MenuLanControlNo, X_ActionBtnLanControlNo, " +
                     " B_IsDefault, X_DataSource, X_DefaultCriteria, X_BranchCriteria, X_LocationCriteria, X_PKey, X_PCode," + nUserID + " as N_UserID, B_SearchEnabled, B_AttachementSearch, " +
-                    " X_TotalField, N_Type, N_Order, X_DefaultSortField FROM Gen_TableView where N_CompanyID=-1 and N_MenuID=" + nMenuID + " and N_Type=" + nTypeID + " and N_UserID=0";
-                    MasterTable = dLayer.ExecuteDataTable(masterSql, Params, connection,transaction);
+                    " X_TotalField, N_Type, N_Order," + SortFeild + " FROM Gen_TableView where N_CompanyID=-1 and N_MenuID=" + nMenuID + " and N_Type=" + nTypeID + " and N_UserID=0";
+                    MasterTable = dLayer.ExecuteDataTable(masterSql, Params, connection, transaction);
                     dLayer.ExecuteScalar("delete from Gen_TableViewDetails where N_TableViewID in (select N_TableViewID from Gen_TableView where N_CompanyID=" + nCompanyID + " and N_MenuID=" + nMenuID + " and N_Type=" + nTypeID + " and N_UserID=" + nUserID + ") and N_CompanyID=" + nCompanyID, connection, transaction);
                     dLayer.ExecuteScalar("delete from Gen_TableView where N_CompanyID=" + nCompanyID + " and N_MenuID=" + nMenuID + " and N_Type=" + nTypeID + " and N_UserID=" + nUserID, connection, transaction);
 
@@ -345,6 +366,7 @@ namespace SmartxAPI.Controllers
                     {
                         DetailTable.Columns.Remove("n_Type");
                     }
+
                     foreach (DataRow Avar in DetailTable.Rows)
                     {
                         Avar["N_CompanyID"] = nCompanyID;
@@ -383,14 +405,21 @@ namespace SmartxAPI.Controllers
 
 
                 }
-                
-                 return Ok(_api.Success("Listing Configuration Restored"));
+
+                return Ok(_api.Success("Listing Configuration Restored"));
             }
             catch (Exception ex)
             {
                 return Ok(_api.Error(User, ex));
             }
 
+        }
+        private static Random random = new Random();
+        public string RandomString(int length = 6)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
 

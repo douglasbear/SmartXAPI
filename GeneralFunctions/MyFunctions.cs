@@ -25,6 +25,7 @@ using System.Text.RegularExpressions;
 using System.Net.Http;
 using Microsoft.AspNetCore.Hosting;
 using SmartxAPI.GeneralFunctions;
+using OfficeOpenXml;
 
 namespace SmartxAPI.GeneralFunctions
 {
@@ -282,7 +283,7 @@ namespace SmartxAPI.GeneralFunctions
                 Result = obj.ToString();
             return Result;
         }
-            public string checkDraftProcessed(string TableName, string ColumnReturn, string ColumnValidate, string ValidateValue, string Condition, SortedList Params, IDataAccessLayer dLayer, SqlConnection connection)
+        public string checkDraftProcessed(string TableName, string ColumnReturn, string ColumnValidate, string ValidateValue, string Condition, SortedList Params, IDataAccessLayer dLayer, SqlConnection connection)
         {
             string Result = "";
             object obj = dLayer.ExecuteScalar("select " + ColumnReturn + " from " + TableName + " where " + ColumnValidate + "=" + ValidateValue + " and " + Condition + "", Params, connection);
@@ -419,7 +420,7 @@ namespace SmartxAPI.GeneralFunctions
                 return true;
         }
 
-        public bool CheckPRProcessed(int nPurchaseID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection ,SqlTransaction transaction)
+        public bool CheckPRProcessed(int nPurchaseID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             SortedList Params = new SortedList();
             int nCompanyID = this.GetCompanyID(User);
@@ -429,7 +430,7 @@ namespace SmartxAPI.GeneralFunctions
             string sqlCommand = "Select COUNT(N_TransID) From Inv_PaymentRequest Where  N_CompanyID=@p1 and N_TransID=@p2 and N_FormID=65";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nPurchaseID);
-            AdvancePRProcessed = dLayer.ExecuteScalar(sqlCommand, Params, connection,transaction);
+            AdvancePRProcessed = dLayer.ExecuteScalar(sqlCommand, Params, connection, transaction);
 
             if (AdvancePRProcessed != null)
             {
@@ -474,11 +475,11 @@ namespace SmartxAPI.GeneralFunctions
             int nNextApprovalID = nTransApprovalLevel + 1;
             string xLastUserName = "", xEntryTime = "";
             int nTempStatusID = 0;
-            object nActiveID=0;
+            object nActiveID = 0;
 
             int loggedInUserID = this.GetUserID(User);
 
-             int GUserID = this.GetGlobalUserID(User);
+            int GUserID = this.GetGlobalUserID(User);
 
             /* Approval Response Set */
             SortedList Response = new SortedList();
@@ -512,18 +513,18 @@ namespace SmartxAPI.GeneralFunctions
             ApprovalParams.Add("@nTransStatus", nTransStatus);
             ApprovalParams.Add("@nGroupID", nGroupID);
             ApprovalParams.Add("@loggedInUserID", loggedInUserID);
-             ApprovalParams.Add("@GUserID", GUserID);
+            ApprovalParams.Add("@GUserID", GUserID);
 
             object objUserCategory = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User where N_CompanyID=" + nCompanyID + " and N_UserID=" + loggedInUserID, ApprovalParams, connection);
 
             objUserCategory = objUserCategory != null ? objUserCategory : 0;
 
-              using (SqlConnection olivCnn = new SqlConnection(masterDBConnectionString))
-                {
-                    olivCnn.Open();
-                    nActiveID = dLayer.ExecuteScalar("select N_ActiveAppID from users where N_UserID=@GUserID",ApprovalParams,olivCnn);
+            using (SqlConnection olivCnn = new SqlConnection(masterDBConnectionString))
+            {
+                olivCnn.Open();
+                nActiveID = dLayer.ExecuteScalar("select N_ActiveAppID from users where N_UserID=@GUserID", ApprovalParams, olivCnn);
 
-                }
+            }
 
 
             if (nApprovalID == 0)
@@ -566,16 +567,16 @@ namespace SmartxAPI.GeneralFunctions
             if (nApprovalID > 0)
             {
                 nIsApprovalSystem = 1;
-                Response["isApprovalSystem"] = nIsApprovalSystem;                
+                Response["isApprovalSystem"] = nIsApprovalSystem;
             }
             else
             {
-                if(getIntVAL(nActiveID.ToString()) == 2)
+                if (getIntVAL(nActiveID.ToString()) == 2)
                 {
                     Response["btnSaveText"] = "Save";
                     Response["btnDeleteText"] = "Delete";
                     Response["saveEnabled"] = false;
-                    Response["deleteEnabled"] = false; 
+                    Response["deleteEnabled"] = false;
                     Response["saveTag"] = 0;
                     Response["deleteTag"] = 0;
                     Response["isApprovalSystem"] = 0;
@@ -584,7 +585,7 @@ namespace SmartxAPI.GeneralFunctions
                     Response["lblVisible"] = true;
                     Response["lblText"] = "Approval not set for this user";
                     return Response;
-                }              
+                }
             }
             if (nTransID > 0)
             {
@@ -606,7 +607,7 @@ namespace SmartxAPI.GeneralFunctions
                     Response["isEditable"] = true;
                     return Response;
                 }
-            }           
+            }
 
             if (nIsApprovalSystem == -1)
             {
@@ -1393,13 +1394,13 @@ namespace SmartxAPI.GeneralFunctions
             if (N_IsApprovalSystem == 1)
             {
                 dLayer.ExecuteNonQuery("SP_Gen_ApprovalCodesTrans @nCompanyID,@nFormID,@nApprovalUserID,@nTransID,@nApprovalLevelID,@nProcStatusID,@nApprovalID,@nGroupID,@nFnYearID,@xAction,@nEmpID,@xDepLevel,@dTransDate,0,0,@nTransOwnUserID", LogParams, connection, transaction);
-                
-                if(N_ProcStatusID==0 || N_ProcStatusID==6)
+
+                if (N_ProcStatusID == 0 || N_ProcStatusID == 6)
                 {
-                    dLayer.ExecuteNonQuery("delete from Log_ApprovalProcess where N_CompanyID="+N_CompanyID+" and X_TransType='"+X_TransType+"' and N_TransID="+N_TransID, connection, transaction);
+                    dLayer.ExecuteNonQuery("delete from Log_ApprovalProcess where N_CompanyID=" + N_CompanyID + " and X_TransType='" + X_TransType + "' and N_TransID=" + N_TransID, connection, transaction);
                     return 0;
                 }
-                
+
                 object NxtUser = null;
                 NxtUser = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=0", LogParams, connection, transaction);
                 if (NxtUser != null)
@@ -1686,7 +1687,7 @@ namespace SmartxAPI.GeneralFunctions
                         break;
                     case 1068://Employee Evaluation
                         DeleteStatus = dLayer.DeleteData("Pay_EmpEvaluationDetails", "N_EvalID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
-                        DeleteStatus = dLayer.DeleteData("Pay_EmpEvaluation", "N_EvalID", N_TransID, "N_CompanyID="+N_CompanyID+" and N_FnYearID=" + N_FnYearID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_EmpEvaluation", "N_EvalID", N_TransID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 684://Material Dispatch
@@ -1929,6 +1930,38 @@ namespace SmartxAPI.GeneralFunctions
 
             return result;
         }
+
+        public bool QryToExcel(ClaimsPrincipal User, string _fillquery, string _filename,SortedList _params, IDataAccessLayer dLayer, SqlConnection connection)
+        {
+            bool result = false;
+            DataTable dataTable = dLayer.ExecuteDataTable(_fillquery, _params, connection);
+
+            dataTable.Columns["Column1"].ColumnName = "NewColumn1";
+            
+            try
+            {
+                ExcelPackage.LicenseContext = LicenseContext.Commercial;
+                using (var package = new ExcelPackage())
+                {
+                    
+
+                    var worksheet = package.Workbook.Worksheets.Add("Sheet1");
+                    worksheet.Cells["A1"].LoadFromDataTable(dataTable, true);
+                    package.SaveAs(new FileInfo(this.TempFilesPath.ToString()+ _filename+".xls"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return result;
+            }
+
+
+            return result;
+        }
+
+
+
+
 
         public static bool GenerateExportFile(string _filepath, DataTable ExportTable, string _filename)
         {
@@ -2267,16 +2300,16 @@ namespace SmartxAPI.GeneralFunctions
             return B_completed;
         }
 
-// User Type Definition
-// 0 - Admin User
-// 1 - ERP User
-// 2 - ESS User
-// 6 - POS User
-// 21 - Teacher Portal User
-// 20 - Parent Portal User
-// 22 - Student Portal User
-// 13 - Customer Portal User
-// 14 - Vendor Portal User
+        // User Type Definition
+        // 0 - Admin User
+        // 1 - ERP User
+        // 2 - ESS User
+        // 6 - POS User
+        // 21 - Teacher Portal User
+        // 20 - Parent Portal User
+        // 22 - Student Portal User
+        // 13 - Customer Portal User
+        // 14 - Vendor Portal User
 
 
         public bool CreatePortalUser(int nCompanyID, int nBranchID, string xPartyName, string emailID, string type, string partyCode, int partyID, bool active, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
@@ -2433,7 +2466,7 @@ namespace SmartxAPI.GeneralFunctions
                             url = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + "" + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
                             var path = client.GetAsync(url);
 
-                            ReportName = FormName + "_" + docNumber + "_" + partyName.Trim() +"_"+random+ ".pdf";
+                            ReportName = FormName + "_" + docNumber + "_" + partyName.Trim() + "_" + random + ".pdf";
                             path.Wait();
                             if (env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName))
                                 return false;
@@ -2648,38 +2681,61 @@ namespace SmartxAPI.GeneralFunctions
             return 0;
         }
 
-        public bool LogScreenActivitys(int nFnYearID,int nTransID,string xTransCode,int nFormID,string xAction,string ipAddress,ClaimsPrincipal User,DataTable LogTable, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
+        public bool LogScreenActivitys(int nFnYearID, int nTransID, string xTransCode, int nFormID, string xAction, string ipAddress, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             try
             {
+                SortedList Params =new SortedList();
+                Params.Add("@nFormID",nFormID);
+                Params.Add("@keyVal",nTransID);
+                Params.Add("@cVal",this.GetCompanyID(User));
+                DataTable LogDataSrc = dLayer.ExecuteDataTable("select * from Log_ActivityConfig where N_FormID=@nFormID",Params,connection,transaction);
 
-                string FieldValues="";
+                if(LogDataSrc.Rows.Count==0){
+                    return false;
+                }
+                String LogSql = LogDataSrc.Rows[0]["X_DataSource"].ToString();
+                String keyFeild = LogDataSrc.Rows[0]["X_KeyField"].ToString();
+                DataTable LogTable = dLayer.ExecuteDataTable(LogSql ,Params,connection,transaction);
 
-                if(LogTable.Rows.Count>0){
-                string[] FieldNames = LogTable.Columns.Cast<DataColumn>()
-                                 .Select(x => x.ColumnName)
-                                 .ToArray();  
-                if(LogTable.Columns.Count>0){
-                for (int k = 0; k < LogTable.Columns.Count; k++)
+                string FieldValues = "";
+                string PartyNameFeild = keyFeild.Split(",").Length>0?keyFeild.Split(",")[0]:"";
+                string DocDateFeild =keyFeild.Split(",").Length>1?keyFeild.Split(",")[1]:"";
+                string PartyName = "";
+                DateTime DocDate;
+
+                if (LogTable.Rows.Count > 0)
                 {
-                    foreach (string ColumnName in FieldNames)
+                    string[] FieldNames = LogTable.Columns.Cast<DataColumn>()
+                                     .Select(x => x.ColumnName)
+                                     .ToArray();
+                    if (LogTable.Columns.Count > 0)
                     {
-                        if (LogTable.Columns[k].ColumnName.ToString().ToLower() == ColumnName.ToLower())
+                        for (int k = 0; k < LogTable.Columns.Count; k++)
+                        {
+                            foreach (string ColumnName in FieldNames)
                             {
-                                if (LogTable.Rows[0][k] == DBNull.Value) { continue; }
-                                var values = LogTable.Rows[0][k].ToString();
-                                values = values.Replace("|", " ");
-                                values = values.Replace("~~~", " ");
-                                values = values.Replace(":::", " ");
-                                FieldValues = FieldValues + "~~~" + ColumnName + ":::" + values;
+                                if (LogTable.Columns[k].ColumnName.ToString().ToLower() == ColumnName.ToLower())
+                                {
+                                    if (LogTable.Rows[0][k] == DBNull.Value) { continue; }
+                                    var values = LogTable.Rows[0][k].ToString();
+                                    values = values.Replace("|", " ");
+                                    values = values.Replace("~~~", " ");
+                                    values = values.Replace(":::", " ");
+                                    FieldValues = FieldValues + "~~~" + ColumnName + ":::" + values;
+                                    if(PartyNameFeild.ToString().ToLower()==ColumnName.ToString().ToLower())
+                                        PartyName = values;
+                                    if(DocDateFeild.ToString().ToLower()==ColumnName.ToString().ToLower())
+                                        DocDate = Convert.ToDateTime(values.ToString());
+                                }
                             }
+                        }
+                        if (FieldValues.Length > 3)
+                        {
+                            FieldValues = FieldValues.Substring(3);
+                            FieldValues = ValidateString(FieldValues);
+                        }
                     }
-                }
-                if(FieldValues.Length>3){
-                FieldValues = FieldValues.Substring(3);
-                FieldValues = ValidateString(FieldValues);
-                }
-                }
                 }
 
                 SortedList LogParams = new SortedList();
@@ -2693,9 +2749,9 @@ namespace SmartxAPI.GeneralFunctions
                 LogParams.Add("X_IP", ipAddress);
                 LogParams.Add("X_TransCode", xTransCode);
                 LogParams.Add("X_Remark", " ");
-                LogParams.Add("X_Log", xAction.ToLower()=="delete"?"Entry Deleted":FieldValues);
+                LogParams.Add("X_Log", xAction.ToLower() == "delete" ? "Entry Deleted" : FieldValues);
 
-                dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction); 
+                dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);
                 return true;
             }
             catch (Exception e)
@@ -2777,7 +2833,7 @@ namespace SmartxAPI.GeneralFunctions
         //                 objUserCat= dLayer.ExecuteScalar("Select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + "  and N_AppID=20", connection, transaction);
         //             else if(N_UserType==5)
         //                 objUserCat= dLayer.ExecuteScalar("Select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + "  and N_AppID=22", connection, transaction);
-                    
+
 
         //             if (objUserCat != null)
         //             {
@@ -2839,6 +2895,8 @@ namespace SmartxAPI.GeneralFunctions
 
 
 
+
+
     public interface IMyFunctions
     {
         public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, string FieldName, IDataAccessLayer dLayer, SqlConnection connection);
@@ -2896,7 +2954,7 @@ namespace SmartxAPI.GeneralFunctions
         public bool SendMail(string ToMail, string Body, string Subjectval, IDataAccessLayer dLayer, int FormID, int ReferID, int CompanyID);
         public bool CheckClosedYear(int N_CompanyID, int nFnYearID, IDataAccessLayer dLayer, SqlConnection connection);
         public bool CheckActiveYearTransaction(int nCompanyID, int nFnYearID, DateTime dTransDate, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
-        public bool CheckPRProcessed(int nPurchaseID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection,SqlTransaction transaction);
+        public bool CheckPRProcessed(int nPurchaseID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public bool ExportToExcel(ClaimsPrincipal User, string _fillquery, string _filename, IDataAccessLayer dLayer, SqlConnection connection);
         public string GetUploadsPath(ClaimsPrincipal User, string DocType);
         public string GetTempFileName(ClaimsPrincipal User, string DocType, string FileName);
@@ -2910,7 +2968,7 @@ namespace SmartxAPI.GeneralFunctions
         public bool CreatePortalUser(int nCompanyID, int nBranchID, string xPartyName, string emailID, string type, string partyCode, int partyID, bool active, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public bool SendMailWithAttachments(int nFormID, int nFnYearID, int nPkeyID, int nPartyID, string partyName, string Subject, string docNumber, string mail, string xBody, IDataAccessLayer dLayer, ClaimsPrincipal User);
         public bool UpdateTxnStatus(int nCompanyID, int nTransID, int nFormID, bool forceUpdate, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
-        public bool LogScreenActivitys(int nFnYearID,int nTransID,string xTransCode,int nFormID,string xAction,string ipAddress,ClaimsPrincipal User,DataTable LogTable, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
-
+        public bool LogScreenActivitys(int nFnYearID, int nTransID, string xTransCode, int nFormID, string xAction, string ipAddress, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
+public bool QryToExcel(ClaimsPrincipal User, string _fillquery, string _filename,SortedList _params, IDataAccessLayer dLayer, SqlConnection connection);
     }
 }
