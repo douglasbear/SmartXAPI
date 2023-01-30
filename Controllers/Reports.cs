@@ -618,7 +618,7 @@ namespace SmartxAPI.Controllers
                                 {
                                     Mobile = dLayer.ExecuteScalar("select x_Phone from VW_InvSalesQuotationMaster where n_quotationid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
                                     Date = dLayer.ExecuteScalar("select d_quotationdate from VW_InvSalesQuotationMaster where n_quotationid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
-                                    Party = dLayer.ExecuteScalar("select x_customername from VW_InvSalesQuotationMaster where n_quotationid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                    Party = dLayer.ExecuteScalar("select x_crmcustomer from VW_InvSalesQuotationMaster where n_quotationid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
 
                                 }
                                 else if (nFormID == 81)
