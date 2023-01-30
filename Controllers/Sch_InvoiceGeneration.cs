@@ -34,14 +34,18 @@ namespace SmartxAPI.Controllers
 
         //Filling Fee schedules from Sch_Sales
         [HttpGet("feeSchedules")]
-        public ActionResult FeeScheduleFilling(int n_BranchID, int N_LocationID,int N_FnYearID , DateTime d_Date,string xSortBy)
+        public ActionResult FeeScheduleFilling(int n_BranchID, int N_LocationID,int N_FnYearID , DateTime d_Date,string xSortBy,int nCustomerID)
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
             string sqlCondition="";
-
+            string Criteria = "";
+            if(nCustomerID>0)
+            {
+             Criteria= " and Sch_Sales.N_CustomerID="+nCustomerID;
+            }
             if(d_Date!=null)
                 sqlCondition= " and Sch_Sales.D_SalesDate <= @d_Date";
 
@@ -62,7 +66,7 @@ namespace SmartxAPI.Controllers
 					                        " Sch_Admission ON Sch_Admission.N_CompanyID=Sch_Sales.N_CompanyId AND Sch_Admission.N_AcYearID=Sch_Sales.N_FnYearId AND Sch_Admission.N_CustomerID=Sch_Sales.N_CustomerID INNER JOIN "+						                    
 						                    " Sch_Class ON Sch_Admission.N_CompanyID=Sch_Class.N_CompanyId AND Sch_Admission.N_ClassID=Sch_Class.N_ClassID INNER JOIN "+
 						                    " Sch_ClassDivision ON Sch_Admission.N_CompanyID=Sch_ClassDivision.N_CompanyID AND Sch_Admission.N_DivisionID=Sch_ClassDivision.N_ClassDivisionID"+
-	                                    " WHERE Sch_Sales.N_CompanyID=@N_CompanyID and Sch_Sales.N_FnYearID=@N_AcYearID and ISNULL(Sch_Sales.N_RefSalesID,0)=0 " + sqlCondition + "" + xSortBy+"";
+	                                    " WHERE Sch_Sales.N_CompanyID=@N_CompanyID and Sch_Sales.N_FnYearID=@N_AcYearID and ISNULL(Sch_Sales.N_RefSalesID,0)=0 " + sqlCondition + Criteria + "" + xSortBy+"";
 
             Params.Add("@N_CompanyID", nCompanyId);  
             Params.Add("@N_BranchID", n_BranchID);
