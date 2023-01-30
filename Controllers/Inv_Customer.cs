@@ -682,7 +682,7 @@ namespace SmartxAPI.Controllers
                    }
                    dLayer.ExecuteNonQuery("update Inv_ItemMaster set N_CustomerID=0,x_CustomerSKU=null where N_CompanyID=" + nCompanyID + "  and N_CustomerID=" + nCustomerID, Params, connection);
 
-                    crmcustomer = dLayer.ExecuteScalar("select count(N_customerID) from Inv_SalesQuotation  Where N_CompanyID=" + nCompanyID + " and  N_CrmCompanyID=" + nCrmCustomerID,  QueryParams, connection);
+                    crmcustomer = dLayer.ExecuteScalar("select count(N_CrmCompanyID) from Inv_SalesQuotation  Where N_CompanyID=" + nCompanyID + " and  N_CrmCompanyID=" + nCrmCustomerID,  QueryParams, connection);
 
                     SqlTransaction transaction = connection.BeginTransaction();
                     if( myFunctions.getIntVAL(crmcustomer.ToString())<=0)
