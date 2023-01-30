@@ -117,11 +117,7 @@ namespace SmartxAPI.Controllers
 
                                 SecAllMenus.AcceptChanges();
                             }
-                            else
-                            {
-                                 Rows.Delete();
 
-                            }
                             SecAllMenus.AcceptChanges();
 
 
