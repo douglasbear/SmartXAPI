@@ -91,8 +91,6 @@ namespace SmartxAPI.Controllers
                     SecAllMenus.Columns.Add("X_Email", typeof(System.String));
                     SecAllMenus.Columns.Add("X_Password", typeof(System.String));
                     SecAllMenus.Columns.Add("N_Type", typeof(System.Int32));
-                    SecAllMenus.Columns.Add("X_Datatable", typeof(System.String));
-                    SecAllMenus.Columns.Add("X_Pkey", typeof(System.String));
 
 
                     foreach (DataRow Rows in SecAllMenus.Rows)
@@ -111,10 +109,6 @@ namespace SmartxAPI.Controllers
                                 Rows["X_Email"] = KRows["X_Email"].ToString();
                                 Rows["X_Password"] = KRows["X_Password"].ToString();
                                 Rows["N_Type"] = KRows["N_Type"].ToString();
-                                Rows["X_Datatable"] = KRows["X_Datatable"].ToString();
-                                Rows["X_Pkey"] = KRows["X_Pkey"].ToString();
-
-
                                 SecAllMenus.AcceptChanges();
                             }
                             else
