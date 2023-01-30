@@ -90,6 +90,7 @@ namespace SmartxAPI.Controllers
                     SecAllMenus.Columns.Add("B_AutoSend", typeof(System.Boolean));
                     SecAllMenus.Columns.Add("X_Email", typeof(System.String));
                     SecAllMenus.Columns.Add("X_Password", typeof(System.String));
+                    SecAllMenus.Columns.Add("N_Type", typeof(System.Int32));
 
 
                     foreach (DataRow Rows in SecAllMenus.Rows)
@@ -107,6 +108,7 @@ namespace SmartxAPI.Controllers
                                 Rows["B_AutoSend"] = Convert.ToBoolean(KRows["B_AutoSend"].ToString());
                                 Rows["X_Email"] =KRows["X_Email"].ToString();
                                 Rows["X_Password"] = KRows["X_Password"].ToString();
+                                Rows["N_Type"] = KRows["N_Type"].ToString();
 
 
                                 SecAllMenus.AcceptChanges();

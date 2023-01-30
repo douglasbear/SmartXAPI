@@ -594,7 +594,7 @@ namespace SmartxAPI.Controllers
                         DataTable Whatsapp = dLayer.ExecuteDataTable("select * from vw_GeneralScreenSettings where N_CompanyID=" + nCompanyId + " and N_FnyearID=" + nFnYearID + " and N_MenuID=" + nFormID, QueryParams, connection, transaction);
                         if (Whatsapp.Rows.Count > 0)
                         {
-                            if (myFunctions.getBoolVAL(Whatsapp.Rows[0]["B_AutoSend"].ToString()))
+                            if (myFunctions.getBoolVAL(Whatsapp.Rows[0]["B_AutoSend"].ToString())&& printSave)
                             {
                                 string Company = myFunctions.GetCompanyName(User);
                                 string FILEPATH = AppURL + "/temp/" + FormName + "_" + docNumber + "_" + partyName.Trim() + "_" + random + ".pdf";
@@ -617,7 +617,7 @@ namespace SmartxAPI.Controllers
                                 string URLAPI = "https://api.textmebot.com/send.php?recipient=+" + Mobile + "&apikey=" + WhatsappAPI + "&text=" + body;
                                 var FileMSG = clientFile.GetAsync(URLAPI);
                                 FileMSG.Wait();
-                                Thread.Sleep(5000);
+                                Thread.Sleep(6000);
                                 if (myFunctions.getBoolVAL(Whatsapp.Rows[0]["B_AttachPdf"].ToString()))
                                 {
                                     string URLFILE = "https://api.textmebot.com/send.php?recipient=+" + Mobile + "&apikey=" + WhatsappAPI + "&document=" + FILEPATH;
