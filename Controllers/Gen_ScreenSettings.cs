@@ -62,7 +62,7 @@ namespace SmartxAPI.Controllers
                     SortedList secParams = new SortedList();
                     int N_MenuID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_MenuID from vw_UserMenusAll_Disp where X_Text='" + perModules + "' and N_ParentMenuID=0", Params, connection).ToString());
 
-
+                    dLayer.DeleteData("Sec_GeneralScreenSettings", "N_MenuID", N_MenuID, "N_CompanyID=" + nCompanyID, connection);
 
                     secParams.Add("@nCompanyID", nCompanyID);
                     secParams.Add("@xUserCategory", x_UserCategoryName);
@@ -91,6 +91,8 @@ namespace SmartxAPI.Controllers
                     SecAllMenus.Columns.Add("X_Email", typeof(System.String));
                     SecAllMenus.Columns.Add("X_Password", typeof(System.String));
                     SecAllMenus.Columns.Add("N_Type", typeof(System.Int32));
+                    SecAllMenus.Columns.Add("X_Datatable", typeof(System.String));
+                    SecAllMenus.Columns.Add("X_Pkey", typeof(System.String));
 
 
                     foreach (DataRow Rows in SecAllMenus.Rows)
@@ -100,18 +102,25 @@ namespace SmartxAPI.Controllers
                         {
                             if (Rows["n_MenuID"].ToString() == KRows["n_MenuID"].ToString())
                             {
-                                Rows["X_WhatsappNumber"] =KRows["X_WhatsappNumber"].ToString();
+                                Rows["X_WhatsappNumber"] = KRows["X_WhatsappNumber"].ToString();
                                 Rows["X_WhatsappKey"] = KRows["X_WhatsappKey"].ToString();
                                 Rows["N_TemplateID"] = KRows["N_TemplateID"].ToString();
                                 Rows["X_TemplateName"] = KRows["X_TemplateName"].ToString();
                                 Rows["B_AttachPdf"] = Convert.ToBoolean(KRows["B_AttachPdf"].ToString());
                                 Rows["B_AutoSend"] = Convert.ToBoolean(KRows["B_AutoSend"].ToString());
-                                Rows["X_Email"] =KRows["X_Email"].ToString();
+                                Rows["X_Email"] = KRows["X_Email"].ToString();
                                 Rows["X_Password"] = KRows["X_Password"].ToString();
                                 Rows["N_Type"] = KRows["N_Type"].ToString();
+                                Rows["X_Datatable"] = KRows["X_Datatable"].ToString();
+                                Rows["X_Pkey"] = KRows["X_Pkey"].ToString();
 
 
                                 SecAllMenus.AcceptChanges();
+                            }
+                            else
+                            {
+                                 Rows.Delete();
+
                             }
                             SecAllMenus.AcceptChanges();
 
@@ -177,8 +186,8 @@ namespace SmartxAPI.Controllers
 
                     int N_InternalID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_InternalID"].ToString());
                     int N_MenuID = myFunctions.getIntVAL(DetailTable.Rows[0]["n_MenuID"].ToString());
-                   
-                   
+
+
                     dLayer.DeleteData("Sec_GeneralScreenSettings", "N_InternalID", N_InternalID, "N_MenuID=" + N_MenuID, connection, transaction);
                     if (DetailTable.Rows.Count > 0)
                     {
@@ -191,7 +200,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Unable to save"));
                         }
                     }
-                   
+
                     if (N_InternalID <= 0)
                     {
                         transaction.Rollback();
