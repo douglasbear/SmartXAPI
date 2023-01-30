@@ -214,6 +214,8 @@ namespace SmartxAPI.Controllers
 
                             string subItemSql = "SELECT     vw_InvItem_Search_cloud.*, dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID, vw_InvItem_Search_cloud.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, Inv_ItemUnit.X_ItemUnit AS Expr1, Inv_ItemDetails.N_MainItemID,Inv_ItemDetails.B_HideInInv as B_GroupHideInInv, Inv_ItemDetails.N_Qty, Inv_ItemDetails.N_Qty as N_SubItemQty FROM  Inv_ItemUnit RIGHT OUTER JOIN Inv_ItemDetails RIGHT OUTER JOIN vw_InvItem_Search_cloud ON Inv_ItemDetails.N_CompanyID = vw_InvItem_Search_cloud.N_CompanyID AND Inv_ItemDetails.N_ItemID = vw_InvItem_Search_cloud.N_ItemID ON Inv_ItemUnit.N_CompanyID = vw_InvItem_Search_cloud.N_CompanyID AND Inv_ItemUnit.N_ItemID = vw_InvItem_Search_cloud.N_ItemID AND Inv_ItemUnit.N_ItemUnitID = vw_InvItem_Search_cloud.N_SalesUnitID WHERE(vw_InvItem_Search_cloud.N_CompanyID = " + nCompanyID + ") AND(vw_InvItem_Search_cloud.B_InActive = 0) and Inv_ItemDetails.N_MainItemID =" + myFunctions.getIntVAL(item["N_ItemID"].ToString()) + "";
                             DataTable subTbl = dLayer.ExecuteDataTable(subItemSql, connection);
+                            if(subTbl.Columns.Contains("B_HideInInv")){subTbl.Columns.Remove("B_HideInInv");}
+                            subTbl.AcceptChanges();
                             item["SubItems"] = subTbl;
                         }
                     }
