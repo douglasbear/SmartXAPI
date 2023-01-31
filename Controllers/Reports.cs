@@ -1204,8 +1204,8 @@ namespace SmartxAPI.Controllers
                     {
                         bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
                         bool Consolidated = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_Isdefault,0) as B_Isdefault from acc_company where N_CompanyID=" + nCompanyID, Params, connection).ToString()); ;
-                        dLayer.ExecuteNonQuery("delete from Acc_LedgerBalForReporting where N_UserID=" + myFunctions.GetUserID(User), connection);
-                        dLayer.ExecuteNonQuery("delete from Acc_AccountStatement where N_UserID=" + myFunctions.GetUserID(User), connection);
+                        dLayer.ExecuteNonQuery("delete from Acc_LedgerBalForReporting", connection);
+                        dLayer.ExecuteNonQuery("delete from Acc_AccountStatement", connection);
                             
                         if (Consolidated)
                         {
