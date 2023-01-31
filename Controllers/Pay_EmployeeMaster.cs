@@ -1278,8 +1278,12 @@ namespace SmartxAPI.Controllers
 
                         if (myFunctions.getVAL(N_TitleCount.ToString()) > 0)
                         {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, "job title already Exixt"));
+                            object N_EmpCount = dLayer.ExecuteScalar("select count(*) from Pay_Employee where N_CompanyID= " + nCompanyID + " and N_PositionID= " + nPositionID + " and N_EmpID <> " + nEmpID, connection, transaction);
+                            if (myFunctions.getVAL(N_EmpCount.ToString()) > 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, "Job title already Exist"));
+                            }
                         }
                     }
 
