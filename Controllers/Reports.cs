@@ -508,7 +508,27 @@ namespace SmartxAPI.Controllers
                                         g.Clear(Color.White);
                                         g.DrawImageUnscaled(Sign, 0, 0);
                                     }
-                                    b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + ".png");
+                                    b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + "-wch.png");
+                                }
+                            }
+
+                             SqlCommand cmd2 = new SqlCommand("select i_signature2 from Wh_GRN where N_GRNID=" + nPkeyID, connection, transaction);
+                            if ((cmd2.ExecuteScalar().ToString()) != "")
+                            {
+                                byte[] content = (byte[])cmd2.ExecuteScalar();
+                                MemoryStream stream = new MemoryStream(content);
+                                Image Sign = Image.FromStream(stream);
+
+                                using (var b = new Bitmap(Sign.Width, Sign.Height))
+                                {
+                                    b.SetResolution(Sign.HorizontalResolution, Sign.VerticalResolution);
+
+                                    using (var g = Graphics.FromImage(b))
+                                    {
+                                        g.Clear(Color.White);
+                                        g.DrawImageUnscaled(Sign, 0, 0);
+                                    }
+                                    b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + "-wrec.png");
                                 }
                             }
                         }
@@ -530,17 +550,14 @@ namespace SmartxAPI.Controllers
                                         g.Clear(Color.White);
                                         g.DrawImageUnscaled(Sign, 0, 0);
                                     }
-                                    b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + ".png");
+                                    b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + "-ch.png");
                                 }
                             }
-                        }
-                        if (nFormID == 1426)
-                        {
-                            SqlCommand cmd = new SqlCommand("select i_signature from Inv_Deliverynote where N_DeliveryNoteID=" + nPkeyID, connection, transaction);
-                            object output = cmd.ExecuteScalar();
-                            if ((cmd.ExecuteScalar().ToString()) != "")
+
+                            SqlCommand cmd1 = new SqlCommand("select i_signature2 from Inv_Deliverynote where N_DeliveryNoteID=" + nPkeyID, connection, transaction);
+                            if ((cmd1.ExecuteScalar().ToString()) != "")
                             {
-                                byte[] content = (byte[])cmd.ExecuteScalar();
+                                byte[] content = (byte[])cmd1.ExecuteScalar();
                                 MemoryStream stream = new MemoryStream(content);
                                 Image Sign = Image.FromStream(stream);
 
@@ -553,11 +570,34 @@ namespace SmartxAPI.Controllers
                                         g.Clear(Color.White);
                                         g.DrawImageUnscaled(Sign, 0, 0);
                                     }
-                                    //b = resizeImage(Sign, new Size(400, 300));
-                                    b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + ".png");
+                                    b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + "-rc.png");
                                 }
                             }
                         }
+                        // if (nFormID == 1426)
+                        // {
+                        //     SqlCommand cmd = new SqlCommand("select i_signature from Inv_Deliverynote where N_DeliveryNoteID=" + nPkeyID, connection, transaction);
+                        //     object output = cmd.ExecuteScalar();
+                        //     if ((cmd.ExecuteScalar().ToString()) != "")
+                        //     {
+                        //         byte[] content = (byte[])cmd.ExecuteScalar();
+                        //         MemoryStream stream = new MemoryStream(content);
+                        //         Image Sign = Image.FromStream(stream);
+
+                        //         using (var b = new Bitmap(Sign.Width, Sign.Height))
+                        //         {
+                        //             b.SetResolution(Sign.HorizontalResolution, Sign.VerticalResolution);
+
+                        //             using (var g = Graphics.FromImage(b))
+                        //             {
+                        //                 g.Clear(Color.White);
+                        //                 g.DrawImageUnscaled(Sign, 0, 0);
+                        //             }
+                        //             //b = resizeImage(Sign, new Size(400, 300));
+                        //             b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + ".png");
+                        //         }
+                        //     }
+                        // }
 
                         if (nFormID == 1454)
                         {
@@ -1162,10 +1202,34 @@ namespace SmartxAPI.Controllers
                     }
                     if (xProCode != "")
                     {
-
                         bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
-
-                        SortedList mParamsList = new SortedList()
+                        bool Consolidated = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_Isdefault,0) as B_Isdefault from acc_company where N_CompanyID=" + nCompanyID, Params, connection).ToString()); ;
+                        dLayer.ExecuteNonQuery("delete from Acc_LedgerBalForReporting", connection);
+                        dLayer.ExecuteNonQuery("delete from Acc_AccountStatement", connection);
+                            
+                        if (Consolidated)
+                        {
+                            string FnYear = dLayer.ExecuteScalar("select X_FnYearDescr from Acc_FnYear where N_CompanyID=" + nCompanyID + " and N_FnyearID=" + FnYearID, Params, connection).ToString();
+                            int ClientID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ClientID from Acc_Company where N_CompanyID=" + nCompanyID, Params, connection).ToString());
+                            DataTable dt = dLayer.ExecuteDataTable("select * from vw_ConsolidatedCompany where n_clientID=" + ClientID + " and X_FnYearDescr='" + FnYear + "'", Params, connection);
+                            foreach (DataRow dr in dt.Rows)
+                            {
+                                SortedList mParamsList = new SortedList()
+                            {
+                            {"N_CompanyID",dr["n_CompanyID"]},
+                            {"N_FnYearID",dr["n_FnyearID"]},
+                            {"N_PeriodID",0},
+                            {"X_Code",xProCode},
+                            {"X_Parameter", procParam },
+                            {"N_UserID",myFunctions.GetUserID(User)},
+                            {"N_BranchID",mainBranch ?0:BranchID},
+                            };
+                                dLayer.ExecuteDataTablePro("SP_OpeningBalanceGenerate", mParamsList, connection);
+                            }
+                        }
+                        else
+                        {
+                            SortedList mParamsList = new SortedList()
                             {
                             {"N_CompanyID",nCompanyID},
                             {"N_FnYearID",FnYearID},
@@ -1175,14 +1239,12 @@ namespace SmartxAPI.Controllers
                             {"N_UserID",myFunctions.GetUserID(User)},
                             {"N_BranchID",mainBranch ?0:BranchID},
                             // {"N_SalesmanID",SalesmanID},
-
                             // {"X_InstanceCode",random},
                             };
-                        dLayer.ExecuteDataTablePro("SP_OpeningBalanceGenerate", mParamsList, connection);
-
-                        // if(xInstanceCode!="")
-                        // Criteria = Criteria == "" ? xInstanceCode + "='"+random+"' " : Criteria + " and "+xInstanceCode+"='"+random+"' ";
-
+                            dLayer.ExecuteDataTablePro("SP_OpeningBalanceGenerate", mParamsList, connection);
+                            // if(xInstanceCode!="")
+                            // Criteria = Criteria == "" ? xInstanceCode + "='"+random+"' " : Criteria + " and "+xInstanceCode+"='"+random+"' ";
+                        }
                     }
 
                     dbName = connection.Database;

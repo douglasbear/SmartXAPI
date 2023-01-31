@@ -702,6 +702,9 @@ namespace SmartxAPI.Controllers
                     double workPercentage = myFunctions.getIntVAL(DetailTable.Rows[0]["x_WorkPercentage"].ToString());
                     double TaskPercentage = 0.00;
                     double ParentTaskPercentage = 0.00;
+                    // DateTime dStartDate=DetailTable.Rows[0]["d_TaskStartDate"].ToString();
+                    // DateTime dEndDate=DetailTable.Rows[0]["d_TaskEndDate"].ToString();
+                   
                     if (DetailTable.Columns.Contains("x_WorkPercentage"))
                     {
                         DetailTable.Columns.Remove("x_WorkPercentage");
@@ -710,6 +713,7 @@ namespace SmartxAPI.Controllers
                     {
                         DetailTable.Columns.Remove("n_UsedWorkHours");
                     }
+                  
                     //Percentage Calculation
 
 
@@ -811,8 +815,7 @@ namespace SmartxAPI.Controllers
                         }
                         masterStatus = 9;
                     }
-
-
+                   
 
                     if (nStatus == "9" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_ClosedUserID"].ToString()))
                     {
@@ -863,6 +866,37 @@ namespace SmartxAPI.Controllers
 
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=0 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     }
+
+                   if (MasterTable.Columns.Contains("d_TaskStartDate"))
+                     {
+
+                //    if (MasterTable.Columns.Contains("d_TaskStartDate"))
+                //     {
+                //         var dStartDate = MasterTable.Rows[0]["d_TaskStartDate"].ToString();
+                    
+                //       if (MasterTable.Columns.Contains("d_TaskEndDate"))
+                //     {
+                //         var dEndDate=MasterTable.Rows[0]["d_TaskEndDate"].ToString();
+                      
+                //     }
+                  
+                    if (MasterTable.Columns.Contains("d_TaskStartDate"))
+                    {
+                       if(nStatus == "4" && MasterTable.Columns.Contains("d_TaskEndDate"))
+                       {
+                        dLayer.ExecuteNonQuery("Update Tsk_TaskStatus SET D_EntryDate= '" + MasterTable.Rows[0]["d_TaskEndDate"].ToString() + "'  where N_CompanyID=" + nCompanyID + " and N_TaskStatusID ="+nTaskStatusID+" and N_TaskID=" + nTaskID, Params, connection, transaction);
+                        dLayer.ExecuteNonQuery("Update Tsk_TaskStatus SET D_EntryDate= '" + MasterTable.Rows[0]["d_TaskStartDate"].ToString() + "'  where N_CompanyID=" + nCompanyID + " and N_Status =7 and N_TaskID=" + nTaskID, Params, connection, transaction);
+ 
+                       }
+                       else if(nStatus == "7")
+                       {
+                        dLayer.ExecuteNonQuery("Update Tsk_TaskStatus SET D_EntryDate= '" + MasterTable.Rows[0]["d_TaskStartDate"].ToString() + "'  where N_CompanyID=" + nCompanyID + " and N_Status =7 and N_TaskStatusID ="+nTaskStatusID+" and N_TaskID=" + nTaskID, Params, connection, transaction);
+ 
+                       }
+                       
+                    }
+                     }
+
 
                     //   if (masterStatus == 11)
                     //     {

@@ -51,7 +51,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial, int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID, bool b_Asn, int nPriceListID, bool isSalesItems, bool isRentalItem, bool rentalItems, bool purchaseRentalItems,bool showStockInlist)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial, int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID, bool b_Asn, int nPriceListID, bool isSalesItems, bool isRentalItem, bool rentalItems, bool purchaseRentalItems,bool showStockInlist,int nitemType,bool isAssetItem)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -71,6 +71,9 @@ namespace SmartxAPI.Controllers
             string xOrderNew = "";
             //nItemUsedFor -> 1-Purchase, 2-Sales, 3-Both, 4-Raw Material
              string showStock="";
+             string otherItem="";
+              string sqlComandText ="";
+
              if(showStockInlist)
              {
                 showStock= "dbo.SP_GenGetStock(vw_InvItem_Search_cloud.N_ItemID," + nLocationID + ",'', 'location') As N_AvlStock,";
@@ -149,14 +152,24 @@ namespace SmartxAPI.Controllers
 
                 priceListCondition = " and vw_InvItem_Search_cloud.N_ItemID in (Select N_ItemID from Inv_DiscountDetails where N_CompanyID=@p1 and n_DiscID=" + nPriceListID + " )";
             }
-
-
-
+            if(isAssetItem==true){
+                if(nitemType==1){
+                otherItem = otherItem + " and N_ItemTypeID=1";
+            }
+            else if(nitemType==6){
+                otherItem = otherItem + " and N_ItemTypeID=6";
+            }
+            }
+            else{
+                otherItem = otherItem + " and N_ItemTypeID<>1";
+            }
+         
+         
+                 sqlComandText = "  vw_InvItem_Search_cloud.*,"+showStock+" dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID,vw_InvItem_Search_cloud.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_SellingPrice2 FROM vw_InvItem_Search_cloud LEFT OUTER JOIN " +
+             " Inv_ItemUnit ON vw_InvItem_Search_cloud.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search_cloud.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search_cloud.N_CompanyID=@p1 and vw_InvItem_Search_cloud.B_Inactive=@p2 and vw_InvItem_Search_cloud.[Item Code]<> @p3  and vw_InvItem_Search_cloud.N_ItemID=Inv_ItemUnit.N_ItemID and  vw_InvItem_Search_cloud.N_ClassID!=6 " + ownAssent + RentalItem + RentalPOItem + qry + Category + Condition + itemTypeCondition + warehouseSql + priceListCondition+otherItem;
             // string sqlComandText = " * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
 
-            string sqlComandText = "  vw_InvItem_Search_cloud.*,"+showStock+" dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID,vw_InvItem_Search_cloud.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_SellingPrice2 FROM vw_InvItem_Search_cloud LEFT OUTER JOIN " +
-             " Inv_ItemUnit ON vw_InvItem_Search_cloud.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search_cloud.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search_cloud.N_CompanyID=@p1 and vw_InvItem_Search_cloud.B_Inactive=@p2 and vw_InvItem_Search_cloud.[Item Code]<> @p3 and vw_InvItem_Search_cloud.N_ItemTypeID<>@p4  and vw_InvItem_Search_cloud.N_ItemID=Inv_ItemUnit.N_ItemID and  vw_InvItem_Search_cloud.N_ClassID!=6 " + ownAssent + RentalItem + RentalPOItem + qry + Category + Condition + itemTypeCondition + warehouseSql + priceListCondition;
-
+     
 
 
 
@@ -201,6 +214,8 @@ namespace SmartxAPI.Controllers
 
                             string subItemSql = "SELECT     vw_InvItem_Search_cloud.*, dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID, vw_InvItem_Search_cloud.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, Inv_ItemUnit.X_ItemUnit AS Expr1, Inv_ItemDetails.N_MainItemID,Inv_ItemDetails.B_HideInInv as B_GroupHideInInv, Inv_ItemDetails.N_Qty, Inv_ItemDetails.N_Qty as N_SubItemQty FROM  Inv_ItemUnit RIGHT OUTER JOIN Inv_ItemDetails RIGHT OUTER JOIN vw_InvItem_Search_cloud ON Inv_ItemDetails.N_CompanyID = vw_InvItem_Search_cloud.N_CompanyID AND Inv_ItemDetails.N_ItemID = vw_InvItem_Search_cloud.N_ItemID ON Inv_ItemUnit.N_CompanyID = vw_InvItem_Search_cloud.N_CompanyID AND Inv_ItemUnit.N_ItemID = vw_InvItem_Search_cloud.N_ItemID AND Inv_ItemUnit.N_ItemUnitID = vw_InvItem_Search_cloud.N_SalesUnitID WHERE(vw_InvItem_Search_cloud.N_CompanyID = " + nCompanyID + ") AND(vw_InvItem_Search_cloud.B_InActive = 0) and Inv_ItemDetails.N_MainItemID =" + myFunctions.getIntVAL(item["N_ItemID"].ToString()) + "";
                             DataTable subTbl = dLayer.ExecuteDataTable(subItemSql, connection);
+                            if(subTbl.Columns.Contains("B_HideInInv")){subTbl.Columns.Remove("B_HideInInv");}
+                            subTbl.AcceptChanges();
                             item["SubItems"] = subTbl;
                         }
                     }
@@ -1734,6 +1749,40 @@ namespace SmartxAPI.Controllers
             //tbStringToTranslate.Text = text;
             return translated;
         }
+
+
+        
+             [HttpGet("ProductTypeList")]
+        public ActionResult ProductType()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+           
+            string sqlCommandText = "select * from vw_InvPRSProductType where n_Type=1";
+           
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
+
 
 
 
