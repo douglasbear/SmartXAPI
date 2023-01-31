@@ -880,12 +880,20 @@ namespace SmartxAPI.Controllers
                       
                 //     }
                   
-                    if (nStatus == "4" && MasterTable.Columns.Contains("d_TaskStartDate"))
+                    if (MasterTable.Columns.Contains("d_TaskStartDate"))
                     {
-                        
+                       if(nStatus == "4" && MasterTable.Columns.Contains("d_TaskEndDate"))
+                       {
                         dLayer.ExecuteNonQuery("Update Tsk_TaskStatus SET D_EntryDate= '" + MasterTable.Rows[0]["d_TaskEndDate"].ToString() + "'  where N_CompanyID=" + nCompanyID + " and N_TaskStatusID ="+nTaskStatusID+" and N_TaskID=" + nTaskID, Params, connection, transaction);
                         dLayer.ExecuteNonQuery("Update Tsk_TaskStatus SET D_EntryDate= '" + MasterTable.Rows[0]["d_TaskStartDate"].ToString() + "'  where N_CompanyID=" + nCompanyID + " and N_Status =7 and N_TaskID=" + nTaskID, Params, connection, transaction);
  
+                       }
+                       else if(nStatus == "7")
+                       {
+                        dLayer.ExecuteNonQuery("Update Tsk_TaskStatus SET D_EntryDate= '" + MasterTable.Rows[0]["d_TaskStartDate"].ToString() + "'  where N_CompanyID=" + nCompanyID + " and N_Status =7 and N_TaskStatusID ="+nTaskStatusID+" and N_TaskID=" + nTaskID, Params, connection, transaction);
+ 
+                       }
+                       
                     }
                      }
 
