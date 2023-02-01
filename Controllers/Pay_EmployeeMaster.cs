@@ -1279,7 +1279,7 @@ namespace SmartxAPI.Controllers
                         if (myFunctions.getVAL(N_TitleCount.ToString()) > 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User, "job title already Exixt"));
+                            return Ok(_api.Error(User, "Job title already Exist"));
                         }
                     }
 
