@@ -266,6 +266,21 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                         }
                     }
 
+                    if (N_PartyType == 0)//Vendor
+                    {
+                        if (N_TransType == 1)
+                            {X_Trasnaction = "VENDOR CREDIT NOTE";}
+                        else if (N_TransType == 0)
+                            {X_Trasnaction = "VENDOR DEBIT NOTE";}
+                    }
+                    if (N_PartyType == 1)//customer
+                    {
+                        if (N_TransType == 1)
+                           { X_Trasnaction = "CUSTOMER CREDIT NOTE";}
+                        else if (N_TransType == 0)
+                            {X_Trasnaction = "CUSTOMER DEBIT NOTE";}
+                    }
+
                     // Auto Gen
                     string AdjustmentNo = "";
                     var values = MasterTable.Rows[0]["X_VoucherNo"].ToString();
