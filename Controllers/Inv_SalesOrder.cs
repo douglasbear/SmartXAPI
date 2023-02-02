@@ -603,14 +603,6 @@ namespace SmartxAPI.Controllers
                    {
                     MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
                     N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
-
-
-
-
-
-
-
-                    
                   
                   }
                   else
