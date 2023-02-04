@@ -246,6 +246,7 @@ namespace SmartxAPI.Controllers
             OutPut.Add("totalBalance", 0);
             OutPut.Add("advanceAmount", 0);
             OutPut.Add("txnStarted", false);
+            object decimalobj=null;
             if (bShowAllbranch == true)
             {
                 AllBranch = 0;
@@ -346,10 +347,12 @@ namespace SmartxAPI.Controllers
                     if(PayInfo.Rows.Count>0)
                       Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), 67, 0, User, connection);
                     //Attachments = api.Format(Attachments, "attachments");
+                    decimalobj = dLayer.ExecuteScalar("Select isnull(N_Decimal, 0)  from Acc_Company where N_CompanyID=@nCompanyID ", paramList, connection);
                 }
 
                 PayReceipt = myFunctions.AddNewColumnToDataTable(PayReceipt, "n_DueAmount", typeof(double), 0);
 
+                       
 
                 if (PayReceipt.Rows.Count > 0)
                 {
@@ -371,7 +374,11 @@ namespace SmartxAPI.Controllers
                         N_ListedAmtTotal += N_InvoiceDueAmt;
                         if (N_InvoiceDueAmt == 0) { dr.Delete(); continue; }
                         if (nPayReceiptID > 0 && (myFunctions.getVAL(dr["N_DiscountAmt"].ToString()) == 0 && myFunctions.getVAL(dr["N_Amount"].ToString()) == 0)) { dr.Delete(); continue; }
-                        dr["n_DueAmount"] = N_InvoiceDueAmt.ToString(myFunctions.decimalPlaceString(2));
+
+                        if (myFunctions.getIntVAL(decimalobj.ToString()) > 0)
+                            dr["n_DueAmount"] = N_InvoiceDueAmt.ToString(myFunctions.decimalPlaceString(myFunctions.getIntVAL(decimalobj.ToString())));
+                        else 
+                            dr["n_DueAmount"] = N_InvoiceDueAmt.ToString(myFunctions.decimalPlaceString(2));
                     }
                 }
                 PayReceipt.AcceptChanges();
