@@ -99,6 +99,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@bVal", nBranchID);
             Params.Add("@tbvVal", nTableViewID);
             Params.Add("@mnuVal", nFormID);
+            
 
 
             string sqlCommandCount = "";
