@@ -40,7 +40,13 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
+
             string sqlCommandText = "select * from vw_TaxCategory_Disp where N_CompanyID=@p1 and N_FnYearID=@p2";
+
+            if(nCompanyID==-1){
+                sqlCommandText = "select * from vw_TaxCategory_Disp where N_CompanyID=@p1 ";
+            }
+
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearID);
 
