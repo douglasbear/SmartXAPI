@@ -821,7 +821,7 @@ namespace SmartxAPI.Controllers
                         PostingParams.Add("X_SystemName", "ERP Cloud");
                         try
                         {
-                            object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
+                        object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
                         }
                         catch (Exception ex)
                         {
