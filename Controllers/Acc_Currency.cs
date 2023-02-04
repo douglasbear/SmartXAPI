@@ -222,13 +222,16 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nCurrencyId)
         {
              int Results=0;
+             SortedList Params = new SortedList();
              int nCompanyId=myFunctions.GetCompanyID(User);
             try
             {
                                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                Results=dLayer.DeleteData("Acc_CurrencyMaster","N_CurrencyID",nCurrencyId,"",connection);
+
+                Results= dLayer.DeleteData("Acc_CurrencyMaster", "N_CurrencyID", nCurrencyId, "", connection);
+
                 if(Results>0){
                     return Ok(api.Success("Currency deleted" ));
                 }else{
@@ -237,10 +240,13 @@ namespace SmartxAPI.Controllers
                 }
                 
             }
-            catch (Exception ex)
-                {
-                    return Ok(api.Error(User,ex));
-                }
+             catch (Exception ex)
+            {
+                if (ex.Message.Contains("REFERENCE constraint"))
+                    return Ok(api.Error(User, "Unable to delete Currency! It has been used."));
+                else
+                    return Ok(api.Error(User, ex));
+            }
         }
     }
 }
