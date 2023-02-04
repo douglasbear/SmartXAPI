@@ -253,7 +253,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listdetails")]
-        public ActionResult GetPurchaseInvoiceDetails(int nCompanyId, int nFnYearId, string nPurchaseNO, bool showAllBranch, int nBranchId, string xPOrderNo, string xGrnNo, string multipleGrnNo, int nServiceSheetID)
+        public ActionResult GetPurchaseInvoiceDetails(int nCompanyId, int nFnYearId, string nPurchaseNO, bool showAllBranch, int nBranchId, string xPOrderNo, string xGrnNo, string multipleGrnNo, int nServiceSheetID,bool invoiceTax)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
@@ -268,8 +268,21 @@ namespace SmartxAPI.Controllers
                 int N_POrderID = 0;
                 int nCompanyID = myFunctions.GetCompanyID(User);
                 int N_decimalPlace = 2;
+                bool IsDirectMRN = false;
                 N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Purchase", "Decimal_Place", "N_Value", nCompanyID, dLayer, connection));
                 N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
+
+                if(xGrnNo!=null){
+                     object purchaseOrderNo = dLayer.ExecuteScalar("select N_POrderid from Inv_MRN where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId +" and X_MRNNo='" + xGrnNo + "'", Params, connection);
+                 
+                 if( myFunctions.getVAL(purchaseOrderNo.ToString()) > 0){
+                    IsDirectMRN=false;
+                 }
+                 else{
+                    IsDirectMRN=true;
+                 }
+                }
+
                 if (nPurchaseNO != null)
                     nPurchaseNO = nPurchaseNO.Replace("%2F", "/");
 
@@ -328,10 +341,29 @@ namespace SmartxAPI.Controllers
                         X_MasterSql = "select * from vw_Inv_MRNAsInvoiceMaster where N_CompanyID=@CompanyID and N_MRNID in (" + multipleGrnNo + ") and B_IsSaveDraft<>1 " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
 
                     }
+                   
 
                     dtPurchaseInvoice = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
 
+                     if (IsDirectMRN && !invoiceTax)
+                     {
+                    object taxID = dLayer.ExecuteScalar("Select N_Value from Gen_Settings where N_CompanyId=" + nCompanyId+" and X_Description='DefaultTaxCategory' and X_Group='Inventory'", Params, connection);
+                         if(taxID!=null)
+                         {
+                             object category = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_CompanyId=" + nCompanyId+" and X_PkeyCode=" + taxID+" ", Params, connection);
+                             object taxCatID = dLayer.ExecuteScalar("Select N_PkeyID from Acc_TaxCategory where N_CompanyId=" + nCompanyId+" and X_PkeyCode=" + taxID+" ", Params, connection);
+                             object percentage = dLayer.ExecuteScalar("Select Cast(REPLACE(N_Amount,',','') as Numeric(10,0)) from Acc_TaxCategory where N_PkeyID=" + taxID+" ", Params, connection);
+                            
+                                dtPurchaseInvoice.Rows[0]["X_DisplayName"] = category.ToString();
+                                dtPurchaseInvoice.Rows[0]["N_TaxCategoryId"] = myFunctions.getIntVAL(taxCatID.ToString());
+                                dtPurchaseInvoice.Rows[0]["n_TaxPercentage"] =myFunctions.getIntVAL(percentage.ToString());
+                               }
 
+                               
+
+                     }
+
+                 
                     object objPayment = dLayer.ExecuteScalar("SELECT dbo.Inv_PayReceipt.X_Type, dbo.Inv_PayReceiptDetails.N_InventoryId FROM dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and  dbo.Inv_PayReceipt.B_IsDraft <> 1 and dbo.Inv_PayReceiptDetails.N_InventoryId in (select N_PurchaseID from Inv_Purchase where X_InvoiceNo='" + nPurchaseNO + "' and N_CompanyID=@CompanyID and N_FnYearID=@YearID)", Params, connection);
                     if (objPayment != null)
                         myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "B_PaymentProcessed", typeof(Boolean), true);
@@ -385,10 +417,46 @@ namespace SmartxAPI.Controllers
                         X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_POrderID=" + N_POrderID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                     }
                     //multiple GRN From Invoice
-                    if (multipleGrnNo != null && multipleGrnNo != "")
-                        X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_UnitSPrice,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_SPrice,N_MrnID AS N_RsID  from vw_InvMRNDetailsDirect Where N_CompanyID=@CompanyID and N_MRNID in (" + multipleGrnNo + ")";
 
+                    object Tax1ID="";
+                    if (multipleGrnNo != null && multipleGrnNo != "")
+
+                      X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_UnitSPrice,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_SPrice,N_MrnID AS N_RsID  from vw_InvMRNDetailsDirect Where N_CompanyID=@CompanyID and N_MRNID in (" + multipleGrnNo + ")";
+             
+                    
                     dtPurchaseInvoiceDetails = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
+
+                    if (multipleGrnNo != null && multipleGrnNo != ""){
+                      foreach (DataRow Row in dtPurchaseInvoiceDetails.Rows)
+                       {
+                          if(myFunctions.getIntVAL(Row["n_POrderDetailsID"].ToString())>0){
+                             DataTable deliveryDetails = new DataTable();
+                            string directDelivery = "SELECT  Acc_TaxCategory.X_DisplayName, Inv_PurchaseOrderDetails.N_TaxCategoryID1, Inv_PurchaseOrderDetails.N_TaxAmt1, Inv_PurchaseOrderDetails.N_TaxPercentage1 FROM  Inv_PurchaseOrderDetails INNER JOIN Acc_TaxCategory ON Inv_PurchaseOrderDetails.N_TaxCategoryID1 = Acc_TaxCategory.N_PkeyID AND Inv_PurchaseOrderDetails.N_CompanyID = Acc_TaxCategory.N_CompanyID where Inv_PurchaseOrderDetails.N_POrderDetailsID="+myFunctions.getIntVAL(Row["n_POrderDetailsID"].ToString());
+                            deliveryDetails = dLayer.ExecuteDataTable(directDelivery, Params, connection);
+
+                            if(deliveryDetails.Rows.Count>0){                  
+                               Row["x_DisplayName1"] = deliveryDetails.Rows[0]["X_DisplayName"];
+                               Row["n_TaxPercentage1"]=deliveryDetails.Rows[0]["N_TaxPercentage1"];
+                               Row["n_TaxCategoryID1"]=deliveryDetails.Rows[0]["N_TaxCategoryID1"];
+                            }
+                            else{
+                                DataTable OrderData = new DataTable();
+                              string purchaseData="SELECT Acc_TaxCategory.X_DisplayName, Inv_PurchaseOrder.N_TaxCategoryID, Inv_PurchaseOrder.N_TaxPercentage, Inv_PurchaseOrder.N_TaxAmt FROM  Inv_PurchaseOrder LEFT OUTER JOIN Acc_TaxCategory ON Inv_PurchaseOrder.N_TaxCategoryID = Acc_TaxCategory.N_PkeyID AND Inv_PurchaseOrder.N_CompanyID = Acc_TaxCategory.N_CompanyID where Inv_PurchaseOrder.N_POrderID="+myFunctions.getIntVAL(Row["n_POrderID"].ToString());  
+                              OrderData = dLayer.ExecuteDataTable(purchaseData, Params, connection);
+                              Row["x_DisplayName1"] = OrderData.Rows[0]["X_DisplayName"];
+                               Row["n_TaxPercentage1"]=OrderData.Rows[0]["N_TaxPercentage"];
+                               Row["n_TaxCategoryID1"]=OrderData.Rows[0]["N_TaxCategoryID"];
+                            }
+               
+                            //    Row["N_TaxAmt1"]=deliveryDetails.Rows[0]["N_TaxAmt1"];
+                                
+                       
+                     }
+                       }
+                     dtPurchaseInvoiceDetails.AcceptChanges();
+                    }
+                      
+            
 
                     X_FreightSql = "Select *,X_ShortName as X_CurrencyName FROM vw_InvPurchaseFreights WHERE N_PurchaseID=" + N_PurchaseID;
                     dtFreightCharges = dLayer.ExecuteDataTable(X_FreightSql, Params, connection);
