@@ -105,6 +105,7 @@ namespace SmartxAPI.Controllers
                     UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_ActiveAppID", typeof(int), 0);
                     UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "X_UserID", typeof(string), email);
                     UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_UserType", typeof(int), 0);
+                    UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_LoginType", typeof(int), 2);
 
 
                     int UserID = dLayer.SaveData("Users", "n_UserID", UserTable, connection, transaction);
@@ -114,6 +115,9 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Something went wrong"));
                     }
 
+                    string Sql = "SELECT (select isnull(max(N_UserID),0) from Users)+1 , REPLACE (X_EmailID, '@', '_SpAdmin@'), REPLACE (X_EmailID, '@', '_SpAdmin@'), N_ClientID, N_ActiveAppID, '.', '', 0, 1, REPLACE (X_EmailID, '@', '_SpAdmin@'), N_UserType,1 FROM Users WHERE N_UserID ="+UserID;
+                    int output = dLayer.ExecuteNonQuery(Sql, connection, transaction);
+                        
                     transaction.Commit();
                 }
                 string ipAddress = "";
