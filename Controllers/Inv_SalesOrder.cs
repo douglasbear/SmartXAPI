@@ -956,7 +956,14 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Delivery Note processed! Unable to delete Sales Order"));
                     }
 
+                    object objtskProcessed = dLayer.ExecuteScalar("Select count(*) from Tsk_TaskMaster where N_CompanyID=" + nCompanyID + " and N_ServiceDetailsID in (select N_SalesOrderDetailsID from  Inv_SalesOrderDetails where N_CompanyId=" + nCompanyID + "  and N_SalesOrderid="+nSalesOrderID+")", connection, transaction);
+                    if (objtskProcessed == null) objtskProcessed = 0;
 
+                    if(myFunctions.getIntVAL(objtskProcessed.ToString()) > 0)
+                    {
+                    dLayer.ExecuteScalar("delete from Tsk_TaskMaster where  N_CompanyID=" + nCompanyID + " and N_ServiceDetailsID in (select N_SalesOrderDetailsID from  Inv_SalesOrderDetails where N_CompanyId=" + nCompanyID + "  and N_SalesOrderid="+nSalesOrderID+")", connection, transaction);
+                    dLayer.ExecuteScalar("delete from Tsk_TaskStatus where  N_CompanyID=" + nCompanyID + " and  N_TaskID in (select N_TaskID from Tsk_TaskMaster where N_CompanyId=" + nCompanyID + " and N_ServiceDetailsID in (select N_SalesOrderDetailsID from  Inv_SalesOrderDetails where N_CompanyId=" + nCompanyID + "  and N_SalesOrderid="+nSalesOrderID+"))", connection, transaction);
+                    }
 
                     if (myFunctions.getIntVAL(objProcessed.ToString()) == 0)
                     {

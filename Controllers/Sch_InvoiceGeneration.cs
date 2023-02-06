@@ -34,14 +34,18 @@ namespace SmartxAPI.Controllers
 
         //Filling Fee schedules from Sch_Sales
         [HttpGet("feeSchedules")]
-        public ActionResult FeeScheduleFilling(int n_BranchID, int N_LocationID,int N_FnYearID , DateTime d_Date,string xSortBy)
+        public ActionResult FeeScheduleFilling(int n_BranchID, int N_LocationID,int N_FnYearID , DateTime d_Date,string xSortBy,int nCustomerID)
         {
             DataSet dt=new DataSet();
             DataTable MasterTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
             string sqlCondition="";
-
+            string Criteria = "";
+            if(nCustomerID>0)
+            {
+             Criteria= " and Sch_Sales.N_CustomerID="+nCustomerID;
+            }
             if(d_Date!=null)
                 sqlCondition= " and Sch_Sales.D_SalesDate <= @d_Date";
 
@@ -53,7 +57,7 @@ namespace SmartxAPI.Controllers
 				                            " Inv_Customer.X_CustomerName AS Customer_Name,vw_InvItemMaster.X_ItemName AS Item_Name,vw_InvItemMaster.X_ItemUnit AS unit,1 AS Qty,Sch_Sales.N_SalesAmt AS Price,'' AS Tax_Perc,Sch_Sales.N_DiscountAmt AS Discount, "+
 				                            " (select X_BranchName from Acc_BranchMaster where N_CompanyID=@N_CompanyID and N_BranchID=@N_BranchID) AS Branch,(select X_LocationName from Inv_Location where N_CompanyID=@N_CompanyID and N_LocationID=@N_LocationID) AS Location, "+
 				                            " @N_CompanyID AS N_CompanyID,vw_InvItemMaster.X_ItemCode AS Item_Code,Inv_Customer.X_CustomerCode AS Customer_Code,Sch_Sales.N_SalesId AS SchSalesID ,Sch_Admission.N_AdmissionID,Sch_Admission.X_Name,Sch_Admission.N_ClassID, "+
-                                            " Sch_Class.X_Class, Sch_Admission.N_DivisionID,Sch_ClassDivision.X_ClassDivision,Sch_Sales.X_InvoiceNo,Sch_SalesDetails.N_ItemID AS N_FeeCodeID "+
+                                            " Sch_Class.X_Class, Sch_Admission.N_DivisionID,Sch_ClassDivision.X_ClassDivision,Sch_Sales.X_InvoiceNo,Sch_SalesDetails.N_ItemID AS N_FeeCodeID,Sch_SalesDetails.N_SalesID,Sch_SalesDetails.N_SalesDetailsID "+
 	                                    " FROM         Sch_SalesDetails INNER JOIN "+
 					                        " Sch_Sales ON Sch_SalesDetails.N_CompanyID = Sch_Sales.N_CompanyId AND Sch_SalesDetails.N_SalesID = Sch_Sales.N_SalesId INNER JOIN "+
 					                        " Sch_FeeCodes ON Sch_SalesDetails.N_CompanyID = Sch_FeeCodes.N_CompanyID AND Sch_SalesDetails.N_ItemID = Sch_FeeCodes.N_FeeCodeID INNER JOIN "+
@@ -61,8 +65,9 @@ namespace SmartxAPI.Controllers
 					                        " Inv_Customer ON Sch_Sales.N_CompanyId=Inv_Customer.N_CompanyID AND Sch_Sales.N_FnYearId=Inv_Customer.N_FnYearID AND Sch_Sales.N_CustomerID=Inv_Customer.N_CustomerID INNER JOIN "+
 					                        " Sch_Admission ON Sch_Admission.N_CompanyID=Sch_Sales.N_CompanyId AND Sch_Admission.N_AcYearID=Sch_Sales.N_FnYearId AND Sch_Admission.N_CustomerID=Sch_Sales.N_CustomerID INNER JOIN "+						                    
 						                    " Sch_Class ON Sch_Admission.N_CompanyID=Sch_Class.N_CompanyId AND Sch_Admission.N_ClassID=Sch_Class.N_ClassID INNER JOIN "+
-						                    " Sch_ClassDivision ON Sch_Admission.N_CompanyID=Sch_ClassDivision.N_CompanyID AND Sch_Admission.N_DivisionID=Sch_ClassDivision.N_ClassDivisionID"+
-	                                    " WHERE Sch_Sales.N_CompanyID=@N_CompanyID and Sch_Sales.N_FnYearID=@N_AcYearID and ISNULL(Sch_Sales.N_RefSalesID,0)=0 " + sqlCondition + "" + xSortBy+"";
+						                    " Sch_ClassDivision ON Sch_Admission.N_CompanyID=Sch_ClassDivision.N_CompanyID AND Sch_Admission.N_DivisionID=Sch_ClassDivision.N_ClassDivisionID LEFT OUTER JOIN " + 
+                                            " Inv_SalesDetails ON Sch_Sales.N_SalesId = Inv_SalesDetails.N_SchSalesID AND Sch_Sales.N_CompanyId = Inv_SalesDetails.N_CompanyID"+
+	                                    " WHERE Sch_Sales.N_CompanyID=@N_CompanyID and Sch_Sales.N_FnYearID=@N_AcYearID and ISNULL(Sch_Sales.N_RefSalesID,0)=0 and ISNULL(N_SchSalesID,0)=0" + sqlCondition + Criteria + "" + xSortBy+"";
 
             Params.Add("@N_CompanyID", nCompanyId);  
             Params.Add("@N_BranchID", n_BranchID);

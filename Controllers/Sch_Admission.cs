@@ -332,7 +332,7 @@ namespace SmartxAPI.Controllers
                                             " (select N_FieldValue from Acc_AccountDefaults where x_fielddescr='Debtor Account' and N_CompanyID=vw_SchAdmission.N_CompanyID and N_FnYearID=vw_SchAdmission.N_AcYearID) AS N_LedgerID," +
                                             " N_AcYearID AS N_FnYearID,GETDATE() AS D_EntryDate,D_DOB,2 AS N_TypeID,N_BranchId,"+
                                             " (select N_CountryID from Acc_Company where N_CompanyID=vw_SchAdmission.N_CompanyID) AS N_CountryID," +
-                                            " (select N_CurrencyID from Acc_Company where N_CompanyID=vw_SchAdmission.N_CompanyID) AS N_CurrencyID" +
+                                            " (select N_CurrencyID from Acc_Company where N_CompanyID=vw_SchAdmission.N_CompanyID) AS N_CurrencyID, 1 AS N_AllowCashPay" +
                                             " FROM vw_SchAdmission where N_CompanyID="+nCompanyID+" and N_AcYearID="+nAcYearID+" and N_AdmissionID="+ nAdmissionID;
 
                     dtCustomer = dLayer.ExecuteDataTable(sqlCommandText, Params,connection,transaction);
