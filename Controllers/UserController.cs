@@ -99,7 +99,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetUserList(int? nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetUserList(int? nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int userId)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -109,7 +109,10 @@ namespace SmartxAPI.Controllers
             string sqlCommandCount = "";
             string Searchkey = "";
             string exclude = " and X_UserID<>'Olivo' and X_Email LIKE '_%@__%.__%'";
+            string criteria ="";
 
+
+           
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (X_UserID like '%" + xSearchkey + "%' or X_UserCategory like '%" + xSearchkey + "%' or X_BranchName like '%" + xSearchkey + "%')";
 
@@ -119,18 +122,34 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_UserList where N_CompanyID=@p1 " + exclude + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_UserList where N_CompanyID=@p1 " + exclude +criteria+ Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_UserList where N_CompanyID=@p1 " + exclude + Searchkey + " and N_UserID not in(select top(" + Count + ")  N_UserID from vw_UserList where N_CompanyID=@p1 " + exclude + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_UserList where N_CompanyID=@p1 " + exclude + criteria+Searchkey + " and N_UserID not in(select top(" + Count + ")  N_UserID from vw_UserList where N_CompanyID=@p1 " + exclude +criteria+ xSortBy + " ) " + xSortBy;
 
             Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", userId);
             SortedList OutPut = new SortedList();
-
+           
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                     object usertypeID = dLayer.ExecuteScalar("SELECT N_TypeID FROM sec_User where n_UserID=@p2 and N_CompanyID=@p1 ", Params, connection);
+                     if (usertypeID == null) usertypeID = 0;
+                     if (myFunctions.getIntVAL(usertypeID.ToString()) > 0  )
+                            {
+                           if (myFunctions.getIntVAL(usertypeID.ToString()) ==1)
+                           {
+                            criteria="";
+                           }
+                            else
+                           {
+                            criteria=" and N_TypeID in (select N_TypeID from sec_User where  N_CompanyID=@p1 and N_TypeID>="+usertypeID+")";
+                           }
+
+                            }
+                    
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     dt = myFunctions.AddNewColumnToDataTable(dt, "X_UserCategoryNameList", typeof(string), 0);
@@ -150,7 +169,7 @@ namespace SmartxAPI.Controllers
                     }
                     dt.AcceptChanges();
 
-                    sqlCommandCount = "select count(*) as N_Count from vw_UserList where N_CompanyID=@p1  " + exclude + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count from vw_UserList where N_CompanyID=@p1  " + exclude +criteria+ Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
