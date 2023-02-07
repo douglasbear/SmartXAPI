@@ -271,9 +271,10 @@ namespace SmartxAPI.Controllers
                         CustomerCode = dLayer.GetAutoNumber("Inv_Customer", "X_CustomerCode", Params, connection, transaction);
                         if (CustomerCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Customer Code")); }
                         MasterTable.Rows[0]["X_CustomerCode"] = CustomerCode;
-
-                       
-                        object CustomerCount = dLayer.ExecuteScalar("select count(N_customerID) from Inv_Customer  Where X_CustomerName ='" + x_CustomerName.Trim() + "' and N_CompanyID=" + nCompanyID, Params, connection,transaction);
+       
+                       SortedList CustNewParams = new SortedList();
+                       CustNewParams.Add("@x_CustomerName", x_CustomerName);
+                        object CustomerCount = dLayer.ExecuteScalar("select count(N_customerID) from Inv_Customer  Where X_CustomerName =@x_CustomerName and N_CompanyID=" + nCompanyID, CustNewParams, connection,transaction);
 
                              if( myFunctions.getIntVAL(CustomerCount.ToString())>0)
                                     {
@@ -297,9 +298,9 @@ namespace SmartxAPI.Controllers
 
                     if (isSave== true)
                                     {
-                     nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", MasterTable, connection, transaction);
-                                 
-                                    }else
+                                      nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", MasterTable, connection, transaction);
+                                    }
+                                    else
                                  {
                     //string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_CustomerCode='" + CustomerCode + "'";
                    string  DupCriteria = "x_CustomerName='" + x_CustomerName.Replace("'", "''") + "' and N_CompanyID=" + nCompanyID;
