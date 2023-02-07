@@ -371,10 +371,15 @@ namespace SmartxAPI.Controllers
                         string X_LedgerName = "";
                         if (b_AutoGenerate)
                         {
-                            X_LedgerName = x_CustomerName; 
+                        X_LedgerName = x_CustomerName; 
+                       SortedList ledgerParams = new SortedList();
+                       ledgerParams.Add("@X_LedgerName", X_LedgerName);
+                      
+
+
                             if (N_GroupID != null)
                             {
-                                object N_LedgerID = dLayer.ExecuteScalar("Select Isnull(N_LedgerID,0) From Acc_MastLedger Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_LedgerName='" + X_LedgerName + "' and N_GroupID=" + myFunctions.getIntVAL(N_GroupID.ToString()), Params, connection, transaction);
+                                object N_LedgerID = dLayer.ExecuteScalar("Select Isnull(N_LedgerID,0) From Acc_MastLedger Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_LedgerName=@X_LedgerName and N_GroupID=" + myFunctions.getIntVAL(N_GroupID.ToString()), ledgerParams, connection, transaction);
                                 if (N_LedgerID != null)
                                 {
                                     if (flag == 2)//for confirmation of same ledger creattion 
