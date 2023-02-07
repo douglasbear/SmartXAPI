@@ -39,8 +39,39 @@ namespace SmartxAPI.Dtos.SP
         public byte[] I_Logo { get; set; }
         public bool B_AllBranchesData { get; set; }
         public int N_TaxType { get; set; }
+        public int N_Decimal { get; set; }
         public string X_UserFullName { get; set; }
+        public string X_BranchCode { get; set; }
+        public int N_DecimalPlace { get; set; }
         public string X_UserCategoryIDList { get; set; }
+        public int N_CurrencyDecimal { get; set; }
+        public int N_EmpID { get; set; }
+        public string X_EmpCode { get; set; }
+        public string X_EmpName { get; set; }
+        public int N_PositionID { get; set; }
+        public string X_Position { get; set; }
+        public int N_DepartmentID { get; set; }
+        public string X_Department { get; set; }
+        public string X_EmpNameLocale { get; set; }
+        public int N_SalesmanID { get; set; }
+        public string X_SalesmanCode { get; set; }
+        public string X_SalesmanName { get; set; }
+        public bool B_AllowEdit { get; set; }
+        public string X_CurrencyName { get; set; }
+        public int N_CustomerID { get; set; }
+        public string X_CustomerCode { get; set; }
+        public string X_CustomerName { get; set; }
+        public int N_ParentID { get; set; }
+        public string X_ParentCode { get; set; }
+        public string X_ParentName { get; set; }
+        public int N_StudentID { get; set; }
+        public string X_StudentCode { get; set; }
+        public string X_StudentName { get; set; }
+        public int N_TeacherID { get; set; }
+        public string X_TeacherCode { get; set; }
+        public string X_TeacherName { get; set; }
+        public int N_DefaultStudentID { get; set; }
+        public int N_TypeID { get; set; }
         [NotMapped]
         public string Token { get; set; }
         [NotMapped]
@@ -54,39 +85,22 @@ namespace SmartxAPI.Dtos.SP
         [NotMapped]
         public string I_CompanyLogo { get; set; }
         [NotMapped]
-        public string X_CurrencyName { get; set; }
-        [NotMapped]
-        public int N_EmpID { get; set; }
-        [NotMapped]
-        public string X_EmpCode { get; set; }
-        [NotMapped]
-        public string X_EmpName { get; set; }
-        [NotMapped]
-        public int N_PositionID { get; set; }
-        [NotMapped]
-        public string X_Position { get; set; }
-        [NotMapped]
-        public int N_DepartmentID { get; set; }
-        [NotMapped]
-        public string X_Department { get; set; }
-        [NotMapped]
-        public string X_EmpNameLocale { get; set; }
-        [NotMapped]
         public int N_CountryID { get; set; }
-        [NotMapped]
-        public int N_SalesmanID { get; set; }
-        [NotMapped]
-        public string X_SalesmanCode { get; set; }
-        [NotMapped]
-        public string X_SalesmanName { get; set; }
-        [NotMapped]
-        public int N_CurrencyDecimal { get; set; }
+
         [NotMapped]
         public int N_AppID { get; set; }
+
         [NotMapped]
         public DataTable GlobalUserInfo { get; set; }
+        [NotMapped]
+        public int N_LoginID { get; set; }
+        [NotMapped]
+        public string Warning { get; set; }
 
-        public string X_BranchCode { get; set; }
+
+
+
+
 
 
     }

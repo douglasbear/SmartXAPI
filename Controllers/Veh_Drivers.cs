@@ -105,7 +105,7 @@ namespace SmartxAPI.Controllers
             else
                 xCriteria = " N_CompanyID=@p1 and N_BranchID=@p2 ";
 
-            sqlCommandText = "select * from Veh_Drivers where " + xCriteria + " and N_DriversID=@p3";
+            sqlCommandText = "select * from vw_Veh_Drivers where " + xCriteria + " and N_DriversID=@p3";
 
             try
             {

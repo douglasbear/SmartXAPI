@@ -37,7 +37,7 @@ namespace SmartxAPI.Controllers
 
         //List
         [HttpGet("list")]
-        public ActionResult GetBalanceDetails(int nFnyearID, int nPartyType, int nPartyID, int N_TransType, int nPage, int nSizeperpage,string xSearchkey, string xSortBy)
+        public ActionResult GetBalanceDetails(int nFnyearID, int nPartyType, int nPartyID, int N_TransType, int nPage, int nSizeperpage,string xSearchkey, string xSortBy,bool bAllBranchData,int nBranchID, int nFormID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -45,14 +45,21 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
             if (nPartyType ==1){
                 if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or [Customer Name] like '%"+ xSearchkey + "%' or cast([Adjustment Date] as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%"+ xSearchkey + "%' or x_VendorName like '%"+ xSearchkey + "%' or [Net Amount] like '%"+ xSearchkey + "%')";
+                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or [Customer Name] like '%"+ xSearchkey + "%' or cast([Adjustment Date] as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%"+ xSearchkey + "%' or [Net Amount] like '%"+ xSearchkey + "%')";
             }
             else {
                 if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or X_VendorName like '%"+ xSearchkey + "%' or cast([Adjustment Date] as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%"+ xSearchkey + "%' or Netamt like '%"+ xSearchkey + "%')";
             }
             
-
+             if (bAllBranchData == true)
+                        {
+                            Searchkey = Searchkey + " ";
+                        }
+                        else
+                        {
+                            Searchkey = Searchkey + " and N_BranchID=" + nBranchID + " ";
+                        }
             if (xSortBy == null || xSortBy.Trim() == ""){
                 xSortBy = " order by [Invoice No] desc";
             }
@@ -82,20 +89,22 @@ namespace SmartxAPI.Controllers
             if (Count == 0)
             {
                 if (nPartyType ==1)
-                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount],X_Notes from vw_CustomerBalanceAdjustment where N_CompanyID=@p1  and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 " + Searchkey + " " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount],X_Notes,N_BillAmtF,X_CustomerName_Ar from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6  and N_TransType=@p4  and N_PartyType=@p5 and N_FormID=@p7 " + Searchkey + " " + xSortBy;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt as netAmount,X_Notes from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 " + Searchkey + " " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt as netAmount,X_Notes,X_VendorName_Ar from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6  and N_TransType=@p4  and N_PartyType=@p5 and N_FormID=@p7 " + Searchkey + " " + xSortBy;
             }
             else
             {
                 if (nPartyType ==1)
-                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount],X_Notes from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 " + Searchkey + " and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 and [Invoice No] not in (select top(" + Count + ") [Invoice No] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 " + xSortBy + " ) " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount],X_Notes,N_BillAmtF,X_CustomerName_Ar from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 and N_FormID=@p7  " + Searchkey + " and N_TransType=@p4  and N_PartyType=@p5 and [Invoice No] not in (select top(" + Count + ") [Invoice No] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 and N_TransType=@p4 and N_PartyType=@p5 and N_FormID=@p7 " + xSortBy + " ) " + xSortBy;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt as netAmount,X_Notes from vw_VendorBalanceAdjustment where N_CompanyID=@p1 " + Searchkey + " and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 and [Invoice No] not in (select top(" + Count + ") [Invoice No] from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 " + xSortBy + " ) " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt as netAmount,X_Notes,X_VendorName_Ar from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 and N_FormID=@p7 " + Searchkey + " and N_TransType=@p4  and N_PartyType=@p5 and [Invoice No] not in (select top(" + Count + ") [Invoice No] from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 and N_TransType=@p4 and N_PartyType=@p5 and N_FormID=@p7 " + xSortBy + " ) " + xSortBy;
             }
             Params.Add("@p1", nCompanyID);
             Params.Add("@p4", N_TransType);
             Params.Add("@p5", nPartyType);
+            Params.Add("@p6", nFnyearID);
+            Params.Add("@p7", nFormID);
             SortedList OutPut = new SortedList();
 
             try
@@ -105,9 +114,9 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     if (nPartyType ==1)
-                        sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE([Net Amount],',','') as Numeric(10,2)) ) as TotalAmount from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 " + Searchkey + "";
+                        sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE([Net Amount],',','') as Numeric(10,2)) ) as TotalAmount from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6  and N_TransType=@p4 and N_PartyType=@p5 and N_FormID=@p7 " + Searchkey + "";
                     else
-                        sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(Netamt,',','') as Numeric(10,2)) ) as TotalAmount from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 " + Searchkey + "";
+                        sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(Netamt,',','') as Numeric(10,2)) ) as TotalAmount from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 and N_TransType=@p4 and N_PartyType=@p5 and N_FormID=@p7 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount="0";
                     string TotalSum="0";
@@ -139,6 +148,8 @@ namespace SmartxAPI.Controllers
         [HttpGet("listDetails")]
         public ActionResult GetBalanceListDetails(int N_PartyType, string N_TransType, int nFnYearId, string X_ReceiptNo, bool bAllBranchData, int nBranchID)
         {
+              if (X_ReceiptNo != null)
+                X_ReceiptNo = X_ReceiptNo.Replace("%2F", "/");
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
@@ -151,7 +162,7 @@ namespace SmartxAPI.Controllers
             if (bAllBranchData == true)
             {
                 if (N_PartyType == 1)
-                    Mastersql = "Select Inv_Customer.*,Inv_BalanceAdjustmentMaster.* from Inv_BalanceAdjustmentMaster Inner Join  Inv_Customer ON Inv_BalanceAdjustmentMaster.N_PartyID = Inv_Customer.N_CustomerID And Inv_BalanceAdjustmentMaster.N_CompanyID = Inv_Customer.N_CompanyID and Inv_BalanceAdjustmentMaster.N_FnYearID=Inv_Customer.N_FnYearID Where  Inv_BalanceAdjustmentMaster.N_CompanyID=@p1 and Inv_BalanceAdjustmentMaster.N_TransType =@p2 and Inv_BalanceAdjustmentMaster.N_FnYearID=@p3 and Inv_BalanceAdjustmentMaster.X_VoucherNo=@p4 and Inv_BalanceAdjustmentMaster.N_PartyType=@p5";
+                    Mastersql = "Select Inv_Customer.*,Inv_BalanceAdjustmentMaster.*,Inv_CustomerProjects.X_ProjectName from Inv_BalanceAdjustmentMaster Inner Join  Inv_Customer ON Inv_BalanceAdjustmentMaster.N_PartyID = Inv_Customer.N_CustomerID And Inv_BalanceAdjustmentMaster.N_CompanyID = Inv_Customer.N_CompanyID and Inv_BalanceAdjustmentMaster.N_FnYearID=Inv_Customer.N_FnYearID  Left Outer Join Inv_CustomerProjects ON Inv_BalanceAdjustmentMaster.N_ProjectID = Inv_CustomerProjects.N_ProjectID And Inv_BalanceAdjustmentMaster.N_CompanyID = Inv_CustomerProjects.N_CompanyID Where  Inv_BalanceAdjustmentMaster.N_CompanyID=@p1 and Inv_BalanceAdjustmentMaster.N_TransType =@p2 and Inv_BalanceAdjustmentMaster.N_FnYearID=@p3 and Inv_BalanceAdjustmentMaster.X_VoucherNo=@p4 and Inv_BalanceAdjustmentMaster.N_PartyType=@p5";
                 else if (N_PartyType == 0)
                     Mastersql = "SELECT     Inv_BalanceAdjustmentMaster.N_CompanyID, Inv_BalanceAdjustmentMaster.N_FnYearID, Inv_BalanceAdjustmentMaster.X_VoucherNo, Inv_BalanceAdjustmentMaster.D_AdjustmentDate, Inv_BalanceAdjustmentMaster.D_EntryDate, Inv_BalanceAdjustmentMaster.N_Amount, Inv_BalanceAdjustmentMaster.N_UserID, Inv_BalanceAdjustmentMaster.N_BranchID, Inv_BalanceAdjustmentMaster.N_TransType, Inv_BalanceAdjustmentMaster.X_notes, Inv_BalanceAdjustmentMaster.N_PartyType, Inv_BalanceAdjustmentMaster.N_PartyID, Inv_BalanceAdjustmentMaster.N_AdjustmentId, Inv_BalanceAdjustmentMaster.N_AmountF, Inv_BalanceAdjustmentMaster.N_CurExchRate, Inv_BalanceAdjustmentMaster.N_WOID, Inv_Vendor.N_CompanyID AS Expr1, Inv_Vendor.N_VendorID, Inv_Vendor.X_VendorCode, Inv_Vendor.X_VendorName, Inv_Vendor.X_ContactName, Inv_Vendor.X_Address, Inv_Vendor.X_ZipCode, Inv_Vendor.X_PhoneNo1, Inv_Vendor.X_PhoneNo2, Inv_Vendor.X_FaxNo, Inv_Vendor.X_Email, Inv_Vendor.X_WebSite, Inv_Vendor.N_CreditLimit, Inv_Vendor.B_Inactive, Inv_Vendor.N_LedgerID, Inv_Vendor.N_InvDueDays, Inv_Vendor.N_FnYearID AS Expr2, Inv_Vendor.D_Entrydate AS Expr3, Inv_Vendor.N_CountryID, Inv_Vendor.N_TypeID, Inv_Vendor.B_DirPosting, Inv_Vendor.N_CurrencyID, Inv_Vendor.X_ReminderMsg, Inv_Vendor.X_VendorName_Ar, Inv_Vendor.N_CountryID, Inv_Vendor.X_TaxRegistrationNo, Inv_Vendor.N_TaxCategoryID, Inv_Vendor.B_AllowCashPay, Inv_Vendor.N_PartnerTypeID, Inv_Vendor.N_VendorTypeID, Inv_Vendor.N_GoodsDeliveryIn, Inv_Vendor.X_TandC, Acc_CurrencyMaster.N_CompanyID AS Expr4, Acc_CurrencyMaster.N_CurrencyID AS Expr5, Acc_CurrencyMaster.X_CurrencyCode, Acc_CurrencyMaster.X_CurrencyName, Acc_CurrencyMaster.X_ShortName, Acc_CurrencyMaster.N_ExchangeRate, Acc_CurrencyMaster.B_default, Acc_CurrencyMaster.N_Decimal, Prj_WorkOrder.N_WorkOrderId, Prj_WorkOrder.X_WorkOrderNo FROM         Inv_BalanceAdjustmentMaster INNER JOIN Inv_Vendor ON Inv_BalanceAdjustmentMaster.N_PartyID = Inv_Vendor.N_VendorID AND Inv_BalanceAdjustmentMaster.N_CompanyID = Inv_Vendor.N_CompanyID AND  Inv_BalanceAdjustmentMaster.N_FnYearID = Inv_Vendor.N_FnYearID INNER JOIN Acc_CurrencyMaster ON Inv_Vendor.N_CurrencyID = Acc_CurrencyMaster.N_CurrencyID LEFT OUTER JOIN Prj_WorkOrder ON Inv_BalanceAdjustmentMaster.N_CompanyID = Prj_WorkOrder.N_CompanyId AND Inv_BalanceAdjustmentMaster.N_WOID = Prj_WorkOrder.N_WorkOrderId Where  Inv_BalanceAdjustmentMaster.N_CompanyID=@p1 and Inv_BalanceAdjustmentMaster.N_FnYearID=@p3 and Inv_BalanceAdjustmentMaster.N_TransType=@p2 and Inv_BalanceAdjustmentMaster.X_VoucherNo=@p4 and Inv_BalanceAdjustmentMaster.N_PartyType=@p5";
 
@@ -159,7 +170,7 @@ namespace SmartxAPI.Controllers
             else
             {
                 if (N_PartyType == 1)
-                    Mastersql = "Select Inv_Customer.*,Inv_BalanceAdjustmentMaster.* from Inv_BalanceAdjustmentMaster Inner Join  Inv_Customer ON Inv_BalanceAdjustmentMaster.N_PartyID = Inv_Customer.N_CustomerID And Inv_BalanceAdjustmentMaster.N_CompanyID = Inv_Customer.N_CompanyID and Inv_BalanceAdjustmentMaster.N_FnYearID=Inv_Customer.N_FnYearID Where  Inv_BalanceAdjustmentMaster.N_CompanyID=@p1 and Inv_BalanceAdjustmentMaster.N_TransType =@p2 and Inv_BalanceAdjustmentMaster.N_FnYearID=@p3 and Inv_BalanceAdjustmentMaster.X_VoucherNo=@p4 and Inv_BalanceAdjustmentMaster.N_PartyType=@p5 and Inv_BalanceAdjustmentMaster.N_BranchID=@p6";
+                    Mastersql = "Select Inv_Customer.*,Inv_BalanceAdjustmentMaster.*,Inv_CustomerProjects.X_ProjectName from Inv_BalanceAdjustmentMaster Inner Join  Inv_Customer ON Inv_BalanceAdjustmentMaster.N_PartyID = Inv_Customer.N_CustomerID And Inv_BalanceAdjustmentMaster.N_CompanyID = Inv_Customer.N_CompanyID and Inv_BalanceAdjustmentMaster.N_FnYearID=Inv_Customer.N_FnYearID  Left Outer Join Inv_CustomerProjects ON Inv_BalanceAdjustmentMaster.N_ProjectID = Inv_CustomerProjects.N_ProjectID And Inv_BalanceAdjustmentMaster.N_CompanyID = Inv_CustomerProjects.N_CompanyID Where  Inv_BalanceAdjustmentMaster.N_CompanyID=@p1 and Inv_BalanceAdjustmentMaster.N_TransType =@p2 and Inv_BalanceAdjustmentMaster.N_FnYearID=@p3 and Inv_BalanceAdjustmentMaster.X_VoucherNo=@p4 and Inv_BalanceAdjustmentMaster.N_PartyType=@p5 and Inv_BalanceAdjustmentMaster.N_BranchID=@p6";
                 else if (N_PartyType == 0)
                     Mastersql = "SELECT     Inv_BalanceAdjustmentMaster.N_CompanyID, Inv_BalanceAdjustmentMaster.N_FnYearID, Inv_BalanceAdjustmentMaster.X_VoucherNo, Inv_BalanceAdjustmentMaster.D_AdjustmentDate, Inv_BalanceAdjustmentMaster.D_EntryDate, Inv_BalanceAdjustmentMaster.N_Amount, Inv_BalanceAdjustmentMaster.N_UserID, Inv_BalanceAdjustmentMaster.N_BranchID, Inv_BalanceAdjustmentMaster.N_TransType, Inv_BalanceAdjustmentMaster.X_notes, Inv_BalanceAdjustmentMaster.N_PartyType, Inv_BalanceAdjustmentMaster.N_PartyID, Inv_BalanceAdjustmentMaster.N_AdjustmentId, Inv_BalanceAdjustmentMaster.N_AmountF, Inv_BalanceAdjustmentMaster.N_CurExchRate, Inv_BalanceAdjustmentMaster.N_WOID, Inv_Vendor.N_CompanyID AS Expr1, Inv_Vendor.N_VendorID, Inv_Vendor.X_VendorCode, Inv_Vendor.X_VendorName, Inv_Vendor.X_ContactName, Inv_Vendor.X_Address, Inv_Vendor.X_ZipCode, Inv_Vendor.X_PhoneNo1, Inv_Vendor.X_PhoneNo2, Inv_Vendor.X_FaxNo, Inv_Vendor.X_Email, Inv_Vendor.X_WebSite, Inv_Vendor.N_CreditLimit, Inv_Vendor.B_Inactive, Inv_Vendor.N_LedgerID, Inv_Vendor.N_InvDueDays, Inv_Vendor.N_FnYearID AS Expr2, Inv_Vendor.D_Entrydate AS Expr3, Inv_Vendor.N_CountryID, Inv_Vendor.N_TypeID, Inv_Vendor.B_DirPosting, Inv_Vendor.N_CurrencyID, Inv_Vendor.X_ReminderMsg, Inv_Vendor.X_VendorName_Ar, Inv_Vendor.N_CountryID, Inv_Vendor.X_TaxRegistrationNo, Inv_Vendor.N_TaxCategoryID, Inv_Vendor.B_AllowCashPay, Inv_Vendor.N_PartnerTypeID, Inv_Vendor.N_VendorTypeID, Inv_Vendor.N_GoodsDeliveryIn, Inv_Vendor.X_TandC, Acc_CurrencyMaster.N_CompanyID AS Expr4, Acc_CurrencyMaster.N_CurrencyID AS Expr5, Acc_CurrencyMaster.X_CurrencyCode, Acc_CurrencyMaster.X_CurrencyName, Acc_CurrencyMaster.X_ShortName, Acc_CurrencyMaster.N_ExchangeRate, Acc_CurrencyMaster.B_default, Acc_CurrencyMaster.N_Decimal, Prj_WorkOrder.N_WorkOrderId, Prj_WorkOrder.X_WorkOrderNo FROM         Inv_BalanceAdjustmentMaster INNER JOIN Inv_Vendor ON Inv_BalanceAdjustmentMaster.N_PartyID = Inv_Vendor.N_VendorID AND Inv_BalanceAdjustmentMaster.N_CompanyID = Inv_Vendor.N_CompanyID AND  Inv_BalanceAdjustmentMaster.N_FnYearID = Inv_Vendor.N_FnYearID INNER JOIN Acc_CurrencyMaster ON Inv_Vendor.N_CurrencyID = Acc_CurrencyMaster.N_CurrencyID LEFT OUTER JOIN Prj_WorkOrder ON Inv_BalanceAdjustmentMaster.N_CompanyID = Prj_WorkOrder.N_CompanyId AND Inv_BalanceAdjustmentMaster.N_WOID = Prj_WorkOrder.N_WorkOrderId Where  Inv_BalanceAdjustmentMaster.N_CompanyID=@p1 and Inv_BalanceAdjustmentMaster.N_FnYearID=@p3 and Inv_BalanceAdjustmentMaster.N_TransType=@p2 and Inv_BalanceAdjustmentMaster.X_VoucherNo=@p4 and Inv_BalanceAdjustmentMaster.N_PartyType=@p5 and Inv_BalanceAdjustmentMaster.N_BranchID=@p6";
                 Params.Add("@p6", nBranchID);
@@ -234,27 +245,40 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                     int N_TransType = myFunctions.getIntVAL(MasterRow["n_TransType"].ToString());
                     int N_PartyType = myFunctions.getIntVAL(MasterRow["n_PartyType"].ToString());
                     string X_Trasnaction = "";
-                    int N_FormID =0;
+                    int N_FormID = myFunctions.getIntVAL(MasterRow["n_FormID"].ToString());
+                    int N_IsImport = 0;
 
+                    if (N_FormID==1515) N_IsImport = 1;
 
+                     if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_AdjustmentDate"].ToString(), "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                    {
+                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=@nCompanyID and convert(date ,'" + MasterTable.Rows[0]["D_AdjustmentDate"].ToString() + "') between D_Start and D_End", Params, connection, transaction);
+                        if (DiffFnYearID != null)
+                        {
+                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                            N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                           // QueryParams["@nFnYearID"] = N_FnYearID;
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                        }
+                    }
 
                     if (N_PartyType == 0)//Vendor
                     {
                         if (N_TransType == 1)
-                            {X_Trasnaction = "VENDOR CREDIT NOTE";
-                            N_FormID=507;}
+                            {X_Trasnaction = "VENDOR CREDIT NOTE";}
                         else if (N_TransType == 0)
-                            {X_Trasnaction = "VENDOR DEBIT NOTE";
-                            N_FormID=508;}
+                            {X_Trasnaction = "VENDOR DEBIT NOTE";}
                     }
                     if (N_PartyType == 1)//customer
                     {
                         if (N_TransType == 1)
-                           { X_Trasnaction = "CUSTOMER CREDIT NOTE";
-                            N_FormID=504;}
+                           { X_Trasnaction = "CUSTOMER CREDIT NOTE";}
                         else if (N_TransType == 0)
-                            {X_Trasnaction = "CUSTOMER DEBIT NOTE";
-                            N_FormID=505;}
+                            {X_Trasnaction = "CUSTOMER DEBIT NOTE";}
                     }
 
                     // Auto Gen
@@ -304,17 +328,42 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                     }
                     else
                     {
-                        SortedList PostingParams = new SortedList(){
+                        try
+                        {
+                            SortedList PostingParams = new SortedList(){
                                 {"N_CompanyID",N_CompanyID},
                                 {"X_InventoryMode",X_Trasnaction},
                                 {"N_InternalID",N_AdjustmentID},
-                                {"N_UserID",myFunctions.GetUserID(User)}
+                                {"N_UserID",myFunctions.GetUserID(User)},
+                                {"N_IsImport",N_IsImport}
                                 };
                             dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
-                            
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            if (ex.Message == "50")
+                                return Ok(_api.Error(User, "Day Closed"));
+                            else if (ex.Message == "51")
+                                return Ok(_api.Error(User, "Year Closed"));
+                            else if (ex.Message == "52")
+                                return Ok(_api.Error(User, "Year Exists"));
+                            else if (ex.Message == "53")
+                                return Ok(_api.Error(User, "Period Closed"));
+                            else if (ex.Message == "54")
+                                return Ok(_api.Error(User, "Wrong Txn Date"));
+                            else if (ex.Message == "55")
+                                return Ok(_api.Error(User, "Quantity exceeds!"));
+                            else
+                                return Ok(_api.Error(User, ex));
+                        }
                         transaction.Commit();
                     }
-                    return Ok(_api.Success("Adjustment saved" + ":" + N_AdjustmentID));
+                       SortedList Result = new SortedList();
+                       Result.Add("AdjustmentNo", MasterTable.Rows[0]["X_VoucherNo"] );
+                       Result.Add("N_AdjustmentID", N_AdjustmentID);
+               
+                    return Ok(_api.Success(Result,"Adjustment saved" + ":" + N_AdjustmentID));
                 }
             }
             catch (Exception ex)

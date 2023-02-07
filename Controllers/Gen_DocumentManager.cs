@@ -12,6 +12,8 @@ using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
+using System.IO;
 
 namespace SmartxAPI.Controllers
 {
@@ -24,8 +26,10 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly string reportLocation;
         private readonly int FormID;
         private readonly IMyAttachments myAttachments;
+        public string RPTLocation = "";
         public Gen_DocumentManager(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             api = apifun;
@@ -33,6 +37,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            reportLocation = conf.GetConnectionString("ReportLocation");
             FormID = 0;
         }
 
@@ -71,12 +76,12 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
         [HttpGet("getFile")]
-        public async Task<IActionResult> Download(int fileID,string filename)
+        public async Task<IActionResult> Download(int fileID, string filename)
         {
             if (filename == null)
                 return Content("filename not present");
@@ -96,7 +101,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
             path = path + filename;
 
@@ -107,6 +112,51 @@ namespace SmartxAPI.Controllers
             }
             memory.Position = 0;
             return File(memory, api.GetContentType(path), Path.GetFileName(path));
+        }
+        private bool LoadReportDetails(int nFnYearID, int nFormID)
+        {
+            SortedList QueryParams = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            QueryParams.Add("@nCompanyId", nCompanyId);
+            QueryParams.Add("@nFnYearID", nFnYearID);
+            QueryParams.Add("@nFormID", nFormID);
+            RPTLocation = "";
+            string xUserCategoryList = myFunctions.GetUserCategoryList(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction;
+                    transaction = connection.BeginTransaction();
+                    object ObjTaxType = dLayer.ExecuteScalar("SELECT Acc_TaxType.X_RepPathCaption FROM Acc_TaxType LEFT OUTER JOIN Acc_FnYear ON Acc_TaxType.N_TypeID = Acc_FnYear.N_TaxType where Acc_FnYear.N_CompanyID=@nCompanyId and Acc_FnYear.N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
+                    if (ObjTaxType == null)
+                        ObjTaxType = "";
+                    if (ObjTaxType.ToString() == "")
+                        ObjTaxType = "none";
+                    string TaxType = ObjTaxType.ToString();
+
+                    object ObjPath = dLayer.ExecuteScalar("SELECT X_RptFolder FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    if (ObjPath != null)
+                    {
+                        if (ObjPath.ToString() != "")
+                            RPTLocation = reportLocation + "printing/" + ObjPath + "/" + TaxType + "/";
+                        else
+                            RPTLocation = reportLocation + "printing/";
+                    }
+                    object Custom = dLayer.ExecuteScalar("SELECT isnull(b_Custom,0) FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
+                    int N_Custom = myFunctions.getIntVAL(Custom.ToString());
+                    if (N_Custom == 1)
+                        RPTLocation = RPTLocation + "custom/";
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                return false;
+
+            }
+
         }
 
 
@@ -125,8 +175,30 @@ namespace SmartxAPI.Controllers
                     int payId = myFunctions.getIntVAL(Attachment.Rows[0]["n_TransID"].ToString());
                     string partyCode = Attachment.Rows[0]["x_PartyCode"].ToString();
                     int partyID = myFunctions.getIntVAL(Attachment.Rows[0]["n_PartyID"].ToString());
-                    string folderName= Attachment.Rows[0]["x_FolderName"].ToString();
-                    string partyName= Attachment.Rows[0]["x_PartyName"].ToString();
+                    string folderName = Attachment.Rows[0]["x_FolderName"].ToString();
+                    string partyName = Attachment.Rows[0]["x_PartyName"].ToString();
+
+                    if (Attachment.Rows[0]["x_FolderName"].ToString() == "reports")
+                    {
+                        var base64Data = Regex.Match(Attachment.Rows[0]["FileData"].ToString(), @"data:(?<type>.+?);base64,(?<data>.+)").Groups["data"].Value;
+                        byte[] FileBytes = Convert.FromBase64String(base64Data);
+                        System.IO.File.WriteAllBytes(reportLocation + Attachment.Rows[0]["x_File"].ToString(),
+                                           FileBytes);
+                        return Ok(api.Success("Report Updated"));
+                    }
+                    if (Attachment.Rows[0]["x_FolderName"].ToString() == "print")
+                    {
+                        int nFormID = myFunctions.getIntVAL(Attachment.Rows[0]["nFormID"].ToString());
+                        int nFnYearID = myFunctions.getIntVAL(Attachment.Rows[0]["nFnYearID"].ToString());
+                        if (LoadReportDetails(nFnYearID, nFormID))
+                        {
+                            var base64Data = Regex.Match(Attachment.Rows[0]["FileData"].ToString(), @"data:(?<type>.+?);base64,(?<data>.+)").Groups["data"].Value;
+                            byte[] FileBytes = Convert.FromBase64String(base64Data);
+                            System.IO.File.WriteAllBytes(RPTLocation + Attachment.Rows[0]["x_File"].ToString(),
+                                               FileBytes);
+                            return Ok(api.Success("Print Updated"));
+                        }
+                    }
 
                     Attachment.Columns.Remove("x_FolderName");
                     Attachment.Columns.Remove("x_PartyName");
@@ -134,9 +206,8 @@ namespace SmartxAPI.Controllers
                     Attachment.Columns.Remove("x_TransCode");
                     Attachment.AcceptChanges();
 
-
                     SqlTransaction transaction = connection.BeginTransaction();
-                    myAttachments.SaveAttachment(dLayer, Attachment, payCode, payId , partyName, partyCode, partyID, folderName, User, connection, transaction);
+                    myAttachments.SaveAttachment(dLayer, Attachment, payCode, payId, partyName, partyCode, partyID, folderName, User, connection, transaction);
                     transaction.Commit();
 
                 }
@@ -144,13 +215,13 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
         }
 
-        
 
-          [HttpGet("getAttachments")]
+
+        [HttpGet("getAttachments")]
         public ActionResult GetSalesInvoiceDetails(int nTransID, int nPartyID, int nFormID, int nFnYearID)
         {
 
@@ -159,14 +230,14 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection Con = new SqlConnection(connectionString))
                 {
                     Con.Open();
-                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, nPartyID,nTransID,nFormID,nFnYearID, User, Con);
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, nPartyID, nTransID, nFormID, nFnYearID, User, Con);
                     Attachments = api.Format(Attachments, "attachments");
                     return Ok(api.Success(Attachments));
                 }
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 

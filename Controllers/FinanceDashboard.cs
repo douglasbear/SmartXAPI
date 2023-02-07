@@ -31,21 +31,35 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("details")]
-        public ActionResult GetDashboardDetails(int nFnYearId)
+        public ActionResult GetDashboardDetails(int nFnYearId, int nBranchID,bool bAllBranchData )
         {
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
+            string crieteria="";
+            string crieteria1="";
+           string crieteriaReceiv="";
+            if (bAllBranchData == true)
+            {
+            crieteria="";
+            crieteria1="";
+            crieteriaReceiv="";
+            }
+            else
+            {
+            crieteria=" and N_BranchID="+nBranchID;
+            crieteria1=" and Acc_VoucherDetails.N_BranchID="+nBranchID;
+            crieteriaReceiv=" and BranchID="+nBranchID;
+            }
+            string sqlReceivables = "select CAST(CONVERT(VARCHAR, CAST(sum(N_BalanceAmount) AS MONEY), 1) AS VARCHAR) as N_Amount from vw_InvReceivables where N_CompanyId = "+nCompanyID+" and N_FnYearId= "+nFnYearId+crieteriaReceiv+"  and X_Type<>'SALES RETURN' and X_Type<>'SA'";
+            string sqlPayables= "select CAST(CONVERT(VARCHAR, CAST(sum(N_BalanceAmount) AS MONEY), 1) AS VARCHAR) as N_Amount from vw_InvPayables where N_CompanyId = "+nCompanyID+" and N_FnYearId= "+nFnYearId+crieteria;
+            string sqlProfitMargin= "select CAST(CONVERT(VARCHAR, CAST((((select sum(ABS(N_Amount)) from vw_AccVoucherDetailsMonthWise where X_Type='I' and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+crieteria+") -(select sum(ABS(N_Amount))  from vw_AccVoucherDetailsMonthWise where X_Type='E' and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+crieteria+"))  / (select sum(ABS(N_Amount)) from vw_AccVoucherDetailsMonthWise where X_Type='I' and N_CompanyID = "+nCompanyID+" and N_FnYearId= "+nFnYearId+crieteria+" ) * 100) AS MONEY), 1) AS VARCHAR) as N_ProfitMargin";
 
-            string sqlReceivables = "select CAST(CONVERT(VARCHAR, CAST(sum(N_BalanceAmount) AS MONEY), 1) AS VARCHAR) as N_Amount from vw_InvReceivables where N_CompanyId = "+nCompanyID+" and N_FnYearId= "+nFnYearId+" and X_Type<>'SALES RETURN' and X_Type<>'SA'";
-            string sqlPayables= "select CAST(CONVERT(VARCHAR, CAST(sum(N_BalanceAmount) AS MONEY), 1) AS VARCHAR) as N_Amount from vw_InvPayables where N_CompanyId = "+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
-            string sqlProfitMargin= "select CAST(CONVERT(VARCHAR, CAST((((select sum(ABS(N_Amount)) from vw_AccVoucherDetailsMonthWise where X_Type='I' and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+") -(select sum(ABS(N_Amount))  from vw_AccVoucherDetailsMonthWise where X_Type='E' and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+"))  / (select sum(ABS(N_Amount)) from vw_AccVoucherDetailsMonthWise where X_Type='I' and N_CompanyID = "+nCompanyID+" and N_FnYearId= "+nFnYearId+" ) * 100) AS MONEY), 1) AS VARCHAR) as N_ProfitMargin";
-
-            string sqlMonthWiseData = "select X_Month,N_Expense,N_Income from vw_IncomeExpenseMonthWise where N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
-            string sqlIncomeExpense = "select (select CAST(CONVERT(VARCHAR, CAST(ABS(sum(N_Amount)) AS MONEY), 1) AS VARCHAR) from vw_AccVoucherDetailsMonthWise where X_Type='I' and N_CompanyID = "+nCompanyID+" and N_FnYearId= "+nFnYearId+") as N_Income, (select CAST(CONVERT(VARCHAR, CAST(ABS(sum(N_Amount)) AS MONEY), 1) AS VARCHAR)  from vw_AccVoucherDetailsMonthWise where X_Type='E' and N_CompanyID = "+nCompanyID+" and N_FnYearId= "+nFnYearId+") as N_Expense";
-            string sqlAssetLiability = "SELECT Acc_VoucherDetails.N_CompanyID,Acc_VoucherDetails.N_FnYearID,ABS (sum(Acc_VoucherDetails.N_Amount)) as  N_Amount,case when vw_AccMastLedger.X_Type  = 'A' then 'Asset'  when vw_AccMastLedger.X_Type  = 'L' then 'Liability' end as X_Type FROM   Acc_VoucherDetails INNER JOIN vw_AccMastLedger ON Acc_VoucherDetails.N_CompanyID = vw_AccMastLedger.N_CompanyID AND Acc_VoucherDetails.N_LedgerID = vw_AccMastLedger.N_LedgerID AND Acc_VoucherDetails.N_FnYearID = vw_AccMastLedger.N_FnYearID where  vw_AccMastLedger.X_Type in ('A','L') and Acc_VoucherDetails.N_CompanyID ="+nCompanyID+"   and Acc_VoucherDetails.N_FnYearID = "+nFnYearId+"  group by Acc_VoucherDetails.N_CompanyID,Acc_VoucherDetails.N_FnYearID,vw_AccMastLedger.X_Type ";
-            string sqlCashBalance = "SELECT sum(Acc_VoucherDetails.N_Amount) as  N_Amount,vw_AccMastLedger.N_CashBahavID FROM   Acc_VoucherDetails INNER JOIN vw_AccMastLedger ON Acc_VoucherDetails.N_CompanyID = vw_AccMastLedger.N_CompanyID AND Acc_VoucherDetails.N_LedgerID = vw_AccMastLedger.N_LedgerID AND Acc_VoucherDetails.N_FnYearID = vw_AccMastLedger.N_FnYearID where  vw_AccMastLedger.N_CashBahavID =4 and Acc_VoucherDetails.N_CompanyID ="+nCompanyID+"  and Acc_VoucherDetails.N_FnYearID = "+nFnYearId+" group by Acc_VoucherDetails.N_CompanyID,Acc_VoucherDetails.N_FnYearID,vw_AccMastLedger.N_CashBahavID ";
-            string sqlBankBalance = "SELECT sum(Acc_VoucherDetails.N_Amount) as  N_Amount,vw_AccMastLedger.N_CashBahavID FROM   Acc_VoucherDetails INNER JOIN vw_AccMastLedger ON Acc_VoucherDetails.N_CompanyID = vw_AccMastLedger.N_CompanyID AND Acc_VoucherDetails.N_LedgerID = vw_AccMastLedger.N_LedgerID AND Acc_VoucherDetails.N_FnYearID = vw_AccMastLedger.N_FnYearID where  vw_AccMastLedger.N_CashBahavID =5 and Acc_VoucherDetails.N_CompanyID ="+nCompanyID+"  and Acc_VoucherDetails.N_FnYearID = "+nFnYearId+" group by Acc_VoucherDetails.N_CompanyID,Acc_VoucherDetails.N_FnYearID,vw_AccMastLedger.N_CashBahavID ";
+            string sqlMonthWiseData = "select X_Month,N_Expense,N_Income from vw_IncomeExpenseMonthWise where N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+crieteria;
+            string sqlIncomeExpense = "select (select CAST(CONVERT(VARCHAR, CAST(ABS(sum(N_Amount)) AS MONEY), 1) AS VARCHAR) from vw_AccVoucherDetailsMonthWise where X_Type='I' and N_CompanyID = "+nCompanyID+" and N_FnYearId= "+nFnYearId+crieteria+") as N_Income, (select CAST(CONVERT(VARCHAR, CAST(ABS(sum(N_Amount)) AS MONEY), 1) AS VARCHAR)  from vw_AccVoucherDetailsMonthWise where X_Type='E' and N_CompanyID = "+nCompanyID+" and N_FnYearId= "+nFnYearId+crieteria+") as N_Expense";
+            string sqlAssetLiability = "SELECT Acc_VoucherDetails.N_CompanyID,Acc_VoucherDetails.N_FnYearID,ABS (sum(Acc_VoucherDetails.N_Amount)) as  N_Amount,case when vw_AccMastLedger.X_Type  = 'A' then 'Asset'  when vw_AccMastLedger.X_Type  = 'L' then 'Liability' end as X_Type FROM   Acc_VoucherDetails INNER JOIN vw_AccMastLedger ON Acc_VoucherDetails.N_CompanyID = vw_AccMastLedger.N_CompanyID AND Acc_VoucherDetails.N_LedgerID = vw_AccMastLedger.N_LedgerID AND Acc_VoucherDetails.N_FnYearID = vw_AccMastLedger.N_FnYearID where  vw_AccMastLedger.X_Type in ('A','L') and Acc_VoucherDetails.N_CompanyID ="+nCompanyID+"    and Acc_VoucherDetails.N_FnYearID = "+nFnYearId+ crieteria1+"  group by Acc_VoucherDetails.N_CompanyID,Acc_VoucherDetails.N_FnYearID,vw_AccMastLedger.X_Type,Acc_VoucherDetails.N_BranchID ";
+            string sqlCashBalance = "SELECT sum(Acc_VoucherDetails.N_Amount) as  N_Amount,vw_AccMastLedger.N_CashBahavID FROM   Acc_VoucherDetails INNER JOIN vw_AccMastLedger ON Acc_VoucherDetails.N_CompanyID = vw_AccMastLedger.N_CompanyID AND Acc_VoucherDetails.N_LedgerID = vw_AccMastLedger.N_LedgerID AND Acc_VoucherDetails.N_FnYearID = vw_AccMastLedger.N_FnYearID where  vw_AccMastLedger.N_CashBahavID =4 and Acc_VoucherDetails.N_CompanyID ="+nCompanyID+"  and Acc_VoucherDetails.N_FnYearID = "+nFnYearId+crieteria1+" group by Acc_VoucherDetails.N_CompanyID,Acc_VoucherDetails.N_FnYearID,vw_AccMastLedger.N_CashBahavID,Acc_VoucherDetails.N_BranchID ";
+            string sqlBankBalance = "SELECT sum(Acc_VoucherDetails.N_Amount) as  N_Amount,vw_AccMastLedger.N_CashBahavID FROM   Acc_VoucherDetails INNER JOIN vw_AccMastLedger ON Acc_VoucherDetails.N_CompanyID = vw_AccMastLedger.N_CompanyID AND Acc_VoucherDetails.N_LedgerID = vw_AccMastLedger.N_LedgerID AND Acc_VoucherDetails.N_FnYearID = vw_AccMastLedger.N_FnYearID where  vw_AccMastLedger.N_CashBahavID =5 and Acc_VoucherDetails.N_CompanyID ="+nCompanyID+"  and Acc_VoucherDetails.N_FnYearID = "+nFnYearId+crieteria1+"  group by Acc_VoucherDetails.N_CompanyID,Acc_VoucherDetails.N_FnYearID,vw_AccMastLedger.N_CashBahavID,Acc_VoucherDetails.N_BranchID ";
 
             // string sqlOpenQuotation = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesQuotationNo_Search WHERE MONTH(D_QuotationDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)";
             // "select X_LeadSource,CAST(COUNT(*) as varchar(50)) as N_Percentage from vw_CRMLeads group by X_LeadSource";
@@ -107,5 +121,160 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,e));
             }
         }
+
+        [HttpGet("trialBalancelist")]
+        public ActionResult TrialBalanceList(int nComapanyID,int nFnYearID,int nBranchID,int nPage, int nSizeperpage, bool b_AllBranchData,DateTime d_Start,DateTime d_end, string xSearchkey, string xSortBy)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable dt = new DataTable();
+                    DataTable tb = new DataTable();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    int nUserID = myFunctions.GetUserID(User);
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string Searchkey = "";
+                    string d_Date =d_Start.ToString("dd-MMM-yyyy") + "|" + d_end.ToString("dd-MMM-yyyy")  + "|";
+
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nFnYearID);
+                    Params.Add("@p3", nUserID);
+                    Params.Add("@p4",nBranchID);
+                    Params.Add("@p5",d_Date);
+                    
+         
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and ( X_LedgerName like '%" + xSearchkey + "%' or X_LedgerCode like '%" + xSearchkey + "%' or N_Opening like '%" + xSearchkey + "%' or N_Debit like '%" + xSearchkey + "%' or N_Credit like '%" + xSearchkey + "%' or N_Balance like '%" + xSearchkey + "%' ) ";
+
+                    // if (xSortBy == null || xSortBy.Trim() == "")
+                    //     xSortBy = " order by N_LedgerID desc";
+                    // else
+                    //  {
+                    //      switch (xSortBy.Split(" ")[0])
+                    //        {
+                    //     case "X_LedgerCode":
+                    //     xSortBy = "X_LedgerCode " + xSortBy.Split(" ")[1];
+                    //     break;
+                    //     default: break;
+                    //       }
+                    //      xSortBy = " order by " + xSortBy;
+                    //       }
+                         if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_LedgerID desc";
+                   else
+                   {
+                switch (xSortBy.Split(" ")[0])
+                   {
+                    case "X_LedgerCode":
+                        xSortBy = "X_LedgerCode " + xSortBy.Split(" ")[1];
+                        break;
+                     default: break;
+                     }
+                xSortBy = " order by " + xSortBy;
+                     }
+
+                       if (b_AllBranchData == true)
+                            {
+                                sqlCommandText = "SP_OpeningBalanceGenerate @p1,@p2,0,11,@p5,@p3,0";
+                             
+                            }
+                            else
+                            {
+                                sqlCommandText = "SP_OpeningBalanceGenerate @p1,@p2,0,11,@p5,@p3,@p4";
+                                
+                            }
+                    tb = dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                    tb = api.Format(tb,"Master");
+                    
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_FnYearID,N_LedgerID,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_UserID=@p3 " + Searchkey + " group by N_FnYearID,N_LedgerID,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance " ;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_FnYearID,N_LedgerID,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_UserID=@p3 " + Searchkey + "and N_LedgerID not in (select top(" + Count + ") N_LedgerID from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2  " + Searchkey+ " ) group by N_FnYearID,N_LedgerID,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance " +xSortBy;
+                    SortedList OutPut = new SortedList();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
+                    string sqlCommandCount = "select count(*) as N_Count  from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return BadRequest(api.Error(User, e));
+            }
+        }
+       [HttpGet("statementsOfAccounts")]
+        public ActionResult TrialBalanceList(string xLedgerCode,int nFnYearID, int nPage, int nSizeperpage, bool b_AllBranchData, string xSearchkey, string xSortBy)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    int nUserID = myFunctions.GetUserID(User);
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string Searchkey = "";
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nFnYearID);
+                    Params.Add("@p3", nUserID);
+                    Params.Add("@p4", xLedgerCode);
+         
+
+                  object LedgeridObj = dLayer.ExecuteScalar("select N_LedgerID From Acc_MastLedger where X_LedgerCode = @p4 and N_CompanyID =@p1 and N_FnYearID=@p2",Params, connection);
+
+                  int nLedgerID = myFunctions.getIntVAL(LedgeridObj.ToString());
+                   Params.Add("@p5", nLedgerID);
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and ( X_LedgerName like '%" + xSearchkey + "%' or X_LedgerCode like '%" + xSearchkey + "%' or N_Opening like '%" + xSearchkey + "%' or N_Debit like '%" + xSearchkey + "%' or N_Credit like '%" + xSearchkey + "%' or N_Balance like '%" + xSearchkey + "%' ) ";
+
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by N_LedgerID desc";
+                    else
+                        xSortBy = " order by " + xSortBy;
+
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_StatementsOfAccounts_Detailed  where N_CompanyID=@p1 and N_FnYearID=@p2 and N_LedgerID=@p5" + Searchkey ;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_StatementsOfAccounts_Detailed  where N_CompanyID=@p1 and N_FnYearID=@p2 and N_LedgerID=@p5" + Searchkey + "and N_LedgerID not in (select top(" + Count + ") N_LedgerID from vw_StatementsOfAccounts_Detailed where N_CompanyID=@p1 and N_FnYearID=@p2 and N_LedgerID=@p5" + Searchkey+ " ) ";
+                    SortedList OutPut = new SortedList();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
+                    string sqlCommandCount = "select count(*) as N_Count  from vw_StatementsOfAccounts_Detailed  where N_CompanyID=@p1 and N_FnYearID=@p2 and N_LedgerID=@p5" + Searchkey;
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return BadRequest(api.Error(User, e));
+            }
+        }
+
     }
 }

@@ -23,6 +23,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly IDataAccessLayer dLayer;
         private readonly string masterDBConnectionString;
+        private readonly string connectionString;
 
         public Apps(ISec_UserRepo repository, IApiFunctions api, IMyFunctions myFun, IDataAccessLayer dl, IConfiguration conf)
         {
@@ -31,29 +32,72 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
+            connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
 
         [HttpGet("list")]
-        public ActionResult GetAllApps(bool showAll)
+        public ActionResult GetAllApps(bool showAll, string AppName)
         {
             DataTable dt = new DataTable();
             int ClientID = myFunctions.GetClientID(User);
-            string sqlCommandText = "select * from (SELECT AppMaster.*, ClientApps.N_ClientID FROM AppMaster LEFT OUTER JOIN ClientApps ON AppMaster.N_AppID = ClientApps.N_AppID" +
-                                    " WHERE(AppMaster.B_Inactive = 0) and(ClientApps.N_ClientID =" + ClientID + " )" +
-                                    " Union all" +
-                                    " SELECT *, null as N_ClientID FROM AppMaster WHERE N_AppID not in (SELECT N_AppID FROM ClientApps WHERE N_ClientID =" + ClientID + " )) a order by N_Order";
-// showAll=false;
-            if (showAll == false)
-            {
-                sqlCommandText = "SELECT AppMaster.*,ClientApps.N_ClientID FROM AppMaster INNER JOIN ClientApps ON AppMaster.N_AppID = ClientApps.N_AppID where ClientApps.N_ClientID=" + ClientID + " and AppMaster.B_Inactive =0 order by AppMaster.N_Order";
-            }
+            int GUserID = myFunctions.GetGlobalUserID(User);
+      
+
+
+
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
                 {
                     connection.Open();
+                    int appID = 0;
+                    object userType = dLayer.ExecuteScalar("SELECT isnull(N_UserType,0) as N_UserType FROM Users where N_ClientID=" + ClientID + " and N_UserID=" + GUserID, connection);
+                    if (myFunctions.getIntVAL(userType.ToString()) != 0)
+                    {
+                        appID = myFunctions.getIntVAL(userType.ToString());
+                    }
+
+                    string xCritreria="";
+
+                    if(appID>0){
+                        using (SqlConnection con = new SqlConnection(connectionString))
+                        {
+                            con.Open();
+                               int userID = myFunctions.GetUserID(User);
+                                     int nCompanyID = myFunctions.GetCompanyID(User);
+                            string appString="select N_AppID from Sec_UserApps where N_UserID="+userID+" and N_CompanyID="+nCompanyID+"";
+                            DataTable userApps=dLayer.ExecuteDataTable(appString,con);
+                            var listApps = userApps.AsEnumerable().Select(r => r["N_AppID"].ToString());
+                             string value = string.Join(",", listApps);
+                            xCritreria = " and (ClientApps.N_AppID in ("+value+")) ";
+              
+                        }
+
+                    }
+
+                    string sqlCommandText = "select * from (SELECT AppMaster.*, ClientApps.N_ClientID FROM AppMaster LEFT OUTER JOIN ClientApps ON AppMaster.N_AppID = ClientApps.N_AppID" +
+                        " WHERE (AppMaster.B_Inactive = 0) and (ClientApps.N_ClientID =" + ClientID + " )" +
+                        " Union all" +
+                        " SELECT *, null as N_ClientID FROM AppMaster WHERE  N_AppID not in (SELECT N_AppID FROM ClientApps WHERE N_ClientID =" + ClientID + " )) a where N_AppID in (SELECT  N_AppID FROM AppConfig where X_BuildType='" + AppName + "')  order by N_Order";
+                    if (showAll == false)
+                    {
+                        sqlCommandText = "SELECT  AppMaster.N_AppID ,AppMaster.X_AppName,AppMaster.X_AppDescription,AppMaster.X_Version,"
+                                         +" AppMaster.B_Inactive,AppMaster.N_Order,AppMaster.N_TrialPeriod,AppMaster.X_HelpUrl,AppMaster.X_InitialDataUrl,"
+                                          +" AppMaster.B_EnableAttachment,ClientApps.N_ClientID,ClientApps.D_ExpiryDate"
+                                           +",isnull(DATEDIFF(day, GETDATE(),min(D_ExpiryDate)),0) as expiry"
+                                          +" FROM AppMaster "
+                                           +"INNER JOIN ClientApps ON AppMaster.N_AppID = ClientApps.N_AppID "
+                                          +"  where ClientApps.N_ClientID=" + ClientID + " and AppMaster.B_Inactive =0 " + xCritreria + " "
+                                           +"Group By AppMaster.N_AppID ,AppMaster.X_AppName,AppMaster.X_AppDescription,AppMaster.X_Version, "
+                                          +" AppMaster.B_Inactive,AppMaster.N_Order,AppMaster.N_TrialPeriod,AppMaster.X_HelpUrl,AppMaster.X_InitialDataUrl, "
+                                         +"  AppMaster.B_EnableAttachment,ClientApps.N_ClientID,ClientApps.D_ExpiryDate  order by AppMaster.N_Order";
+                    }
+
                     dt = dLayer.ExecuteDataTable(sqlCommandText, connection);
+
+                
                 }
                 if (dt.Rows.Count == 0)
                 {
@@ -67,7 +111,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
 
         }
@@ -106,9 +150,12 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
 
         }
+        
+
+       
     }
 }

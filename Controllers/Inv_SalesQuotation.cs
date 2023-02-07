@@ -50,14 +50,39 @@ namespace SmartxAPI.Controllers
                     string sqlCommandText = "";
                     string sqlCommandCount = "";
                     string Searchkey = "";
+                    int nCompanyID = myFunctions.GetCompanyID(User);
                     string criteria = "";
+                     int N_decimalPlace=2;
+                    N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Sales", "Decimal_Place", "N_Value",nCompanyID, dLayer, connection));
+                    N_decimalPlace=N_decimalPlace==0?2:N_decimalPlace;
+                    string UserPattern = myFunctions.GetUserPattern(User);
+                    int nUserID = myFunctions.GetUserID(User);
+                    string Pattern = "";
+            if (UserPattern != "")
+            {
+                Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
+                Params.Add("@UserPattern", UserPattern);
+            }
+            // else
+            // {
+            //                     object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
+                // if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                //     Pattern = " and N_CreatedUser=" + nUserID;
+            //     if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+            //         Pattern = " and N_UserID=" + nUserID;
+            //     if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+            //         Pattern = " and N_CreatedUser=" + nUserID;     
+            // }
+
+
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
 
-                    if (screen=="Quotation")
+
+                    if (screen == "Quotation")
                         criteria = "and MONTH(Cast(D_QuotationDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)";
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([Quotation No] like '%" + xSearchkey + "%' or X_CustomerName like '%" + xSearchkey + "%' or x_BranchName like '%" + xSearchkey + "%' or cast([Quotation Date] as Varchar) like '%" + xSearchkey + "%' or Cast(d_RfqRefDate as Varchar) like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or n_AmountF like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%')";
+                        Searchkey = "and ([Quotation No] like '%" + xSearchkey + "%' or X_CustomerName like '%" + xSearchkey + "%' or X_CrmCustomer like '%" + xSearchkey + "%' or x_BranchName like '%" + xSearchkey + "%' or cast([Quotation Date] as Varchar) like '%" + xSearchkey + "%' or Cast(d_RfqRefDate as Varchar) like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or n_AmountF like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_RfqRefNo like '%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_QuotationId desc";
@@ -76,7 +101,7 @@ namespace SmartxAPI.Controllers
                                 xSortBy = "N_QuotationId " + xSortBy.Split(" ")[1];
                                 break;
                             case "n_AmountF":
-                                xSortBy = "Cast(REPLACE(n_AmountF,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
+                                xSortBy = "Cast(REPLACE(n_AmountF,',','') as Numeric(10,"+N_decimalPlace+")) " + xSortBy.Split(" ")[1];
                                 break;
                             default: break;
                         }
@@ -106,10 +131,9 @@ namespace SmartxAPI.Controllers
                     }
 
                     if (Count == 0)
-
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo,D_RfqRefDate,N_Amount,N_FreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo,D_RfqRefDate,N_Amount,N_FreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer,N_StatusID,N_LastActionID,X_ClosingRemarks,N_FormID,X_ActionName,X_ActionStatus,X_StatusColour,X_CustomerName_Ar from vw_InvSalesQuotationNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + Searchkey + " " +  " Group By  N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo,D_RfqRefDate,N_Amount,N_FreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer,N_StatusID,N_LastActionID,X_ClosingRemarks,N_FormID,X_ActionName,X_ActionStatus,X_StatusColour,X_CustomerName_Ar" +xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo as XRfqRefNo,D_RfqRefDate as DRfqRefDate,N_Amount as NAmount,N_FreightAmt as NFreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + Searchkey + " and N_QuotationId not in (select top(" + Count + ") N_QuotationId from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo as XRfqRefNo,D_RfqRefDate as DRfqRefDate,N_Amount as NAmount,N_FreightAmt as NFreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer,N_StatusID,N_LastActionID,X_ClosingRemarks,N_FormID,X_ActionName,X_ActionStatus,X_StatusColour,X_CustomerName_Ar from vw_InvSalesQuotationNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + Searchkey + " and N_QuotationId not in (select top(" + Count + ") N_QuotationId from vw_InvSalesQuotationNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + Searchkey + xSortBy + " ) " + "Group By  N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo,D_RfqRefDate,N_Amount,N_FreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer,N_StatusID,N_LastActionID,X_ClosingRemarks,N_FormID,X_ActionName,X_ActionStatus,X_StatusColour,X_CustomerName_Ar" + xSortBy;
 
 
 
@@ -119,7 +143,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_AmountF,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount from vw_InvSalesQuotationNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -152,8 +176,11 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult GetQuotationDetails(int xQuotationNo, int nFnYearId, bool bAllBranchData, int nBranchID, int n_OpportunityID)
+        public ActionResult GetQuotationDetails(string xQuotationNo, int nFnYearId, bool bAllBranchData, int nBranchID, int n_OpportunityID, int n_RFQDecisionID)
         {
+
+            if (xQuotationNo != null)
+                xQuotationNo = xQuotationNo.Replace("%2F", "/");
             DataSet dsQuotation = new DataSet();
             DataTable dtProcess = new DataTable();
             SortedList Params = new SortedList();
@@ -161,20 +188,28 @@ namespace SmartxAPI.Controllers
             int nCompanyId = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyId);
             Params.Add("@nFnYearID", nFnYearId);
-            Params.Add("@xQuotationNo", xQuotationNo);
             Params.Add("@nBranchID", nBranchID);
             Params.Add("@n_OpportunityID", n_OpportunityID);
-
+            Params.Add("@n_RFQDecisionID", n_RFQDecisionID);
+            if (n_OpportunityID > 0)
+            {
+            sqlCommandText = "select * from vw_OpportunityToQuotation Where N_CompanyID=@nCompanyID and n_OpportunityID=@n_OpportunityID";
+            }
+            else if(n_RFQDecisionID>0) 
+             {
+             sqlCommandText = "select * from vw_RFQDToSalesQuotationMaster Where N_CompanyID=@nCompanyID and N_RFQDecisionID=@n_RFQDecisionID";
+             }
+            else
             if (bAllBranchData == true)
             {
-                sqlCommandText = "SELECT Inv_SalesQuotation.*, Gen_LookupTable.X_Name as X_SubSource ,Acc_CurrencyMaster.N_CurrencyID, Acc_CurrencyMaster.X_CurrencyName, CRM_Customer.X_Customer as x_CrmCustomer, CRM_Contact.N_ContactID,CRM_Contact.X_Contact FROM  CRM_Contact RIGHT OUTER JOIN Inv_SalesQuotation ON CRM_Contact.N_ContactID = Inv_SalesQuotation.N_ContactID AND CRM_Contact.N_CompanyId = Inv_SalesQuotation.N_CompanyId LEFT OUTER JOIN CRM_Customer ON Inv_SalesQuotation.N_CrmCompanyID = CRM_Customer.N_CustomerID AND Inv_SalesQuotation.N_CompanyId = CRM_Customer.N_CompanyId LEFT OUTER JOIN Gen_LookupTable ON Inv_SalesQuotation.n_SubSourceID = Gen_LookupTable.N_PkeyId LEFT OUTER JOIN Acc_CurrencyMaster RIGHT OUTER JOIN Inv_Customer ON Acc_CurrencyMaster.N_CompanyID = Inv_Customer.N_CompanyID AND Acc_CurrencyMaster.N_CurrencyID = Inv_Customer.N_CurrencyID ON Inv_SalesQuotation.N_CompanyId = Inv_Customer.N_CompanyID AND Inv_SalesQuotation.N_CustomerId = Inv_Customer.N_CustomerID Where Inv_SalesQuotation.N_CompanyID=@nCompanyID and Inv_SalesQuotation.N_FnYearID=@nFnYearID and Inv_SalesQuotation.X_QuotationNo=@xQuotationNo";
+                Params.Add("@xQuotationNo", xQuotationNo);
+                sqlCommandText = "SELECT * from VW_InvSalesQuotationMaster  Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_QuotationNo=@xQuotationNo";
             }
             else
             {
-                sqlCommandText = "SELECT Inv_SalesQuotation.*, Gen_LookupTable.X_Name as X_SubSource  ,Acc_CurrencyMaster.N_CurrencyID, Acc_CurrencyMaster.X_CurrencyName, CRM_Customer.X_Customer as x_CrmCustomer, CRM_Contact.N_ContactID,CRM_Contact.X_Contact FROM  CRM_Contact RIGHT OUTER JOIN Inv_SalesQuotation ON CRM_Contact.N_ContactID = Inv_SalesQuotation.N_ContactID AND CRM_Contact.N_CompanyId = Inv_SalesQuotation.N_CompanyId LEFT OUTER JOIN Gen_LookupTable ON Inv_SalesQuotation.n_SubSourceID = Gen_LookupTable.N_PkeyId LEFT OUTER JOIN CRM_Customer ON Inv_SalesQuotation.N_CrmCompanyID = CRM_Customer.N_CustomerID AND Inv_SalesQuotation.N_CompanyId = CRM_Customer.N_CompanyId LEFT OUTER JOIN Acc_CurrencyMaster RIGHT OUTER JOIN Inv_Customer ON Acc_CurrencyMaster.N_CompanyID = Inv_Customer.N_CompanyID AND Acc_CurrencyMaster.N_CurrencyID = Inv_Customer.N_CurrencyID ON Inv_SalesQuotation.N_CompanyId = Inv_Customer.N_CompanyID AND Inv_SalesQuotation.N_CustomerId = Inv_Customer.N_CustomerID Where Inv_SalesQuotation.N_CompanyID=@nCompanyID and Inv_SalesQuotation.N_FnYearID=@nFnYearID and Inv_SalesQuotation.X_QuotationNo=@xQuotationNo and Inv_SalesQuotation.N_BranchID=@nBranchID";
+                Params.Add("@xQuotationNo", xQuotationNo);
+                sqlCommandText = "SELECT * from  VW_InvSalesQuotationMaster Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_QuotationNo=@xQuotationNo and N_BranchID=@nBranchID";
             }
-            if (n_OpportunityID > 0)
-                sqlCommandText = "select * from vw_OpportunityToQuotation Where N_CompanyID=@nCompanyID and n_OpportunityID=@n_OpportunityID";
 
             try
             {
@@ -228,27 +263,31 @@ namespace SmartxAPI.Controllers
                         object xProjectName = dLayer.ExecuteScalar("select X_ProjectName from Inv_CustomerProjects where N_CompanyID=@nCompanyID and N_ProjectID=@nProjectID", Params, connection);
                         if (xProjectName != null)
                             Master = myFunctions.AddNewColumnToDataTable(Master, "X_ProjectName", typeof(string), xProjectName.ToString());
+                        object xProjectcode = dLayer.ExecuteScalar("select X_Projectcode from Inv_CustomerProjects where N_CompanyID=@nCompanyID and N_ProjectID=@nProjectID", Params, connection);
+                        if (xProjectcode != null)
+                            Master = myFunctions.AddNewColumnToDataTable(Master, "X_ProjectCode", typeof(string), xProjectcode.ToString());
                     }
                     else
                     {
                         Master = myFunctions.AddNewColumnToDataTable(Master, "X_ProjectName", typeof(string), "");
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "x_ProjectCode", typeof(string), "");
                     }
 
 
                     int nCustomerID = myFunctions.getIntVAL(Master.Rows[0]["N_CustomerId"].ToString());
                     Params.Add("@nCustomerID", nCustomerID);
-                    if (nCustomerID > 0)
-                    {
-                        string sql = "select X_CustomerCode from Inv_Customer where N_CustomerID=@nCustomerID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID) and B_Inactive = 0";
-                        if (bAllBranchData)
-                            sql = "select X_CustomerCode from Inv_Customer where N_CustomerID=@nCustomerID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_Inactive = 0";
-                        object xCustomerCode = dLayer.ExecuteScalar(sql, Params, connection);
-                        Master = myFunctions.AddNewColumnToDataTable(Master, "X_CustomerCode", typeof(string), xCustomerCode.ToString());
-                    }
-                    else
-                    {
-                        Master = myFunctions.AddNewColumnToDataTable(Master, "X_CustomerCode", typeof(string), "");
-                    }
+                    // if (nCustomerID > 0)
+                    // {
+                    //     string sql = "select X_CustomerCode from Inv_Customer where N_CustomerID=@nCustomerID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID) and B_Inactive = 0";
+                    //     if (bAllBranchData)
+                    //         sql = "select X_CustomerCode from Inv_Customer where N_CustomerID=@nCustomerID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_Inactive = 0";
+                    //     object xCustomerCode = dLayer.ExecuteScalar(sql, Params, connection);
+                    //     Master = myFunctions.AddNewColumnToDataTable(Master, "X_CustomerCode", typeof(string), xCustomerCode.ToString());
+                    // }
+                    // else
+                    // {
+                    //     Master = myFunctions.AddNewColumnToDataTable(Master, "X_CustomerCode", typeof(string), "");
+                    // }
 
                     int nTaxCategoryID = myFunctions.getIntVAL(Master.Rows[0]["N_TaxCategoryID"].ToString());
                     Params.Add("@nTaxCategoryID", nTaxCategoryID);
@@ -269,43 +308,54 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nQuotationID", nQuotationId);
                     Params.Add("@nFormID", nFormID);
 
-                    object objFollowup = dLayer.ExecuteScalar("Select  isnull(max(N_id),0) from vsa_appointment where n_refid = @nQuotationID and N_companyID=@nCompanyID and B_IsComplete=0", Params, connection);
-                    if (objFollowup != null)
-                    {
-                        Params.Add("@nRefTypeID", 8);
-                        DataTable dtFollowUp = new DataTable();
-                        string qry = "Select * from vw_QuotaionFollowup Where N_CompanyID=@nCompanyID and N_RefTypeID=@nRefTypeID and N_RefID= @nQuotationID";
-                        dtFollowUp = dLayer.ExecuteDataTable(qry, Params, connection);
-                        dtFollowUp = _api.Format(dtFollowUp, "FollowUp");
-                        dsQuotation.Tables.Add(dtFollowUp);
-                    }
+                    // object objFollowup = dLayer.ExecuteScalar("Select  isnull(max(N_id),0) from vsa_appointment where n_refid = @nQuotationID and N_companyID=@nCompanyID and B_IsComplete=0", Params, connection);
+                    // if (objFollowup != null )
+                    // {
+                    //     if( myFunctions.getIntVAL(objFollowup.ToString()) !=0)
+                    //     {
+                    //     Params.Add("@nRefTypeID", 8);
+                    //     DataTable dtFollowUp = new DataTable();
+                    //     string qry = "Select * from vw_QuotaionFollowup Where N_CompanyID=@nCompanyID and N_RefTypeID=@nRefTypeID and N_RefID= @nQuotationID";
+                    //     dtFollowUp = dLayer.ExecuteDataTable(qry, Params, connection);
+                    //     dtFollowUp = _api.Format(dtFollowUp, "FollowUp");
+                    //     dsQuotation.Tables.Add(dtFollowUp);
+                    //     }
+                    // }
 
 
                     //object objSalesOrder = dLayer.ExecuteScalar("Select N_SalesOrderID from Inv_SalesOrder Where N_CompanyID=@nCompanyID and N_QuotationID =@nQuotationID and B_IsSaveDraft=0", Params);
                     Master = myFunctions.AddNewColumnToDataTable(Master, "B_SalesOrderProcessed", typeof(int), 0);
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "N_OrderFormID", typeof(int), 0);
                     Master = myFunctions.AddNewColumnToDataTable(Master, "X_SalesOrderNo", typeof(string), "");
-                    Master = myFunctions.AddNewColumnToDataTable(Master, "B_DeliveryNoteProcessed", typeof(int), 0);
-                    Master = myFunctions.AddNewColumnToDataTable(Master, "X_DeliveryNoteNo", typeof(string), "");
+                    // Master = myFunctions.AddNewColumnToDataTable(Master, "B_DeliveryNoteProcessed", typeof(int), 0);
+                    // Master = myFunctions.AddNewColumnToDataTable(Master, "X_DeliveryNoteNo", typeof(string), "");
                     Master = myFunctions.AddNewColumnToDataTable(Master, "B_SalesProcessed", typeof(int), 0);
                     Master = myFunctions.AddNewColumnToDataTable(Master, "X_SalesReceiptNo", typeof(string), "");
+                    if(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationId"].ToString()) > 0)
+                    {
 
                     object objxSalesOrder = myFunctions.checkProcessed("Inv_SalesOrder", "X_OrderNo", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
                     if (objxSalesOrder.ToString() != "")
                     {
                         Master.Rows[0]["B_SalesOrderProcessed"] = 1;
                         Master.Rows[0]["X_SalesOrderNo"] = objxSalesOrder;
+                        object objSalesOrderFormID = myFunctions.checkProcessed("Inv_SalesOrder", "N_FormID", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID ", Params, dLayer, connection);
+                        if (objSalesOrderFormID.ToString() != "")
+                        {
+                            Master.Rows[0]["N_OrderFormID"] = myFunctions.getIntVAL(objSalesOrderFormID.ToString());
+                        }
                         Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Sales Order Processed");
                     }
-                    object objxDeliveryNoteNo = myFunctions.checkProcessed("Inv_DeliveryNote", "X_ReceiptNo", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
-                    if (objxDeliveryNoteNo.ToString() != "")
-                    {
-                        Master.Rows[0]["B_DeliveryNoteProcessed"] = 1;
-                        Master.Rows[0]["X_DeliveryNoteNo"] = objxDeliveryNoteNo;
-                        if (Master.Columns.Contains("TxnStatus"))
-                            Master.Columns.Remove("TxnStatus");
-                        Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Delivery Note Processed");
+                    // object objxDeliveryNoteNo = myFunctions.checkProcessed("Inv_DeliveryNote", "X_ReceiptNo", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
+                    // if (objxDeliveryNoteNo.ToString() != "")
+                    // {
+                    //     Master.Rows[0]["B_DeliveryNoteProcessed"] = 1;
+                    //     Master.Rows[0]["X_DeliveryNoteNo"] = objxDeliveryNoteNo;
+                    //     if (Master.Columns.Contains("TxnStatus"))
+                    //         Master.Columns.Remove("TxnStatus");
+                    //     Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Delivery Note Processed");
 
-                    }
+                    // }
                     object objxSalesNo = myFunctions.checkProcessed("Inv_Sales", "X_ReceiptNo", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
                     if (objxSalesNo.ToString() != "")
                     {
@@ -317,78 +367,99 @@ namespace SmartxAPI.Controllers
                     }
 
 
+                    object objxDraftSalesNo = myFunctions.checkDraftProcessed("Inv_Sales", "X_ReceiptNo", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=1", Params, dLayer, connection);
+                    if (objxDraftSalesNo.ToString() != "")
+                    {
+                        Master.Rows[0]["B_SalesProcessed"] = 1;
+                        Master.Rows[0]["X_SalesReceiptNo"] = objxDraftSalesNo;
+                        if (Master.Columns.Contains("TxnStatus"))
+                            Master.Columns.Remove("TxnStatus");
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Invoice Processed");
+                    }
+
+
+
+
+
+
+
+                    }
+                  
+
                     var UserCategoryID = User.FindFirst(ClaimTypes.GroupSid)?.Value;
                     DateTime quotationDate = myFunctions.GetFormatedDate(Master.Rows[0]["D_QuotationDate"].ToString());
                     //Check Settings 
                     int N_DefSPriceID = myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "DefSPriceTypeID", "N_Value", "N_UserCategoryID", UserCategoryID, myFunctions.getIntVAL(nCompanyId.ToString()), dLayer, connection));
-                    bool B_LastSPrice = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings(this.FormID.ToString(), "LastSPrice_InGrid", "N_Value", "N_UserCategoryID", UserCategoryID, myFunctions.getIntVAL(nCompanyId.ToString()), dLayer, connection)));
-                    bool B_LastPurchaseCost = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings(this.FormID.ToString(), "LastPurchaseCost", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), myFunctions.getIntVAL(nCompanyId.ToString()), dLayer, connection)));
-
+                   
                     Params.Add("@nDefSPriceID", N_DefSPriceID);
                     Params.Add("@dQuotationDate", myFunctions.getDateVAL(quotationDate));
-                    string sqlCommandText2 = "Select *,dbo.SP_GenGetStock(vw_InvQuotationDetails.N_ItemID,@nLocationID,'','location') As N_Stock ,dbo.[SP_Stock](vw_InvQuotationDetails.N_ItemID) As N_StockAll ,dbo.SP_Cost(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID,'') As N_LPrice,dbo.SP_SellingPrice(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID) As N_SPrice,dbo.SP_SellingPrice_Select(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID,@nDefSPriceID,@nBranchID) As N_UnitSPrice,dbo.SP_GetQuotationCount(@nCompanyID,vw_InvQuotationDetails.N_ItemID,@dQuotationDate) As QuotedQty  from vw_InvQuotationDetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nQuotationID";
+                    // string sqlCommandText2 = "Select *,dbo.SP_GenGetStock(vw_InvQuotationDetails.N_ItemID,@nLocationID,'','location') As N_Stock ,dbo.[SP_Stock](vw_InvQuotationDetails.N_ItemID) As N_StockAll ,dbo.SP_Cost(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID,'') As N_LPrice,dbo.SP_SellingPrice(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID) As N_SPrice,dbo.SP_SellingPrice_Select(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID,@nDefSPriceID,@nBranchID) As N_UnitSPrice,dbo.SP_GetQuotationCount(@nCompanyID,vw_InvQuotationDetails.N_ItemID,@dQuotationDate) As QuotedQty  from vw_InvQuotationDetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nQuotationID";
+                    string sqlCommandText2 = "Select *,dbo.SP_SellingPrice(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID) As N_SPrice,dbo.SP_SellingPrice_Select(vw_InvQuotationDetails.N_ItemID,vw_InvQuotationDetails.N_CompanyID,@nDefSPriceID,@nBranchID) As N_UnitSPrice,dbo.SP_GenGetStock(vw_InvQuotationDetails.N_ItemID,@nLocationID,'', 'location') As n_Stock  from vw_InvQuotationDetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nQuotationID";
                     if (n_OpportunityID > 0)
                         sqlCommandText2 = "select * from vw_OpportunityToQuotationDetails Where N_CompanyID=@nCompanyID and n_OpportunityID=" + n_OpportunityID;
+                    if (n_RFQDecisionID > 0)
+                        sqlCommandText2 = "select * from vw_RFQDecisionToQuotationDetails Where N_CompanyID=@nCompanyID and n_RFQDecisionID=" + n_RFQDecisionID;
+
                     DataTable Details = new DataTable();
                     Details = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
                     Details = _api.Format(Details, "Details");
 
-                    Details = myFunctions.AddNewColumnToDataTable(Details, "X_UpdatedSPrice", typeof(string), "");
-                    Details = myFunctions.AddNewColumnToDataTable(Details, "SubQty", typeof(string), "");
-                    Details = myFunctions.AddNewColumnToDataTable(Details, "BaseUnitQty", typeof(string), "0.00");
-                    Details = myFunctions.AddNewColumnToDataTable(Details, "LastSellingPrice", typeof(string), "0.00");
-                    Details = myFunctions.AddNewColumnToDataTable(Details, "LastPurchasePrice", typeof(string), "0.00");
-                    Params.Add("@nSPriceTypeID", "");
-                    Params.Add("@xClassItemCode", "");
-                    Params.Add("@nItemID", "");
-                    Params.Add("@xItemUnit", "");
-                    foreach (DataRow var in Details.Rows)
-                    {
-                        if (var["ItemClass"].ToString() == "Group Item")
-                        {
-                            Params["@nSPriceTypeID"] = var["N_SPriceTypeID"].ToString();
-                            if (var["N_SPriceTypeID"].ToString() != "")
-                                var["X_UpdatedSPrice"] = Convert.ToString(dLayer.ExecuteScalar("select X_Name from Gen_LookupTable where N_CompanyID=@nCompanyID and N_ReferId=3 and N_PkeyId=@nSPriceTypeID", Params, connection));
+                    // Details = myFunctions.AddNewColumnToDataTable(Details, "X_UpdatedSPrice", typeof(string), "");
+                    // Details = myFunctions.AddNewColumnToDataTable(Details, "SubQty", typeof(string), "");
+                    // Details = myFunctions.AddNewColumnToDataTable(Details, "BaseUnitQty", typeof(string), "0.00");
+                    // Details = myFunctions.AddNewColumnToDataTable(Details, "LastSellingPrice", typeof(string), "0.00");
+                    // Details = myFunctions.AddNewColumnToDataTable(Details, "LastPurchasePrice", typeof(string), "0.00");
+                    // Params.Add("@nSPriceTypeID", "");
+                    // Params.Add("@xClassItemCode", "");
+                    // Params.Add("@nItemID", "");
+                    // Params.Add("@xItemUnit", "");
+                    // foreach (DataRow var in Details.Rows)
+                    // {
+                    //     if (var["ItemClass"].ToString() == "Group Item")
+                    //     {
+                    //         Params["@nSPriceTypeID"] = var["N_SPriceTypeID"].ToString();
+                    //         // if (var["N_SPriceTypeID"].ToString() != "")
+                    //         //     var["X_UpdatedSPrice"] = Convert.ToString(dLayer.ExecuteScalar("select X_Name from Gen_LookupTable where N_CompanyID=@nCompanyID and N_ReferId=3 and N_PkeyId=@nSPriceTypeID", Params, connection));
 
-                            Params["@xClassItemCode"] = var["ClassItemCode"].ToString();
-                            Params["@nItemID"] = var["N_ItemId"].ToString();
-                            object subQty = dLayer.ExecuteScalar("Select N_Qty from Inv_ItemDetails where N_MainItemId=(select N_ItemId from Inv_Itemmaster where X_itemcode=@xClassItemCode) and N_ItemId=@nItemID and N_CompanyID=@nCompanyID", Params, connection);
-                            if(subQty!=null)
-                                var["SubQty"] = subQty.ToString();
-                        }
-                        else
-                        {
-                            Params["@nSPriceTypeID"] = var["N_SPriceTypeID"].ToString();
-                            if (var["N_SPriceTypeID"].ToString() != "")
-                                var["X_UpdatedSPrice"] = Convert.ToString(dLayer.ExecuteScalar("select X_Name from Gen_LookupTable where N_CompanyID=@nCompanyID and N_ReferId=3 and N_PkeyId=@nSPriceTypeID", Params, connection));
-                            Params["@nItemID"] = var["N_ItemId"].ToString();
-                            Params["@xItemUnit"] = var["X_ItemUnit"].ToString();
-                            object BaseUnitQty = dLayer.ExecuteScalar("Select N_Qty from Inv_ItemUnit Where N_CompanyID=@nCompanyID and N_ItemID =@nItemID and X_ItemUnit=@xItemUnit", Params, connection);
-                            if (BaseUnitQty != null)
-                            {
-                                var["BaseUnitQty"] = BaseUnitQty.ToString();
-                            }
+                    //         Params["@xClassItemCode"] = var["ClassItemCode"].ToString();
+                    //         Params["@nItemID"] = var["N_ItemId"].ToString();
+                    //         // object subQty = dLayer.ExecuteScalar("Select N_Qty from Inv_ItemDetails where N_MainItemId=(select N_ItemId from Inv_Itemmaster where X_itemcode=@xClassItemCode) and N_ItemId=@nItemID and N_CompanyID=@nCompanyID", Params, connection);
+                    //         // if (subQty != null)
+                    //         //     var["SubQty"] = subQty.ToString();
+                    //     }
+                    //     else
+                    //     {
+                    //         Params["@nSPriceTypeID"] = var["N_SPriceTypeID"].ToString();
+                    //         if (var["N_SPriceTypeID"].ToString() != "")
+                    //             var["X_UpdatedSPrice"] = Convert.ToString(dLayer.ExecuteScalar("select X_Name from Gen_LookupTable where N_CompanyID=@nCompanyID and N_ReferId=3 and N_PkeyId=@nSPriceTypeID", Params, connection));
+                    //         Params["@nItemID"] = var["N_ItemId"].ToString();
+                    //         Params["@xItemUnit"] = var["X_ItemUnit"].ToString();
+                    //         object BaseUnitQty = dLayer.ExecuteScalar("Select N_Qty from Inv_ItemUnit Where N_CompanyID=@nCompanyID and N_ItemID =@nItemID and X_ItemUnit=@xItemUnit", Params, connection);
+                    //         if (BaseUnitQty != null)
+                    //         {
+                    //             var["BaseUnitQty"] = BaseUnitQty.ToString();
+                    //         }
 
-                            if (B_LastSPrice)
-                            {
-                                if (BaseUnitQty != null)
-                                    var["LastSellingPrice"] = GetLastSellingPrice(myFunctions.getVAL(BaseUnitQty.ToString()), Params, connection);
-                                else
-                                    var["LastSellingPrice"] = GetLastSellingPrice(myFunctions.getVAL("1"), Params, connection);
-                            }
+                    //         if (B_LastSPrice)
+                    //         {
+                    //             if (BaseUnitQty != null)
+                    //                 var["LastSellingPrice"] = GetLastSellingPrice(myFunctions.getVAL(BaseUnitQty.ToString()), Params, connection);
+                    //             else
+                    //                 var["LastSellingPrice"] = GetLastSellingPrice(myFunctions.getVAL("1"), Params, connection);
+                    //         }
 
-                            if (B_LastPurchaseCost)
-                            {
-                                if (BaseUnitQty == null) { BaseUnitQty = 0; }
-                                object LastPurchaseCost = dLayer.ExecuteScalar("Select TOP(1) ISNULL(N_LPrice,0) from Inv_StockMaster Where N_ItemID=@nItemID and N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and (X_Type='Purchase' or X_Type='Opening') Order by N_StockID Desc", Params, connection);
-                                if (LastPurchaseCost != null)
-                                    var["LastPurchasePrice"] = (myFunctions.getVAL(LastPurchaseCost.ToString()) * myFunctions.getIntVAL(BaseUnitQty.ToString())).ToString(myFunctions.decimalPlaceString(myCompanyID.DecimalPlaces));
-                            }
+                    //         if (B_LastPurchaseCost)
+                    //         {
+                    //             if (BaseUnitQty == null) { BaseUnitQty = 0; }
+                    //             object LastPurchaseCost = dLayer.ExecuteScalar("Select TOP(1) ISNULL(N_LPrice,0) from Inv_StockMaster Where N_ItemID=@nItemID and N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and (X_Type='Purchase' or X_Type='Opening') Order by N_StockID Desc", Params, connection);
+                    //             if (LastPurchaseCost != null)
+                    //                 var["LastPurchasePrice"] = (myFunctions.getVAL(LastPurchaseCost.ToString()) * myFunctions.getIntVAL(BaseUnitQty.ToString())).ToString(myFunctions.decimalPlaceString(myCompanyID.DecimalPlaces));
+                    //         }
 
 
-                        }
+                    //     }
 
-                    }
+                    // }
                     // if (Master.Rows.Count == 0 || Details.Rows.Count == 0)
                     // {
                     //     return Ok(_api.Notice("No data found"));
@@ -482,27 +553,53 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nQuotationID", N_QuotationID);
                     QueryParams.Add("@nBranchID", N_BranchID);
                     QueryParams.Add("@nLocationID", N_LocationID);
-
+                   
                     bool B_SalesEnquiry = myFunctions.CheckPermission(N_CompanyID, 724, "Administrator", "X_UserCategory", dLayer, connection, transaction);
 
                     // Auto Gen
                     string QuotationNo = MasterTable.Rows[0]["x_QuotationNo"].ToString();
                     DataRow Master = MasterTable.Rows[0];
+                   if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_QuotationDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                  {
+                   object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_QuotationDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                  if (DiffFnYearID != null)
+                   {
+                    MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                    N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                  
+                  }
+                  else
+                  {
+                    // transaction.Rollback();
+                    // return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                    // Result.Add("b_IsCompleted", 0);
+                    // Result.Add("x_Msg", "Transaction date must be in the active Financial Year.");
+                      return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                   }
+                  }
+                 object B_YearEndProcess=dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_QuotationDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                if(myFunctions.getBoolVAL(B_YearEndProcess.ToString()))
+                {
+                     return Ok(_api.Error(User, "Year Closed"));
+                }
 
                     SortedList CustParams = new SortedList();
                     CustParams.Add("@nCompanyID", N_CompanyID);
                     CustParams.Add("@nFnYearID", N_FnYearID);
                     object objCustName;
+
+                  
+
                     if (N_CrmCompanyID > 0)
                     {
                         CustParams.Add("@N_CRMCustomerID", N_CrmCompanyID);
-                        objCustName = dLayer.ExecuteScalar("Select X_Customer From Crm_Customer where N_CustomerID=@N_CRMCustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
+                        objCustName = dLayer.ExecuteScalar("Select X_Customer From Crm_Customer where N_CustomerID=@N_CRMCustomerID and N_CompanyID=@nCompanyID  ", CustParams, connection, transaction);
                     }
                     else
                     if (N_ContactID > 0)
                     {
                         CustParams.Add("@N_ContactID", N_ContactID);
-                        objCustName = dLayer.ExecuteScalar("Select X_Contact From Crm_Contact where N_ContactID=@N_ContactID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
+                        objCustName = dLayer.ExecuteScalar("Select X_Contact From Crm_Contact where N_ContactID=@N_ContactID and N_CompanyID=@nCompanyID  ", CustParams, connection, transaction);
                     }
                     else
                     {
@@ -514,9 +611,9 @@ namespace SmartxAPI.Controllers
                         int N_PkeyID = N_QuotationID;
                         string X_Criteria = "n_QuotationID=" + N_PkeyID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Inv_SalesQuotation", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "Sales Quotation", N_PkeyID, QuotationNo, 1, objCustName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "Sales Quotation", N_PkeyID, QuotationNo, 1, objCustName.ToString(), 0, "",0, User, dLayer, connection, transaction);
                         transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_PkeyID, "Sales Quotation", QuotationNo, dLayer, connection, transaction, User);
+                        //myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_PkeyID, "Sales Quotation", QuotationNo, dLayer, connection, transaction, User);
                         return Ok(_api.Success("Sales Quotation Approval updated" + "-" + QuotationNo));
                     }
 
@@ -529,7 +626,7 @@ namespace SmartxAPI.Controllers
                         QuotationNo = dLayer.GetAutoNumber("Inv_SalesQuotation", "x_QuotationNo", Params, connection, transaction);
                         if (QuotationNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
-
+                                                                                                                                                 
                     }
 
                     if (N_QuotationID > 0)
@@ -559,7 +656,7 @@ namespace SmartxAPI.Controllers
                     if (N_CustomerID == 0)
                         objCustName = "";
 
-                    N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "Sales Quotation", N_QuotationID, QuotationNo, 1, objCustName.ToString(), 0, "", User, dLayer, connection, transaction);
+                    N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "Sales Quotation", N_QuotationID, QuotationNo, 1, objCustName.ToString(), 0, "",0, User, dLayer, connection, transaction);
 
                     int N_QuotationDetailId = dLayer.SaveData("Inv_SalesQuotationDetails", "n_QuotationDetailsID", DetailTable, connection, transaction);
                     if (N_QuotationDetailId <= 0)
@@ -599,8 +696,17 @@ namespace SmartxAPI.Controllers
                                 return Ok(_api.Error(User, ex));
                             }
                         }
+
+                                if (N_QuotationID > 0)
+                                {
+                                    if(!myFunctions.UpdateTxnStatus(N_CompanyID,N_QuotationID,80,false,dLayer,connection,transaction))
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                    }
+                                }
                         //transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_QuotationID, "Sales Quotation", QuotationNo, dLayer, connection, transaction, User);
+                        //myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_QuotationID, "Sales Quotation", QuotationNo, dLayer, connection, transaction, User);
                     }
                     transaction.Commit();
 
@@ -836,7 +942,10 @@ namespace SmartxAPI.Controllers
                     CustParams.Add("@N_CustomerID", N_CustomerID);
                     CustParams.Add("@nFnYearID", nFnYearID);
                     object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection);
-                    // string CustName = TransRow["X_CustomerName"].ToString();
+                     string CustName ="";
+                     if(objCustName!=null)
+                        CustName=objCustName.ToString();
+
 
                     DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, N_QuotationID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
                     Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
@@ -859,7 +968,7 @@ namespace SmartxAPI.Controllers
                         string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                         int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
 
-                        string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Sales Quotation", N_QuotationID, TransRow["X_QuotationNo"].ToString(), ProcStatus, "Inv_SalesQuotation", X_Criteria, objCustName.ToString(), User, dLayer, connection, transaction);
+                        string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Sales Quotation", N_QuotationID, TransRow["X_QuotationNo"].ToString(), ProcStatus, "Inv_SalesQuotation", X_Criteria, CustName.ToString(), User, dLayer, connection, transaction);
                         if (status != "Error")
                         {
                             if (ButtonTag == "6" || ButtonTag == "0")
