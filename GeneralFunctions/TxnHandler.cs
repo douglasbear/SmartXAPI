@@ -576,7 +576,7 @@ namespace SmartxAPI.GeneralFunctions
                             PostingMRNParam.Add("B_DirectPurchase", Dir_Purchase);
                             PostingMRNParam.Add("N_MRNID", n_MRNID);
 
-                            dLayer.ExecuteNonQueryPro("[SP_Inv_MRNprocessing]", PostingMRNParam, connection, transaction);
+                             dLayer.ExecuteNonQueryPro("[SP_Inv_MRNprocessing]", PostingMRNParam, connection, transaction);
 
                             SortedList PostingParam = new SortedList();
                             PostingParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
@@ -586,7 +586,7 @@ namespace SmartxAPI.GeneralFunctions
                             PostingParam.Add("X_SystemName", "ERP Cloud");
                             PostingParam.Add("MRN_Flag", Dir_Purchase==0 ? "1" : "0");
 
-                            dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
+                             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
 
                             SortedList StockOutParam = new SortedList();
                             StockOutParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
