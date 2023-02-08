@@ -42,7 +42,7 @@ namespace SmartxAPI.Dtos.Login
         public int N_TeacherID { get; set; }
         public string X_TeacherCode { get; set; }
         public string X_TeacherName { get; set; }
-
+        public int N_TypeID { get; set; }
 
     }
 }
