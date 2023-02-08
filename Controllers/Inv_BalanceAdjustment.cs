@@ -248,7 +248,7 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
 
                      if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_AdjustmentDate"].ToString(), "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
                     {
-                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=@nCompanyID and convert(date ,'" + MasterTable.Rows[0]["D_AdjustmentDate"].ToString() + "') between D_Start and D_End", Params, connection, transaction);
+                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_AdjustmentDate"].ToString() + "') between D_Start and D_End", Params, connection, transaction);
                         if (DiffFnYearID != null)
                         {
                             MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
