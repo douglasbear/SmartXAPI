@@ -158,8 +158,8 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string Code = "";
-                    var values = MasterTable.Rows[0]["X_RegistrationCode"].ToString();
-                    if (values == "@Auto")
+                    var xRegistrationCode = MasterTable.Rows[0]["X_RegistrationCode"].ToString();
+                    if (xRegistrationCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                          Params.Add("N_YearID", nFnYearId);
@@ -245,7 +245,10 @@ namespace SmartxAPI.Controllers
                     }
 
                     transaction.Commit();
-                    return Ok(api.Success("Bus Registration Completed"));
+                    SortedList Result = new SortedList();
+                    Result.Add("n_RegistrationID", nRegistrationID);
+                    Result.Add("x_RegistrationCode", xRegistrationCode);
+                    return Ok(api.Success(Result, "Bus Registration Completed"));
 
                 }
             }
@@ -359,6 +362,43 @@ namespace SmartxAPI.Controllers
 
 
         }
+
+
+          [HttpGet("BusDetails") ]
+        public ActionResult BusDetails(int nCompanyID,string xAdmissionNo)
+        {    
+            SortedList param = new SortedList();           
+            DataTable dt=new DataTable();
+            
+            string sqlCommandText="";
+
+            sqlCommandText="select * from vw_studentAdmissionToBusReg where N_CompanyID=@p1 and X_AdmissionNo=@p2";
+
+            param.Add("@p1", nCompanyID);  
+            param.Add("@p2", xAdmissionNo);           
+                
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                }
+                if(dt.Rows.Count==0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }              
+            }
+            catch(Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }   
+        } 
     }
 }
 

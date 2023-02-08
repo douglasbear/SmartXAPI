@@ -181,13 +181,14 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction=connection.BeginTransaction();
-                    string ReturnNo="",xTransType="";
+                    var xTransType="";
                     int nCompanyID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
                     int N_AssetInventoryID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_AssetInventoryID"].ToString());
                     int TypeID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_TypeID"].ToString());
                     int nLocationID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationID"].ToString());
                     int N_UserID=myFunctions.GetUserID(User);
                     var X_InvoiceNo = MasterTable.Rows[0]["X_InvoiceNo"].ToString();
+                    string ReturnNo = MasterTable.Rows[0]["X_InvoiceNo"].ToString();
                     MasterTable.Columns.Remove("N_LocationID");
 
                     if(X_InvoiceNo=="@Auto"){
@@ -198,13 +199,6 @@ namespace SmartxAPI.Controllers
                         ReturnNo =  dLayer.GetAutoNumber("Ass_SalesMaster","X_InvoiceNo", Params,connection,transaction);
                         if(ReturnNo==""){transaction.Rollback(); return Ok(_api.Warning("Unable to generate Invoice Number"));}
                         MasterTable.Rows[0]["X_InvoiceNo"] = ReturnNo;
-                    }
-
-
-                        if (N_AssetInventoryID > 0)
-                    {
-                        dLayer.DeleteData("Ass_SalesMaster", "N_AssetInventoryID", N_AssetInventoryID, "N_CompanyID=" + nCompanyID + " and N_AssetInventoryID=" + N_AssetInventoryID, connection, transaction);
-                        dLayer.DeleteData("Ass_SalesDetails", "N_AssetInventoryID", N_AssetInventoryID, "N_CompanyID=" + nCompanyID + " and N_AssetInventoryID=" + N_AssetInventoryID, connection, transaction);
                     }
 
                     if(N_AssetInventoryID>0)

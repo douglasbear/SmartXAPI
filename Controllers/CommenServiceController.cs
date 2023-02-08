@@ -156,6 +156,7 @@ namespace SmartxAPI.Controllers
                     string companyname = myFunctions.GetCompanyName(User);
                     string activeDbUri = "SmartxConnection";
                     bool b_AppNotExist = false;
+                    bool b_noUserCategoryExist = false;
 
                     try
                     {
@@ -179,7 +180,8 @@ namespace SmartxAPI.Controllers
                             }
                             paramList.Add("@nAppID", appID);
                             object checkAppExisting = dLayer.ExecuteScalar("SELECT Count(N_AppID) as Count FROM ClientApps where N_ClientID=@nClientID and N_AppID=@nAppID", paramList, olivCnn);
-                            if (myFunctions.getIntVAL(checkAppExisting.ToString()) == 0)
+                      
+                            if (myFunctions.getIntVAL(checkAppExisting.ToString()) == 0 )
                             {
                                 object isAdmin = dLayer.ExecuteScalar("SELECT Count(N_ClientID) as Count FROM clientMaster where N_ClientID=@nClientID and X_EmailID=@xEmailID", paramList, olivCnn);
                                 if (myFunctions.getIntVAL(isAdmin.ToString()) == 0)
@@ -222,6 +224,10 @@ namespace SmartxAPI.Controllers
                                 // // }
                                 //     }
                             }
+                            else
+                            {
+
+                            }
                             connectionString = cofig.GetConnectionString(activeDbUri);
                             // if(companyid>0)
                             // {
@@ -233,7 +239,11 @@ namespace SmartxAPI.Controllers
                                     dLayer.ExecuteNonQuery("delete from Sec_UserApps where N_CompanyID="+companyid+" and N_AppID="+appID+" and N_UserID="+myFunctions.GetUserID(User)+" and N_GlobalUserID="+GlobalUserID, paramList, cnn);
                                     dLayer.ExecuteNonQuery("insert into Sec_UserApps select "+companyid+",max(N_APPMappingID)+1,"+appID+","+myFunctions.GetUserID(User)+","+GlobalUserID+" from Sec_UserApps", paramList, cnn);
                                 }
-                                  
+                              if(companyid>0)
+                              {
+                              object userCategoryCount = dLayer.ExecuteScalar("SELECT Count(N_UserCategoryID) as Count FROM Sec_UserCategory where  N_AppID="+appID+" and N_CompanyID="+companyid+"", paramList, cnn);
+                              if(myFunctions.getIntVAL(userCategoryCount.ToString()) == 0){ b_noUserCategoryExist=true;}
+                              }
                                 string companySql = "";
                                 if (companyid > 0)
                                     companySql = " and Acc_Company.N_CompanyID=" + companyid + " ";
@@ -251,7 +261,7 @@ namespace SmartxAPI.Controllers
                                 }
                                 companyid = myFunctions.getIntVAL(companyDt.Rows[0]["N_CompanyID"].ToString());
                                 companyname = companyDt.Rows[0]["X_CompanyName"].ToString();
-                                if (b_AppNotExist)
+                                if (b_AppNotExist || b_noUserCategoryExist)
                                 {
                                     paramList.Add("@companyid", companyid);
                                     int nUserCat = dLayer.ExecuteNonQuery("insert into Sec_UserCategory SELECT @companyid, MAX(N_UserCategoryID)+1, (select X_UserCategory from Sec_UserCategory where N_CompanyID=-1 and N_AppID=@nAppID), MAX(N_UserCategoryID)+1, 12, @nAppID FROM Sec_UserCategory ", paramList, cnn);

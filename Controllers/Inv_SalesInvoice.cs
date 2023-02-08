@@ -342,7 +342,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesInvoiceDetails(int nCompanyId, bool bAllBranchData, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID, string xDeliveryNoteID,int nServiceSheetID, string xServiceSheetID)
+        public ActionResult GetSalesInvoiceDetails(int nCompanyId, bool bAllBranchData, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID, string xDeliveryNoteID,int nServiceSheetID, string xServiceSheetID,string xSchSalesID,bool isServiceOrder)
         {
             if (xInvoiceNo != null)
                 xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
@@ -363,6 +363,8 @@ namespace SmartxAPI.Controllers
                     string DetailGetSql = "";
                      int N_DeliveryNote=0;
                       string x_DeliveryNoteNo="";
+                      bool IsDirectMRN=false;
+                      string DisplayName = "";
                     //CRM Quotation Checking
                     if (n_OpportunityID > 0)
                     {
@@ -383,6 +385,8 @@ namespace SmartxAPI.Controllers
                         string Mastersql = "";
                         // string xDeliveryNo="";
 
+  
+
                         if (nDeliveryNoteId > 0)
                         {
                             QueryParamsList.Add("@nDeliveryNoteID", nDeliveryNoteId);
@@ -392,6 +396,21 @@ namespace SmartxAPI.Controllers
                             MasterTable = _api.Format(MasterTable, "Master");
                             N_salesOrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_salesOrderID"].ToString());
                             xDeliveryNoteID = nDeliveryNoteId.ToString();
+
+                     if(xDeliveryNoteID!=null){
+                     object purchaseOrderNo = dLayer.ExecuteScalar("select N_SalesOrderID from Inv_DeliveryNoteDetails where N_CompanyID=" + nCompanyId +" and N_DeliveryNoteID=" + xDeliveryNoteID, QueryParamsList, Con);
+                     if(purchaseOrderNo==null)
+                      purchaseOrderNo=0;
+                if( myFunctions.getVAL(purchaseOrderNo.ToString()) > 0)
+                {
+                     IsDirectMRN=false;
+                  }
+                  else{
+                     IsDirectMRN=true;
+                 }
+                   
+
+                 }
                         }
                         else
                         {
@@ -446,6 +465,52 @@ namespace SmartxAPI.Controllers
 
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
+
+
+                     int EnableInvoicebasedtax = myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "EnableInvoicebasedtax", "N_Value", nCompanyId, dLayer, Con));
+                    if(EnableInvoicebasedtax==0 &&IsDirectMRN==true){
+                     DataTable deliveryDetails = new DataTable();
+                    string directDelivery = "SELECT Acc_TaxCategory.X_DisplayName,Inv_DeliveryNoteDetails.N_DeliveryNoteID, Acc_TaxCategory.N_Amount as N_TaxAmt1, Inv_ItemCategory.N_TaxCategoryID as N_TaxCategoryID1, Inv_DeliveryNote.N_FnYearId, Inv_DeliveryNote.N_CompanyId,Inv_ItemMaster.N_ItemID FROM Inv_ItemCategory INNER JOIN Inv_DeliveryNoteDetails INNER JOIN Inv_DeliveryNote ON Inv_DeliveryNoteDetails.N_DeliveryNoteID = Inv_DeliveryNote.N_DeliveryNoteId AND Inv_DeliveryNoteDetails.N_CompanyID = Inv_DeliveryNote.N_CompanyId INNER JOIN Inv_ItemMaster ON Inv_DeliveryNoteDetails.N_ItemID = Inv_ItemMaster.N_ItemID AND Inv_DeliveryNoteDetails.N_CompanyID = Inv_ItemMaster.N_CompanyID INNER JOIN Acc_FnYear ON Inv_DeliveryNote.N_FnYearId = Acc_FnYear.N_FnYearID AND Inv_DeliveryNote.N_CompanyId = Acc_FnYear.N_CompanyID ON Inv_ItemCategory.N_CategoryID = Inv_ItemMaster.N_CategoryID AND Inv_ItemCategory.N_CompanyID = Inv_ItemMaster.N_CompanyID INNER JOIN Acc_TaxCategory ON Inv_ItemCategory.N_TaxCategoryID = Acc_TaxCategory.N_PkeyID AND Inv_ItemCategory.N_CompanyID = Acc_TaxCategory.N_CompanyID where (Inv_DeliveryNoteDetails.n_deliveryNoteID =@nDeliveryNoteID)";
+                    deliveryDetails = dLayer.ExecuteDataTable(directDelivery, QueryParamsList, Con);
+                    // string DisplayName = "";
+                     
+
+                        foreach (DataRow dr in deliveryDetails.Rows)
+                        {
+                         foreach (DataRow Row in DetailTable.Rows){
+
+                             if (dr["N_ItemID"].ToString() == Row["N_ItemID"].ToString())
+                             {
+                               Row["x_DisplayName"] = dr["X_DisplayName"].ToString();
+                               Row["n_TaxPercentage1"]=dr["N_TaxAmt1"];
+                               Row["n_TaxCategoryID1"]=dr["n_TaxCategoryID1"];
+                               Row["n_TaxAmt1"]=dr["N_TaxAmt1"];
+
+
+                             }
+                         }
+                       }
+                     }
+                     DetailTable.AcceptChanges();
+
+                    if (IsDirectMRN && EnableInvoicebasedtax==1)
+                     {
+                    object taxID = dLayer.ExecuteScalar("Select N_Value from Gen_Settings where N_CompanyId=" + nCompanyId+" and X_Description='DefaultTaxCategory' and X_Group='Inventory'", QueryParamsList, Con);
+                         if(taxID!=null)
+                         {
+                             object category = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_CompanyId=" + nCompanyId+" and X_PkeyCode=" + taxID+" ", QueryParamsList, Con);
+                             object taxCatID = dLayer.ExecuteScalar("Select N_PkeyID from Acc_TaxCategory where N_CompanyId=" + nCompanyId+" and X_PkeyCode=" + taxID+" ", QueryParamsList, Con);
+                             object percentage = dLayer.ExecuteScalar("Select Cast(REPLACE(N_Amount,',','') as Numeric(10,0)) from Acc_TaxCategory where N_PkeyID=" + taxID+" ", QueryParamsList, Con);
+                            
+                                MasterTable.Rows[0]["X_DisplayName"] = category.ToString();
+                                MasterTable.Rows[0]["n_TaxCategoryID"] = myFunctions.getIntVAL(taxCatID.ToString());
+                                MasterTable.Rows[0]["n_TaxPercentage"] =myFunctions.getIntVAL(percentage.ToString());
+                                 MasterTable.Rows[0]["n_TaxAmt"] =myFunctions.getIntVAL(percentage.ToString());
+                               }
+                               MasterTable.AcceptChanges();
+
+                     }
+
                         if (nDeliveryNoteId >0 || N_DeliveryNote>0)
                         {
                             if (myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesOrderID"].ToString()) > 0)
@@ -510,6 +575,32 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Success(dsSalesInvoice));
 
                     }
+                      else if(isServiceOrder && nSalesOrderID > 0)
+                    {
+                        QueryParamsList.Add("@nOrderID", nSalesOrderID);
+                        string Mastersql = "select *,0 as B_IsProforma from vw_SalesOrderMasterToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID";
+                        DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
+                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                        if (!MasterTable.Columns.Contains("N_OpportunityID"))
+                        {
+                            MasterTable.Columns.Add("N_OpportunityID");
+                            MasterTable.Rows[0]["N_OpportunityID"] = n_OpportunityID.ToString();
+                        }
+                        MasterTable = _api.Format(MasterTable, "Master");
+                        if (isProfoma == 1)
+                        {
+                            MasterTable.Rows[0]["B_IsSaveDraft"] = 1;
+                            MasterTable.Rows[0]["B_IsProforma"] = 1;
+                        }
+
+                        string DetailSql = "";
+                        DetailSql = "select *,0 as N_MaterialID,0 as N_DisplayQty,0 as N_TaskID  from vw_SalesOrderDetailsToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID union select * from vw_ServiceDetailsItems where N_CompanyId=@nCompanyID and N_ServiceID in (select N_ServiceID from Inv_SalesOrderDetails where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID )";
+                        DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+                        DetailTable = _api.Format(DetailTable, "Details");
+                        dsSalesInvoice.Tables.Add(MasterTable);
+                        dsSalesInvoice.Tables.Add(DetailTable);
+                        return Ok(_api.Success(dsSalesInvoice));
+                    }
                     else
                     if (nSalesOrderID > 0)
                     {
@@ -539,6 +630,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Success(dsSalesInvoice));
 
                     }
+                  
                     else
                     if (nServiceID > 0)
                     {
@@ -548,7 +640,7 @@ namespace SmartxAPI.Controllers
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable = _api.Format(MasterTable, "Master");
                         string DetailSql = "";
-                        DetailSql = "select * from Vw_ServiceDetailsToInvoice where N_CompanyId=@nCompanyID and N_ServiceID=@nServiceID";
+                        DetailSql = "select * from Vw_ServiceDetailsToInvoice where N_CompanyId=@nCompanyID and N_ServiceID=@nServiceID ";
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
                         dsSalesInvoice.Tables.Add(MasterTable);
@@ -668,6 +760,26 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Success(dsSalesInvoice));
 
                     }
+                    else if (xSchSalesID !="" && xSchSalesID!=null)
+                    {
+
+                        string[] X_SchID = xSchSalesID.Split(",");
+                        int N_SchID = myFunctions.getIntVAL(X_SchID[0].ToString());
+                        string Mastersql = "select * from Vw_FeeDetailsToSalesMaster where N_SchSalesID="+N_SchID+" and N_CompanyID="+nCompanyId+"";
+                        DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
+                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                        MasterTable = _api.Format(MasterTable, "Master");
+                      
+                        string DetailSql = "";
+                        DetailSql = "select * from Vw_FeeDetailsToSalesDetails where N_CompanyId=@nCompanyID and  N_SchSalesID in ("+xSchSalesID+")";
+                        DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+                        DetailTable = _api.Format(DetailTable, "Details");
+                        dsSalesInvoice.Tables.Add(MasterTable);
+                        dsSalesInvoice.Tables.Add(DetailTable);
+                        return Ok(_api.Success(dsSalesInvoice));
+
+                    }
+
                     else
                     {
                         QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);

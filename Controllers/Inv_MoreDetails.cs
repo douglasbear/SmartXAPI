@@ -148,11 +148,13 @@ namespace SmartxAPI.Controllers
 
                     Results = dLayer.DeleteData("Inv_ServiceInfo", "N_ServiceInfoID", nServiceInfoID, "N_CompanyID=" + nCompanyID + "", connection);
                     dLayer.DeleteData("Inv_ServiceCondition", "N_ServiceInfoID", nServiceInfoID, "N_CompanyID=" + nCompanyID + "", connection);
+                    dLayer.DeleteData("Inv_ServiceMaterials", "N_ServiceInfoID", nServiceInfoID, "N_CompanyID=" + nCompanyID + "", connection);
+                        
 
                 }
                 if (Results > 0)
                 {
-                    return Ok(api.Success("Device deleted"));
+                    return Ok(api.Success("Deleted Sucessfully"));
                 }
                 else
                 {
@@ -196,17 +198,18 @@ namespace SmartxAPI.Controllers
 
                     Master = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     Master = api.Format(Master, "Master");
+                   
 
-
-                    if (Master.Rows.Count == 0)
-                    {
-                        return Ok(api.Notice("No Results Found"));
-                    }
-                    else
-                    {
+                    // if (Master.Rows.Count == 0)
+                    // {
+                    //     //return Ok(api.Notice("No Results Found"));
+                    //     return Ok(api.Success(ds));
+                    // }
+                    // else
+                    // {
                         // Params.Add("@nServiceInfoID", Master.Rows[0]["nServiceInfoID"].ToString());
+                       
                         ds.Tables.Add(Master);
-
                         string DeviceDetailsSql = "select * from vw_Inv_ServiceCondition where N_CompanyID=" + nCompanyID + " and N_ServiceInfoID=" + nServiceInfoID;
 
                         DeviceDetails = dLayer.ExecuteDataTable(DeviceDetailsSql, Params, connection);
@@ -222,7 +225,7 @@ namespace SmartxAPI.Controllers
                         ds.Tables.Add(ReqMaterials);
 
 
-                    }
+                    //}
 
                 }
                 return Ok(api.Success(ds));
