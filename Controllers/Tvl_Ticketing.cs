@@ -177,7 +177,7 @@ namespace SmartxAPI.Controllers
                         PMasterDt = api.Format(PMasterDt, "master");
                         Pds.Tables.Add(PMasterDt);
 
-                        string sqlPurchaseDetails ="SELECT     Tvl_Ticketing.N_CompanyID, ISNULL(Inv_PurchaseDetails.N_PurchaseID,0) AS N_PurchaseID, ISNULL(Inv_PurchaseDetails.N_PurchaseID,N_PurchaseDetailsID) AS N_PurchaseDetailsID, Inv_ItemMaster.N_ItemID, 1 AS N_Qty, "+
+                        string sqlPurchaseDetails ="SELECT     Tvl_Ticketing.N_CompanyID, ISNULL(Inv_PurchaseDetails.N_PurchaseID,0) AS N_PurchaseID, ISNULL(Inv_PurchaseDetails.N_PurchaseDetailsID) AS N_PurchaseDetailsID, Inv_ItemMaster.N_ItemID, 1 AS N_Qty, "+
                                                     " Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission AS N_PPrice, Inv_ItemMaster.N_ItemUnitID, 1 AS N_QtyDisplay, "+
                                                     " Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission AS N_Cost, GETDATE() AS D_Entrydate, Acc_BranchMaster.N_BranchID, Inv_Location.N_LocationID, "+
                                                     " Acc_Company.N_CurrencyID, 1 AS N_ExchangeRate, Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission AS N_PPriceF, "+
