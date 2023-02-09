@@ -130,6 +130,37 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("getGenNotifications")]
+        public ActionResult GetNotificationList()
+        {
+            SortedList Params = new SortedList();
+            DataTable dt = new DataTable();
+
+            int nUserID = myFunctions.GetUserID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "";
+
+            sqlCommandText = "select * from Gen_Notifications where (N_CompanyID=0 and N_UserID=0) or (N_CompanyID=@nCompanyID and (N_UserID=@nUserID or N_UserID=0))";
+            Params.Add("@nCompanyD", nCompanyID);
+            Params.Add("@nUserID", nUserID);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    
+                    SortedList res = new SortedList();
+                    res.Add("Details", api.Format(dt));
+                    return Ok(api.Success(res));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
 
 
 
