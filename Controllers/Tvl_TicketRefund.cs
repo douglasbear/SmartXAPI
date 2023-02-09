@@ -405,6 +405,41 @@ namespace SmartxAPI.Controllers
 
 
         }
+
+
+
+               [HttpGet("tktList")]
+        public ActionResult RefundDetails()
+        {
+            DataSet dt = new DataSet();
+            DataTable MasterTable = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            string sqlCommandText = "select * from Tvl_Ticketing where N_CompanyID=@p1";
+            Params.Add("@p1", nCompanyId);  
+            // Params.Add("@p2", X_RefundNo);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    if (MasterTable.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+
+                    MasterTable = api.Format(MasterTable, "Master");
+                    dt.Tables.Add(MasterTable);
+                }
+                return Ok(api.Success(dt));
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
     }
 }
 
