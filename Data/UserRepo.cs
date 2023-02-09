@@ -52,8 +52,9 @@ namespace SmartxAPI.Data
         
            
             
-  public LoginResponseDto Authenticate(string companyname,string username, string password,string ipAddress,int AppID)
+  public LoginResponseDto Authenticate(string companyname,string username, string password,string ipAddress,int AppID,int loginID)
         {
+            
             
             if (string.IsNullOrEmpty(companyname) || string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                 return null;
@@ -84,7 +85,7 @@ namespace SmartxAPI.Data
                 else
                 {
                     DataRow dr =dt.Rows[0];
-                   return(_services.Authenticate(myFunctions.getIntVAL(dr["N_CompanyID"].ToString()),dr["X_CompanyName"].ToString(),dr["X_UserName"].ToString(),myFunctions.getIntVAL(dr["N_UserID"].ToString()),"All",AppID,"",0,0));
+                   return(_services.Authenticate(myFunctions.getIntVAL(dr["N_CompanyID"].ToString()),dr["X_CompanyName"].ToString(),dr["X_UserName"].ToString(),myFunctions.getIntVAL(dr["N_UserID"].ToString()),"All",AppID,"",0,0,ipAddress,loginID));
                 }                   
         }
     }
@@ -92,7 +93,7 @@ namespace SmartxAPI.Data
     public interface ISec_UserRepo
     {
 
-        LoginResponseDto Authenticate(string companyname,string username, string password ,string IpAddress,int AppID);
+        LoginResponseDto Authenticate(string companyname,string username, string password ,string IpAddress,int AppID,int loginID);
  
     }
 }

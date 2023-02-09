@@ -297,12 +297,20 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_CostCentreCode"] = X_CostCentreCode;
                         MasterTable.Rows[0]["N_CostCentreID"] = 0;
                     }
-                    // else
-                    // {
-                    //     dLayer.DeleteData("Acc_CostCentreMaster", "N_CostCentreID", N_CostCentreID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
-                    // }
+                    else
+                    {
+                        dLayer.DeleteData("Acc_CostCentreMaster", "N_CostCentreID", N_CostCentreID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+                    }
                     if (MasterTable.Columns.Contains("n_empid"))
                         MasterTable.Columns.Remove("n_empid");
+
+                    if (MasterTable.Columns.Contains("B_AllowTransactionPosting"))
+                        MasterTable.Rows[0]["B_AllowTransactionPosting"]=1;
+                    else
+                    {
+                        myFunctions.AddNewColumnToDataTable(MasterTable, "B_AllowTransactionPosting", typeof(bool), 1);
+                    }
+
                     N_CostCentreID = dLayer.SaveData("Acc_CostCentreMaster", "N_CostCentreID", MasterTable, connection, transaction);
                     if (N_CostCentreID <= 0)
                     {
@@ -314,7 +322,7 @@ namespace SmartxAPI.Controllers
                         transaction.Commit();
                     }
 
-                    return Ok(_api.Success("Department/Cost Centre Saved"));
+                    return Ok(_api.Success("Entry Saved"));
                 }
             }
             catch (Exception ex)
@@ -348,13 +356,13 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            return Ok(_api.Error(User,"Department Allready Used"));
+                            return Ok(_api.Error(User,"Department/Costcenter Allready in use"));
                         }
                     }
                 }
                 if (Results > 0)
                 {
-                    return Ok(_api.Success("Department/Cost centre deleted"));
+                    return Ok(_api.Success("Entry deleted"));
                 }
                 else
                 {

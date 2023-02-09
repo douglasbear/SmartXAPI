@@ -220,6 +220,7 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nApprovalSettingsID, int nCompanyID, int nFnYearID)
         {
             int Results = 0;
+            
             try
             {
                 SortedList QueryParams = new SortedList();
@@ -229,7 +230,12 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
+                    object apprObj = dLayer.ExecuteScalar("select count(*) From Pay_Employee where N_ApprovalID = @nApprovalSettingsID and N_CompanyID=@nCompanyID",QueryParams, connection);
+                    int  N_Count= myFunctions.getIntVAL(apprObj.ToString());
+                    if(N_Count > 0)
+                    {
+                    return Ok( _api.Error(User,"Unable to delete its already in use"));
+                    }
                     Results = dLayer.DeleteData("Sec_ApprovalSettings_Employee", "N_ApprovalSettingsID", nApprovalSettingsID, "", connection);
 
 

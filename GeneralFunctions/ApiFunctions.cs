@@ -98,7 +98,10 @@ namespace SmartxAPI.GeneralFunctions
         {
             return (new { type = "warning", Message = message, Data = "" });
         }
-
+        public object Unauthorized(string message)
+        {
+            return (new { type = "unauthorized", Message = message, Data = "" });
+        }
 
         public object Error(ClaimsPrincipal User, Exception ex)
         {
@@ -118,6 +121,9 @@ namespace SmartxAPI.GeneralFunctions
                 case "Invalid co":
                     Msg = ex.Message.Substring(0, 42);
                     break;
+                case "Not Enou":
+                 Msg = ex.Message;
+                    break;
                 default:
                     if (ex.Message.Contains("Invalid column name '") == true)
                     {
@@ -135,12 +141,18 @@ namespace SmartxAPI.GeneralFunctions
                         Msg = "Some accounts may not properly set. Please check the  Account Mapping !";
                         break;
                     }
+
+                    if(ex.Message.Contains("ResponseText-")){
+                         Msg = ex.Message.Replace("ResponseText- ","");
+                        break;
+                    }
                     if (ex.Message.Contains("Transaction Processed"))
                     {
                         Msg = ex.Message;
                         break;
                     }
                     break;
+
                     // if (env.EnvironmentName == "Development")
                     // {
                     //     Msg = ex.Message;
@@ -158,8 +170,8 @@ namespace SmartxAPI.GeneralFunctions
             if (!Directory.Exists(logPath))
                 Directory.CreateDirectory(logPath);
 
-                File.AppendAllText(logPath + myFunctions.GetCompanyName(User) + " - log.log", sb.ToString());
-                sb.Clear();
+            File.AppendAllText(logPath + myFunctions.GetCompanyName(User) + " - log.log", sb.ToString());
+            sb.Clear();
 
             return (new { type = "error", Message = Msg, Data = "" });
 
@@ -256,6 +268,7 @@ namespace SmartxAPI.GeneralFunctions
         public object Success(string message);
         public object Success(DataSet dataSet, String message);
         public object Success(DataRow dataRow, String message);
+        public object Unauthorized(string message);
         public object Notice(string message);
         public object Warning(string message);
         public string GetContentType(string path);

@@ -172,8 +172,15 @@ namespace SmartxAPI.Controllers
                     dLayer.DeleteData("Pay_InsuranceSettingsDetails", "N_InsuranceSettingsID", nInsuranceSettingsID, "", connection, transaction);
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                          nInsuranceSettingsDetailsID = dLayer.SaveData("Pay_InsuranceSettingsDetails", "N_InsuranceSettingsDetailsID", DetailTable, connection, transaction);
+                        DetailTable.Rows[j]["N_InsuranceSettingsID"] = nInsuranceSettingsID;  
                     }
+                    nInsuranceSettingsDetailsID = dLayer.SaveData("Pay_InsuranceSettingsDetails", "N_InsuranceSettingsDetailsID", DetailTable, connection, transaction);
+                    if (nInsuranceSettingsDetailsID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User,"Unable to save"));
+                    }
+
                     transaction.Commit();
                     return Ok(_api.Success("Insurance Price Settings Saved"));
                 }

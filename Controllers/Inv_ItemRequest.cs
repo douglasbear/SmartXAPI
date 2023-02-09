@@ -33,7 +33,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetRequestList(int nCompanyId, int nFnYearId, int nBranchID, bool bAllBranchData, int FormID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetRequestList(int nCompanyId, int nFnYearId, int nBranchID, bool bAllBranchData, int FormID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nLocationID,bool isRecieved)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -42,9 +42,10 @@ namespace SmartxAPI.Controllers
             string sqlCommandCount = "";
             string sqlCondition = "";
             string Searchkey = "";
+            string transferCondition = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([PRS No] like '%" + xSearchkey + "%')";
+                Searchkey = "and ([PRS No] like '%" + xSearchkey + "%' or X_ProjectName like '%" + xSearchkey + "%' or location like '%" + xSearchkey + "%' or X_DeliveryPlace like '%" + xSearchkey + "%' or  X_Purpose like '%" + xSearchkey + "%' or  [PRS No] like '%" + xSearchkey + "%' or  D_PRSDate like '%" + xSearchkey + "%' )";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_PRSID desc";
@@ -62,6 +63,14 @@ namespace SmartxAPI.Controllers
                 }
                 xSortBy = " order by " + xSortBy;
             }
+            if(FormID==1592 && isRecieved)
+            {
+              transferCondition=" and N_Processed=2 ";
+            }
+            else if(FormID==1592 && !isRecieved)
+            {
+                transferCondition=" and N_Processed!=2 ";
+            }
 
             Params.Add("@nCompanyId", nCompanyId);
             Params.Add("@nFnYearId", nFnYearId);
@@ -76,27 +85,42 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     if (!myFunctions.CheckClosedYear(nCompanyId, nFnYearId, dLayer, connection))
                     {
-                        if (bAllBranchData)
-                            sqlCondition = "N_CompanyID=@nCompanyId and B_YearEndProcess=0 and N_FormID=@FormID";
-                        else
-                            sqlCondition = "N_CompanyID=@nCompanyId and N_BranchID=@nBranchID and B_YearEndProcess=0 and N_FormID=@FormID";
+                        if(FormID==1592)
+                        { 
+                         sqlCondition= "N_CompanyID=@nCompanyId and B_YearEndProcess=0 and N_FormID=@FormID and (N_LocationIDFrom ="+nLocationID+" or N_LocationID="+nLocationID+")  ";
+                        }
+                        else 
+                        {
+                            if (bAllBranchData)
+                                sqlCondition = "N_CompanyID=@nCompanyId and B_YearEndProcess=0 and N_FormID=@FormID";
+                            else
+                                sqlCondition = "N_CompanyID=@nCompanyId and N_BranchID=@nBranchID and B_YearEndProcess=0 and N_FormID=@FormID";
+                        }
                     }
                     else
                     {
+                        if(FormID==1592)
+                        { 
+                         sqlCondition= "N_CompanyID=@nCompanyId and N_FormID=@FormID and (N_LocationIDFrom ="+nLocationID+" or N_LocationID="+nLocationID+" ) ";
+                        }
+                        else
+                        {
                         if (bAllBranchData)
                             sqlCondition = "N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and N_FormID=@FormID";
                         else
                             sqlCondition = "N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and N_BranchID=@nBranchID and N_FormID=@FormID";
+
+                        }
                     }
 
                     if (Count == 0)
-                        sqlCommandText = "select  top(" + nSizeperpage + ") [PRS No] as x_PRSNo,* from vw_InvPRSNo_UCSearch where " + sqlCondition + " " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select  top(" + nSizeperpage + ") [PRS No] as x_PRSNo,* from vw_InvPRSNo_UCSearch where " + sqlCondition + " " + transferCondition + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select  top(" + nSizeperpage + ") [PRS No] as x_PRSNo,* from vw_InvPRSNo_UCSearch where " + sqlCondition + " " + Searchkey + " and N_PRSID not in (select top(" + Count + ") N_PRSID from vw_InvPRSNo_UCSearch where " + sqlCondition + " " + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select  top(" + nSizeperpage + ") [PRS No] as x_PRSNo,* from vw_InvPRSNo_UCSearch where " + sqlCondition + " " + transferCondition + Searchkey + " and N_PRSID not in (select top(" + Count + ") N_PRSID from vw_InvPRSNo_UCSearch where " + sqlCondition + " "+ transferCondition + xSortBy + " ) " + xSortBy;
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_InvPRSNo_UCSearch where " + sqlCondition + " " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count from vw_InvPRSNo_UCSearch where " + sqlCondition + " " + transferCondition + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -241,7 +265,9 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     dLayer.DeleteData("Inv_PRSDetails", "N_PRSID", nPRSID, "N_CompanyID=" + nCompanyID + " and N_PRSID=" + nPRSID, connection, transaction);
                     Results = dLayer.DeleteData("Inv_PRS", "N_PRSID", nPRSID, "N_CompanyID=" + nCompanyID + " and N_PRSID=" + nPRSID, connection, transaction);
-
+                  object objMDProcessed = dLayer.ExecuteScalar("Select Isnull(N_RSID,0) from Inv_MaterialDispatch where N_CompanyId=" + nCompanyID + " and N_RSID=" +nPRSID  + " ", connection, transaction);
+                    if (objMDProcessed == null)
+                        objMDProcessed = 0;
                     if (nSalesOrderID > 0)
                     {
                         SortedList DeleteParams = new SortedList(){
@@ -251,6 +277,12 @@ namespace SmartxAPI.Controllers
 
                         dLayer.ExecuteNonQueryPro("SP_SalesOrderProcessUpdate", DeleteParams, connection, transaction);
                     }
+
+                       if (myFunctions.getIntVAL(objMDProcessed.ToString()) > 0)
+                       {
+                       return Ok(api.Error(User, "Unable to delete"));
+                       }
+                            
 
                     if (Results > 0)
                     {
@@ -357,7 +389,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult GetRequestDetails(string xPRSNo, int nFnYearID, int N_LocationID, int nBranchID, bool bShowAllBranchData)
+        public ActionResult GetRequestDetails(string xPRSNo, int nFnYearID, int N_LocationID, int nBranchID, bool bShowAllBranchData,int formID)
         {
             DataTable Master = new DataTable();
             DataTable Detail = new DataTable();
@@ -379,12 +411,17 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
+                    if(formID<=0)
+                    {
                     if (bShowAllBranchData == true)
                         Condition = "n_Companyid=@nCompanyID and X_PRSNo =@xPRSNo and N_FnYearID=@nFnYearID";
                     else
                         Condition = "n_Companyid=@nCompanyID and X_PRSNo =@xPRSNo and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
-
+                    }
+                    else
+                    {
+                         Condition = "n_Companyid=@nCompanyID and X_PRSNo =@xPRSNo and N_FnYearID=@nFnYearID";
+                    }
 
                     _sqlQuery = "Select * from vw_Inv_SRSDetails Where " + Condition + "";
 
@@ -625,7 +662,40 @@ namespace SmartxAPI.Controllers
             }
 
         }
-  
+        
+  [HttpGet("TimeLinelist")]
+        public ActionResult GetList(int nPRSID)
+
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID=myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID",nCompanyID);
+            Params.Add("@nPRSID",nPRSID);
+            string sqlCommandText="Select FORMAT (d_Date, 'dd-MMM-yyyy') as date,type as name,x_DocNo as s,'' as t from vw_PRSTimeLine where P_KeyID=@nPRSID";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
 
     }
-}
+} 
+ 

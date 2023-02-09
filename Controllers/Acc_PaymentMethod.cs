@@ -34,7 +34,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            string feild = "N_PaymentMethodID,N_CompanyID,N_TypeID,B_IsCheque,X_PayMethod";
+            string feild = "N_PaymentMethodID,N_CompanyID,N_TypeID,B_IsCheque,X_PayMethod,X_PayMethod_Ar";
             string crieteria = " N_CompanyID=@nCompanyID";
             switch (type.ToLower())
             {
@@ -57,6 +57,10 @@ namespace SmartxAPI.Controllers
                 case "salarypayment":
                     crieteria = crieteria + " and B_SalaryPayment='True'";
                     feild = feild + ",B_ReceiptVoucher";
+                    break;
+                case "financialsettings":
+                    crieteria = crieteria;
+                    feild = feild;
                     break;
                 default: break;
             }

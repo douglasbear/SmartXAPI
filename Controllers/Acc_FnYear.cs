@@ -30,12 +30,20 @@ namespace SmartxAPI.Controllers
         }
         [AllowAnonymous]
         [HttpGet("list")]
-        public ActionResult GetCountryList(int nCompanyId)
+        public ActionResult GetCountryList(int nCompanyId,bool nProcessed)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            string sqlCommandText=" ";
             Params.Add("@nCompanyID",myFunctions.GetCompanyID(User));
-            string sqlCommandText = "Select * from Acc_FnYear Where Acc_FnYear.N_CompanyID=@nCompanyID";
+          if (nProcessed == true)
+            {
+              sqlCommandText = "Select * from Acc_FnYear Where Acc_FnYear.B_TransferProcess=1 and Acc_FnYear.N_CompanyID=@nCompanyId";
+            }
+         else
+           {
+            sqlCommandText = "Select * from Acc_FnYear Where Acc_FnYear.N_CompanyID=@nCompanyID";
+           }
             Params.Add("@p1", nCompanyId);
 
             try

@@ -110,21 +110,20 @@ namespace SmartxAPI
         public static int _UserLevel = 0;
         public static bool _OnlinePosting = true;
 
-
-
-        
-
-
         public static int DecimalPlaces = 2;
         public static string DecimalPlaceString = "#,##0.00";
         public static string ThousandSeparatorString = "#,##0";
-
         public static string DecimalPlace3 = "#,##0.000";
-
         public static string _FontName = "Verdana";
         public static string prevVal = "";
         public static string newVal = "";
+<<<<<<< HEAD
         public static string _APIVersion = "22.12.26.1";
        
+=======
+
+        public static string _APIVersion = "22.12.26.1";
+
+>>>>>>> 0d555b700049a1e5d90b0cb88739c7f0309da103
     }
-} 
+}

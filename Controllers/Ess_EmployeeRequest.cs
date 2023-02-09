@@ -261,10 +261,10 @@ namespace SmartxAPI.Controllers
                         int N_PkeyID = nRequestID;
                         string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpAnyRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
                         myAttachments.SaveAttachment(dLayer, Attachment, xReqCode, nRequestID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
                         transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Employee Request", xReqCode, dLayer, connection, transaction, User);
+                        //myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Employee Request", xReqCode, dLayer, connection, transaction, User);
                         return Ok(api.Success("Employee Request Approved" + "-" + xReqCode));
                     }
 
@@ -293,7 +293,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", nRequestID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", nRequestID, xReqCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
 
                         // DataTable Files = ds.Tables["files"];
                         // if (Files.Rows.Count > 0)
@@ -308,7 +308,7 @@ namespace SmartxAPI.Controllers
 
                         myAttachments.SaveAttachment(dLayer, Attachment, xReqCode, nRequestID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
                         transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Employee Request", xReqCode, dLayer, connection, transaction, User);
+                        //myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Employee Request", xReqCode, dLayer, connection, transaction, User);
                         Dictionary<string, string> res = new Dictionary<string, string>();
                         res.Add("x_RequestCode", xReqCode.ToString());
                         return Ok(api.Success(res, "Employee Request successfully created with Request No" + "-" + xReqCode));
@@ -346,13 +346,22 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     if(N_RequestTypeID==0){
                     N_RequestTypeID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select max(isnull(N_RequestTypeID,0)) as N_RequestTypeID from Pay_EmployeeRequestType where N_CompanyID=@nCompanyID", Params, connection, transaction).ToString());
-                    if(N_RequestTypeID==0)
+                    if(N_RequestTypeID==0 || N_RequestTypeID < 3000)
                         {
                             N_RequestTypeID=3000;// Employee Request Type ID Starts From 3000
                             MasterTable.Rows[0]["n_RequestTypeID"]=N_RequestTypeID;
                             MasterTable.AcceptChanges();
                         }
+                    else
+                    {
+                        N_RequestTypeID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select max(isnull(N_RequestTypeID,0))+1 as N_RequestTypeID from Pay_EmployeeRequestType where N_CompanyID=@nCompanyID", Params, connection, transaction).ToString());
+                    }
                     }    
+                         if (N_RequestTypeID > 0) 
+                    {  
+                        dLayer.DeleteData("Pay_EmployeeRequestType", "N_RequestTypeID",N_RequestTypeID,"N_CompanyId=" + myFunctions.GetCompanyID(User), connection, transaction);                        
+                    }
+
                     N_RequestTypeID = dLayer.SaveData("Pay_EmployeeRequestType", "N_RequestTypeID", MasterTable, connection, transaction);
                     if (N_RequestTypeID <= 0)
                     {

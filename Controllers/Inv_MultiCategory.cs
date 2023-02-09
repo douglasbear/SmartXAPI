@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
 
 
-            string sqlCommandText = "Select N_CompanyID,N_CategoryDisplayID,N_ParentID,X_CategoryDisplay,X_CategoryCode,'' as X_ImageURL  from Inv_ItemCategoryDisplay Where N_CompanyID= " + nCompanyID + " Order By X_CategoryCode";
+            string sqlCommandText = "Select N_CompanyID,N_CategoryDisplayID,N_ParentID,X_CategoryDisplay,X_CategoryDisplay_Ar,X_CategoryCode,'' as X_ImageURL  from Inv_ItemCategoryDisplay Where N_CompanyID= " + nCompanyID + " Order By X_CategoryCode";
             string sqlCommandText1 = "Select *  from Inv_DisplayImages Where N_CompanyID= " + nCompanyID + " ";
 
 

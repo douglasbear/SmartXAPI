@@ -51,7 +51,7 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(_api.Warning("No Results Found"));
+                     return Ok(_api.Success(dt));
                 }
                 else
                 {
