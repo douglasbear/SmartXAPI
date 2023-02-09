@@ -20,6 +20,7 @@ using System.Net.Cache;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Net;
+using System.Threading;
 namespace SmartxAPI.Controllers
 {
     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -426,7 +427,7 @@ namespace SmartxAPI.Controllers
                     {
 
                         var client = new HttpClient(handler);
-                        var clientFile = new HttpClient(handler);
+
                         var dbName = connection.Database;
                         var random = RandomString();
                         if (TableName != "" && critiria != "")
@@ -605,7 +606,7 @@ namespace SmartxAPI.Controllers
                             foreach (DataRow var in dt.Rows)
                             {
                                 SqlCommand cmd = new SqlCommand("Select isnull(i_sign,'') as  i_sign from vw_Log_ApprovalAppraisal where N_ActionID=" + var["N_ActionID"].ToString(), connection, transaction);
-                                if ((cmd.ExecuteScalar().ToString()) != "" && cmd.ExecuteScalar().ToString() != "0x")
+                                if ((cmd.ExecuteScalar().ToString()) != "" && cmd.ExecuteScalar().ToString() != "0x" && cmd.ExecuteScalar().ToString() != "System.Byte[]")
                                 {
                                     byte[] content = (byte[])cmd.ExecuteScalar();
                                     MemoryStream stream = new MemoryStream(content);
@@ -630,31 +631,70 @@ namespace SmartxAPI.Controllers
                         var path = client.GetAsync(URL);
 
                         //WHATSAPP MODE
-                        if (nFormID == 64 || nFormID == 894 && sendWtsapMessage)
+                        DataTable Whatsapp = dLayer.ExecuteDataTable("select * from vw_GeneralScreenSettings where N_CompanyID=" + nCompanyId + " and N_FnyearID=" + nFnYearID + " and N_MenuID=" + nFormID + " and N_Type=2", QueryParams, connection, transaction);
+                        if (Whatsapp.Rows.Count > 0)
                         {
-                            object N_WhatsappMSG = dLayer.ExecuteScalar("select N_Value from Gen_Settings where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_Group='64' and X_Description='Whatsapp Message'", QueryParams, connection, transaction);
-                            if (N_WhatsappMSG != null)
+                            if (myFunctions.getBoolVAL(Whatsapp.Rows[0]["B_AutoSend"].ToString()) && printSave)
                             {
-                                if (N_WhatsappMSG.ToString() == "1")
+                                string Company = myFunctions.GetCompanyName(User);
+                                string FILEPATH = AppURL + "/temp/" + FormName + "_" + docNumber + "_" + partyName.Trim() + "_" + random + ".pdf";
+                                object WhatsappAPI = Whatsapp.Rows[0]["X_WhatsappKey"].ToString();
+                                object Currency = dLayer.ExecuteScalar("select x_currency from acc_company  where n_companyid=" + nCompanyId, QueryParams, connection, transaction);
+                                string Body = Whatsapp.Rows[0]["X_Body"].ToString();
+                                Body = Body.Replace("</p>", "");
+                                Body = Body.Replace("<br>", "");
+                                Body = Body.Replace("<p>", "%0A");
+                                string body = Body ;//+ " %0A%0ARegards, %0A" + Company;
+                                object Mobile = "";
+                                object Date = "";
+                                object Party = "";
+                                if (nFormID == 64)
                                 {
-                                    string Company = myFunctions.GetCompanyName(User);
-                                    string FILEPATH = AppURL + "/temp/" + FormName + "_" + docNumber + "_" + partyName.Trim() + "_" + random + ".pdf";
-                                    object WhatsappAPI = dLayer.ExecuteScalar("select X_Value from Gen_Settings where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_Group='64' and X_Description='Whatsapp Message'", QueryParams, connection, transaction);
-                                    object Currency = dLayer.ExecuteScalar("select x_currency from acc_company  where n_companyid=" + nCompanyId, QueryParams, connection, transaction);
-                                    DataTable dt = dLayer.ExecuteDataTable("select * from vw_InvSalesInvoiceNo_Search_Cloud where n_salesid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
-                                    string body = "Dear " + dt.Rows[0]["Customer"].ToString() + ",%0A%0A*_Thank you for your purchase._*%0A%0ADoc No : " + dt.Rows[0]["Invoice No"].ToString() + "%0ATotal Amount : " + dt.Rows[0]["n_BillAmtF"].ToString() + "%0ADiscount : " + dt.Rows[0]["n_DiscountDisplay"].ToString() + "%0AVAT Amount : " + dt.Rows[0]["n_TaxAmtF"].ToString() + "%0ARound Off : " + dt.Rows[0]["n_DiscountAmtF"].ToString() + "%0ANet Amount : " + dt.Rows[0]["x_BillAmt"].ToString() + " " + Currency + " %0A%0ARegards, %0A" + Company;
-                                    string URLAPI = "https://api.textmebot.com/send.php?recipient=" + dt.Rows[0]["x_Phoneno1"].ToString() + "&apikey=" + WhatsappAPI + "&text=" + body;
-                                    string URLFILE = "https://api.textmebot.com/send.php?recipient=" + dt.Rows[0]["x_Phoneno1"].ToString() + "&apikey=" + WhatsappAPI + "&document=" + FILEPATH;
-                                    var MSGFile = clientFile.GetAsync(URLFILE);
-                                    MSGFile.Wait();
-                                    var MSG = client.GetAsync(URLAPI);
-                                    MSG.Wait();
+                                    Mobile = dLayer.ExecuteScalar("select x_Phoneno1 from vw_InvSalesInvoiceNo_Search_Cloud where n_salesid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                    Date = dLayer.ExecuteScalar("select d_salesdate from vw_InvSalesInvoiceNo_Search_Cloud where n_salesid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                    Party = dLayer.ExecuteScalar("select Customer from vw_InvSalesInvoiceNo_Search_Cloud where n_salesid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                }
+                                else if (nFormID == 80)
+                                {
+                                    Mobile = dLayer.ExecuteScalar("select x_Phone from VW_InvSalesQuotationMaster where n_quotationid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                    Date = dLayer.ExecuteScalar("select d_quotationdate from VW_InvSalesQuotationMaster where n_quotationid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                    Party = dLayer.ExecuteScalar("select x_crmcustomer from VW_InvSalesQuotationMaster where n_quotationid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
 
                                 }
+                                else if (nFormID == 81)
+
+                                {
+                                    Mobile = dLayer.ExecuteScalar("select x_Phoneno1 from vw_InvSalesOrder where n_salesorderID=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                    Date = dLayer.ExecuteScalar("select D_OrderDate from vw_InvSalesOrder where n_salesorderID=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                    Party = dLayer.ExecuteScalar("select x_customername from vw_InvSalesOrder where n_salesorderID=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                }
+                                 Body = Body.Replace("@PartyName", Party.ToString());
+                                 Body = Body.Replace("@CompanyName", Company.ToString());
+                                 Body = Body.Replace("@Date",Convert.ToDateTime(Date).ToString("dd-M-yyyy"));
+
+
+                                var clientFile = new HttpClient(handler);
+                                string URLAPI = "https://api.textmebot.com/send.php?recipient=+" + Mobile + "&apikey=" + WhatsappAPI + "&text=" + Body;
+                                var FileMSG = clientFile.GetAsync(URLAPI);
+                                FileMSG.Wait();
+
+                                if (myFunctions.getBoolVAL(Whatsapp.Rows[0]["B_AttachPdf"].ToString()))
+                                {
+                                    Thread.Sleep(6000);
+                                    string URLFILE = "https://api.textmebot.com/send.php?recipient=+" + Mobile + "&apikey=" + WhatsappAPI + "&document=" + FILEPATH;
+                                    var MSG1 = client.GetAsync(URLFILE);
+                                    MSG1.Wait();
+                                }
+
+
+
+
+
                             }
-
-
                         }
+
+
+                      
                         if (nFormID == 80)
                         {
                             SortedList Params = new SortedList();
