@@ -119,10 +119,10 @@ namespace SmartxAPI.Controllers
             Params.Add("@mnuVal", nFormID);
             Params.Add("@empVal", nEmpID);
             Params.Add("@userVal", nUserID);
-            
+
             string UserPattern = myFunctions.GetUserPattern(User);
             if (UserPattern != "")
-            Params.Add("@UserPattern", UserPattern);
+            Params.Add("@userPattern", UserPattern);
 
 
 
