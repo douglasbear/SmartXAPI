@@ -83,7 +83,7 @@ namespace SmartxAPI.Controllers
 
                     if (MasterTable.Rows.Count == 0)
                     {
-                        return Ok(api.Warning("No Results Found"));
+                        return Ok(api.Success(dt)); 
                     }
                 
                     MasterTable = api.Format(MasterTable, "Master");
