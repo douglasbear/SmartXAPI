@@ -1271,7 +1271,7 @@ namespace SmartxAPI.Controllers
                         if (myFunctions.getVAL(N_DocNumber.ToString()) == 1)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User, "Employee Code already exist"));
+                            return Ok(_api.Error(User, "Employee Code alread5y exist"));
                         }
 
                         object N_TitleCount = dLayer.ExecuteScalar("select count(*) from Pay_Position where N_CompanyID= " + nCompanyID + " and N_PositionID= " + nPositionID + " and B_IsSupervisor = 1", connection, transaction);

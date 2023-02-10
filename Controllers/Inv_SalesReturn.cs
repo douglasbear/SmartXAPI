@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetSalesReturn(int? nCompanyId, int nFnYearId, bool bAllBranchData, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetSalesReturn(int? nCompanyId, int nFnYearId, bool bAllBranchData, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nFormID)
         {
             try
             {
@@ -121,17 +121,18 @@ namespace SmartxAPI.Controllers
                         }
                     }
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") x_DebitNoteNo,N_DebitNoteId,x_CustomerName,x_BranchName,d_ReturnDate,n_TotalPaidAmountF,x_Notes from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + Searchkey + " " + " Group By x_DebitNoteNo,N_DebitNoteId,x_CustomerName,x_BranchName,d_ReturnDate,n_TotalPaidAmountF,x_Notes "+ xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") x_DebitNoteNo,N_DebitNoteId,x_CustomerName,x_BranchName,d_ReturnDate,n_TotalPaidAmountF,x_Notes from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p3 " + Pattern + Searchkey + " " + " Group By x_DebitNoteNo,N_DebitNoteId,x_CustomerName,x_BranchName,d_ReturnDate,n_TotalPaidAmountF,x_Notes "+ xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") x_DebitNoteNo,N_DebitNoteId,x_CustomerName,x_BranchName,d_ReturnDate,n_TotalPaidAmountF,x_Notes from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + Searchkey + " and N_DebitNoteId not in(select top(" + Count + ")  N_DebitNoteId from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + " Group By x_DebitNoteNo,N_DebitNoteId,x_CustomerName,x_BranchName,d_ReturnDate,n_TotalPaidAmountF,x_Notes" +xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") x_DebitNoteNo,N_DebitNoteId,x_CustomerName,x_BranchName,d_ReturnDate,n_TotalPaidAmountF,x_Notes from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p3 " + Pattern + Searchkey + " and N_DebitNoteId not in(select top(" + Count + ")  N_DebitNoteId from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p3 " + xSortBy + " ) " + " Group By x_DebitNoteNo,N_DebitNoteId,x_CustomerName,x_BranchName,d_ReturnDate,n_TotalPaidAmountF,x_Notes" +xSortBy;
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
+                    Params.Add("@p3", nFormID);
                     SortedList OutPut = new SortedList();
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_TotalPaidAmount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount  from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_TotalPaidAmount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount  from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p3 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";

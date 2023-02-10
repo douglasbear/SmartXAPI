@@ -41,7 +41,7 @@ namespace SmartxAPI.Controllers
             DataTable MasterTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_TvlTicketRefund where N_CompanyID=@p1  and X_RefundNo=@p2";
+            string sqlCommandText = "select * from vw_tvlTicketRefundDetails where N_CompanyID=@p1  and X_RefundNo=@p2";
             Params.Add("@p1", nCompanyId);  
             Params.Add("@p2", X_RefundNo);
             try
@@ -126,7 +126,7 @@ namespace SmartxAPI.Controllers
                                                 " Tvl_TicketRefund.N_CustRefund AS N_TotalReturnAmount, Tvl_TicketRefund.N_CustomerID, GETDATE() AS D_Entrydate, Inv_Location.N_LocationID, Acc_BranchMaster.N_BranchID, "+
                                                 " 0 AS N_DeliveryNoteId, 1 AS B_Invoice, Tvl_TicketRefund.X_Notes, 0 AS N_Discountreturn, 0 AS N_TaxAmt, Inv_Sales.N_PaymentMethodId, Tvl_TicketRefund.N_SalesmanID, "+
                                                 " 0 AS B_IsSaveDraft,Acc_Company.N_CurrencyID,1 AS N_ExchangeRate, 0 AS N_TotalPaidAmountF,Tvl_TicketRefund.N_CustRefund AS N_TotalReturnAmountF, "+
-                                                " Tvl_TicketRefund.N_CreatedUser,Tvl_TicketRefund.D_CreatedDate , 1638 AS N_FormID"+
+                                                " Tvl_TicketRefund.N_CreatedUser,Tvl_TicketRefund.D_CreatedDate , 1638 AS N_FormID,0 as N_ProjectID"+
                                                 " FROM         Inv_Sales INNER JOIN "+
                                                 " Tvl_Ticketing ON Inv_Sales.N_CompanyId = Tvl_Ticketing.N_CompanyID AND Inv_Sales.N_SalesRefID = Tvl_Ticketing.N_TicketID AND Inv_Sales.N_SalesType=7 INNER JOIN "+
                                                 " Tvl_TicketRefund ON Tvl_Ticketing.N_CompanyID = Tvl_TicketRefund.N_CompanyID AND Tvl_Ticketing.N_TicketID = Tvl_TicketRefund.N_TicketID INNER JOIN "+
@@ -140,8 +140,18 @@ namespace SmartxAPI.Controllers
                         SMasterDt = api.Format(SMasterDt, "master");
                         Sds.Tables.Add(SMasterDt); 
 
+                        //   DateTime dStartDate = Convert.ToDateTime(SMasterDt.Rows[0]["D_ReturnDate"]);
+
+                        // //  string NewDate =dStartDate.ToString("yyyy-MM-dd HH:mm:ss:fff");
+                        // DateTime Start = new DateTime(Convert.ToDateTime(dStartDate.ToString()).Year, Convert.ToDateTime(dStartDate.ToString()).Month, 1);
+
+                        // SMasterDt.Rows[0]["D_ReturnDate"]= Start;
+                        // SMasterDt.AcceptChanges();
+
+
+
                         string sqlSalesDetails =" SELECT     Tvl_TicketRefund.N_CompanyID, ISNULL(Inv_SalesReturnDetails.N_DebitNoteDetailsID, 0) AS N_DebitNoteDetailsID, ISNULL(Inv_SalesReturnDetails.N_DebitNoteId, 0) AS N_DebitNoteId, "+
-                                                " 1 AS N_RetQty, Tvl_TicketRefund.N_CustRefund, Inv_SalesDetails.N_ItemID, GETDATE() AS D_Entrydate,Inv_Location.N_LocationID,Acc_BranchMaster.N_BranchID, "+
+                                                " 1 AS N_RetQty, Tvl_TicketRefund.N_CustRefund As N_RetAmount, Inv_SalesDetails.N_ItemID, GETDATE() AS D_Entrydate,Inv_Location.N_LocationID,Acc_BranchMaster.N_BranchID, "+
                                                 " Inv_SalesDetails.N_Cost AS N_ReturnCost,Inv_SalesDetails.N_ItemUnitID AS N_UnitID,Inv_SalesDetails.N_Sprice AS N_SPrice,1 AS N_BaseUnitQty,Tvl_TicketRefund.N_CustRefund AS N_RetAmountF, "+
                                                 " Inv_SalesDetails.N_Cost AS N_ReturnCostF,Inv_SalesDetails.N_Sprice AS N_SPriceF "+
                                                 " FROM         Inv_SalesDetails INNER JOIN "+
@@ -404,6 +414,41 @@ namespace SmartxAPI.Controllers
 
 
 
+        }
+
+
+
+               [HttpGet("tktList")]
+        public ActionResult RefundDetails()
+        {
+            DataSet dt = new DataSet();
+            DataTable MasterTable = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            string sqlCommandText = "select * from Tvl_Ticketing where N_CompanyID=@p1 and ISNULL(B_NonRefundable,0)=0 and N_TicketID not in(select N_TicketID from Tvl_TicketRefund)";
+            Params.Add("@p1", nCompanyId);  
+            // Params.Add("@p2", X_RefundNo);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    if (MasterTable.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+
+                    MasterTable = api.Format(MasterTable, "Master");
+                    dt.Tables.Add(MasterTable);
+                }
+                return Ok(api.Success(dt));
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
         }
     }
 }
