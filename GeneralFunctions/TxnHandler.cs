@@ -1512,7 +1512,7 @@ namespace SmartxAPI.GeneralFunctions
             int UserID = myFunctions.GetUserID(User);
             int N_CompanyID = myFunctions.GetCompanyID(User);
             int N_InvoiceId = 0;
-            int nFnYearID = 0;
+            int nFnYearID = myFunctions.getIntVAL(masterRow["N_fnYearId"].ToString());;
 
             int N_DebitNoteId = myFunctions.getIntVAL(masterRow["N_DebitNoteId"].ToString());
             int N_CustomerID = myFunctions.getIntVAL(masterRow["n_CustomerID"].ToString());
