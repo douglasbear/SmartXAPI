@@ -140,8 +140,8 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
 
-            sqlCommandText = "select * from Gen_Notifications where (N_CompanyID=0 and N_UserID=0) or (N_CompanyID=@nCompanyID and (N_UserID=@nUserID or N_UserID=0))";
-            Params.Add("@nCompanyD", nCompanyID);
+            sqlCommandText = "select * from Gen_Notifications where ((N_CompanyID=0 and N_UserID=0) or (N_CompanyID=@nCompanyID and (N_UserID=@nUserID or N_UserID=0))) and D_StartDate<=GETDATE() and D_EndDate>=GETDATE()";
+            Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nUserID", nUserID);
 
             try
