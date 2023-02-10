@@ -219,11 +219,7 @@ namespace SmartxAPI.Controllers
                                 dtVar["details"] = dtNode;
                             }
                         }
-
-                    }
-                    mst.AcceptChanges();
-
-                    foreach (DataRow Kvar in dt.Rows)
+                     foreach (DataRow Kvar in dt.Rows)
                     {
                         if (myFunctions.getBoolVAL(Kvar["B_ExcludeInSalary"].ToString()) == true && Kvar["details"] == null)
                         {
@@ -231,6 +227,11 @@ namespace SmartxAPI.Controllers
                             continue;
                         }
                     }
+
+                    }
+                    mst.AcceptChanges();
+
+              
                     dt.AcceptChanges();
                     dt = _api.Format(dt);
                     mst = _api.Format(mst);
