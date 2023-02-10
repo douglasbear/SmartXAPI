@@ -293,9 +293,12 @@ namespace SmartxAPI.Controllers
                     }
                     else if (X_CostCentreCode == "@Auto" && N_CostCentreID > 0)
                     {
+                       
                         X_CostCentreCode = GetNextChildCode(N_CostCentreID, QueryParams, connection, transaction);
                         MasterTable.Rows[0]["x_CostCentreCode"] = X_CostCentreCode;
                         MasterTable.Rows[0]["N_CostCentreID"] = 0;
+                        dLayer.DeleteData("Acc_CostCentreMaster", "N_CostCentreID", N_CostCentreID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+              
                     }
                     else
                     {
