@@ -60,7 +60,7 @@ namespace SmartxAPI.Controllers
             }
 
 
-            string sqlCommandText = "SELECT X_UserCategory AS Category, X_UserCategoryCode AS Code, N_UserCategoryID, N_CompanyID,N_AppID FROM dbo.Sec_UserCategory where N_CompanyID=@p1 and X_UserCategory!='Olivo'  order by Code DESC";
+            string sqlCommandText = "SELECT X_UserCategory AS Category, X_UserCategoryCode AS Code, N_UserCategoryID, N_CompanyID,N_AppID,N_TypeID FROM dbo.Sec_UserCategory where N_CompanyID=@p1 and X_UserCategory!='Olivo'  order by Code DESC";
             Params.Add("@p1", nCompanyId);
 
             try
