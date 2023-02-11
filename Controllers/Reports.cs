@@ -90,9 +90,9 @@ namespace SmartxAPI.Controllers
 
                     string sqlCommandText1 = "";
                     if (myFunctions.getBoolVAL(B_Consolidated.ToString()))
-                        sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_LinkCompID,X_LinkField,B_Range,isnull(B_Consolidated,0) as B_Consolidated from vw_WebReportMenus where N_LanguageId=@nLangId group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_ListOrder,N_LinkCompID,X_LinkField,B_Range,B_Consolidated order by N_ListOrder";
+                        sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_LinkCompID,X_LinkField,B_Range,isnull(B_Consolidated,0) as B_Consolidated,b_enablemultiselect from vw_WebReportMenus where N_LanguageId=@nLangId group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_ListOrder,N_LinkCompID,X_LinkField,B_Range,B_Consolidated,b_enablemultiselect order by N_ListOrder";
                     else
-                        sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_LinkCompID,X_LinkField,B_Range,isnull(B_Consolidated,0) as B_Consolidated from vw_WebReportMenus where N_LanguageId=@nLangId and B_Consolidated<>1 group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_ListOrder,N_LinkCompID,X_LinkField,B_Range,B_Consolidated order by N_ListOrder";
+                        sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_LinkCompID,X_LinkField,B_Range,isnull(B_Consolidated,0) as B_Consolidated,b_enablemultiselect from vw_WebReportMenus where N_LanguageId=@nLangId and B_Consolidated<>1 group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_ListOrder,N_LinkCompID,X_LinkField,B_Range,B_Consolidated,b_enablemultiselect order by N_ListOrder";
                     dt1 = dLayer.ExecuteDataTable(sqlCommandText1, Params, connection);
 
                     dt.Columns.Add("ChildMenus", typeof(DataTable));
@@ -513,7 +513,7 @@ namespace SmartxAPI.Controllers
                                 }
                             }
 
-                             SqlCommand cmd2 = new SqlCommand("select i_signature2 from Wh_GRN where N_GRNID=" + nPkeyID, connection, transaction);
+                            SqlCommand cmd2 = new SqlCommand("select i_signature2 from Wh_GRN where N_GRNID=" + nPkeyID, connection, transaction);
                             if ((cmd2.ExecuteScalar().ToString()) != "")
                             {
                                 byte[] content = (byte[])cmd2.ExecuteScalar();
@@ -1190,7 +1190,23 @@ namespace SmartxAPI.Controllers
                                         if (bRange && valueTo != "")
                                             Criteria = Criteria == "" ? xFeild + " " + ">= '" + value + "' and " + xFeild + " " + "<= '" + valueTo + "'" : Criteria + " and " + xFeild + " " + ">= '" + value + "' and " + xFeild + " " + "<= '" + valueTo + "'";
                                         else
-                                            Criteria = Criteria == "" ? xFeild + " " + xOperator + " '" + value + "' " : Criteria + " and " + xFeild + " " + xOperator + " '" + value + "' ";
+                                        {
+                                            if (value.Contains(","))
+                                            {
+                                                string[] values = value.Split(',');
+                                                string filterval ="";
+                                                for (int i = 0; i < values.Length; i++)
+                                                {
+                                                     filterval = filterval + xFeild + " " + xOperator + " '" + values[i] + "' or ";
+
+                                                }
+                                                filterval=filterval.Substring(0,filterval.Length-3);
+                                                Criteria = Criteria == "" ? "( "+filterval+" )" : Criteria + " and ( " + filterval + " ) ";
+
+                                            }
+                                            else
+                                                Criteria = Criteria == "" ? xFeild + " " + xOperator + " '" + value + "' " : Criteria + " and " + xFeild + " " + xOperator + " '" + value + "' ";
+                                        }
                                     }
                                 }
                             }
@@ -1222,33 +1238,33 @@ namespace SmartxAPI.Controllers
                     }
                     else if (CompanyData != "")
                     {
-                         bool Consolidated = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_Isdefault,0) as B_Isdefault from acc_company where N_CompanyID=" + nCompanyID, Params, connection).ToString()); ;
-                        
-                        if(MenuID==859 && Consolidated==false)
+                        bool Consolidated = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_Isdefault,0) as B_Isdefault from acc_company where N_CompanyID=" + nCompanyID, Params, connection).ToString()); ;
+
+                        if (MenuID == 859 && Consolidated == false)
                         {
                             string FnYear = dLayer.ExecuteScalar("select X_FnYearDescr from Acc_FnYear where N_CompanyID=" + nCompanyID + " and N_FnyearID=" + FnYearID, Params, connection).ToString();
                             int ClientID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ClientID from Acc_Company where N_CompanyID=" + nCompanyID, Params, connection).ToString());
                             DataTable dt = dLayer.ExecuteDataTable("select * from vw_ConsolidatedCompany where n_clientID=" + ClientID + " and X_FnYearDescr='" + FnYear + "' order by N_CompanyID desc", Params, connection);
                             foreach (DataRow dr in dt.Rows)
                             {
-                             Criteria = Criteria + " and " + CompanyData + "=" + dr["n_CompanyID"];
+                                Criteria = Criteria + " and " + CompanyData + "=" + dr["n_CompanyID"];
                             }
                         }
                         else
                         {
-                        Criteria = Criteria + " and " + CompanyData + "=" + nCompanyID;
-                        if (YearData != "")
-                            Criteria = Criteria + " and " + YearData + "=" + FnYearID;
-                        if (BranchData != "")
-                        {
-                            bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
-                            if (mainBranch == false)
-                                Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
-                            // if (mainBranch == false)
-                            //     Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
-                            // else if (xProCode == "11")
-                            //     Criteria = Criteria + " and " + BranchData + "=" + BranchID;
-                        }
+                            Criteria = Criteria + " and " + CompanyData + "=" + nCompanyID;
+                            if (YearData != "")
+                                Criteria = Criteria + " and " + YearData + "=" + FnYearID;
+                            if (BranchData != "")
+                            {
+                                bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
+                                if (mainBranch == false)
+                                    Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
+                                // if (mainBranch == false)
+                                //     Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
+                                // else if (xProCode == "11")
+                                //     Criteria = Criteria + " and " + BranchData + "=" + BranchID;
+                            }
                         }
                     }
                     if (UserData != "")
@@ -1261,7 +1277,7 @@ namespace SmartxAPI.Controllers
                         bool Consolidated = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_Isdefault,0) as B_Isdefault from acc_company where N_CompanyID=" + nCompanyID, Params, connection).ToString()); ;
                         dLayer.ExecuteNonQuery("delete from Acc_LedgerBalForReporting", connection);
                         dLayer.ExecuteNonQuery("delete from Acc_AccountStatement", connection);
-                            
+
                         if (Consolidated)
                         {
                             string FnYear = dLayer.ExecuteScalar("select X_FnYearDescr from Acc_FnYear where N_CompanyID=" + nCompanyID + " and N_FnyearID=" + FnYearID, Params, connection).ToString();
