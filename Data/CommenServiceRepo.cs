@@ -134,6 +134,9 @@ namespace SmartxAPI.Data
                                         X_TeacherName = dr["X_TeacherName"].ToString(),
                                         N_DefaultStudentID = myFunctions.getIntVAL(dr["N_DefaultStudentID"].ToString()),
                                         N_TypeID = Convert.ToInt32(dr["N_TypeID"]),
+                                        X_UtcOffSet = dr["X_UtcOffSet"].ToString(),
+                                        X_ZoneName = dr["X_ZoneName"].ToString(),
+                                        N_TimeZoneID = Convert.ToInt32(dr["N_TimeZoneID"]),
 
                                     }).ToList()
                             .FirstOrDefault();
