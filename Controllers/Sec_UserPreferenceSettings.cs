@@ -56,7 +56,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-         public ActionResult SecUserPreferenceList (int appID )
+         public ActionResult SecUserPreferenceList (int appID,int nLangaugeID )
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -72,14 +72,18 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                      Params.Add("@appID", appID);
+                     Params.Add("@nLangaugeID", nLangaugeID);
+
+                     string xUserCategoryList = myFunctions.GetUserCategoryList(User);
 
 
                      DataTable AppModules = dLayer.ExecuteDataTable("select N_ModuleID from AppModules where  N_AppID= " + appID,Params,cnn);
                       var listApps = AppModules.AsEnumerable().Select(r => r["N_ModuleID"].ToString());
                              string value = string.Join(",", listApps);
                       
-                   
-                     string sqlCommandText="select * from sec_menus where N_ParentMenuID in(" + value + ") and B_WShow=1 and ((ISNULL(sec_menus.x_RouteName, '') <> '') OR (ISNULL(sec_menus.x_RouteName, 0) <> 0)) and ((ISNULL(sec_menus.X_Caption, '') <> ''))";
+                      
+
+                 string sqlCommandText= "select Sec_Menus.N_MenuID,Sec_Menus.X_RouteName,lan_multilingual.X_WText from Sec_Menus inner join  lan_multilingual ON sec_menus.n_menuID=lan_multilingual.n_FormID where N_ParentMenuID in(" + value + ")  and B_WShow=1 and ((ISNULL(sec_menus.x_RouteName, '') <> '') OR (ISNULL(sec_menus.x_RouteName, 0) <> 0)) and ((ISNULL(sec_menus.X_Caption, '') <> ''))and N_MenuID in (select N_MenuID from Sec_UserPrevileges where N_UserCategoryID in("+xUserCategoryList+")and B_Visible=1) and lan_multilingual.X_ControlNo='0' and lan_multilingual.N_LanguageId=@nLangaugeID";
 
                      dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
@@ -115,7 +119,8 @@ namespace SmartxAPI.Controllers
              int nAppID=myFunctions.getIntVAL(MasterTable.Rows[0]["nAppID"].ToString());
 
             try
-            {
+            { 
+                
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -128,6 +133,8 @@ namespace SmartxAPI.Controllers
                      paramList.Add("@userID", userID);
                      paramList.Add("@nCompanyId", nCompanyId);
                      paramList.Add("@nAppID", nAppID);
+
+                
                    
                 dLayer.ExecuteNonQuery("Update Sec_UserApps Set X_LandingPage=@landingPage Where N_UserID=@userID and N_CompanyID=@nCompanyId and N_AppID=@nAppID",paramList, connection, transaction);
                  transaction.Commit();
@@ -143,7 +150,7 @@ namespace SmartxAPI.Controllers
 
 
                 [HttpGet("details")]
-        public ActionResult GetDetails(int nAppID, int nUserID)
+        public ActionResult GetDetails(int nAppID, int nUserID,int nLangID)
         {
             DataTable moduleDetails = new DataTable();
             DataTable dtDefaults = new DataTable();
@@ -153,33 +160,116 @@ namespace SmartxAPI.Controllers
             SortedList dParamList = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
-            string details = " select * from Sec_UserApps where N_UserID=@p2 and N_AppID=@p1";
+                  try
+            {
+                
+                using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
+                 {
+                    cnn.Open();
+  
+                     using (SqlConnection connection = new SqlConnection(connectionString))
+                  {
+                    connection.Open();
 
-            Params.Add("@p1", nAppID);
+           Params.Add("@p1", nAppID);
             Params.Add("@p2", nUserID);
             Params.Add("@p3", nCompanyId);
+             Params.Add("@nLangID", nLangID);
          
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    moduleDetails = dLayer.ExecuteDataTable(details, Params, connection);
 
-                }
-                moduleDetails = api.Format(moduleDetails, "details");
+
+                     DataTable AppModules = dLayer.ExecuteDataTable("select N_ModuleID from AppModules where  N_AppID= " + nAppID,Params,cnn);
+                      var listApps = AppModules.AsEnumerable().Select(r => r["N_ModuleID"].ToString());
+                             string value = string.Join(",", listApps);
+                      
+                      
+
+                 string details="SELECT * FROM  Sec_UserApps INNER JOIN Sec_Menus ON Sec_UserApps.X_LandingPage = Sec_Menus.X_RouteName INNER JOIN Lan_MultiLingual ON Sec_Menus.N_MenuID = Lan_MultiLingual.N_FormID where Sec_UserApps.N_UserID=@p2 and Sec_UserApps.N_AppID=@p1 and lan_multilingual.X_ControlNo='0' and lan_multilingual.N_LanguageId=@nLangID and Sec_Menus.B_WShow=1 and Sec_Menus.N_ParentMenuID in ("+value+")";
+
+                     moduleDetails = dLayer.ExecuteDataTable(details, Params, connection);
+
+               moduleDetails = api.Format(moduleDetails, "details");
                  DS.Tables.Add(moduleDetails);
                  return Ok(api.Success(DS));
                 
-            }
-            catch (Exception e)
+                  }
+               
+                }
+             }
+
+             catch (Exception e)
             {
                 return Ok(api.Error(User, e));
             }
-        }
+
+     }
 
         
 
 
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//              DataTable AppModules = dLayer.ExecuteDataTable("select N_ModuleID from AppModules where  N_AppID= " + nAppID,Params,cnn);
+//                     var listApps = AppModules.AsEnumerable().Select(r => r["N_ModuleID"].ToString());
+//                      string value = string.Join(",", listApps);
+
+
+//               string details="SELECT * FROM  Sec_UserApps INNER JOIN Sec_Menus ON Sec_UserApps.X_LandingPage = Sec_Menus.X_RouteName INNER JOIN Lan_MultiLingual ON Sec_Menus.N_MenuID = Lan_MultiLingual.N_FormID where Sec_UserApps.N_UserID=@p2 and Sec_UserApps.N_AppID=@p1 and lan_multilingual.X_ControlNo='0' and lan_multilingual.N_LanguageId=@nLangID and Sec_Menus.B_WShow=1 and Sec_Menus.N_ParentMenuID in ("+value+")";
+
+
+//             Params.Add("@p1", nAppID);
+//             Params.Add("@p2", nUserID);
+//             Params.Add("@p3", nCompanyId);
+//              Params.Add("@nLangID", nLangID);
+         
+//             try
+//             {
+//                 using (SqlConnection connection = new SqlConnection(connectionString))
+//                 {
+//                     connection.Open();
+//                     moduleDetails = dLayer.ExecuteDataTable(details, Params, connection);
+
+//                 }
+//                 moduleDetails = api.Format(moduleDetails, "details");
+//                  DS.Tables.Add(moduleDetails);
+//                  return Ok(api.Success(DS));
+                
+//             }
+//             catch (Exception e)
+//             {
+//                 return Ok(api.Error(User, e));
+//             }
+//         }
+
+        
+
+
+//     }
+// }
