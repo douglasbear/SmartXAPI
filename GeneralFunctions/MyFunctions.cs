@@ -282,6 +282,15 @@ namespace SmartxAPI.GeneralFunctions
                 Result = obj.ToString();
             return Result;
         }
+            public string checkDraftProcessed(string TableName, string ColumnReturn, string ColumnValidate, string ValidateValue, string Condition, SortedList Params, IDataAccessLayer dLayer, SqlConnection connection)
+        {
+            string Result = "";
+            object obj = dLayer.ExecuteScalar("select " + ColumnReturn + " from " + TableName + " where " + ColumnValidate + "=" + ValidateValue + " and " + Condition + "", Params, connection);
+            if (obj != null)
+                Result = obj.ToString();
+            return Result;
+        }
+
         public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection)
         {
             string Result = "";
@@ -1065,7 +1074,7 @@ namespace SmartxAPI.GeneralFunctions
                     Response["deleteTag"] = 0;
                     Response["isApprovalSystem"] = 0;
                     Response["ApprovalID"] = 0;
-                    Response["isEditable"] = false;
+                    Response["isEditable"] = true;
                     Response["lblVisible"] = true;
                     Response["lblText"] = "Approval not set for this user";
                     return Response;
@@ -1878,7 +1887,13 @@ namespace SmartxAPI.GeneralFunctions
             if (N_IsApprovalSystem == 1)
             {
                 dLayer.ExecuteNonQuery("SP_Gen_ApprovalCodesTrans @nCompanyID,@nFormID,@nApprovalUserID,@nTransID,@nApprovalLevelID,@nProcStatusID,@nApprovalID,@nGroupID,@nFnYearID,@xAction,@nEmpID,@xDepLevel,@dTransDate,0,0,@nTransOwnUserID", LogParams, connection, transaction);
-
+                
+                if(N_ProcStatusID==0 || N_ProcStatusID==6)
+                {
+                    dLayer.ExecuteNonQuery("delete from Log_ApprovalProcess where N_CompanyID="+N_CompanyID+" and X_TransType='"+X_TransType+"' and N_TransID="+N_TransID, connection, transaction);
+                    return 0;
+                }
+                
                 object NxtUser = null;
                 NxtUser = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=0", LogParams, connection, transaction);
                 if (NxtUser != null)
@@ -3273,6 +3288,7 @@ namespace SmartxAPI.GeneralFunctions
         public string DecryptString(string inputString);
         public bool checkIsNull(DataRow Row, String KeyName);
         public string checkProcessed(string TableName, string ColumnReturn, string ColumnValidate, string ValidateValue, string Condition, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection);
+        public string checkDraftProcessed(string TableName, string ColumnReturn, string ColumnValidate, string ValidateValue, string Condition, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection);
         public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection);
         public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection, SqlTransaction transaction);
         public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, int nCompanyID, IDataAccessLayer dLayer, SqlConnection Connection);

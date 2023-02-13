@@ -1734,6 +1734,8 @@ namespace SmartxAPI.GeneralFunctions
             double N_TotalReceivedF = myFunctions.getVAL(MasterTable.Rows[0]["n_TotalReceivedF"].ToString());
             MasterTable.Rows[0]["n_TotalReceivedF"] = N_TotalReceivedF;
             var values = MasterTable.Rows[0]["X_CreditNoteNo"].ToString();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            int N_VendorID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_VendorID"].ToString());
 
             if (!myFunctions.CheckActiveYearTransaction(myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString()), Convert.ToDateTime(MasterTable.Rows[0]["D_RetDate"].ToString()), dLayer, connection, transaction))
             {
@@ -1741,6 +1743,7 @@ namespace SmartxAPI.GeneralFunctions
                 if (DiffFnYearID != null)
                 {
                     MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+          
                 }
                 else
                 {

@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetTimsheetList(int? nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetTimsheetList(int? nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -74,10 +74,11 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
             }
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_TimeSheetApproveMaster where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_TimeSheetApproveMaster where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_TimeSheetApproveMaster where N_CompanyID=@p1 " + Searchkey + " and N_TimeSheetApproveID not in (select top(" + Count + ") N_TimeSheetApproveID from Pay_TimeSheetApproveMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_TimeSheetApproveMaster where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_TimeSheetApproveID not in (select top(" + Count + ") N_TimeSheetApproveID from Pay_TimeSheetApproveMaster where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearID);
             SortedList OutPut = new SortedList();
 
 
@@ -87,7 +88,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from Pay_TimeSheetApproveMaster where N_CompanyID=@p1 " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count  from Pay_TimeSheetApproveMaster where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

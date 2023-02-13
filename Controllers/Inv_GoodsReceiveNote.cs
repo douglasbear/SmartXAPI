@@ -338,6 +338,33 @@ namespace SmartxAPI.Controllers
                             MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
                             nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
                             //QueryParams["@nFnYearID"] = nFnYearID;
+
+                            
+                           SortedList QueryParams = new SortedList();
+                            QueryParams["@nFnYearID"] = nFnYearID;
+                            QueryParams["@nCompanyID"] = nCompanyID;
+                            QueryParams["@N_VendorID"] = N_VendorID;
+                            
+                              SortedList PostingParam = new SortedList();
+                              PostingParam.Add("N_PartyID", N_VendorID);
+                              PostingParam.Add("N_FnyearID", nFnYearID);
+                              PostingParam.Add("N_CompanyID", nCompanyID);
+                              PostingParam.Add("X_Type", "vendor");
+
+
+                             object vendorCount = dLayer.ExecuteScalar("Select count(*) From Inv_Vendor where N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID and N_VendorID=@N_VendorID", QueryParams, connection, transaction);
+                      
+                               if(myFunctions.getIntVAL(vendorCount.ToString())==0){
+                                try 
+                                  {
+                                     dLayer.ExecuteNonQueryPro("SP_CratePartyBackYear", PostingParam, connection, transaction);
+                                  }
+                                  catch (Exception ex)
+                                  {
+                                    transaction.Rollback();
+                                     throw ex;
+                                  }
+                                  }
                         }
                         else
                         {
@@ -345,6 +372,14 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
                         }
                     }
+
+                object B_YearEndProcess=dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID="+nCompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_MRNDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                 if(myFunctions.getBoolVAL(B_YearEndProcess.ToString()))
+                 {
+                     return Ok(_api.Error(User, "Year Closed"));
+                 }
+
+
                     if (N_GRNID > 0)
                     {
                         if (CheckProcessed(N_GRNID))

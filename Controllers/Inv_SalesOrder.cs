@@ -577,8 +577,8 @@ namespace SmartxAPI.Controllers
                     DataTable rentalItem = ds.Tables["segmentTable"];
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
-                     
-
+                    SortedList Result = new SortedList();
+                     SortedList QueryParams = new SortedList();
 
                     int n_SalesOrderId = myFunctions.getIntVAL(MasterRow["n_SalesOrderId"].ToString());
                     int n_SOId = myFunctions.getIntVAL(MasterRow["n_SalesOrderId"].ToString());
@@ -596,8 +596,57 @@ namespace SmartxAPI.Controllers
                     {
                         N_FormID = myFunctions.getIntVAL(MasterRow["N_FormID"].ToString());
                     }
+                   if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_OrderDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                  {
+                   object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_OrderDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                  if (DiffFnYearID != null)
+                   {
+                    MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                    N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+
+                    QueryParams["@nFnYearID"] = N_FnYearID;
+                    QueryParams["@N_CustomerId"] = N_CustomerId;
+                    QueryParams["@N_CompanyID"] = N_CompanyID;
 
 
+                    SortedList PostingParam = new SortedList();
+                    PostingParam.Add("N_PartyID", N_CustomerId);
+                    PostingParam.Add("N_FnyearID", N_FnYearID);
+                    PostingParam.Add("N_CompanyID", N_CompanyID);
+                    PostingParam.Add("X_Type", "customer");
+
+
+                     object custCount = dLayer.ExecuteScalar("Select count(*) From Inv_Customer where N_FnYearID=@nFnYearID and N_CompanyID=@N_CompanyID and N_CustomerID=@N_CustomerId", QueryParams, connection, transaction);
+                      
+                      if(myFunctions.getIntVAL(custCount.ToString())==0){
+                           try 
+                    {
+                        dLayer.ExecuteNonQueryPro("SP_CratePartyBackYear", PostingParam, connection, transaction);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        throw ex;
+                    }
+                      }
+                 
+                  
+                  }
+                  else
+                  {
+                    // transaction.Rollback();
+                    // return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                    // Result.Add("b_IsCompleted", 0);
+                    // Result.Add("x_Msg", "Transaction date must be in the active Financial Year.");
+                      return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                   }
+                 }
+                 MasterTable.AcceptChanges();
+                object B_YearEndProcess=dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_OrderDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                if(myFunctions.getBoolVAL(B_YearEndProcess.ToString()))
+                {
+                     return Ok(_api.Error(User, "Year Closed"));
+                }
                     if (x_OrderNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
@@ -835,7 +884,7 @@ namespace SmartxAPI.Controllers
 
 
                     transaction.Commit();
-                    SortedList Result = new SortedList();
+                    // SortedList Result = new SortedList();
                     Result.Add("n_SalesOrderID", n_SalesOrderId);
                     Result.Add("x_SalesOrderNo", x_OrderNo);
 
