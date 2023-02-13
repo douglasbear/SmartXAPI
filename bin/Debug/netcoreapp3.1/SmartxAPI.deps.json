@@ -1671,9 +1671,6 @@
           "System.Security.Principal.Windows": "4.7.0"
         }
       },
-<<<<<<< HEAD
-      "System.Security.Cryptography.Cng/4.5.0": {},
-=======
       "System.Security.Cryptography.Cng/4.7.0": {},
       "System.Security.Cryptography.Pkcs/4.7.0": {
         "dependencies": {
@@ -1683,7 +1680,6 @@
           "ref/netcoreapp3.0/System.Security.Cryptography.Pkcs.dll": {}
         }
       },
->>>>>>> 0d555b700049a1e5d90b0cb88739c7f0309da103
       "System.Security.Cryptography.Primitives/4.3.0": {
         "dependencies": {
           "System.Diagnostics.Debug": "4.3.0",
@@ -5670,14 +5666,6 @@
       "sha512": ""
     },
     "System.Security.Principal.Windows.Reference/4.1.1.0": {
-<<<<<<< HEAD
-      "type": "referenceassembly",
-      "serviceable": false,
-      "sha512": ""
-    },
-    "System.Security.SecureString.Reference/4.1.2.0": {
-=======
->>>>>>> 0d555b700049a1e5d90b0cb88739c7f0309da103
       "type": "referenceassembly",
       "serviceable": false,
       "sha512": ""
