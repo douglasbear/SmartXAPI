@@ -50,11 +50,11 @@ namespace SmartxAPI.Controllers
                     //   Params.Add("@today", dDate);
                       
             object nBatchID = dLayer.ExecuteScalar("select n_AdmittedDivisionID from vw_schAdmission where N_AdmissionID= "+nTeacherID+" and  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID,Params, connection) ;
-            string sqlAssignment = "SELECT COUNT(*) as N_Count FROM Vw_AssignmentByTeacher WHERE MONTH(D_AssignedDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_AssignedDate) = YEAR(CURRENT_TIMESTAMP) and isnull(B_IsSaveDraft,0)=0 and  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID+" and n_TeacherID="+nTeacherID+" " ;
-            string sqlAssignmentTotal = "SELECT COUNT(*) as N_Count FROM Vw_AssignmentByTeacher WHERE N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID+" and n_TeacherID="+nTeacherID+"" ;
-            string sqlExam = "SELECT COUNT(*) as N_Count FROM Vw_ExamByTeacher WHERE N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  +" and n_TeacherID="+nTeacherID+""; 
-            string sqlPubResults = "SELECT COUNT(*) as N_Count FROM vw_Sch_Assignment WHERE N_FormID=1547 and isnull(b_PublishMark,0)=1 and  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
-            string sqlSheduledExam = "SELECT COUNT(*) as N_Count FROM Vw_ExamByTeacher WHERE  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  +" and n_TeacherID="+nTeacherID+" and  D_ExamDate>='" + dDate + "'"; 
+            string sqlAssignment = "SELECT count(1) as N_Count FROM Vw_AssignmentByTeacher WHERE MONTH(D_AssignedDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_AssignedDate) = YEAR(CURRENT_TIMESTAMP) and isnull(B_IsSaveDraft,0)=0 and  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID+" and n_TeacherID="+nTeacherID+" " ;
+            string sqlAssignmentTotal = "SELECT count(1) as N_Count FROM Vw_AssignmentByTeacher WHERE N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID+" and n_TeacherID="+nTeacherID+"" ;
+            string sqlExam = "SELECT count(1) as N_Count FROM Vw_ExamByTeacher WHERE N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  +" and n_TeacherID="+nTeacherID+""; 
+            string sqlPubResults = "SELECT count(1) as N_Count FROM vw_Sch_Assignment WHERE N_FormID=1547 and isnull(b_PublishMark,0)=1 and  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
+            string sqlSheduledExam = "SELECT count(1) as N_Count FROM Vw_ExamByTeacher WHERE  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  +" and n_TeacherID="+nTeacherID+" and  D_ExamDate>='" + dDate + "'"; 
              string sqlTimeTableData = "SELECT * FROM vw_TimetableDetails WHERE N_CompanyID = " + nCompanyID + " and  N_FnYearID="+nAcYearID+"  and  x_WeekName='"+dayOfWk+"' and n_TeacherID="+nTeacherID+"" ;
            
             SortedList Data = new SortedList();
@@ -159,7 +159,7 @@ namespace SmartxAPI.Controllers
                     AssignmentDetails = dLayer.ExecuteDataTable(sqlAssignment, Params, connection);
                     AssignmentDetails = api.Format(AssignmentDetails, "AssignmentDetails");
                     if (AssignmentDetails.Rows.Count > 0) Data.Add("AssignmentDetails", AssignmentDetails);
-                    string sqlCommandCount1 = "select count(*) as N_Count from Vw_AssignmentByTeacher WHERE MONTH(D_AssignedDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_AssignedDate) = YEAR(CURRENT_TIMESTAMP) and isnull(B_IsSaveDraft,0)=0 and  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID+" and N_TeacherID="+nTeacherID+" ";
+                    string sqlCommandCount1 = "select count(1) as N_Count from Vw_AssignmentByTeacher WHERE MONTH(D_AssignedDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_AssignedDate) = YEAR(CURRENT_TIMESTAMP) and isnull(B_IsSaveDraft,0)=0 and  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID+" and N_TeacherID="+nTeacherID+" ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount1, Params, connection);
                     Data.Add("TotalCount", TotalCount);
                      if (AssignmentDetails.Rows.Count == 0)
@@ -213,7 +213,7 @@ namespace SmartxAPI.Controllers
                     BatchwiseDetails = dLayer.ExecuteDataTable(sqlAssignment, Params, connection);
                     BatchwiseDetails = api.Format(BatchwiseDetails, "BatchwiseDetails");
                     if (BatchwiseDetails.Rows.Count > 0) Data.Add("BatchwiseDetails", BatchwiseDetails);
-                    string sqlCommandCount1 ="select count(*) as N_Count from Vw_ClassandBatchWiseList WHERE   N_CompanyID = " + nCompanyID + " and N_FnYearID="+nAcYearID+" and N_TeacherID="+nTeacherID+"";
+                    string sqlCommandCount1 ="select count(1) as N_Count from Vw_ClassandBatchWiseList WHERE   N_CompanyID = " + nCompanyID + " and N_FnYearID="+nAcYearID+" and N_TeacherID="+nTeacherID+"";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount1, Params, connection);
                     Data.Add("TotalCount", TotalCount);
                      if (BatchwiseDetails.Rows.Count == 0)
@@ -289,7 +289,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "Select  count(*) from Vw_SubjectMapping Where N_CompanyID = " + nCompanyId + " and N_AcYearID="+nAcYearID + crieteria ;
+                    sqlCommandCount = "Select  count(1) from Vw_SubjectMapping Where N_CompanyID = " + nCompanyId + " and N_AcYearID="+nAcYearID + crieteria ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

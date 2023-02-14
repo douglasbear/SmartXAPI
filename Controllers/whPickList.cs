@@ -71,7 +71,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    string sqlCommandCount = "select count(*) as N_Count  from vw_WhPickListMaster where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and isnull(N_FormID,0)=@nFormID " + Searchkey + "";
+                    string sqlCommandCount = "select count(1) as N_Count  from vw_WhPickListMaster where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and isnull(N_FormID,0)=@nFormID " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -271,7 +271,7 @@ namespace SmartxAPI.Controllers
                     else
                         DetailSql = "select * from vw_WhPickListDetails where N_CompanyID=@nCompanyID and N_PickListID=@nPickListID ";
                    
-                    object Count = dLayer.ExecuteScalar("select count(*)  from Inv_TransferStock where N_CompanyID=@nCompanyID and N_PickListID ="+myFunctions.getIntVAL(MasterTable.Rows[0]["n_PickListID"].ToString())+" ", Params, connection);
+                    object Count = dLayer.ExecuteScalar("select count(1)  from Inv_TransferStock where N_CompanyID=@nCompanyID and N_PickListID ="+myFunctions.getIntVAL(MasterTable.Rows[0]["n_PickListID"].ToString())+" ", Params, connection);
                     if(myFunctions.getIntVAL(Count.ToString())>0)
                     {
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_productTransfered", typeof(double), 0);

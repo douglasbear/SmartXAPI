@@ -173,7 +173,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
                     if(formID==1658){
-                      object count = dLayer.ExecuteScalar("Select count(*) from Pay_EmpBussinessTripRequest Where  N_CompanyID= " + nCompanyID + " and N_TravelTypeID=" + nPkeyId, connection, transaction);
+                      object count = dLayer.ExecuteScalar("Select count(1) from Pay_EmpBussinessTripRequest Where  N_CompanyID= " + nCompanyID + " and N_TravelTypeID=" + nPkeyId, connection, transaction);
                           if(myFunctions.getIntVAL(count.ToString())>0){
                          return Ok(api.Warning("Unable To delete"));
                     }

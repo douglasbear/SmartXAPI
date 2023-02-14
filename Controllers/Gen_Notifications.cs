@@ -47,11 +47,11 @@ namespace SmartxAPI.Controllers
 
             if (bShowAllBranch)
             {
-                sqlCommandText = "select count(*) from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID ";
+                sqlCommandText = "select count(1) from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID ";
             }
             else
             {
-                sqlCommandText = "select count(*) from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID and N_Branchid = @nBranchID ";
+                sqlCommandText = "select count(1) from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID and N_Branchid = @nBranchID ";
                 Params.Add("@nBranchID", nBranchID);
             }
 
@@ -88,8 +88,8 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string sqlCommandCount = "";
 
-            // sqlCommandText = "select X_Type, count(*) as N_Count from vw_Gen_Notification where N_CompanyID=@nCompanyID and N_UserID=@nUserID and N_LanguageID=1 group by X_Type ";
-            sqlCommandText = "select List.X_Type,count(*) as N_Count  from (Select 'Approval' AS X_Type, X_Type AS X_Notification, '' as X_Title, N_CompanyID, N_FormID,NULL AS D_ExpiryDate, 0 AS N_PartyID, N_NextApproverID AS N_UserID,1 AS N_LanguageID from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID "
+            // sqlCommandText = "select X_Type, count(1) as N_Count from vw_Gen_Notification where N_CompanyID=@nCompanyID and N_UserID=@nUserID and N_LanguageID=1 group by X_Type ";
+            sqlCommandText = "select List.X_Type,count(1) as N_Count  from (Select 'Approval' AS X_Type, X_Type AS X_Notification, '' as X_Title, N_CompanyID, N_FormID,NULL AS D_ExpiryDate, 0 AS N_PartyID, N_NextApproverID AS N_UserID,1 AS N_LanguageID from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID "
                             + "UNION  all "
                             + "Select 'Reminder' AS X_Type,X_Subject AS X_Notification, X_Title, N_CompanyId, N_FormID, D_ExpiryDate, N_PartyID, N_UserID,N_LanguageID from vw_Gen_ReminderDashboard where isNull(N_Processed,0)=0 and N_CompanyID=@nCompanyID and N_LanguageID=1 "
                             + "UNION all "
@@ -103,7 +103,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_TotalCount  from (Select 'Approval' AS X_Type, X_Type AS X_Notification, '' as X_Title, N_CompanyID, N_FormID,NULL AS D_ExpiryDate, 0 AS N_PartyID, N_NextApproverID AS N_UserID,1 AS N_LanguageID from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID "
+                    sqlCommandCount = "select count(1) as N_TotalCount  from (Select 'Approval' AS X_Type, X_Type AS X_Notification, '' as X_Title, N_CompanyID, N_FormID,NULL AS D_ExpiryDate, 0 AS N_PartyID, N_NextApproverID AS N_UserID,1 AS N_LanguageID from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID "
                             + "UNION  all "
                             + "Select 'Reminder' AS X_Type,X_Subject AS X_Notification, X_Title, N_CompanyId, N_FormID, D_ExpiryDate, N_PartyID, N_UserID,N_LanguageID from vw_Gen_ReminderDashboard where isNull(N_Processed,0)=0 and N_CompanyID=@nCompanyID and N_LanguageID=1 "
                             + "UNION all "

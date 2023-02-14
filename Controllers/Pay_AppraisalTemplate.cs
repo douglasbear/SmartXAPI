@@ -124,7 +124,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count from Pay_AppraisalTemplate where " + sqlCondition + " " + Searchkey + " ";
+                    sqlCommandCount = "select count(1) as N_Count from Pay_AppraisalTemplate where " + sqlCondition + " " + Searchkey + " ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -388,8 +388,8 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                     object tempcount = dLayer.ExecuteScalar("select count(*) from Pay_EvaluationSettings where N_TemplateID=" + nTemplateID + " and N_CompanyID=" + nCompanyID + "", connection);
-                     object tempempcount= dLayer.ExecuteScalar("select count(*) from Pay_Employee where N_TemplateID=" + nTemplateID + " and N_CompanyID=" + nCompanyID + "", connection);
+                     object tempcount = dLayer.ExecuteScalar("select count(1) from Pay_EvaluationSettings where N_TemplateID=" + nTemplateID + " and N_CompanyID=" + nCompanyID + "", connection);
+                     object tempempcount= dLayer.ExecuteScalar("select count(1) from Pay_Employee where N_TemplateID=" + nTemplateID + " and N_CompanyID=" + nCompanyID + "", connection);
                       
                          int ntempcount = myFunctions.getIntVAL(tempcount.ToString());
                          int ntempempcount = myFunctions.getIntVAL(tempempcount.ToString());

@@ -163,7 +163,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     object xCategory = dLayer.ExecuteScalar("Select X_Category From Inv_ItemCategory Where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User), connection);
-                    object Objcount = dLayer.ExecuteScalar("Select count(*) From Inv_ItemMaster where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User), connection);
+                    object Objcount = dLayer.ExecuteScalar("Select count(1) From Inv_ItemMaster where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User), connection);
                     int Obcount = myFunctions.getIntVAL(Objcount.ToString());
                     if (Obcount != 0)
                     {
@@ -232,7 +232,7 @@ namespace SmartxAPI.Controllers
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
-                   sqlCommandCount = "select count(*) as N_Count  from Inv_ItemCategory where N_CompanyID=@p1";
+                   sqlCommandCount = "select count(1) as N_Count  from Inv_ItemCategory where N_CompanyID=@p1";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

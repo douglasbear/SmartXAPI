@@ -137,7 +137,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p7 " +criteria+ Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount from vw_InvPurchaseOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p7 " +criteria+ Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -422,7 +422,7 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                    Object PoCount=dLayer.ExecuteScalar("select count(*) from Inv_MRNDetails where N_PONo="+N_POrderID+" and N_CompanyID="+nCompanyId, Params, connection);
+                    Object PoCount=dLayer.ExecuteScalar("select count(1) from Inv_MRNDetails where N_PONo="+N_POrderID+" and N_CompanyID="+nCompanyId, Params, connection);
                     int nPoCount = myFunctions.getIntVAL(PoCount.ToString());
                     if (nPoCount > 0)
                     {

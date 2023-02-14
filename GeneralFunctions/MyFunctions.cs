@@ -1082,7 +1082,7 @@ namespace SmartxAPI.GeneralFunctions
             }
             if (nTransID > 0)
             {
-                object objApprovalPresent = dLayer.ExecuteScalar("select COUNT(*) from Gen_ApprovalCodesTrans where N_FormID=" + nFormID + " and N_CompanyID=" + nCompanyID + " and N_TransID=" + nTransID, ApprovalParams, connection);
+                object objApprovalPresent = dLayer.ExecuteScalar("select count(1) from Gen_ApprovalCodesTrans where N_FormID=" + nFormID + " and N_CompanyID=" + nCompanyID + " and N_TransID=" + nTransID, ApprovalParams, connection);
                 if (this.getIntVAL(objApprovalPresent.ToString()) == 0)
                 {
                     Response["btnSaveText"] = "Save";

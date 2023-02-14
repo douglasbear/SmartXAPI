@@ -181,7 +181,7 @@ namespace SmartxAPI.Controllers
 
                     DataTable TaxInfo = dLayer.ExecuteDataTable("SELECT  Top(1) Gen_Settings.N_Value AS n_PkeyID, Acc_TaxCategory.X_CategoryName AS x_DisplayName FROM Acc_TaxCategory INNER JOIN Acc_FnYear ON Acc_TaxCategory.N_TaxTypeID = Acc_FnYear.N_TaxType AND Acc_TaxCategory.N_CompanyID = Acc_FnYear.N_CompanyID INNER JOIN Gen_Settings ON Acc_TaxCategory.X_PkeyCode = Gen_Settings.N_Value AND Acc_TaxCategory.N_CompanyID = Gen_Settings.N_CompanyID WHERE (Gen_Settings.N_CompanyID = @p2) AND (Gen_Settings.X_Group = 'Inventory') AND (Gen_Settings.X_Description = 'DefaultTaxCategory') and Acc_FnYear.N_FnYearID=" + N_FnYearID, Params, connection);
                        Params.Add("@nCompanyID", nCompanyID);
-                     object CompanyCount = dLayer.ExecuteScalar("select count(*) from Acc_VoucherDetails where N_CompanyID= " + nCompanyID, connection);
+                     object CompanyCount = dLayer.ExecuteScalar("select count(1) from Acc_VoucherDetails where N_CompanyID= " + nCompanyID, connection);
                       
                        if(myFunctions.getIntVAL(CompanyCount.ToString())>0){
                           setReadOnly=true;
@@ -321,7 +321,7 @@ namespace SmartxAPI.Controllers
                     }
                     Params.Add("@p1", xUserName);
                     Params.Add("@p2", xPassword);
-                    object CompanyCount = dLayer.ExecuteScalar("select count(*) from Acc_Company where B_IsDefault=1 and N_ClientID=" + myFunctions.GetClientID(User), connection, transaction);
+                    object CompanyCount = dLayer.ExecuteScalar("select count(1) from Acc_Company where B_IsDefault=1 and N_ClientID=" + myFunctions.GetClientID(User), connection, transaction);
 
                     int Count = myFunctions.getIntVAL(CompanyCount.ToString());
                     if (Count == 0)

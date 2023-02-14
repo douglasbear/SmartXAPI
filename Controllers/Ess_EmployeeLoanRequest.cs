@@ -93,7 +93,7 @@ namespace SmartxAPI.Controllers
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
                         dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                        sqlCommandCount = "select count(*) as N_Count from vw_Pay_LoanIssueList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  " + Searchkey + "";
+                        sqlCommandCount = "select count(1) as N_Count from vw_Pay_LoanIssueList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  " + Searchkey + "";
                         object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
                         OutPut.Add("Details", api.Format(dt));
                         OutPut.Add("TotalCount", TotalCount);
@@ -172,7 +172,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object count = dLayer.ExecuteScalar("select count(*) From Pay_LoanIssue " +
+                    object count = dLayer.ExecuteScalar("select count(1) From Pay_LoanIssue " +
                                  " INNER JOIN dbo.Pay_EmployeePaymentDetails ON dbo.Pay_LoanIssue.N_CompanyID = dbo.Pay_EmployeePaymentDetails.N_CompanyID AND " +
                                  " dbo.Pay_LoanIssue.N_LoanTransID = dbo.Pay_EmployeePaymentDetails.N_SalesID and dbo.Pay_EmployeePaymentDetails.N_Entryfrom=212 and Pay_LoanIssue.N_LoanAmount =dbo.Pay_EmployeePaymentDetails.N_Amount " +
                                  " where Pay_LoanIssue.N_LoanID =" + nLoanID + " and Pay_LoanIssue.N_CompanyID=" + companyid + " and Pay_LoanIssue.N_FnYearID =" + nFnYearID + "", QueryParams, connection);
@@ -597,7 +597,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_Pay_LoanIssueList where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count from vw_Pay_LoanIssueList where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

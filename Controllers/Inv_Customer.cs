@@ -161,10 +161,10 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                       if(bActiveCustomer==true){
-                       sqlCommandCount = "select count(*) as N_Count  from vw_InvCustomer where N_CompanyID=@p1 and N_FnYearId=@p3 and ISNULL(N_EnablePopup,0)=0 and B_Inactive=1" + Searchkey + "";
+                       sqlCommandCount = "select count(1) as N_Count  from vw_InvCustomer where N_CompanyID=@p1 and N_FnYearId=@p3 and ISNULL(N_EnablePopup,0)=0 and B_Inactive=1" + Searchkey + "";
                       }
                       else{
-                       sqlCommandCount = "select count(*) as N_Count  from vw_InvCustomer where N_CompanyID=@p1 and N_FnYearId=@p3 and ISNULL(N_EnablePopup,0)=0 " + Searchkey + "";
+                       sqlCommandCount = "select count(1) as N_Count  from vw_InvCustomer where N_CompanyID=@p1 and N_FnYearId=@p3 and ISNULL(N_EnablePopup,0)=0 " + Searchkey + "";
                       }
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
@@ -757,7 +757,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "portalURL", typeof(string), "");
                     if(nCustomerID>0){
-                    object Count = dLayer.ExecuteScalar("select count(*)  from vw_Inv_CheckCustomer where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID", Params, connection);
+                    object Count = dLayer.ExecuteScalar("select count(1)  from vw_Inv_CheckCustomer where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID", Params, connection);
                     int NCount = myFunctions.getIntVAL(Count.ToString());
                     if (NCount > 0)
                     {
