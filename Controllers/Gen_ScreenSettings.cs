@@ -176,9 +176,10 @@ namespace SmartxAPI.Controllers
 
                     int N_InternalID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_InternalID"].ToString());
                     int N_MenuID = myFunctions.getIntVAL(DetailTable.Rows[0]["n_MenuID"].ToString());
+                    int N_Type = myFunctions.getIntVAL(DetailTable.Rows[0]["N_Type"].ToString());
 
 
-                    dLayer.DeleteData("Sec_GeneralScreenSettings", "N_CompanyID", nCompanyID, "", connection, transaction);
+                    dLayer.DeleteData("Sec_GeneralScreenSettings", "N_CompanyID", nCompanyID, "N_Type="+N_Type, connection, transaction);
                     if (DetailTable.Rows.Count > 0)
                     {
 

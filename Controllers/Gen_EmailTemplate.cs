@@ -312,6 +312,48 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, e));
             }
         }
+        [HttpGet("emaildetails")]
+        public ActionResult EmailTemplateDetails(string nFormID)
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string sqlCommandText = "";
+
+            sqlCommandText = "select  * from vw_MailGeneralScreenSettings where N_CompanyID=@p1 and N_MenuID=@p2";
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFormID);
+
+            SortedList OutPut = new SortedList();
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(dt));
+                    }
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+
         [HttpGet("details")]
         public ActionResult TemplateListDetails(string n_TemplateID)
         {
