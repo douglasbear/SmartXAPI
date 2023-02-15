@@ -165,53 +165,19 @@ namespace SmartxAPI.Controllers
                         {
                             DataTable UserPrevilegesDT = new DataTable();
                             DataTable Printtemplates = new DataTable();
-                            string sqlCommandText = "select 0 AS N_InternalID," + N_UserCategoryID + " AS N_UserCategoryID, N_MenuID, B_Visible, B_Edit, B_Delete, B_Save, B_View from Sec_UserPrevileges where N_UserCategoryID=" + FromUserCatID;
+                            // string sqlCommandText = "select 0 AS N_InternalID," + N_UserCategoryID + " AS N_UserCategoryID, N_MenuID, B_Visible, B_Edit, B_Delete, B_Save, B_View from Sec_UserPrevileges where N_UserCategoryID=" + FromUserCatID;
+                            string sqlCommandText = " insert into Sec_UserPrevileges (N_InternalID, N_UserCategoryID, N_MenuID, B_Visible, B_Edit, B_Delete, B_Save, B_View) " +
+                            " SELECT        N_InternalID, " + N_UserCategoryID + " AS N_UserCategoryID, N_MenuID, B_Visible, B_Edit, B_Delete, B_Save, B_View " +
+                            " FROM            Sec_UserPrevileges where N_UserCategoryID=" + FromUserCatID+"" ;
+                            string sqlSettingsCommandText = "insert into Gen_Settings(N_CompanyID, X_Group, X_Description, N_Value, X_Value, N_UserCategoryID, X_FieldType, N_SettingsFormID, X_SettingsTabCode, X_WLanControlNo, N_Order, X_DataSource, B_WShow) "+
+                            " SELECT        N_CompanyID, X_Group, X_Description, N_Value, X_Value, "+N_UserCategoryID+", X_FieldType, N_SettingsFormID, X_SettingsTabCode, X_WLanControlNo, N_Order, X_DataSource, B_WShow "+
+                            " FROM            Gen_Settings where N_UserCategoryID=" + FromUserCatID+"" ;
                             string sqlCommandPrintTemplates = "insert into Gen_PrintTemplates (N_CompanyID, N_FormID, X_RptName, X_Criteria, N_UserCategoryID, N_PrintCopies, X_RptFolder, X_PkeyField, B_ClearScreenAfterSave, B_Custom, X_FormName, B_PrintAfterSave) SELECT N_CompanyID, N_FormID, X_RptName, X_Criteria, " + N_UserCategoryID + " AS N_UserCategoryID, N_PrintCopies, X_RptFolder, X_PkeyField, B_ClearScreenAfterSave, B_Custom,X_FormName,B_PrintAfterSave FROM Gen_PrintTemplates where N_UserCategoryID=" + FromUserCatID+"";
-                            UserPrevilegesDT = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
+                            // UserPrevilegesDT = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
                             dLayer.ExecuteScalar(sqlCommandPrintTemplates, connection,transaction);
-                            // Printtemplates = dLayer.ExecuteDataTable(sqlCommandPrintTemplates, Params, connection, transaction);
-                            // dLayer.SaveData("Gen_PrintTemplates", "N_FormID", Printtemplates, connection, transaction);
-                            if (UserPrevilegesDT.Rows.Count == 0)
-                            {
-                                DataRow row = UserPrevilegesDT.NewRow();
-                                row["N_InternalID"] = 0;
-                                row["N_UserCategoryID"] = N_UserCategoryID;
-                                row["N_MenuID"] = 1;
-                                row["B_Visible"] = 1;
-                                row["B_Edit"] = 1;
-                                row["B_Delete"] = 1;
-                                row["B_Save"] = 1;
-                                row["B_View"] = null;
-                                UserPrevilegesDT.Rows.Add(row);
-
-                                DataRow row2 = UserPrevilegesDT.NewRow();
-                                row2["N_InternalID"] = 0;
-                                row2["N_UserCategoryID"] = N_UserCategoryID;
-                                row2["N_MenuID"] = 70;
-                                row2["B_Visible"] = 1;
-                                row2["B_Edit"] = 1;
-                                row2["B_Delete"] = 1;
-                                row2["B_Save"] = 1;
-                                row2["B_View"] = null;
-                                UserPrevilegesDT.Rows.Add(row2);
-
-                                DataRow row3 = UserPrevilegesDT.NewRow();
-                                row3["N_InternalID"] = 0;
-                                row3["N_UserCategoryID"] = N_UserCategoryID;
-                                row3["N_MenuID"] = 148;
-                                row3["B_Visible"] = 1;
-                                row3["B_Edit"] = 1;
-                                row3["B_Delete"] = 1;
-                                row3["B_Save"] = 1;
-                                row3["B_View"] = null;
-                                UserPrevilegesDT.Rows.Add(row2);
-                            }
-                            int N_InternalID = dLayer.SaveData("Sec_UserPrevileges", "N_InternalID", UserPrevilegesDT, connection, transaction);
-                            if (N_InternalID <= 0)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, "Unable to save"));
-                            }
+                            dLayer.ExecuteScalar("delete from Sec_UserPrevileges where N_UserCategoryID=" + N_UserCategoryID, connection,transaction);
+                            dLayer.ExecuteScalar(sqlCommandText, connection,transaction);
+                            dLayer.ExecuteScalar(sqlSettingsCommandText, connection,transaction);
                         }
 
                         transaction.Commit();

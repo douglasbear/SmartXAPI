@@ -428,6 +428,25 @@ namespace SmartxAPI.Controllers
                           apps.AcceptChanges();
                           if(myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString())>0)
                           {
+                         SortedList userParam= new SortedList();
+                        userParam.Add("@userID", userID);
+                        apps = myFunctions.AddNewColumnToDataTable(apps, "X_LandingPage", typeof(string), null);
+                        string sqlText = "Select * From sec_userApps Where N_UserID=@userID";
+
+                        DataTable duserApps = dLayer.ExecuteDataTable( sqlText,userParam,connection,transaction);
+                        foreach (DataRow Rows in duserApps.Rows){
+                            foreach (DataRow drow in apps.Rows){
+                                if (myFunctions.getIntVAL(Rows["N_UserID"].ToString())==myFunctions.getIntVAL(drow["N_UserID"].ToString())&&myFunctions.getIntVAL(Rows["N_AppID"].ToString())==myFunctions.getIntVAL(drow["N_AppID"].ToString()))
+                                {
+                                    
+                                    drow["X_LandingPage"]=Rows["X_LandingPage"];
+                                }
+
+                            }
+
+                        }
+                          apps.AcceptChanges();
+
                           dLayer.ExecuteNonQuery("DELETE FROM sec_userApps  WHERE N_UserID="+userID , connection, transaction);
                           }
                        

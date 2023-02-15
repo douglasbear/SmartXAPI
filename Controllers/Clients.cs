@@ -468,5 +468,42 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+
+
+              [HttpPost("save")]
+        public ActionResult Save([FromBody] DataSet ds)
+        {
+            DataTable MasterTable = ds.Tables["master"];
+            DataRow MasterRow = MasterTable.Rows[0];
+
+            string email = MasterTable.Rows[0]["x_EmailID"].ToString();
+            int nLangaugeID =  myFunctions.getIntVAL(MasterTable.Rows[0]["N_LanguageID"].ToString());
+            int nClientID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ClientID"].ToString());
+
+            try
+            {
+                using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                {
+                    olivoCon.Open();
+                    SqlTransaction transaction;
+
+                    transaction = olivoCon.BeginTransaction();
+
+                    SortedList paramList = new SortedList();
+                    paramList.Add("@emailID", email);
+                     paramList.Add("@nLangaugeID", nLangaugeID);
+                     paramList.Add("@nClientID", nClientID);
+                   
+                dLayer.ExecuteNonQuery("Update users Set N_LanguageID=@nLangaugeID Where X_EmailID=@emailID  and N_ClientID=@nClientID",paramList, olivoCon, transaction);
+                 transaction.Commit();
+                return Ok(_api.Success("Account Saved"));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
     }
 }
