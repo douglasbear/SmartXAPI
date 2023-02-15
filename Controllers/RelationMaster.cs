@@ -46,7 +46,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
 
-                    // string sqlCommandCount = "select count(*) as N_Count  from Pay_Relation where N_CompanyID="+ nCompanyID +"and N_RelationID not in ("+ nRelationID +")";
+                    // string sqlCommandCount = "select count(1) as N_Count  from Pay_Relation where N_CompanyID="+ nCompanyID +"and N_RelationID not in ("+ nRelationID +")";
                     // object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection, transaction);
                     
                     string X_Relation = MasterTable.Rows[0]["X_Relation"].ToString();

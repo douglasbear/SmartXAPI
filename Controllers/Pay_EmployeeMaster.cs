@@ -231,10 +231,10 @@ namespace SmartxAPI.Controllers
             Params.Add("@xEmpCode", xEmpCode);
 
             string branchSql = bAllBranchData == false ? " and (vw_PayEmployee.N_BranchID=0 or vw_PayEmployee.N_BranchID=@nBranchID ) " : "";
-            string EmployeeSql = "Select X_LedgerName_Ar As X_LedgerName,[Loan Ledger Name_Ar] As [Loan Ledger Name],[Loan Ledger Name_Ar] AS X_LoanLedgerName_Ar,[Loan Ledger Code] AS X_LoanLedgerCode,[Loan Ledger Name] AS X_LoanLedgerName, *,CASE WHEN dbo.Pay_VacationDetails.D_VacDateFrom<=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.D_VacDateTo>=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.N_VacDays<0 and dbo.Pay_VacationDetails.B_IsSaveDraft=0 Then '1' Else vw_PayEmployee.N_Status end AS [Status] ,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_PayEmployee.N_CompanyID AND N_EmpID = vw_PayEmployee.N_EmpID and ISNULL(B_BeginingBalEntry,0) = 0 and N_FormID = 190 ) AS N_NoEdit from vw_PayEmployee Left Outer Join Pay_Supervisor On vw_PayEmployee.N_ReportToID= Pay_Supervisor.N_SupervisorID and vw_PayEmployee.N_CompanyID= Pay_Supervisor.N_CompanyID  Left Outer Join Pay_Employee On Pay_Supervisor.N_EmpID=Pay_Employee.N_EmpID and Pay_employee.N_FnYearID=@nFnYearID Left Outer Join  dbo.Pay_VacationDetails ON vw_PayEmployee.N_EmpID = dbo.Pay_VacationDetails.N_EmpID AND dbo.Pay_VacationDetails.D_VacDateFrom <= CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.D_VacDateTo >=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.N_VacDays<0  Where vw_PayEmployee.N_CompanyID=@nCompanyID and vw_PayEmployee.N_FnYearID=@nFnYearID and vw_PayEmployee.X_EmpCode=@xEmpCode " + branchSql;
+            string EmployeeSql = "Select X_LedgerName_Ar As X_LedgerName,[Loan Ledger Name_Ar] As [Loan Ledger Name],[Loan Ledger Name_Ar] AS X_LoanLedgerName_Ar,[Loan Ledger Code] AS X_LoanLedgerCode,[Loan Ledger Name] AS X_LoanLedgerName, *,CASE WHEN dbo.Pay_VacationDetails.D_VacDateFrom<=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.D_VacDateTo>=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.N_VacDays<0 and dbo.Pay_VacationDetails.B_IsSaveDraft=0 Then '1' Else vw_PayEmployee.N_Status end AS [Status] ,(Select count(1) from Pay_PaymentDetails Where N_CompanyID = vw_PayEmployee.N_CompanyID AND N_EmpID = vw_PayEmployee.N_EmpID and ISNULL(B_BeginingBalEntry,0) = 0 and N_FormID = 190 ) AS N_NoEdit from vw_PayEmployee Left Outer Join Pay_Supervisor On vw_PayEmployee.N_ReportToID= Pay_Supervisor.N_SupervisorID and vw_PayEmployee.N_CompanyID= Pay_Supervisor.N_CompanyID  Left Outer Join Pay_Employee On Pay_Supervisor.N_EmpID=Pay_Employee.N_EmpID and Pay_employee.N_FnYearID=@nFnYearID Left Outer Join  dbo.Pay_VacationDetails ON vw_PayEmployee.N_EmpID = dbo.Pay_VacationDetails.N_EmpID AND dbo.Pay_VacationDetails.D_VacDateFrom <= CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.D_VacDateTo >=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.N_VacDays<0  Where vw_PayEmployee.N_CompanyID=@nCompanyID and vw_PayEmployee.N_FnYearID=@nFnYearID and vw_PayEmployee.X_EmpCode=@xEmpCode " + branchSql;
             string contactSql = "Select * from vw_ContactDetails where N_CompanyID =@nCompanyID and N_EmpID=@nEmpID order by N_ContactDetailsID desc";
-            string salarySql = "Select *,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformation.N_CompanyID AND N_EmpID = vw_EmpPayInformation.N_EmpID AND N_PayID = vw_EmpPayInformation.N_PayID AND N_Value = vw_EmpPayInformation.N_value ) AS N_NoEdit from vw_EmpPayInformation Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpID=@nEmpID and D_EffectiveDate= (select max(D_EffectiveDate) from vw_EmpPayInformation where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpID=@nEmpID ) order by vw_EmpPayInformation.N_PaySetupID,vw_EmpPayInformation.N_Value";
-            string accrualSql = "Select *,(Select COUNT(*) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@nCompanyID  and N_EmpID=@nEmpID";
+            string salarySql = "Select *,(Select count(1) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformation.N_CompanyID AND N_EmpID = vw_EmpPayInformation.N_EmpID AND N_PayID = vw_EmpPayInformation.N_PayID AND N_Value = vw_EmpPayInformation.N_value ) AS N_NoEdit from vw_EmpPayInformation Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpID=@nEmpID and D_EffectiveDate= (select max(D_EffectiveDate) from vw_EmpPayInformation where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpID=@nEmpID ) order by vw_EmpPayInformation.N_PaySetupID,vw_EmpPayInformation.N_Value";
+            string accrualSql = "Select *,(Select count(1) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@nCompanyID  and N_EmpID=@nEmpID";
             string empDepedenceSql = "Select * from Pay_EmployeeDependence Inner Join Pay_Relation on Pay_EmployeeDependence.N_RelationID = Pay_Relation.N_RelationID and Pay_EmployeeDependence.N_CompanyID = Pay_Relation.N_CompanyID    Where Pay_EmployeeDependence.N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
             string empEducationSql = "Select * from Pay_EmployeeEducation where N_CompanyID =@nCompanyID and N_EmpID=@nEmpID";
             string employementHistorySql = "Select * from Pay_EmploymentHistory where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
@@ -472,7 +472,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_PayEmployee_Dashboard " + Criteria + Searchkey;
+                    sqlCommandCount = "select count(1) as N_Count  from vw_PayEmployee_Dashboard " + Criteria + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -1274,7 +1274,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Employee Code alread5y exist"));
                         }
 
-                        object N_TitleCount = dLayer.ExecuteScalar("select count(*) from Pay_Position where N_CompanyID= " + nCompanyID + " and N_PositionID= " + nPositionID + " and B_IsSupervisor = 1", connection, transaction);
+                        object N_TitleCount = dLayer.ExecuteScalar("select count(1) from Pay_Position where N_CompanyID= " + nCompanyID + " and N_PositionID= " + nPositionID + " and B_IsSupervisor = 1", connection, transaction);
 
                         if (myFunctions.getVAL(N_TitleCount.ToString()) > 0)
                         {
@@ -1285,7 +1285,7 @@ namespace SmartxAPI.Controllers
 
                     if (xPhone1 != "")
                     {
-                        object NPhnCount = dLayer.ExecuteScalar("Select count(*) from pay_Employee Where X_Phone1 ='" + xPhone1 + "' and N_EmpID <> '" + nEmpID + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                        object NPhnCount = dLayer.ExecuteScalar("Select count(1) from pay_Employee Where X_Phone1 ='" + xPhone1 + "' and N_EmpID <> '" + nEmpID + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
                         if (NPhnCount == null)
                         {
                             NPhnCount = 0;
@@ -1300,7 +1300,7 @@ namespace SmartxAPI.Controllers
                     }
                     if (xEmailID != "")
                     {
-                        object NEmailCount = dLayer.ExecuteScalar("Select count(*) from pay_Employee Where X_EmailID ='" + xEmailID + "' and N_EmpID <> '" + nEmpID + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                        object NEmailCount = dLayer.ExecuteScalar("Select count(1) from pay_Employee Where X_EmailID ='" + xEmailID + "' and N_EmpID <> '" + nEmpID + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
                         if (NEmailCount == null)
                         {
                             NEmailCount = 0;
@@ -1469,7 +1469,7 @@ namespace SmartxAPI.Controllers
                             NewEmp = 1;
                         if (NewEmp == 1)
                         {
-                            object Processed = dLayer.ExecuteScalar("Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = " + nCompanyID + " AND N_EmpID = " + nSavedEmpID, connection, transaction);
+                            object Processed = dLayer.ExecuteScalar("Select count(1) from Pay_PaymentDetails Where N_CompanyID = " + nCompanyID + " AND N_EmpID = " + nSavedEmpID, connection, transaction);
                             if (myFunctions.getIntVAL(Processed.ToString()) != 0)
                                 n_NoEdit = 1;
                         }
@@ -1508,7 +1508,7 @@ namespace SmartxAPI.Controllers
                         }
 
                         //Employee Accruals
-                        //object AccrualUsed = dLayer.ExecuteScalar("Select COUNT(*) from Pay_VacationDetails Where N_VacDays < 0 and N_CompanyID = " + nCompanyID + " AND N_EmpID = " + nSavedEmpID, connection, transaction);
+                        //object AccrualUsed = dLayer.ExecuteScalar("Select count(1) from Pay_VacationDetails Where N_VacDays < 0 and N_CompanyID = " + nCompanyID + " AND N_EmpID = " + nSavedEmpID, connection, transaction);
                         int pay_EmpAccrulsRes = 0;
                         if (dtpay_EmpAccruls.Rows.Count > 0)
                         {

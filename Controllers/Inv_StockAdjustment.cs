@@ -89,7 +89,7 @@ namespace SmartxAPI.Controllers
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count   from (select N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_LocationName,X_Remarks from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " Group By N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_LocationName,X_Remarks) as AdjustmentCountTable";
+                    sqlCommandCount = "select count(1) as N_Count   from (select N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_LocationName,X_Remarks from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " Group By N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_LocationName,X_Remarks) as AdjustmentCountTable";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

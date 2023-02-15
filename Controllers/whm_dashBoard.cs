@@ -42,9 +42,9 @@ namespace SmartxAPI.Controllers
         
 
  
-            string sqlpendingAsnList = "Select count(*) as N_Count  from vw_Wh_AsnMaster_Disp Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearId  + " and N_AsnID Not in (select N_AsnID from Wh_Grn  Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearId+" )";
-            string sqlPendingPickup ="select count(*) as N_Pickup from Wh_PickList where N_CompanyID= " + nCompanyID + " and N_FnYearID="+nFnYearId +"and N_FormID=1460";
-            string sqlPendingPicklist ="select count(*) as N_Pick from Wh_PickList where N_CompanyID= " + nCompanyID + " and N_FnYearID="+nFnYearId +"and N_FormID=1459";
+            string sqlpendingAsnList = "Select count(1) as N_Count  from vw_Wh_AsnMaster_Disp Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearId  + " and N_AsnID Not in (select N_AsnID from Wh_Grn  Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearId+" )";
+            string sqlPendingPickup ="select count(1) as N_Pickup from Wh_PickList where N_CompanyID= " + nCompanyID + " and N_FnYearID="+nFnYearId +"and N_FormID=1460";
+            string sqlPendingPicklist ="select count(1) as N_Pick from Wh_PickList where N_CompanyID= " + nCompanyID + " and N_FnYearID="+nFnYearId +"and N_FormID=1459";
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearId",nFnYearId);
 

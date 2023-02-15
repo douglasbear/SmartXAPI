@@ -104,7 +104,7 @@ namespace SmartxAPI.Controllers
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
                         dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                        sqlCommandCount = "select count(*) as N_Count From vw_PayVacationList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  and B_IsAdjustEntry<>1 " + Searchkey + " ";
+                        sqlCommandCount = "select count(1) as N_Count From vw_PayVacationList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  and B_IsAdjustEntry<>1 " + Searchkey + " ";
                         object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
                         dt = api.Format(dt);
                         OutPut.Add("Details", api.Format(dt));
@@ -194,7 +194,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                    sqlCommandCount = "select count(*) as N_Count from (select N_VacationGroupID From vw_PayVacationList where N_CompanyID=@nCompanyID " + isAdjestmentCriteria + criteria + Searchkey + isMyApprovalsCriteria + " group by N_VacationGroupID ) as tbl";
+                    sqlCommandCount = "select count(1) as N_Count from (select N_VacationGroupID From vw_PayVacationList where N_CompanyID=@nCompanyID " + isAdjestmentCriteria + criteria + Searchkey + isMyApprovalsCriteria + " group by N_VacationGroupID ) as tbl";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
                     dt = api.Format(dt);
                     OutPut.Add("Details", api.Format(dt));

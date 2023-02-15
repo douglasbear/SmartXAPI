@@ -180,7 +180,7 @@ namespace SmartxAPI.Controllers
                         }
                         MasterTable.Rows[0]["X_TruckCode"] = X_TruckCode;
 
-                    object Count=dLayer.ExecuteScalar("select COUNT(*) from Inv_TruckMaster  where N_CompanyID="+ nCompanyID +" and  X_PlateNumber='"+X_PlateNumber+"'", Params, connection, transaction);
+                    object Count=dLayer.ExecuteScalar("select count(1) from Inv_TruckMaster  where N_CompanyID="+ nCompanyID +" and  X_PlateNumber='"+X_PlateNumber+"'", Params, connection, transaction);
 
                       if (myFunctions.getIntVAL(Count.ToString()) > 0){
 

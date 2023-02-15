@@ -39,11 +39,11 @@ namespace SmartxAPI.Controllers
             string UserPattern = myFunctions.GetUserPattern(User);
             string Pattern = "";
             string AssigneePattern = "";
-            string sqlActiveEmployees = "SELECT COUNT(*) as N_ActiveEmloyees FROM pay_employee WHERE N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and  N_Status not in (2,3)";//Active employees
-            string sqlScheduledList = "select  COUNT(*) as N_ToDoList from  [vw_TaskCurrentStatus] where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and isnull(B_Closed,0) =0";
-            string sqlTodaysTaskList = "select Count(*) as N_TodaysTaskList from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_TaskDate as DATE)<='" + d_Date + "' and  Cast(D_DueDate as DATE) >= '" + d_Date + "'";
-            string sqlCompletedList = "select Count(*) as N_CompletedList from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "and  N_Status in(4) and MONTH(Cast(vw_Tsk_TaskCompletedStatus.D_Entrydate as Datetime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(vw_Tsk_TaskCompletedStatus.D_Entrydate)= YEAR(CURRENT_TIMESTAMP)";
-            string sqlOverDueList = "select Count(*) as N_OverDueTaskList from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + "   and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) < '" + d_Date + "'";
+            string sqlActiveEmployees = "SELECT count(1) as N_ActiveEmloyees FROM pay_employee WHERE N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and  N_Status not in (2,3)";//Active employees
+            string sqlScheduledList = "select  count(1) as N_ToDoList from  [vw_TaskCurrentStatus] where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and isnull(B_Closed,0) =0";
+            string sqlTodaysTaskList = "select count(1) as N_TodaysTaskList from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_TaskDate as DATE)<='" + d_Date + "' and  Cast(D_DueDate as DATE) >= '" + d_Date + "'";
+            string sqlCompletedList = "select count(1) as N_CompletedList from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "and  N_Status in(4) and MONTH(Cast(vw_Tsk_TaskCompletedStatus.D_Entrydate as Datetime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(vw_Tsk_TaskCompletedStatus.D_Entrydate)= YEAR(CURRENT_TIMESTAMP)";
+            string sqlOverDueList = "select count(1) as N_OverDueTaskList from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + "   and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) < '" + d_Date + "'";
             string sqlTaskStatus = "";
             SortedList Data = new SortedList();
             DataTable ActiveEmployees = new DataTable();
@@ -200,7 +200,7 @@ namespace SmartxAPI.Controllers
                     UpComingTasks = api.Format(UpComingTasks, "UpComingTasks");
                     OverDueTasks = api.Format(OverDueTasks, "OverDueTasks");
                     FollowupTasks = api.Format(FollowupTasks, "FollowUpTasks");
-                    string sqlCommandCount = "select count(*) as N_Count from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and  D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and D_DueDate='" + d_Date + "'";
+                    string sqlCommandCount = "select count(1) as N_Count from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and  D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and D_DueDate='" + d_Date + "'";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     if (Summary.Rows.Count > 0)
@@ -209,7 +209,7 @@ namespace SmartxAPI.Controllers
                         TotalCount = drow["N_Count"].ToString();
 
                     }
-                    string sqlCommandCount1 = "select count(*) as N_Count from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + "  and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and D_TaskDate > '" + d_Date + "'";
+                    string sqlCommandCount1 = "select count(1) as N_Count from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + "  and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and D_TaskDate > '" + d_Date + "'";
                     DataTable Summary1 = dLayer.ExecuteDataTable(sqlCommandCount1, Params, connection);
                     string TotalCount1 = "0";
                     if (Summary1.Rows.Count > 0)
@@ -218,7 +218,7 @@ namespace SmartxAPI.Controllers
                         TotalCount1 = drow["N_Count"].ToString();
 
                     }
-                    string sqlCommandCount2 = "select count(*) as N_Count from [vw_TaskCurrentStatus] where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and   D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and D_DueDate >  '" + d_Date + "'";
+                    string sqlCommandCount2 = "select count(1) as N_Count from [vw_TaskCurrentStatus] where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and   D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and D_DueDate >  '" + d_Date + "'";
                     DataTable Summary2 = dLayer.ExecuteDataTable(sqlCommandCount2, Params, connection);
                     string TotalCount2 = "0";
                     if (Summary2.Rows.Count > 0)
@@ -227,7 +227,7 @@ namespace SmartxAPI.Controllers
                         TotalCount2 = drow["N_Count"].ToString();
 
                     }
-                    string sqlCommandCount3 = "select count(*) as N_Count from vw_Tsk_TaskStatus where N_CompanyID=" + nCompanyID + " and N_Status <= 3 and  N_Status <> 1 and N_CreaterID=" + nUserID + " and ISNULL(B_Closed,0)=0 ";
+                    string sqlCommandCount3 = "select count(1) as N_Count from vw_Tsk_TaskStatus where N_CompanyID=" + nCompanyID + " and N_Status <= 3 and  N_Status <> 1 and N_CreaterID=" + nUserID + " and ISNULL(B_Closed,0)=0 ";
                     DataTable Summary3 = dLayer.ExecuteDataTable(sqlCommandCount3, Params, connection);
                     string TotalCount3 = "0";
                     if (Summary3.Rows.Count > 0)
@@ -309,7 +309,7 @@ namespace SmartxAPI.Controllers
                     TodaysTasks = dLayer.ExecuteDataTable(sqlTodaysTaskList, Params, connection);
 
                     TodaysTasks = api.Format(TodaysTasks, "TodaysTasks");
-                    string sqlCommandCount = "select count(*) as N_Count from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_TaskDate as DATE)<='" + d_Date + "' and Cast(D_DueDate as DATE)>='" + d_Date + "'";
+                    string sqlCommandCount = "select count(1) as N_Count from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_TaskDate as DATE)<='" + d_Date + "' and Cast(D_DueDate as DATE)>='" + d_Date + "'";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     // if (Summary.Rows.Count > 0)
@@ -368,7 +368,7 @@ namespace SmartxAPI.Controllers
 
                     OverDueTasks = dLayer.ExecuteDataTable(sqlOverDueList, Params, connection);
                     OverDueTasks = api.Format(OverDueTasks, "OverDueTasks");
-                    string sqlCommandCount1 = "select count(*) as N_Count from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) < '" + d_Date + "'";
+                    string sqlCommandCount1 = "select count(1) as N_Count from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) < '" + d_Date + "'";
                     DataTable Summary1 = dLayer.ExecuteDataTable(sqlCommandCount1, Params, connection);
                     string TotalCount1 = "0";
                     if (Summary1.Rows.Count > 0)
@@ -421,7 +421,7 @@ namespace SmartxAPI.Controllers
 
                     UpComingTasks = dLayer.ExecuteDataTable(sqlUpcomingList, Params, connection);
                     UpComingTasks = api.Format(UpComingTasks, "UpComingTasks");
-                    string sqlCommandCount2 = "select count(*) as N_Count from [vw_TaskCurrentStatus] where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and   D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_TaskDate as DATE) >  '" + d_Date + "'";
+                    string sqlCommandCount2 = "select count(1) as N_Count from [vw_TaskCurrentStatus] where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and   D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_TaskDate as DATE) >  '" + d_Date + "'";
                     DataTable Summary2 = dLayer.ExecuteDataTable(sqlCommandCount2, Params, connection);
                     string TotalCount2 = "0";
                     if (Summary2.Rows.Count > 0)
@@ -482,7 +482,7 @@ namespace SmartxAPI.Controllers
 
                     FollowupTasks = dLayer.ExecuteDataTable(sqlFollowUp, Params, connection);
                     FollowupTasks = api.Format(FollowupTasks, "FollowUpTasks");
-                    string sqlCommandCount3 = "select count(*) as N_Count from vw_Tsk_TaskStatus where  N_CompanyID=" + nCompanyID + " and N_Status <> 1 and N_CreaterID=" + nUserID + " and ISNULL(B_Closed,0)=0  "+sqlParentFilte+" and N_TaskStatusID in (select Max(N_TaskStatusID) from vw_Tsk_TaskStatus  where N_CompanyID=" + nCompanyID + " and N_Status <> 1 and N_CreaterID="+nUserID+" and N_AssigneeID <> "+nUserID+" and ISNULL(B_Closed,0)=0  "+sqlParentFilte+"  group by N_TaskID,N_CompanyID)";
+                    string sqlCommandCount3 = "select count(1) as N_Count from vw_Tsk_TaskStatus where  N_CompanyID=" + nCompanyID + " and N_Status <> 1 and N_CreaterID=" + nUserID + " and ISNULL(B_Closed,0)=0  "+sqlParentFilte+" and N_TaskStatusID in (select Max(N_TaskStatusID) from vw_Tsk_TaskStatus  where N_CompanyID=" + nCompanyID + " and N_Status <> 1 and N_CreaterID="+nUserID+" and N_AssigneeID <> "+nUserID+" and ISNULL(B_Closed,0)=0  "+sqlParentFilte+"  group by N_TaskID,N_CompanyID)";
                     DataTable Summary3 = dLayer.ExecuteDataTable(sqlCommandCount3, Params, connection);
                     string TotalCount3 = "0";
                     if (Summary3.Rows.Count > 0)
@@ -538,7 +538,7 @@ namespace SmartxAPI.Controllers
 
                     todayCompletedTasks = dLayer.ExecuteDataTable(sqlUpcomingList, Params, connection);
                     todayCompletedTasks = api.Format(todayCompletedTasks, "todayCompletedTasks");
-                    string sqlCommandCount2 = "select count(*) as N_Count from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + " and  N_Status in(5,4,9,10) and Cast(D_EntryDate as DATE) =  '" + d_Date + "' ";
+                    string sqlCommandCount2 = "select count(1) as N_Count from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + " and  N_Status in(5,4,9,10) and Cast(D_EntryDate as DATE) =  '" + d_Date + "' ";
                     DataTable Summary2 = dLayer.ExecuteDataTable(sqlCommandCount2, Params, connection);
                     string TotalCount2 = "0";
                     if (Summary2.Rows.Count > 0)
@@ -596,7 +596,7 @@ namespace SmartxAPI.Controllers
 
                     OverDueTasks = dLayer.ExecuteDataTable(sqlOverDueList, Params, connection);
                     OverDueTasks = api.Format(OverDueTasks, "openTasks");
-                    string sqlCommandCount1 = "select count(*) as N_Count from vw_Tsk_TaskCurrentStatus  where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "  and isnull(N_AssigneeID,0)=0  and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed'";
+                    string sqlCommandCount1 = "select count(1) as N_Count from vw_Tsk_TaskCurrentStatus  where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "  and isnull(N_AssigneeID,0)=0  and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed'";
                     DataTable Summary1 = dLayer.ExecuteDataTable(sqlCommandCount1, Params, connection);
                     string TotalCount1 = "0";
                     if (Summary1.Rows.Count > 0)
@@ -650,7 +650,7 @@ namespace SmartxAPI.Controllers
 
                     SubmitTasks = dLayer.ExecuteDataTable(sqlOverDueList, Params, connection);
                     SubmitTasks = api.Format(SubmitTasks, "submitTasks");
-                    string sqlCommandCount1 = "select count(*) as N_Count from vw_Tsk_TaskCurrentStatus  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + "  and N_Status=4 and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed'";
+                    string sqlCommandCount1 = "select count(1) as N_Count from vw_Tsk_TaskCurrentStatus  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + "  and N_Status=4 and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed'";
                     DataTable Summary1 = dLayer.ExecuteDataTable(sqlCommandCount1, Params, connection);
                     string TotalCount1 = "0";
                     if (Summary1.Rows.Count > 0)

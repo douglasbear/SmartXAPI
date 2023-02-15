@@ -599,7 +599,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                    sqlCommandCount = "select count(*) as N_Count from Pay_workLocation where N_CompanyID=@nCompanyID " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count from Pay_workLocation where N_CompanyID=@nCompanyID " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
 
                     if (dt.Rows.Count > 0)
