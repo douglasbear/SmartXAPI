@@ -102,7 +102,13 @@ namespace SmartxAPI.Controllers
                     }
                     MasterTable.Columns.Remove("N_FnYearID");
 
+                    Params.Add("X_Position",X_Position);
 
+                    object nCount = dLayer.ExecuteScalar("Select count(*) From Pay_Position where N_CompanyID=@N_CompanyID and X_Position=@X_Position", Params, connection,transaction);
+
+                    if(myFunctions.getIntVAL(nCount.ToString())>0){
+                       return Ok(_api.Error(User, "Job Titile Already Exist"));
+                    }
                     //string DupCriteria = "N_CompanyID=" + N_CompanyID + " and(X_PositionCode='" + X_PositionCode + "' OR X_Position='" + X_Position + "')";
                    
                     N_PositionID = dLayer.SaveData("Pay_Position", "N_PositionID", MasterTable, connection, transaction);

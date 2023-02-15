@@ -297,8 +297,13 @@ namespace SmartxAPI.Controllers
                             if (DiffFnYearID != null)
                             {
                                 MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                                 foreach (DataRow var in CostCenterTable.Rows)
+                                 {
+                                    var["n_FnYearID"]=DiffFnYearID.ToString();
+                                 }
+                                CostCenterTable.AcceptChanges();
                                 nFnYearId = DiffFnYearID.ToString();
-                               // QueryParams["@nFnYearID"] = N_FnYearID;
+                                  
                             }
                             else
                             {
