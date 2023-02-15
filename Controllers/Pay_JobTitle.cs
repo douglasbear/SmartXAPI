@@ -126,7 +126,7 @@ namespace SmartxAPI.Controllers
 
                         }
                         else
-                            dLayer.DeleteData("Pay_Supervisor", "N_SupervisorID", N_SupervisorID, "N_CompanyID=" + N_CompanyID + "", connection, transaction);
+                            dLayer.DeleteData("Pay_Supervisor", "N_PositionID", N_PositionID, "N_CompanyID=" + N_CompanyID + "", connection, transaction);
 
                         transaction.Commit();
                     }
