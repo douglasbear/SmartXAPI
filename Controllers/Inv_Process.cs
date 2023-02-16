@@ -79,7 +79,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
+                    sqlCommandCount = "select count(1) as N_Count  from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -396,7 +396,7 @@ namespace SmartxAPI.Controllers
                         for (int i = 0; i < DetailTable.Rows.Count; i++)
                         {
                             if (myFunctions.getIntVAL(DetailTable.Rows[i]["n_ItemID"].ToString()) <= 0) continue;
-                            string sql = "select count(*) from Inv_ItemDetails where N_CompanyID=" + nCompanyID + " and N_MainItemID=" + N_ItemID + " and N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[i]["n_ItemID"].ToString()) + " and N_Type=1";
+                            string sql = "select count(1) from Inv_ItemDetails where N_CompanyID=" + nCompanyID + " and N_MainItemID=" + N_ItemID + " and N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[i]["n_ItemID"].ToString()) + " and N_Type=1";
                             object Itemcount = dLayer.ExecuteScalar(sql, connection, transaction);
                             if (myFunctions.getIntVAL(Itemcount.ToString()) != 0) continue;
                             int type = 1;  //bom items

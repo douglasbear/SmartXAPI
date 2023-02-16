@@ -120,7 +120,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_InvPRSNo_UCSearch where " + sqlCondition + " " + transferCondition + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count from vw_InvPRSNo_UCSearch where " + sqlCondition + " " + transferCondition + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -239,9 +239,9 @@ namespace SmartxAPI.Controllers
             Params.Add("@nBranchID", nBranchID);
 
             if (bAllBranchData)
-                branch_count = dLayer.ExecuteScalar("SELECT count(*) FROm Inv_Location  Where N_CompanyID=@nCompanyID", Params, connection);
+                branch_count = dLayer.ExecuteScalar("SELECT count(1) FROm Inv_Location  Where N_CompanyID=@nCompanyID", Params, connection);
             else
-                branch_count = dLayer.ExecuteScalar("SELECT count(*) FROm Inv_Location  Where N_CompanyID=@nCompanyID and N_BranchID=@nBranchID", Params, connection);
+                branch_count = dLayer.ExecuteScalar("SELECT count(1) FROm Inv_Location  Where N_CompanyID=@nCompanyID and N_BranchID=@nBranchID", Params, connection);
 
 
             if (myFunctions.getIntVAL(branch_count.ToString()) == 1)

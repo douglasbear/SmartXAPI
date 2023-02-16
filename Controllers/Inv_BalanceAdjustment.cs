@@ -114,9 +114,9 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     if (nPartyType ==1)
-                        sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE([Net Amount],',','') as Numeric(10,2)) ) as TotalAmount from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6  and N_TransType=@p4 and N_PartyType=@p5 and N_FormID=@p7 " + Searchkey + "";
+                        sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE([Net Amount],',','') as Numeric(10,2)) ) as TotalAmount from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6  and N_TransType=@p4 and N_PartyType=@p5 " + Searchkey + "";
                     else
-                        sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(Netamt,',','') as Numeric(10,2)) ) as TotalAmount from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 and N_TransType=@p4 and N_PartyType=@p5 and N_FormID=@p7 " + Searchkey + "";
+                        sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(Netamt,',','') as Numeric(10,2)) ) as TotalAmount from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_FnYearID=@p6 and N_TransType=@p4 and N_PartyType=@p5 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount="0";
                     string TotalSum="0";
@@ -245,18 +245,73 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                     int N_TransType = myFunctions.getIntVAL(MasterRow["n_TransType"].ToString());
                     int N_PartyType = myFunctions.getIntVAL(MasterRow["n_PartyType"].ToString());
                     string X_Trasnaction = "";
-                    int N_FormID = myFunctions.getIntVAL(MasterRow["n_FormID"].ToString());
-                    int N_IsImport = 0;
+                    int N_FormID =0;
+                    int N_PartyID = myFunctions.getIntVAL(MasterRow["n_PartyID"].ToString());
+                     SortedList PostingParam = new SortedList();
+                      SortedList QueryParams = new SortedList();
 
-                    if (N_FormID==1515) N_IsImport = 1;
+                       QueryParams["@N_CompanyID"] = N_CompanyID;
 
                      if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_AdjustmentDate"].ToString(), "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
                     {
+
                         object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_AdjustmentDate"].ToString() + "') between D_Start and D_End", Params, connection, transaction);
+
                         if (DiffFnYearID != null)
                         {
                             MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
                             N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+
+                    QueryParams["@nFnYearID"] = N_FnYearID;
+                    QueryParams["@N_PartyID"] = N_PartyID;
+                   
+
+                    if(N_PartyType==0){
+                        
+                    PostingParam.Add("N_PartyID", N_PartyID);
+                    PostingParam.Add("N_FnyearID", N_FnYearID);
+                    PostingParam.Add("N_CompanyID", N_CompanyID);
+                    PostingParam.Add("X_Type", "vendor");
+
+
+                    object vendorCount = dLayer.ExecuteScalar("Select count(*) From Inv_Vendor where N_FnYearID=@nFnYearID and N_CompanyID=@N_CompanyID and N_VendorID=@N_PartyID", QueryParams, connection, transaction);
+                      
+                               if(myFunctions.getIntVAL(vendorCount.ToString())==0){
+                                try 
+                                  {
+                                     dLayer.ExecuteNonQueryPro("SP_CratePartyBackYear", PostingParam, connection, transaction);
+                                  }
+                                  catch (Exception ex)
+                                  {
+                                    transaction.Rollback();
+                                     throw ex;
+                                  }
+                                  }
+                      }
+
+                      else{
+
+                    PostingParam.Add("N_PartyID", N_PartyID);
+                    PostingParam.Add("N_FnyearID", N_FnYearID);
+                    PostingParam.Add("N_CompanyID", N_CompanyID);
+                    PostingParam.Add("X_Type", "customer");
+
+                 object custCount = dLayer.ExecuteScalar("Select count(*) From Inv_Customer where N_FnYearID=@nFnYearID and N_CompanyID=@N_CompanyID and N_CustomerID=@N_PartyID", QueryParams, connection, transaction);
+                      
+                      if(myFunctions.getIntVAL(custCount.ToString())==0){
+                           try 
+                    {
+                        dLayer.ExecuteNonQueryPro("SP_CratePartyBackYear", PostingParam, connection, transaction);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        throw ex;
+                    }
+                      }
+
+                      }
+
                            // QueryParams["@nFnYearID"] = N_FnYearID;
                         }
                         else

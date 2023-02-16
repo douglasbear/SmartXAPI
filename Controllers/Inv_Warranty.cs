@@ -144,7 +144,7 @@ namespace SmartxAPI.Controllers
         //             connection.Open();
         //             dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
 
-        //             sqlCommandCount = "select count(*) as N_Count  from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
+        //             sqlCommandCount = "select count(1) as N_Count  from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
         //             object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
         //             OutPut.Add("Details", _api.Format(dt));
         //             OutPut.Add("TotalCount", TotalCount);
@@ -198,7 +198,7 @@ namespace SmartxAPI.Controllers
                     if(MasterTable.Rows.Count==1)
                     {
                         int N_SalesID=myFunctions.getIntVAL(dLayer.ExecuteScalar("select Top 1 N_SalesID from Inv_Sales where  N_CompanyID="+myFunctions.GetCompanyID(User)+" and X_Barcode='"+MasterTable.Rows[0]["X_WarrantyNo"]+"' order By N_SalesID desc",Params, connection).ToString());
-                        int nCount =myFunctions.getIntVAL(dLayer.ExecuteScalar(" select COUNT(*)  from Inv_SaleAmountDetails where  N_CompanyID="+myFunctions.GetCompanyID(User)+" and N_SalesID="+N_SalesID+" ",Params, connection).ToString());
+                        int nCount =myFunctions.getIntVAL(dLayer.ExecuteScalar(" select count(1)  from Inv_SaleAmountDetails where  N_CompanyID="+myFunctions.GetCompanyID(User)+" and N_SalesID="+N_SalesID+" ",Params, connection).ToString());
                         string x_PayMode="";
                         if(nCount==1)
                             x_PayMode=dLayer.ExecuteScalar("SELECT Inv_Customer.X_CustomerName FROM  Inv_SaleAmountDetails INNER JOIN Inv_Customer ON Inv_SaleAmountDetails.N_CompanyID = Inv_Customer.N_CompanyID AND Inv_SaleAmountDetails.N_CustomerID = Inv_Customer.N_CustomerID where  Inv_SaleAmountDetails.N_CompanyID="+myFunctions.GetCompanyID(User)+" and Inv_SaleAmountDetails.N_SalesID="+N_SalesID+"",Params, connection).ToString();
@@ -432,7 +432,7 @@ DetailTable.AcceptChanges();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_Inv_WarrantyClaim where N_CompanyID=@nCompanyID " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count  from vw_Inv_WarrantyClaim where N_CompanyID=@nCompanyID " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

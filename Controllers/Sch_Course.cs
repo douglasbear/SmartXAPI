@@ -99,7 +99,7 @@ namespace SmartxAPI.Controllers
                         Code = dLayer.GetAutoNumber("Sch_Class", "X_ClassCode", Params, connection, transaction);
                         if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Course Code")); }
                         MasterTable.Rows[0]["X_ClassCode"] = Code;
-                         object courseCount = dLayer.ExecuteScalar("select COUNT(*) from Sch_Class  where N_CompanyID="+ nCompanyID +" and  x_class='"+xclass+"'", Params, connection, transaction);
+                         object courseCount = dLayer.ExecuteScalar("select count(1) from Sch_Class  where N_CompanyID="+ nCompanyID +" and  x_class='"+xclass+"'", Params, connection, transaction);
                          
                            if (myFunctions.getIntVAL(courseCount.ToString()) > 0){
                              return Ok(api.Error(User, "Course Already exist"));

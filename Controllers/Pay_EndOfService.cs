@@ -91,7 +91,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    string sqlCommandCount = "select count(*) as N_Count  from vw_EndOfService where N_CompanyID=@nCompanyID " + Searchkey + "";
+                    string sqlCommandCount = "select count(1) as N_Count  from vw_EndOfService where N_CompanyID=@nCompanyID " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -289,7 +289,7 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_ServiceEndCode"] = ServiceEndCode;
                     }
 
-                    object _salProcessed = dLayer.ExecuteScalar("SELECT COUNT(*) FROM Pay_PaymentDetails INNER JOIN Pay_PaymentMaster ON Pay_PaymentDetails.N_TransID = Pay_PaymentMaster.N_TransID AND Pay_PaymentDetails.N_CompanyID = Pay_PaymentMaster.N_CompanyID where N_EmpID = " + myFunctions.getIntVAL(MasterTable.Rows[0]["N_EmpID"].ToString()) + " and Pay_PaymentMaster.N_FormID = 190 and isnull(Pay_PaymentMaster.N_RefBatchID,0) = 0 and N_PayRunID = " + PayrunID + " group by  Pay_PaymentMaster.N_TransID,N_PayRunID,X_Batch,N_EmpID", QueryParams, connection, transaction);
+                    object _salProcessed = dLayer.ExecuteScalar("SELECT count(1) FROM Pay_PaymentDetails INNER JOIN Pay_PaymentMaster ON Pay_PaymentDetails.N_TransID = Pay_PaymentMaster.N_TransID AND Pay_PaymentDetails.N_CompanyID = Pay_PaymentMaster.N_CompanyID where N_EmpID = " + myFunctions.getIntVAL(MasterTable.Rows[0]["N_EmpID"].ToString()) + " and Pay_PaymentMaster.N_FormID = 190 and isnull(Pay_PaymentMaster.N_RefBatchID,0) = 0 and N_PayRunID = " + PayrunID + " group by  Pay_PaymentMaster.N_TransID,N_PayRunID,X_Batch,N_EmpID", QueryParams, connection, transaction);
                     if (_salProcessed != null)
                     {
                         if (myFunctions.getIntVAL(_salProcessed.ToString()) > 0)
@@ -302,9 +302,9 @@ namespace SmartxAPI.Controllers
                         int NewNo = 0, loop = 1;
                         while (OK)
                         {
-                            NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) + " + loop + " As Count FRom Pay_PaymentMaster Where N_CompanyID=" + nCompanyID + " And N_FnyearID = " + nFnYearId + " And N_PayRunID = " + PayrunID, QueryParams, connection, transaction).ToString());
+                            NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(count(1),0) + " + loop + " As Count FRom Pay_PaymentMaster Where N_CompanyID=" + nCompanyID + " And N_FnyearID = " + nFnYearId + " And N_PayRunID = " + PayrunID, QueryParams, connection, transaction).ToString());
                             X_SalBatch = dDateEnd.Year.ToString("00##") + dDateEnd.Month.ToString("0#") + NewNo.ToString("0#");
-                            if (myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) FRom Pay_PaymentMaster Where N_CompanyID=" + nCompanyID + " And N_FnyearID = " + nFnYearId + " And X_Batch = '" + X_SalBatch + "'", QueryParams, connection, transaction).ToString()) == 0)
+                            if (myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(count(1),0) FRom Pay_PaymentMaster Where N_CompanyID=" + nCompanyID + " And N_FnyearID = " + nFnYearId + " And X_Batch = '" + X_SalBatch + "'", QueryParams, connection, transaction).ToString()) == 0)
                             {
                                 OK = false;
                             }

@@ -50,12 +50,12 @@ namespace SmartxAPI.Controllers
            
             }
                      
-            string sqlStudent = "SELECT COUNT(*) as N_Count FROM vw_SchAdmission WHERE N_CompanyID = " + nCompanyID + " and N_AcYearID="+nFnYearID  + crieteria ;
-            string sqlMaleStudent = "SELECT COUNT(*) as N_Count FROM vw_SchAdmission WHERE x_Gender='Male' and  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nFnYearID  + crieteria ;
-            string sqlFemaleStudent = "SELECT COUNT(*) as N_Count FROM vw_SchAdmission WHERE x_Gender='FeMale' and N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nFnYearID  + crieteria ;
-            string sqlParents = "SELECT COUNT(*) as N_Count FROM vw_Sch_ParentDetails_Disp WHERE N_CompanyID = " + nCompanyID  + crieteria ;
-            string sqlTeachers = "SELECT COUNT(*) as N_Count FROM vw_SchTeacher WHERE N_CompanyID = " + nCompanyID + " and N_FnyearID="+nFnYearID  + crieteria ;
-            string sqlOtherStaffs = "SELECT COUNT(*) as N_Count FROM Pay_Employee WHERE B_EnableTeacher = 0 and N_CompanyID = " + nCompanyID + " and N_FnyearID="+nFnYearID  + crieteria ;
+            string sqlStudent = "SELECT count(1) as N_Count FROM vw_SchAdmission WHERE N_CompanyID = " + nCompanyID + " and N_AcYearID="+nFnYearID  + crieteria ;
+            string sqlMaleStudent = "SELECT count(1) as N_Count FROM vw_SchAdmission WHERE x_Gender='Male' and  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nFnYearID  + crieteria ;
+            string sqlFemaleStudent = "SELECT count(1) as N_Count FROM vw_SchAdmission WHERE x_Gender='FeMale' and N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nFnYearID  + crieteria ;
+            string sqlParents = "SELECT count(1) as N_Count FROM vw_Sch_ParentDetails_Disp WHERE N_CompanyID = " + nCompanyID  + crieteria ;
+            string sqlTeachers = "SELECT count(1) as N_Count FROM vw_SchTeacher WHERE N_CompanyID = " + nCompanyID + " and N_FnyearID="+nFnYearID  + crieteria ;
+            string sqlOtherStaffs = "SELECT count(1) as N_Count FROM Pay_Employee WHERE B_EnableTeacher = 0 and N_CompanyID = " + nCompanyID + " and N_FnyearID="+nFnYearID  + crieteria ;
             string sqlCourseBasedStudents = "select X_Class,COUNT(1) as N_Count from  vw_SchAdmission WHERE  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nFnYearID  + crieteria + "  group by X_Class";
             string sqlCountryBasedStudents = "SELECT X_Nationality,COUNT(1) as N_Count from  vw_SchAdmission WHERE  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nFnYearID  + crieteria + "  group by X_Nationality";
             // string sqlCourseBasedStudents = "select X_Class,COUNT(1) as N_Count from  vw_SchAdmission group by X_Class";

@@ -14,9 +14,9 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("genNotifications")]
+    [Route("genFormConfig")]
     [ApiController]
-    public class Gen_Notifications : ControllerBase
+    public class Gen_CountryWiseFormConfig : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
@@ -24,7 +24,7 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly int FormID;
 
-        public Gen_Notifications(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Gen_CountryWiseFormConfig(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
             dLayer = dl;
@@ -35,25 +35,12 @@ namespace SmartxAPI.Controllers
 
 
 
-        [HttpGet("count")]
-        public ActionResult NotificationCount(bool bShowAllBranch, int nBranchID)
+        [HttpGet("list")]
+        public ActionResult FormContrils(int nCountryID,int nFormID)
         {
             SortedList Params = new SortedList();
 
-            int nUserID = myFunctions.GetUserID(User);
-            int nCompanyID = myFunctions.GetCompanyID(User);
-
-            string sqlCommandText = "";
-
-            if (bShowAllBranch)
-            {
-                sqlCommandText = "select count(*) from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID ";
-            }
-            else
-            {
-                sqlCommandText = "select count(*) from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID and N_Branchid = @nBranchID ";
-                Params.Add("@nBranchID", nBranchID);
-            }
+            string sqlCommandText = "select count(*) from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID and N_Branchid = @nBranchID ";
 
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nUserID", nUserID);
@@ -140,7 +127,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
 
-            sqlCommandText = "select * from Gen_Notifications where ((N_CompanyID=0 and N_UserID=0) or (N_CompanyID=@nCompanyID and (N_UserID=@nUserID or N_UserID=0))) and D_StartDate<=GETDATE() and D_EndDate>=GETDATE()";
+            sqlCommandText = "select * from Gen_CountryWiseFormConfig where ((N_CompanyID=0 and N_UserID=0) or (N_CompanyID=@nCompanyID and (N_UserID=@nUserID or N_UserID=0))) and D_StartDate<=GETDATE() and D_EndDate>=GETDATE()";
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nUserID", nUserID);
 

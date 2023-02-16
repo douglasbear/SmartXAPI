@@ -52,7 +52,7 @@ namespace SmartxAPI.Controllers
                     sqlCommandText = "select * from Dms_ReminderCategory where N_CompanyID=@nCompanyId";
                              
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from Dms_ReminderCategory where N_CompanyID=@nCompanyId";
+                    sqlCommandCount = "select count(1) as N_Count from Dms_ReminderCategory where N_CompanyID=@nCompanyId";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     if (Summary.Rows.Count > 0)

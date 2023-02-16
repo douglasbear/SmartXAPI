@@ -199,7 +199,7 @@ namespace SmartxAPI.Data
                                 {
                                     loginRes.Warning = userNotifications(myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString()),AppID,cnn2);
                                     object AllowMultipleCompany=true;
-                                    object numberOfCompanies = dLayer.ExecuteScalar("select count(*)   from Acc_Company where N_ClientID="+myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString())+"", Params, connection);
+                                    object numberOfCompanies = dLayer.ExecuteScalar("select count(1)   from Acc_Company where N_ClientID="+myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString())+"", Params, connection);
                                     object companyLimit = dLayer.ExecuteScalar("select isnull(N_Value,0) from GenSettings where N_ClientID="+myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString())+" and X_Description='COMPANY LIMIT'", Params, cnn2);
                                     if(companyLimit==null){companyLimit="0";}
                                      if(myFunctions.getIntVAL(companyLimit.ToString())<=myFunctions.getIntVAL(numberOfCompanies.ToString()))

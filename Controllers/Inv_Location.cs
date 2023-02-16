@@ -149,7 +149,7 @@ namespace SmartxAPI.Controllers
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText , Params, connection);
-                   sqlCommandCount = "select count(*) as N_Count  from vw_Inv_location_cloud where N_CompanyID=@p1 ";
+                   sqlCommandCount = "select count(1) as N_Count  from vw_Inv_location_cloud where N_CompanyID=@p1 ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -557,7 +557,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     Params.Add("@nLocationId", nLocationId);
-                    object count = dLayer.ExecuteScalar("select count(*) as N_Count from vw_Inv_Location_Disp where N_LocationID=@nLocationId and N_CompanyID=N_CompanyID", Params, connection);
+                    object count = dLayer.ExecuteScalar("select count(1) as N_Count from vw_Inv_Location_Disp where N_LocationID=@nLocationId and N_CompanyID=N_CompanyID", Params, connection);
                     int N_Count = myFunctions.getIntVAL(count.ToString());
                     if (N_Count <= 0)
                     {

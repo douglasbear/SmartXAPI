@@ -83,7 +83,7 @@ namespace SmartxAPI.Controllers
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesInvoiceNo_Search_cloud where " + xCriteria + Searchkey;
+                    sqlCommandCount = "select count(1) as N_Count  from vw_InvSalesInvoiceNo_Search_cloud where " + xCriteria + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -412,7 +412,7 @@ namespace SmartxAPI.Controllers
                          Master.Rows[0]["IsReturnDone"] = false;
                     }
 
-                    object count = dLayer.ExecuteScalar("select count(*) from Inv_Sales where N_FreeTextReturnID =" + N_SalesID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "", Params, connection);
+                    object count = dLayer.ExecuteScalar("select count(1) from Inv_Sales where N_FreeTextReturnID =" + N_SalesID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "", Params, connection);
 
                     if (myFunctions.getVAL(count.ToString())>0)
                     {
@@ -494,7 +494,7 @@ namespace SmartxAPI.Controllers
                     var nUserID = myFunctions.GetUserID(User);
                       SortedList Params = new SortedList();
 
-                       object count = dLayer.ExecuteScalar("select count(*) from Inv_Sales where N_FreeTextReturnID =" + nSalesID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
+                       object count = dLayer.ExecuteScalar("select count(1) from Inv_Sales where N_FreeTextReturnID =" + nSalesID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
                      if (myFunctions.getVAL(count.ToString())>0)
                      {
                          return Ok(_api.Error(User, "Unable to delete Free text sales"));
