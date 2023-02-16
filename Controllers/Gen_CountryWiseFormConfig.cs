@@ -40,21 +40,21 @@ namespace SmartxAPI.Controllers
         {
             SortedList Params = new SortedList();
 
-            string  sqlCommandText = "select count(*) from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID and N_Branchid = @nBranchID ";
+            string  sqlCommandText = "select * from Gen_CountryWiseFormConfig where N_CountryID=@nCountryID and N_FormID=@nFormID ";
 
-            // Params.Add("@nCompanyID", nCompanyID);
-            // Params.Add("@nUserID", nUserID);
+            Params.Add("@nCountryID", nCountryID);
+            Params.Add("@nFormID", nFormID);
+            DataTable dt=new DataTable();
 
             try
             {
-                int count = 0;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    count = myFunctions.getIntVAL(dLayer.ExecuteScalar(sqlCommandText, Params, connection).ToString());
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 SortedList res = new SortedList();
-                res.Add("Count", count);
+                res.Add("Details", dt);
                 return Ok(api.Success(res));
 
             }
@@ -63,97 +63,6 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,e));
             }
         }
-
-        [HttpGet("notificationList")]
-        public ActionResult GetNotification()
-        {
-            SortedList Params = new SortedList();
-            DataTable dt = new DataTable();
-
-            int nUserID = myFunctions.GetUserID(User);
-            int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "";
-            string sqlCommandCount = "";
-
-            // sqlCommandText = "select X_Type, count(*) as N_Count from vw_Gen_Notification where N_CompanyID=@nCompanyID and N_UserID=@nUserID and N_LanguageID=1 group by X_Type ";
-            sqlCommandText = "select List.X_Type,count(*) as N_Count  from (Select 'Approval' AS X_Type, X_Type AS X_Notification, '' as X_Title, N_CompanyID, N_FormID,NULL AS D_ExpiryDate, 0 AS N_PartyID, N_NextApproverID AS N_UserID,1 AS N_LanguageID from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID "
-                            + "UNION  all "
-                            + "Select 'Reminder' AS X_Type,X_Subject AS X_Notification, X_Title, N_CompanyId, N_FormID, D_ExpiryDate, N_PartyID, N_UserID,N_LanguageID from vw_Gen_ReminderDashboard where isNull(N_Processed,0)=0 and N_CompanyID=@nCompanyID and N_LanguageID=1 "
-                            + "UNION all "
-                            + "Select 'Review' AS X_Type, X_Comment AS X_Notification, '' AS X_Title, N_CompanyID, N_FormID, NULL AS D_ExpiryDate, 0 AS N_PartyID, N_UserID, 1 AS N_LanguageID from (SELECT vw_ApprovalReview_Disp.*, Log_ApprovalProcess.N_ActionUserID FROM vw_ApprovalReview_Disp LEFT OUTER JOIN Log_ApprovalProcess ON vw_ApprovalReview_Disp.N_FormID = Log_ApprovalProcess.N_FormID AND vw_ApprovalReview_Disp.N_TransID = Log_ApprovalProcess.N_TransID AND vw_ApprovalReview_Disp.N_CompanyID = Log_ApprovalProcess.N_CompanyID AND vw_ApprovalReview_Disp.N_FnYearID = Log_ApprovalProcess.N_FnYearID AND vw_ApprovalReview_Disp.X_TransCode = Log_ApprovalProcess.X_TransCode AND vw_ApprovalReview_Disp.N_NextApproverID = Log_ApprovalProcess.N_ActionUserID where vw_ApprovalReview_Disp.N_NextApproverID=@nUserID and Log_ApprovalProcess.N_ActionUserID is null) AS Review) AS List GROUP BY List.X_Type";
-            Params.Add("@nCompanyID", nCompanyID);
-            Params.Add("@nUserID", nUserID);
-
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_TotalCount  from (Select 'Approval' AS X_Type, X_Type AS X_Notification, '' as X_Title, N_CompanyID, N_FormID,NULL AS D_ExpiryDate, 0 AS N_PartyID, N_NextApproverID AS N_UserID,1 AS N_LanguageID from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID "
-                            + "UNION  all "
-                            + "Select 'Reminder' AS X_Type,X_Subject AS X_Notification, X_Title, N_CompanyId, N_FormID, D_ExpiryDate, N_PartyID, N_UserID,N_LanguageID from vw_Gen_ReminderDashboard where isNull(N_Processed,0)=0 and N_CompanyID=@nCompanyID and N_LanguageID=1 "
-                            + "UNION all "
-                            + "Select 'Review' AS X_Type, X_Comment AS X_Notification, '' AS X_Title, N_CompanyID, N_FormID, NULL AS D_ExpiryDate, 0 AS N_PartyID, N_UserID, 1 AS N_LanguageID from (SELECT vw_ApprovalReview_Disp.*, Log_ApprovalProcess.N_ActionUserID FROM vw_ApprovalReview_Disp LEFT OUTER JOIN Log_ApprovalProcess ON vw_ApprovalReview_Disp.N_FormID = Log_ApprovalProcess.N_FormID AND vw_ApprovalReview_Disp.N_TransID = Log_ApprovalProcess.N_TransID AND vw_ApprovalReview_Disp.N_CompanyID = Log_ApprovalProcess.N_CompanyID AND vw_ApprovalReview_Disp.N_FnYearID = Log_ApprovalProcess.N_FnYearID AND vw_ApprovalReview_Disp.X_TransCode = Log_ApprovalProcess.X_TransCode AND vw_ApprovalReview_Disp.N_NextApproverID = Log_ApprovalProcess.N_ActionUserID where vw_ApprovalReview_Disp.N_NextApproverID=@nUserID and Log_ApprovalProcess.N_ActionUserID is null) AS Review) AS Count";
-                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-
-                    SortedList res = new SortedList();
-                    res.Add("Details", api.Format(dt));
-                    res.Add("TotalCount", TotalCount);
-
-                    if (dt.Rows.Count == 0)
-                    {
-                        return Ok(api.Warning("No Results Found"));
-                    }
-                    else
-                    {
-                        return Ok(api.Success(res));
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                return Ok(api.Error(User,e));
-            }
-        }
-
-        [HttpGet("getGenNotifications")]
-        public ActionResult GetNotificationList()
-        {
-            SortedList Params = new SortedList();
-            DataTable dt = new DataTable();
-
-            int nUserID = myFunctions.GetUserID(User);
-            int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "";
-
-            sqlCommandText = "select * from Gen_CountryWiseFormConfig where ((N_CompanyID=0 and N_UserID=0) or (N_CompanyID=@nCompanyID and (N_UserID=@nUserID or N_UserID=0))) and D_StartDate<=GETDATE() and D_EndDate>=GETDATE()";
-            Params.Add("@nCompanyID", nCompanyID);
-            Params.Add("@nUserID", nUserID);
-
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    
-                    SortedList res = new SortedList();
-                    res.Add("Details", api.Format(dt));
-                    return Ok(api.Success(res));
-                }
-            }
-            catch (Exception e)
-            {
-                return Ok(api.Error(User,e));
-            }
-        }
-
-
-
-
-
-
-        
+ 
     }
 }
