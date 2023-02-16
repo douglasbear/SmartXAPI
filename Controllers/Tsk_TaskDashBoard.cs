@@ -42,6 +42,7 @@ namespace SmartxAPI.Controllers
             string sqlActiveEmployees = "SELECT count(1) as N_ActiveEmloyees FROM pay_employee WHERE N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and  N_Status not in (2,3)";//Active employees
             string sqlScheduledList = "select  count(1) as N_ToDoList from  [vw_TaskCurrentStatus] where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and isnull(B_Closed,0) =0";
             string sqlTodaysTaskList = "select count(1) as N_TodaysTaskList from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_TaskDate as DATE)<='" + d_Date + "' and  Cast(D_DueDate as DATE) >= '" + d_Date + "'";
+            string sqlUpcomingTaskList = "select count(1) as N_UpcomingTaskList from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + " and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) > '" + d_Date + "' and Cast(D_TaskDate as DATE) >  '" + d_Date + "'";
             string sqlCompletedList = "select count(1) as N_CompletedList from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID=" + nUserID + "and  N_Status in(4) and MONTH(Cast(vw_Tsk_TaskCompletedStatus.D_Entrydate as Datetime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(vw_Tsk_TaskCompletedStatus.D_Entrydate)= YEAR(CURRENT_TIMESTAMP)";
             string sqlOverDueList = "select count(1) as N_OverDueTaskList from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID=" + nUserID + "   and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) < '" + d_Date + "'";
             string sqlTaskStatus = "";
@@ -52,7 +53,7 @@ namespace SmartxAPI.Controllers
             DataTable CompletedList = new DataTable();
             DataTable overDueList = new DataTable();
             DataTable TaskStatus = new DataTable();
-
+            DataTable upComingTask = new DataTable();
 
             try
             {
@@ -65,7 +66,7 @@ namespace SmartxAPI.Controllers
                     TodayTaskList = dLayer.ExecuteDataTable(sqlTodaysTaskList, Params, connection);
                     CompletedList = dLayer.ExecuteDataTable(sqlCompletedList, Params, connection);
                     overDueList = dLayer.ExecuteDataTable(sqlOverDueList, Params, connection);
-
+                    upComingTask = dLayer.ExecuteDataTable(sqlUpcomingTaskList, Params, connection);
 
 
                     SortedList statusParams = new SortedList();
@@ -92,6 +93,7 @@ namespace SmartxAPI.Controllers
                 CompletedList.AcceptChanges();
                 overDueList.AcceptChanges();
                 TaskStatus.AcceptChanges();
+                upComingTask.AcceptChanges();
 
                 if (ActiveEmployees.Rows.Count > 0) Data.Add("ActiveEmployees", ActiveEmployees);
                 if (ScheduledList.Rows.Count > 0) Data.Add("ScheduledList", ScheduledList);
@@ -100,7 +102,7 @@ namespace SmartxAPI.Controllers
                 if (overDueList.Rows.Count > 0) Data.Add("overDueList", overDueList);
 
                 if (TaskStatus.Rows.Count > 0) Data.Add("TaskStatus", TaskStatus);
-
+                if (upComingTask.Rows.Count > 0) Data.Add("upComingTask", upComingTask);
 
                 return Ok(api.Success(Data));
 
