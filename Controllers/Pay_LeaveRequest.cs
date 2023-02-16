@@ -461,7 +461,7 @@ namespace SmartxAPI.Controllers
         [HttpGet("getAvailable")]
         public ActionResult GetAvailableDays(int nVacTypeID, DateTime dDateFrom, int nEmpID, int nVacationGroupID, int bIsAdjusted)
         {
-            DataTable dt = new DataTable();git p
+            DataTable dt = new DataTable();
             SortedList output = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             SortedList QueryParams = new SortedList();
