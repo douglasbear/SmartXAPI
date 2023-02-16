@@ -1087,6 +1087,7 @@ namespace SmartxAPI.Controllers
             objPayMode="";
             object RetQty = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =" + nSalesID + " and Isnull(B_IsSaveDraft,0) =0 and N_CompanyID=" + nCompanyID , connection);
             object RetQtyDrft = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =" + nSalesID + " and Isnull(B_IsSaveDraft,0)=1 and N_CompanyID=" + nCompanyID , connection);
+            object DebitNoteNo = dLayer.ExecuteScalar("select X_DebitNoteNo from Inv_SalesReturnMaster where N_SalesId =" + nSalesID + " and N_CompanyID=" + nCompanyID , connection);
 
 
             if (objInvoiceRecievable != null)
@@ -1116,7 +1117,7 @@ namespace SmartxAPI.Controllers
                         TxnStatus["SaveEnabled"] = false;
                         TxnStatus["DeleteEnabled"] = false;
                         TxnStatus["Alert"] = "Sales Return Processed for this invoice.";
-                        TxnStatus["Label"] = "Paid ("+objPayMode.ToString()+") (Return)";
+                        TxnStatus["Label"] = "Paid ("+objPayMode.ToString()+") (Return - "+DebitNoteNo+")";
                         TxnStatus["LabelColor"] = "Green";
                     }
                     else if (RetQtyDrft != null && myFunctions.getIntVAL(RetQtyDrft.ToString()) > 0)
@@ -1124,7 +1125,7 @@ namespace SmartxAPI.Controllers
                         TxnStatus["SaveEnabled"] = true;
                         TxnStatus["DeleteEnabled"] = false;
                         TxnStatus["Alert"] = "Sales Return Processed for this invoice.";
-                        TxnStatus["Label"] = "Paid ("+objPayMode.ToString()+") (Return)";
+                        TxnStatus["Label"] = "Paid ("+objPayMode.ToString()+") (Return - "+DebitNoteNo+")";
                         TxnStatus["LabelColor"] = "Green";
                     }
                 }
