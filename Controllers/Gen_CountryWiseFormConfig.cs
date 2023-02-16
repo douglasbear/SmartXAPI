@@ -40,10 +40,10 @@ namespace SmartxAPI.Controllers
         {
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select count(*) from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID and N_Branchid = @nBranchID ";
+            string  sqlCommandText = "select count(*) from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID and N_Branchid = @nBranchID ";
 
-            Params.Add("@nCompanyID", nCompanyID);
-            Params.Add("@nUserID", nUserID);
+            // Params.Add("@nCompanyID", nCompanyID);
+            // Params.Add("@nUserID", nUserID);
 
             try
             {
