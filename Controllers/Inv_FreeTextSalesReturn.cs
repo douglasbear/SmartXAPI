@@ -73,7 +73,7 @@ namespace SmartxAPI.Controllers
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_FreetextSaleReturn_Search_Cloud where " + xCriteria + Searchkey;
+                    sqlCommandCount = "select count(1) as N_Count  from vw_FreetextSaleReturn_Search_Cloud where " + xCriteria + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -334,7 +334,7 @@ namespace SmartxAPI.Controllers
                     if (Master.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     N_SalesID = myFunctions.getIntVAL(Master.Rows[0]["N_SalesID"].ToString());
                     
-                    string paymentcount = dLayer.ExecuteScalar("select count(*) from Inv_PayReceiptDetails where N_CompanyID=" + nCompanyId + " and N_InventoryId=" + N_SalesID + "and x_TransType='DEBIT NOTE'", connection).ToString();
+                    string paymentcount = dLayer.ExecuteScalar("select count(1) from Inv_PayReceiptDetails where N_CompanyID=" + nCompanyId + " and N_InventoryId=" + N_SalesID + "and x_TransType='DEBIT NOTE'", connection).ToString();
                     
                      if (myFunctions.getVAL(paymentcount.ToString())>0){
                         Master = myFunctions.AddNewColumnToDataTable(Master, "paymentDone", typeof(bool), true);

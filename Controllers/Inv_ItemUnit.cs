@@ -140,7 +140,7 @@ namespace SmartxAPI.Controllers
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText , Params, connection);
-                   sqlCommandCount = "select count(*) as N_Count  from Inv_ItemUnit where ISNULL(B_BaseUnit,0)=1 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0";
+                   sqlCommandCount = "select count(1) as N_Count  from Inv_ItemUnit where ISNULL(B_BaseUnit,0)=1 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

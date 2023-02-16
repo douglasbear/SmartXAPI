@@ -86,13 +86,13 @@ namespace SmartxAPI.Controllers
                         if (nVendorId > 0)
                         {
                             bool B_IsUsed = false;
-                            object objIsUsed = dLayer.ExecuteScalar("Select count(*) From Acc_VoucherDetails where N_AccID=@nVendorID and N_AccType=1", Params, connection);
+                            object objIsUsed = dLayer.ExecuteScalar("Select count(1) From Acc_VoucherDetails where N_AccID=@nVendorID and N_AccType=1", Params, connection);
                             if (objIsUsed != null)
                                 if (myFunctions.getIntVAL(objIsUsed.ToString()) > 0)
                                     B_IsUsed = true;
                             myFunctions.AddNewColumnToDataTable(dt, "B_IsUsed", typeof(Boolean), B_IsUsed);
 
-                            object objUsedCount = dLayer.ExecuteScalar("Select Count(*) from vw_Inv_CheckVendor Where N_CompanyID=@nCompanyID and N_VendorID=@nVendorID", Params, connection);
+                            object objUsedCount = dLayer.ExecuteScalar("Select count(1) from vw_Inv_CheckVendor Where N_CompanyID=@nCompanyID and N_VendorID=@nVendorID", Params, connection);
                             if (objUsedCount != null)
                                 myFunctions.AddNewColumnToDataTable(dt, "N_UsedCount", typeof(int), myFunctions.getIntVAL(objUsedCount.ToString()));
                         }
@@ -212,7 +212,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    string sqlCommandCount = "select count(*) as N_Count  from vw_InvVendor where N_CompanyID=@p1  and N_FnYearID=@nFnYearId " + Searchkey + "";
+                    string sqlCommandCount = "select count(1) as N_Count  from vw_InvVendor where N_CompanyID=@p1  and N_FnYearID=@nFnYearId " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -460,7 +460,7 @@ namespace SmartxAPI.Controllers
 
                     Params.Add("@nVendorID", nVendorID);
 
-                    object Count = dLayer.ExecuteScalar("select count(*)  from vw_Inv_CheckVendor where N_CompanyID=@p1 and X_VendorCode=@xVendorCode", Params, connection);
+                    object Count = dLayer.ExecuteScalar("select count(1)  from vw_Inv_CheckVendor where N_CompanyID=@p1 and X_VendorCode=@xVendorCode", Params, connection);
                     int NCount = myFunctions.getIntVAL(Count.ToString());
                     if (NCount > 0)
                     {

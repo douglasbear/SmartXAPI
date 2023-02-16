@@ -49,12 +49,12 @@ namespace SmartxAPI.Controllers
 
             object nBatchID = dLayer.ExecuteScalar("select n_AdmittedDivisionID from vw_schAdmission where N_AdmissionID= "+StudentID+" and  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID,Params, connection) ;
             string sqlStudentInfo = "select X_Name,x_Class,x_ClassDivision,x_EmpName,x_Phone1 from vw_schAdmission where N_AdmissionID= "+StudentID+" and  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID ;
-            string sqlAssignment = "SELECT COUNT(*) as N_Count FROM vw_Sch_AssignmentDetails WHERE N_StudentID= "+StudentID+" and MONTH(D_AssignedDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_AssignedDate) = YEAR(CURRENT_TIMESTAMP) and isnull(B_IsSaveDraft,0)=0 and N_FormID=1485 and  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID  ;
-            string sqlAssignmentTotal = "SELECT COUNT(*) as N_Count FROM vw_Sch_AssignmentDetails WHERE N_StudentID= "+StudentID+" and N_FormID=1485 and N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID  ;
-            string sqlExam = "SELECT COUNT(*) as N_Count FROM vw_Sch_AssignmentDetails WHERE N_StudentID= "+StudentID+" and N_FormID=1547 and isnull(B_IsSaveDraft,0)=0 and  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
-            string sqlPubResults = "SELECT COUNT(*) as N_Count FROM vw_Sch_AssignmentDetails WHERE N_StudentID= "+StudentID+" and N_FormID=1547 and isnull(b_PublishMark,0)=1 and  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
+            string sqlAssignment = "SELECT count(1) as N_Count FROM vw_Sch_AssignmentDetails WHERE N_StudentID= "+StudentID+" and MONTH(D_AssignedDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_AssignedDate) = YEAR(CURRENT_TIMESTAMP) and isnull(B_IsSaveDraft,0)=0 and N_FormID=1485 and  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID  ;
+            string sqlAssignmentTotal = "SELECT count(1) as N_Count FROM vw_Sch_AssignmentDetails WHERE N_StudentID= "+StudentID+" and N_FormID=1485 and N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID  ;
+            string sqlExam = "SELECT count(1) as N_Count FROM vw_Sch_AssignmentDetails WHERE N_StudentID= "+StudentID+" and N_FormID=1547 and isnull(B_IsSaveDraft,0)=0 and  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
+            string sqlPubResults = "SELECT count(1) as N_Count FROM vw_Sch_AssignmentDetails WHERE N_StudentID= "+StudentID+" and N_FormID=1547 and isnull(b_PublishMark,0)=1 and  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
            
-           //string sqlAbsent = "SELECT COUNT(*) as N_Count FROM vw_SchAdmission WHERE x_Gender='FeMale' and N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
+           //string sqlAbsent = "SELECT count(1) as N_Count FROM vw_SchAdmission WHERE x_Gender='FeMale' and N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
            
             SortedList Data = new SortedList();
             DataTable Assignment = new DataTable();
@@ -138,7 +138,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "Select  count(*) from vw_Sch_AssignmentStudents Where N_FormID=1485 and isnull(B_IsSaveDraft,0)=0 and N_CompanyID = " + nCompanyId + " and N_AcYearID="+nAcYearID + crieteria ;
+                    sqlCommandCount = "Select  count(1) from vw_Sch_AssignmentStudents Where N_FormID=1485 and isnull(B_IsSaveDraft,0)=0 and N_CompanyID = " + nCompanyId + " and N_AcYearID="+nAcYearID + crieteria ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -205,7 +205,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "Select  count(*) from vw_Sch_AssignmentStudents Where YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_StudentID=" + nStudentID + " and N_CompanyID = " + nCompanyId  + crieteria ;
+                    sqlCommandCount = "Select  count(1) from vw_Sch_AssignmentStudents Where YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_StudentID=" + nStudentID + " and N_CompanyID = " + nCompanyId  + crieteria ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -274,7 +274,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "Select  count(*) from vw_Sch_AdmissionFee Where N_RefID="+nAdmissionID+" and B_IsRemoved=0 and YEAR(D_DateFrom) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_FnYearID="+nFnYearID + crieteria ;
+                    sqlCommandCount = "Select  count(1) from vw_Sch_AdmissionFee Where N_RefID="+nAdmissionID+" and B_IsRemoved=0 and YEAR(D_DateFrom) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_FnYearID="+nFnYearID + crieteria ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -342,7 +342,7 @@ namespace SmartxAPI.Controllers
         //             connection.Open();
         //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-        //             sqlCommandCount = "Select  count(*) from vw_TimetableDisplay Where YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_StudentID=" + nStudentID + " and N_CompanyID = " + nCompanyId  + crieteria ;
+        //             sqlCommandCount = "Select  count(1) from vw_TimetableDisplay Where YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_StudentID=" + nStudentID + " and N_CompanyID = " + nCompanyId  + crieteria ;
         //             object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
         //             OutPut.Add("Details", api.Format(dt));
         //             OutPut.Add("TotalCount", TotalCount);

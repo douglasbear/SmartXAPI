@@ -121,14 +121,14 @@ namespace SmartxAPI.Controllers
 
                     // connection.Open();
                     //  dt=dLayer.ExecuteDataTable(sqlCommandText,Params, connection);
-                    //  sqlCommandCount = "select count(*) as N_Count  from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2";
+                    //  sqlCommandCount = "select count(1) as N_Count  from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2";
                     // object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     // OutPut.Add("Details",_api.Format(dt));
                     // OutPut.Add("TotalCount",TotalCount);
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_TotalReturnAmount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(n_TotalReturnAmount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -185,7 +185,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2";
+                    sqlCommandCount = "select count(1) as N_Count  from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

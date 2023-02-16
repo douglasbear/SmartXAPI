@@ -68,7 +68,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_Prj_Tender where N_CompanyID=@p1 ";
+                    sqlCommandCount = "select count(1) as N_Count  from vw_Prj_Tender where N_CompanyID=@p1 ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
