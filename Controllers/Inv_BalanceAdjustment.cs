@@ -244,9 +244,12 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     int N_TransType = myFunctions.getIntVAL(MasterRow["n_TransType"].ToString());
                     int N_PartyType = myFunctions.getIntVAL(MasterRow["n_PartyType"].ToString());
+                    int N_FormID = myFunctions.getIntVAL(MasterRow["N_FormID"].ToString());
                     string X_Trasnaction = "";
-                    int N_FormID =0;
+             
                     int N_PartyID = myFunctions.getIntVAL(MasterRow["n_PartyID"].ToString());
+                    int N_IsImport = 0;
+                    if (N_FormID==1515) N_IsImport = 1;
                      SortedList PostingParam = new SortedList();
                       SortedList QueryParams = new SortedList();
 
