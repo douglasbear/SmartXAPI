@@ -237,7 +237,7 @@ namespace SmartxAPI.Controllers
                     switch (xAppType)
                     {
                     case "erp"://PO
-                        clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID and X_Description<>'STUDENT LIMIT'";
+                        clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID and X_Description not in ('STUDENT LIMIT','EMPLOYEE LIMIT')";
                         break;
                     case "obs"://loan issue
                        clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID and X_Description not in('STUDENT LIMIT','BRANCH LIMIT','USER LIMIT','EMPLOYEE LIMIT') ";
