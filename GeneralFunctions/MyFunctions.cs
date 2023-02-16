@@ -2149,13 +2149,8 @@ namespace SmartxAPI.GeneralFunctions
                         X_Action = "Delete";
                         B_IsDelete = true;
                         break;
-<<<<<<< HEAD
-                    case 212 ://loan issue
-                    case 1226 ://loan issue
-=======
                     case 212://loan issue
                     case 1226://loan issue
->>>>>>> 1d09a0ad9efbd253785ff2fa8cea9fe965211676
                         DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
                         X_Action = "Delete";
                         B_IsDelete = true;

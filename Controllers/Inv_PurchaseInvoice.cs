@@ -189,11 +189,7 @@ namespace SmartxAPI.Controllers
                     }
 
 
-<<<<<<< HEAD
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(16," + N_decimalPlace + ")) ) as TotalAmount from vw_InvPurchaseInvoiceNo_Search_Cloud where  N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_FormID, 65)=@p3 " + criteria + " " + Searchkey + "";
-=======
                     sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(16," + N_decimalPlace + ")) ) as TotalAmount from vw_InvPurchaseInvoiceNo_Search_Cloud where  N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + " " + Searchkey + "";
->>>>>>> 1d09a0ad9efbd253785ff2fa8cea9fe965211676
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
