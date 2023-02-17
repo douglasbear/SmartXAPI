@@ -1366,6 +1366,8 @@ namespace SmartxAPI.Controllers
 
                     if (myFunctions.ContainColumn("b_RentalProduct", dtMasterTable))
                         dtMasterTable.Columns.Remove("b_RentalProduct");
+                    // if (myFunctions.ContainColumn("d_PassportExpiry", dtMasterTable) && dtMasterTable.Rows[0]["d_PassportExpiry"] == DBNull.Value)
+                    //     dtMasterTable.Rows[0]["d_PassportExpiry"] = DBNull.Value;
                     nEmpID = dLayer.SaveData("pay_Employee", "n_EmpID", DupCriteria, X_Crieteria, dtMasterTable, connection, transaction);
                     if (nEmpID <= 0)
                     {
@@ -1914,13 +1916,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("salaryGrade")]
-        public ActionResult GetSalaryGrade()
+        public ActionResult GetSalaryGrade(int nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
-            string sqlCommandText = "Select X_GradeCode,X_Gradename,N_CompanyID,N_GradeID,B_Active,B_Edit,N_SalaryFrom,N_SalaryTo from Pay_SalaryGrade Where N_CompanyID=@nCompanyID   and B_Active=1 order by X_Gradename";
+            Params.Add("@nFnYearID", nFnYearID);
+            string sqlCommandText = "Select X_GradeCode,X_Gradename,N_CompanyID,N_GradeID,B_Active,B_Edit,N_SalaryFrom,N_SalaryTo from Pay_SalaryGrade Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_Active=1 order by X_Gradename";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
