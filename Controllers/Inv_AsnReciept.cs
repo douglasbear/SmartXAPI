@@ -98,7 +98,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_Wh_AsnMaster_Disp where " + sqlCondition + " " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count from vw_Wh_AsnMaster_Disp where " + sqlCondition + " " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -334,7 +334,7 @@ namespace SmartxAPI.Controllers
 
                         // Master= myFunctions.AddNewColumnToDataTable(Master, "N_Processed", typeof(int), 0);
 
-                        object GroupCodeObj = dLayer.ExecuteScalar("select count(*) as N_Count from Wh_GRN Where N_CompanyID=@nCompanyID and N_AsnID=@N_AsnID", QueryParams, connection);
+                        object GroupCodeObj = dLayer.ExecuteScalar("select count(1) as N_Count from Wh_GRN Where N_CompanyID=@nCompanyID and N_AsnID=@N_AsnID", QueryParams, connection);
                         if (myFunctions.getIntVAL(GroupCodeObj.ToString()) > 0)
                         {
                             Master.Rows[0]["N_Processed"] = 1;
@@ -404,7 +404,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object Count = dLayer.ExecuteScalar("select count(*)  from vw_Wh_AsnDetails_Disp where N_CompanyID=@companyid and X_SKU=@xSKU and N_CustomerID=@nCustomerID", QueryParams, connection);
+                    object Count = dLayer.ExecuteScalar("select count(1)  from vw_Wh_AsnDetails_Disp where N_CompanyID=@companyid and X_SKU=@xSKU and N_CustomerID=@nCustomerID", QueryParams, connection);
                     int NCount = myFunctions.getIntVAL(Count.ToString());
                     if (NCount > 0)
                     {
@@ -469,7 +469,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    string sqlCommandCount3 = "select count(*) as N_Count from Wh_GRN where N_CompanyID= " + nCompanyID + "and N_AsnID=" + nAsnID + " ";
+                    string sqlCommandCount3 = "select count(1) as N_Count from Wh_GRN where N_CompanyID= " + nCompanyID + "and N_AsnID=" + nAsnID + " ";
                     object count = dLayer.ExecuteScalar(sqlCommandCount3, Params, connection, transaction);
                     if (myFunctions.getIntVAL(count.ToString()) > 0)
                     {

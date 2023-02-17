@@ -93,7 +93,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_SchAdmission_Dashboard  where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID and isNull(N_Inactive,0)=0 " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count  from vw_SchAdmission_Dashboard  where N_CompanyID=@nCompanyId and N_AcYearID=@nAcYearID and isNull(N_Inactive,0)=0 " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -233,7 +233,7 @@ namespace SmartxAPI.Controllers
                     var values = MasterTable.Rows[0]["X_AdmissionNo"].ToString();
                     if(values!= null && values != "@Auto")
                     {
-                           object AdCode = dLayer.ExecuteScalar("select COUNT(*) from Sch_Admission  where N_CompanyID="+ nCompanyID +"  and X_AdmissionNo='"+values+"' and N_AcYearID= "+nAcYearID +" and N_AdmissionID<>" + nAdmissionID, Params, connection, transaction);
+                           object AdCode = dLayer.ExecuteScalar("select count(1) from Sch_Admission  where N_CompanyID="+ nCompanyID +"  and X_AdmissionNo='"+values+"' and N_AcYearID= "+nAcYearID +" and N_AdmissionID<>" + nAdmissionID, Params, connection, transaction);
                          
                            if(myFunctions.getIntVAL(AdCode.ToString())>0)
                            {
@@ -491,7 +491,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     if ( nAdmissionID > 0)
                     {
-                        object admCount = dLayer.ExecuteScalar("select COUNT(*) From Sch_BusRegistration where N_AdmissionID =" + nAdmissionID + " and N_CompanyID =" + nCompanyID + " and N_FnYearID=" + nFnYearId , connection, transaction);
+                        object admCount = dLayer.ExecuteScalar("select count(1) From Sch_BusRegistration where N_AdmissionID =" + nAdmissionID + " and N_CompanyID =" + nCompanyID + " and N_FnYearID=" + nFnYearId , connection, transaction);
                         admCount = admCount == null ? 0 : admCount;
                         if (myFunctions.getIntVAL(admCount.ToString()) > 0)
                             return Ok(api.Error(User, "Already In Use !!"));
@@ -521,7 +521,7 @@ namespace SmartxAPI.Controllers
 
                                 dLayer.DeleteData("Sch_SalesDetails", "N_SalesID", myFunctions.getIntVAL(dtSch_Sales.Rows[j]["N_SalesID"].ToString()), "N_CompanyID =" + nCompanyID, connection, transaction);                   
                             }
-                             object customerCount = dLayer.ExecuteScalar("select COUNT(*) from Inv_Sales  where N_CompanyID="+ nCompanyID +"  and N_CustomerId="+nCustomerID, Params, connection, transaction);
+                             object customerCount = dLayer.ExecuteScalar("select count(1) from Inv_Sales  where N_CompanyID="+ nCompanyID +"  and N_CustomerId="+nCustomerID, Params, connection, transaction);
                          
                            if(myFunctions.getIntVAL(customerCount.ToString())>0)
                            {
@@ -599,6 +599,57 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,e));
             }
         }
+
+        [HttpGet("stdCustomerlist") ]
+        public ActionResult StdCustomerList(int nCompanyID, int nFnYearId, int nBranchId, bool bAllBranchesData, int nClassID, int nDivisionID)
+        {    
+            SortedList param = new SortedList();           
+            DataTable dt=new DataTable();
+            string sqlCommandText="";
+            string X_Crieteria="";
+            string condition="";
+
+            if (bAllBranchesData == true)
+            { X_Crieteria=" where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_Inactive, 0)=0 and ISNULL(N_EnablePopup,0)=0"; }
+            else
+            {
+                X_Crieteria=" where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_Inactive, 0)=0 and ISNULL(N_EnablePopup,0)=0 and (N_BranchID=0 or N_BranchID=@p3)";
+                param.Add("@p3", nBranchId);
+            }
+
+            if (nClassID > 0 && nDivisionID > 0)
+            {
+                condition=" and N_ClassID=@p4 and N_ClassDivisionID=@p5";
+                param.Add("@p4", nClassID);
+                param.Add("@p5", nDivisionID);
+            }
+
+            sqlCommandText="select * from vw_InvCustomer_Student "+X_Crieteria+""+condition+" order by N_CustomerID DESC";
+            param.Add("@p1", nCompanyID);
+            param.Add("@p2", nFnYearId); 
+                
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                }
+                if(dt.Rows.Count==0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch(Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }   
+        }  
     }
 }
 

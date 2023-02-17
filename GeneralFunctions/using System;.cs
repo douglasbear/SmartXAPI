@@ -2250,9 +2250,9 @@
 //                     int NewNo = 0, loop = 1;
 //                     while (OK)
 //                     {
-//                         NewNo = myFunctions.getIntVAL(dba.ExecuteSclarNoErrorCatch("Select Isnull(Count(*),0) + " + loop + " As Count FRom Pay_TimeSheetMaster Where N_CompanyID=" + myCompanyID._CompanyID + " And N_FnyearID = " + myCompanyID._FnYearID + " And N_BatchID = " + PayrunID, "TEXT", new DataTable()).ToString());
+//                         NewNo = myFunctions.getIntVAL(dba.ExecuteSclarNoErrorCatch("Select Isnull(count(1),0) + " + loop + " As Count FRom Pay_TimeSheetMaster Where N_CompanyID=" + myCompanyID._CompanyID + " And N_FnyearID = " + myCompanyID._FnYearID + " And N_BatchID = " + PayrunID, "TEXT", new DataTable()).ToString());
 //                         txtBatchID.Text = dtpPayrunText.Value.Year.ToString("00##") + dtpPayrunText.Value.Month.ToString("0#") + NewNo.ToString("0#");
-//                         if (myFunctions.getIntVAL(dba.ExecuteSclarNoErrorCatch("Select Isnull(Count(*),0) FRom Pay_PaymentMaster Where N_CompanyID=" + myCompanyID._CompanyID + " And N_FnyearID = " + myCompanyID._FnYearID + " And X_Batch = '" + txtBatchID.Text + "'", "TEXT", new DataTable()).ToString()) == 0)
+//                         if (myFunctions.getIntVAL(dba.ExecuteSclarNoErrorCatch("Select Isnull(count(1),0) FRom Pay_PaymentMaster Where N_CompanyID=" + myCompanyID._CompanyID + " And N_FnyearID = " + myCompanyID._FnYearID + " And X_Batch = '" + txtBatchID.Text + "'", "TEXT", new DataTable()).ToString()) == 0)
 //                         {
 //                             OK = false;
 //                         }

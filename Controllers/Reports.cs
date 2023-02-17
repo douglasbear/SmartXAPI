@@ -20,6 +20,7 @@ using System.Net.Cache;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Net;
+using System.Threading;
 namespace SmartxAPI.Controllers
 {
     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -31,7 +32,8 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
-        private readonly string connectionString;
+        private string connectionString;
+        private readonly string connectionStringClinet;
         private readonly string reportApi;
         private readonly string TempFilesPath;
         private readonly string reportLocation;
@@ -51,6 +53,7 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            connectionStringClinet = conf.GetConnectionString("OlivoClientConnection");
             reportApi = conf.GetConnectionString("ReportAPI");
             TempFilesPath = conf.GetConnectionString("TempFilesPath");
             reportLocation = conf.GetConnectionString("ReportLocation");
@@ -68,30 +71,42 @@ namespace SmartxAPI.Controllers
             + " union all "
             + "Select vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild ,CAST(MAX(1 * vwUserMenus.B_Visible) AS BIT) as B_Visible, CAST(MAX(1 * vwUserMenus.B_Edit) AS BIT) as B_Edit, CAST(MAX(1 * vwUserMenus.B_Delete) AS BIT) as B_Delete,CAST(MAX(1 * vwUserMenus.B_Save) AS BIT) as B_Save, CAST(MAX(1 * vwUserMenus.B_View) AS BIT) as B_View, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID in ( " + myFunctions.GetUserCategoryList(User) + " ) and vwUserMenus.B_Show=1 inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId and isnull(vwUserMenus.N_CountryID,0)=@nCountryID group by vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text,vwUserMenus.N_CountryID "
             + ") as Menus order by N_Order";
+            
+            if (nMenuId == 1680)
+                sqlCommandText = "select N_CompanyID,N_MenuID,X_MenuName,X_Caption,N_ParentMenuID,N_Order,N_HasChild ,B_Visible,B_Edit,B_Delete,B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,N_IsStartup,B_Show,B_ShowOnline,X_RouteName,B_WShow,X_Text from ("
+                + "Select vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild ,CAST(MAX(1 * vwUserMenus.B_Visible) AS BIT) as B_Visible, CAST(MAX(1 * vwUserMenus.B_Edit) AS BIT) as B_Edit, CAST(MAX(1 * vwUserMenus.B_Delete) AS BIT) as B_Delete,CAST(MAX(1 * vwUserMenus.B_Save) AS BIT) as B_Save, CAST(MAX(1 * vwUserMenus.B_View) AS BIT) as B_View, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID in ( " + myFunctions.GetUserCategoryList(User) + " ) and vwUserMenus.B_Show=1 inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId and vwUserMenus.N_CountryID is null group by vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text,vwUserMenus.N_CountryID "
+               + ") as Menus order by N_Order";
+
             Params.Add("@nMenuId", nMenuId == 0 ? 318 : nMenuId);
             Params.Add("@nLangId", nLangId);
             Params.Add("@nUserCatID", myFunctions.GetUserCategoryList(User));
             Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
             Params.Add("@nBranchID", nBranchID);
+            int CountryID = 0;
 
             try
             {
+                if (nMenuId == 1680)
+                    connectionString = connectionStringClinet;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     string sqlCountryID = "select n_CountryID from Acc_Company where N_CompanyID=@nCompanyID";
-                    int CountryID = myFunctions.getIntVAL(dLayer.ExecuteScalar(sqlCountryID, Params, connection).ToString());
+                    if (nMenuId != 1680)
+                        CountryID = myFunctions.getIntVAL(dLayer.ExecuteScalar(sqlCountryID, Params, connection).ToString());
                     Params.Add("@nCountryID", CountryID);
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     DataTable dt1 = new DataTable();
-                    object B_Consolidated = dLayer.ExecuteScalar("select isnull(B_DefaultBranch,0) from Acc_BranchMaster where N_CompanyID=@nCompanyID and N_branchID=@nBranchID", Params, connection);
+                    object B_Consolidated = "false";
+                    if (nMenuId != 1680)
+                        B_Consolidated = dLayer.ExecuteScalar("select isnull(B_DefaultBranch,0) from Acc_BranchMaster where N_CompanyID=@nCompanyID and N_branchID=@nBranchID", Params, connection);
 
                     string sqlCommandText1 = "";
                     if (myFunctions.getBoolVAL(B_Consolidated.ToString()))
-                        sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_LinkCompID,X_LinkField,B_Range,isnull(B_Consolidated,0) as B_Consolidated from vw_WebReportMenus where N_LanguageId=@nLangId group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_ListOrder,N_LinkCompID,X_LinkField,B_Range,B_Consolidated order by N_ListOrder";
+                        sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_LinkCompID,X_LinkField,B_Range,isnull(B_Consolidated,0) as B_Consolidated,b_enablemultiselect from vw_WebReportMenus where N_LanguageId=@nLangId group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_ListOrder,N_LinkCompID,X_LinkField,B_Range,B_Consolidated,b_enablemultiselect order by N_ListOrder";
                     else
-                        sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_LinkCompID,X_LinkField,B_Range,isnull(B_Consolidated,0) as B_Consolidated from vw_WebReportMenus where N_LanguageId=@nLangId and B_Consolidated<>1 group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_ListOrder,N_LinkCompID,X_LinkField,B_Range,B_Consolidated order by N_ListOrder";
+                        sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_LinkCompID,X_LinkField,B_Range,isnull(B_Consolidated,0) as B_Consolidated,b_enablemultiselect from vw_WebReportMenus where N_LanguageId=@nLangId and B_Consolidated<>1 group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_ListOrder,N_LinkCompID,X_LinkField,B_Range,B_Consolidated,b_enablemultiselect order by N_ListOrder";
                     dt1 = dLayer.ExecuteDataTable(sqlCommandText1, Params, connection);
 
                     dt.Columns.Add("ChildMenus", typeof(DataTable));
@@ -116,7 +131,7 @@ namespace SmartxAPI.Controllers
                                 dt.Rows[i]["Filter"] = Filter;
                             }
                         }
-                        catch
+                        catch (Exception ex)
                         {
 
                         }
@@ -155,6 +170,8 @@ namespace SmartxAPI.Controllers
 
             try
             {
+                if (nMenuId == 1680)
+                    connectionString = connectionStringClinet;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -426,7 +443,7 @@ namespace SmartxAPI.Controllers
                     {
 
                         var client = new HttpClient(handler);
-                        var clientFile = new HttpClient(handler);
+
                         var dbName = connection.Database;
                         var random = RandomString();
                         if (TableName != "" && critiria != "")
@@ -512,7 +529,7 @@ namespace SmartxAPI.Controllers
                                 }
                             }
 
-                             SqlCommand cmd2 = new SqlCommand("select i_signature2 from Wh_GRN where N_GRNID=" + nPkeyID, connection, transaction);
+                            SqlCommand cmd2 = new SqlCommand("select i_signature2 from Wh_GRN where N_GRNID=" + nPkeyID, connection, transaction);
                             if ((cmd2.ExecuteScalar().ToString()) != "")
                             {
                                 byte[] content = (byte[])cmd2.ExecuteScalar();
@@ -605,7 +622,7 @@ namespace SmartxAPI.Controllers
                             foreach (DataRow var in dt.Rows)
                             {
                                 SqlCommand cmd = new SqlCommand("Select isnull(i_sign,'') as  i_sign from vw_Log_ApprovalAppraisal where N_ActionID=" + var["N_ActionID"].ToString(), connection, transaction);
-                                if ((cmd.ExecuteScalar().ToString()) != "" && cmd.ExecuteScalar().ToString() != "0x")
+                                if ((cmd.ExecuteScalar().ToString()) != "" && cmd.ExecuteScalar().ToString() != "0x" && cmd.ExecuteScalar().ToString() != "System.Byte[]")
                                 {
                                     byte[] content = (byte[])cmd.ExecuteScalar();
                                     MemoryStream stream = new MemoryStream(content);
@@ -630,31 +647,70 @@ namespace SmartxAPI.Controllers
                         var path = client.GetAsync(URL);
 
                         //WHATSAPP MODE
-                        if (nFormID == 64 || nFormID == 894 && sendWtsapMessage)
+                        DataTable Whatsapp = dLayer.ExecuteDataTable("select * from vw_GeneralScreenSettings where N_CompanyID=" + nCompanyId + " and N_FnyearID=" + nFnYearID + " and N_MenuID=" + nFormID + " and N_Type=2", QueryParams, connection, transaction);
+                        if (Whatsapp.Rows.Count > 0)
                         {
-                            object N_WhatsappMSG = dLayer.ExecuteScalar("select N_Value from Gen_Settings where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_Group='64' and X_Description='Whatsapp Message'", QueryParams, connection, transaction);
-                            if (N_WhatsappMSG != null)
+                            if (myFunctions.getBoolVAL(Whatsapp.Rows[0]["B_AutoSend"].ToString()) && printSave)
                             {
-                                if (N_WhatsappMSG.ToString() == "1")
+                                string Company = myFunctions.GetCompanyName(User);
+                                string FILEPATH = AppURL + "/temp/" + FormName + "_" + docNumber + "_" + partyName.Trim() + "_" + random + ".pdf";
+                                object WhatsappAPI = Whatsapp.Rows[0]["X_WhatsappKey"].ToString();
+                                object Currency = dLayer.ExecuteScalar("select x_currency from acc_company  where n_companyid=" + nCompanyId, QueryParams, connection, transaction);
+                                string Body = Whatsapp.Rows[0]["X_Body"].ToString();
+                                Body = Body.Replace("</p>", "");
+                                Body = Body.Replace("<br>", "");
+                                Body = Body.Replace("<p>", "%0A");
+                                string body = Body;//+ " %0A%0ARegards, %0A" + Company;
+                                object Mobile = "";
+                                object Date = "";
+                                object Party = "";
+                                if (nFormID == 64)
                                 {
-                                    string Company = myFunctions.GetCompanyName(User);
-                                    string FILEPATH = AppURL + "/temp/" + FormName + "_" + docNumber + "_" + partyName.Trim() + "_" + random + ".pdf";
-                                    object WhatsappAPI = dLayer.ExecuteScalar("select X_Value from Gen_Settings where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_Group='64' and X_Description='Whatsapp Message'", QueryParams, connection, transaction);
-                                    object Currency = dLayer.ExecuteScalar("select x_currency from acc_company  where n_companyid=" + nCompanyId, QueryParams, connection, transaction);
-                                    DataTable dt = dLayer.ExecuteDataTable("select * from vw_InvSalesInvoiceNo_Search_Cloud where n_salesid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
-                                    string body = "Dear " + dt.Rows[0]["Customer"].ToString() + ",%0A%0A*_Thank you for your purchase._*%0A%0ADoc No : " + dt.Rows[0]["Invoice No"].ToString() + "%0ATotal Amount : " + dt.Rows[0]["n_BillAmtF"].ToString() + "%0ADiscount : " + dt.Rows[0]["n_DiscountDisplay"].ToString() + "%0AVAT Amount : " + dt.Rows[0]["n_TaxAmtF"].ToString() + "%0ARound Off : " + dt.Rows[0]["n_DiscountAmtF"].ToString() + "%0ANet Amount : " + dt.Rows[0]["x_BillAmt"].ToString() + " " + Currency + " %0A%0ARegards, %0A" + Company;
-                                    string URLAPI = "https://api.textmebot.com/send.php?recipient=" + dt.Rows[0]["x_Phoneno1"].ToString() + "&apikey=" + WhatsappAPI + "&text=" + body;
-                                    string URLFILE = "https://api.textmebot.com/send.php?recipient=" + dt.Rows[0]["x_Phoneno1"].ToString() + "&apikey=" + WhatsappAPI + "&document=" + FILEPATH;
-                                    var MSGFile = clientFile.GetAsync(URLFILE);
-                                    MSGFile.Wait();
-                                    var MSG = client.GetAsync(URLAPI);
-                                    MSG.Wait();
+                                    Mobile = dLayer.ExecuteScalar("select x_Phoneno1 from vw_InvSalesInvoiceNo_Search_Cloud where n_salesid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                    Date = dLayer.ExecuteScalar("select d_salesdate from vw_InvSalesInvoiceNo_Search_Cloud where n_salesid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                    Party = dLayer.ExecuteScalar("select Customer from vw_InvSalesInvoiceNo_Search_Cloud where n_salesid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                }
+                                else if (nFormID == 80)
+                                {
+                                    Mobile = dLayer.ExecuteScalar("select x_Phone from VW_InvSalesQuotationMaster where n_quotationid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                    Date = dLayer.ExecuteScalar("select d_quotationdate from VW_InvSalesQuotationMaster where n_quotationid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                    Party = dLayer.ExecuteScalar("select x_crmcustomer from VW_InvSalesQuotationMaster where n_quotationid=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
 
                                 }
+                                else if (nFormID == 81)
+
+                                {
+                                    Mobile = dLayer.ExecuteScalar("select x_Phoneno1 from vw_InvSalesOrder where n_salesorderID=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                    Date = dLayer.ExecuteScalar("select D_OrderDate from vw_InvSalesOrder where n_salesorderID=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                    Party = dLayer.ExecuteScalar("select x_customername from vw_InvSalesOrder where n_salesorderID=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                                }
+                                Body = Body.Replace("@PartyName", Party.ToString());
+                                Body = Body.Replace("@CompanyName", Company.ToString());
+                                Body = Body.Replace("@Date", Convert.ToDateTime(Date).ToString("dd-M-yyyy"));
+
+
+                                var clientFile = new HttpClient(handler);
+                                string URLAPI = "https://api.textmebot.com/send.php?recipient=+" + Mobile + "&apikey=" + WhatsappAPI + "&text=" + Body;
+                                var FileMSG = clientFile.GetAsync(URLAPI);
+                                FileMSG.Wait();
+
+                                if (myFunctions.getBoolVAL(Whatsapp.Rows[0]["B_AttachPdf"].ToString()))
+                                {
+                                    Thread.Sleep(6000);
+                                    string URLFILE = "https://api.textmebot.com/send.php?recipient=+" + Mobile + "&apikey=" + WhatsappAPI + "&document=" + FILEPATH;
+                                    var MSG1 = client.GetAsync(URLFILE);
+                                    MSG1.Wait();
+                                }
+
+
+
+
+
                             }
-
-
                         }
+
+
+
                         if (nFormID == 80)
                         {
                             SortedList Params = new SortedList();
@@ -1006,10 +1062,14 @@ namespace SmartxAPI.Controllers
                 var dbName = "";
                 string Extention = "";
                 int LanguageID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LanguageID"].ToString());
+                int MainMenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["moduleID"].ToString());
+                if (MainMenuID == 1680)
+                    connectionString = connectionStringClinet;
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    int MainMenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["moduleID"].ToString());
+                    MainMenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["moduleID"].ToString());
 
                     int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportCategoryID"].ToString());
                     int ReportID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportID"].ToString());
@@ -1150,7 +1210,23 @@ namespace SmartxAPI.Controllers
                                         if (bRange && valueTo != "")
                                             Criteria = Criteria == "" ? xFeild + " " + ">= '" + value + "' and " + xFeild + " " + "<= '" + valueTo + "'" : Criteria + " and " + xFeild + " " + ">= '" + value + "' and " + xFeild + " " + "<= '" + valueTo + "'";
                                         else
-                                            Criteria = Criteria == "" ? xFeild + " " + xOperator + " '" + value + "' " : Criteria + " and " + xFeild + " " + xOperator + " '" + value + "' ";
+                                        {
+                                            if (value.Contains(","))
+                                            {
+                                                string[] values = value.Split(',');
+                                                string filterval = "";
+                                                for (int i = 0; i < values.Length; i++)
+                                                {
+                                                    filterval = filterval + xFeild + " " + xOperator + " '" + values[i] + "' or ";
+
+                                                }
+                                                filterval = filterval.Substring(0, filterval.Length - 3);
+                                                Criteria = Criteria == "" ? "( " + filterval + " )" : Criteria + " and ( " + filterval + " ) ";
+
+                                            }
+                                            else
+                                                Criteria = Criteria == "" ? xFeild + " " + xOperator + " '" + value + "' " : Criteria + " and " + xFeild + " " + xOperator + " '" + value + "' ";
+                                        }
                                     }
                                 }
                             }
@@ -1182,33 +1258,33 @@ namespace SmartxAPI.Controllers
                     }
                     else if (CompanyData != "")
                     {
-                         bool Consolidated = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_Isdefault,0) as B_Isdefault from acc_company where N_CompanyID=" + nCompanyID, Params, connection).ToString()); ;
-                        
-                        if(MenuID==859 && Consolidated==false)
+                        bool Consolidated = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_Isdefault,0) as B_Isdefault from acc_company where N_CompanyID=" + nCompanyID, Params, connection).ToString()); ;
+
+                        if (MenuID == 859 && Consolidated == false)
                         {
                             string FnYear = dLayer.ExecuteScalar("select X_FnYearDescr from Acc_FnYear where N_CompanyID=" + nCompanyID + " and N_FnyearID=" + FnYearID, Params, connection).ToString();
                             int ClientID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ClientID from Acc_Company where N_CompanyID=" + nCompanyID, Params, connection).ToString());
                             DataTable dt = dLayer.ExecuteDataTable("select * from vw_ConsolidatedCompany where n_clientID=" + ClientID + " and X_FnYearDescr='" + FnYear + "' order by N_CompanyID desc", Params, connection);
                             foreach (DataRow dr in dt.Rows)
                             {
-                             Criteria = Criteria + " and " + CompanyData + "=" + dr["n_CompanyID"];
+                                Criteria = Criteria + " and " + CompanyData + "=" + dr["n_CompanyID"];
                             }
                         }
                         else
                         {
-                        Criteria = Criteria + " and " + CompanyData + "=" + nCompanyID;
-                        if (YearData != "")
-                            Criteria = Criteria + " and " + YearData + "=" + FnYearID;
-                        if (BranchData != "")
-                        {
-                            bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
-                            if (mainBranch == false)
-                                Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
-                            // if (mainBranch == false)
-                            //     Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
-                            // else if (xProCode == "11")
-                            //     Criteria = Criteria + " and " + BranchData + "=" + BranchID;
-                        }
+                            Criteria = Criteria + " and " + CompanyData + "=" + nCompanyID;
+                            if (YearData != "")
+                                Criteria = Criteria + " and " + YearData + "=" + FnYearID;
+                            if (BranchData != "")
+                            {
+                                bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
+                                if (mainBranch == false)
+                                    Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
+                                // if (mainBranch == false)
+                                //     Criteria = Criteria + " and ( " + BranchData + "=" + BranchID + " or " + BranchData + "=0 )";
+                                // else if (xProCode == "11")
+                                //     Criteria = Criteria + " and " + BranchData + "=" + BranchID;
+                            }
                         }
                     }
                     if (UserData != "")
@@ -1221,7 +1297,7 @@ namespace SmartxAPI.Controllers
                         bool Consolidated = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_Isdefault,0) as B_Isdefault from acc_company where N_CompanyID=" + nCompanyID, Params, connection).ToString()); ;
                         dLayer.ExecuteNonQuery("delete from Acc_LedgerBalForReporting", connection);
                         dLayer.ExecuteNonQuery("delete from Acc_AccountStatement", connection);
-                            
+
                         if (Consolidated)
                         {
                             string FnYear = dLayer.ExecuteScalar("select X_FnYearDescr from Acc_FnYear where N_CompanyID=" + nCompanyID + " and N_FnyearID=" + FnYearID, Params, connection).ToString();

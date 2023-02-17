@@ -173,7 +173,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                    if (nStudentCatID > 0)
                     {
-                        object stuCatCount = dLayer.ExecuteScalar("select COUNT(*) From Sch_Admission where N_StudentCatID =" + nStudentCatID + " and N_CompanyID =" + nCompanyID + " and N_AcYearID=" + nAcYearID , connection, transaction);
+                        object stuCatCount = dLayer.ExecuteScalar("select count(1) From Sch_Admission where N_StudentCatID =" + nStudentCatID + " and N_CompanyID =" + nCompanyID + " and N_AcYearID=" + nAcYearID , connection, transaction);
                         stuCatCount = stuCatCount == null ? 0 : stuCatCount;
                         if (myFunctions.getIntVAL(stuCatCount.ToString()) > 0)
                             return Ok(api.Error(User, "Student Category Already In Use !!"));

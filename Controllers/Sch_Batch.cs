@@ -100,7 +100,7 @@ namespace SmartxAPI.Controllers
                         if (Code == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Course Code")); }
                         MasterTable.Rows[0]["x_DivisionCode"] = Code;
 
-                      object batchCount = dLayer.ExecuteScalar("select COUNT(*) from Sch_ClassDivision  where N_CompanyID="+ nCompanyID +" and n_classID = "+nclassID + " and  x_ClassDivision='"+xclassDivision+"'", Params, connection, transaction);
+                      object batchCount = dLayer.ExecuteScalar("select count(1) from Sch_ClassDivision  where N_CompanyID="+ nCompanyID +" and n_classID = "+nclassID + " and  x_ClassDivision='"+xclassDivision+"'", Params, connection, transaction);
                          
                            if (myFunctions.getIntVAL(batchCount.ToString()) > 0){
                              return Ok(api.Error(User, "Batch Already exist"));

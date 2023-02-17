@@ -133,6 +133,10 @@ namespace SmartxAPI.Data
                                         X_TeacherCode = dr["X_TeacherCode"].ToString(),
                                         X_TeacherName = dr["X_TeacherName"].ToString(),
                                         N_DefaultStudentID = myFunctions.getIntVAL(dr["N_DefaultStudentID"].ToString()),
+                                        N_TypeID = Convert.ToInt32(dr["N_TypeID"]),
+                                        X_UtcOffSet = dr["X_UtcOffSet"].ToString(),
+                                        X_ZoneName = dr["X_ZoneName"].ToString(),
+                                        N_TimeZoneID = Convert.ToInt32(dr["N_TimeZoneID"]),
 
                                     }).ToList()
                             .FirstOrDefault();
@@ -189,13 +193,13 @@ namespace SmartxAPI.Data
                             {
                                 cnn2.Open();
 
-                                string sqlGUserInfo = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.B_EnableAttachment,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,CASE WHEN Users.N_UserType=0 THEN 1 ELSE 0 end as isAdminUser,Users.X_UserID FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_UserID ='" + username + "')";
+                                string sqlGUserInfo = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.B_EnableAttachment,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,users.N_LanguageID, CASE WHEN Users.N_UserType=0 THEN 1 ELSE 0 end as isAdminUser,Users.X_UserID FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_UserID ='" + username + "')";
                                 DataTable globalInfo = dLayer.ExecuteDataTable(sqlGUserInfo, cnn2);
                                 if (globalInfo.Rows.Count > 0)
                                 {
                                     loginRes.Warning = userNotifications(myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString()),AppID,cnn2);
                                     object AllowMultipleCompany=true;
-                                    object numberOfCompanies = dLayer.ExecuteScalar("select count(*)   from Acc_Company where N_ClientID="+myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString())+"", Params, connection);
+                                    object numberOfCompanies = dLayer.ExecuteScalar("select count(1)   from Acc_Company where N_ClientID="+myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString())+"", Params, connection);
                                     object companyLimit = dLayer.ExecuteScalar("select isnull(N_Value,0) from GenSettings where N_ClientID="+myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString())+" and X_Description='COMPANY LIMIT'", Params, cnn2);
                                     if(companyLimit==null){companyLimit="0";}
                                      if(myFunctions.getIntVAL(companyLimit.ToString())<=myFunctions.getIntVAL(numberOfCompanies.ToString()))
@@ -207,6 +211,12 @@ namespace SmartxAPI.Data
                                     globalInfo = myFunctions.AddNewColumnToDataTable(globalInfo, "B_AllowMultipleCom", typeof(bool), AllowMultipleCompany == null ? 0 : AllowMultipleCompany);
                                     loginRes.GlobalUserInfo = globalInfo;
                                     xGlobalUserID = globalInfo.Rows[0]["X_UserID"].ToString();
+
+
+                                    if(globalInfo.Rows[0]["N_LanguageID"].ToString()==null||globalInfo.Rows[0]["N_LanguageID"].ToString()==""){
+                                        globalInfo.Rows[0]["N_LanguageID"]=loginRes.N_LanguageID;
+                                         globalInfo.AcceptChanges();
+                                    }
                                 }
 
                                 int daysToExpire = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_ExpiryDate)),0) as expiry from ClientApps where N_ClientID=" + clientID+" and N_AppID="+AppID+"", cnn2).ToString());
@@ -258,6 +268,16 @@ namespace SmartxAPI.Data
                                 if(attachment!=null)
                                     globalInfo.Rows[0]["B_EnableAttachment"]=myFunctions.getBoolVAL(attachment.ToString());
                                 globalInfo.AcceptChanges();
+                                globalInfo = myFunctions.AddNewColumnToDataTable(globalInfo, "X_LandingPage", typeof(string), null);
+                                globalInfo.AcceptChanges();
+                                 object landingPage=null;
+                                landingPage = dLayer.ExecuteScalar("select ISNULL(x_LandingPage,'') as x_LandingPage from Sec_UserApps where N_UserID=" + loginRes.N_UserID +" and N_AppID="+AppID+"",connection);
+                                if(landingPage==""){
+                                 string LandingPage = "select x_LandingPage from AppMaster where N_AppID="+AppID+"";
+                                 landingPage = dLayer.ExecuteScalar(LandingPage, cnn2);
+                                }
+                                     globalInfo.Rows[0]["X_LandingPage"]=landingPage;
+                                     globalInfo.AcceptChanges();
 
 
                                 }

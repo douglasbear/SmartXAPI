@@ -144,7 +144,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetUserList(int? nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetUserList(int? nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int userId)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -154,7 +154,10 @@ namespace SmartxAPI.Controllers
             string sqlCommandCount = "";
             string Searchkey = "";
             string exclude = " and X_UserID<>'Olivo' and X_Email LIKE '_%@__%.__%'";
+            string criteria ="";
 
+
+           
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (X_UserID like '%" + xSearchkey + "%' or X_UserCategory like '%" + xSearchkey + "%' or X_BranchName like '%" + xSearchkey + "%')";
 
@@ -163,19 +166,34 @@ namespace SmartxAPI.Controllers
             else
                 xSortBy = " order by " + xSortBy;
 
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_UserList where N_CompanyID=@p1 " + exclude + Searchkey + " " + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_UserList where N_CompanyID=@p1 " + exclude + Searchkey + " and N_UserID not in(select top(" + Count + ")  N_UserID from vw_UserList where N_CompanyID=@p1 " + exclude + xSortBy + " ) " + xSortBy;
-
             Params.Add("@p1", nCompanyId);
-            SortedList OutPut = new SortedList();
-
+            Params.Add("@p2", userId);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                     object usertypeID = dLayer.ExecuteScalar("SELECT isnull(N_TypeID,0)  FROM sec_User where n_UserID=@p2 and N_CompanyID=@p1 ", Params, connection);
+                     if (usertypeID == null) usertypeID = 0;
+                     if (myFunctions.getIntVAL(usertypeID.ToString()) > 0  )
+                            {
+                           if (myFunctions.getIntVAL(usertypeID.ToString()) ==1)
+                           {
+                            criteria="";
+                           }
+                            else
+                           {
+                            criteria=" and N_TypeID in (select N_TypeID from sec_User where  N_CompanyID=@p1 and N_TypeID>="+usertypeID+")";
+                           }
+
+                            }
+               if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_UserList where N_CompanyID=@p1 " + exclude +criteria+ Searchkey + " " + xSortBy;
+              else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_UserList where N_CompanyID=@p1 " + exclude + criteria+Searchkey + " and N_UserID not in(select top(" + Count + ")  N_UserID from vw_UserList where N_CompanyID=@p1 " + exclude +criteria+ xSortBy + " ) " + xSortBy;
+
+          
+            SortedList OutPut = new SortedList();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     dt = myFunctions.AddNewColumnToDataTable(dt, "X_UserCategoryNameList", typeof(string), 0);
@@ -195,7 +213,7 @@ namespace SmartxAPI.Controllers
                     }
                     dt.AcceptChanges();
 
-                    sqlCommandCount = "select count(*) as N_Count from vw_UserList where N_CompanyID=@p1  " + exclude + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count from vw_UserList where N_CompanyID=@p1  " + exclude +criteria+ Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -410,6 +428,25 @@ namespace SmartxAPI.Controllers
                           apps.AcceptChanges();
                           if(myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString())>0)
                           {
+                         SortedList userParam= new SortedList();
+                        userParam.Add("@userID", userID);
+                        apps = myFunctions.AddNewColumnToDataTable(apps, "X_LandingPage", typeof(string), null);
+                        string sqlText = "Select * From sec_userApps Where N_UserID=@userID";
+
+                        DataTable duserApps = dLayer.ExecuteDataTable( sqlText,userParam,connection,transaction);
+                        foreach (DataRow Rows in duserApps.Rows){
+                            foreach (DataRow drow in apps.Rows){
+                                if (myFunctions.getIntVAL(Rows["N_UserID"].ToString())==myFunctions.getIntVAL(drow["N_UserID"].ToString())&&myFunctions.getIntVAL(Rows["N_AppID"].ToString())==myFunctions.getIntVAL(drow["N_AppID"].ToString()))
+                                {
+                                    
+                                    drow["X_LandingPage"]=Rows["X_LandingPage"];
+                                }
+
+                            }
+
+                        }
+                          apps.AcceptChanges();
+
                           dLayer.ExecuteNonQuery("DELETE FROM sec_userApps  WHERE N_UserID="+userID , connection, transaction);
                           }
                        
@@ -417,7 +454,7 @@ namespace SmartxAPI.Controllers
                             if (bSalesPerson)
                             {
 
-                                object salesManCount = dLayer.ExecuteScalar("select count(*) from Inv_SalesMan where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_UserID=" + userID, connection, transaction);
+                                object salesManCount = dLayer.ExecuteScalar("select count(1) from Inv_SalesMan where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_UserID=" + userID, connection, transaction);
 
                                 if (salesManCount == null)
                                     salesManCount = 0;
@@ -560,6 +597,22 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
+                    object nTypeID = dLayer.ExecuteScalar("SELECT n_TypeID  FROM Sec_User where x_UserID=@xUserID", userParams, connection, transaction);
+                    if (myFunctions.getIntVAL(nTypeID.ToString()) == 1)
+                    {
+                         DateTime  validDateTime=DateTime.Now;
+                       
+                        object nPswdDuraHours  =  dLayer.ExecuteScalar("select isnull(N_PswdDuraHours,0) ASN_PswdDuraHours  from Users where  N_ClientID="+clientID+" and X_EmailID=@xUserID",userParams, olivoCon,olivoTxn);
+                        if(myFunctions.getIntVAL(nPswdDuraHours.ToString())>0)
+                        {
+                          int daysToAdd=myFunctions.getIntVAL(nPswdDuraHours.ToString());
+                          validDateTime= DateTime.Now.AddHours(daysToAdd);
+                          
+                        }
+                        
+                    dLayer.ExecuteNonQuery("Update Sec_User set D_ExpireDate='"+validDateTime+"' where x_UserID=@xUserID", userParams, connection, transaction);
+                    }
+
 
 
                     int res2 = dLayer.ExecuteNonQuery("Update Users set X_Password=@xPassword,B_InActive=0,B_EmailVerified=1 where N_UserID=@nglobalUserID and N_ClientID=@nClientID and X_EmailID=@xUserID", userParams, olivoCon, olivoTxn);
@@ -582,7 +635,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("forgotPassword")]
-        public ActionResult VerifyUser(string emailID)
+        public ActionResult VerifyUser(string emailID,string senderMail,int nPswdDuraHours,DateTime dPswdResetTime)
         {
             try
             {
@@ -610,13 +663,22 @@ namespace SmartxAPI.Controllers
 + "Forgot Your Password?"
 + "</span><h1 style='font-size: 32px;font-weight: 600;margin:40px 0 12px;'>"
 + "</h1><p style='margin: 0 0 24px;'> That's okay, it happens! Click on the button below to reset your password."
-+ "</p><a href='" + appUrl + "/verifyUser#" + inviteCode + "' style='text-decoration: none;display: block;width: max-content;font-size: 18px;margin: 0 auto 24px;padding: 20px 40px;color: #ffffff;border-radius: 4px;background-color: #2c6af6;'>Reset Your Password</a><p style='margin: 24px 0 0 ;padding: 17px 0;text-align: center;background: #f4f5f6;color: #86898e;font-size: 14px;'>Copyright © 2021 Olivo Tech., All rights reserved.</p></div>";
++ "</p><a href='" + "http://localhost:3000" + "/verifyUser#" + inviteCode + "' style='text-decoration: none;display: block;width: max-content;font-size: 18px;margin: 0 auto 24px;padding: 20px 40px;color: #ffffff;border-radius: 4px;background-color: #2c6af6;'>Reset Your Password</a><p style='margin: 24px 0 0 ;padding: 17px 0;text-align: center;background: #f4f5f6;color: #86898e;font-size: 14px;'>Copyright © 2021 Olivo Tech., All rights reserved.</p></div>";
                     string EmailSubject = "Olivo Cloud Solutions - Reset Password";
+                    if(senderMail!="")
+                    {
 
-                    myFunctions.SendMail(emailID.ToString(), EmailBody, EmailSubject, dLayer, 1, 1, 1);
+                     myFunctions.SendMail(senderMail.ToString(), EmailBody, EmailSubject, dLayer, 1, 1, 1);
+                     dLayer.ExecuteNonQuery("update users set N_PswdDuraHours="+nPswdDuraHours+" ,D_PswdResetTime='"+dPswdResetTime+"' where N_ClientID=" + clientID+ "and  X_EmailID=@xEmail", userParams,olivoCon); 
+               
+                    }
+                    else{
+                     myFunctions.SendMail(emailID.ToString(), EmailBody, EmailSubject, dLayer, 1, 1, 1);
+                    }
+                   
 
                 }
-                return Ok(_api.Success("Password Reset Mail Send"));
+                 return Ok(_api.Success("Password Reset Mail Send"));
             }
             catch (Exception ex)
             {
@@ -727,7 +789,7 @@ namespace SmartxAPI.Controllers
             int nClientID = myFunctions.GetClientID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
             string sqlCategory = "Select X_UserCategory from Sec_User  inner join Sec_UserCategory on Sec_User.X_UserCategoryList = Sec_UserCategory.N_UserCategoryID where Sec_User.X_UserID=@p3 and Sec_User.N_CompanyID =@p1";
-            string sqlTrans = "select COUNT(*) from vw_UserTransaction where n_userid=@p2";
+            string sqlTrans = "select count(1) from vw_UserTransaction where n_userid=@p2";
             string sqlUser = "select X_UserID from sec_user where n_userid=@p2";
 
             Params.Add("@p1", nCompanyID);
@@ -748,7 +810,7 @@ namespace SmartxAPI.Controllers
                         olivoCon.Open();
                         SqlTransaction olivoTxn = olivoCon.BeginTransaction();
 
-                        object nUseradmin = dLayer.ExecuteScalar("SELECT count(*) FROM ClientMaster where X_AdminUserID=@p3 and N_ClientID=@nClientID", Params, olivoCon, olivoTxn);
+                        object nUseradmin = dLayer.ExecuteScalar("SELECT count(1) FROM ClientMaster where X_AdminUserID=@p3 and N_ClientID=@nClientID", Params, olivoCon, olivoTxn);
                         if (myFunctions.getIntVAL(nUseradmin.ToString()) > 0)
                         {
                             return Ok(_api.Error(User, "Unable to delete User"));

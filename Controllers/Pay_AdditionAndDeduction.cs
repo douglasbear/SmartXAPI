@@ -219,11 +219,7 @@ namespace SmartxAPI.Controllers
                                 dtVar["details"] = dtNode;
                             }
                         }
-
-                    }
-                    mst.AcceptChanges();
-
-                    foreach (DataRow Kvar in dt.Rows)
+                     foreach (DataRow Kvar in dt.Rows)
                     {
                         if (myFunctions.getBoolVAL(Kvar["B_ExcludeInSalary"].ToString()) == true && Kvar["details"] == null)
                         {
@@ -231,6 +227,11 @@ namespace SmartxAPI.Controllers
                             continue;
                         }
                     }
+
+                    }
+                    mst.AcceptChanges();
+
+              
                     dt.AcceptChanges();
                     dt = _api.Format(dt);
                     mst = _api.Format(mst);
@@ -435,9 +436,9 @@ namespace SmartxAPI.Controllers
                         int NewNo = 0, loop = 1;
                         while (OK)
                         {
-                            NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) + " + loop + " As Count FRom Pay_MonthlyAddOrDed Where N_CompanyID=@nCompanyID  And N_PayRunID =@nPayRunID", Params, connection, transaction).ToString());
+                            NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(count(1),0) + " + loop + " As Count FRom Pay_MonthlyAddOrDed Where N_CompanyID=@nCompanyID  And N_PayRunID =@nPayRunID", Params, connection, transaction).ToString());
                             x_Batch = nPayRunID + "" + NewNo.ToString("0#");
-                            if (myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) FRom Pay_MonthlyAddOrDed Where N_CompanyID=@nCompanyID And X_Batch = '" + x_Batch + "'", Params, connection, transaction).ToString()) == 0)
+                            if (myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(count(1),0) FRom Pay_MonthlyAddOrDed Where N_CompanyID=@nCompanyID And X_Batch = '" + x_Batch + "'", Params, connection, transaction).ToString()) == 0)
                             {
                                 OK = false;
                             }
@@ -590,7 +591,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID " + Searchkey;
+                    sqlCommandCount = "select count(1) as N_Count  from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

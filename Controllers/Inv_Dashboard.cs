@@ -160,7 +160,7 @@ namespace SmartxAPI.Controllers
                         sqlCommandText = "Select top(" + nSizeperpage + ") " + X_VisibleFieldList + " from " + X_TableName + " where " + X_Crieteria + " " + Searchkey + " " + " and N_ItemID not in (select top(" + Count + ") N_ItemID from " + X_TableName + " where " + X_Crieteria + ") " + xSortBy + "";
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count From " + X_TableName + " where " + X_Crieteria + " " ;
+                    sqlCommandCount = "select count(1) as N_Count From " + X_TableName + " where " + X_Crieteria + " " ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     dt = _api.Format(dt);
                     SortedList OutPut = new SortedList();
@@ -210,7 +210,7 @@ namespace SmartxAPI.Controllers
             // criteria="N_CompanyID ="+nCompanyID+" and N_LocationID="+nLocationID+" and N_BranchID="+nBranchID;
 
            // sqlAll = "SELECT COUNT(N_ItemID) as N_Count FROM vw_InvItem_WHLink WHERE " + criteria1 + " and B_Inactive=0 and X_ItemCode <> '001' and N_ItemTypeID<>1 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) ";
-            sqlAll = "SELECT COUNT(N_ItemID) as N_Count from Inv_ItemMaster where " + criteria1 + " and B_InActive=0 and X_ItemCode <> '001' and N_ItemTypeID<>1 and N_ClassID in (2,3,5) and N_ItemID in "+
+            sqlAll = "SELECT COUNT(N_ItemID) as N_Count from Inv_ItemMaster where B_InActive=0 and X_ItemCode <> '001' and N_ItemTypeID<>1 and N_ClassID in (2,3,5) and N_ItemID in "+
                         " (SELECT N_ItemID FROM vw_InvItem_WHLink WHERE " + criteria1 + " and B_Inactive=0 and X_ItemCode <> '001' and N_ItemTypeID<>1 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) "+
                         " GROUP BY N_ItemID,N_CompanyID) ";
             sqlNoStock = "SELECT COUNT(N_ItemID) as N_Count FROM vw_LocationWiseStocklevel WHERE " + criteria + " and N_CurrentStock = 0 and N_ClassID in (2,3,5) and (N_MinQty is not null or N_ReOrderQty is not null) ";
@@ -322,7 +322,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count from Vw_ItemWiseLocation where N_CompanyID=@p1 and X_BatchCode is not null and D_ExpiryDate is not null and D_ExpiryDate <='"+d_Date+"' and N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where "+criteria1+") and N_ItemID in (Select N_ItemID from Inv_StockMaster where "+criteria+" and D_ExpiryDate<='"+d_Date+" '  ) ";
+                    sqlCommandCount = "select count(1) as N_Count from Vw_ItemWiseLocation where N_CompanyID=@p1 and X_BatchCode is not null and D_ExpiryDate is not null and D_ExpiryDate <='"+d_Date+"' and N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where "+criteria1+") and N_ItemID in (Select N_ItemID from Inv_StockMaster where "+criteria+" and D_ExpiryDate<='"+d_Date+" '  ) ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

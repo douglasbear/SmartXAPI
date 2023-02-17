@@ -102,7 +102,32 @@ namespace SmartxAPI.GeneralFunctions
                         {
                             MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
                             nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
-                        }
+                             SortedList QueryParams = new SortedList();
+                            QueryParams["@nFnYearID"] = nFnYearID;
+                            QueryParams["@nCompanyID"] = nCompanyID;
+                            QueryParams["@N_VendorID"] = N_VendorID;
+                            
+                              SortedList PostingParam = new SortedList();
+                              PostingParam.Add("N_PartyID", N_VendorID);
+                              PostingParam.Add("N_FnyearID", nFnYearID);
+                              PostingParam.Add("N_CompanyID", nCompanyID);
+                              PostingParam.Add("X_Type", "vendor");
+
+
+                             object vendorCount = dLayer.ExecuteScalar("Select count(*) From Inv_Vendor where N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID and N_VendorID=@N_VendorID", QueryParams, connection, transaction);
+                      
+                               if(myFunctions.getIntVAL(vendorCount.ToString())==0){
+                                try 
+                                  {
+                                     dLayer.ExecuteNonQueryPro("SP_CratePartyBackYear", PostingParam, connection, transaction);
+                                  }
+                                  catch (Exception ex)
+                                  {
+                                    transaction.Rollback();
+                                     throw ex;
+                                  }
+                                  }
+                         }
                         else
                             {
                         //     transaction.Rollback();
@@ -576,7 +601,7 @@ namespace SmartxAPI.GeneralFunctions
                             PostingMRNParam.Add("B_DirectPurchase", Dir_Purchase);
                             PostingMRNParam.Add("N_MRNID", n_MRNID);
 
-                            dLayer.ExecuteNonQueryPro("[SP_Inv_MRNprocessing]", PostingMRNParam, connection, transaction);
+                             dLayer.ExecuteNonQueryPro("[SP_Inv_MRNprocessing]", PostingMRNParam, connection, transaction);
 
                             SortedList PostingParam = new SortedList();
                             PostingParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
@@ -586,7 +611,7 @@ namespace SmartxAPI.GeneralFunctions
                             PostingParam.Add("X_SystemName", "ERP Cloud");
                             PostingParam.Add("MRN_Flag", Dir_Purchase==0 ? "1" : "0");
 
-                            dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
+                             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
 
                             SortedList StockOutParam = new SortedList();
                             StockOutParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
@@ -777,6 +802,29 @@ namespace SmartxAPI.GeneralFunctions
                     MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
                     N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
                     QueryParams["@nFnYearID"] = N_FnYearID;
+
+                    SortedList PostingParam = new SortedList();
+                    PostingParam.Add("N_PartyID", N_CustomerID);
+                    PostingParam.Add("N_FnyearID", N_FnYearID);
+                    PostingParam.Add("N_CompanyID", N_CompanyID);
+                    PostingParam.Add("X_Type", "customer");
+
+
+                     object custCount = dLayer.ExecuteScalar("Select count(*) From Inv_Customer where N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID", QueryParams, connection, transaction);
+                      
+                      if(myFunctions.getIntVAL(custCount.ToString())==0){
+                           try 
+                    {
+                        dLayer.ExecuteNonQueryPro("SP_CratePartyBackYear", PostingParam, connection, transaction);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        throw ex;
+                    }
+                      }
+                 
+
                 }
                 else
                 {
@@ -1056,18 +1104,8 @@ namespace SmartxAPI.GeneralFunctions
                 //     ipAddress = Request.Headers["X-Forwarded-For"];
                 // else
                 //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                SortedList LogParams = new SortedList();
-                LogParams.Add("N_CompanyID", N_CompanyID);
-                LogParams.Add("N_FnYearID", N_FnYearID);
-                LogParams.Add("N_TransID", N_SalesID);
-                LogParams.Add("N_FormID", 64);
-                LogParams.Add("N_UserId", N_UserID);
-                LogParams.Add("X_Action", xButtonAction);
-                LogParams.Add("X_SystemName", "ERP Cloud");
-                LogParams.Add("X_IP", ipAddress);
-                LogParams.Add("X_TransCode", InvoiceNo);
-                LogParams.Add("X_Remark", " ");
-                dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);              
+                myFunctions.LogScreenActivitys(N_FnYearID,N_SalesID,InvoiceNo,64,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                   
 
                 DataRow Rowloyalitypoints = null;
                 if (ds.Tables.Contains("loyalitypoints"))
@@ -1512,7 +1550,7 @@ namespace SmartxAPI.GeneralFunctions
             int UserID = myFunctions.GetUserID(User);
             int N_CompanyID = myFunctions.GetCompanyID(User);
             int N_InvoiceId = 0;
-            int nFnYearID = 0;
+            int nFnYearID = myFunctions.getIntVAL(masterRow["N_fnYearId"].ToString());;
 
             int N_DebitNoteId = myFunctions.getIntVAL(masterRow["N_DebitNoteId"].ToString());
             int N_CustomerID = myFunctions.getIntVAL(masterRow["n_CustomerID"].ToString());
@@ -1686,6 +1724,8 @@ namespace SmartxAPI.GeneralFunctions
             double N_TotalReceivedF = myFunctions.getVAL(MasterTable.Rows[0]["n_TotalReceivedF"].ToString());
             MasterTable.Rows[0]["n_TotalReceivedF"] = N_TotalReceivedF;
             var values = MasterTable.Rows[0]["X_CreditNoteNo"].ToString();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            int N_VendorID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_VendorID"].ToString());
 
             if (!myFunctions.CheckActiveYearTransaction(myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString()), Convert.ToDateTime(MasterTable.Rows[0]["D_RetDate"].ToString()), dLayer, connection, transaction))
             {
@@ -1693,6 +1733,7 @@ namespace SmartxAPI.GeneralFunctions
                 if (DiffFnYearID != null)
                 {
                     MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+          
                 }
                 else
                 {
