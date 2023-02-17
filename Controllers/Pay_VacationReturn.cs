@@ -45,7 +45,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nEmpID", nEmpID);
             string strBranch = (bAllBranchData == false) ? " and vw_PayVacationMaster_Disp.N_BranchID=@nBranchID " : "";
             string sqlCommandText = "Select vw_PayVacationEmployee.[Employee Code] AS X_EmpCode, vw_PayVacationEmployee.Name AS X_Emp_Name, vw_PayVacationEmployee.N_VacationGroupID, vw_PayVacationEmployee.X_VacationGroupCode, " +
-                        " vw_PayVacationEmployee.X_VacType, vw_PayVacationEmployee.N_EmpID, vw_PayVacationEmployee.N_Status,vw_PayVacationEmployee.N_VacationID, vw_PayVacationMaster_Disp.N_VacTypeID,vw_PayVacationEmployee.N_FormID " +
+                        " vw_PayVacationEmployee.X_VacType, vw_PayVacationEmployee.N_EmpID, vw_PayVacationEmployee.N_Status,vw_PayVacationEmployee.N_VacationID, vw_PayVacationMaster_Disp.N_VacTypeID,vw_PayVacationEmployee.N_FormID,vw_PayVacationEmployee.x_Handover " +
                         " from vw_PayVacationEmployee RIGHT OUTER JOIN " +
                         " vw_PayVacationMaster_Disp ON vw_PayVacationEmployee.N_EmpID = vw_PayVacationMaster_Disp.N_EmpID AND vw_PayVacationEmployee.X_VacationGroupCode = vw_PayVacationMaster_Disp.X_VacationGroupCode AND " +
                         " vw_PayVacationEmployee.N_CompanyID = vw_PayVacationMaster_Disp.N_CompanyID AND vw_PayVacationEmployee.N_VacationGroupID = vw_PayVacationMaster_Disp.N_VacationGroupID " +
@@ -56,7 +56,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    sqlCommandText = "select X_EmpCode,X_Emp_Name,N_VacationGroupID,N_VacationID,X_VacationGroupCode,X_VacType,N_EmpID,N_Status,N_VacTypeID,N_FormID from (" + sqlCommandText + ") as dt group by X_EmpCode,X_Emp_Name,N_VacationGroupID,N_VacationID,X_VacationGroupCode,X_VacType,N_EmpID,N_Status,N_VacTypeID,N_FormID";
+                    sqlCommandText = "select X_EmpCode,X_Emp_Name,N_VacationGroupID,N_VacationID,X_VacationGroupCode,X_VacType,N_EmpID,N_Status,N_VacTypeID,N_FormID,X_Handover from (" + sqlCommandText + ") as dt group by X_EmpCode,X_Emp_Name,N_VacationGroupID,N_VacationID,X_VacationGroupCode,X_VacType,N_EmpID,N_Status,N_VacTypeID,N_FormID,X_Handover";
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "D_VacDateFrom", typeof(DateTime), null);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "D_VacDateTo", typeof(DateTime), null);
