@@ -44,7 +44,7 @@ namespace SmartxAPI.GeneralFunctions
             int nCompanyID = myFunctions.GetCompanyID(User);
             string xCompanyName = myFunctions.GetCompanyName(User);
             int N_AttachmentID = 0;
-            string ExpiryDate = "";
+            string ExpiryDate = null;
             int N_remCategory = 0;
             int N_FolderID = 0;
 
@@ -133,7 +133,7 @@ namespace SmartxAPI.GeneralFunctions
                         else
                             FileType = "Folder";
 
-                        ExpiryDate = "";
+                        ExpiryDate = null;
                         N_remCategory = 0;
                          if(dsAttachment.Columns.Contains("D_ExpiryDate"))
                         {
@@ -354,8 +354,9 @@ namespace SmartxAPI.GeneralFunctions
             try
             {
                 DateTime dtExpire = new DateTime();
-                if (strExpireDate != "")
+                if (strExpireDate != null)
                     dtExpire = Convert.ToDateTime(strExpireDate);
+
                 int nUserID = myFunctions.GetUserID(User);
                 int nCompanyID = myFunctions.GetCompanyID(User);
                 object N_Result = dLayer.ExecuteScalar("Select 1 from DMS_MasterFiles Where X_FileCode ='" + filecode + "' and N_CompanyID= " + nCompanyID + " and N_FormID=" + FormID, connection, transaction);
@@ -366,8 +367,8 @@ namespace SmartxAPI.GeneralFunctions
                 //  FileInfo flinfo = new FileInfo(fls);
                 string extension = System.IO.Path.GetExtension(filename);
                 string refname = filecode + extension;
-                int ReminderId,nreminderID = 0 ;
-                if (strExpireDate != "")
+                int ReminderId=0,nreminderID = 0 ;
+                if (strExpireDate != null)
                 { 
                      dLayer.ExecuteNonQuery("insert into DMS_MasterFiles(N_CompanyID,N_FileID,X_FileCode,X_Name,X_Title,X_Contents,N_FolderID,N_UserID,X_refName,N_AttachmentID,N_FormID,D_ExpiryDate,N_CategoryID,N_TransID)values(" + nCompanyID + "," + FileID + ",'" + filecode + "','" + filename + "','" + category + "','" + subject + "'," + folderId + "," + nUserID + ",'" + refname + "'," + attachID + "," + FormID + ",'" + dtExpire.ToString("dd/MMM/yyyy") + "'," + remCategoryId + "," + transId + ")", connection, transaction);
                      //nreminderID=myFunctions.getIntVAL(dLayer.ExecuteScalar("Select N_AttachmentID from DMS_MasterFiles where N_CompanyID=" + nCompanyID+" and n_UserID="+nUserID+" and N_TransID="+transId, connection, transaction).ToString());
@@ -382,7 +383,7 @@ namespace SmartxAPI.GeneralFunctions
                     dLayer.ExecuteNonQuery("update DMS_MasterFiles set N_ReminderID=" + ReminderId + " where N_FileID=" + FileID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                 }
                 else{
-                  ReminderId = ReminderSave(dLayer, FormID, partyID, strExpireDate, subject, filename, remCategoryId, 1, settingsId,nreminderID, User, transaction, connection);
+                  //ReminderId = ReminderSave(dLayer, FormID, partyID, strExpireDate, subject, filename, remCategoryId, 1, settingsId,nreminderID, User, transaction, connection);
                 dLayer.ExecuteNonQuery("insert into DMS_MasterFiles(N_CompanyID,N_FileID,X_FileCode,X_Name,X_Title,X_Contents,N_FolderID,N_UserID,X_refName,N_AttachmentID,N_FormID,N_TransID,N_ReminderID)values(" + nCompanyID + "," + FileID + ",'" + filecode + "','" + filename + "','" + category + "','" + subject + "'," + folderId + "," + nUserID + ",'" + refname + "'," + attachID + "," + FormID + "," + transId +","+ReminderId+ ")", connection, transaction);
                 }// System.IO.File.Copy(sourcepath, destpath + refname, overwriteexisting);
 

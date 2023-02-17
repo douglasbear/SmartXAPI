@@ -677,7 +677,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    object nUserID= dLayer.ExecuteScalar("select N_UserID from vw_UserList where X_UserID=@xUserID" ,Params, connection); 
+                    object nUserID= dLayer.ExecuteScalar("select N_UserID from vw_UserList where X_UserID=@xUserID and N_CompanyID=@nCompanyID" ,Params, connection); 
                     Params.Add("@nUserID",  myFunctions.getIntVAL(nUserID.ToString()));
                     multiApps = dLayer.ExecuteDataTable(multiqry, Params, connection);
                     

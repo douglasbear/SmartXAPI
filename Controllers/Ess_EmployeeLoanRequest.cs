@@ -247,6 +247,8 @@ namespace SmartxAPI.Controllers
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
                 var dDateFrom = MasterRow["d_LoanPeriodFrom"].ToString();
                 var dLoanPeriodTo = MasterRow["d_LoanPeriodTo"].ToString();
+                var dLoanIssueDate = MasterRow["d_LoanIssueDate"].ToString();
+                //double nAmount = MasterRow["n_Amount"].ToString();
                 double n_LoanAmount = myFunctions.getVAL(MasterRow["n_LoanAmount"].ToString());
 
                 QueryParams.Add("@nCompanyID", nCompanyID);
@@ -282,9 +284,8 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    if (xLoanID == "@Auto")
-                    {
-                        if (!EligibleForLoan(dDateFrom, QueryParams, connection, transaction))
+                  
+                        if (!EligibleForLoan(dLoanIssueDate, QueryParams, connection, transaction))
                         {
                             transaction.Rollback();
                             return Ok(api.Warning("Not Eligible For Loan!"));
@@ -312,7 +313,8 @@ namespace SmartxAPI.Controllers
                                 transaction.Rollback();
                                 return Ok(api.Warning("Maximum Loan Amount is" + " : " + loanLimitAmount.ToString()));
                             }
-
+                  if (xLoanID == "@Auto")
+                    {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
@@ -365,7 +367,7 @@ namespace SmartxAPI.Controllers
                             row["N_LoanTransID"] = nLoanTransID;
                             row["D_DateFrom"] = myFunctions.getDateVAL(Start);
                             row["D_DateTo"] = myFunctions.getDateVAL(End);
-                            row["N_InstAmount"] = nInstAmount;
+                            row["N_InstAmount"] =Math.Floor(nInstAmount); //myFunctions.getIntVAL(Math.Round(Convert.ToDouble(nInstAmount)).ToString());
                             dt.Rows.Add(row);
                             Start = Start.AddMonths(1);
                         }
@@ -376,6 +378,11 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(api.Error(User,"Unable to save Loan Request"));
                         }
+                        double loandecimalAmt= myFunctions.getIntVAL(Math.Floor(nInstAmount).ToString())*nInstNos;
+                        double n_LoaninstAmount= myFunctions.getIntVAL(Math.Floor(nInstAmount).ToString()) + n_LoanAmount-loandecimalAmt;
+
+                        dLayer.ExecuteNonQuery("update Pay_LoanIssueDetails set n_InstAmount="+n_LoaninstAmount+" where N_CompanyID=" + nCompanyID + " and N_LoanTransDetailsID = (select MAX (N_LoanTransDetailsID) from Pay_LoanIssueDetails where N_CompanyID="+nCompanyID+" and N_LoanTransId ="+nLoanTransID+" )", Params, connection, transaction);
+                     
 
                         transaction.Commit();
                         //myFunctions.SendApprovalMail(N_NextApproverID, FormID, nLoanTransID, this.xTransType, xLoanID, dLayer, connection, transaction, User);
