@@ -1274,12 +1274,15 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Employee Code alread5y exist"));
                         }
 
-                        object N_TitleCount = dLayer.ExecuteScalar("select count(1) from Pay_Position where N_CompanyID= " + nCompanyID + " and N_PositionID= " + nPositionID + " and B_IsSupervisor = 1", connection, transaction);
-
+                       object N_TitleCount = dLayer.ExecuteScalar("select count(*) from Pay_Position where N_CompanyID= " + nCompanyID + " and N_PositionID= " + nPositionID + " and B_IsSupervisor = 1", connection, transaction);
                         if (myFunctions.getVAL(N_TitleCount.ToString()) > 0)
                         {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, "Job title already Exist"));
+                            object N_EmpCount = dLayer.ExecuteScalar("select count(*) from Pay_Employee where N_CompanyID= " + nCompanyID + " and N_PositionID= " + nPositionID + " and N_EmpID <> " + nEmpID, connection, transaction);
+                            if (myFunctions.getVAL(N_EmpCount.ToString()) > 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, "Job title already Exist"));
+                            }
                         }
                     }
 
