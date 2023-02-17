@@ -221,7 +221,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult GetEmployeeVacationDetails(string xVacationGroupCode, int nBranchID, bool bShowAllBranchData)
+        public ActionResult GetEmployeeVacationDetails(string xVacationGroupCode, int nBranchID, bool bShowAllBranchData,bool isApproval)
         {
             DataTable Master = new DataTable();
             DataTable Detail = new DataTable();
@@ -247,7 +247,10 @@ namespace SmartxAPI.Controllers
                     else
                         Condition = "n_Companyid=@nCompanyID and X_VacationGroupCode =@xVacationGroupCode and N_BranchID=@nBranchID and N_TransType=1";
 
-
+                    if(isApproval)
+                    {
+                       Condition="n_Companyid=@nCompanyID and X_VacationGroupCode =@xVacationGroupCode and N_TransType=1"; 
+                    }
                     _sqlQuery = "Select * from vw_PayVacationMaster Where " + Condition + "";
 
                     Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
@@ -270,7 +273,10 @@ namespace SmartxAPI.Controllers
                             Condition = "n_Companyid=@nCompanyID and N_VacationGroupID =@nVacationGroupID and N_TransType=1 and X_Type='B'";
                         else
                             Condition = "n_Companyid=@nCompanyID and N_VacationGroupID =@nVacationGroupID and N_BranchID=@nBranchID  and N_TransType=1 and X_Type='B'";
-
+                        if(isApproval)
+                         {
+                         Condition="n_Companyid=@nCompanyID and N_VacationGroupID =@nVacationGroupID and N_TransType=1 and X_Type='B'"; 
+                         }
                         bool bIsAdjusted = myFunctions.getBoolVAL(Master.Rows[0]["B_IsAdjustEntry"].ToString());
                         _sqlQuery = "Select *,dbo.Fn_CalcAvailDays(N_CompanyID,VacTypeId,@nEmpID,D_VacDateFrom,N_VacationGroupID,2) As n_AvailDays,dbo.Fn_CalcAvailDays(N_CompanyID,VacTypeId,@nEmpID,D_VacDateFrom,N_VacationGroupID," + (bIsAdjusted == true ? "3" : "1") + ") As n_AvailUptoDays from vw_PayVacationDetails_Disp Where " + Condition + "";
                         Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
