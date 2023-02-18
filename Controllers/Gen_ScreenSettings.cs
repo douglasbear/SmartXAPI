@@ -34,7 +34,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("fillData")]
-        public ActionResult GetScreen(string perModules, string permUserCategory, int nLanguageID, int nUserCategoryID)
+        public ActionResult GetScreen(string perModules, string permUserCategory, int nLanguageID, int nUserCategoryID,int nTypeID)
         {
             try
             {
@@ -76,9 +76,10 @@ namespace SmartxAPI.Controllers
                     SecAllMenus = dLayer.ExecuteDataTable(SecAllSql, secParams, connection);
 
                     PostingParam.Add("@nCompanyID", nCompanyID);
+                    PostingParam.Add("@nType", nTypeID);
                     PostingParam.Add("@xUserCategory", permUserCategory);
                     PostingParam.Add("@nMenuID", N_MenuID);
-                    string SecUsersql = "select * from vw_GeneralScreenSettings where N_CompanyID=@nCompanyID";
+                    string SecUsersql = "select * from vw_GeneralScreenSettings where N_CompanyID=@nCompanyID and N_Type=@nType";
                     SecScreensettings = dLayer.ExecuteDataTable(SecUsersql, PostingParam, connection);
                     SecScreensettings = _api.Format(SecScreensettings, "SecScreensettings");
 
