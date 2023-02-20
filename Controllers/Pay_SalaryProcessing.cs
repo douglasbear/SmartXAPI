@@ -287,7 +287,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
+                    sqlCommandCount = "select count(1) as N_Count  from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -1229,9 +1229,9 @@ namespace SmartxAPI.Controllers
                         int NewNo = 0, loop = 1;
                         while (OK)
                         {
-                            NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) + " + loop + " As Count FRom Pay_PaymentMaster Where N_CompanyID=@nCompanyID  And N_PayRunID =@nPayRunID", Params, connection, transaction).ToString());
+                            NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(count(1),0) + " + loop + " As Count FRom Pay_PaymentMaster Where N_CompanyID=@nCompanyID  And N_PayRunID =@nPayRunID", Params, connection, transaction).ToString());
                             x_Batch = nPayRunID + "" + NewNo.ToString("0#");
-                            if (myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) FRom Pay_PaymentMaster Where N_CompanyID=@nCompanyID And X_Batch = '" + x_Batch + "'", Params, connection, transaction).ToString()) == 0)
+                            if (myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(count(1),0) FRom Pay_PaymentMaster Where N_CompanyID=@nCompanyID And X_Batch = '" + x_Batch + "'", Params, connection, transaction).ToString()) == 0)
                             {
                                 OK = false;
                             }
@@ -1400,7 +1400,7 @@ namespace SmartxAPI.Controllers
                     dltParams.Add("@nFnYearID", nFnYearID);
                     dltParams.Add("@xBatch", xBatch);
 
-                    int count = myFunctions.getIntVAL(dLayer.ExecuteNonQuery("Select count(*) from Acc_VoucherMaster Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " And N_FnyearID =@nFnYearID and X_TransType = 'ESI' and B_IsAccPosted = 1 and X_ReferenceNo=@xBatch", dltParams, connection, transaction).ToString());
+                    int count = myFunctions.getIntVAL(dLayer.ExecuteNonQuery("Select count(1) from Acc_VoucherMaster Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " And N_FnyearID =@nFnYearID and X_TransType = 'ESI' and B_IsAccPosted = 1 and X_ReferenceNo=@xBatch", dltParams, connection, transaction).ToString());
 
 
                     if (count > 0)

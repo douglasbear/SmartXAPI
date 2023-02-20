@@ -32,7 +32,8 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
-        private readonly string connectionString;
+        private string connectionString;
+        private readonly string connectionStringClinet;
         private readonly string reportApi;
         private readonly string TempFilesPath;
         private readonly string reportLocation;
@@ -52,6 +53,7 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            connectionStringClinet = conf.GetConnectionString("OlivoClientConnection");
             reportApi = conf.GetConnectionString("ReportAPI");
             TempFilesPath = conf.GetConnectionString("TempFilesPath");
             reportLocation = conf.GetConnectionString("ReportLocation");
@@ -69,24 +71,36 @@ namespace SmartxAPI.Controllers
             + " union all "
             + "Select vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild ,CAST(MAX(1 * vwUserMenus.B_Visible) AS BIT) as B_Visible, CAST(MAX(1 * vwUserMenus.B_Edit) AS BIT) as B_Edit, CAST(MAX(1 * vwUserMenus.B_Delete) AS BIT) as B_Delete,CAST(MAX(1 * vwUserMenus.B_Save) AS BIT) as B_Save, CAST(MAX(1 * vwUserMenus.B_View) AS BIT) as B_View, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID in ( " + myFunctions.GetUserCategoryList(User) + " ) and vwUserMenus.B_Show=1 inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId and isnull(vwUserMenus.N_CountryID,0)=@nCountryID group by vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text,vwUserMenus.N_CountryID "
             + ") as Menus order by N_Order";
+
+            if (nMenuId == 1680)
+                sqlCommandText = "select N_CompanyID,N_MenuID,X_MenuName,X_Caption,N_ParentMenuID,N_Order,N_HasChild ,B_Visible,B_Edit,B_Delete,B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,N_IsStartup,B_Show,B_ShowOnline,X_RouteName,B_WShow,X_Text from ("
+                + "Select vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild ,CAST(MAX(1 * vwUserMenus.B_Visible) AS BIT) as B_Visible, CAST(MAX(1 * vwUserMenus.B_Edit) AS BIT) as B_Edit, CAST(MAX(1 * vwUserMenus.B_Delete) AS BIT) as B_Delete,CAST(MAX(1 * vwUserMenus.B_Save) AS BIT) as B_Save, CAST(MAX(1 * vwUserMenus.B_View) AS BIT) as B_View, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID in ( " + myFunctions.GetUserCategoryList(User) + " ) and vwUserMenus.B_Show=1 inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId and vwUserMenus.N_CountryID is null group by vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text,vwUserMenus.N_CountryID "
+               + ") as Menus order by N_Order";
+
             Params.Add("@nMenuId", nMenuId == 0 ? 318 : nMenuId);
             Params.Add("@nLangId", nLangId);
             Params.Add("@nUserCatID", myFunctions.GetUserCategoryList(User));
             Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
             Params.Add("@nBranchID", nBranchID);
+            int CountryID = 0;
 
             try
             {
+                if (nMenuId == 1680)
+                    connectionString = connectionStringClinet;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     string sqlCountryID = "select n_CountryID from Acc_Company where N_CompanyID=@nCompanyID";
-                    int CountryID = myFunctions.getIntVAL(dLayer.ExecuteScalar(sqlCountryID, Params, connection).ToString());
+                    if (nMenuId != 1680)
+                        CountryID = myFunctions.getIntVAL(dLayer.ExecuteScalar(sqlCountryID, Params, connection).ToString());
                     Params.Add("@nCountryID", CountryID);
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     DataTable dt1 = new DataTable();
-                    object B_Consolidated = dLayer.ExecuteScalar("select isnull(B_DefaultBranch,0) from Acc_BranchMaster where N_CompanyID=@nCompanyID and N_branchID=@nBranchID", Params, connection);
+                    object B_Consolidated = "false";
+                    if (nMenuId != 1680)
+                        B_Consolidated = dLayer.ExecuteScalar("select isnull(B_DefaultBranch,0) from Acc_BranchMaster where N_CompanyID=@nCompanyID and N_branchID=@nBranchID", Params, connection);
 
                     string sqlCommandText1 = "";
                     if (myFunctions.getBoolVAL(B_Consolidated.ToString()))
@@ -117,7 +131,7 @@ namespace SmartxAPI.Controllers
                                 dt.Rows[i]["Filter"] = Filter;
                             }
                         }
-                        catch
+                        catch (Exception ex)
                         {
 
                         }
@@ -138,7 +152,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("dynamiclist")]
-        public ActionResult GetDynamicList(int nMenuId, int nCompId, int nLangId, string cval, string bval, string fval, string qry)
+        public ActionResult GetDynamicList(int nMenuId, int nCompId, int nLangId, string cval, string bval, string fval, string qry, int nMainMenuID)
         {
             DataTable dt = new DataTable();
             DataTable outTable = new DataTable();
@@ -156,6 +170,8 @@ namespace SmartxAPI.Controllers
 
             try
             {
+                if (nMainMenuID == 1680)
+                    connectionString = connectionStringClinet;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -644,7 +660,7 @@ namespace SmartxAPI.Controllers
                                 Body = Body.Replace("</p>", "");
                                 Body = Body.Replace("<br>", "");
                                 Body = Body.Replace("<p>", "%0A");
-                                string body = Body ;//+ " %0A%0ARegards, %0A" + Company;
+                                string body = Body;//+ " %0A%0ARegards, %0A" + Company;
                                 object Mobile = "";
                                 object Date = "";
                                 object Party = "";
@@ -668,9 +684,9 @@ namespace SmartxAPI.Controllers
                                     Date = dLayer.ExecuteScalar("select D_OrderDate from vw_InvSalesOrder where n_salesorderID=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
                                     Party = dLayer.ExecuteScalar("select x_customername from vw_InvSalesOrder where n_salesorderID=" + nPkeyID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
                                 }
-                                 Body = Body.Replace("@PartyName", Party.ToString());
-                                 Body = Body.Replace("@CompanyName", Company.ToString());
-                                 Body = Body.Replace("@Date",Convert.ToDateTime(Date).ToString("dd-M-yyyy"));
+                                Body = Body.Replace("@PartyName", Party.ToString());
+                                Body = Body.Replace("@CompanyName", Company.ToString());
+                                Body = Body.Replace("@Date", Convert.ToDateTime(Date).ToString("dd-M-yyyy"));
 
 
                                 var clientFile = new HttpClient(handler);
@@ -694,7 +710,7 @@ namespace SmartxAPI.Controllers
                         }
 
 
-                      
+
                         if (nFormID == 80)
                         {
                             SortedList Params = new SortedList();
@@ -1046,10 +1062,14 @@ namespace SmartxAPI.Controllers
                 var dbName = "";
                 string Extention = "";
                 int LanguageID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LanguageID"].ToString());
+                int MainMenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["moduleID"].ToString());
+                if (MainMenuID == 1680)
+                    connectionString = connectionStringClinet;
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    int MainMenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["moduleID"].ToString());
+                    MainMenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["moduleID"].ToString());
 
                     int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportCategoryID"].ToString());
                     int ReportID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportID"].ToString());
@@ -1194,14 +1214,14 @@ namespace SmartxAPI.Controllers
                                             if (value.Contains(","))
                                             {
                                                 string[] values = value.Split(',');
-                                                string filterval ="";
+                                                string filterval = "";
                                                 for (int i = 0; i < values.Length; i++)
                                                 {
-                                                     filterval = filterval + xFeild + " " + xOperator + " '" + values[i] + "' or ";
+                                                    filterval = filterval + xFeild + " " + xOperator + " '" + values[i] + "' or ";
 
                                                 }
-                                                filterval=filterval.Substring(0,filterval.Length-3);
-                                                Criteria = Criteria == "" ? "( "+filterval+" )" : Criteria + " and ( " + filterval + " ) ";
+                                                filterval = filterval.Substring(0, filterval.Length - 3);
+                                                Criteria = Criteria == "" ? "( " + filterval + " )" : Criteria + " and ( " + filterval + " ) ";
 
                                             }
                                             else
@@ -1319,7 +1339,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     dbName = connection.Database;
-                    if (x_comments == "")
+                    if (x_comments == "" && MainMenuID!=1680)
                     {
                         object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
                         object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection);

@@ -240,7 +240,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                      if (nRouteID > 0)
                     {
-                        object RouteCount = dLayer.ExecuteScalar("select COUNT(*) From Sch_BusRegistration where N_PickRoute =" + nRouteID + " and N_CompanyID =" + nCompanyID + " and N_FnYearID=" + nFnYearId , connection, transaction);
+                        object RouteCount = dLayer.ExecuteScalar("select count(1) From Sch_BusRegistration where N_PickRoute =" + nRouteID + " and N_CompanyID =" + nCompanyID + " and N_FnYearID=" + nFnYearId , connection, transaction);
                         RouteCount = RouteCount == null ? 0 : RouteCount;
                         if (myFunctions.getIntVAL(RouteCount.ToString()) > 0)
                             return Ok(api.Error(User, "Bus Route Already In Use !!"));

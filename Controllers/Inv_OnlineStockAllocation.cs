@@ -86,7 +86,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from Inv_OnlineStore where N_CompanyID=@p1" + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count from Inv_OnlineStore where N_CompanyID=@p1" + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     if (Summary.Rows.Count > 0)

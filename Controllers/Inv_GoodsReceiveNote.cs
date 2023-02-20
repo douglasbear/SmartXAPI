@@ -122,7 +122,7 @@ namespace SmartxAPI.Controllers
 
           
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_IsDirectMRN=1 and N_FormID=@p3 " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_IsDirectMRN=1 and N_FormID=@p3 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     if (Summary.Rows.Count > 0)
@@ -338,6 +338,33 @@ namespace SmartxAPI.Controllers
                             MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
                             nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
                             //QueryParams["@nFnYearID"] = nFnYearID;
+
+                            
+                           SortedList QueryParams = new SortedList();
+                            QueryParams["@nFnYearID"] = nFnYearID;
+                            QueryParams["@nCompanyID"] = nCompanyID;
+                            QueryParams["@N_VendorID"] = N_VendorID;
+                            
+                              SortedList PostingParam = new SortedList();
+                              PostingParam.Add("N_PartyID", N_VendorID);
+                              PostingParam.Add("N_FnyearID", nFnYearID);
+                              PostingParam.Add("N_CompanyID", nCompanyID);
+                              PostingParam.Add("X_Type", "vendor");
+
+
+                             object vendorCount = dLayer.ExecuteScalar("Select count(*) From Inv_Vendor where N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID and N_VendorID=@N_VendorID", QueryParams, connection, transaction);
+                      
+                               if(myFunctions.getIntVAL(vendorCount.ToString())==0){
+                                try 
+                                  {
+                                     dLayer.ExecuteNonQueryPro("SP_CratePartyBackYear", PostingParam, connection, transaction);
+                                  }
+                                  catch (Exception ex)
+                                  {
+                                    transaction.Rollback();
+                                     throw ex;
+                                  }
+                                  }
                         }
                         else
                         {

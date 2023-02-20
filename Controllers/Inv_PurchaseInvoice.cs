@@ -189,7 +189,7 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(16," + N_decimalPlace + ")) ) as TotalAmount from vw_InvPurchaseInvoiceNo_Search_Cloud where  N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_FormID, 65)=@p3 " + criteria + " " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(16," + N_decimalPlace + ")) ) as TotalAmount from vw_InvPurchaseInvoiceNo_Search_Cloud where  N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_FormID, 65)=@p3 " + criteria + " " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -1583,7 +1583,7 @@ namespace SmartxAPI.Controllers
                    
 
 
-                    sqlCommandCount = "select count(*) as N_Count,0 as TotalAmount from Vw_Inv_PurchaseWarranty where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId " + criteria + " " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count,0 as TotalAmount from Vw_Inv_PurchaseWarranty where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId " + criteria + " " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";

@@ -79,7 +79,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    sqlCommandCount = "select count(*) as N_Count  from Vw_Sch_CourseTransfer where N_CompanyID=@nCompanyID and N_AcYearID=@nAcYearID and N_FormID=@nFormID " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count  from Vw_Sch_CourseTransfer where N_CompanyID=@nCompanyID and N_AcYearID=@nAcYearID and N_FormID=@nFormID " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

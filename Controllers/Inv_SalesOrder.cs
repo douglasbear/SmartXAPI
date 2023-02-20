@@ -197,11 +197,11 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     if (salesOrder == false)
                     {
-                        sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10," + N_decimalPlace + ")) ) as TotalAmount from vw_pendingSO where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria + Searchkey + "";
+                        sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(16," + N_decimalPlace + ")) ) as TotalAmount from vw_pendingSO where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria + Searchkey + "";
                     }
                     else
                     {
-                        sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10," + N_decimalPlace + ")) ) as TotalAmount from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria + Searchkey + "";
+                        sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(16," + N_decimalPlace + ")) ) as TotalAmount from vw_InvSalesOrderNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Pattern + criteria + custPortalOrder + serviceOrderCriteria + Searchkey + "";
                     }
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
@@ -435,7 +435,7 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                   object countOfOrder =  dLayer.ExecuteScalar("Select Count(*) from vw_pendingSO Where N_CompanyID = " + nCompanyID + "  and N_SalesOrderId=" + myFunctions.getIntVAL(N_SOrderID.ToString()), DetailParams, connection);
+                   object countOfOrder =  dLayer.ExecuteScalar("Select count(1) from vw_pendingSO Where N_CompanyID = " + nCompanyID + "  and N_SalesOrderId=" + myFunctions.getIntVAL(N_SOrderID.ToString()), DetailParams, connection);
                    if(countOfOrder!=null)
                    {
                     if(myFunctions.getIntVAL(countOfOrder.ToString())>0)
@@ -595,8 +595,8 @@ namespace SmartxAPI.Controllers
                     DataTable rentalItem = ds.Tables["segmentTable"];
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
-                            SortedList Result = new SortedList();
-
+                    SortedList Result = new SortedList();
+                     SortedList QueryParams = new SortedList();
 
                     int n_SalesOrderId = myFunctions.getIntVAL(MasterRow["n_SalesOrderId"].ToString());
                     int n_SOId = myFunctions.getIntVAL(MasterRow["n_SalesOrderId"].ToString());
@@ -621,6 +621,33 @@ namespace SmartxAPI.Controllers
                    {
                     MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
                     N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+
+                    QueryParams["@nFnYearID"] = N_FnYearID;
+                    QueryParams["@N_CustomerId"] = N_CustomerId;
+                    QueryParams["@N_CompanyID"] = N_CompanyID;
+
+
+                    SortedList PostingParam = new SortedList();
+                    PostingParam.Add("N_PartyID", N_CustomerId);
+                    PostingParam.Add("N_FnyearID", N_FnYearID);
+                    PostingParam.Add("N_CompanyID", N_CompanyID);
+                    PostingParam.Add("X_Type", "customer");
+
+
+                     object custCount = dLayer.ExecuteScalar("Select count(*) From Inv_Customer where N_FnYearID=@nFnYearID and N_CompanyID=@N_CompanyID and N_CustomerID=@N_CustomerId", QueryParams, connection, transaction);
+                      
+                      if(myFunctions.getIntVAL(custCount.ToString())==0){
+                           try 
+                    {
+                        dLayer.ExecuteNonQueryPro("SP_CratePartyBackYear", PostingParam, connection, transaction);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        throw ex;
+                    }
+                      }
+                 
                   
                   }
                   else
@@ -788,7 +815,7 @@ namespace SmartxAPI.Controllers
                             foreach (DataRow var in Details.Rows)
                             {
                                 if (myFunctions.getIntVAL(var["N_ServiceID"].ToString()) == 0) { continue; }
-                                taskCountsql = "select COUNT(*) from Tsk_TaskMaster  where N_CompanyID=" + N_CompanyID + " and N_ServiceDetailsID=" + myFunctions.getIntVAL(var["N_SalesOrderDetailsID"].ToString()) + "";
+                                taskCountsql = "select count(1) from Tsk_TaskMaster  where N_CompanyID=" + N_CompanyID + " and N_ServiceDetailsID=" + myFunctions.getIntVAL(var["N_SalesOrderDetailsID"].ToString()) + "";
                                 taskCount = dLayer.ExecuteScalar(taskCountsql, Params, connection, transaction);
                                 if (myFunctions.getIntVAL(taskCount.ToString()) > 0)
                                 {
@@ -1438,7 +1465,7 @@ namespace SmartxAPI.Controllers
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_ScheduledRentalOrders  where N_CompanyID=@p1 and N_ItemID=@p2 and ((D_PeriodFrom<=@p4 and isNull(D_PeriodTo,getDate())>=@p4) OR (D_PeriodFrom<=@p5 and isNull(D_PeriodTo,getDate())>=@p5) OR(D_PeriodFrom>=@p4 and D_PeriodFrom<=@p5))";
+                    sqlCommandCount = "select count(1) as N_Count from vw_ScheduledRentalOrders  where N_CompanyID=@p1 and N_ItemID=@p2 and ((D_PeriodFrom<=@p4 and isNull(D_PeriodTo,getDate())>=@p4) OR (D_PeriodFrom<=@p5 and isNull(D_PeriodTo,getDate())>=@p5) OR(D_PeriodFrom>=@p4 and D_PeriodFrom<=@p5))";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
 
                     OutPut.Add("Details", _api.Format(dt));

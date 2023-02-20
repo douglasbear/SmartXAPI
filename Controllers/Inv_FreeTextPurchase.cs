@@ -81,7 +81,7 @@ namespace SmartxAPI.Controllers
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
+                    sqlCommandCount = "select count(1) as N_Count  from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -428,7 +428,7 @@ namespace SmartxAPI.Controllers
                          Master.Rows[0]["IsReturnDone"] = false;
                     }
 
-                    object count = dLayer.ExecuteScalar("select count(*) from Inv_Purchase where N_FreeTextReturnID =" + N_PurchaseID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "", Params, connection);
+                    object count = dLayer.ExecuteScalar("select count(1) from Inv_Purchase where N_FreeTextReturnID =" + N_PurchaseID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "", Params, connection);
 
                      if (myFunctions.getVAL(count.ToString())>0){
                         Master = myFunctions.AddNewColumnToDataTable(Master, "ReturnDone", typeof(bool), true);

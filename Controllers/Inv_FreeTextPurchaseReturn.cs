@@ -70,7 +70,7 @@ namespace SmartxAPI.Controllers
 
                     SortedList OutPut = new SortedList();
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvFreeTextPurchaseReturn_Search where " + xCriteria + Searchkey;
+                    sqlCommandCount = "select count(1) as N_Count  from vw_InvFreeTextPurchaseReturn_Search where " + xCriteria + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -308,7 +308,7 @@ namespace SmartxAPI.Controllers
                     var nUserID = myFunctions.GetUserID(User);
                       SortedList Params = new SortedList();
 
-                     object count = dLayer.ExecuteScalar("select count(*) from Inv_Purchase where N_FreeTextReturnID =" + nPurchaseID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
+                     object count = dLayer.ExecuteScalar("select count(1) from Inv_Purchase where N_FreeTextReturnID =" + nPurchaseID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
                      if (myFunctions.getVAL(count.ToString())>0)
                      {
                          return Ok(_api.Error(User, "Unable to delete Free text Purchase"));
@@ -370,7 +370,7 @@ namespace SmartxAPI.Controllers
                     Master = myFunctions.AddNewColumnToDataTable(Master, "isReturnDone", typeof(bool), false);
 
 
-                      string paymentcount = dLayer.ExecuteScalar("select count(*) from Inv_PayReceiptDetails where N_CompanyID=" + nCompanyId + " and N_InventoryId=" + N_PurchaseID+"and x_TransType='CREDIT NOTE'", connection).ToString();
+                      string paymentcount = dLayer.ExecuteScalar("select count(1) from Inv_PayReceiptDetails where N_CompanyID=" + nCompanyId + " and N_InventoryId=" + N_PurchaseID+"and x_TransType='CREDIT NOTE'", connection).ToString();
                     
                      if (myFunctions.getVAL(paymentcount.ToString())>0){
                         Master = myFunctions.AddNewColumnToDataTable(Master, "paymentDone", typeof(bool), true);
