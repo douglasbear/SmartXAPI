@@ -663,7 +663,7 @@ namespace SmartxAPI.Controllers
 + "Forgot Your Password?"
 + "</span><h1 style='font-size: 32px;font-weight: 600;margin:40px 0 12px;'>"
 + "</h1><p style='margin: 0 0 24px;'> That's okay, it happens! Click on the button below to reset your password."
-+ "</p><a href='" + "http://localhost:3000" + "/verifyUser#" + inviteCode + "' style='text-decoration: none;display: block;width: max-content;font-size: 18px;margin: 0 auto 24px;padding: 20px 40px;color: #ffffff;border-radius: 4px;background-color: #2c6af6;'>Reset Your Password</a><p style='margin: 24px 0 0 ;padding: 17px 0;text-align: center;background: #f4f5f6;color: #86898e;font-size: 14px;'>Copyright © 2021 Olivo Tech., All rights reserved.</p></div>";
++ "</p><a href='" +appUrl+ "/verifyUser#" + inviteCode + "' style='text-decoration: none;display: block;width: max-content;font-size: 18px;margin: 0 auto 24px;padding: 20px 40px;color: #ffffff;border-radius: 4px;background-color: #2c6af6;'>Reset Your Password</a><p style='margin: 24px 0 0 ;padding: 17px 0;text-align: center;background: #f4f5f6;color: #86898e;font-size: 14px;'>Copyright © 2021 Olivo Tech., All rights reserved.</p></div>";
                     string EmailSubject = "Olivo Cloud Solutions - Reset Password";
                     if(senderMail!="")
                     {
