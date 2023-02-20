@@ -128,6 +128,7 @@ namespace SmartxAPI.Controllers
                     string xTransType = "DEBIT NOTE";
                     DocNo = MasterRow["X_ReceiptNo"].ToString();
                     DataTable Attachment = ds.Tables["attachments"];
+                    String xButtonAction="";
                     
 
                      if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_SalesDate"].ToString()), dLayer, connection, transaction))
@@ -155,6 +156,7 @@ namespace SmartxAPI.Controllers
                             DelParam.Add("X_TransType", xTransType);
                             DelParam.Add("N_VoucherID", nSalesID);
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DelParam, connection, transaction);
+                            xButtonAction="Update"; 
                         }
                         catch (Exception ex)
                         {
@@ -174,6 +176,7 @@ namespace SmartxAPI.Controllers
                         //Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
 
                         X_ReceiptNo = dLayer.GetAutoNumber("Inv_Sales", "X_ReceiptNo", Params, connection, transaction);
+                         xButtonAction="Insert"; 
                         if (X_ReceiptNo == "")
                         {
                             transaction.Rollback();
@@ -265,7 +268,13 @@ namespace SmartxAPI.Controllers
                         row["N_ProjectID"] = myFunctions.getIntVAL(dRow["N_Segment_3"].ToString());
                         costcenter.Rows.Add(row);
                     }
-
+                              //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nSalesID,X_ReceiptNo,385,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
                      SortedList freeTextSalesReturnParams = new SortedList();
                            freeTextSalesReturnParams.Add("@N_SalesId", nSalesID);
 
@@ -483,7 +492,7 @@ ReturnDetails = _api.Format(ReturnDetails, "Details");
             }
         }
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nSalesID, string X_TransType)
+        public ActionResult DeleteData(int nSalesID, string X_TransType,int nFnYearID)
         {
 
             try
@@ -491,9 +500,14 @@ ReturnDetails = _api.Format(ReturnDetails, "Details");
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    SortedList ParamList=new SortedList();
                     SqlTransaction transaction = connection.BeginTransaction();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     var nUserID = myFunctions.GetUserID(User);
+                    SortedList Params = new SortedList();
+                    ParamList.Add("@nFnYearID",nFnYearID);
+                    string xButtonAction="Delete";
+                     String X_ReceiptNo="";
                     
                        object objPaymentProcessed = dLayer.ExecuteScalar("Select Isnull(N_PayReceiptId,0) from Inv_PayReceiptDetails where N_InventoryId=" + nSalesID + " and X_TransType='DEBIT NOTE'", connection, transaction);
                       if (objPaymentProcessed == null)
@@ -502,6 +516,17 @@ ReturnDetails = _api.Format(ReturnDetails, "Details");
                       if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) != 0){
                         return Ok(_api.Error(User, "Payment processed! Unable to delete"));
                     }
+
+                object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Inv_Sales where N_SalesId =" + nSalesID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
+                
+               //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nSalesID,X_ReceiptNo,385,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
                                 {"X_TransType",X_TransType},

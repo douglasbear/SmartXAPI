@@ -255,6 +255,7 @@ namespace SmartxAPI.Controllers
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 bool b_AutoGenerate = false;
                 int flag = 0;
+                String xButtonAction="";
                 //gLAccount AutoGen
                 if (MasterTable.Columns.Contains("b_AutoGenerate"))
                 {
@@ -289,6 +290,8 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         VendorCode = dLayer.GetAutoNumber("Inv_Vendor", "x_VendorCode", Params, connection, transaction);
+                         xButtonAction="Insert"; 
+                       
                         if (VendorCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to save")); }
                         MasterTable.Rows[0]["x_VendorCode"] = VendorCode;
                     }

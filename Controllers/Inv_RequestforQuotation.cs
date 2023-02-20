@@ -149,6 +149,7 @@ namespace SmartxAPI.Controllers
                     DataTable VendorMasterTable;
                     string DocNo = "";
                     GeneralTable = ds.Tables["general"];
+                    String xButtonAction="";
                     int nFormID = myFunctions.getIntVAL(GeneralTable.Rows[0]["n_FormID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(GeneralTable.Rows[0]["n_FnYearID"].ToString());
                     if (nFormID == 618)
@@ -169,6 +170,7 @@ namespace SmartxAPI.Controllers
                             dLayer.DeleteData("Inv_RFQVendorList", "N_QuotationID", nQuotationID, "N_CompanyID = " + nCompanyID, connection, transaction);
                             dLayer.DeleteData("Inv_VendorRequestDetails", "N_QuotationID", nQuotationID, "N_CompanyID = " + nCompanyID, connection, transaction);
                             dLayer.DeleteData("Inv_VendorRequest", "N_QuotationID", nQuotationID, "N_CompanyID = " + nCompanyID, connection, transaction);
+                             xButtonAction="Update"; 
                         }
                         DocNo = MasterRow["x_QuotationNo"].ToString();
                         if (X_QuotationNo == "@Auto")
@@ -181,6 +183,7 @@ namespace SmartxAPI.Controllers
                             {
                                 DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
                                 object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_VendorRequest Where x_QuotationNo ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                                   xButtonAction="Insert"; 
                                 if (N_Result == null)
                                     break;
                             }
@@ -282,6 +285,15 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Unable To Save"));
                         }
+                        
+             //Activity Log
+                // string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(nFnYearID,nQuotationID,X_InwardsCode,618,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
 
                         for (int k = 0; k < MultiVendorTable.Rows.Count; k++)
                         {
@@ -338,9 +350,9 @@ namespace SmartxAPI.Controllers
                     if (nFormID == 618)
                     {
                         if (bShowAllBranchData == true)
-                            Condition = "Inv_VendorRequest.n_CompanyId=@nCompanyID and Inv_VendorRequest.X_QuotationNo =@X_QuotationNo and Inv_VendorRequest.N_FnYearId=@nFnYearID";
+                            Condition = "Vw_RequestForQuotation.n_CompanyId=@nCompanyID and Vw_RequestForQuotation.X_QuotationNo =@X_QuotationNo and Vw_RequestForQuotation.N_FnYearId=@nFnYearID";
                         else
-                            Condition = "Inv_VendorRequest.n_CompanyId=@nCompanyID and Inv_VendorRequest.X_QuotationNo =@X_QuotationNo and Inv_VendorRequest.N_BranchID=@nBranchID and Inv_VendorRequest.N_FnYearId=@nFnYearID";
+                            Condition = "Vw_RequestForQuotation.n_CompanyId=@nCompanyID and Vw_RequestForQuotation.X_QuotationNo =@X_QuotationNo and Vw_RequestForQuotation.N_BranchID=@nBranchID and Vw_RequestForQuotation.N_FnYearId=@nFnYearID";
 
 
                         // _sqlQuery = "Select * from Inv_VendorRequest Where " + Condition + "";

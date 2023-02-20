@@ -525,6 +525,8 @@ namespace SmartxAPI.Controllers
                 DataTable Attachment = ds.Tables["attachments"];
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
+                string xButtonAction = "";
+                string quotationNo = "";
 
                 DataTable Approvals;
                 Approvals = ds.Tables["approval"];
@@ -558,6 +560,7 @@ namespace SmartxAPI.Controllers
 
                     // Auto Gen
                     string QuotationNo = MasterTable.Rows[0]["x_QuotationNo"].ToString();
+                     
                     DataRow Master = MasterTable.Rows[0];
                    if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_QuotationDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
                   {
@@ -624,11 +627,14 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 80);
                         Params.Add("N_BranchID", Master["n_BranchId"].ToString());
                         QuotationNo = dLayer.GetAutoNumber("Inv_SalesQuotation", "x_QuotationNo", Params, connection, transaction);
-                        if (QuotationNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Quotation Number")); }
+                          xButtonAction = "INSERT";
+                        if (QuotationNo == "") 
+                        { 
+                            transaction.Rollback();
+                         return Ok(_api.Error(User, "Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
-                                                                                                                                                 
+                                                                                                                                               
                     }
-
                     if (N_QuotationID > 0)
                     {
                         SortedList DeleteParams = new SortedList(){
@@ -636,11 +642,14 @@ namespace SmartxAPI.Controllers
                                 {"X_TransType","Sales Quotation"},
                                 {"N_VoucherID",N_QuotationID}};
                         dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+
+                          xButtonAction = "Update";
+
                     }
                     string DupCriteria = "N_CompanyID=" + N_CompanyID + " and X_QuotationNo='" + QuotationNo + "'";
                     MasterTable.Rows[0]["n_UserID"] = myFunctions.GetUserID(User);
-
-
+                   
+                    
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
                     N_QuotationID = dLayer.SaveData("Inv_SalesQuotation", "N_QuotationId", DupCriteria, "", MasterTable, connection, transaction);
 
@@ -659,11 +668,15 @@ namespace SmartxAPI.Controllers
                     N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "Sales Quotation", N_QuotationID, QuotationNo, 1, objCustName.ToString(), 0, "",0, User, dLayer, connection, transaction);
 
                     int N_QuotationDetailId = dLayer.SaveData("Inv_SalesQuotationDetails", "n_QuotationDetailsID", DetailTable, connection, transaction);
+                   
+                   
                     if (N_QuotationDetailId <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to save Quotation"));
                     }
+
+                 
                     else
                     {
                         QueryParams.Add("@nItemID", 0);
@@ -680,6 +693,15 @@ namespace SmartxAPI.Controllers
                             if (myFunctions.getIntVAL(QueryParams["@nCRMID"].ToString()) > 0)
                                 dLayer.ExecuteNonQuery("Update Inv_CRMDetails Set B_Processed=1 Where N_CRMID=@nCRMID and N_ItemID=@nItemID and N_CompanyID=@nCompanyID and N_BranchID=@nBranchID", QueryParams, connection, transaction);
                         }
+
+                        //Activity Log
+
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(N_FnYearID,N_QuotationID,quotationNo,80,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
                         SortedList CustomerParams = new SortedList();
                         CustomerParams.Add("@nCustomerID", N_CustomerID);
@@ -924,6 +946,8 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nTransID", N_QuotationID);
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", nCompanyID);
+                    string xButtonAction = "Delete";
+                    string quotationNo = "";
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_CustomerID,0) as N_CustomerID,X_QuotationNo from Inv_SalesQuotation where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nTransID";
 
                     // string Sql = "select isNull(Inv_SalesQuotation.N_UserID,0) as N_UserID,isNull(Inv_SalesQuotation.N_ProcStatus,0) as N_ProcStatus,isNull(Inv_SalesQuotation.N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(Inv_SalesQuotation.N_CustomerID,0) as N_CustomerID,Inv_SalesQuotation.X_QuotationNo, CASE WHEN ISNULL(Inv_SalesQuotation.N_CrmCompanyID,0)>0 THEN CRM_Customer.X_Customer ELSE CRM_Contact.X_Contact END AS X_CName" +
@@ -946,6 +970,7 @@ namespace SmartxAPI.Controllers
                      if(objCustName!=null)
                         CustName=objCustName.ToString();
 
+               
 
                     DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, N_QuotationID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
                     Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
@@ -968,12 +993,22 @@ namespace SmartxAPI.Controllers
                         string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                         int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
 
+                        string ipAddress = "";
+                            if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                                ipAddress = Request.Headers["X-Forwarded-For"];
+                            else
+                                ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                 
+                        myFunctions.LogScreenActivitys(nFnYearID,N_QuotationID,quotationNo.ToString(),80,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
                         string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Sales Quotation", N_QuotationID, TransRow["X_QuotationNo"].ToString(), ProcStatus, "Inv_SalesQuotation", X_Criteria, CustName.ToString(), User, dLayer, connection, transaction);
                         if (status != "Error")
                         {
                             if (ButtonTag == "6" || ButtonTag == "0")
                                 myAttachments.DeleteAttachment(dLayer, 1, N_QuotationID, N_CustomerID, nFnYearID, this.FormID, User, transaction, connection);
-
+               
+               
+                 
                             transaction.Commit();
                             return Ok(_api.Success("Sales Quotation " + status + " Successfully"));
                         }
@@ -1001,6 +1036,8 @@ namespace SmartxAPI.Controllers
                         //     return Ok(_api.Success("Sales Quotation deleted"));
 
                         // }
+
+               
                     }
                     else
                     {

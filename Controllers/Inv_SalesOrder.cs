@@ -597,6 +597,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     SortedList Result = new SortedList();
                      SortedList QueryParams = new SortedList();
+                      String xButtonAction="";
 
                     int n_SalesOrderId = myFunctions.getIntVAL(MasterRow["n_SalesOrderId"].ToString());
                     int n_SOId = myFunctions.getIntVAL(MasterRow["n_SalesOrderId"].ToString());
@@ -672,6 +673,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", N_FormID);
                         Params.Add("N_BranchID", N_BranchID);
                         x_OrderNo = dLayer.GetAutoNumber("Inv_SalesOrder", "X_OrderNo", Params, connection, transaction);
+                        xButtonAction="Insert"; 
                         if (x_OrderNo == "")
                         {
                             transaction.Rollback();
@@ -686,6 +688,7 @@ namespace SmartxAPI.Controllers
                         {
                             dLayer.ExecuteScalar("SP_Delete_Trans_With_Accounts " + N_CompanyID + ",'Sales Order'," + n_SalesOrderId.ToString(), connection, transaction);
                             dLayer.ExecuteScalar("delete from Inv_DeliveryDispatch where N_SOrderID=" + n_SalesOrderId.ToString() + " and N_CompanyID=" + N_CompanyID, connection, transaction);
+                            xButtonAction="Update"; 
                         }
                         catch (Exception ex)
                         {
@@ -868,6 +871,15 @@ namespace SmartxAPI.Controllers
                             tempQuotationID = N_QuotationID;
                         };
 
+                           //Activity Log
+                    //      string ipAddress = "";
+                    //     if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    //      ipAddress = Request.Headers["X-Forwarded-For"];
+                    //      else
+                    //    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    //    myFunctions.LogScreenActivitys(nFnYearID,nSalesOrderID,orderNo,81,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
+
                         SortedList CustomerParams = new SortedList();
                         CustomerParams.Add("@nCustomerID", N_CustomerId);
                         DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID=@nCustomerID", CustomerParams, connection, transaction);
@@ -950,6 +962,8 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nCompanyID", nCompanyID);
                     ParamList.Add("@nFnYearID", nFnYearID);
                     string Sql = "select N_CustomerId from Inv_SalesOrder where N_SalesOrderId=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+                   string xButtonAction="Delete";
+                     String orderNo="";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
@@ -991,6 +1005,16 @@ namespace SmartxAPI.Controllers
                     dLayer.ExecuteScalar("delete from Tsk_TaskMaster where  N_CompanyID=" + nCompanyID + " and N_ServiceDetailsID in (select N_SalesOrderDetailsID from  Inv_SalesOrderDetails where N_CompanyId=" + nCompanyID + "  and N_SalesOrderid="+nSalesOrderID+")", connection, transaction);
                     dLayer.ExecuteScalar("delete from Tsk_TaskStatus where  N_CompanyID=" + nCompanyID + " and  N_TaskID in (select N_TaskID from Tsk_TaskMaster where N_CompanyId=" + nCompanyID + " and N_ServiceDetailsID in (select N_SalesOrderDetailsID from  Inv_SalesOrderDetails where N_CompanyId=" + nCompanyID + "  and N_SalesOrderid="+nSalesOrderID+"))", connection, transaction);
                     }
+
+                      //Activity Log
+                // string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nSalesOrderID,orderNo,81,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
+
 
                     if (myFunctions.getIntVAL(objProcessed.ToString()) == 0)
                     {
