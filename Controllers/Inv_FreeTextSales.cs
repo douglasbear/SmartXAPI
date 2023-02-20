@@ -136,6 +136,7 @@ namespace SmartxAPI.Controllers
                     string xTransType = "FTSALES";
                     DocNo = MasterRow["X_ReceiptNo"].ToString();
                     DataTable Attachment = ds.Tables["attachments"];
+                  
                     
 
                      if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_SalesDate"].ToString()), dLayer, connection, transaction))
@@ -164,6 +165,9 @@ namespace SmartxAPI.Controllers
                             DelParam.Add("N_VoucherID", nSalesID);
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DelParam, connection, transaction);
                             int dltRes = dLayer.DeleteData("Inv_CostCentreTransactions", "N_InventoryID", nSalesID, " N_CompanyID = " + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction);
+                    
+
+                       
                         }
                         catch (Exception ex)
                         {
@@ -182,6 +186,7 @@ namespace SmartxAPI.Controllers
                         //Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
 
                         X_ReceiptNo = dLayer.GetAutoNumber("Inv_Sales", "X_ReceiptNo", Params, connection, transaction);
+                   
                         if (X_ReceiptNo == "")
                         {
                             transaction.Rollback();
@@ -308,7 +313,7 @@ namespace SmartxAPI.Controllers
                         row["N_ProjectID"] = myFunctions.getIntVAL(dRow["N_Segment_3"].ToString());
                         costcenter.Rows.Add(row);
                     }
-
+                   
                      SortedList freeTextSalesParams = new SortedList();
                            freeTextSalesParams.Add("@N_SalesId", nSalesID);
 
@@ -481,7 +486,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nSalesID, string X_TransType)
+        public ActionResult DeleteData(int nSalesID, string X_TransType,int nFnYearID)
         {
 
             try
@@ -493,14 +498,23 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     var nUserID = myFunctions.GetUserID(User);
                       SortedList Params = new SortedList();
+                       string xButtonAction = "Delete";
+                      string X_ReceiptNo = "";
 
                        object count = dLayer.ExecuteScalar("select count(1) from Inv_Sales where N_FreeTextReturnID =" + nSalesID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
                      if (myFunctions.getVAL(count.ToString())>0)
                      {
                          return Ok(_api.Error(User, "Unable to delete Free text sales"));
                      }
+                      string ipAddress = "";
+                            if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                                ipAddress = Request.Headers["X-Forwarded-For"];
+                            else
+                                ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                 
+                       myFunctions.LogScreenActivitys(nFnYearID,nSalesID,X_ReceiptNo.ToString(),372,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
-
+                     object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Inv_Sales where N_SalesId =" + nSalesID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
                                 {"X_TransType",X_TransType},

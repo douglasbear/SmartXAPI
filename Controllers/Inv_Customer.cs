@@ -205,6 +205,7 @@ namespace SmartxAPI.Controllers
                  bool isSave = myFunctions.getBoolVAL(MasterTable.Rows[0]["isSave"].ToString());
                 int nLedgerID=0;
                 object CustCount="";
+                String xButtonAction="";
                
                 if(MasterTable.Columns.Contains("N_LedgerID"))
                 {
@@ -269,6 +270,8 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 51);
                         Params.Add("N_BranchID", nBranchId);
                         CustomerCode = dLayer.GetAutoNumber("Inv_Customer", "X_CustomerCode", Params, connection, transaction);
+                             xButtonAction="Insert"; 
+                       
                         if (CustomerCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Customer Code")); }
                         MasterTable.Rows[0]["X_CustomerCode"] = CustomerCode;
        
@@ -396,6 +399,7 @@ namespace SmartxAPI.Controllers
                                     else// update ledger id
                                     {
                                         dLayer.ExecuteNonQuery("Update Inv_Customer Set N_LedgerID =" + myFunctions.getIntVAL(N_LedgerID.ToString()) + " Where N_CustomerID =" + nCustomerID + " and N_CompanyID=" + nCompanyID + " and N_FnyearID= " + nFnYearId, Params, connection, transaction);
+                                   xButtonAction="Update"; 
                                     }
                                 }
                                 else
@@ -465,6 +469,15 @@ namespace SmartxAPI.Controllers
                                     // } 
                                 }
                             }
+
+                              //Activity Log
+                // string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(nFnYearID,nCustomerID,x_CustomerCode,51,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
 
                             if (UserID == 0)
                             {
@@ -664,6 +677,8 @@ namespace SmartxAPI.Controllers
                 QueryParams.Add("@nCustomerID", nCustomerID);
                  QueryParams.Add("@nCrmCustomerID", nCrmCustomerID);
                   string sqlCommandCount = "";
+                    string xButtonAction="Delete";
+                     String x_CustomerCode="";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -686,6 +701,15 @@ namespace SmartxAPI.Controllers
                    {
                       return Ok(api.Error(User, "Unable to delete customer! It has been used."));
                    }
+
+                       //Activity Log
+                // string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nCustomerID,x_CustomerCode,51,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
                    dLayer.ExecuteNonQuery("update Inv_ItemMaster set N_CustomerID=0,x_CustomerSKU=null where N_CompanyID=" + nCompanyID + "  and N_CustomerID=" + nCustomerID, Params, connection);
 
                     crmcustomer = dLayer.ExecuteScalar("select count(N_CrmCompanyID) from Inv_SalesQuotation  Where N_CompanyID=" + nCompanyID + " and  N_CrmCompanyID=" + nCrmCustomerID,  QueryParams, connection);

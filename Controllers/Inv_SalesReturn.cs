@@ -596,16 +596,20 @@ namespace SmartxAPI.Controllers
         
         //Delete....
         [HttpDelete()]
-        public ActionResult DeleteData(int? nCompanyId, int? nDebitNoteId)
+        public ActionResult DeleteData(int? nCompanyId, int? nDebitNoteId,int nFnYearID)
         {
             try
             {
                 string sqlCommandText = "";
+                SortedList ParamList=new SortedList();
                 SortedList Params = new SortedList();
                 sqlCommandText = "SP_Delete_Trans_With_SaleAccounts  @N_CompanyId,'SALES RETURN',@N_DebitNoteId";
                 Params.Add("@N_CompanyId", nCompanyId);
 
                 Params.Add("@N_DebitNoteId", nDebitNoteId);
+                     ParamList.Add("@nFnYearID",nFnYearID);
+                    string xButtonAction="Delete";
+                      String x_DebitNoteNo="";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -613,6 +617,19 @@ namespace SmartxAPI.Controllers
                     object objPaymentProcessed = dLayer.ExecuteScalar("Select Isnull(N_PayReceiptId,0) from Inv_PayReceiptDetails where N_InventoryId=" + nDebitNoteId + " and X_TransType='SALES RETURN'", connection);
                     if (objPaymentProcessed == null)
                         objPaymentProcessed = 0;
+
+  //  object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Inv_Purchase where n_CreditNoteId =" + nCreditNoteId + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
+                   
+                                   
+               //Activity Log
+                // string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nDebitNoteId,x_DebitNoteNo,55,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
+
                     if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) == 0)
                     {
                         SortedList StockUpdateParams = new SortedList(){

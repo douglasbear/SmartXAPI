@@ -586,6 +586,8 @@ namespace SmartxAPI.Controllers
                     int N_SaveDraft = myFunctions.getIntVAL(Master["b_IssaveDraft"].ToString());
                     int nUserID = myFunctions.GetUserID(User);
                     int N_NextApproverID = 0;
+                    String xButtonAction="";
+
                               
                     int N_FormID = 0;
                    if (MasterTable.Columns.Contains("N_FormID"))
@@ -697,6 +699,7 @@ namespace SmartxAPI.Controllers
                                 {"N_VoucherID",PayReceiptId}
                             };
                         dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
+                           xButtonAction="Update"; 
                     }
 
                     if (xVoucherNo == "@Auto")
@@ -708,6 +711,8 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_BranchID", nBranchID);
 
                         xVoucherNo = dLayer.GetAutoNumber("Inv_PayReceipt", "x_VoucherNo", Params, connection, transaction);
+                         xButtonAction="Insert"; 
+                        
                         if (xVoucherNo == "") { transaction.Rollback(); return Ok(api.Warning("Unable to generate Receipt Number")); }
 
                         MasterTable.Rows[0]["x_VoucherNo"] = xVoucherNo;
@@ -731,6 +736,15 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(api.Error(User, "Unable To Save Customer Payment"));
                     }
+
+                     //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,PayReceiptId,xVoucherNo,66,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
 
                     N_NextApproverID = myFunctions.LogApprovals(Approvals, myFunctions.getIntVAL(nFnYearID.ToString()), "SALES RECEIPT", PayReceiptId, xVoucherNo, 1, "", 0, "", 0, User, dLayer, connection, transaction);
                     N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_PayReceipt where N_PayReceiptId=" + PayReceiptId + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
@@ -909,6 +923,8 @@ namespace SmartxAPI.Controllers
                     string xButtonAction = "Delete";
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,X_VoucherNo,N_PayReceiptId from Inv_PayReceipt where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_PayReceiptId=@nTransID";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                  //  string xButtonAction="Delete";
+                   //  String xVoucherNo="";
                     if (TransData.Rows.Count == 0)
                     {
                         return Ok(api.Error(User, "Transaction not Found"));
@@ -992,6 +1008,14 @@ namespace SmartxAPI.Controllers
                                 myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnYearID, 66, User, transaction, connection);
                             }
                         }
+                         //Activity Log
+                // string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nPayReceiptId,xVoucherNo,66,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                   
                         transaction.Commit();
                         if (nFormID == 66)
                             return Ok(api.Success("Sales Receipt " + status + " Successfully"));
