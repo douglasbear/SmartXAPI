@@ -344,13 +344,7 @@ namespace SmartxAPI.Controllers
 
 
                         // _sqlQuery = "Select * from Inv_VendorRequest Where " + Condition + "";
-                        _sqlQuery = "SELECT  Inv_VendorRequest.N_CompanyId, Inv_VendorRequest.N_FnYearId, Inv_VendorRequest.N_QuotationId, Inv_VendorRequest.X_QuotationNo, Inv_VendorRequest.D_QuotationDate, Inv_VendorRequest.D_EntryDate," +
-                        " Inv_VendorRequest.N_VendorID, Inv_VendorRequest.N_BillAmt, Inv_VendorRequest.N_DiscountAmt, Inv_VendorRequest.N_FreightAmt, Inv_VendorRequest.N_CashReceived, Inv_VendorRequest.x_Notes, " +
-                         "Inv_VendorRequest.N_UserID, Inv_VendorRequest.N_Processed, Inv_VendorRequest.N_LocationID, Inv_VendorRequest.N_BranchId, Inv_VendorRequest.N_ProjectID, Inv_VendorRequest.X_RfqRefNo,Inv_VendorRequest.X_CustomerDocNo,Inv_VendorRequest.N_CustomerId,Inv_Customer.X_CustomerName ," +
-                         "Inv_VendorRequest.X_TandC, Inv_VendorRequest.D_DueDate, Inv_VendorRequest.N_ValidUpTo, Inv_VendorRequest.N_EmpID, Pay_Employee.X_EmpName " +
- " FROM            Inv_VendorRequest LEFT OUTER JOIN " +
-                        "Inv_Customer ON Inv_VendorRequest.N_CompanyId = Inv_Customer.N_CompanyID AND Inv_VendorRequest.N_CustomerId = Inv_Customer.N_CustomerID   LEFT OUTER JOIN " +
-                         " Pay_Employee ON Inv_VendorRequest.N_CompanyId = Pay_Employee.N_CompanyID AND Inv_VendorRequest.N_EmpID = Pay_Employee.N_EmpID AND Inv_VendorRequest.N_FnYearId = Pay_Employee.N_FnYearID  Where " + Condition + "";
+                        _sqlQuery = "select * from Vw_RequestForQuotation Where " + Condition + "";
 
                         Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
                         QueryParams.Add("@N_QuotationID", Master.Rows[0]["N_QuotationID"].ToString());

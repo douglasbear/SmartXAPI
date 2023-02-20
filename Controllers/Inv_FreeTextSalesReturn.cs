@@ -128,6 +128,7 @@ namespace SmartxAPI.Controllers
                     string xTransType = "DEBIT NOTE";
                     DocNo = MasterRow["X_ReceiptNo"].ToString();
                     DataTable Attachment = ds.Tables["attachments"];
+                    
 
                      if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_SalesDate"].ToString()), dLayer, connection, transaction))
                     {
@@ -324,11 +325,7 @@ namespace SmartxAPI.Controllers
                     string X_MasterSql = "";
                     string X_DetailsSql = "";
 
-                    X_MasterSql = "Select Inv_CustomerProjects.X_Projectname,Inv_Salesman.X_SalesmanName, Inv_Customer.*,Inv_Sales.*" +
-                                  " from Inv_Sales Left Outer Join  Inv_CustomerProjects ON Inv_Sales.N_ProjectID = Inv_CustomerProjects.N_ProjectID And Inv_Sales.N_CompanyID = Inv_CustomerProjects.N_CompanyID " +
-                                  " Left Outer Join  Inv_Salesman ON Inv_Sales.N_SalesmanID = Inv_Salesman.N_SalesmanID And Inv_Sales.N_CompanyID = Inv_Salesman.N_CompanyID and Inv_Sales.N_FnYearID=Inv_Salesman.N_FnYearID" +
-                                  " Inner Join  Inv_Customer ON Inv_Sales.N_CustomerID = Inv_Customer.N_CustomerID And Inv_Sales.N_CompanyID = Inv_Customer.N_CompanyID and Inv_Sales.N_FnYearID=Inv_Customer.N_FnYearID" +
-                                  " Where  Inv_Sales.N_CompanyID=" + nCompanyId + " and Inv_Sales.X_TransType = '" + xTransType + "' and  Inv_Sales.N_FnYearID=" + nFnYearId + " and Inv_Sales.X_ReceiptNo='" + xInvoiceNO + "'";
+                    X_MasterSql = "select * from Vw_FreeTextSalesReturnMaster Where  N_CompanyID=" + nCompanyId + " and X_TransType = '" + xTransType + "' and  N_FnYearID=" + nFnYearId + " and X_ReceiptNo='" + xInvoiceNO + "'";
 
                     Master = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
                     if (Master.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }

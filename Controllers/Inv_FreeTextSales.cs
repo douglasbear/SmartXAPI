@@ -479,7 +479,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nSalesID, string X_TransType)
+        public ActionResult DeleteData(int nSalesID, string X_TransType,int nFnYearID)
         {
 
             try
@@ -487,10 +487,15 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    SortedList ParamList=new SortedList();
                     SqlTransaction transaction = connection.BeginTransaction();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     var nUserID = myFunctions.GetUserID(User);
+                    ParamList.Add("@nFnYearID",nFnYearID);
                       SortedList Params = new SortedList();
+                     string xButtonAction="Delete";
+                     String X_ReceiptNo="";
+                     
 
                        object count = dLayer.ExecuteScalar("select count(1) from Inv_Sales where N_FreeTextReturnID =" + nSalesID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
                      if (myFunctions.getVAL(count.ToString())>0)
@@ -498,6 +503,15 @@ namespace SmartxAPI.Controllers
                          return Ok(_api.Error(User, "Unable to delete Free text sales"));
                      }
 
+                    object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Inv_Sales where N_SalesId =" + nSalesID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
+                
+   //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nSalesID,X_ReceiptNo,372,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
