@@ -47,8 +47,6 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     Params.Add("@nCompanyID", nCompanyID);
-                    Boolean bool1 = true;
-                    Boolean bool2 = false;
 
                     x_UserCategoryName = x_UserCategoryName + "," + nUserCategoryID;
 
