@@ -687,7 +687,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.GetCompanyID(User);
                 Params.Add("@p1", nCompanyID);
                 Params.Add("@p2", BankID);
-                string CSVDatasql = "Select X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText from [vw_pay_ProcessedDetails_CSV] where X_Batch=" + x_batchID + " and N_EmpTypeID<>183 and TransBankID=" + BankID;
+                string CSVDatasql = "Select X_BankCodeRef,X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText from [vw_pay_ProcessedDetails_CSV] where X_Batch=" + x_batchID + " and N_EmpTypeID<>183 and TransBankID=" + BankID;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -709,11 +709,11 @@ namespace SmartxAPI.Controllers
                         string delimiter = ",";
 
                         string[][] header = new string[][]
-                        {new string[]{"Bank Name ","Account Number","Total Salary","Transaction Reference","Employee Name","National ID/Iqama ID","Employee Address","Basic Salary","Housing Allowance","Other Earnings","Deductions"}
+                        {new string[]{"Bank Code","Employee/Payee’s Account Number","Amount","Transaction Reference","Employee/Payee’s Name","Employee/Payee’s Address 1","Employee/Payee’s Address 2","Employee/Payee’s Address 3","Beneficiary ID (National/Iqama ID)","Basic Salary","Housing Allowance","Other Earnings","Deductions"}
                         };
                         string[][] output = new string[][]
                         {
-                        new string[]{drow["X_BankName"].ToString(),"'"+ drow["X_BankAccountNo"].ToString(),drow["totalsalary"].ToString(),drow["X_PaymentDescription"].ToString(),drow["X_EmpName"].ToString(),"'"+ drow["X_IqamaNo"].ToString(),drow["X_Address"].ToString(),drow["N_BasicSalary"].ToString(),drow["N_HA"].ToString(),drow["N_OtherEarnings"].ToString(),drow["N_OtherDeductions"].ToString()}
+                        new string[]{drow["X_BankCodeRef"].ToString(),"'"+ drow["X_BankAccountNo"].ToString(),drow["totalsalary"].ToString(),drow["X_PaymentDescription"].ToString(),drow["X_EmpName"].ToString(),drow["X_Address"].ToString()," "," ","'"+ drow["X_IqamaNo"].ToString(),drow["N_BasicSalary"].ToString(),drow["N_HA"].ToString(),drow["N_OtherEarnings"].ToString(),drow["N_OtherDeductions"].ToString()}
                        };
 
                         int length = output.GetLength(0);
