@@ -149,6 +149,7 @@ namespace SmartxAPI.Controllers
                     DataTable VendorMasterTable;
                     string DocNo = "";
                     GeneralTable = ds.Tables["general"];
+                    String xButtonAction="";
                     int nFormID = myFunctions.getIntVAL(GeneralTable.Rows[0]["n_FormID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(GeneralTable.Rows[0]["n_FnYearID"].ToString());
                     if (nFormID == 618)
@@ -169,6 +170,7 @@ namespace SmartxAPI.Controllers
                             dLayer.DeleteData("Inv_RFQVendorList", "N_QuotationID", nQuotationID, "N_CompanyID = " + nCompanyID, connection, transaction);
                             dLayer.DeleteData("Inv_VendorRequestDetails", "N_QuotationID", nQuotationID, "N_CompanyID = " + nCompanyID, connection, transaction);
                             dLayer.DeleteData("Inv_VendorRequest", "N_QuotationID", nQuotationID, "N_CompanyID = " + nCompanyID, connection, transaction);
+                             xButtonAction="Update"; 
                         }
                         DocNo = MasterRow["x_QuotationNo"].ToString();
                         if (X_QuotationNo == "@Auto")
@@ -181,6 +183,7 @@ namespace SmartxAPI.Controllers
                             {
                                 DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
                                 object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_VendorRequest Where x_QuotationNo ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                                   xButtonAction="Insert"; 
                                 if (N_Result == null)
                                     break;
                             }
@@ -282,6 +285,15 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Unable To Save"));
                         }
+                        
+             //Activity Log
+                // string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(nFnYearID,nQuotationID,X_InwardsCode,618,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
 
                         for (int k = 0; k < MultiVendorTable.Rows.Count; k++)
                         {
@@ -338,19 +350,13 @@ namespace SmartxAPI.Controllers
                     if (nFormID == 618)
                     {
                         if (bShowAllBranchData == true)
-                            Condition = "Inv_VendorRequest.n_CompanyId=@nCompanyID and Inv_VendorRequest.X_QuotationNo =@X_QuotationNo and Inv_VendorRequest.N_FnYearId=@nFnYearID";
+                            Condition = "Vw_RequestForQuotation.n_CompanyId=@nCompanyID and Vw_RequestForQuotation.X_QuotationNo =@X_QuotationNo and Vw_RequestForQuotation.N_FnYearId=@nFnYearID";
                         else
-                            Condition = "Inv_VendorRequest.n_CompanyId=@nCompanyID and Inv_VendorRequest.X_QuotationNo =@X_QuotationNo and Inv_VendorRequest.N_BranchID=@nBranchID and Inv_VendorRequest.N_FnYearId=@nFnYearID";
+                            Condition = "Vw_RequestForQuotation.n_CompanyId=@nCompanyID and Vw_RequestForQuotation.X_QuotationNo =@X_QuotationNo and Vw_RequestForQuotation.N_BranchID=@nBranchID and Vw_RequestForQuotation.N_FnYearId=@nFnYearID";
 
 
                         // _sqlQuery = "Select * from Inv_VendorRequest Where " + Condition + "";
-                        _sqlQuery = "SELECT  Inv_VendorRequest.N_CompanyId, Inv_VendorRequest.N_FnYearId, Inv_VendorRequest.N_QuotationId, Inv_VendorRequest.X_QuotationNo, Inv_VendorRequest.D_QuotationDate, Inv_VendorRequest.D_EntryDate," +
-                        " Inv_VendorRequest.N_VendorID, Inv_VendorRequest.N_BillAmt, Inv_VendorRequest.N_DiscountAmt, Inv_VendorRequest.N_FreightAmt, Inv_VendorRequest.N_CashReceived, Inv_VendorRequest.x_Notes, " +
-                         "Inv_VendorRequest.N_UserID, Inv_VendorRequest.N_Processed, Inv_VendorRequest.N_LocationID, Inv_VendorRequest.N_BranchId, Inv_VendorRequest.N_ProjectID, Inv_VendorRequest.X_RfqRefNo,Inv_VendorRequest.X_CustomerDocNo,Inv_VendorRequest.N_CustomerId,Inv_Customer.X_CustomerName ," +
-                         "Inv_VendorRequest.X_TandC, Inv_VendorRequest.D_DueDate, Inv_VendorRequest.N_ValidUpTo, Inv_VendorRequest.N_EmpID, Pay_Employee.X_EmpName " +
- " FROM            Inv_VendorRequest LEFT OUTER JOIN " +
-                        "Inv_Customer ON Inv_VendorRequest.N_CompanyId = Inv_Customer.N_CompanyID AND Inv_VendorRequest.N_CustomerId = Inv_Customer.N_CustomerID   LEFT OUTER JOIN " +
-                         " Pay_Employee ON Inv_VendorRequest.N_CompanyId = Pay_Employee.N_CompanyID AND Inv_VendorRequest.N_EmpID = Pay_Employee.N_EmpID AND Inv_VendorRequest.N_FnYearId = Pay_Employee.N_FnYearID  Where " + Condition + "";
+                        _sqlQuery = "select * from Vw_RequestForQuotation Where " + Condition + "";
 
                         Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
                         QueryParams.Add("@N_QuotationID", Master.Rows[0]["N_QuotationID"].ToString());

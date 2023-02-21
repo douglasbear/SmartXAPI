@@ -414,7 +414,8 @@ namespace SmartxAPI.Controllers
                 int n_PayReceiptID = 0;
                 string PayReceiptNo = "";
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-                
+                String xButtonAction="";
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -508,6 +509,7 @@ namespace SmartxAPI.Controllers
                         // Params.Add("N_BranchID", Master["n_BranchID"].ToString());
 
                         PayReceiptNo = dLayer.GetAutoNumber("Inv_PayReceipt", "x_VoucherNo", Params, connection, transaction);
+                       xButtonAction="Insert"; 
                         if (PayReceiptNo == "") { transaction.Rollback(); return Ok(api.Warning("Unable to generate Receipt Number")); }
                         MasterTable.Rows[0]["x_VoucherNo"] = PayReceiptNo;
                     }
@@ -522,7 +524,7 @@ namespace SmartxAPI.Controllers
                                 {"X_TransType",x_Type},
                                 {"N_VoucherID",n_PayReceiptID}};
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
-
+                             xButtonAction="Update";
 
                             // if (myFunctions.CheckPermission(nCompanyId, 576, "Administrator", dLayer, connection, transaction))
                             // {
@@ -544,6 +546,16 @@ namespace SmartxAPI.Controllers
 
                         }
                     }
+
+            //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,n_PayReceiptID,x_VoucherNo,67,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
+                          
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
 

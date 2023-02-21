@@ -117,6 +117,7 @@ namespace SmartxAPI.Controllers
                     string xTransType = "CREDIT NOTE";
                     DocNo = MasterRow["X_InvoiceNo"].ToString();
                     DataTable Attachment = ds.Tables["attachments"];
+                    String xButtonAction="";
 
 
                      if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_InvoiceDate"].ToString()), dLayer, connection, transaction))
@@ -146,6 +147,7 @@ namespace SmartxAPI.Controllers
                             DelParam.Add("N_VoucherID", nPurchaseID);
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DelParam, connection, transaction);
                             int dltRes = dLayer.DeleteData("Inv_CostCentreTransactions", "N_InventoryID", nPurchaseID, "N_CompanyID = " + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction);
+                            xButtonAction="Update"; 
                         }
                         catch (Exception ex)
                         {
@@ -165,6 +167,7 @@ namespace SmartxAPI.Controllers
                         //Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
 
                         X_InvoiceNo = dLayer.GetAutoNumber("Inv_Purchase", "x_InvoiceNo", Params, connection, transaction);
+                          xButtonAction="Insert"; 
                         if (X_InvoiceNo == "")
                         {
                             transaction.Rollback();
@@ -246,7 +249,15 @@ namespace SmartxAPI.Controllers
                         row["N_ProjectID"] = myFunctions.getIntVAL(dRow["N_Segment_3"].ToString());
                         costcenter.Rows.Add(row);
                     }
-                      
+                        //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nPurchaseID,X_InvoiceNo,384,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
+                          
                           SortedList freeTextPurchaseReturnParams = new SortedList();
                            freeTextPurchaseReturnParams.Add("@N_PurchaseID", nPurchaseID);
 
@@ -295,7 +306,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nPurchaseID, string X_TransType)
+        public ActionResult DeleteData(int nPurchaseID, string X_TransType,int nFnYearID)
         {
 
             try
@@ -303,11 +314,24 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                     SortedList ParamList=new SortedList();
                     SqlTransaction transaction = connection.BeginTransaction();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     var nUserID = myFunctions.GetUserID(User);
                       SortedList Params = new SortedList();
+                        ParamList.Add("@nFnYearID",nFnYearID);
+                    string xButtonAction="Delete";
+                     String X_InvoiceNo="";
 
+                     object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Inv_Purchase where N_PurchaseID =" + nPurchaseID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
+                    //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nPurchaseID,X_InvoiceNo,384,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                   
                      object count = dLayer.ExecuteScalar("select count(1) from Inv_Purchase where N_FreeTextReturnID =" + nPurchaseID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
                      if (myFunctions.getVAL(count.ToString())>0)
                      {

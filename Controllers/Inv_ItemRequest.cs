@@ -263,6 +263,8 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                    string xButtonAction="Delete";
+                     String X_PRSNo="";
                     dLayer.DeleteData("Inv_PRSDetails", "N_PRSID", nPRSID, "N_CompanyID=" + nCompanyID + " and N_PRSID=" + nPRSID, connection, transaction);
                     Results = dLayer.DeleteData("Inv_PRS", "N_PRSID", nPRSID, "N_CompanyID=" + nCompanyID + " and N_PRSID=" + nPRSID, connection, transaction);
                   object objMDProcessed = dLayer.ExecuteScalar("Select Isnull(N_RSID,0) from Inv_MaterialDispatch where N_CompanyId=" + nCompanyID + " and N_RSID=" +nPRSID  + " ", connection, transaction);
@@ -277,6 +279,13 @@ namespace SmartxAPI.Controllers
 
                         dLayer.ExecuteNonQueryPro("SP_SalesOrderProcessUpdate", DeleteParams, connection, transaction);
                     }
+                      string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nPRSID,X_PRSNo,1592,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                         
 
                        if (myFunctions.getIntVAL(objMDProcessed.ToString()) > 0)
                        {
@@ -316,6 +325,7 @@ namespace SmartxAPI.Controllers
             // DataTable Approvals;
             // Approvals = ds.Tables["approval"];
             SortedList Params = new SortedList();
+            String xButtonAction="";
             // Auto Gen
             try
             {
@@ -341,6 +351,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", N_FormID);
                         Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         X_PRSNo = dLayer.GetAutoNumber("Inv_PRS", "X_PRSNo", Params, connection, transaction);
+                         xButtonAction="Insert"; 
                         if (X_PRSNo == "") { transaction.Rollback(); return Ok(api.Warning("Unable to generate Request Number")); }
                         MasterTable.Rows[0]["X_PRSNo"] = X_PRSNo;
                     }
@@ -371,7 +382,17 @@ namespace SmartxAPI.Controllers
                         QueryParams.Add("@N_FnYearID", N_FnYearID);
 
                         dLayer.ExecuteNonQuery("Update Inv_SalesOrder set N_Processed=1,N_TranTypeID=@N_TransTypeID Where N_SalesOrderId=@N_SalesOrderId and N_CompanyID=@N_CompanyID and N_FnYearID=@N_FnYearID", QueryParams, connection, transaction);
+                        xButtonAction="Update"; 
                     }
+                //Activity Log
+                // string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(nFnYearID,nPRSID,X_PRSNo,1592,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
+                          
 
                     transaction.Commit();
 

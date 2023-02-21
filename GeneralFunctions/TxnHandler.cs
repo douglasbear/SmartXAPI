@@ -76,6 +76,8 @@ namespace SmartxAPI.GeneralFunctions
             DetailsToImport = ds.Tables["detailsImport"];
             bool B_isImport = false;
             bool showSellingPrice =false;
+              String xButtonAction="";
+
             if(MasterTable.Columns.Contains("showSellingPrice")) 
                showSellingPrice=myFunctions.getBoolVAL(masterRow["showSellingPrice"].ToString());
             if(MasterTable.Columns.Contains("showSellingPrice")){MasterTable.Columns.Remove("showSellingPrice");}
@@ -291,6 +293,7 @@ namespace SmartxAPI.GeneralFunctions
                         while (true)
                         {
                             InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                            xButtonAction="Insert"; 
                             object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Purchase Where X_InvoiceNo ='" + values + "' and N_CompanyID= " + nCompanyID, connection, transaction);
                             if (N_Result == null)
                                 break;
@@ -397,6 +400,7 @@ namespace SmartxAPI.GeneralFunctions
 	                            {"X_TransType", "PURCHASE"}};
 
                         dLayer.ExecuteNonQueryPro("SP_StockDeleteUpdate", StockUpdateParams, connection, transaction);
+                         xButtonAction="Update"; 
                     }
                     MasterTable.Rows[0]["n_userID"] = myFunctions.GetUserID(User);
 
@@ -450,6 +454,8 @@ namespace SmartxAPI.GeneralFunctions
                         dLayer.ExecuteNonQuery("delete from Mig_Purchase ", connection, transaction);
                         dLayer.SaveData("Mig_Purchase", "PkeyID", "", "", DetailsToImport, connection, transaction);
 
+                    
+
                         SortedList ProParam = new SortedList();
                         ProParam.Add("N_CompanyID", nCompanyID);
                         ProParam.Add("N_PKeyID", N_PurchaseID);
@@ -478,6 +484,16 @@ namespace SmartxAPI.GeneralFunctions
 
                     N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "PURCHASE", N_PurchaseID, InvoiceNo, 1, objVendorName.ToString(), 0, "", 0, User, dLayer, connection, transaction);
                     N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
+                  
+
+                          //   Activity Log
+                    //  string ipAddress = "";
+                    //  if ( Request.Headers.ContainsKey("X-Forwarded-For"))
+                    //     ipAddress = Request.Headers["X-Forwarded-For"];
+                    //   else
+                    //   ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    //   myFunctions.LogScreenActivitys(nFnYearID,N_PurchaseID,InvoiceNo,65,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
 
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -574,7 +590,7 @@ namespace SmartxAPI.GeneralFunctions
                         dLayer.SaveData("Inv_PurchaseFreights", "N_PurchaseFreightID", PurchaseFreight, connection, transaction);
                     }
 
-                    
+             
 
                     if (b_FreightAmountDirect == 0)
                     {
@@ -586,6 +602,8 @@ namespace SmartxAPI.GeneralFunctions
                         };
                         dLayer.ExecuteNonQueryPro("SP_FillFreightToPurchase", ProcParams, connection, transaction);
                     }
+
+
 
                     if (N_SaveDraft == 0)
                     {
@@ -1560,6 +1578,7 @@ namespace SmartxAPI.GeneralFunctions
             MasterTable.Rows[0]["N_TotalPaidAmount"] = N_TotalPaid;
             double N_TotalPaidF = myFunctions.getVAL(MasterTable.Rows[0]["n_TotalPaidAmountF"].ToString());
             MasterTable.Rows[0]["n_TotalPaidAmountF"] = N_TotalPaidF;
+               String xButtonAction="";
 
             if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_ReturnDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
             {
@@ -1587,6 +1606,7 @@ namespace SmartxAPI.GeneralFunctions
                 Params.Add("N_FormID", 55);
                 Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
                 InvoiceNo = dLayer.GetAutoNumber("Inv_SalesReturnMaster", "X_DebitNoteNo", Params, connection, transaction);
+                 xButtonAction="Insert"; 
                 if (InvoiceNo == "") 
                 {
                      //transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Return Number")); 
@@ -1605,7 +1625,7 @@ namespace SmartxAPI.GeneralFunctions
 	                            {"X_TransType", "SALES RETURN"}};
 
                 dLayer.ExecuteNonQueryPro("SP_StockDeleteUpdate", StockUpdateParams, connection, transaction);
-
+                xButtonAction="Update"; 
                 SortedList DeleteParams = new SortedList(){
                         {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
                         {"X_TransType","SALES RETURN"},
@@ -1675,7 +1695,13 @@ namespace SmartxAPI.GeneralFunctions
                     throw ex;
                 }
             }
-
+                //          //Activity Log
+                // string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(nFnYearID,nDebitNoteId,x_DebitNoteNo,55,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
             SortedList InsParams = new SortedList();
             InsParams.Add("N_CompanyID", N_CompanyID);
             InsParams.Add("N_DebitNoteId", N_InvoiceId);
@@ -1726,6 +1752,7 @@ namespace SmartxAPI.GeneralFunctions
             var values = MasterTable.Rows[0]["X_CreditNoteNo"].ToString();
             int nCompanyID = myFunctions.GetCompanyID(User);
             int N_VendorID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_VendorID"].ToString());
+            String xButtonAction="";
 
             if (!myFunctions.CheckActiveYearTransaction(myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString()), Convert.ToDateTime(MasterTable.Rows[0]["D_RetDate"].ToString()), dLayer, connection, transaction))
             {
@@ -1752,6 +1779,7 @@ namespace SmartxAPI.GeneralFunctions
                 Params.Add("N_FormID", 80);
                 Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                 ReturnNo = dLayer.GetAutoNumber("Inv_PurchaseReturnMaster", "X_CreditNoteNo", Params, connection, transaction);
+                xButtonAction="Insert"; 
                 if (ReturnNo == "") 
                 { 
                     // transaction.Rollback();
@@ -1762,7 +1790,15 @@ namespace SmartxAPI.GeneralFunctions
                 }
                 MasterTable.Rows[0]["X_CreditNoteNo"] = ReturnNo;
             }
+  
 
+         //Activity Log
+                // string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(nFnYearID,nCreditNoteId,ReturnNo,68,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
             if (N_CreditNoteID > 0)
             {
                 SortedList DeleteParams = new SortedList(){
@@ -1772,6 +1808,7 @@ namespace SmartxAPI.GeneralFunctions
                 try
                 {
                     dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
+                           xButtonAction="Update"; 
                 }
                 catch (Exception ex)
                 {
