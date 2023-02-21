@@ -12,6 +12,7 @@
     <PackageReference Include="CrystalDecisions.Shared" Version="1.0.0" />
     <PackageReference Include="CrystalDecisions.Windows.Forms" Version="1.0.0" />
     <PackageReference Include="Dapper" Version="2.0.35" />
+    <PackageReference Include="DocumentFormat.OpenXml" Version="2.19.0" />
     <PackageReference Include="EPPlus" Version="6.1.2" />
     <PackageReference Include="iTextSharp" Version="5.5.13.3" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Cors" Version="5.2.7" />
