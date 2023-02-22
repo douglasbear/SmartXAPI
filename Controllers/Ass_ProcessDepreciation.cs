@@ -150,7 +150,7 @@ namespace SmartxAPI.Controllers
             else
                 cond="N_FnYearID=@p2 and N_CompanyID=@p1 and N_BranchID=@p3";
 
-            sqlCommandText = "select * from Ass_DepreciationMaster where "+cond+" and X_DepriciationNo=@p4";
+            sqlCommandText = "select * from Vw_AssetDepreciationMaster where "+cond+" and X_DepriciationNo=@p4";
 
             try
             {
