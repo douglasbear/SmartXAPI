@@ -48,12 +48,12 @@ namespace SmartxAPI.Controllers
 
                     string menus = "select * from " +
                     "(select X_TableViewCode,N_TableViewID,N_MenuID as formID,X_TitleLanControlNo as titleLbl,X_MenuLanControlNo as menuLbl, " +
-                    "B_IsDefault as isDefault,B_SearchEnabled as searchEnabled,B_AttachementSearch as attachementSearch,X_PKey,N_Type,N_Order,X_PCode,N_UserID from " +
+                    "B_IsDefault as isDefault,B_SearchEnabled as searchEnabled,B_AttachementSearch as attachementSearch,X_PKey,N_Type,N_Order,X_PCode,N_UserID,X_TotalField from " +
                     "Gen_TableView where N_MenuID=@nMenuID  " +
                     "and N_Type not in(select N_Type from Gen_TableView where N_MenuID=@nMenuID and N_CompanyID=@nCompanyID and N_UserID=@nUserID) " +
                     "union all " +
                     "select X_TableViewCode,N_TableViewID,N_MenuID as formID,X_TitleLanControlNo as titleLbl,X_MenuLanControlNo as menuLbl, " +
-                    "B_IsDefault as isDefault,B_SearchEnabled as searchEnabled,B_AttachementSearch as attachementSearch,X_PKey,N_Type,N_Order,X_PCode,N_UserID from " +
+                    "B_IsDefault as isDefault,B_SearchEnabled as searchEnabled,B_AttachementSearch as attachementSearch,X_PKey,N_Type,N_Order,X_PCode,N_UserID,X_TotalField from " +
                     "Gen_TableView where N_MenuID=@nMenuID  and N_CompanyID=@nCompanyID and N_UserID=@nUserID) as Tbl_Gen_TableView " +
                     "order by N_Order ";
 
@@ -107,7 +107,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetDashboardList(int nFnYearID, int nPage, int nSizeperpage, string xSearchkey, string xSearchField, string xSortBy, int nBranchID, int nEmpID,int nUserID, bool bAllBranchData, int nFormID, int nTableViewID, bool export)
+        public ActionResult GetDashboardList(int nFnYearID, int nPage, int nSizeperpage, string xSearchkey, string xSearchField, string xSortBy, int nBranchID, int nEmpID, int nUserID, int nDecimalPlace, bool bAllBranchData, int nFormID, int nTableViewID, bool export)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             SortedList OutPut = new SortedList();
@@ -122,7 +122,7 @@ namespace SmartxAPI.Controllers
 
             string UserPattern = myFunctions.GetUserPattern(User);
             if (UserPattern != "")
-            Params.Add("@userPattern", UserPattern);
+                Params.Add("@userPattern", UserPattern);
 
 
 
@@ -138,7 +138,9 @@ namespace SmartxAPI.Controllers
             string PKey = "";
             string BranchCriterea = "";
             string SortBy = "";
-            string PatternCriteria="";
+            string PatternCriteria = "";
+            string SumField = "";
+
 
             try
             {
@@ -183,7 +185,7 @@ namespace SmartxAPI.Controllers
                         SortBy = " order by " + xSortBy;
                     }
 
-                    string CriteriaSql = "select isnull(X_DataSource,'') as X_DataSource,isnull(X_DefaultCriteria,'') as X_DefaultCriteria,isnull(X_BranchCriteria,'') as X_BranchCriteria,isnull(X_DefaultSortField,'') as X_DefaultSortField,isnull(X_PKey,'') as X_PKey,isnull(X_PatternCriteria,'') as X_PatternCriteria from Gen_TableView where (N_TableViewID = @tbvVal) AND (N_MenuID=@mnuVal)";
+                    string CriteriaSql = "select isnull(X_DataSource,'') as X_DataSource,isnull(X_DefaultCriteria,'') as X_DefaultCriteria,isnull(X_BranchCriteria,'') as X_BranchCriteria,isnull(X_DefaultSortField,'') as X_DefaultSortField,isnull(X_PKey,'') as X_PKey,isnull(X_PatternCriteria,'') as X_PatternCriteria,X_TotalField from Gen_TableView where (N_TableViewID = @tbvVal) AND (N_MenuID=@mnuVal)";
                     DataTable CriteriaList = dLayer.ExecuteDataTable(CriteriaSql, Params, connection);
 
                     if (CriteriaList.Rows.Count == 0)
@@ -192,6 +194,8 @@ namespace SmartxAPI.Controllers
                     }
 
                     DataRow dRow = CriteriaList.Rows[0];
+
+                    SumField = dRow["X_TotalField"].ToString();
 
                     if ((SortBy == null || SortBy.Trim() == "") && dRow["X_DefaultSortField"].ToString() != "")
                     {
@@ -208,9 +212,9 @@ namespace SmartxAPI.Controllers
                         BranchCriterea = " ( " + dRow["X_BranchCriteria"].ToString() + " ) ";
                     }
 
-                    if ( UserPattern != "" && dRow["X_PatternCriteria"].ToString() != "")
+                    if (UserPattern != "" && dRow["X_PatternCriteria"].ToString() != "")
                     {
-                        PatternCriteria= " (  Left(X_Pattern,Len(@userPattern))=@userPattern ) ";
+                        PatternCriteria = " (  Left(X_Pattern,Len(@userPattern))=@userPattern ) ";
                     }
 
                     if (BranchCriterea.Trim().Length > 0)
@@ -218,7 +222,9 @@ namespace SmartxAPI.Controllers
                         if (Criterea.Trim().Length > 0)
                         {
                             Criterea = Criterea + " and " + BranchCriterea;
-                        }else{
+                        }
+                        else
+                        {
                             Criterea = BranchCriterea;
                         }
                     }
@@ -228,16 +234,21 @@ namespace SmartxAPI.Controllers
                         if (Criterea.Trim().Length > 0)
                         {
                             Criterea = Criterea + " and " + Searchkey;
-                        }else{
+                        }
+                        else
+                        {
                             Criterea = Searchkey;
                         }
                     }
 
-                    if(PatternCriteria.Trim().Length > 0){
-                         if (Criterea.Trim().Length > 0)
+                    if (PatternCriteria.Trim().Length > 0)
+                    {
+                        if (Criterea.Trim().Length > 0)
                         {
                             Criterea = Criterea + " and " + PatternCriteria;
-                        }else{
+                        }
+                        else
+                        {
                             Criterea = PatternCriteria;
                         }
                     }
@@ -283,11 +294,29 @@ namespace SmartxAPI.Controllers
                     else
                     {
 
+                        if (SumField == null)
+                        { SumField = ""; }
+
                         dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                        sqlCommandCount = "select count(*) as N_Count  from " + DataSource + Criterea;
+                        sqlCommandCount = "select count(*) as N_Count,0 as TotalAmount  from " + DataSource + Criterea;
 
-                        object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                        if (SumField.Trim() != "")
+                        {
+                            sqlCommandCount = "select count(*) as N_Count ,sum(Cast(REPLACE(" + SumField + ",',','') as Numeric(16," + nDecimalPlace + ")) ) as TotalAmount  from " + DataSource + Criterea;
+                        }
+
+                        DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                        string TotalCount = "0";
+                        string TotalSum = "0";
+                        if (Summary.Rows.Count > 0)
+                        {
+                            DataRow drow = Summary.Rows[0];
+                            TotalCount = drow["N_Count"].ToString();
+                            TotalSum = drow["TotalAmount"].ToString();
+                        }
+
+                        OutPut.Add("TotalSum", TotalSum);
                         OutPut.Add("Details", _api.Format(dt));
                         OutPut.Add("TotalCount", TotalCount);
 

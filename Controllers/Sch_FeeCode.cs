@@ -103,7 +103,7 @@ namespace SmartxAPI.Controllers
                         if (Code == "") { transaction.Rollback();return Ok(_api.Error(User,"Unable to generate Course Code")); }
                         MasterTable.Rows[0]["X_FeeCode"] = Code;
                         
-                    object descCount = dLayer.ExecuteScalar("Select count(*) From Sch_FeeCodes Where X_FeeDescription ='" + MasterTable.Rows[0]["X_FeeDescription"].ToString() + "' and N_CompanyID= " + nCompanyID , Params, connection, transaction);
+                    object descCount = dLayer.ExecuteScalar("Select count(1) From Sch_FeeCodes Where X_FeeDescription ='" + MasterTable.Rows[0]["X_FeeDescription"].ToString() + "' and N_CompanyID= " + nCompanyID , Params, connection, transaction);
                      
                        if (myFunctions.getIntVAL(descCount.ToString()) >0)
                         {
@@ -115,7 +115,7 @@ namespace SmartxAPI.Controllers
 
                     if (nFeeCodeID> 0) 
                     {  
-                        object Count = dLayer.ExecuteScalar("select count(*) from Sch_ClassFeeSetup where N_FeeCodeID="+nFeeCodeID+" and N_CompanyID="+nCompanyID+"", Params, connection,transaction); 
+                        object Count = dLayer.ExecuteScalar("select count(1) from Sch_ClassFeeSetup where N_FeeCodeID="+nFeeCodeID+" and N_CompanyID="+nCompanyID+"", Params, connection,transaction); 
                         if (myFunctions.getIntVAL(Count.ToString()) >0)
                         {
                              transaction.Rollback();
@@ -183,7 +183,7 @@ namespace SmartxAPI.Controllers
                   Params.Add("@nItemID",nItemID);
 
 
-                    object Count = dLayer.ExecuteScalar("select count(*) from Sch_ClassFeeSetup where N_FeeCodeID=@nFeeCodeID and N_CompanyID=@nCompanyID", Params, connection,transaction); 
+                    object Count = dLayer.ExecuteScalar("select count(1) from Sch_ClassFeeSetup where N_FeeCodeID=@nFeeCodeID and N_CompanyID=@nCompanyID", Params, connection,transaction); 
                       
                         if (myFunctions.getIntVAL(Count.ToString()) >0)
                     {
@@ -191,7 +191,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable To Delete"));
                     }
 
-                    object BusCount = dLayer.ExecuteScalar("select count(*) from Sch_BusRoute where N_FeeCodeID=@nFeeCodeID and N_CompanyID=@nCompanyID", Params, connection,transaction); 
+                    object BusCount = dLayer.ExecuteScalar("select count(1) from Sch_BusRoute where N_FeeCodeID=@nFeeCodeID and N_CompanyID=@nCompanyID", Params, connection,transaction); 
                     
                               if (myFunctions.getIntVAL(BusCount.ToString()) >0)
                     {
@@ -359,7 +359,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    sqlCommandCount = "select count(*) as N_Count  from VW_SCHFEECODES where N_CompanyID=@nCompanyID " + Searchkey + " ";
+                    sqlCommandCount = "select count(1) as N_Count  from VW_SCHFEECODES where N_CompanyID=@nCompanyID " + Searchkey + " ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

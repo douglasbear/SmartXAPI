@@ -50,7 +50,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nUserID", nUserID);
 
                     string userCategoryID = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User Where N_CompanyID =" + nCompanyID + " and N_UserID=" + myFunctions.GetUserID(User) + "", Params, connection).ToString();
-                    object UserCategory = dLayer.ExecuteScalar("Select Count(*) from Sec_UserCategory Where N_UserCategoryID in  (" + userCategoryID + ") and X_UserCategory='Admin'", Params, connection);
+                    object UserCategory = dLayer.ExecuteScalar("Select count(1) from Sec_UserCategory Where N_UserCategoryID in  (" + userCategoryID + ") and X_UserCategory='Admin'", Params, connection);
 
                     if (myFunctions.getIntVAL(UserCategory.ToString()) >0)
                         criteria=" ";
@@ -91,7 +91,7 @@ namespace SmartxAPI.Controllers
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType " + criteria + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count  from Vw_Pay_Appraisal where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_Type=@nType " + criteria + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -320,7 +320,7 @@ namespace SmartxAPI.Controllers
                     {
                         if( myFunctions.getIntVAL(MasterTable.Rows[0]["N_Type"].ToString())==1)
                         {
-                            object Count = dLayer.ExecuteScalar("select COUNT(*) from Pay_Appraisal where N_CompanyID="+nCompanyID+" and N_EmpID="+ myFunctions.getIntVAL(MasterTable.Rows[0]["N_EmpID"].ToString())+" and N_EntryUserID="+ myFunctions.getIntVAL(MasterTable.Rows[0]["N_EntryUserID"].ToString())+" and N_Type=1 and N_EvalSettingsID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_EvalSettingsID"].ToString()), connection, transaction);
+                            object Count = dLayer.ExecuteScalar("select count(1) from Pay_Appraisal where N_CompanyID="+nCompanyID+" and N_EmpID="+ myFunctions.getIntVAL(MasterTable.Rows[0]["N_EmpID"].ToString())+" and N_EntryUserID="+ myFunctions.getIntVAL(MasterTable.Rows[0]["N_EntryUserID"].ToString())+" and N_Type=1 and N_EvalSettingsID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_EvalSettingsID"].ToString()), connection, transaction);
                             if(myFunctions.getIntVAL(Count.ToString())>0)
                             {
                                 transaction.Rollback();

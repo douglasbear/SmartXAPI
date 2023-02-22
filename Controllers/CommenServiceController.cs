@@ -236,8 +236,12 @@ namespace SmartxAPI.Controllers
                                 cnn.Open();
                                 if(companyid>0)
                                 {
+
+                                 object sqlText = dLayer.ExecuteScalar("Select ISNULL(x_LandingPage,'') AS x_LandingPage From Sec_UserApps Where N_CompanyID="+companyid+" and N_AppID="+appID+" and N_UserID="+myFunctions.GetUserID(User)+" and N_GlobalUserID="+GlobalUserID+"",paramList,cnn);
+                                    if(sqlText==null){sqlText="";}
                                     dLayer.ExecuteNonQuery("delete from Sec_UserApps where N_CompanyID="+companyid+" and N_AppID="+appID+" and N_UserID="+myFunctions.GetUserID(User)+" and N_GlobalUserID="+GlobalUserID, paramList, cnn);
-                                    dLayer.ExecuteNonQuery("insert into Sec_UserApps select "+companyid+",max(N_APPMappingID)+1,"+appID+","+myFunctions.GetUserID(User)+","+GlobalUserID+" from Sec_UserApps", paramList, cnn);
+                                    //insert landing page wiht object
+                                    dLayer.ExecuteNonQuery("insert into Sec_UserApps select "+companyid+",max(N_APPMappingID)+1,"+appID+","+myFunctions.GetUserID(User)+","+GlobalUserID+",'"+sqlText.ToString()+"' from Sec_UserApps", paramList, cnn);
                                 }
                               if(companyid>0)
                               {

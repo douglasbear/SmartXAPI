@@ -471,7 +471,7 @@ namespace SmartxAPI.GeneralFunctions
         {
             DataTable SecUserLevel = new DataTable();
             DataTable GenStatus = new DataTable();
-            int nMinLevel = 1, nMaxLevel = 0, nActionLevelID = 0, nSubmitter = 0;
+            int nMinLevel = 1, nMaxLevel = 0, nActionLevelID = 0, nSubmitter = 0,nRequestedUserID=0;
             int nNextApprovalID = nTransApprovalLevel + 1;
             string xLastUserName = "", xEntryTime = "";
             int nTempStatusID = 0;
@@ -589,7 +589,7 @@ namespace SmartxAPI.GeneralFunctions
             }
             if (nTransID > 0)
             {
-                object objApprovalPresent = dLayer.ExecuteScalar("select COUNT(*) from Gen_ApprovalCodesTrans where N_FormID=" + nFormID + " and N_CompanyID=" + nCompanyID + " and N_TransID=" + nTransID, ApprovalParams, connection);
+                object objApprovalPresent = dLayer.ExecuteScalar("select count(1) from Gen_ApprovalCodesTrans where N_FormID=" + nFormID + " and N_CompanyID=" + nCompanyID + " and N_TransID=" + nTransID, ApprovalParams, connection);
                 if (this.getIntVAL(objApprovalPresent.ToString()) == 0)
                 {
                     Response["btnSaveText"] = "Save";
@@ -706,6 +706,11 @@ namespace SmartxAPI.GeneralFunctions
                 if (NextRewChec != null)
                     nNextActionLevelID = this.getIntVAL(NextRewChec.ToString());
 
+                object ReqUser = null;
+                ReqUser = dLayer.ExecuteScalar("Select Isnull (N_UserID,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=108", ApprovalParams, connection);
+                if (ReqUser != null)
+                    nRequestedUserID = this.getIntVAL(ReqUser.ToString());
+
                 object bIsEditable = false;
                 bIsEditable = dLayer.ExecuteScalar("Select Isnull (B_IsEditable,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID", ApprovalParams, connection);
                 if (bIsEditable == null)
@@ -780,8 +785,16 @@ namespace SmartxAPI.GeneralFunctions
                         }
                         else if (nTransStatus == 3)
                         {
-                            nTransStatus = 918;
-                            ApprovalParams["@nTransStatus"] = nTransStatus;
+                            if(nRequestedUserID==nTransUserID)
+                            {
+                                nTransStatus = 923;
+                                ApprovalParams["@nTransStatus"] = nTransStatus;
+                            }
+                            else
+                            {
+                                nTransStatus = 918;
+                                ApprovalParams["@nTransStatus"] = nTransStatus;
+                            }
                         }
                         else if (nTransStatus == 4)
                         {
@@ -825,6 +838,11 @@ namespace SmartxAPI.GeneralFunctions
                                 if (nTransStatus == 924)
                                 {
                                     nTransStatus = 930;
+                                    ApprovalParams["@nTransStatus"] = nTransStatus;
+                                }
+                                else if(nTransStatus != 1)
+                                {
+                                    nTransStatus = 931;
                                     ApprovalParams["@nTransStatus"] = nTransStatus;
                                 }
                                 else
@@ -918,16 +936,21 @@ namespace SmartxAPI.GeneralFunctions
 
                 if (xLastUserName.Trim() == "" && nTransID > 0)
                 {
-                    if ((nMaxLevel == nTransApprovalLevel || nSubmitter == nTransApprovalLevel) && nTransUserID == loggedInUserID)
+                    if ((nMaxLevel == nTransApprovalLevel || nSubmitter == nTransApprovalLevel) && nTransUserID == loggedInUserID )
                     {
                         if (nMaxLevel == nMinLevel || nSubmitter == nMinLevel)
                         {
                             nTransStatus = 922;
                             ApprovalParams["@nTransStatus"] = nTransStatus;
                         }
-                        else if (nTransStatus != 3 && nTransStatus != 918 && nTransStatus != 4 && nTransStatus != 919)
+                        else if (nTransStatus != 3 && nTransStatus != 918 && nTransStatus != 4 && nTransStatus != 919 && nTransUserID != nRequestedUserID)
                         {
                             nTransStatus = 914;
+                            ApprovalParams["@nTransStatus"] = nTransStatus;
+                        }
+                        else if (nTransStatus != 3 && nTransStatus != 918 && nTransStatus != 4 && nTransStatus != 919 && nTransUserID == nRequestedUserID)
+                        {
+                            nTransStatus = 923;
                             ApprovalParams["@nTransStatus"] = nTransStatus;
                         }
                         NextApprovalUser = dLayer.ExecuteScalar("SELECT X_UserName FROM Sec_User Where N_UserID=@nTransUserID  and N_CompanyID=@nCompanyID", ApprovalParams, connection);
@@ -1400,7 +1423,6 @@ namespace SmartxAPI.GeneralFunctions
                     dLayer.ExecuteNonQuery("delete from Log_ApprovalProcess where N_CompanyID=" + N_CompanyID + " and X_TransType='" + X_TransType + "' and N_TransID=" + N_TransID, connection, transaction);
                     return 0;
                 }
-
                 object NxtUser = null;
                 NxtUser = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=0", LogParams, connection, transaction);
                 if (NxtUser != null)
@@ -1587,7 +1609,7 @@ namespace SmartxAPI.GeneralFunctions
             int N_ApprovalID = 0;
             N_ApprovalID = ApprovalID;
             int N_CompanyID = this.GetCompanyID(User);
-            int N_ApprovalUserID = this.GetUserID(User);
+            int N_ApprovalUserID = this.GetUserID(User);            
 
             SortedList UpdateParams = new SortedList();
             UpdateParams.Add("@nFormID", FormID);
@@ -1649,6 +1671,7 @@ namespace SmartxAPI.GeneralFunctions
                 X_Action = "Delete";
                 X_Message = "Deleted";
                 int DeleteStatus = 0;
+
                 switch (FormID)
                 {
                     case 82://PO
@@ -1656,7 +1679,8 @@ namespace SmartxAPI.GeneralFunctions
                         X_Action = "Delete";
                         B_IsDelete = true;
                         break;
-                    case 212://loan issue
+                    case 212 ://loan issue
+                    case 1226 ://loan issue
                         DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
                         X_Action = "Delete";
                         B_IsDelete = true;
@@ -1744,6 +1768,7 @@ namespace SmartxAPI.GeneralFunctions
             Approvals.AcceptChanges();
 
             this.LogApprovals(Approvals, N_FnYearID, X_TransType, N_TransID, X_TransCode, 1, PartyName, 0, "", 0, User, dLayer, connection, transaction);
+            
             return X_Message;
         }
 

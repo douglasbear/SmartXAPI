@@ -51,10 +51,10 @@ namespace SmartxAPI.Controllers
 
 
              
-            string sqlCurrentOrder = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvPurchaseOrderNo_Search WHERE MONTH(Cast([Order Date] as DateTime))= MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Order Date] as DateTime))= YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID + " and N_FnYearID="+nFnYearId + crieteria ;
-            string sqlCurrentInvoice = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvPurchaseInvoiceNo_Search WHERE MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID + " and N_PurchaseType = 0 "+ " and N_FnYearID="+nFnYearId+crieteria;
+            string sqlCurrentOrder = "SELECT count(1) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvPurchaseOrderNo_Search WHERE MONTH(Cast([Order Date] as DateTime))= MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Order Date] as DateTime))= YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID + " and N_FnYearID="+nFnYearId + crieteria ;
+            string sqlCurrentInvoice = "SELECT count(1) as N_ThisMonth,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvPurchaseInvoiceNo_Search WHERE MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID + " and N_PurchaseType = 0 "+ " and N_FnYearID="+nFnYearId+crieteria;
 
-            string sqlTopVendors = "select top(5) Vendor as X_TopVendors,CAST(COUNT(*) as varchar(50)) as N_Count from vw_InvPurchaseInvoiceNo_Search where N_CompanyID = " + nCompanyID + "and N_FnYearID="+nFnYearId+ crieteria + " group by Vendor order by COUNT(*) Desc";
+            string sqlTopVendors = "select top(5) Vendor as X_TopVendors,CAST(count(1) as varchar(50)) as N_Count from vw_InvPurchaseInvoiceNo_Search where N_CompanyID = " + nCompanyID + "and N_FnYearID="+nFnYearId+ crieteria + " group by Vendor order by count(1) Desc";
             string sqlDraftedInvoice = "select COUNT(N_PurchaseID) as N_DraftedInvoice from Inv_Purchase where MONTH(Cast(D_InvoiceDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_InvoiceDate)= YEAR(CURRENT_TIMESTAMP) and ISNULL(B_IsSaveDraft,0)=1 and X_TransType='PURCHASE' and N_CompanyID = " + nCompanyID +" and N_FnYearID="+nFnYearId + crieteria;
             string sqlUnprocessedOrder = "select COUNT(N_POrderID) as N_UnProcessed from Inv_PurchaseOrder where MONTH(Cast(D_POrderDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_POrderDate)= YEAR(CURRENT_TIMESTAMP) and ISNULL(N_Processed,0)=0 and (D_ExDelvDate < getDate()) and N_CompanyID=" + nCompanyID + "and N_FnYearID="+nFnYearId + crieteria;           
 
@@ -211,7 +211,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "Select count(*) as N_Count,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvPurchaseInvoiceNo_Search_Cloud Where YEAR([Invoice Date]) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_FnYearID = " + nFnYearId+crieteria;
+                    sqlCommandCount = "Select count(1) as N_Count,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvPurchaseInvoiceNo_Search_Cloud Where YEAR([Invoice Date]) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyId + " and N_FnYearID = " + nFnYearId+crieteria;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

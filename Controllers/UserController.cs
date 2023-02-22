@@ -213,7 +213,7 @@ namespace SmartxAPI.Controllers
                     }
                     dt.AcceptChanges();
 
-                    sqlCommandCount = "select count(*) as N_Count from vw_UserList where N_CompanyID=@p1  " + exclude +criteria+ Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count from vw_UserList where N_CompanyID=@p1  " + exclude +criteria+ Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -428,6 +428,25 @@ namespace SmartxAPI.Controllers
                           apps.AcceptChanges();
                           if(myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString())>0)
                           {
+                         SortedList userParam= new SortedList();
+                        userParam.Add("@userID", userID);
+                        apps = myFunctions.AddNewColumnToDataTable(apps, "X_LandingPage", typeof(string), null);
+                        string sqlText = "Select * From sec_userApps Where N_UserID=@userID";
+
+                        DataTable duserApps = dLayer.ExecuteDataTable( sqlText,userParam,connection,transaction);
+                        foreach (DataRow Rows in duserApps.Rows){
+                            foreach (DataRow drow in apps.Rows){
+                                if (myFunctions.getIntVAL(Rows["N_UserID"].ToString())==myFunctions.getIntVAL(drow["N_UserID"].ToString())&&myFunctions.getIntVAL(Rows["N_AppID"].ToString())==myFunctions.getIntVAL(drow["N_AppID"].ToString()))
+                                {
+                                    
+                                    drow["X_LandingPage"]=Rows["X_LandingPage"];
+                                }
+
+                            }
+
+                        }
+                          apps.AcceptChanges();
+
                           dLayer.ExecuteNonQuery("DELETE FROM sec_userApps  WHERE N_UserID="+userID , connection, transaction);
                           }
                        
@@ -435,7 +454,7 @@ namespace SmartxAPI.Controllers
                             if (bSalesPerson)
                             {
 
-                                object salesManCount = dLayer.ExecuteScalar("select count(*) from Inv_SalesMan where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_UserID=" + userID, connection, transaction);
+                                object salesManCount = dLayer.ExecuteScalar("select count(1) from Inv_SalesMan where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_UserID=" + userID, connection, transaction);
 
                                 if (salesManCount == null)
                                     salesManCount = 0;
@@ -770,7 +789,7 @@ namespace SmartxAPI.Controllers
             int nClientID = myFunctions.GetClientID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
             string sqlCategory = "Select X_UserCategory from Sec_User  inner join Sec_UserCategory on Sec_User.X_UserCategoryList = Sec_UserCategory.N_UserCategoryID where Sec_User.X_UserID=@p3 and Sec_User.N_CompanyID =@p1";
-            string sqlTrans = "select COUNT(*) from vw_UserTransaction where n_userid=@p2";
+            string sqlTrans = "select count(1) from vw_UserTransaction where n_userid=@p2";
             string sqlUser = "select X_UserID from sec_user where n_userid=@p2";
 
             Params.Add("@p1", nCompanyID);
@@ -791,7 +810,7 @@ namespace SmartxAPI.Controllers
                         olivoCon.Open();
                         SqlTransaction olivoTxn = olivoCon.BeginTransaction();
 
-                        object nUseradmin = dLayer.ExecuteScalar("SELECT count(*) FROM ClientMaster where X_AdminUserID=@p3 and N_ClientID=@nClientID", Params, olivoCon, olivoTxn);
+                        object nUseradmin = dLayer.ExecuteScalar("SELECT count(1) FROM ClientMaster where X_AdminUserID=@p3 and N_ClientID=@nClientID", Params, olivoCon, olivoTxn);
                         if (myFunctions.getIntVAL(nUseradmin.ToString()) > 0)
                         {
                             return Ok(_api.Error(User, "Unable to delete User"));

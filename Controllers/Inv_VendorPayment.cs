@@ -138,14 +138,14 @@ namespace SmartxAPI.Controllers
 
                     // connection.Open();
                     // dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    // sqlCommandCount = "select count(*) as N_Count  from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_YearEndProcess=0  and amount is not null ";
+                    // sqlCommandCount = "select count(1) as N_Count  from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_YearEndProcess=0  and amount is not null ";
                     // object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     // OutPut.Add("Details",api.Format(dt));
                     // OutPut.Add("TotalCount",TotalCount);
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(Amount,',','') as Numeric(20," + N_decimalPlace + ")) ) as TotalAmount from vw_InvPayment_Search where N_CompanyID=@p1  and N_FormID <> 91 and  N_FnYearID=@p2 and (X_type='PP' OR X_type='PA') and amount is not null " + Pattern + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(Amount,',','') as Numeric(20," + N_decimalPlace + ")) ) as TotalAmount from vw_InvPayment_Search where N_CompanyID=@p1  and N_FormID <> 91 and  N_FnYearID=@p2 and (X_type='PP' OR X_type='PA') and amount is not null " + Pattern + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -204,7 +204,7 @@ namespace SmartxAPI.Controllers
         //         {
         //             connection.Open();
         //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-        //             sqlCommandCount = "select count(*) as N_Count  from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+        //             sqlCommandCount = "select count(1) as N_Count  from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
         //             object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
         //             OutPut.Add("Details",api.Format(dt));
         //             OutPut.Add("TotalCount",TotalCount);
@@ -246,6 +246,7 @@ namespace SmartxAPI.Controllers
             OutPut.Add("totalBalance", 0);
             OutPut.Add("advanceAmount", 0);
             OutPut.Add("txnStarted", false);
+            object decimalobj=null;
             if (bShowAllbranch == true)
             {
                 AllBranch = 0;
@@ -346,10 +347,12 @@ namespace SmartxAPI.Controllers
                     if(PayInfo.Rows.Count>0)
                       Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), 67, 0, User, connection);
                     //Attachments = api.Format(Attachments, "attachments");
+                    decimalobj = dLayer.ExecuteScalar("Select isnull(N_Decimal, 0)  from Acc_Company where N_CompanyID=@nCompanyID ", paramList, connection);
                 }
 
                 PayReceipt = myFunctions.AddNewColumnToDataTable(PayReceipt, "n_DueAmount", typeof(double), 0);
 
+                       
 
                 if (PayReceipt.Rows.Count > 0)
                 {
@@ -371,7 +374,11 @@ namespace SmartxAPI.Controllers
                         N_ListedAmtTotal += N_InvoiceDueAmt;
                         if (N_InvoiceDueAmt == 0) { dr.Delete(); continue; }
                         if (nPayReceiptID > 0 && (myFunctions.getVAL(dr["N_DiscountAmt"].ToString()) == 0 && myFunctions.getVAL(dr["N_Amount"].ToString()) == 0)) { dr.Delete(); continue; }
-                        dr["n_DueAmount"] = N_InvoiceDueAmt.ToString(myFunctions.decimalPlaceString(2));
+
+                        if (myFunctions.getIntVAL(decimalobj.ToString()) > 0)
+                            dr["n_DueAmount"] = N_InvoiceDueAmt.ToString(myFunctions.decimalPlaceString(myFunctions.getIntVAL(decimalobj.ToString())));
+                        else 
+                            dr["n_DueAmount"] = N_InvoiceDueAmt.ToString(myFunctions.decimalPlaceString(2));
                     }
                 }
                 PayReceipt.AcceptChanges();
@@ -407,7 +414,8 @@ namespace SmartxAPI.Controllers
                 int n_PayReceiptID = 0;
                 string PayReceiptNo = "";
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-                
+                String xButtonAction="";
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -501,6 +509,7 @@ namespace SmartxAPI.Controllers
                         // Params.Add("N_BranchID", Master["n_BranchID"].ToString());
 
                         PayReceiptNo = dLayer.GetAutoNumber("Inv_PayReceipt", "x_VoucherNo", Params, connection, transaction);
+                       xButtonAction="Insert"; 
                         if (PayReceiptNo == "") { transaction.Rollback(); return Ok(api.Warning("Unable to generate Receipt Number")); }
                         MasterTable.Rows[0]["x_VoucherNo"] = PayReceiptNo;
                     }
@@ -515,7 +524,7 @@ namespace SmartxAPI.Controllers
                                 {"X_TransType",x_Type},
                                 {"N_VoucherID",n_PayReceiptID}};
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
-
+                             xButtonAction="Update";
 
                             // if (myFunctions.CheckPermission(nCompanyId, 576, "Administrator", dLayer, connection, transaction))
                             // {
@@ -537,6 +546,16 @@ namespace SmartxAPI.Controllers
 
                         }
                     }
+
+            //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,n_PayReceiptID,x_VoucherNo,67,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
+                          
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
 

@@ -290,7 +290,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from Gen_MailTemplates where N_CompanyID=@p1";
+                    sqlCommandCount = "select count(1) as N_Count  from Gen_MailTemplates where N_CompanyID=@p1";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -312,6 +312,48 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, e));
             }
         }
+        [HttpGet("emaildetails")]
+        public ActionResult EmailTemplateDetails(string nFormID)
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string sqlCommandText = "";
+
+            sqlCommandText = "select  * from vw_MailGeneralScreenSettings where N_CompanyID=@p1 and N_MenuID=@p2";
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFormID);
+
+            SortedList OutPut = new SortedList();
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Success(dt));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(dt));
+                    }
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+
         [HttpGet("details")]
         public ActionResult TemplateListDetails(string n_TemplateID)
         {

@@ -69,7 +69,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_InvAssembly where N_CompanyId=@p1 and N_FnYearID=@p2 " + Searchkey + " ";
+                    sqlCommandCount = "select count(1) as N_Count from vw_InvAssembly where N_CompanyId=@p1 and N_FnYearID=@p2 " + Searchkey + " ";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
 

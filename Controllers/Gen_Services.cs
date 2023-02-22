@@ -177,7 +177,7 @@ namespace SmartxAPI.Controllers
                     string sqlCommand = "";
                     if (nCustomerID > 0)
                     {
-                        sqlCommand = "Select Count(*) from vw_Inv_CheckCustomer Where N_CompanyID=" + nCompanyID + " and N_CustomerID=" + nCustomerID + "";
+                        sqlCommand = "Select count(1) from vw_Inv_CheckCustomer Where N_CompanyID=" + nCompanyID + " and N_CustomerID=" + nCustomerID + "";
                     }
                     Count = myFunctions.getIntVAL(dLayer.ExecuteScalar(sqlCommand, Params, connection).ToString());
                     SortedList output = new SortedList();

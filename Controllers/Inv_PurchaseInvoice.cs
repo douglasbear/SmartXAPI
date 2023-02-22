@@ -189,7 +189,7 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(16," + N_decimalPlace + ")) ) as TotalAmount from vw_InvPurchaseInvoiceNo_Search_Cloud where  N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_FormID, 65)=@p3 " + criteria + " " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(16," + N_decimalPlace + ")) ) as TotalAmount from vw_InvPurchaseInvoiceNo_Search_Cloud where  N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_FormID, 65)=@p3 " + criteria + " " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -1368,6 +1368,9 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", nCompanyID);
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_VendorID,0) as N_VendorID,X_InvoiceNo from Inv_Purchase where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_PurchaseID=@nTransID";
+                   string xButtonAction="Delete";
+                     String X_ReceiptNo="";
+
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
@@ -1409,6 +1412,14 @@ namespace SmartxAPI.Controllers
 	                            {"X_TransType", "PURCHASE"}};
 
                             dLayer.ExecuteNonQueryPro("SP_StockDeleteUpdate", StockUpdateParams, connection, transaction);
+                       
+               //Activity Log
+                // string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nPurchaseID,InvoiceNo,65,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
                             SortedList DeleteParams = new SortedList(){
                                     {"N_CompanyID",nCompanyID},
@@ -1583,7 +1594,7 @@ namespace SmartxAPI.Controllers
                    
 
 
-                    sqlCommandCount = "select count(*) as N_Count,0 as TotalAmount from Vw_Inv_PurchaseWarranty where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId " + criteria + " " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count,0 as TotalAmount from Vw_Inv_PurchaseWarranty where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId " + criteria + " " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";

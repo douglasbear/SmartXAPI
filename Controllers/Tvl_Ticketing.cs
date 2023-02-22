@@ -160,38 +160,39 @@ namespace SmartxAPI.Controllers
                         string x_PMessage="";
 
                         string sqlPurchaseMaster ="SELECT Tvl_Ticketing.N_CompanyID, Tvl_Ticketing.N_FnyearID, ISNULL(Inv_Purchase.N_PurchaseID,0) AS N_PurchaseID, ISNULL(Inv_Purchase.X_InvoiceNo,'@Auto') AS X_InvoiceNo, Tvl_Ticketing.N_VendorID, GETDATE() AS D_EntryDate, "+
-                                                    " Tvl_Ticketing.D_TicketDate AS D_InvoiceDate, (Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission) AS N_InvoiceAmt, 0 AS N_DiscountAmt, 0 AS N_CashPaid, "+
-                                                    " 0 AS N_FreightAmt, Tvl_Ticketing.N_userID, 0 AS B_BeginingBalEntry, 7 AS N_PurchaseType, Tvl_Ticketing.N_TicketID AS N_PurchaseRefID, Inv_Location.N_LocationID, "+
+                                                    " Tvl_Ticketing.D_TicketDate AS D_InvoiceDate, (Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission +Tvl_Ticketing.N_AirLineTax) AS N_InvoiceAmt, 0 AS N_DiscountAmt, 0 AS N_CashPaid, "+
+                                                    " 0 AS N_FreightAmt, Tvl_Ticketing.N_userID, 0 AS B_BeginingBalEntry, 0 AS N_PurchaseType, Tvl_Ticketing.N_TicketID AS N_PurchaseRefID, Inv_Location.N_LocationID, "+
                                                     " Acc_BranchMaster.N_BranchID, 'PURCHASE' AS X_TransType, Tvl_Ticketing.X_Notes AS X_Description, 0 AS B_IsSaveDraft,Acc_Company.N_CurrencyID,1 AS N_ExchangeRate, "+
-                                                    " (Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission) AS N_InvoiceAmtF, 0 AS N_DiscountAmtF, 0 AS N_CashPaidF,0 AS N_FreightAmtF, "+
+                                                    " (Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission +Tvl_Ticketing.N_AirLineTax) AS N_InvoiceAmtF, 0 AS N_DiscountAmtF, 0 AS N_CashPaidF,0 AS N_FreightAmtF, "+
                                                     " 1 AS B_FreightAmountDirect,Tvl_Ticketing.N_SuppTax AS N_TaxAmt,Tvl_Ticketing.N_SuppTax AS N_TaxAmtF,Tvl_Ticketing.N_TaxCategoryID,2 AS N_PaymentMethod,Tvl_Ticketing.D_TicketDate D_PrintDate, "+
-                                                    " Tvl_Ticketing.N_TaxPercentage AS n_TaxPercentage,Tvl_Ticketing.N_CreatedUser,Tvl_Ticketing.D_CreatedDate,565 AS N_FormID,0 AS N_POrderID "+
+                                                    " Tvl_Ticketing.N_TaxPercentage AS n_TaxPercentage,Tvl_Ticketing.N_CreatedUser,Tvl_Ticketing.D_CreatedDate,565 AS N_FormID,0 AS N_POrderID, Inv_Purchase.N_RSID"+
                                                     " FROM         Tvl_Ticketing INNER JOIN "+
                                                     " Inv_Location ON Tvl_Ticketing.N_CompanyID = Inv_Location.N_CompanyID AND Inv_Location.B_IsDefault = 1 INNER JOIN "+
                                                     " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND Acc_BranchMaster.B_DefaultBranch = 1 INNER JOIN "+
                                                     " Acc_Company ON Tvl_Ticketing.N_CompanyID = Acc_Company.N_CompanyID LEFT OUTER JOIN "+
-                                                    " Inv_Purchase ON Tvl_Ticketing.N_TicketID = Inv_Purchase.N_PurchaseRefID AND Tvl_Ticketing.N_CompanyID = Inv_Purchase.N_CompanyID and Inv_Purchase.N_PurchaseType=7 "+
+                                                    " Inv_Purchase ON Tvl_Ticketing.N_TicketID = Inv_Purchase.N_PurchaseRefID AND Tvl_Ticketing.N_CompanyID = Inv_Purchase.N_CompanyID and Inv_Purchase.N_PurchaseType=0 "+
                                                     " WHERE      Tvl_Ticketing.N_CompanyID="+ nCompanyID +" AND Tvl_Ticketing.N_TicketID= "+ nTicketID;
 
                         PMasterDt = dLayer.ExecuteDataTable(sqlPurchaseMaster, Params, connection,transaction);
                         PMasterDt = api.Format(PMasterDt, "master");
                         Pds.Tables.Add(PMasterDt);
 
-                        string sqlPurchaseDetails ="SELECT     Tvl_Ticketing.N_CompanyID, ISNULL(Inv_PurchaseDetails.N_PurchaseID,0) AS N_PurchaseID, ISNULL(Inv_PurchaseDetails.N_PurchaseID,N_PurchaseDetailsID) AS N_PurchaseDetailsID, Inv_ItemMaster.N_ItemID, 1 AS N_Qty, "+
-                                                    " Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission AS N_PPrice, Inv_ItemMaster.N_ItemUnitID, 1 AS N_QtyDisplay, "+
+                        string sqlPurchaseDetails ="SELECT     Tvl_Ticketing.N_CompanyID, ISNULL(Inv_PurchaseDetails.N_PurchaseID,0) AS N_PurchaseID, ISNULL(Inv_PurchaseDetails.N_PurchaseDetailsID,0) AS N_PurchaseDetailsID,ISNULL(Inv_PurchaseDetails.N_PorderID,0) AS N_PorderID, Inv_ItemMaster.N_ItemID, 1 AS N_Qty, "+
+                                                    " Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission + Tvl_Ticketing.N_AirLineTax AS N_PPrice, Inv_ItemMaster.N_ItemUnitID, 1 AS N_QtyDisplay, "+
                                                     " Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission AS N_Cost, GETDATE() AS D_Entrydate, Acc_BranchMaster.N_BranchID, Inv_Location.N_LocationID, "+
-                                                    " Acc_Company.N_CurrencyID, 1 AS N_ExchangeRate, Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission AS N_PPriceF, "+
-                                                    " Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission AS N_CostF, Tvl_Ticketing.N_TaxCategoryID AS N_TaxCategoryID1, "+
-                                                    " Tvl_Ticketing.N_TaxPercentage AS N_TaxPercentage1, Tvl_Ticketing.N_SuppTax AS N_TaxAmt1, Inv_ItemUnit.X_ItemUnit "+
+                                                    " Acc_Company.N_CurrencyID, 1 AS N_ExchangeRate, Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission +Tvl_Ticketing.N_AirLineTax AS N_PPriceF, "+
+                                                    " Tvl_Ticketing.N_SuppFare + Tvl_Ticketing.N_SuppCommission - Tvl_Ticketing.N_Commission +Tvl_Ticketing.N_AirLineTax AS N_CostF, Tvl_Ticketing.N_TaxCategoryID AS N_TaxCategoryID1, "+
+                                                    " Tvl_Ticketing.N_TaxPercentage AS N_TaxPercentage1, Tvl_Ticketing.N_SuppTax AS N_TaxAmt1,Inv_ItemUnit.X_ItemUnit,Inv_PurchaseDetails.N_RsID ,Inv_MRNDetails.N_MRNDetailsiD"+
                                                     " FROM         Inv_PurchaseDetails RIGHT OUTER JOIN "+
                                                     " Inv_Purchase ON Inv_PurchaseDetails.N_CompanyID = Inv_Purchase.N_CompanyID AND Inv_PurchaseDetails.N_PurchaseID = Inv_Purchase.N_PurchaseID RIGHT OUTER JOIN "+
                                                     " Tvl_Ticketing INNER JOIN "+
-                                                    " Inv_ItemMaster ON Tvl_Ticketing.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemMaster.X_ItemCode = '001' INNER JOIN "+
+                                                    " Inv_ItemMaster ON Tvl_Ticketing.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemMaster.X_ItemCode = '005' INNER JOIN "+
                                                     " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND Acc_BranchMaster.B_DefaultBranch = 1 INNER JOIN "+
                                                     " Inv_Location ON Tvl_Ticketing.N_CompanyID = Inv_Location.N_CompanyID AND Inv_Location.B_IsDefault = 1 INNER JOIN "+
                                                     " Acc_Company ON Tvl_Ticketing.N_CompanyID = Acc_Company.N_CompanyID INNER JOIN "+
                                                     " Inv_ItemUnit ON Inv_ItemUnit.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemUnit.N_ItemUnitID = Inv_ItemMaster.N_ItemUnitID ON "+
-                                                    " Inv_Purchase.N_CompanyID = Tvl_Ticketing.N_CompanyID AND Inv_Purchase.N_PurchaseRefID = Tvl_Ticketing.N_TicketID "+
+                                                    " Inv_Purchase.N_CompanyID = Tvl_Ticketing.N_CompanyID AND Inv_Purchase.N_PurchaseRefID = Tvl_Ticketing.N_TicketID LEFT OUTER JOIN "+
+                                                    " Inv_MRNDetails ON Inv_PurchaseDetails.N_CompanyID=Inv_MRNDetails.N_CompanyID AND Inv_PurchaseDetails.N_PurchaseDetailsID=Inv_MRNDetails.N_PurchaseDetailsID" +
                                                     " WHERE      Tvl_Ticketing.N_CompanyID= "+nCompanyID+" and Tvl_Ticketing.N_TicketID= "+nTicketID;
 
                         PDetailsDt = dLayer.ExecuteDataTable(sqlPurchaseDetails, Params, connection,transaction);
@@ -232,7 +233,7 @@ namespace SmartxAPI.Controllers
                         int n_SIsCompleted=0;
                         string x_SMessage="";
 
-                        string sqlSalesMaster=" SELECT     Tvl_Ticketing.N_CompanyID, Tvl_Ticketing.N_FnyearID, 0 AS N_SalesId, '@Auto' AS X_ReceiptNo, REPLACE(CONVERT(VARCHAR,Tvl_Ticketing.D_TicketDate,121),'.',':') AS D_SalesDate, GETDATE() AS D_EntryDate, "+
+                        string sqlSalesMaster=" SELECT     Tvl_Ticketing.N_CompanyID, Tvl_Ticketing.N_FnyearID,ISNULL(Inv_Sales.N_SalesId,0) AS N_SalesId, '@Auto' AS X_ReceiptNo, REPLACE(CONVERT(VARCHAR,Tvl_Ticketing.D_TicketDate,121),'.',':') AS D_SalesDate, GETDATE() AS D_EntryDate, "+
                                                     " Tvl_Ticketing.N_CustomerID AS N_CustomerId, Tvl_Ticketing.N_CustomerAmt AS N_BillAmt, 0 AS N_DiscountAmt, 0 AS N_FreightAmt, 0 AS N_CashReceived, "+
                                                     " Tvl_Ticketing.X_Description AS x_Notes, Tvl_Ticketing.N_userID, 0 AS N_SalesOrderID, 0 AS B_BeginingBalEntry, 7 AS N_SalesType, Tvl_Ticketing.N_TicketID AS N_SalesRefID, "+
                                                     " Inv_Location.N_LocationID, Acc_BranchMaster.N_BranchID, 'SALES' AS X_TransType, 0 AS B_IsSaveDraft, 2 AS N_PaymentMethodId, Tvl_Ticketing.D_TicketDate AS D_PrintDate, "+
@@ -249,13 +250,13 @@ namespace SmartxAPI.Controllers
                         SMasterDt = api.Format(SMasterDt, "master");
                         Sds.Tables.Add(SMasterDt); 
 
-                        string sqlSalesDetails ="SELECT     Tvl_Ticketing.N_CompanyID, ISNULL(Inv_SalesDetails.N_SalesID,0) AS N_SalesID, ISNULL(Inv_SalesDetails.N_SalesDetailsID,0) AS N_SalesDetailsID, Inv_ItemMaster.N_ItemID, 1 AS N_Qty, Tvl_Ticketing.N_CustomerAmt AS N_Sprice, Inv_ItemMaster.N_ClassID, "+
+                        string sqlSalesDetails ="SELECT     Tvl_Ticketing.N_CompanyID, ISNULL(Inv_SalesDetails.N_SalesID,0) AS N_SalesID, ISNULL(Inv_SalesDetails.N_SalesDetailsID,0) AS N_SalesDetailsID,ISNULL(Inv_SalesDetails.N_DeliveryNoteID,0) AS N_DeliveryNoteID, Inv_ItemMaster.N_ItemID, 1 AS N_Qty, Tvl_Ticketing.N_CustomerAmt AS N_Sprice, Inv_ItemMaster.N_ClassID, "+
                                                 " Inv_ItemMaster.N_ItemID AS N_MainItemID, Inv_ItemMaster.N_ItemUnitID, 1 AS N_QtyDisplay, Tvl_Ticketing.N_CustomerAmt AS N_Cost, GETDATE() AS D_EntryDate, Inv_Location.N_LocationID, "+
                                                 " Acc_BranchMaster.N_BranchID, Tvl_Ticketing.N_CustomerAmt AS N_SpriceF, 0 AS n_SalesOrderID, 0 AS N_SalesQuotationID "+
                                                 " FROM         Inv_SalesDetails INNER JOIN "+
                                                 " Inv_Sales ON Inv_SalesDetails.N_CompanyID = Inv_Sales.N_CompanyId AND Inv_SalesDetails.N_SalesID = Inv_Sales.N_SalesId RIGHT OUTER JOIN "+
                                                 " Tvl_Ticketing INNER JOIN "+
-                                                " Inv_ItemMaster ON Tvl_Ticketing.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemMaster.X_ItemCode = '001' INNER JOIN "+
+                                                " Inv_ItemMaster ON Tvl_Ticketing.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemMaster.X_ItemCode = '005' INNER JOIN "+
                                                 " Inv_Location ON Tvl_Ticketing.N_CompanyID = Inv_Location.N_CompanyID AND Inv_Location.B_IsDefault = 1 INNER JOIN "+
                                                 " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND Acc_BranchMaster.B_DefaultBranch = 1 ON Inv_Sales.N_CompanyId = Tvl_Ticketing.N_CompanyID AND "+
                                                 " Inv_Sales.N_SalesRefID = Tvl_Ticketing.N_TicketID AND Inv_Sales.N_SalesType=7 "+
@@ -362,7 +363,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    sqlCommandCount = "select count(*) as N_Count  from Vw_TvlTicketingMaster  where N_CompanyID=@nCompanyId and N_FnyearID=@nFnYearId " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count  from Vw_TvlTicketingMaster  where N_CompanyID=@nCompanyId and N_FnyearID=@nFnYearId " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
