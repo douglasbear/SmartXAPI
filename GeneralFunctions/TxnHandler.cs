@@ -1663,6 +1663,7 @@ namespace SmartxAPI.GeneralFunctions
             }
 
             // dLayer.setTransaction();
+           
             MasterTable.Columns.Remove("n_ProjectID");
             N_InvoiceId = dLayer.SaveData("Inv_SalesReturnMaster", "N_DebitNoteId", MasterTable, connection, transaction);
             if (N_InvoiceId <= 0)
@@ -1681,6 +1682,8 @@ namespace SmartxAPI.GeneralFunctions
             SortedList CustomerParams = new SortedList();
             CustomerParams.Add("@nCustomerID", N_CustomerID);
             DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID=@nCustomerID", CustomerParams, connection, transaction);
+                myFunctions.LogScreenActivitys(nFnYearID,N_DebitNoteId,InvoiceNo,55,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+           
             if (CustomerInfo.Rows.Count > 0)
             {
                 try
@@ -1697,6 +1700,9 @@ namespace SmartxAPI.GeneralFunctions
                     throw ex;
                 }
             }
+
+          
+
             SortedList InsParams = new SortedList();
             InsParams.Add("N_CompanyID", N_CompanyID);
             InsParams.Add("N_DebitNoteId", N_InvoiceId);
@@ -1718,13 +1724,7 @@ namespace SmartxAPI.GeneralFunctions
             dLayer.ExecuteNonQueryPro("SP_StockOutUpdate", StockOutParam, connection, transaction);
 
             
-                       //  Activity Log
-                // string ipAddress = "";
-                // if ( Request.Headers.ContainsKey("X-Forwarded-For"))
-                //     ipAddress = Request.Headers["X-Forwarded-For"];
-                // else
-                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                      myFunctions.LogScreenActivitys(nFnYearID,N_DebitNoteId,InvoiceNo,55,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+          
 
             //transaction.Commit();
 
