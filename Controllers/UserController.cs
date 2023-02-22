@@ -754,7 +754,12 @@ namespace SmartxAPI.Controllers
                     if (objUser == null)
                         return Ok(_api.Warning("User Not Found"));
 
+                    object objByPass = dLayer.ExecuteScalar("select B_ByPassTwoFactAuth from Users where X_UserID=@xUserID", Params, olvConn);
+                    // object objAuthType = dLayer.ExecuteScalar("select N_TwoFactAuthType from ClientMaster where X_EmailID=@xUserID", Params, olvConn);
+
                     dt = myFunctions.AddNewColumnToDataTable(dt, "N_GlobalUserID", typeof(int), myFunctions.getIntVAL(objUser.ToString()));
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "B_ByPassTwoFactAuth", typeof(bool), myFunctions.getBoolVAL(objByPass.ToString()));
+                    // dt = myFunctions.AddNewColumnToDataTable(dt, "N_TwoFactAuthType", typeof(int), myFunctions.getIntVAL(objAuthType.ToString()));
 
                     dt.AcceptChanges();
                 }
@@ -980,5 +985,42 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User,e));
             }   
         }   
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpGet("companylist")]
+        public ActionResult GetUserCompanyList(string xUserID, int nClientID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "SELECT Sec_User.N_CompanyID, Sec_User.N_UserID, Sec_User.X_UserID, Sec_User.X_Password, Sec_User.N_UserCategoryID, Sec_User.B_Active, Sec_User.N_BranchID, Sec_User.N_LocationID, Sec_User.X_UserName, "
+                    + "Sec_User.D_ExpireDate, Sec_User.N_TerminalID, Sec_User.N_EmpID, Sec_User.N_LoginFlag, Sec_User.N_CustomerID, Sec_User.X_UserCategoryList, Sec_User.X_Token, Sec_User.X_Email, Sec_User.N_EcomAdmin, "
+                    + "Sec_User.I_Sign, Sec_User.N_ParentID, Sec_User.N_StudentID, Sec_User.N_TeacherID, Sec_User.N_TypeID, Acc_Company.N_ClientID "
+                    + "FROM Sec_User INNER JOIN "
+                    + "Acc_Company ON Sec_User.N_CompanyID = Acc_Company.N_CompanyID where X_UserID='"+ xUserID +"' and N_ClientID="+ nClientID +" and Sec_User.N_CompanyID <>"+ nCompanyId;
+            Params.Add("N_CompanyID", nCompanyId);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                    return Ok(_api.Warning("No Results Found"));
+                else
+                {
+                    dt.Columns.Remove("X_Password");
+                    dt.AcceptChanges();
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(403, _api.Error(User, e));
+            }
+        }
     }
 }

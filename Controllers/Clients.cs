@@ -477,7 +477,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-              [HttpPost("save")]
+        [HttpPost("save")]
         public ActionResult Save([FromBody] DataSet ds)
         {
             DataTable MasterTable = ds.Tables["master"];
@@ -504,6 +504,84 @@ namespace SmartxAPI.Controllers
                 dLayer.ExecuteNonQuery("Update users Set N_LanguageID=@nLangaugeID Where X_EmailID=@emailID  and N_ClientID=@nClientID",paramList, olivoCon, transaction);
                  transaction.Commit();
                 return Ok(_api.Success("Account Saved"));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+        [HttpPost("prefsave")]
+        public ActionResult SavePref([FromBody] DataSet ds)
+        {
+            DataTable MasterTable = ds.Tables["master"];
+            DataRow MasterRow = MasterTable.Rows[0];
+
+            string email = MasterTable.Rows[0]["x_EmailID"].ToString();
+            int nLangaugeID =  myFunctions.getIntVAL(MasterTable.Rows[0]["n_LanguageID"].ToString());
+            int nClientID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ClientID"].ToString());
+            int nTimeZoneID =  myFunctions.getIntVAL(MasterTable.Rows[0]["n_TimeZoneID"].ToString());
+            bool bEnableTwoFactAuth = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_EnableTwoFactAuth"].ToString());
+
+            try
+            {
+                using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                {
+                    olivoCon.Open();
+                    SqlTransaction transaction;
+
+                    transaction = olivoCon.BeginTransaction();
+
+                    SortedList paramList = new SortedList();
+                    paramList.Add("@emailID", email);
+                    paramList.Add("@nLangaugeID", nLangaugeID);
+                    paramList.Add("@nClientID", nClientID);
+                    paramList.Add("@nTimeZoneID", nTimeZoneID);
+                    paramList.Add("@bEnableTwoFactAuth", bEnableTwoFactAuth);
+                   
+                dLayer.ExecuteNonQuery("Update users Set N_LanguageID=@nLangaugeID, N_TimeZoneID=@nTimeZoneID, B_EnableTwoFactAuth=@bEnableTwoFactAuth Where X_EmailID=@emailID and N_ClientID=@nClientID",paramList, olivoCon, transaction);
+                 transaction.Commit();
+                return Ok(_api.Success("Preference Saved"));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+        [HttpPost("authsave")]
+        public ActionResult SaveAuth([FromBody] DataSet ds)
+        {
+            DataTable MasterTable = ds.Tables["master"];
+            DataRow MasterRow = MasterTable.Rows[0];
+
+            int nClientID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ClientID"].ToString());
+            bool bEnableWhatsappAuth = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_EnableWhatsappAuth"].ToString());
+            bool bEnableEmailAuth = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_EnableEmailAuth"].ToString());
+            int nTwoFactAuthType = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TwoFactAuthType"].ToString());
+
+            try
+            {
+                using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                {
+                    olivoCon.Open();
+                    SqlTransaction transaction;
+
+                    transaction = olivoCon.BeginTransaction();
+
+                    SortedList paramList = new SortedList();
+                    paramList.Add("@nClientID", nClientID);
+                    paramList.Add("@bEnableWhatsappAuth", bEnableWhatsappAuth);
+                    paramList.Add("@bEnableEmailAuth", bEnableEmailAuth);
+                    paramList.Add("@nTwoFactAuthType", nTwoFactAuthType);
+                   
+                dLayer.ExecuteNonQuery("Update ClientMaster Set B_EnableWhatsappAuth=@bEnableWhatsappAuth, B_EnableEmailAuth=@bEnableEmailAuth, N_TwoFactAuthType=@nTwoFactAuthType Where N_ClientID=@nClientID",paramList, olivoCon, transaction);
+                 transaction.Commit();
+                return Ok(_api.Success("Authentication Saved"));
                 }
 
             }
