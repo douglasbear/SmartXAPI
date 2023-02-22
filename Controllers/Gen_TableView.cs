@@ -157,16 +157,16 @@ namespace SmartxAPI.Controllers
                         {
                             if (myFunctions.getBoolVAL(cRow["B_Search"].ToString()))
                             {
-                                Searchkey = Searchkey + " or " + cRow["X_FieldName"].ToString() + " like '%" + xSearchkey + "%'";
+                                Searchkey = Searchkey + " or [" + cRow["X_FieldName"].ToString() + "] like '%" + xSearchkey + "%'";
                             }
                         }
 
-                        FieldList = FieldList + "," + cRow["X_FieldName"].ToString();
+                        FieldList = FieldList + ",[" + cRow["X_FieldName"].ToString()+"]";
 
                     }
                     if (xSearchField != "All")
                     {
-                        Searchkey = Searchkey + " or " + xSearchField + " like '%" + xSearchkey + "%'";
+                        Searchkey = Searchkey + " or [" + xSearchField + "] like '%" + xSearchkey + "%'";
                     }
 
                     if (Searchkey.Length > 3)
