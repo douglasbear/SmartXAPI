@@ -993,11 +993,10 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "SELECT Sec_User.N_CompanyID, Sec_User.N_UserID, Sec_User.X_UserID, Sec_User.X_Password, Sec_User.N_UserCategoryID, Sec_User.B_Active, Sec_User.N_BranchID, Sec_User.N_LocationID, Sec_User.X_UserName, "
-                    + "Sec_User.D_ExpireDate, Sec_User.N_TerminalID, Sec_User.N_EmpID, Sec_User.N_LoginFlag, Sec_User.N_CustomerID, Sec_User.X_UserCategoryList, Sec_User.X_Token, Sec_User.X_Email, Sec_User.N_EcomAdmin, "
-                    + "Sec_User.I_Sign, Sec_User.N_ParentID, Sec_User.N_StudentID, Sec_User.N_TeacherID, Sec_User.N_TypeID, Acc_Company.N_ClientID "
-                    + "FROM Sec_User INNER JOIN "
-                    + "Acc_Company ON Sec_User.N_CompanyID = Acc_Company.N_CompanyID where X_UserID='"+ xUserID +"' and N_ClientID="+ nClientID +" and Sec_User.N_CompanyID <>"+ nCompanyId;
+            string sqlCommandText = "SELECT Sec_User.N_CompanyID, Sec_User.D_ExpireDate, Sec_User.X_UserCategoryList, Sec_User.X_Email, Acc_Company.N_ClientID, Acc_Company.X_CompanyName, Acc_Company.X_CompanyCode, Sec_User.X_UserName, " +
+                                    " Sec_User.N_UserCategoryID, Sec_User.X_UserID, Sec_User.N_UserID, Sec_User.X_Password " +
+                                    " FROM Sec_User INNER JOIN Acc_Company ON Sec_User.N_CompanyID = Acc_Company.N_CompanyID " +
+                                    " where X_UserID='"+ xUserID +"' and N_ClientID="+ nClientID +" and Sec_User.N_CompanyID <>"+ nCompanyId;
             Params.Add("N_CompanyID", nCompanyId);
 
             try
