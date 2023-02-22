@@ -80,9 +80,9 @@ namespace SmartxAPI.Controllers
             // if (empID == 0 || empID == null)
             // {
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays,N_VacationGroupID,B_IsSaveDraft,X_BranchName  From vw_PayVacationList where N_CompanyID=@nCompanyID and  N_EmpID=@nEmpID and B_IsAdjustEntry<>1  " + Searchkey + "  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,B_IsSaveDraft,N_VacationGroupID,X_BranchName" + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays,N_VacationGroupID,isnull(B_IsSaveDraft,0) AS B_IsSaveDraft,X_BranchName  From vw_PayVacationList where N_CompanyID=@nCompanyID and  N_EmpID=@nEmpID and B_IsAdjustEntry<>1  " + Searchkey + "  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,B_IsSaveDraft,N_VacationGroupID,X_BranchName" + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays,N_VacationGroupID,B_IsSaveDraft,X_BranchName From vw_PayVacationList where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID  and B_IsAdjustEntry<>1  " + Searchkey + " and N_VacationGroupID not in (select top(" + Count + ") N_VacationGroupID from vw_PayVacationList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and B_IsAdjustEntry<>1   group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,B_IsSaveDraft,N_VacationGroupID,X_BranchName" + xSortBy + "  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus ,B_IsSaveDraft,N_VacationGroupID,X_BranchName ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays,N_VacationGroupID,isnull(B_IsSaveDraft,0) AS B_IsSaveDraft,X_BranchName From vw_PayVacationList where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID  and B_IsAdjustEntry<>1  " + Searchkey + " and N_VacationGroupID not in (select top(" + Count + ") N_VacationGroupID from vw_PayVacationList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and B_IsAdjustEntry<>1   group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,B_IsSaveDraft,N_VacationGroupID,X_BranchName" + xSortBy + "  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus ,B_IsSaveDraft,N_VacationGroupID,X_BranchName ) " + xSortBy;
             // }
             SortedList OutPut = new SortedList();
 
@@ -221,7 +221,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult GetEmployeeVacationDetails(string xVacationGroupCode, int nBranchID, bool bShowAllBranchData)
+        public ActionResult GetEmployeeVacationDetails(string xVacationGroupCode, int nBranchID, bool bShowAllBranchData,bool isApproval)
         {
             DataTable Master = new DataTable();
             DataTable Detail = new DataTable();
@@ -247,7 +247,10 @@ namespace SmartxAPI.Controllers
                     else
                         Condition = "n_Companyid=@nCompanyID and X_VacationGroupCode =@xVacationGroupCode and N_BranchID=@nBranchID and N_TransType=1";
 
-
+                    if(isApproval)
+                    {
+                       Condition="n_Companyid=@nCompanyID and X_VacationGroupCode =@xVacationGroupCode and N_TransType=1"; 
+                    }
                     _sqlQuery = "Select * from vw_PayVacationMaster Where " + Condition + "";
 
                     Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
@@ -270,7 +273,10 @@ namespace SmartxAPI.Controllers
                             Condition = "n_Companyid=@nCompanyID and N_VacationGroupID =@nVacationGroupID and N_TransType=1 and X_Type='B'";
                         else
                             Condition = "n_Companyid=@nCompanyID and N_VacationGroupID =@nVacationGroupID and N_BranchID=@nBranchID  and N_TransType=1 and X_Type='B'";
-
+                        if(isApproval)
+                         {
+                         Condition="n_Companyid=@nCompanyID and N_VacationGroupID =@nVacationGroupID and N_TransType=1 and X_Type='B'"; 
+                         }
                         bool bIsAdjusted = myFunctions.getBoolVAL(Master.Rows[0]["B_IsAdjustEntry"].ToString());
                         _sqlQuery = "Select *,dbo.Fn_CalcAvailDays(N_CompanyID,VacTypeId,@nEmpID,D_VacDateFrom,N_VacationGroupID,2) As n_AvailDays,dbo.Fn_CalcAvailDays(N_CompanyID,VacTypeId,@nEmpID,D_VacDateFrom,N_VacationGroupID," + (bIsAdjusted == true ? "3" : "1") + ") As n_AvailUptoDays from vw_PayVacationDetails_Disp Where " + Condition + "";
                         Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);

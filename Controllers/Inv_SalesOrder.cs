@@ -577,8 +577,8 @@ namespace SmartxAPI.Controllers
                     DataTable rentalItem = ds.Tables["segmentTable"];
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
-                            SortedList Result = new SortedList();
-
+                    SortedList Result = new SortedList();
+                     SortedList QueryParams = new SortedList();
 
                     int n_SalesOrderId = myFunctions.getIntVAL(MasterRow["n_SalesOrderId"].ToString());
                     int n_SOId = myFunctions.getIntVAL(MasterRow["n_SalesOrderId"].ToString());
@@ -603,6 +603,33 @@ namespace SmartxAPI.Controllers
                    {
                     MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
                     N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+
+                    QueryParams["@nFnYearID"] = N_FnYearID;
+                    QueryParams["@N_CustomerId"] = N_CustomerId;
+                    QueryParams["@N_CompanyID"] = N_CompanyID;
+
+
+                    SortedList PostingParam = new SortedList();
+                    PostingParam.Add("N_PartyID", N_CustomerId);
+                    PostingParam.Add("N_FnyearID", N_FnYearID);
+                    PostingParam.Add("N_CompanyID", N_CompanyID);
+                    PostingParam.Add("X_Type", "customer");
+
+
+                     object custCount = dLayer.ExecuteScalar("Select count(*) From Inv_Customer where N_FnYearID=@nFnYearID and N_CompanyID=@N_CompanyID and N_CustomerID=@N_CustomerId", QueryParams, connection, transaction);
+                      
+                      if(myFunctions.getIntVAL(custCount.ToString())==0){
+                           try 
+                    {
+                        dLayer.ExecuteNonQueryPro("SP_CratePartyBackYear", PostingParam, connection, transaction);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        throw ex;
+                    }
+                      }
+                 
                   
                   }
                   else

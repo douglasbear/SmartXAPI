@@ -517,7 +517,33 @@ namespace SmartxAPI.Controllers
                    {
                      Master["n_FnYearId"] = DiffFnYearID.ToString();
                     MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
-                    //N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                     int N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+
+                           SortedList QueryParams = new SortedList();
+                            QueryParams["@nFnYearID"] = N_FnYearID;
+                            QueryParams["@nCompanyId"] = nCompanyId;
+                            QueryParams["@N_VendorID"] = N_VendorID;
+                            
+                              SortedList PostingParam = new SortedList();
+                              PostingParam.Add("N_PartyID", N_VendorID);
+                              PostingParam.Add("N_FnyearID", N_FnYearID);
+                              PostingParam.Add("N_CompanyID", nCompanyId);
+                              PostingParam.Add("X_Type", "vendor");
+
+
+                             object vendorCount = dLayer.ExecuteScalar("Select count(*) From Inv_Vendor where N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID and N_VendorID=@N_VendorID", QueryParams, connection, transaction);
+                      
+                               if(myFunctions.getIntVAL(vendorCount.ToString())==0){
+                                try 
+                                  {
+                                     dLayer.ExecuteNonQueryPro("SP_CratePartyBackYear", PostingParam, connection, transaction);
+                                  }
+                                  catch (Exception ex)
+                                  {
+                                    transaction.Rollback();
+                                     throw ex;
+                                  }
+                                  }
                   
                   }
                   else
