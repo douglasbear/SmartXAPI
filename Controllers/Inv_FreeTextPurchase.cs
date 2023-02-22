@@ -245,6 +245,8 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_InvoiceNo"] = X_InvoiceNo;
                     }
 
+                    X_InvoiceNo = MasterTable.Rows[0]["X_InvoiceNo"].ToString();
+
                     if (MasterTable.Columns.Contains("N_ActVendorID"))
                     {
                         MasterTable.Rows[0]["N_ActVendorID"] = N_VendorID;
@@ -518,14 +520,25 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable TransData = new DataTable();
                      SortedList ParamList=new SortedList();
                     SqlTransaction transaction = connection.BeginTransaction();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     var nUserID = myFunctions.GetUserID(User);
                      SortedList Params = new SortedList();
+                      ParamList.Add("@nTransID", nPurchaseID);
                       ParamList.Add("@nFnYearID",nFnYearID);
-                    string xButtonAction="Delete";
+                      ParamList.Add("@nCompanyID", nCompanyID);
+                     string xButtonAction="Delete";
                      String X_InvoiceNo="";
+                     string Sql = "select X_InvoiceNo,n_PurchaseID from Inv_Purchase where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and n_PurchaseID=@nTransID";
+                    
+
+                         if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
 
                         object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Inv_Purchase where N_PurchaseID =" + nPurchaseID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
                     //Activity Log
@@ -534,7 +547,7 @@ namespace SmartxAPI.Controllers
                     ipAddress = Request.Headers["X-Forwarded-For"];
                 else
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nPurchaseID,X_InvoiceNo,380,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nPurchaseID,TransRow["X_InvoiceNo"].ToString(),380,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
                    
                     SortedList DeleteParams = new SortedList(){

@@ -207,9 +207,15 @@ namespace SmartxAPI.Controllers
                         Pds.Tables.Add(PFreightDt);   
 
                         PAttachmentDt = api.Format(PAttachmentDt, "attachments");
-                        Pds.Tables.Add(PAttachmentDt);                                           
+                        Pds.Tables.Add(PAttachmentDt);  
+                           string ipAddress = "";
+                        if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                            ipAddress = Request.Headers["X-Forwarded-For"];
+                        else
+                            ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                                         
 
-                        PResult=txnHandler.PurchaseSaveData( Pds ,User , dLayer, connection, transaction);
+                        PResult=txnHandler.PurchaseSaveData( Pds,ipAddress,User , dLayer, connection, transaction);
 
                         n_PIsCompleted=myFunctions.getIntVAL(PResult["b_IsCompleted"].ToString());
                         x_PMessage=PResult["x_Msg"].ToString();
@@ -289,14 +295,14 @@ namespace SmartxAPI.Controllers
                         SAdvanceDt = api.Format(SAdvanceDt, "advanceTable");
                         Sds.Tables.Add(SAdvanceDt);                                               
 
-                        string ipAddress = "";
+                   
                         if (  Request.Headers.ContainsKey("X-Forwarded-For"))
                             ipAddress = Request.Headers["X-Forwarded-For"];
                         else
                             ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
 
-                        SResult=txnHandler.SalesSaveData( Sds ,ipAddress,User , dLayer, connection, transaction);
-                        
+                        SResult=txnHandler.SalesSaveData( Sds,ipAddress,User , dLayer, connection, transaction);
+                    
                         n_SIsCompleted=myFunctions.getIntVAL(SResult["b_IsCompleted"].ToString());
                         x_SMessage=SResult["x_Msg"].ToString();
 

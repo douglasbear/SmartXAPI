@@ -309,6 +309,7 @@ namespace SmartxAPI.Controllers
                    string  DupCriteria = "x_CustomerName='" + x_CustomerName.Replace("'", "''") + "' and N_CompanyID=" + nCompanyID;
                    string  X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
                         nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
+                           xButtonAction="Update"; 
                      }
                  
                                    
@@ -353,6 +354,7 @@ namespace SmartxAPI.Controllers
                      
                                 int ncrmCustomerID = dLayer.SaveData("CRM_Customer", "N_CustomerId", CustomerMaster, connection, transaction);
                                 dLayer.ExecuteNonQuery("Update Inv_Customer Set n_CrmCompanyID =" + ncrmCustomerID + " Where N_CustomerID =" + nCustomerID + " and N_CompanyID=" + nCompanyID + " and N_FnyearID= " + nFnYearId, Params, connection, transaction);
+                                
                                 if (ncrmCustomerID <= 0)
                                 {
                                     transaction.Rollback();
@@ -399,12 +401,15 @@ namespace SmartxAPI.Controllers
                                     else// update ledger id
                                     {
                                         dLayer.ExecuteNonQuery("Update Inv_Customer Set N_LedgerID =" + myFunctions.getIntVAL(N_LedgerID.ToString()) + " Where N_CustomerID =" + nCustomerID + " and N_CompanyID=" + nCompanyID + " and N_FnyearID= " + nFnYearId, Params, connection, transaction);
-                                   xButtonAction="Update"; 
+                                  
                                     }
                                 }
                                 else
                                 {
+                               
                                     dLayer.ExecuteNonQuery("SP_Inv_CreateCustomerAccount " + nCompanyID + "," + nCustomerID + ",'" + CustomerCode + "',@X_LedgerName," + myFunctions.GetUserID(User) + "," + nFnYearId + "," + "Customer", ledgerParams, connection, transaction);
+                                 
+                              
                                 }
                             }
                             // else
@@ -418,6 +423,17 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQuery("Update Inv_Customer Set N_LedgerID =" + myFunctions.getIntVAL(N_DefLedgerID.ToString()) + " Where N_CustomerID =" + nCustomerID + " and N_CompanyID=" + nCompanyID + " and N_FnyearID= " + nFnYearId, Params, connection, transaction);
                             }
                         }
+
+
+                        
+                              //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearId,nCustomerID,CustomerCode,51,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       
 
 
 
@@ -469,15 +485,7 @@ namespace SmartxAPI.Controllers
                                     // } 
                                 }
                             }
-
-                              //Activity Log
-                // string ipAddress = "";
-                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                //     ipAddress = Request.Headers["X-Forwarded-For"];
-                // else
-                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                //        myFunctions.LogScreenActivitys(nFnYearID,nCustomerID,x_CustomerCode,51,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-                          
+   
 
                             if (UserID == 0)
                             {
@@ -702,14 +710,7 @@ namespace SmartxAPI.Controllers
                       return Ok(api.Error(User, "Unable to delete customer! It has been used."));
                    }
 
-                       //Activity Log
-                // string ipAddress = "";
-                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                //     ipAddress = Request.Headers["X-Forwarded-For"];
-                // else
-                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                //        myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nCustomerID,x_CustomerCode,51,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-
+                
                    dLayer.ExecuteNonQuery("update Inv_ItemMaster set N_CustomerID=0,x_CustomerSKU=null where N_CompanyID=" + nCompanyID + "  and N_CustomerID=" + nCustomerID, Params, connection);
 
                     crmcustomer = dLayer.ExecuteScalar("select count(N_CrmCompanyID) from Inv_SalesQuotation  Where N_CompanyID=" + nCompanyID + " and  N_CrmCompanyID=" + nCrmCustomerID,  QueryParams, connection);
@@ -719,6 +720,16 @@ namespace SmartxAPI.Controllers
                    {
                      dLayer.DeleteData("CRM_Customer", "N_CustomerID", nCrmCustomerID, "", connection, transaction);
                    }
+
+                   
+                     //  Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nCustomerID,x_CustomerCode,51,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
 
                     Results = dLayer.DeleteData("Inv_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
                   
