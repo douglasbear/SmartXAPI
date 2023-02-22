@@ -191,6 +191,7 @@ namespace SmartxAPI.Controllers
                         }
                         MasterTable.Rows[0]["X_ReceiptNo"] = X_ReceiptNo;
                     }
+                    X_ReceiptNo=MasterTable.Rows[0]["X_ReceiptNo"].ToString();
 
                      object DupCount = dLayer.ExecuteScalar("Select COUNT(X_ReceiptNo) from Inv_Sales where X_ReceiptNo ='" + DocNo + "' and N_CompanyID=" + nCompanyID + "and N_FnYearID=" + nFnYearID , Params, connection, transaction);
                        
@@ -487,15 +488,25 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable TransData=new DataTable();
                     SortedList ParamList=new SortedList();
+                    SortedList Params=new SortedList();
                     SqlTransaction transaction = connection.BeginTransaction();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     var nUserID = myFunctions.GetUserID(User);
                     ParamList.Add("@nFnYearID",nFnYearID);
-                      SortedList Params = new SortedList();
-                     string xButtonAction="Delete";
+                    ParamList.Add("@nCompanyID",nCompanyID);
+                    ParamList.Add("@nSalesId",nSalesID);
+                    
+                    string xButtonAction="Delete";
                      String X_ReceiptNo="";
-                     
+                     string Sql = "select N_Salesid,X_ReceiptNo from Vw_FreeTextSalesMaster where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_Salesid=@nSalesId";
+                     TransData=dLayer.ExecuteDataTable(Sql,ParamList,connection,transaction);
+                      if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error(User, "Transaction not Found"));
+                    }
+                     DataRow TransRow=TransData.Rows[0];
 
                        object count = dLayer.ExecuteScalar("select count(1) from Inv_Sales where N_FreeTextReturnID =" + nSalesID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
                      if (myFunctions.getVAL(count.ToString())>0)
@@ -511,7 +522,7 @@ namespace SmartxAPI.Controllers
                     ipAddress = Request.Headers["X-Forwarded-For"];
                 else
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nSalesID,X_ReceiptNo,372,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nSalesID,TransRow["X_ReceiptNo"].ToString(),372,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
