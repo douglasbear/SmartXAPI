@@ -150,7 +150,7 @@ namespace SmartxAPI.Controllers
             else
                 cond="N_FnYearID=@p2 and N_CompanyID=@p1 and N_BranchID=@p3";
 
-            sqlCommandText = "select * from Ass_DepreciationMaster where "+cond+" and X_DepriciationNo=@p4";
+            sqlCommandText = "select * from Vw_AssetDepreciationMaster where "+cond+" and X_DepriciationNo=@p4";
 
             try
             {
@@ -203,6 +203,7 @@ namespace SmartxAPI.Controllers
                     int N_UserID = myFunctions.GetUserID(User);
                     MasterTable.Columns.Remove("N_AllBranchData");
                     var values = MasterTable.Rows[0]["X_DepriciationNo"].ToString();
+                    String xButtonAction="";
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
@@ -210,6 +211,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.FormID);
                         Params.Add("N_BranchID", N_BranchID);
                         DepreciationNo = dLayer.GetAutoNumber("Ass_Transactions", "X_Reference", Params, connection, transaction);
+                         xButtonAction="Insert"; 
                         if (DepreciationNo == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate Depreciation Number")); }
                         MasterTable.Rows[0]["X_DepriciationNo"] = DepreciationNo;
                     }
@@ -225,6 +227,7 @@ namespace SmartxAPI.Controllers
                         try
                         {
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+                              xButtonAction="Update"; 
                         }
                         catch (Exception ex)
                         {
@@ -232,6 +235,17 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User,ex));
                         }
                     }
+
+                     //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(N_FnYearID,N_DeprID,DepreciationNo,403,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
+
+
 
                     string Condn="",SqlCmd="";
                     if (N_AllBranchData == 1)
@@ -243,6 +257,7 @@ namespace SmartxAPI.Controllers
                     DepTable = dLayer.ExecuteDataTable(SqlCmd, Params, connection,transaction);
 
                     N_DeprID = dLayer.SaveData("Ass_DepreciationMaster", "N_DeprID", MasterTable, connection, transaction);
+                    xButtonAction="Update"; 
                     if (N_DeprID <= 0)
                     {
                         transaction.Rollback();
@@ -316,7 +331,7 @@ namespace SmartxAPI.Controllers
 
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nFnYearID, int nCompanyId,string DepreciationNo,int nBranchID)
+        public ActionResult DeleteData(int nFnYearID, int nCompanyId,string DepreciationNo,int nBranchID,int N_DeprID)
         {
             try
             {
@@ -324,6 +339,18 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                     string xButtonAction="Delete";
+                    // String DepreciationNo="";
+
+                       
+               //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),N_DeprID,DepreciationNo,403,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
 
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyId},

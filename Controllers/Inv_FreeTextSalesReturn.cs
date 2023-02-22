@@ -184,6 +184,8 @@ namespace SmartxAPI.Controllers
                         }
                         MasterTable.Rows[0]["X_ReceiptNo"] = X_ReceiptNo;
                     }
+
+                    X_ReceiptNo = MasterTable.Rows[0]["X_ReceiptNo"].ToString();
                     
                      object DupCount = dLayer.ExecuteScalar("Select COUNT(X_ReceiptNo) from Inv_Sales where X_ReceiptNo ='" + DocNo + "' and N_CompanyID=" + nCompanyID + "and N_FnYearID=" + nFnYearID , Params, connection, transaction);
                        
@@ -506,14 +508,33 @@ ReturnDetails = _api.Format(ReturnDetails, "Details");
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable TransData = new DataTable();
                     SortedList ParamList=new SortedList();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    int nCompanyID = myFunctions.GetCompanyID(User);
+                   int nCompanyID = myFunctions.GetCompanyID(User);
                     var nUserID = myFunctions.GetUserID(User);
                     SortedList Params = new SortedList();
-                    ParamList.Add("@nFnYearID",nFnYearID);
+                     ParamList.Add("@nTransID", nSalesID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                           
                     string xButtonAction="Delete";
+                   
                      String X_ReceiptNo="";
+                     string Sql = "select X_ReceiptNo,n_SalesID from Inv_Sales where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and n_SalesID=@nTransID";
+                    
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+           
+                
+                
+             
+
+                          if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+
                     
                        object objPaymentProcessed = dLayer.ExecuteScalar("Select Isnull(N_PayReceiptId,0) from Inv_PayReceiptDetails where N_InventoryId=" + nSalesID + " and X_TransType='DEBIT NOTE'", connection, transaction);
                       if (objPaymentProcessed == null)
@@ -531,7 +552,7 @@ ReturnDetails = _api.Format(ReturnDetails, "Details");
                     ipAddress = Request.Headers["X-Forwarded-For"];
                 else
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nSalesID,X_ReceiptNo,385,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nSalesID,TransRow["X_ReceiptNo"].ToString(),385,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},

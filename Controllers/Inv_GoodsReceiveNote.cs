@@ -315,6 +315,7 @@ namespace SmartxAPI.Controllers
             int nFnYearID = myFunctions.getIntVAL(masterRow["n_FnYearId"].ToString());
             int n_POrderID = myFunctions.getIntVAL(masterRow["n_POrderID"].ToString());
             int n_FormID = myFunctions.getIntVAL(masterRow["n_FormID"].ToString());
+             String xButtonAction="";
 
             
             
@@ -394,6 +395,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
 
                         GRNNo = dLayer.GetAutoNumber("Inv_MRN", "X_MRNNo", Params, connection, transaction);
+                          xButtonAction="Insert"; 
                         if (GRNNo == "")
                         {
                             transaction.Rollback();
@@ -402,11 +404,14 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_MRNNo"] = GRNNo;
                     }
 
+                    GRNNo = MasterTable.Rows[0]["X_MRNNo"].ToString();
+
                     if (N_GRNID > 0)
                     {
                         if (n_POrderID > 0)
                         {
                             dLayer.ExecuteScalar("Update Inv_PurchaseOrder Set N_Processed=1  Where N_POrderID=" + n_POrderID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                           
                         }
 
                         SortedList StockUpdateParams = new SortedList(){
@@ -427,6 +432,7 @@ namespace SmartxAPI.Controllers
                         try
                         {
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
+                               xButtonAction="Update"; 
                         }
                         catch (Exception ex)
                         {
@@ -498,6 +504,16 @@ namespace SmartxAPI.Controllers
                                     }
                         }
                     }
+
+                                                        //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,N_GRNID,GRNNo,555,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
+
                     SortedList VendorParams = new SortedList();
                     VendorParams.Add("@nVendorID", N_VendorID);
                     DataTable VendorInfo = dLayer.ExecuteDataTable("Select X_VendorCode,X_VendorName from Inv_Vendor where N_VendorID=@nVendorID", VendorParams, connection, transaction);
@@ -583,6 +599,7 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nCompanyID", nCompanyID);
                     string Sql = "select N_VendorID,N_FnYearID from Inv_MRN where N_MRNID=@nTransID and N_CompanyID=@nCompanyID";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                     string xButtonAction = "Delete";
                     if (TransData.Rows.Count == 0)
                     {
                         return Ok(_api.Error(User,"Transaction not Found"));
@@ -614,6 +631,14 @@ namespace SmartxAPI.Controllers
 	                            {"X_TransType", "GRN"}};
 
                         dLayer.ExecuteNonQueryPro("SP_StockDeleteUpdate", StockUpdateParams, connection, transaction);
+                             //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nGRNID,TransRow["GRNNo"].ToString(),555,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
 
                         SortedList DeleteParams = new SortedList(){
                             {"N_CompanyID",nCompanyID},

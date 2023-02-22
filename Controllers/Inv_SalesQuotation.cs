@@ -635,6 +635,8 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
                                                                                                                                                
                     }
+
+                    QuotationNo = MasterTable.Rows[0]["QuotationNo"].ToString();
                     if (N_QuotationID > 0)
                     {
                         SortedList DeleteParams = new SortedList(){
@@ -999,7 +1001,7 @@ namespace SmartxAPI.Controllers
                             else
                                 ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
                  
-                        myFunctions.LogScreenActivitys(nFnYearID,N_QuotationID,quotationNo.ToString(),80,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                        myFunctions.LogScreenActivitys(nFnYearID,N_QuotationID,TransRow["quotationNo"].ToString(),80,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
                         string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Sales Quotation", N_QuotationID, TransRow["X_QuotationNo"].ToString(), ProcStatus, "Inv_SalesQuotation", X_Criteria, CustName.ToString(), User, dLayer, connection, transaction);
                         if (status != "Error")

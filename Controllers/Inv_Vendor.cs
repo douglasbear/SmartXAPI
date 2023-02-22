@@ -294,6 +294,9 @@ namespace SmartxAPI.Controllers
                        
                         if (VendorCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to save")); }
                         MasterTable.Rows[0]["x_VendorCode"] = VendorCode;
+                    }else {
+                         xButtonAction="Update"; 
+
                     }
 
                     if (MasterTable.Columns.Contains("b_DirPosting"))
@@ -308,6 +311,7 @@ namespace SmartxAPI.Controllers
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and X_VendorCode='" + VendorCode + "'";
                     string X_Crieteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                     nVendorID = dLayer.SaveData("Inv_Vendor", "N_VendorID", DupCriteria, X_Crieteria, MasterTable, connection, transaction);
+                  
                     if (nVendorID <= 0)
                     {
                         transaction.Rollback();
@@ -338,18 +342,31 @@ namespace SmartxAPI.Controllers
                                     else// update ledger id
                                     {
                                         dLayer.ExecuteNonQuery("Update Inv_Vendor Set N_LedgerID =" + myFunctions.getIntVAL(N_LedgerID.ToString()) + " Where N_VendorID=" + nVendorID + "and N_CompanyID= " + nCompanyID + " and  N_FnYearID = " + nFnYearID, Params, connection, transaction);
-
+                                        
                                     }
                                 }
                                 else
                                 {
                                     dLayer.ExecuteNonQuery("SP_Inv_CreateVendorAccount " + nCompanyID + "," + nVendorID + ",'" + nVendorID + "','" + X_LedgerName + "'," + myFunctions.GetUserID(User) + "," + nFnYearID + "," + "Vendor", Params, connection, transaction);
+                               
                                 }
                             }
                             // else
                             // msg.msgError("No DefaultGroup");
                         }
 
+                      
+                        
+                               //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nVendorID,VendorCode,52,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       
+
+          
 
 
                         SortedList nParams = new SortedList();
@@ -367,10 +384,14 @@ namespace SmartxAPI.Controllers
                         }
                         DataRow NewRow = outputDt.Rows[0];
 
+
+                     
                         try
                         {
                             myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["x_VendorCode"].ToString() + "-" + MasterTable.Rows[0]["x_VendorName"].ToString(), 0, MasterTable.Rows[0]["x_VendorName"].ToString(), MasterTable.Rows[0]["x_VendorCode"].ToString(), nVendorID, "Vendor Document", User, connection, transaction);
                         }
+
+                        
                         catch (Exception ex)
                         {
                             transaction.Rollback();
@@ -402,6 +423,8 @@ namespace SmartxAPI.Controllers
                 QueryParams.Add("@nFnYearID", nFnYearID);
                 QueryParams.Add("@nFormID", 52);
                 QueryParams.Add("@nVendorID", nVendorID);
+                  string xButtonAction="Delete";
+                     String VendorCode="";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -412,6 +435,18 @@ namespace SmartxAPI.Controllers
 
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Inv_Vendor", "N_VendorID", nVendorID, "N_CompanyID="+nCompanyID, connection, transaction);
+             //  Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nVendorID,VendorCode,52,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
+
+                   
+                   
+                   
                     myAttachments.DeleteAttachment(dLayer, 1, 0, nVendorID, nFnYearID, this.FormID, User, transaction, connection);
                     transaction.Commit();
                 }

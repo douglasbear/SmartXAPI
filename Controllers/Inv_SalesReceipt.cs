@@ -722,7 +722,9 @@ namespace SmartxAPI.Controllers
                         // DetailTable.Columns.Remove("n_PayReceiptDetailsId");
                         // DetailTable.AcceptChanges();
                     }
+                      xVoucherNo = MasterTable.Rows[0]["x_VoucherNo"].ToString();
 
+               
                     MasterTable.Rows[0]["n_UserID"] = myFunctions.GetUserID(User);
                     MasterTable.AcceptChanges();
 
@@ -731,19 +733,17 @@ namespace SmartxAPI.Controllers
                         MasterTable.Columns.Remove("N_FormID");
 
                     PayReceiptId = dLayer.SaveData("Inv_PayReceipt", "n_PayReceiptId", MasterTable, connection, transaction);
+
+
                     if (PayReceiptId <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error(User, "Unable To Save Customer Payment"));
                     }
 
-                     //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(nFnYearID,PayReceiptId,xVoucherNo,66,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
+                  
+            
                           
 
                     N_NextApproverID = myFunctions.LogApprovals(Approvals, myFunctions.getIntVAL(nFnYearID.ToString()), "SALES RECEIPT", PayReceiptId, xVoucherNo, 1, "", 0, "", 0, User, dLayer, connection, transaction);
@@ -857,6 +857,16 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
+                                    //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,PayReceiptId,xVoucherNo,66,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
+
+
                     transaction.Commit();
                     if (n_PayReceiptDetailsId > 0 && PayReceiptId > 0)
                     {
@@ -924,7 +934,9 @@ namespace SmartxAPI.Controllers
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,X_VoucherNo,N_PayReceiptId from Inv_PayReceipt where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_PayReceiptId=@nTransID";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                   //  string xButtonAction="Delete";
-                   //  String xVoucherNo="";
+                    String xVoucherNo="";
+
+             
                     if (TransData.Rows.Count == 0)
                     {
                         return Ok(api.Error(User, "Transaction not Found"));
@@ -990,6 +1002,16 @@ namespace SmartxAPI.Controllers
                     //         return Ok(api.Error(User, "Unable to delete Sales Receipt"));
                     //     }
                     // }
+
+                           //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nPayReceiptId,TransRow["X_VoucherNo"].ToString(),66,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                   
+
                     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "SALES RECEIPT", nPayReceiptId, TransRow["X_VoucherNo"].ToString(), ProcStatus, "Inv_PayReceipt", X_Criteria, "", User, dLayer, connection, transaction);
                     if (status != "Error")
                     {
@@ -1008,14 +1030,7 @@ namespace SmartxAPI.Controllers
                                 myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnYearID, 66, User, transaction, connection);
                             }
                         }
-                         //Activity Log
-                // string ipAddress = "";
-                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                //     ipAddress = Request.Headers["X-Forwarded-For"];
-                // else
-                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                //        myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nPayReceiptId,xVoucherNo,66,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-                   
+               
                         transaction.Commit();
                         if (nFormID == 66)
                             return Ok(api.Success("Sales Receipt " + status + " Successfully"));
