@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
                     string menus = "select * from " +
                     "(select X_TableViewCode,N_TableViewID,N_MenuID as formID,X_TitleLanControlNo as titleLbl,X_MenuLanControlNo as menuLbl, " +
                     "B_IsDefault as isDefault,B_SearchEnabled as searchEnabled,B_AttachementSearch as attachementSearch,X_PKey,N_Type,N_Order,X_PCode,N_UserID,X_TotalField from " +
-                    "Gen_TableView where N_MenuID=@nMenuID  " +
+                    "Gen_TableView where N_MenuID=@nMenuID and N_CompanyID=-1 " +
                     "and N_Type not in(select N_Type from Gen_TableView where N_MenuID=@nMenuID and N_CompanyID=@nCompanyID and N_UserID=@nUserID) " +
                     "union all " +
                     "select X_TableViewCode,N_TableViewID,N_MenuID as formID,X_TitleLanControlNo as titleLbl,X_MenuLanControlNo as menuLbl, " +
