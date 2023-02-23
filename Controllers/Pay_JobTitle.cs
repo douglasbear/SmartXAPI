@@ -86,7 +86,13 @@ namespace SmartxAPI.Controllers
                     int N_PositionID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PositionID"].ToString());
                     int N_SupervisorID = myFunctions.getIntVAL(dtSupervisor.Rows[0]["n_SupervisorID"].ToString());
                     int N_IsSupervisor = myFunctions.getIntVAL(MasterTable.Rows[0]["b_IsSupervisor"].ToString());
+                    string x_FunctionalJobTitle ="";
                     bool B_IsSupervisor = false;
+                if( MasterTable.Columns.Contains("x_FunctionalJobTitle"))
+                {
+                    x_FunctionalJobTitle=MasterTable.Rows[0]["x_FunctionalJobTitle"].ToString();
+
+                }
                     if (N_IsSupervisor == 1) B_IsSupervisor = true;
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nPositionID", N_PositionID);
@@ -96,19 +102,34 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_YearID", N_FnYearID);
                         Params.Add("N_FormID", this.FormID);
+                        Params.Add("X_Position",X_Position);
+                        Params.Add("x_FunctionalJobTitle",x_FunctionalJobTitle);
+
                         X_PositionCode = dLayer.GetAutoNumber("Pay_Position", "x_PositionCode", Params, connection, transaction);
                         if (X_PositionCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Job title Code")); }
                         MasterTable.Rows[0]["x_PositionCode"] = X_PositionCode;
+
+                        if(x_FunctionalJobTitle!=""){
+                             object nCount = dLayer.ExecuteScalar("Select count(*) From Pay_Position where N_CompanyID=@N_CompanyID and X_Position=@X_Position and x_FunctionalJobTitle=@x_FunctionalJobTitle", Params, connection,transaction);
+                             object status = dLayer.ExecuteScalar("select x_Position from Pay_Position where N_CompanyID=@N_CompanyID and X_Position=@X_Position and x_FunctionalJobTitle=@x_FunctionalJobTitle",Params, connection,transaction);
+
+                                  if(myFunctions.getIntVAL(nCount.ToString())>0){
+                                 return Ok(_api.Error(User, x_FunctionalJobTitle+" Under " + status + " Already Exist"));
+                                 }
+                        }
+                       if(x_FunctionalJobTitle==""){
+                            object jobtitle = dLayer.ExecuteScalar("Select count(*) From Pay_Position where N_CompanyID=@N_CompanyID and X_Position=@X_Position and ISNULL(Pay_Position.X_FunctionalJobTitle,'')=''", Params, connection,transaction);
+                       if(myFunctions.getIntVAL(jobtitle.ToString())>=1){
+                       return Ok(_api.Error(User,"Job Title Already Exist"));
+                       }
+                       }
+                     
                     }
+
+                
                     MasterTable.Columns.Remove("N_FnYearID");
 
-                    Params.Add("X_Position",X_Position);
 
-                    object nCount = dLayer.ExecuteScalar("Select count(*) From Pay_Position where N_CompanyID=@N_CompanyID and X_Position=@X_Position", Params, connection,transaction);
-
-                    if(myFunctions.getIntVAL(nCount.ToString())>0){
-                       return Ok(_api.Error(User, "Job Titile Already Exist"));
-                    }
                     //string DupCriteria = "N_CompanyID=" + N_CompanyID + " and(X_PositionCode='" + X_PositionCode + "' OR X_Position='" + X_Position + "')";
                    
                     N_PositionID = dLayer.SaveData("Pay_Position", "N_PositionID", MasterTable, connection, transaction);
@@ -132,7 +153,7 @@ namespace SmartxAPI.Controllers
 
                         }
                         else
-                            dLayer.DeleteData("Pay_Supervisor", "N_SupervisorID", N_SupervisorID, "N_CompanyID=" + N_CompanyID + "", connection, transaction);
+                            dLayer.DeleteData("Pay_Supervisor", "N_PositionID", N_PositionID, "N_CompanyID=" + N_CompanyID + "", connection, transaction);
 
                         transaction.Commit();
                     }
