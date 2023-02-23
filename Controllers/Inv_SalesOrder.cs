@@ -965,9 +965,9 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nTransID", nSalesOrderID);
                     ParamList.Add("@nCompanyID", nCompanyID);
                     ParamList.Add("@nFnYearID", nFnYearID);
-                    string Sql = "select N_CustomerId from Inv_SalesOrder where N_SalesOrderId=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+                    string Sql = "select N_CustomerId,x_OrderNo from Inv_SalesOrder where N_SalesOrderId=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
                    string xButtonAction="Delete";
-                     String orderNo="";
+                     String x_OrderNo="";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
@@ -1016,7 +1016,7 @@ namespace SmartxAPI.Controllers
                     ipAddress = Request.Headers["X-Forwarded-For"];
                 else
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nSalesOrderID,TransRow["orderNo"].ToString(),81,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nSalesOrderID,TransRow["x_OrderNo"].ToString(),81,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
 
 
