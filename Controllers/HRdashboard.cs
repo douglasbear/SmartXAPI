@@ -66,7 +66,7 @@ namespace SmartxAPI.Controllers
             }
 
             //string sqlPayables= "select sum(N_BalanceAmount) as N_Amount from vw_InvPayables where N_CompanyId = "+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
-            string sqlEmpByCountry= "select X_Nationality,count(1) as N_Percentage from Pay_Employee where N_Status not in (2,3) and isnull(X_Nationality,'') <>'' and N_CompanyID ="+nCompanyID+" group by X_Nationality ";
+            string sqlEmpByCountry= "select X_Nationality,count(1) as N_Percentage from vw_PayEmployee where N_Status not in (2,3) and isnull(X_Nationality,'') <>'' and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+" group by X_Nationality ";
 
             string sqlEmpByDpt = "select X_Department,N_Male,N_Female from vw_DptWiseEmployee where N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
             string sqlEmpByPjct = "select isNull(X_ProjectName,'Others') as X_ProjectName,N_Male,N_Female from vw_PjctWiseEmployee where N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
