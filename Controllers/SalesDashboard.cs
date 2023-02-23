@@ -65,9 +65,9 @@ namespace SmartxAPI.Controllers
            string sqlDailySales="";
            string sqlMonthlySales="";
             // string sqlReceivedRevenue = "SELECT SUM(Inv_PayReceiptDetails.N_AmountF-Inv_PayReceiptDetails.N_DiscountAmtF)as N_ReceivedAmount FROM Inv_PayReceiptDetails INNER JOIN Inv_PayReceipt ON Inv_PayReceiptDetails.N_PayReceiptId = Inv_PayReceipt.N_PayReceiptId AND Inv_PayReceiptDetails.N_CompanyID = Inv_PayReceipt.N_CompanyID where Inv_PayReceipt.X_Type in ('SR','SA') and MONTH(Cast(Inv_PayReceiptDetails.D_Entrydate as DateTime)) ="+MonthWiseDate+"and YEAR(Inv_PayReceiptDetails.D_Entrydate)= YEAR(CURRENT_TIMESTAMP) and Inv_PayReceiptDetails.N_CompanyID = " + nCompanyID  + " and Inv_PayReceipt.N_FnyearID="+nFnYearID + crieteria1;
-            // string sqlOpenQuotation = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesQuotationNo_Search WHERE MONTH(D_QuotationDate) ="+MonthWiseDate+"AND YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)";
-            // "select X_LeadSource,CAST(COUNT(*) as varchar(50)) as N_Percentage from vw_CRMLeads group by X_LeadSource";
-            // string sqlPipelineoppotunity = "select count(*) as N_Count from CRM_Opportunity where N_ClosingStatusID=0 or N_ClosingStatusID is null";
+            // string sqlOpenQuotation = "SELECT count(1) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesQuotationNo_Search WHERE MONTH(D_QuotationDate) ="+MonthWiseDate+"AND YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)";
+            // "select X_LeadSource,CAST(count(1) as varchar(50)) as N_Percentage from vw_CRMLeads group by X_LeadSource";
+            // string sqlPipelineoppotunity = "select count(1) as N_Count from CRM_Opportunity where N_ClosingStatusID=0 or N_ClosingStatusID is null";
             //string sqlCurrentSales =""
 
             SortedList Data = new SortedList();
@@ -104,13 +104,13 @@ namespace SmartxAPI.Controllers
 
                  
                      
-                      sqlCurrentOrder = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesOrderNo_Search WHERE MONTH(Cast(D_OrderDate as DateTime)) = "+MonthWiseDate+" and YEAR(D_OrderDate)= "+YearWiseDate+" and N_CompanyID = " + nCompanyID + " and N_FnyearID="+nFnYearID  + "and N_FormID=81" + crieteria ;
-                      sqlCurrentInvoice = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(TotalAmount,',','') as Numeric(10,2)) ) AS  TotalAmount  FROM Vw_SalesRevenew_Cloud WHERE MONTH(Cast(D_SalesDate as DateTime)) = "+MonthWiseDate+" AND YEAR(Cast(D_SalesDate as DateTime)) = "+YearWiseDate+" and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID + crieteria;
-                     //string sqlCurrentInvoice = "SELECT COUNT(*) as N_ThisMonth,CAST(CONVERT(varchar, CAST(sum(Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)) ) AS Money), 1) AS   varchar) AS  TotalAmount  FROM vw_InvSalesInvoiceNo_Search WHERE MONTH(Cast([Invoice Date] as DateTime)) ="+MonthWiseDate+"AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID;
-                      sqlCurrentQuotation = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesQuotationNo_Search WHERE MONTH(Cast(D_QuotationDate as DateTime)) = "+MonthWiseDate+" and YEAR(D_QuotationDate) = "+YearWiseDate+" and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID + crieteria;
+                      sqlCurrentOrder = "SELECT count(1) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesOrderNo_Search WHERE MONTH(Cast(D_OrderDate as DateTime)) = "+MonthWiseDate+" and YEAR(D_OrderDate)= "+YearWiseDate+" and N_CompanyID = " + nCompanyID + " and N_FnyearID="+nFnYearID  + "and N_FormID=81" + crieteria ;
+                      sqlCurrentInvoice = "SELECT count(1) as N_ThisMonth,sum(Cast(REPLACE(TotalAmount,',','') as Numeric(10,2)) ) AS  TotalAmount  FROM Vw_SalesRevenew_Cloud WHERE MONTH(Cast(D_SalesDate as DateTime)) = "+MonthWiseDate+" AND YEAR(Cast(D_SalesDate as DateTime)) = "+YearWiseDate+" and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID + crieteria;
+                     //string sqlCurrentInvoice = "SELECT count(1) as N_ThisMonth,CAST(CONVERT(varchar, CAST(sum(Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)) ) AS Money), 1) AS   varchar) AS  TotalAmount  FROM vw_InvSalesInvoiceNo_Search WHERE MONTH(Cast([Invoice Date] as DateTime)) ="+MonthWiseDate+"AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID;
+                      sqlCurrentQuotation = "SELECT count(1) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesQuotationNo_Search WHERE MONTH(Cast(D_QuotationDate as DateTime)) = "+MonthWiseDate+" and YEAR(D_QuotationDate) = "+YearWiseDate+" and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID + crieteria;
                       sqlBranchWiseData = "select sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount,X_BranchName from vw_BranchWiseSales where MONTH(D_SalesDate) = "+MonthWiseDate+" AND YEAR(D_SalesDate) = "+YearWiseDate+" and N_CompanyID ="+nCompanyID + crieteria + " Group BY X_BranchName,N_CompanyID";
                       sqlCustomerbySource = "select top(5) Customer as X_LeadSource,sum(Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)) ) as N_Percentage from vw_InvSalesInvoiceNo_Search where N_CompanyID = " + nCompanyID  + " and N_TypeID <>1 and  N_FnyearID="+nFnYearID + crieteria + " group by Customer order by N_Percentage Desc";
-                      sqlPipelineoppotunity = "select count(*) as N_Count from CRM_Opportunity where (N_ClosingStatusID=0 or N_ClosingStatusID is null) and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID + crieteria;
+                      sqlPipelineoppotunity = "select count(1) as N_Count from CRM_Opportunity where (N_ClosingStatusID=0 or N_ClosingStatusID is null) and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID + crieteria;
                       sqlReceivedRevenue = "select sum(N_ReceivedAmount) as N_ReceivedAmount,N_CompanyId from (select SUM(N_BillAmt)+ SUM(N_TaxAmt) AS N_ReceivedAmount,Inv_Sales.N_CompanyId from Inv_Sales WHERE N_PaymentMethodId=1 AND MONTH(Cast(Inv_Sales.D_Entrydate as DateTime)) ="+MonthWiseDate+" and YEAR(Inv_Sales.D_Entrydate)= "+YearWiseDate+" AND N_CompanyId="+nCompanyID+" AND N_FnYearId="+nFnYearID+ crieteria +" group by Inv_Sales.N_CompanyID union SELECT SUM(Inv_PayReceiptDetails.N_AmountF-Inv_PayReceiptDetails.N_DiscountAmtF)as N_ReceivedAmount,Inv_PayReceiptDetails.N_CompanyID  FROM Inv_PayReceiptDetails INNER JOIN Inv_PayReceipt ON Inv_PayReceiptDetails.N_PayReceiptId = Inv_PayReceipt.N_PayReceiptId AND Inv_PayReceiptDetails.N_CompanyID = Inv_PayReceipt.N_CompanyID where Inv_PayReceipt.X_Type in ('SR','SA') and MONTH(Cast(Inv_PayReceiptDetails.D_Entrydate as DateTime)) ="+MonthWiseDate+"and YEAR(Inv_PayReceiptDetails.D_Entrydate)= "+YearWiseDate+" and Inv_PayReceiptDetails.N_CompanyID = " + nCompanyID  + " and Inv_PayReceipt.N_FnyearID="+nFnYearID + revCriteria+" group by Inv_PayReceiptDetails.N_CompanyID) as temp where N_CompanyID="+nCompanyID+" group by N_CompanyID";
                       sqlDailySales = " select sum(N_TotalSales) AS  TotalSales,Cast(D_SalesDate as date) as d_salesdate ,sum(N_CashSales) AS  TotalCashSales,Cast(D_SalesDate as date) as d_cashdate from vw_DateWiseTotalSales  where MONTH(Cast(D_SalesDate as DateTime)) ="+MonthWiseDate+"and YEAR(D_SalesDate)= "+YearWiseDate+" and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID + crieteria + "  group by  Cast(D_SalesDate as date)";
                       sqlMonthlySales = " select D_Start,X_Month, N_Year, N_Month, sum (N_SaleOrderAmt)AS N_SalesOrderAmt,sum (N_SalesAmt)AS N_SalesAmt,sum (N_PaidAmt)AS N_PaidAmt from vw_MonthBranchWiseSalesAmt  where  N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID + crieteria + " group by D_Start,X_Month, N_Year, N_Month order by  N_Year, N_Month";
@@ -229,7 +229,7 @@ namespace SmartxAPI.Controllers
 
 
 
-                    sqlCommandCount = "Select  count(*) from vw_SalesOrder_Dashboard Where YEAR(D_Entrydate) = "+YearWiseDate+" and N_CompanyID = " + nCompanyId + " and N_FnyearID="+nFnYearId + "and N_FormID=81" + crieteria ;
+                    sqlCommandCount = "Select  count(1) from vw_SalesOrder_Dashboard Where YEAR(D_Entrydate) = "+YearWiseDate+" and N_CompanyID = " + nCompanyId + " and N_FnyearID="+nFnYearId + "and N_FormID=81" + crieteria ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -319,7 +319,7 @@ namespace SmartxAPI.Controllers
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = api.Format(dt);
-                    sqlCommandCount = "Select  count(*) from vw_InvSalesQuotationNo_Search Where  YEAR(D_QuotationDate) = "+YearWiseDate+"  and N_CompanyID = " + nCompanyId + " and N_FnyearID="+nFnYearId + crieteria + "  ";
+                    sqlCommandCount = "Select  count(1) from vw_InvSalesQuotationNo_Search Where  YEAR(D_QuotationDate) = "+YearWiseDate+"  and N_CompanyID = " + nCompanyId + " and N_FnyearID="+nFnYearId + crieteria + "  ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -408,7 +408,7 @@ namespace SmartxAPI.Controllers
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = api.Format(dt);
-                    sqlCommandCount = "Select count(*) from vw_InvSalesInvoiceNo_Search_Cloud Where  YEAR(D_SalesDate) = "+YearWiseDate+"  and N_CompanyId = " + nCompanyID + " and N_FnyearID="+nFnYearID + crieteria;
+                    sqlCommandCount = "Select count(1) from vw_InvSalesInvoiceNo_Search_Cloud Where  YEAR(D_SalesDate) = "+YearWiseDate+"  and N_CompanyId = " + nCompanyID + " and N_FnyearID="+nFnYearID + crieteria;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

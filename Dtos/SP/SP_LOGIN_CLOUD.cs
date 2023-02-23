@@ -70,7 +70,11 @@ namespace SmartxAPI.Dtos.SP
         public int N_TeacherID { get; set; }
         public string X_TeacherCode { get; set; }
         public string X_TeacherName { get; set; }
-public int N_DefaultStudentID { get; set; }
+        public int N_DefaultStudentID { get; set; }
+        public int N_TypeID { get; set; }
+        public string X_UtcOffSet { get; set; }
+        public string X_ZoneName { get; set; }
+        public int N_TimeZoneID { get; set; }
         [NotMapped]
         public string Token { get; set; }
         [NotMapped]

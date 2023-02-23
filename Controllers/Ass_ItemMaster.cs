@@ -69,7 +69,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_AssetDashBoard where N_CompanyID=@p1 ";
+                    sqlCommandCount = "select count(1) as N_Count  from vw_AssetDashBoard where N_CompanyID=@p1 ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -109,6 +109,7 @@ namespace SmartxAPI.Controllers
                 string xItemCode = MasterTable.Rows[0]["X_ItemCode"].ToString();
                 bool bAssetItem= myFunctions.getBoolVAL(MasterTable.Rows[0]["b_AssetItem"].ToString());
                 int nAddlInfoID=0;
+                String xButtonAction="";
                 if(ExpiryTable.Rows.Count>0)
                     nAddlInfoID = myFunctions.getIntVAL(ExpiryTable.Rows[0]["N_AddlInfoID"].ToString());
 
@@ -136,6 +137,7 @@ namespace SmartxAPI.Controllers
 
                     String DupCriteria = "X_ItemCode= '" + xItemCode + "' and N_CompanyID=" + nCompanyID;
                     nItemID = dLayer.SaveData("Ass_AssetMaster", "N_ItemID", DupCriteria, "", MasterTable, connection, transaction);
+                     xButtonAction="Insert"; 
                     if (nItemID <= 0)
                     {
                         transaction.Rollback();
@@ -144,6 +146,7 @@ namespace SmartxAPI.Controllers
                     if (nItemID > 0)
                     {
                         dLayer.DeleteData("Ass_AssetAddlInfo", "N_ItemID", nItemID, "N_CompanyID=" + nCompanyID, connection, transaction);
+                        xButtonAction="Update"; 
                     }
 
                     if(ExpiryTable.Rows.Count>0)
@@ -156,6 +159,14 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error(User, "Unable to save"));
                         }
                     }
+
+                      //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnyearID,nItemID,xItemCode,452,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
                     if(bAssetItem==true){
                            SortedList ProcParam = new SortedList();
@@ -191,18 +202,36 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nItemID)
+        public ActionResult DeleteData(int nItemID,int nFnYearID)
         {
 
             int Results = 0;
             try
             {
-                SortedList Params = new SortedList();
-
+            
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                        SortedList Params = new SortedList();
+                 SortedList ParamList=new SortedList();
+
                     SqlTransaction transaction = connection.BeginTransaction();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    ParamList.Add("@nFnYearID",nFnYearID);
+                    string xButtonAction="Delete";
+                     String X_ItemCode="";
+
+                     object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Ass_AssetMaster where N_ItemID =" + nItemID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
+                
+               //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nItemID,X_ItemCode,452,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
+                    
                     Results = dLayer.DeleteData("Ass_AssetAddlInfo", "N_ItemID", nItemID, "", connection, transaction);
                     transaction.Commit();
                 }

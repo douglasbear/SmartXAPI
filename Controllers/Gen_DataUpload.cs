@@ -46,6 +46,7 @@ namespace SmartxAPI.Controllers
                 Params.Add("N_FnYearID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_FnYearID"].ToString()));
                 Params.Add("N_BranchID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_BranchID"].ToString()));
                 Params.Add("N_LocationID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_LocationID"].ToString()));
+                Params.Add("X_Type", "");
                 int N_UserID = myFunctions.GetUserID(User);
                 bool isRuleBasedImport = false;
 
@@ -61,7 +62,7 @@ namespace SmartxAPI.Controllers
                         if (dt.Columns.Contains("notes") && !isRuleBasedImport)
                             dt.Columns.Remove("notes");
 
-                        Params.Add("X_Type", dt.TableName);
+                        Params["X_Type"] = dt.TableName;
                         Mastertable = ds.Tables[dt.TableName];
                         if (!isRuleBasedImport)
                         {
@@ -124,8 +125,14 @@ namespace SmartxAPI.Controllers
                             case "leave history":
                                 xTableName = "Mig_EmployeeLeaveHistory";
                                 break;
-                            case "customer balances":
+                         case "student balances":
+                         case  "customer balances":
                                 xTableName = "Mig_CustomerOpening";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
                                 break;
                             case "leave adjustment":
                                 xTableName = "Mig_LeaveAdjustment";
@@ -196,6 +203,14 @@ namespace SmartxAPI.Controllers
                                 break;
                             case "sales invoice":
                                 xTableName = "Mig_SalesInvoice";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;
+                            case "purchase invoice":
+                                xTableName = "Mig_PurchaseInvoice";
                                 Mastertable.Columns.Add("N_CompanyID");
                                 foreach (DataRow dtRow in Mastertable.Rows)
                                 {

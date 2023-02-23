@@ -132,7 +132,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_TotalPaidAmount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount  from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p3 " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(n_TotalPaidAmount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount  from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -414,7 +414,14 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction;
                     transaction = connection.BeginTransaction();
 
-                    Result=txnHandler.SalesReturnSaveData( ds,User, dLayer,  connection, transaction);
+                      string ipAddress = "";
+                    if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+
+
+                    Result=txnHandler.SalesReturnSaveData( ds,ipAddress,User, dLayer,  connection, transaction);
 
                     n_IsCompleted=myFunctions.getIntVAL(Result["b_IsCompleted"].ToString());
                     x_Message=Result["x_Msg"].ToString();
@@ -596,23 +603,41 @@ namespace SmartxAPI.Controllers
         
         //Delete....
         [HttpDelete()]
-        public ActionResult DeleteData(int? nCompanyId, int? nDebitNoteId)
+        public ActionResult DeleteData(int? nCompanyId, int nDebitNoteId,int nFnYearID)
         {
             try
             {
                 string sqlCommandText = "";
+                SortedList ParamList=new SortedList();
                 SortedList Params = new SortedList();
                 sqlCommandText = "SP_Delete_Trans_With_SaleAccounts  @N_CompanyId,'SALES RETURN',@N_DebitNoteId";
                 Params.Add("@N_CompanyId", nCompanyId);
 
                 Params.Add("@N_DebitNoteId", nDebitNoteId);
+                     ParamList.Add("@nFnYearID",nFnYearID);
+                    // string xButtonAction="Delete";
+                    //   String x_DebitNoteNo="";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    // SqlTransaction transaction = connection.BeginTransaction();
                     object objPaymentProcessed = dLayer.ExecuteScalar("Select Isnull(N_PayReceiptId,0) from Inv_PayReceiptDetails where N_InventoryId=" + nDebitNoteId + " and X_TransType='SALES RETURN'", connection);
                     if (objPaymentProcessed == null)
                         objPaymentProcessed = 0;
+
+            //    object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Inv_Purchase where n_DebitNoteId =" + nDebitNoteId + " and N_CompanyID=" + nCompanyId, Params, connection,transaction);
+                   
+                                   
+            //    //Activity Log
+            //     string ipAddress = "";
+            //     if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+            //         ipAddress = Request.Headers["X-Forwarded-For"];
+            //     else
+            //         ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+            //            myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nDebitNoteId,x_DebitNoteNo,55,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
+                   
                     if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) == 0)
                     {
                         SortedList StockUpdateParams = new SortedList(){

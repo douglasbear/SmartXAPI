@@ -169,9 +169,16 @@ namespace SmartxAPI.Controllers
                         Sds.Tables.Add(SDetailsDt);  
 
                         SAttachmentDt = api.Format(SAttachmentDt, "attachments");
-                        Sds.Tables.Add(SAttachmentDt);                                              
+                        Sds.Tables.Add(SAttachmentDt); 
 
-                        SResult=txnHandler.SalesReturnSaveData( Sds ,User , dLayer, connection, transaction);
+                                 //  Activity Log
+                  string ipAddress = "";
+                    if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+
+                        SResult=txnHandler.SalesReturnSaveData( Sds ,ipAddress,User , dLayer, connection, transaction);
                         
                         n_SIsCompleted=myFunctions.getIntVAL(SResult["b_IsCompleted"].ToString());
                         x_SMessage=SResult["x_Msg"].ToString();
@@ -225,9 +232,14 @@ namespace SmartxAPI.Controllers
 
                         PDetailsDt = dLayer.ExecuteDataTable(sqlPurchaseDetails, Params, connection,transaction);
                         PDetailsDt = api.Format(PDetailsDt, "details");
-                        Pds.Tables.Add(PDetailsDt);                                                
+                        Pds.Tables.Add(PDetailsDt);   
 
-                        PResult=txnHandler.PurchaseReturnSaveData( Pds ,User , dLayer, connection, transaction);
+                             if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                            ipAddress = Request.Headers["X-Forwarded-For"];
+                        else
+                            ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();                                             
+
+                        PResult=txnHandler.PurchaseReturnSaveData( Pds,ipAddress,User , dLayer, connection, transaction);
 
                         n_PIsCompleted=myFunctions.getIntVAL(PResult["b_IsCompleted"].ToString());
                         x_PMessage=PResult["x_Msg"].ToString();
@@ -296,7 +308,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_TvlTicketRefund  where N_CompanyID=@nCompanyId and N_FnyearID=@nFnYearId " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count  from vw_TvlTicketRefund  where N_CompanyID=@nCompanyId and N_FnyearID=@nFnYearId " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

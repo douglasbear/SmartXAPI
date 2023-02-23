@@ -64,7 +64,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_PayHistoryMaster where N_CompanyID=@p1 and N_EmpID=@p2" + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count from vw_PayHistoryMaster where N_CompanyID=@p1 and N_EmpID=@p2" + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount="0";
                     if(Summary.Rows.Count>0){

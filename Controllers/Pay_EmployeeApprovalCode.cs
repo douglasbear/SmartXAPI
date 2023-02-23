@@ -230,7 +230,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object apprObj = dLayer.ExecuteScalar("select count(*) From Pay_Employee where N_ApprovalID = @nApprovalSettingsID and N_CompanyID=@nCompanyID",QueryParams, connection);
+                    object apprObj = dLayer.ExecuteScalar("select count(1) From Pay_Employee where N_ApprovalID = @nApprovalSettingsID and N_CompanyID=@nCompanyID",QueryParams, connection);
                     int  N_Count= myFunctions.getIntVAL(apprObj.ToString());
                     if(N_Count > 0)
                     {

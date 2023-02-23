@@ -121,14 +121,14 @@ namespace SmartxAPI.Controllers
 
                     // connection.Open();
                     //  dt=dLayer.ExecuteDataTable(sqlCommandText,Params, connection);
-                    //  sqlCommandCount = "select count(*) as N_Count  from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2";
+                    //  sqlCommandCount = "select count(1) as N_Count  from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2";
                     // object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     // OutPut.Add("Details",_api.Format(dt));
                     // OutPut.Add("TotalCount",TotalCount);
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_TotalReturnAmount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(n_TotalReturnAmount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -185,7 +185,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2";
+                    sqlCommandCount = "select count(1) as N_Count  from vw_InvCreditNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -368,7 +368,14 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction;
                     transaction = connection.BeginTransaction();
 
-                    Result=txnHandler.PurchaseReturnSaveData( ds,User, dLayer,  connection, transaction);
+                         string ipAddress = "";
+                    if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+
+
+                    Result=txnHandler.PurchaseReturnSaveData( ds,ipAddress,User, dLayer,  connection, transaction);
 
                     n_IsCompleted=myFunctions.getIntVAL(Result["b_IsCompleted"].ToString());
                     x_Message=Result["x_Msg"].ToString();
@@ -510,18 +517,33 @@ namespace SmartxAPI.Controllers
 
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int? nCreditNoteId, int? nCompanyId)
+        public ActionResult DeleteData(int? nCreditNoteId, int? nCompanyId,int nFnYearID)
         {
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    SortedList ParamList=new SortedList();
                     SqlTransaction transaction = connection.BeginTransaction();
                     object objPaymentProcessed = dLayer.ExecuteScalar("Select Isnull(N_PayReceiptId,0) from Inv_PayReceiptDetails where N_InventoryId=" + nCreditNoteId + " and X_TransType='PURCHASE RETURN'", connection, transaction);
+                    SortedList Params = new SortedList();
+                    ParamList.Add("@nFnYearID",nFnYearID);
+                    string xButtonAction="Delete";
+                   
                     if (objPaymentProcessed == null)
                         objPaymentProcessed = 0;
+                 //  object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Inv_PurchaseReturnMaster where n_CreditNoteId =" + nCreditNoteId + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
+                   
+                         //Activity Log
+                // string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nCreditNoteId,x_CreditNoteNo,68,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
+                   
                     SortedList deleteParams = new SortedList()
                             {
                                 {"N_CompanyID",nCompanyId},

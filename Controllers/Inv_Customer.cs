@@ -161,10 +161,10 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                       if(bActiveCustomer==true){
-                       sqlCommandCount = "select count(*) as N_Count  from vw_InvCustomer where N_CompanyID=@p1 and N_FnYearId=@p3 and ISNULL(N_EnablePopup,0)=0 and B_Inactive=1" + Searchkey + "";
+                       sqlCommandCount = "select count(1) as N_Count  from vw_InvCustomer where N_CompanyID=@p1 and N_FnYearId=@p3 and ISNULL(N_EnablePopup,0)=0 and B_Inactive=1" + Searchkey + "";
                       }
                       else{
-                       sqlCommandCount = "select count(*) as N_Count  from vw_InvCustomer where N_CompanyID=@p1 and N_FnYearId=@p3 and ISNULL(N_EnablePopup,0)=0 " + Searchkey + "";
+                       sqlCommandCount = "select count(1) as N_Count  from vw_InvCustomer where N_CompanyID=@p1 and N_FnYearId=@p3 and ISNULL(N_EnablePopup,0)=0 " + Searchkey + "";
                       }
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
@@ -205,6 +205,7 @@ namespace SmartxAPI.Controllers
                  bool isSave = myFunctions.getBoolVAL(MasterTable.Rows[0]["isSave"].ToString());
                 int nLedgerID=0;
                 object CustCount="";
+                String xButtonAction="";
                
                 if(MasterTable.Columns.Contains("N_LedgerID"))
                 {
@@ -269,6 +270,8 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 51);
                         Params.Add("N_BranchID", nBranchId);
                         CustomerCode = dLayer.GetAutoNumber("Inv_Customer", "X_CustomerCode", Params, connection, transaction);
+                             xButtonAction="Insert"; 
+                       
                         if (CustomerCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Customer Code")); }
                         MasterTable.Rows[0]["X_CustomerCode"] = CustomerCode;
        
@@ -306,6 +309,7 @@ namespace SmartxAPI.Controllers
                    string  DupCriteria = "x_CustomerName='" + x_CustomerName.Replace("'", "''") + "' and N_CompanyID=" + nCompanyID;
                    string  X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
                         nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
+                           xButtonAction="Update"; 
                      }
                  
                                    
@@ -350,6 +354,7 @@ namespace SmartxAPI.Controllers
                      
                                 int ncrmCustomerID = dLayer.SaveData("CRM_Customer", "N_CustomerId", CustomerMaster, connection, transaction);
                                 dLayer.ExecuteNonQuery("Update Inv_Customer Set n_CrmCompanyID =" + ncrmCustomerID + " Where N_CustomerID =" + nCustomerID + " and N_CompanyID=" + nCompanyID + " and N_FnyearID= " + nFnYearId, Params, connection, transaction);
+                                
                                 if (ncrmCustomerID <= 0)
                                 {
                                     transaction.Rollback();
@@ -396,11 +401,15 @@ namespace SmartxAPI.Controllers
                                     else// update ledger id
                                     {
                                         dLayer.ExecuteNonQuery("Update Inv_Customer Set N_LedgerID =" + myFunctions.getIntVAL(N_LedgerID.ToString()) + " Where N_CustomerID =" + nCustomerID + " and N_CompanyID=" + nCompanyID + " and N_FnyearID= " + nFnYearId, Params, connection, transaction);
+                                  
                                     }
                                 }
                                 else
                                 {
+                               
                                     dLayer.ExecuteNonQuery("SP_Inv_CreateCustomerAccount " + nCompanyID + "," + nCustomerID + ",'" + CustomerCode + "',@X_LedgerName," + myFunctions.GetUserID(User) + "," + nFnYearId + "," + "Customer", ledgerParams, connection, transaction);
+                                 
+                              
                                 }
                             }
                             // else
@@ -414,6 +423,17 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQuery("Update Inv_Customer Set N_LedgerID =" + myFunctions.getIntVAL(N_DefLedgerID.ToString()) + " Where N_CustomerID =" + nCustomerID + " and N_CompanyID=" + nCompanyID + " and N_FnyearID= " + nFnYearId, Params, connection, transaction);
                             }
                         }
+
+
+                        
+                              //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearId,nCustomerID,CustomerCode,51,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       
 
 
 
@@ -465,6 +485,7 @@ namespace SmartxAPI.Controllers
                                     // } 
                                 }
                             }
+   
 
                             if (UserID == 0)
                             {
@@ -664,6 +685,8 @@ namespace SmartxAPI.Controllers
                 QueryParams.Add("@nCustomerID", nCustomerID);
                  QueryParams.Add("@nCrmCustomerID", nCrmCustomerID);
                   string sqlCommandCount = "";
+                    string xButtonAction="Delete";
+                     String x_CustomerCode="";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -686,6 +709,8 @@ namespace SmartxAPI.Controllers
                    {
                       return Ok(api.Error(User, "Unable to delete customer! It has been used."));
                    }
+
+                
                    dLayer.ExecuteNonQuery("update Inv_ItemMaster set N_CustomerID=0,x_CustomerSKU=null where N_CompanyID=" + nCompanyID + "  and N_CustomerID=" + nCustomerID, Params, connection);
 
                     crmcustomer = dLayer.ExecuteScalar("select count(N_CrmCompanyID) from Inv_SalesQuotation  Where N_CompanyID=" + nCompanyID + " and  N_CrmCompanyID=" + nCrmCustomerID,  QueryParams, connection);
@@ -695,6 +720,16 @@ namespace SmartxAPI.Controllers
                    {
                      dLayer.DeleteData("CRM_Customer", "N_CustomerID", nCrmCustomerID, "", connection, transaction);
                    }
+
+                   
+                     //  Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nCustomerID,x_CustomerCode,51,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
 
                     Results = dLayer.DeleteData("Inv_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
                   
@@ -757,7 +792,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "portalURL", typeof(string), "");
                     if(nCustomerID>0){
-                    object Count = dLayer.ExecuteScalar("select count(*)  from vw_Inv_CheckCustomer where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID", Params, connection);
+                    object Count = dLayer.ExecuteScalar("select count(1)  from vw_Inv_CheckCustomer where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID", Params, connection);
                     int NCount = myFunctions.getIntVAL(Count.ToString());
                     if (NCount > 0)
                     {
@@ -920,6 +955,10 @@ namespace SmartxAPI.Controllers
                     //crm customer from Customer for SQ 
 
                     object sqCustomerID= dLayer.ExecuteScalar("select N_CrmCompanyID from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID="+nCustomerID+" ", Params, connection);
+                    
+                    if(sqCustomerID==null)
+                    sqCustomerID=0;
+
                     if(myFunctions.getIntVAL(sqCustomerID.ToString())>0 && isQuotation )
                     {
 

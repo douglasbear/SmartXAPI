@@ -201,7 +201,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     if(screen == "Invoice"){
-                     sqlCommandCount= "SELECT COUNT(*) as N_Count,sum(Cast(REPLACE(TotalAmount,',','') as Numeric(10,2)) ) AS  TotalAmount  FROM Vw_SalesRevenew_Cloud WHERE MONTH(Cast(D_SalesDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast(D_SalesDate as DateTime)) = YEAR(CURRENT_TIMESTAMP) and N_FnyearID=@P2";
+                     sqlCommandCount= "SELECT count(1) as N_Count,sum(Cast(REPLACE(TotalAmount,',','') as Numeric(10,2)) ) AS  TotalAmount  FROM Vw_SalesRevenew_Cloud WHERE MONTH(Cast(D_SalesDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast(D_SalesDate as DateTime)) = YEAR(CURRENT_TIMESTAMP) and N_FnyearID=@P2";
                     }
                     else{
                      sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(16," + N_decimalPlace + ")) ) as TotalAmount from "+viewName+" where N_FnYearID=@p2 and N_Hold=0 " + Pattern + criteria + cndn + formIDCndn + Searchkey + "";
@@ -1174,7 +1174,7 @@ namespace SmartxAPI.Controllers
             }
 
             return TxnStatus;
-        }
+        } 
 
          //Save....
         [HttpPost("Save")]
@@ -2141,19 +2141,21 @@ namespace SmartxAPI.Controllers
                                 ipAddress = Request.Headers["X-Forwarded-For"];
                             else
                                 ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                            SortedList LogParams = new SortedList();
-                            LogParams.Add("N_CompanyID", nCompanyID);
-                            LogParams.Add("N_FnYearID", nFnYearID);
-                            LogParams.Add("N_TransID", nInvoiceID);
-                            LogParams.Add("N_FormID", this.N_FormID);
-                            LogParams.Add("N_UserId", nUserID);
-                            //LogParams.Add("N_UserID", nUserID);
-                            LogParams.Add("X_Action", xButtonAction);
-                            LogParams.Add("X_SystemName", "ERP Cloud");
-                            LogParams.Add("X_IP", ipAddress);
-                            LogParams.Add("X_TransCode", InvoiceNO);
-                            LogParams.Add("X_Remark", " ");
-                            dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);
+                            // SortedList LogParams = new SortedList();
+                            // LogParams.Add("N_CompanyID", nCompanyID);
+                            // LogParams.Add("N_FnYearID", nFnYearID);
+                            // LogParams.Add("N_TransID", nInvoiceID);
+                            // LogParams.Add("N_FormID", this.N_FormID);
+                            // LogParams.Add("N_UserId", nUserID);
+                            // //LogParams.Add("N_UserID", nUserID);
+                            // LogParams.Add("X_Action", xButtonAction);
+                            // LogParams.Add("X_SystemName", "ERP Cloud");
+                            // LogParams.Add("X_IP", ipAddress);
+                            // LogParams.Add("X_TransCode", InvoiceNO);
+                            // LogParams.Add("X_Remark", " ");
+                            // dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);
+                            DataTable MasterTable =new DataTable();
+                            myFunctions.LogScreenActivitys(nFnYearID,nInvoiceID,InvoiceNO.ToString(),this.N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
 
                             //StatusUpdate
@@ -2630,7 +2632,7 @@ namespace SmartxAPI.Controllers
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_StockPOSOQty where N_CompanyID=@p1 and n_ItemID=@p2  ";
+                    sqlCommandCount = "select count(1) as N_Count from vw_StockPOSOQty where N_CompanyID=@p1 and n_ItemID=@p2  ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
 
                     OutPut.Add("Details", _api.Format(dt));

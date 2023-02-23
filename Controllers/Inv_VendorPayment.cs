@@ -138,14 +138,14 @@ namespace SmartxAPI.Controllers
 
                     // connection.Open();
                     // dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    // sqlCommandCount = "select count(*) as N_Count  from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_YearEndProcess=0  and amount is not null ";
+                    // sqlCommandCount = "select count(1) as N_Count  from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_YearEndProcess=0  and amount is not null ";
                     // object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     // OutPut.Add("Details",api.Format(dt));
                     // OutPut.Add("TotalCount",TotalCount);
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(Amount,',','') as Numeric(20," + N_decimalPlace + ")) ) as TotalAmount from vw_InvPayment_Search where N_CompanyID=@p1  and N_FormID <> 91 and  N_FnYearID=@p2 and (X_type='PP' OR X_type='PA') and amount is not null " + Pattern + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(Amount,',','') as Numeric(20," + N_decimalPlace + ")) ) as TotalAmount from vw_InvPayment_Search where N_CompanyID=@p1  and N_FormID <> 91 and  N_FnYearID=@p2 and (X_type='PP' OR X_type='PA') and amount is not null " + Pattern + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -204,7 +204,7 @@ namespace SmartxAPI.Controllers
         //         {
         //             connection.Open();
         //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-        //             sqlCommandCount = "select count(*) as N_Count  from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+        //             sqlCommandCount = "select count(1) as N_Count  from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
         //             object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
         //             OutPut.Add("Details",api.Format(dt));
         //             OutPut.Add("TotalCount",TotalCount);
@@ -405,7 +405,6 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
                 DataTable Attachment = ds.Tables["attachments"];
-
                 DataTable Approvals;
                 Approvals = ds.Tables["approval"];
                 DataRow ApprovalRow = Approvals.Rows[0];
@@ -414,7 +413,8 @@ namespace SmartxAPI.Controllers
                 int n_PayReceiptID = 0;
                 string PayReceiptNo = "";
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-                
+                String xButtonAction="";
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -508,11 +508,15 @@ namespace SmartxAPI.Controllers
                         // Params.Add("N_BranchID", Master["n_BranchID"].ToString());
 
                         PayReceiptNo = dLayer.GetAutoNumber("Inv_PayReceipt", "x_VoucherNo", Params, connection, transaction);
+                       xButtonAction="Insert"; 
                         if (PayReceiptNo == "") { transaction.Rollback(); return Ok(api.Warning("Unable to generate Receipt Number")); }
                         MasterTable.Rows[0]["x_VoucherNo"] = PayReceiptNo;
                     }
                     else
+
+                    
                     {
+                        PayReceiptNo = MasterTable.Rows[0]["x_VoucherNo"].ToString();
 
                         if (n_PayReceiptID > 0)
                         {
@@ -522,7 +526,7 @@ namespace SmartxAPI.Controllers
                                 {"X_TransType",x_Type},
                                 {"N_VoucherID",n_PayReceiptID}};
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
-
+                             xButtonAction="Update";
 
                             // if (myFunctions.CheckPermission(nCompanyId, 576, "Administrator", dLayer, connection, transaction))
                             // {
@@ -544,6 +548,8 @@ namespace SmartxAPI.Controllers
 
                         }
                     }
+
+            
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
 
@@ -624,6 +630,11 @@ namespace SmartxAPI.Controllers
                         else
                             myFunctions.AddNewColumnToDataTable(DetailTable, "n_PayReceiptDetailsId", typeof(int), 0);
 
+                        if (DetailTable.Columns.Contains("N_ProjectID"))
+                            row["N_ProjectID"] = myFunctions.getIntVAL(Master["N_ProjectID"].ToString());
+                        else
+                            myFunctions.AddNewColumnToDataTable(DetailTable, "N_ProjectID", typeof(int), myFunctions.getIntVAL(Master["N_ProjectID"].ToString()));
+
                         // row["N_CompanyID"] = myFunctions.getIntVAL(Master["n_CompanyID"].ToString());
                         // row["N_PayReceiptId"] = n_PayReceiptID;
                         // row["N_InventoryId"] = n_PayReceiptID;
@@ -659,6 +670,17 @@ namespace SmartxAPI.Controllers
                         object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
 
                     }
+
+                  //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,n_PayReceiptID,PayReceiptNo,67,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
+                        
+
                     transaction.Commit();
            
                     if (Attachment.Rows.Count > 0)
@@ -687,7 +709,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpDelete]
-        public ActionResult DeleteData(int nPayReceiptId, string xTransType, int nFnyearID,int nCompanyID,string comments)
+        public ActionResult DeleteData(int nPayReceiptId, string xTransType, int nFnyearID,int nCompanyID,string comments,int nFnYearID)
         {
             try
             {
@@ -700,6 +722,9 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nFnYearID", nFnyearID);
                     ParamList.Add("@nCompanyID", nCompanyID);
                     string xButtonAction = "Delete";
+                    string PayReceiptNo = "";
+
+
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,X_VoucherNo,N_PayReceiptId from Inv_PayReceipt where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_PayReceiptId=@nTransID";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
@@ -748,6 +773,16 @@ namespace SmartxAPI.Controllers
                     //         return Ok(api.Error(User, "Unable to delete Vendor Payment"));
                     //     }
                     // }
+
+                     //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nPayReceiptId,TransRow["X_VoucherNo"].ToString(),67,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
+
 
                     string status = myFunctions.UpdateApprovals(Approvals, nFnyearID, "PURCHASE PAYMENT", nPayReceiptId, TransRow["X_VoucherNo"].ToString(), ProcStatus, "Inv_PayReceipt", X_Criteria, "", User, dLayer, connection, transaction);
                     if (status != "Error")

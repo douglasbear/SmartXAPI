@@ -34,7 +34,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("fillData")]
-        public ActionResult GetScreen(string perModules, string permUserCategory, int nLanguageID, int nUserCategoryID)
+        public ActionResult GetScreen(string perModules, string permUserCategory, int nLanguageID, int nUserCategoryID,int nTypeID)
         {
             try
             {
@@ -47,8 +47,6 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     Params.Add("@nCompanyID", nCompanyID);
-                    Boolean bool1 = true;
-                    Boolean bool2 = false;
 
                     x_UserCategoryName = x_UserCategoryName + "," + nUserCategoryID;
 
@@ -76,9 +74,10 @@ namespace SmartxAPI.Controllers
                     SecAllMenus = dLayer.ExecuteDataTable(SecAllSql, secParams, connection);
 
                     PostingParam.Add("@nCompanyID", nCompanyID);
+                    PostingParam.Add("@nType", nTypeID);
                     PostingParam.Add("@xUserCategory", permUserCategory);
                     PostingParam.Add("@nMenuID", N_MenuID);
-                    string SecUsersql = "select * from vw_GeneralScreenSettings where N_CompanyID=@nCompanyID";
+                    string SecUsersql = "select * from vw_GeneralScreenSettings where N_CompanyID=@nCompanyID and N_Type=@nType";
                     SecScreensettings = dLayer.ExecuteDataTable(SecUsersql, PostingParam, connection);
                     SecScreensettings = _api.Format(SecScreensettings, "SecScreensettings");
 
@@ -176,9 +175,10 @@ namespace SmartxAPI.Controllers
 
                     int N_InternalID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_InternalID"].ToString());
                     int N_MenuID = myFunctions.getIntVAL(DetailTable.Rows[0]["n_MenuID"].ToString());
+                    int N_Type = myFunctions.getIntVAL(DetailTable.Rows[0]["N_Type"].ToString());
 
 
-                    dLayer.DeleteData("Sec_GeneralScreenSettings", "N_CompanyID", nCompanyID, "", connection, transaction);
+                    dLayer.DeleteData("Sec_GeneralScreenSettings", "N_CompanyID", nCompanyID, "N_Type="+N_Type, connection, transaction);
                     if (DetailTable.Rows.Count > 0)
                     {
 

@@ -21,6 +21,11 @@ namespace SmartxAPI.Dtos.Login
         public int N_Decimal { get; set; }
         public string X_BranchCode { get; set; }
         public int N_DefaultStudentID { get; set; }
+        public int N_TypeID { get; set; }
+        public string X_UtcOffSet { get; set; }
+        public string X_ZoneName { get; set; }
+
+
         
     }
 }

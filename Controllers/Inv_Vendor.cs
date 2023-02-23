@@ -86,13 +86,13 @@ namespace SmartxAPI.Controllers
                         if (nVendorId > 0)
                         {
                             bool B_IsUsed = false;
-                            object objIsUsed = dLayer.ExecuteScalar("Select count(*) From Acc_VoucherDetails where N_AccID=@nVendorID and N_AccType=1", Params, connection);
+                            object objIsUsed = dLayer.ExecuteScalar("Select count(1) From Acc_VoucherDetails where N_AccID=@nVendorID and N_AccType=1", Params, connection);
                             if (objIsUsed != null)
                                 if (myFunctions.getIntVAL(objIsUsed.ToString()) > 0)
                                     B_IsUsed = true;
                             myFunctions.AddNewColumnToDataTable(dt, "B_IsUsed", typeof(Boolean), B_IsUsed);
 
-                            object objUsedCount = dLayer.ExecuteScalar("Select Count(*) from vw_Inv_CheckVendor Where N_CompanyID=@nCompanyID and N_VendorID=@nVendorID", Params, connection);
+                            object objUsedCount = dLayer.ExecuteScalar("Select count(1) from vw_Inv_CheckVendor Where N_CompanyID=@nCompanyID and N_VendorID=@nVendorID", Params, connection);
                             if (objUsedCount != null)
                                 myFunctions.AddNewColumnToDataTable(dt, "N_UsedCount", typeof(int), myFunctions.getIntVAL(objUsedCount.ToString()));
                         }
@@ -212,7 +212,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    string sqlCommandCount = "select count(*) as N_Count  from vw_InvVendor where N_CompanyID=@p1  and N_FnYearID=@nFnYearId " + Searchkey + "";
+                    string sqlCommandCount = "select count(1) as N_Count  from vw_InvVendor where N_CompanyID=@p1  and N_FnYearID=@nFnYearId " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -255,6 +255,7 @@ namespace SmartxAPI.Controllers
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 bool b_AutoGenerate = false;
                 int flag = 0;
+                String xButtonAction="";
                 //gLAccount AutoGen
                 if (MasterTable.Columns.Contains("b_AutoGenerate"))
                 {
@@ -289,8 +290,13 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         VendorCode = dLayer.GetAutoNumber("Inv_Vendor", "x_VendorCode", Params, connection, transaction);
+                         xButtonAction="Insert"; 
+                       
                         if (VendorCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to save")); }
                         MasterTable.Rows[0]["x_VendorCode"] = VendorCode;
+                    }else {
+                         xButtonAction="Update"; 
+
                     }
 
                     if (MasterTable.Columns.Contains("b_DirPosting"))
@@ -305,6 +311,7 @@ namespace SmartxAPI.Controllers
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and X_VendorCode='" + VendorCode + "'";
                     string X_Crieteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                     nVendorID = dLayer.SaveData("Inv_Vendor", "N_VendorID", DupCriteria, X_Crieteria, MasterTable, connection, transaction);
+                  
                     if (nVendorID <= 0)
                     {
                         transaction.Rollback();
@@ -335,18 +342,31 @@ namespace SmartxAPI.Controllers
                                     else// update ledger id
                                     {
                                         dLayer.ExecuteNonQuery("Update Inv_Vendor Set N_LedgerID =" + myFunctions.getIntVAL(N_LedgerID.ToString()) + " Where N_VendorID=" + nVendorID + "and N_CompanyID= " + nCompanyID + " and  N_FnYearID = " + nFnYearID, Params, connection, transaction);
-
+                                        
                                     }
                                 }
                                 else
                                 {
                                     dLayer.ExecuteNonQuery("SP_Inv_CreateVendorAccount " + nCompanyID + "," + nVendorID + ",'" + nVendorID + "','" + X_LedgerName + "'," + myFunctions.GetUserID(User) + "," + nFnYearID + "," + "Vendor", Params, connection, transaction);
+                               
                                 }
                             }
                             // else
                             // msg.msgError("No DefaultGroup");
                         }
 
+                      
+                        
+                               //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nVendorID,VendorCode,52,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       
+
+          
 
 
                         SortedList nParams = new SortedList();
@@ -364,10 +384,14 @@ namespace SmartxAPI.Controllers
                         }
                         DataRow NewRow = outputDt.Rows[0];
 
+
+                     
                         try
                         {
                             myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["x_VendorCode"].ToString() + "-" + MasterTable.Rows[0]["x_VendorName"].ToString(), 0, MasterTable.Rows[0]["x_VendorName"].ToString(), MasterTable.Rows[0]["x_VendorCode"].ToString(), nVendorID, "Vendor Document", User, connection, transaction);
                         }
+
+                        
                         catch (Exception ex)
                         {
                             transaction.Rollback();
@@ -399,6 +423,8 @@ namespace SmartxAPI.Controllers
                 QueryParams.Add("@nFnYearID", nFnYearID);
                 QueryParams.Add("@nFormID", 52);
                 QueryParams.Add("@nVendorID", nVendorID);
+                  string xButtonAction="Delete";
+                     String VendorCode="";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -409,6 +435,18 @@ namespace SmartxAPI.Controllers
 
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Inv_Vendor", "N_VendorID", nVendorID, "N_CompanyID="+nCompanyID, connection, transaction);
+             //  Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nVendorID,VendorCode,52,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
+
+                   
+                   
+                   
                     myAttachments.DeleteAttachment(dLayer, 1, 0, nVendorID, nFnYearID, this.FormID, User, transaction, connection);
                     transaction.Commit();
                 }
@@ -460,7 +498,7 @@ namespace SmartxAPI.Controllers
 
                     Params.Add("@nVendorID", nVendorID);
 
-                    object Count = dLayer.ExecuteScalar("select count(*)  from vw_Inv_CheckVendor where N_CompanyID=@p1 and X_VendorCode=@xVendorCode", Params, connection);
+                    object Count = dLayer.ExecuteScalar("select count(1)  from vw_Inv_CheckVendor where N_CompanyID=@p1 and X_VendorCode=@xVendorCode", Params, connection);
                     int NCount = myFunctions.getIntVAL(Count.ToString());
                     if (NCount > 0)
                     {
