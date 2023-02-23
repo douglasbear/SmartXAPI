@@ -120,7 +120,7 @@ namespace SmartxAPI
 
 
 
-        public static string _APIVersion = "23.2.15.1";
+        public static string _APIVersion = "23.1.31.1";
 
 
     }
