@@ -709,11 +709,11 @@ namespace SmartxAPI.Controllers
                         string delimiter = ",";
 
                         string[][] header = new string[][]
-                        {new string[]{"Bank Code","Employee/Payee’s Account Number","Amount","Transaction Reference","Employee/Payee’s Name","Employee/Payee’s Address 1","Employee/Payee’s Address 2","Employee/Payee’s Address 3","Beneficiary ID (National/Iqama ID)","Basic Salary","Housing Allowance","Other Earnings","Deductions"}
+                        {new string[]{"Bank Code","Employee/Payee's Account Number","Amount","Transaction Reference","Employee/Payee's Name","Employee/Payee's Address 1","Employee/Payee's Address 2","Employee/Payee's Address 3","Beneficiary ID (National/Iqama ID)","Basic Salary","Housing Allowance","Other Earnings","Deductions"}
                         };
                         string[][] output = new string[][]
                         {
-                        new string[]{drow["X_BankCodeRef"].ToString(),"'"+ drow["X_BankAccountNo"].ToString(),drow["totalsalary"].ToString(),drow["X_PaymentDescription"].ToString(),drow["X_EmpName"].ToString(),drow["X_Address"].ToString()," "," ","'"+ drow["X_IqamaNo"].ToString(),drow["N_BasicSalary"].ToString(),drow["N_HA"].ToString(),drow["N_OtherEarnings"].ToString(),drow["N_OtherDeductions"].ToString()}
+                        new string[]{drow["X_BankCodeRef"].ToString(),""+ drow["X_BankAccountNo"].ToString(),drow["totalsalary"].ToString(),drow["X_PaymentDescription"].ToString(),drow["X_EmpName"].ToString(),drow["X_Address"].ToString()," "," ",""+ drow["X_IqamaNo"].ToString(),drow["N_BasicSalary"].ToString(),drow["N_HA"].ToString(),drow["N_OtherEarnings"].ToString(),drow["N_OtherDeductions"].ToString()}
                        };
 
                         int length = output.GetLength(0);
