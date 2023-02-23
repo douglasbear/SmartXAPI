@@ -955,6 +955,10 @@ namespace SmartxAPI.Controllers
                     //crm customer from Customer for SQ 
 
                     object sqCustomerID= dLayer.ExecuteScalar("select N_CrmCompanyID from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID="+nCustomerID+" ", Params, connection);
+                    
+                    if(sqCustomerID==null)
+                    sqCustomerID=0;
+
                     if(myFunctions.getIntVAL(sqCustomerID.ToString())>0 && isQuotation )
                     {
 

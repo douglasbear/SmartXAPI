@@ -72,7 +72,7 @@ namespace SmartxAPI.Controllers
                     foreach (DataRow dRow in tableViewResult.Rows)
                     {
                         TviewParams["@nTableViewID"] = dRow["N_TableViewID"].ToString();
-                        string tableHeaderSql = "select X_FieldName as dataField,X_LanControlNo as text,B_EditLink as editLink,B_Sort as sort,X_HeaderAlign as headerAlign,X_Align as align,N_RefFormID,isnull(B_IsHidden,0) as hidden,X_DataType as formatTo,B_SystemField,X_Formatter from Gen_TableViewDetails where N_TableViewID=@nTableViewID order by N_Order";
+                        string tableHeaderSql = "select REPLACE(X_FieldName,' ','') as dataField,X_LanControlNo as text,B_EditLink as editLink,B_Sort as sort,X_HeaderAlign as headerAlign,X_Align as align,N_RefFormID,isnull(B_IsHidden,0) as hidden,X_DataType as formatTo,B_SystemField,X_Formatter from Gen_TableViewDetails where N_TableViewID=@nTableViewID order by N_Order";
 
                         DataTable tableColumnResult = dLayer.ExecuteDataTable(tableHeaderSql, TviewParams, connection);
                         dRow["columns"] = tableColumnResult;

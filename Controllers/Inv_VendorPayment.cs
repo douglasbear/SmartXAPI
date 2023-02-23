@@ -405,7 +405,6 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
                 DataTable Attachment = ds.Tables["attachments"];
-
                 DataTable Approvals;
                 Approvals = ds.Tables["approval"];
                 DataRow ApprovalRow = Approvals.Rows[0];
@@ -517,7 +516,7 @@ namespace SmartxAPI.Controllers
 
                     
                     {
-                        PayReceiptNo = MasterTable.Rows[0]["PayReceiptNo"].ToString();
+                        PayReceiptNo = MasterTable.Rows[0]["x_VoucherNo"].ToString();
 
                         if (n_PayReceiptID > 0)
                         {
@@ -781,7 +780,7 @@ namespace SmartxAPI.Controllers
                     ipAddress = Request.Headers["X-Forwarded-For"];
                 else
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nPayReceiptId,TransRow["PayReceiptNo"].ToString(),67,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nPayReceiptId,TransRow["X_VoucherNo"].ToString(),67,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
 
 
