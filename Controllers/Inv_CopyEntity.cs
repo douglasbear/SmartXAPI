@@ -80,6 +80,12 @@ namespace SmartxAPI.Controllers
                 case "products":
                     sqlCommandCount = "select count(1) as N_Count  from vw_InvItemMaster where N_CompanyID=@p1";
                     break;
+                case "customers":
+                    sqlCommandCount = "select count(1) as N_Count  from vw_InvCustomer where N_CompanyID=@p1";
+                    break;
+                case "vendors":
+                    sqlCommandCount = "select count(1) as N_Count  from vw_InvVendor where N_CompanyID=@p1";
+                    break;
 
                 default: break;
             }
@@ -131,6 +137,18 @@ namespace SmartxAPI.Controllers
                             sqlCommandText = "select " + nCompanyID + " as N_CompanyID,N_ItemID as [Pkey_Code],x_ItemCode as [Product_Code],x_ItemName as [Description],x_PurchaseDescription as [Description_Locale],x_ClassName as [Product_Type],x_Category as [Product_Category],x_PartNo as [Part_No],x_ItemManufacturer as [manufacturer],x_VendorName as [Default_Vendor],n_ItemCost as unit_Cost,n_SalesSprice as selling_Price,x_StockUnit as Stock_Unit,x_PurchaseUnit as Purchase_Unit,n_PurchaseQty as [Qty_Purchase_Unit],n_Saleqty as Qty_Sales_Unit from vw_InvItemMaster where N_CompanyID=@nCopyFromID";
                             dt = dLayer.ExecuteDataTable(sqlCommandText, Param, connection, transaction);
                             dLayer.SaveData("Mig_Items", "Pkey_Code", dt, connection, transaction);
+                            break;
+
+                        case "customers":
+                            sqlCommandText = "select N_CustomerID as [PKey_Code], X_CustomerCode as [Customer_Code], X_CustomerName as [Customer_Name], X_CustomerName_Ar as [Customer_Name_Locale], X_PhoneNo1 as [Contact_Number], X_TaxRegistrationNo as [TAX_Reg_No], X_SalesmanName as [Sales_Executive], NULL as [GL_Account], X_BranchName as Branch, X_Address as Address, N_CreditLimit as [Credit_Limit], NULL as [Invoice_No], NULL as [Invoice_Date], NULL as [PO_No], X_ProjectName as Project, NULL as [Opening_Balance], X_CurrencyName as Currency, NULL as Mobile, X_PhoneNo2 as Phone, X_Email as Email, X_AdvLedgerName as [Advance_Ledger], X_FaxNo as Fax, X_ZipCode as [ZIP_Code], X_Country as Country, X_CRNumber as [CR_No], X_WebSite as Website, X_TaxRegistrationNo as [Tax_Registration_No], NULL as [GL_Account_code], X_AdvLedgerCode as [Advance_Account_code], X_ContactName as [Contact_person], X_VendorCode as [Vendor_Code] from vw_InvCustomer where N_CompanyID=@nCopyFromID";
+                            dt = dLayer.ExecuteDataTable(sqlCommandText, Param, connection, transaction);
+                            dLayer.SaveData("Mig_Customers", "Pkey_Code", dt, connection, transaction);
+                            break;
+
+                        case "vendors":
+                            sqlCommandText = "select N_VendorID as [PKey_Code], X_VendorCode as [Vendor_Code], X_VendorName as [Vendor_Name], X_VendorName_Ar as [Vendor_Name_Locale], X_PhoneNo1 as [Contact_Number], X_TaxRegistrationNo as [VAT_No], X_ContactName as [Contact_Person], X_Address as Address, X_CurrencyName as Currency, NULL as [GL_Account], NULL as [Invoice_No], NULL as [Invoice_Date], NULL as [PO_No], NULL as Project, NULL as [Opening_Balance], NULL as Mobile, X_PhoneNo2 as Phone, X_Email as Email, X_AdvLedgerName as [Advance_Ledger], X_FaxNo as Fax, X_ZipCode as [ZIP_Code], X_Country as Country, X_CRNumber as [CR_No], X_WebSite as Website, X_TaxRegistrationNo as [Tax_Registration_No], NULL as [GL_Account_code], X_AdvLedgerCode as [Advance_Account_code], N_CreditLimit as [Credit_Limit] from vw_InvVendor where N_CompanyID=@nCopyFromID";
+                            dt = dLayer.ExecuteDataTable(sqlCommandText, Param, connection, transaction);
+                            dLayer.SaveData("Mig_Vendors", "Pkey_Code", dt, connection, transaction);
                             break;
 
                         default: break;
