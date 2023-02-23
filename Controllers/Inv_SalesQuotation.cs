@@ -636,7 +636,7 @@ namespace SmartxAPI.Controllers
                                                                                                                                                
                     }
 
-                    QuotationNo = MasterTable.Rows[0]["QuotationNo"].ToString();
+                    QuotationNo = MasterTable.Rows[0]["x_QuotationNo"].ToString();
                     if (N_QuotationID > 0)
                     {
                         SortedList DeleteParams = new SortedList(){
