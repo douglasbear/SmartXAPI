@@ -618,7 +618,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     int nTimeZoneID = myFunctions.getIntVAL(dt.Rows[0]["N_TimeZoneID"].ToString());
-                    object objTimeZone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where N_TimeZoneID="+ nTimeZoneID, Params, connection);
+                    object objTimeZone = dLayer.ExecuteScalar("select (X_ZoneName+' '+'GMT'+X_UtcOffSet) as X_ZoneName from Gen_TimeZone where N_TimeZoneID="+ nTimeZoneID, Params, connection);
                     if (objTimeZone != null)
                         dt = myFunctions.AddNewColumnToDataTable(dt, "X_ZoneName", typeof(string), objTimeZone.ToString());
 
