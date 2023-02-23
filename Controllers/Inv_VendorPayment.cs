@@ -405,7 +405,6 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
                 DataTable Attachment = ds.Tables["attachments"];
-
                 DataTable Approvals;
                 Approvals = ds.Tables["approval"];
                 DataRow ApprovalRow = Approvals.Rows[0];
@@ -517,7 +516,7 @@ namespace SmartxAPI.Controllers
 
                     
                     {
-                        PayReceiptNo = MasterTable.Rows[0]["PayReceiptNo"].ToString();
+                        PayReceiptNo = MasterTable.Rows[0]["x_VoucherNo"].ToString();
 
                         if (n_PayReceiptID > 0)
                         {
