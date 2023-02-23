@@ -486,6 +486,7 @@ namespace SmartxAPI.Controllers
             string email = MasterTable.Rows[0]["x_EmailID"].ToString();
             int nLangaugeID =  myFunctions.getIntVAL(MasterTable.Rows[0]["N_LanguageID"].ToString());
             int nClientID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ClientID"].ToString());
+            string xPhoneNumber = MasterTable.Rows[0]["x_PhoneNumber"].ToString();
 
             try
             {
@@ -498,10 +499,11 @@ namespace SmartxAPI.Controllers
 
                     SortedList paramList = new SortedList();
                     paramList.Add("@emailID", email);
-                     paramList.Add("@nLangaugeID", nLangaugeID);
-                     paramList.Add("@nClientID", nClientID);
+                    paramList.Add("@nLangaugeID", nLangaugeID);
+                    paramList.Add("@nClientID", nClientID);
+                    paramList.Add("@xPhoneNumber", xPhoneNumber);
                    
-                dLayer.ExecuteNonQuery("Update users Set N_LanguageID=@nLangaugeID Where X_EmailID=@emailID  and N_ClientID=@nClientID",paramList, olivoCon, transaction);
+                dLayer.ExecuteNonQuery("Update users Set N_LanguageID=@nLangaugeID, X_PhoneNumber=@xPhoneNumber Where X_EmailID=@emailID  and N_ClientID=@nClientID",paramList, olivoCon, transaction);
                  transaction.Commit();
                 return Ok(_api.Success("Account Saved"));
                 }
@@ -591,33 +593,50 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        // [HttpGet("myAccdetails")]
-        // public ActionResult MyAccountDetails(int nClientID)
-        // {
-        //     DataTable dt = new DataTable();
-        //     SortedList Params = new SortedList();
-        //     string sqlCommandText = "select * from vw_ClientDetails where N_ClientID=@nClientID";
-        //     Params.Add("@nClientID", nClientID);
-        //     try
-        //     {
-        //         using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
-        //         {
-        //             olivoCon.Open();
-        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, olivoCon);
-        //         }
-        //         if (dt.Rows.Count == 0)
-        //         {
-        //             return Ok(_api.Notice("No Results Found"));
-        //         }
-        //         else
-        //         {
-        //             return Ok(_api.Success(dt));
-        //         }
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return Ok(_api.Error(User, e));
-        //     }
-        // }
+        [HttpGet("myAccdetails")]
+        public ActionResult MyAccountDetails(string xUserID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string sqlCommandText = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.X_Password, Users.B_EmailVerified, Users.X_UserID, Users.N_UserType, Users.N_LoginType, Users.N_LanguageID, " +
+                                    "Users.N_PswdDuraHours, Users.D_PswdResetTime, ClientMaster.N_CountryID, Users.N_TimeZoneID, Users.X_PhoneNumber, Users.B_EnableTwoFactAuth, Users.B_ByPassTwoFactAuth, Users.D_OTPExpiry, Users.X_OTP, " +
+                                    "Users.D_ExpireDate, LanguageMaster.X_Language, CountryMaster.X_CountryName, ClientMaster.X_ClientName, ClientMaster.X_CompanyName, ClientMaster.X_AdminUserID, ClientMaster.N_TwoFactAuthType, " +
+                                    "ClientMaster.B_EnableEmailAuth, ClientMaster.B_EnableWhatsappAuth FROM Users INNER JOIN " +
+                                    "ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN " +
+                                    "CountryMaster ON ClientMaster.N_CountryID = CountryMaster.N_CountryID LEFT OUTER JOIN " +
+                                    "LanguageMaster ON Users.N_LanguageID = LanguageMaster.N_LanguageID " +
+						            "where X_UserID='"+xUserID+"'";
+            Params.Add("@xUserID", xUserID);
+            try
+            {
+                using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                {
+                    olivoCon.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, olivoCon);
+                }
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    int nTimeZoneID = myFunctions.getIntVAL(dt.Rows[0]["N_TimeZoneID"].ToString());
+                    object objTimeZone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where N_TimeZoneID="+ nTimeZoneID, Params, connection);
+                    if (objTimeZone != null)
+                        dt = myFunctions.AddNewColumnToDataTable(dt, "X_ZoneName", typeof(string), objTimeZone.ToString());
+
+                    dt.AcceptChanges();
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
     }
 }
