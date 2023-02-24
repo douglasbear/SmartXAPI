@@ -616,8 +616,11 @@ namespace SmartxAPI.Controllers
                         if (InvoiceNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Delivery Number")); }
                         MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
                     }
+                       
+
                     else
                     {
+                        InvoiceNo = MasterTable.Rows[0]["x_ReceiptNo"].ToString();
                         if (N_DeliveryNoteID > 0)
                         {
                             SortedList DeleteParams = new SortedList(){
@@ -627,7 +630,7 @@ namespace SmartxAPI.Controllers
                             try
                             {
                                 dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
-                               
+                                 xButtonAction="Update"; 
                             }
                             catch (Exception ex)
                             {
@@ -682,7 +685,7 @@ namespace SmartxAPI.Controllers
                             try
                             {
                                 dLayer.ExecuteNonQueryPro("SP_TxnStatusUpdate", statusParams, connection, transaction);
-                                  xButtonAction="Update"; 
+                                
                             }
                             catch (Exception ex)
                             {
@@ -995,11 +998,29 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable TransData = new DataTable();
                     SqlTransaction transaction = connection.BeginTransaction();
                     var xUserCategory = User.FindFirst(ClaimTypes.GroupSid)?.Value;
                     var nUserID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                       string xButtonAction="Delete";
-                     String invoiceNo="";
+                     //  string xButtonAction="Delete";
+                    // String invoiceNo="";
+                     
+
+                     
+                    // if (TransData.Rows.Count == 0)
+                    // {
+                    //     return Ok(_api.Error(User, "Transaction not Found"));
+                    // }
+                    // DataRow TransRow = TransData.Rows[0];
+
+                     
+           //Activity Log
+                // string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nDeliveryNoteID,TransRow["invoiceNo"].ToString(),884,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
 
                     //Results = dLayer.DeleteData("Inv_SalesInvoice", "n_InvoiceID", N_InvoiceID, "",connection,transaction);
@@ -1036,13 +1057,6 @@ namespace SmartxAPI.Controllers
                         myAttachments.DeleteAttachment(dLayer, 1, nDeliveryNoteID, nCustomerID, nFnYearID, this.FormID, User, transaction, connection);
                     }
 
-                           //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nDeliveryNoteID,invoiceNo,884,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
                     //Attachment delete code here
 
                     //TxnUpdate

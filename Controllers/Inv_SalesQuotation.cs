@@ -635,6 +635,8 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
                                                                                                                                                
                     }
+
+                    QuotationNo = MasterTable.Rows[0]["x_QuotationNo"].ToString();
                     if (N_QuotationID > 0)
                     {
                         SortedList DeleteParams = new SortedList(){
@@ -947,7 +949,7 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", nCompanyID);
                     string xButtonAction = "Delete";
-                    string quotationNo = "";
+                    string X_QuotationNo = "";
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_CustomerID,0) as N_CustomerID,X_QuotationNo from Inv_SalesQuotation where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nTransID";
 
                     // string Sql = "select isNull(Inv_SalesQuotation.N_UserID,0) as N_UserID,isNull(Inv_SalesQuotation.N_ProcStatus,0) as N_ProcStatus,isNull(Inv_SalesQuotation.N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(Inv_SalesQuotation.N_CustomerID,0) as N_CustomerID,Inv_SalesQuotation.X_QuotationNo, CASE WHEN ISNULL(Inv_SalesQuotation.N_CrmCompanyID,0)>0 THEN CRM_Customer.X_Customer ELSE CRM_Contact.X_Contact END AS X_CName" +
@@ -999,7 +1001,7 @@ namespace SmartxAPI.Controllers
                             else
                                 ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
                  
-                        myFunctions.LogScreenActivitys(nFnYearID,N_QuotationID,quotationNo.ToString(),80,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                        myFunctions.LogScreenActivitys(nFnYearID,N_QuotationID,TransRow["X_QuotationNo"].ToString(),80,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
                         string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Sales Quotation", N_QuotationID, TransRow["X_QuotationNo"].ToString(), ProcStatus, "Inv_SalesQuotation", X_Criteria, CustName.ToString(), User, dLayer, connection, transaction);
                         if (status != "Error")

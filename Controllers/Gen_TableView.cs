@@ -24,6 +24,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
+        private readonly string cliConnectionString;
 
         public Gen_TableView(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
@@ -32,6 +33,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            cliConnectionString = conf.GetConnectionString("OlivoClientConnection");
             FormID = 1056;
         }
 
@@ -49,7 +51,7 @@ namespace SmartxAPI.Controllers
                     string menus = "select * from " +
                     "(select X_TableViewCode,N_TableViewID,N_MenuID as formID,X_TitleLanControlNo as titleLbl,X_MenuLanControlNo as menuLbl, " +
                     "B_IsDefault as isDefault,B_SearchEnabled as searchEnabled,B_AttachementSearch as attachementSearch,X_PKey,N_Type,N_Order,X_PCode,N_UserID,X_TotalField from " +
-                    "Gen_TableView where N_MenuID=@nMenuID  " +
+                    "Gen_TableView where N_MenuID=@nMenuID and N_CompanyID=-1 " +
                     "and N_Type not in(select N_Type from Gen_TableView where N_MenuID=@nMenuID and N_CompanyID=@nCompanyID and N_UserID=@nUserID) " +
                     "union all " +
                     "select X_TableViewCode,N_TableViewID,N_MenuID as formID,X_TitleLanControlNo as titleLbl,X_MenuLanControlNo as menuLbl, " +
@@ -72,7 +74,7 @@ namespace SmartxAPI.Controllers
                     foreach (DataRow dRow in tableViewResult.Rows)
                     {
                         TviewParams["@nTableViewID"] = dRow["N_TableViewID"].ToString();
-                        string tableHeaderSql = "select X_FieldName as dataField,X_LanControlNo as text,B_EditLink as editLink,B_Sort as sort,X_HeaderAlign as headerAlign,X_Align as align,N_RefFormID,isnull(B_IsHidden,0) as hidden,X_DataType as formatTo,B_SystemField,X_Formatter from Gen_TableViewDetails where N_TableViewID=@nTableViewID order by N_Order";
+                        string tableHeaderSql = "select REPLACE(X_FieldName,' ','') as dataField,X_LanControlNo as text,B_EditLink as editLink,B_Sort as sort,X_HeaderAlign as headerAlign,X_Align as align,N_RefFormID,isnull(B_IsHidden,0) as hidden,X_DataType as formatTo,B_SystemField,X_Formatter from Gen_TableViewDetails where N_TableViewID=@nTableViewID order by N_Order";
 
                         DataTable tableColumnResult = dLayer.ExecuteDataTable(tableHeaderSql, TviewParams, connection);
                         dRow["columns"] = tableColumnResult;
@@ -157,16 +159,16 @@ namespace SmartxAPI.Controllers
                         {
                             if (myFunctions.getBoolVAL(cRow["B_Search"].ToString()))
                             {
-                                Searchkey = Searchkey + " or " + cRow["X_FieldName"].ToString() + " like '%" + xSearchkey + "%'";
+                                Searchkey = Searchkey + " or [" + cRow["X_FieldName"].ToString() + "] like '%" + xSearchkey + "%'";
                             }
                         }
 
-                        FieldList = FieldList + "," + cRow["X_FieldName"].ToString();
+                        FieldList = FieldList + ",[" + cRow["X_FieldName"].ToString() + "]";
 
                     }
                     if (xSearchField != "All")
                     {
-                        Searchkey = Searchkey + " or " + xSearchField + " like '%" + xSearchkey + "%'";
+                        Searchkey = Searchkey + " or [" + xSearchField + "] like '%" + xSearchkey + "%'";
                     }
 
                     if (Searchkey.Length > 3)
@@ -287,7 +289,19 @@ namespace SmartxAPI.Controllers
                     {
                         sqlCommandText = "select " + FieldList + " from " + DataSource + Criterea + SortBy;
                         string fileName = "Exported_List_" + RandomString();
-                        myFunctions.QryToExcel(User, sqlCommandText, fileName, Params, dLayer, connection);
+                        if (nFormID == 1650)
+                        {
+                            using (SqlConnection cliConn = new SqlConnection(cliConnectionString))
+                            {
+                                cliConn.Open();
+                                myFunctions.QryToExcel(User, sqlCommandText, fileName, Params, dLayer, cliConn);
+                            }
+                        }
+                        else
+                        {
+                            myFunctions.QryToExcel(User, sqlCommandText, fileName, Params, dLayer, connection);
+                        }
+
                         fileName = fileName + ".xls";
                         return Ok(_api.Success(new SortedList() { { "FileName", fileName } }));
                     }
@@ -297,7 +311,18 @@ namespace SmartxAPI.Controllers
                         if (SumField == null)
                         { SumField = ""; }
 
-                        dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                        if (nFormID == 1650)
+                        {
+                            using (SqlConnection cliConn = new SqlConnection(cliConnectionString))
+                            {
+                                cliConn.Open();
+                                dt = dLayer.ExecuteDataTable(sqlCommandText, Params, cliConn);
+                            }
+                        }
+                        else
+                        {
+                            dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                        }
 
                         sqlCommandCount = "select count(*) as N_Count,0 as TotalAmount  from " + DataSource + Criterea;
 
@@ -305,8 +330,21 @@ namespace SmartxAPI.Controllers
                         {
                             sqlCommandCount = "select count(*) as N_Count ,sum(Cast(REPLACE(" + SumField + ",',','') as Numeric(16," + nDecimalPlace + ")) ) as TotalAmount  from " + DataSource + Criterea;
                         }
+                        DataTable Summary = new DataTable();
+                        if (nFormID == 1650)
+                        {
+                            using (SqlConnection cliConn = new SqlConnection(cliConnectionString))
+                            {
+                                cliConn.Open();
+                                Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, cliConn);
+                            }
+                        }
+                        else
+                        {
+                            Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                        }
 
-                        DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+
                         string TotalCount = "0";
                         string TotalSum = "0";
                         if (Summary.Rows.Count > 0)

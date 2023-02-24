@@ -368,7 +368,14 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction;
                     transaction = connection.BeginTransaction();
 
-                    Result=txnHandler.PurchaseReturnSaveData( ds,User, dLayer,  connection, transaction);
+                         string ipAddress = "";
+                    if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+
+
+                    Result=txnHandler.PurchaseReturnSaveData( ds,ipAddress,User, dLayer,  connection, transaction);
 
                     n_IsCompleted=myFunctions.getIntVAL(Result["b_IsCompleted"].ToString());
                     x_Message=Result["x_Msg"].ToString();

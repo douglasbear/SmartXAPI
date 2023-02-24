@@ -175,6 +175,9 @@ namespace SmartxAPI.Controllers
                         }
                         MasterTable.Rows[0]["x_InvoiceNo"] = X_InvoiceNo;
                     }
+
+                     X_InvoiceNo = MasterTable.Rows[0]["X_InvoiceNo"].ToString();
+                     
                     nPurchaseID = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", MasterTable, connection, transaction);
                     // dLayer.ExecuteNonQuery("Update Inv_Purchase  Set N_FreeTextReturnID=" + nPurchaseID + "   Where N_PurchaseID=" + nPurchaseMapID + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID, connection, transaction);
 
@@ -314,14 +317,27 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    
+                    DataTable TransData = new DataTable();
                      SortedList ParamList=new SortedList();
                     SqlTransaction transaction = connection.BeginTransaction();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     var nUserID = myFunctions.GetUserID(User);
                       SortedList Params = new SortedList();
-                        ParamList.Add("@nFnYearID",nFnYearID);
+                     ParamList.Add("@nTransID", nPurchaseID);
+                     ParamList.Add("@nFnYearID",nFnYearID);
+                     ParamList.Add("@nCompanyID", nCompanyID);
                     string xButtonAction="Delete";
                      String X_InvoiceNo="";
+                      string Sql = "select X_InvoiceNo,n_PurchaseID from Inv_Purchase where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and n_PurchaseID=@nTransID";
+                    
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+           
+                        if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
 
                      object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Inv_Purchase where N_PurchaseID =" + nPurchaseID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
                     //Activity Log
@@ -330,7 +346,7 @@ namespace SmartxAPI.Controllers
                     ipAddress = Request.Headers["X-Forwarded-For"];
                 else
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nPurchaseID,X_InvoiceNo,384,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nPurchaseID,TransRow["X_InvoiceNo"].ToString(),384,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
                    
                      object count = dLayer.ExecuteScalar("select count(1) from Inv_Purchase where N_FreeTextReturnID =" + nPurchaseID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
                      if (myFunctions.getVAL(count.ToString())>0)
