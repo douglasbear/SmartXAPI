@@ -324,8 +324,9 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-
-                    nGradeID = dLayer.SaveData("Pay_SalaryGrade", "N_GradeID", MasterTable, connection, transaction);
+                    string X_Gradename = MasterTable.Rows[0]["X_Gradename"].ToString();
+                    string DupCriteria = "X_Gradename='" + X_Gradename + "' and N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+"";
+                    nGradeID = dLayer.SaveData("Pay_SalaryGrade", "N_GradeID", DupCriteria, "", MasterTable, connection, transaction);
 
                     // if (nGradeID > 0)
                     // {
@@ -404,8 +405,16 @@ namespace SmartxAPI.Controllers
 
                     //dLayer.DeleteData("Pay_SalaryGradeDetails", "N_GradeID", nGradeID, "", connection, transaction);
 
-                    transaction.Commit();
-                    return Ok(_api.Success("Employee Grade Saved"));
+                    if (nGradeID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User,"Unable to save"));
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                        return Ok(_api.Success("Employee Grade Saved"));
+                    }
                 }
             }
             catch (Exception ex)

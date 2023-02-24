@@ -105,6 +105,7 @@ namespace SmartxAPI.Controllers
                     UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_ActiveAppID", typeof(int), 0);
                     UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "X_UserID", typeof(string), email);
                     UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_UserType", typeof(int), 0);
+                    UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_LoginType", typeof(int), 2);
 
 
                     int UserID = dLayer.SaveData("Users", "n_UserID", UserTable, connection, transaction);
@@ -114,6 +115,9 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Something went wrong"));
                     }
 
+                    string Sql = "SELECT (select isnull(max(N_UserID),0) from Users)+1 , REPLACE (X_EmailID, '@', '_SpAdmin@'), REPLACE (X_EmailID, '@', '_SpAdmin@'), N_ClientID, N_ActiveAppID, '.', '', 0, 1, REPLACE (X_EmailID, '@', '_SpAdmin@'), N_UserType,1 FROM Users WHERE N_UserID ="+UserID;
+                    int output = dLayer.ExecuteNonQuery(Sql, connection, transaction);
+                        
                     transaction.Commit();
                 }
                 string ipAddress = "";
@@ -171,6 +175,7 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
+
                     if (emailID == null || password == null) { return Ok(_api.Warning("Username or password is incorrect")); }
 
                     string ipAddress = "";
@@ -184,6 +189,7 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Error(User, Res["Message"].ToString()));
                     }
+                   
 
                     return Ok(_api.Success(Res));
                 }
@@ -205,7 +211,7 @@ namespace SmartxAPI.Controllers
                 // {
                 //     cnn.Open();
                 password = myFunctions.EncryptString(password);
-                string sql = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.X_UserID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,CASE WHEN Users.N_UserType=0 THEN 1 ELSE 0 end as isAdminUser,isnull(N_UserType,0) as N_UserType FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_UserID =@emailID and Users.x_Password=@xPassword)";
+                string sql = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.X_UserID, Users.N_ActiveAppID,isnull(Users.N_PswdDuraHours,0) AS N_PswdDuraHours,Users.D_PswdResetTime,ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,CASE WHEN Users.N_UserType=0 THEN 1 ELSE 0 end as isAdminUser,isnull(N_UserType,0) as N_UserType FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_UserID =@emailID and Users.x_Password=@xPassword)";
                 SortedList Params = new SortedList();
                 Params.Add("@emailID", emailID);
                 Params.Add("@xPassword", password);
@@ -250,6 +256,9 @@ namespace SmartxAPI.Controllers
                         }
                         companyid = myFunctions.getIntVAL(companyDt.Rows[0]["N_CompanyID"].ToString());
                         companyname = companyDt.Rows[0]["X_CompanyName"].ToString();
+                       
+
+
                     }
                     int nClientID = myFunctions.getIntVAL(output.Rows[0]["N_ClientID"].ToString());
                     int nGlobalUserID = myFunctions.getIntVAL(output.Rows[0]["N_UserID"].ToString());
@@ -318,6 +327,8 @@ namespace SmartxAPI.Controllers
                 else
                 if (ex.Message == "Login Failed")
                     Res.Add("Message", "Login Failed");
+                if (ex.Message == "Password Expiry")
+                    Res.Add("Message", "Password Expired");
                 else
                     Res.Add("Message", "Something went wrong..");
 
@@ -464,5 +475,149 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+
+
+        [HttpPost("save")]
+        public ActionResult Save([FromBody] DataSet ds)
+        {
+            DataTable MasterTable = ds.Tables["master"];
+            DataRow MasterRow = MasterTable.Rows[0];
+
+            string email = MasterTable.Rows[0]["x_EmailID"].ToString();
+            int nLangaugeID =  myFunctions.getIntVAL(MasterTable.Rows[0]["N_LanguageID"].ToString());
+            int nClientID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ClientID"].ToString());
+
+            try
+            {
+                using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                {
+                    olivoCon.Open();
+                    SqlTransaction transaction;
+
+                    transaction = olivoCon.BeginTransaction();
+
+                    SortedList paramList = new SortedList();
+                    paramList.Add("@emailID", email);
+                     paramList.Add("@nLangaugeID", nLangaugeID);
+                     paramList.Add("@nClientID", nClientID);
+                   
+                dLayer.ExecuteNonQuery("Update users Set N_LanguageID=@nLangaugeID Where X_EmailID=@emailID  and N_ClientID=@nClientID",paramList, olivoCon, transaction);
+                 transaction.Commit();
+                return Ok(_api.Success("Account Saved"));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+        [HttpPost("prefsave")]
+        public ActionResult SavePref([FromBody] DataSet ds)
+        {
+            DataTable MasterTable = ds.Tables["master"];
+            DataRow MasterRow = MasterTable.Rows[0];
+
+            string email = MasterTable.Rows[0]["x_EmailID"].ToString();
+            int nLangaugeID =  myFunctions.getIntVAL(MasterTable.Rows[0]["n_LanguageID"].ToString());
+            int nClientID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ClientID"].ToString());
+            int nTimeZoneID =  myFunctions.getIntVAL(MasterTable.Rows[0]["n_TimeZoneID"].ToString());
+            bool bEnableTwoFactAuth = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_EnableTwoFactAuth"].ToString());
+
+            try
+            {
+                using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                {
+                    olivoCon.Open();
+                    SqlTransaction transaction;
+
+                    transaction = olivoCon.BeginTransaction();
+
+                    SortedList paramList = new SortedList();
+                    paramList.Add("@emailID", email);
+                    paramList.Add("@nLangaugeID", nLangaugeID);
+                    paramList.Add("@nClientID", nClientID);
+                    paramList.Add("@nTimeZoneID", nTimeZoneID);
+                    paramList.Add("@bEnableTwoFactAuth", bEnableTwoFactAuth);
+                   
+                dLayer.ExecuteNonQuery("Update users Set N_LanguageID=@nLangaugeID, N_TimeZoneID=@nTimeZoneID, B_EnableTwoFactAuth=@bEnableTwoFactAuth Where X_EmailID=@emailID and N_ClientID=@nClientID",paramList, olivoCon, transaction);
+                 transaction.Commit();
+                return Ok(_api.Success("Preference Saved"));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+        [HttpPost("authsave")]
+        public ActionResult SaveAuth([FromBody] DataSet ds)
+        {
+            DataTable MasterTable = ds.Tables["master"];
+            DataRow MasterRow = MasterTable.Rows[0];
+
+            int nClientID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ClientID"].ToString());
+            bool bEnableWhatsappAuth = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_EnableWhatsappAuth"].ToString());
+            bool bEnableEmailAuth = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_EnableEmailAuth"].ToString());
+            int nTwoFactAuthType = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TwoFactAuthType"].ToString());
+
+            try
+            {
+                using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                {
+                    olivoCon.Open();
+                    SqlTransaction transaction;
+
+                    transaction = olivoCon.BeginTransaction();
+
+                    SortedList paramList = new SortedList();
+                    paramList.Add("@nClientID", nClientID);
+                    paramList.Add("@bEnableWhatsappAuth", bEnableWhatsappAuth);
+                    paramList.Add("@bEnableEmailAuth", bEnableEmailAuth);
+                    paramList.Add("@nTwoFactAuthType", nTwoFactAuthType);
+                   
+                dLayer.ExecuteNonQuery("Update ClientMaster Set B_EnableWhatsappAuth=@bEnableWhatsappAuth, B_EnableEmailAuth=@bEnableEmailAuth, N_TwoFactAuthType=@nTwoFactAuthType Where N_ClientID=@nClientID",paramList, olivoCon, transaction);
+                 transaction.Commit();
+                return Ok(_api.Success("Authentication Saved"));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+        // [HttpGet("myAccdetails")]
+        // public ActionResult MyAccountDetails(int nClientID)
+        // {
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
+        //     string sqlCommandText = "select * from vw_ClientDetails where N_ClientID=@nClientID";
+        //     Params.Add("@nClientID", nClientID);
+        //     try
+        //     {
+        //         using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+        //         {
+        //             olivoCon.Open();
+        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, olivoCon);
+        //         }
+        //         if (dt.Rows.Count == 0)
+        //         {
+        //             return Ok(_api.Notice("No Results Found"));
+        //         }
+        //         else
+        //         {
+        //             return Ok(_api.Success(dt));
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(User, e));
+        //     }
+        // }
     }
 }

@@ -287,7 +287,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
+                    sqlCommandCount = "select count(1) as N_Count  from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -687,7 +687,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.GetCompanyID(User);
                 Params.Add("@p1", nCompanyID);
                 Params.Add("@p2", BankID);
-                string CSVDatasql = "Select X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText from [vw_pay_ProcessedDetails_CSV] where X_Batch=" + x_batchID + " and N_EmpTypeID<>183 and TransBankID=" + BankID;
+                string CSVDatasql = "Select X_BankCodeRef,X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText from [vw_pay_ProcessedDetails_CSV] where X_Batch=" + x_batchID + " and N_EmpTypeID<>183 and TransBankID=" + BankID;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -709,11 +709,11 @@ namespace SmartxAPI.Controllers
                         string delimiter = ",";
 
                         string[][] header = new string[][]
-                        {new string[]{"Bank Name ","Account Number","Total Salary","Transaction Reference","Employee Name","National ID/Iqama ID","Employee Address","Basic Salary","Housing Allowance","Other Earnings","Deductions"}
+                        {new string[]{"Bank Code","Employee/Payee's Account Number","Amount","Transaction Reference","Employee/Payee's Name","Employee/Payee's Address 1","Employee/Payee's Address 2","Employee/Payee's Address 3","Beneficiary ID (National/Iqama ID)","Basic Salary","Housing Allowance","Other Earnings","Deductions"}
                         };
                         string[][] output = new string[][]
                         {
-                        new string[]{drow["X_BankName"].ToString(),"'"+ drow["X_BankAccountNo"].ToString(),drow["totalsalary"].ToString(),drow["X_PaymentDescription"].ToString(),drow["X_EmpName"].ToString(),"'"+ drow["X_IqamaNo"].ToString(),drow["X_Address"].ToString(),drow["N_BasicSalary"].ToString(),drow["N_HA"].ToString(),drow["N_OtherEarnings"].ToString(),drow["N_OtherDeductions"].ToString()}
+                        new string[]{drow["X_BankCodeRef"].ToString(),""+ drow["X_BankAccountNo"].ToString(),drow["totalsalary"].ToString(),drow["X_PaymentDescription"].ToString(),drow["X_EmpName"].ToString(),drow["X_Address"].ToString()," "," ",""+ drow["X_IqamaNo"].ToString(),drow["N_BasicSalary"].ToString(),drow["N_HA"].ToString(),drow["N_OtherEarnings"].ToString(),drow["N_OtherDeductions"].ToString()}
                        };
 
                         int length = output.GetLength(0);
@@ -1229,9 +1229,9 @@ namespace SmartxAPI.Controllers
                         int NewNo = 0, loop = 1;
                         while (OK)
                         {
-                            NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) + " + loop + " As Count FRom Pay_PaymentMaster Where N_CompanyID=@nCompanyID  And N_PayRunID =@nPayRunID", Params, connection, transaction).ToString());
+                            NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(count(1),0) + " + loop + " As Count FRom Pay_PaymentMaster Where N_CompanyID=@nCompanyID  And N_PayRunID =@nPayRunID", Params, connection, transaction).ToString());
                             x_Batch = nPayRunID + "" + NewNo.ToString("0#");
-                            if (myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) FRom Pay_PaymentMaster Where N_CompanyID=@nCompanyID And X_Batch = '" + x_Batch + "'", Params, connection, transaction).ToString()) == 0)
+                            if (myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(count(1),0) FRom Pay_PaymentMaster Where N_CompanyID=@nCompanyID And X_Batch = '" + x_Batch + "'", Params, connection, transaction).ToString()) == 0)
                             {
                                 OK = false;
                             }
@@ -1400,7 +1400,7 @@ namespace SmartxAPI.Controllers
                     dltParams.Add("@nFnYearID", nFnYearID);
                     dltParams.Add("@xBatch", xBatch);
 
-                    int count = myFunctions.getIntVAL(dLayer.ExecuteNonQuery("Select count(*) from Acc_VoucherMaster Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " And N_FnyearID =@nFnYearID and X_TransType = 'ESI' and B_IsAccPosted = 1 and X_ReferenceNo=@xBatch", dltParams, connection, transaction).ToString());
+                    int count = myFunctions.getIntVAL(dLayer.ExecuteNonQuery("Select count(1) from Acc_VoucherMaster Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " And N_FnyearID =@nFnYearID and X_TransType = 'ESI' and B_IsAccPosted = 1 and X_ReferenceNo=@xBatch", dltParams, connection, transaction).ToString());
 
 
                     if (count > 0)

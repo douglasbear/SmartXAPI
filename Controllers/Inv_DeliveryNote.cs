@@ -153,13 +153,13 @@ namespace SmartxAPI.Controllers
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     if (nFormID == 1572)
-                        sqlCommandCount = "select count(*) as N_Count  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1572 " + Searchkey + "";
+                        sqlCommandCount = "select count(1) as N_Count  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1572 " + Searchkey + "";
                     else if (nFormID==1603)
                         {
-                      sqlCommandCount = "select count(*) as N_Count  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1603 " + Searchkey + "";
+                      sqlCommandCount = "select count(1) as N_Count  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1603 " + Searchkey + "";
                         }
                     else
-                        sqlCommandCount = "select count(*) as N_Count  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID!=1572 " + Searchkey + "";
+                        sqlCommandCount = "select count(1) as N_Count  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID!=1572 " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -517,7 +517,7 @@ namespace SmartxAPI.Controllers
                     int N_SaveDraft = myFunctions.getIntVAL(MasterRow["b_IsSaveDraft"].ToString());
                     bool B_AllBranchData = false, B_AllowCashPay = false;
                     // bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator", "X_UserCategory", dLayer, connection, transaction);
-                    object SalesOrderCount = dLayer.ExecuteScalar("select count(*) from vw_userPrevileges where N_CompanyID=" + N_CompanyID + " and N_MenuID=81", QueryParams, connection, transaction);
+                    object SalesOrderCount = dLayer.ExecuteScalar("select count(1) from vw_userPrevileges where N_CompanyID=" + N_CompanyID + " and N_MenuID=81", QueryParams, connection, transaction);
                     bool B_SalesOrder = false;
                     if (myFunctions.getIntVAL(SalesOrderCount.ToString()) > 0) B_SalesOrder = true;
 
@@ -525,6 +525,8 @@ namespace SmartxAPI.Controllers
                     string i_Signature = "";
                     string i_signature2 = "";
                     bool SigEnable = false;
+                      String xButtonAction="";
+
 
                   if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_DeliveryDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
                   {
@@ -532,7 +534,35 @@ namespace SmartxAPI.Controllers
                   if (DiffFnYearID != null)
                    {
                     MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
-                    N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                    int nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+
+                    
+                    QueryParams["@N_FnYearID"] = nFnYearID;
+                    QueryParams["@N_CustomerID"] = N_CustomerID;
+                    QueryParams["@N_CompanyID"] = N_CompanyID;
+
+
+                    SortedList PostingParam = new SortedList();
+                    PostingParam.Add("N_PartyID", N_CustomerID);
+                    PostingParam.Add("N_FnyearID", N_FnYearID);
+                    PostingParam.Add("N_CompanyID", N_CompanyID);
+                    PostingParam.Add("X_Type", "customer");
+
+
+                     object custCount = dLayer.ExecuteScalar("Select count(*) From Inv_Customer where N_FnYearID=@N_FnYearID and N_CompanyID=@N_CompanyID and N_CustomerID=@N_CustomerID", QueryParams, connection, transaction);
+                      
+                      if(myFunctions.getIntVAL(custCount.ToString())==0){
+                           try 
+                    {
+                        dLayer.ExecuteNonQueryPro("SP_CratePartyBackYear", PostingParam, connection, transaction);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        throw ex;
+                    }
+                      }
+                 
                   
                   }
                   else
@@ -548,7 +578,7 @@ namespace SmartxAPI.Controllers
 
 
                     QueryParams.Add("@nCompanyID", N_CompanyID);
-                    QueryParams.Add("@nFnYearID", N_FnYearID);
+                     QueryParams.Add("@nFnYearID", N_FnYearID);
                     QueryParams.Add("@nSalesID", N_DeliveryNoteID);
                     QueryParams.Add("@nBranchID", N_BranchID);
                     QueryParams.Add("@nLocationID", N_LocationID);
@@ -581,11 +611,16 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 729);
                         Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
                         InvoiceNo = dLayer.GetAutoNumber("Inv_DeliveryNote", "x_ReceiptNo", Params, connection, transaction);
+                         xButtonAction="Insert"; 
+                        
                         if (InvoiceNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Delivery Number")); }
                         MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
                     }
+                       
+
                     else
                     {
+                        InvoiceNo = MasterTable.Rows[0]["x_ReceiptNo"].ToString();
                         if (N_DeliveryNoteID > 0)
                         {
                             SortedList DeleteParams = new SortedList(){
@@ -595,6 +630,7 @@ namespace SmartxAPI.Controllers
                             try
                             {
                                 dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                                 xButtonAction="Update"; 
                             }
                             catch (Exception ex)
                             {
@@ -649,6 +685,7 @@ namespace SmartxAPI.Controllers
                             try
                             {
                                 dLayer.ExecuteNonQueryPro("SP_TxnStatusUpdate", statusParams, connection, transaction);
+                                
                             }
                             catch (Exception ex)
                             {
@@ -784,6 +821,16 @@ namespace SmartxAPI.Controllers
                                     return Ok(_api.Error(User, "Product is not available for delivery"));
                                 else return Ok(_api.Error(User, ex));
                             }
+
+                            //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(N_FnYearID,N_DeliveryNoteID,InvoiceNo,884,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
+
                             SortedList CustomerParams = new SortedList();
                             CustomerParams.Add("@nCustomerID", N_CustomerID);
                             DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID=@nCustomerID", CustomerParams, connection, transaction);
@@ -876,9 +923,9 @@ namespace SmartxAPI.Controllers
         //         if (Regex.Matches(imeiFrom, @"[a-zA-Z]").Count > 0)
         //         dLayer.ExecuteScalar("Select TOP (1) ISNULL(N_CustomerID,0) from vw_SalesAmount_Customer where N_SalesID=@nSalesID", QueryParams, connection, transaction);
         //         ds.Tables["ValidateIMEIs"] = dLayer.ExecuteDataTable("Select TOP (1) ISNULL(N_CustomerID,0) from vw_SalesAmount_Customer where N_SalesID=@nSalesID", QueryParams, connection);
-        //             dba.FillDataSet(ref ds, "ValidateIMEIs", "select Isnull(Count(*),0) As N_IMEICount from Inv_StockMaster_IMEI where N_IMEI='" + flxSales.get_TextMatrix(row, mcSerialFrom) + "' and N_Status = 0 and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable());
+        //             dba.FillDataSet(ref ds, "ValidateIMEIs", "select Isnull(count(1),0) As N_IMEICount from Inv_StockMaster_IMEI where N_IMEI='" + flxSales.get_TextMatrix(row, mcSerialFrom) + "' and N_Status = 0 and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable());
         //         else
-        //             dba.FillDataSet(ref ds, "ValidateIMEIs", "select Isnull(Count(*),0) As N_IMEICount from Inv_StockMaster_IMEI where ISNUMERIC(N_IMEI)>0  and convert(decimal(38),N_IMEI) between  " + flxSales.get_TextMatrix(row, mcSerialFrom) + " and  " + flxSales.get_TextMatrix(row, mcSerialTo) + " and N_Status = 0 and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable());
+        //             dba.FillDataSet(ref ds, "ValidateIMEIs", "select Isnull(count(1),0) As N_IMEICount from Inv_StockMaster_IMEI where ISNUMERIC(N_IMEI)>0  and convert(decimal(38),N_IMEI) between  " + flxSales.get_TextMatrix(row, mcSerialFrom) + " and  " + flxSales.get_TextMatrix(row, mcSerialTo) + " and N_Status = 0 and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable());
         //         if (ds.Tables["ValidateIMEIs"].Rows.Count != 0)
         //         {
         //             if (myFunctions.getLongIntVAL(ds.Tables["ValidateIMEIs"].Rows[0]["N_IMEICount"].ToString()) != myFunctions.getLongIntVAL(flxSales.get_TextMatrix(row, mcQuantity)))
@@ -902,7 +949,7 @@ namespace SmartxAPI.Controllers
         //                 }
         //                 else
         //                 {
-        //                     dba.FillDataSet(ref ds, "ValidateIMEIs", "select Isnull(Count(*),0) As N_IMEICount from Inv_StockMaster_IMEI where N_IMEI='" + flxSales.get_TextMatrix(row, mcSerialFrom) + "' and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable());
+        //                     dba.FillDataSet(ref ds, "ValidateIMEIs", "select Isnull(count(1),0) As N_IMEICount from Inv_StockMaster_IMEI where N_IMEI='" + flxSales.get_TextMatrix(row, mcSerialFrom) + "' and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable());
         //                     if (ds.Tables["ValidateIMEIs"].Rows.Count != 0)
         //                     {
         //                         if (myFunctions.getLongIntVAL(ds.Tables["ValidateIMEIs"].Rows[0]["N_IMEICount"].ToString()) != myFunctions.getLongIntVAL(flxSales.get_TextMatrix(row, mcQuantity)))
@@ -926,7 +973,7 @@ namespace SmartxAPI.Controllers
         //                 }
         //                 else
         //                 {
-        //                     dba.FillDataSet(ref dsSales, "ValidateIMEIs", "select Isnull(Count(*),0) As N_IMEICount from Inv_StockMaster_IMEI where ISNUMERIC(N_IMEI)>0  and convert(decimal(38),N_IMEI) between  " + flxSales.get_TextMatrix(row, mcSerialFrom) + " and  " + flxSales.get_TextMatrix(row, mcSerialTo) + " and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable());
+        //                     dba.FillDataSet(ref dsSales, "ValidateIMEIs", "select Isnull(count(1),0) As N_IMEICount from Inv_StockMaster_IMEI where ISNUMERIC(N_IMEI)>0  and convert(decimal(38),N_IMEI) between  " + flxSales.get_TextMatrix(row, mcSerialFrom) + " and  " + flxSales.get_TextMatrix(row, mcSerialTo) + " and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable());
         //                     if (dsSales.Tables["ValidateIMEIs"].Rows.Count != 0)
         //                     {
         //                         if (myFunctions.getLongIntVAL(dsSales.Tables["ValidateIMEIs"].Rows[0]["N_IMEICount"].ToString()) != myFunctions.getLongIntVAL(flxSales.get_TextMatrix(row, mcQuantity)))
@@ -951,9 +998,30 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable TransData = new DataTable();
                     SqlTransaction transaction = connection.BeginTransaction();
                     var xUserCategory = User.FindFirst(ClaimTypes.GroupSid)?.Value;
                     var nUserID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                     //  string xButtonAction="Delete";
+                    // String invoiceNo="";
+                     
+
+                     
+                    // if (TransData.Rows.Count == 0)
+                    // {
+                    //     return Ok(_api.Error(User, "Transaction not Found"));
+                    // }
+                    // DataRow TransRow = TransData.Rows[0];
+
+                     
+           //Activity Log
+                // string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nDeliveryNoteID,TransRow["invoiceNo"].ToString(),884,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
 
                     //Results = dLayer.DeleteData("Inv_SalesInvoice", "n_InvoiceID", N_InvoiceID, "",connection,transaction);
                     SortedList DeleteParams = new SortedList(){
@@ -988,6 +1056,7 @@ namespace SmartxAPI.Controllers
 
                         myAttachments.DeleteAttachment(dLayer, 1, nDeliveryNoteID, nCustomerID, nFnYearID, this.FormID, User, transaction, connection);
                     }
+
                     //Attachment delete code here
 
                     //TxnUpdate

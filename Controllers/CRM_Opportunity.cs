@@ -104,7 +104,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMOpportunity where N_CompanyID=@p1  and  isnull(N_ClosingStatusID,0) = 0 " + criteria + Pattern;
+                    sqlCommandCount = "select count(1) as N_Count  from vw_CRMOpportunity where N_CompanyID=@p1  and  isnull(N_ClosingStatusID,0) = 0 " + criteria + Pattern;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
 
                     //sqlCommandTotRevenue = "select N_StageID,X_Stage,SUM(ISNULL(N_ExpRevenue,0)) AS N_TotExpRevenue from vw_CRMOpportunity where N_CompanyID=@p1  and isnull(N_ClosingStatusID,0) = 0 " + Pattern +" group by N_StageID,X_Stage";

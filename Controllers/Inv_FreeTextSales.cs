@@ -83,7 +83,7 @@ namespace SmartxAPI.Controllers
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesInvoiceNo_Search_cloud where " + xCriteria + Searchkey;
+                    sqlCommandCount = "select count(1) as N_Count  from vw_InvSalesInvoiceNo_Search_cloud where " + xCriteria + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -136,7 +136,7 @@ namespace SmartxAPI.Controllers
                     string xTransType = "FTSALES";
                     DocNo = MasterRow["X_ReceiptNo"].ToString();
                     DataTable Attachment = ds.Tables["attachments"];
-                    
+                    String xButtonAction="";
 
                      if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_SalesDate"].ToString()), dLayer, connection, transaction))
                     {
@@ -164,6 +164,7 @@ namespace SmartxAPI.Controllers
                             DelParam.Add("N_VoucherID", nSalesID);
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DelParam, connection, transaction);
                             int dltRes = dLayer.DeleteData("Inv_CostCentreTransactions", "N_InventoryID", nSalesID, " N_CompanyID = " + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction);
+                           xButtonAction="Update"; 
                         }
                         catch (Exception ex)
                         {
@@ -182,6 +183,7 @@ namespace SmartxAPI.Controllers
                         //Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
 
                         X_ReceiptNo = dLayer.GetAutoNumber("Inv_Sales", "X_ReceiptNo", Params, connection, transaction);
+                        xButtonAction="Insert"; 
                         if (X_ReceiptNo == "")
                         {
                             transaction.Rollback();
@@ -189,6 +191,7 @@ namespace SmartxAPI.Controllers
                         }
                         MasterTable.Rows[0]["X_ReceiptNo"] = X_ReceiptNo;
                     }
+                    X_ReceiptNo=MasterTable.Rows[0]["X_ReceiptNo"].ToString();
 
                      object DupCount = dLayer.ExecuteScalar("Select COUNT(X_ReceiptNo) from Inv_Sales where X_ReceiptNo ='" + DocNo + "' and N_CompanyID=" + nCompanyID + "and N_FnYearID=" + nFnYearID , Params, connection, transaction);
                        
@@ -308,7 +311,13 @@ namespace SmartxAPI.Controllers
                         row["N_ProjectID"] = myFunctions.getIntVAL(dRow["N_Segment_3"].ToString());
                         costcenter.Rows.Add(row);
                     }
-
+                    //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nSalesID,X_ReceiptNo,372,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
                      SortedList freeTextSalesParams = new SortedList();
                            freeTextSalesParams.Add("@N_SalesId", nSalesID);
 
@@ -369,19 +378,9 @@ namespace SmartxAPI.Controllers
                     string X_MasterSql = "";
                     string X_DetailsSql = "";
                     if (showAllBranch)
-                        X_MasterSql = "Select Inv_Sales.*,Inv_CustomerProjects.X_Projectname,Inv_Salesman.X_SalesmanName,Inv_Salesman.X_SalesmanCode, Inv_Customer.*,Acc_CurrencyMaster.X_ShortName,Acc_CurrencyMaster.B_default" +
-                                      " from Inv_Sales Left Outer Join  Inv_CustomerProjects ON Inv_Sales.N_ProjectID = Inv_CustomerProjects.N_ProjectID And Inv_Sales.N_CompanyID = Inv_CustomerProjects.N_CompanyID " +
-                                      " Left Outer Join  Inv_Salesman ON Inv_Sales.N_SalesmanID = Inv_Salesman.N_SalesmanID And Inv_Sales.N_CompanyID = Inv_Salesman.N_CompanyID " +
-                                      " Inner Join  Inv_Customer ON Inv_Sales.N_CustomerID = Inv_Customer.N_CustomerID And Inv_Sales.N_CompanyID = Inv_Customer.N_CompanyID  Left outer join Acc_CurrencyMaster on inv_sales.N_CompanyId = Acc_CurrencyMaster.N_companyID and Inv_Sales.N_CurrencyID = Acc_CurrencyMaster.N_CurrencyID" +
-                                      //  " Inner Join Acc_BranchMaster on Inv_Sales.N_BranchID = Acc_BranchMaster.N_BranchID And Inv_Sales.N_CompanyID = Acc_BranchMaster.N_CompanyID " +
-                                      " Where  Inv_Sales.N_CompanyID=" + nCompanyId + " and Inv_Sales.X_TransType = '" + xTransType + "' and Inv_Sales.X_ReceiptNo='" + xInvoiceNO + "' and  Inv_Sales.N_FnYearID=" + nFnYearId;
+                        X_MasterSql = "select * from Vw_FreeTextSalesMaster Where  N_CompanyID=" + nCompanyId + " and X_TransType = '" + xTransType + "' and X_ReceiptNo='" + xInvoiceNO + "' and  N_FnYearID=" + nFnYearId;
                     else
-                        X_MasterSql = "Select Inv_Sales.*,Inv_CustomerProjects.X_Projectname,Inv_Salesman.X_SalesmanName,Inv_Salesman.X_SalesmanCode, Inv_Customer.* ,Acc_CurrencyMaster.X_ShortName,Acc_CurrencyMaster.B_default" +
-                                      " from Inv_Sales Left Outer Join  Inv_CustomerProjects ON Inv_Sales.N_ProjectID = Inv_CustomerProjects.N_ProjectID And Inv_Sales.N_CompanyID = Inv_CustomerProjects.N_CompanyID " +
-                                      " Left Outer Join  Inv_Salesman ON Inv_Sales.N_SalesmanID = Inv_Salesman.N_SalesmanID And Inv_Sales.N_CompanyID = Inv_Salesman.N_CompanyID " +
-                                      " Inner Join  Inv_Customer ON Inv_Sales.N_CustomerID = Inv_Customer.N_CustomerID And Inv_Sales.N_CompanyID = Inv_Customer.N_CompanyID  Left outer join Acc_CurrencyMaster on inv_sales.N_CompanyId = Acc_CurrencyMaster.N_companyID and Inv_Sales.N_CurrencyID = Acc_CurrencyMaster.N_CurrencyID " +
-                                      //  " Inner Join Acc_BranchMaster on Inv_Sales.N_BranchID = Acc_BranchMaster.N_BranchID And Inv_Sales.N_CompanyID = Acc_BranchMaster.N_CompanyID " +
-                                      "Where  Inv_Sales.N_CompanyID=" + nCompanyId + " and Inv_Sales.X_TransType = '" + xTransType + "' and Inv_Sales.X_ReceiptNo='" + xInvoiceNO + "' and  Inv_Sales.N_FnYearID=" + nFnYearId + " and Inv_Sales.N_BranchId=" + nBranchId + "";
+                        X_MasterSql = "select * from Vw_FreeTextSalesMaster Where  N_CompanyID=" + nCompanyId + " and X_TransType = '" + xTransType + "' and X_ReceiptNo='" + xInvoiceNO + "' and  N_FnYearID=" + nFnYearId + " and Inv_Sales.N_BranchId=" + nBranchId + "";
                     Master = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
                     if (Master.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     N_SalesID = myFunctions.getIntVAL(Master.Rows[0]["N_SalesID"].ToString());
@@ -412,7 +411,7 @@ namespace SmartxAPI.Controllers
                          Master.Rows[0]["IsReturnDone"] = false;
                     }
 
-                    object count = dLayer.ExecuteScalar("select count(*) from Inv_Sales where N_FreeTextReturnID =" + N_SalesID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "", Params, connection);
+                    object count = dLayer.ExecuteScalar("select count(1) from Inv_Sales where N_FreeTextReturnID =" + N_SalesID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "", Params, connection);
 
                     if (myFunctions.getVAL(count.ToString())>0)
                     {
@@ -481,7 +480,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nSalesID, string X_TransType)
+        public ActionResult DeleteData(int nSalesID, string X_TransType,int nFnYearID)
         {
 
             try
@@ -489,17 +488,41 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable TransData=new DataTable();
+                    SortedList ParamList=new SortedList();
+                    SortedList Params=new SortedList();
                     SqlTransaction transaction = connection.BeginTransaction();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     var nUserID = myFunctions.GetUserID(User);
-                      SortedList Params = new SortedList();
+                    ParamList.Add("@nFnYearID",nFnYearID);
+                    ParamList.Add("@nCompanyID",nCompanyID);
+                    ParamList.Add("@nSalesId",nSalesID);
+                    
+                    string xButtonAction="Delete";
+                     String X_ReceiptNo="";
+                     string Sql = "select N_Salesid,X_ReceiptNo from Vw_FreeTextSalesMaster where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_Salesid=@nSalesId";
+                     TransData=dLayer.ExecuteDataTable(Sql,ParamList,connection,transaction);
+                      if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error(User, "Transaction not Found"));
+                    }
+                     DataRow TransRow=TransData.Rows[0];
 
-                       object count = dLayer.ExecuteScalar("select count(*) from Inv_Sales where N_FreeTextReturnID =" + nSalesID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
+                       object count = dLayer.ExecuteScalar("select count(1) from Inv_Sales where N_FreeTextReturnID =" + nSalesID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
                      if (myFunctions.getVAL(count.ToString())>0)
                      {
                          return Ok(_api.Error(User, "Unable to delete Free text sales"));
                      }
 
+                    object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Inv_Sales where N_SalesId =" + nSalesID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
+                
+   //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nSalesID,TransRow["X_ReceiptNo"].ToString(),372,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},

@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetMaterialDispatchList(int nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetMaterialDispatchList(int nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nBranchID,int FormID,int nLocationID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -62,11 +62,12 @@ namespace SmartxAPI.Controllers
             }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_MaterialDispatchDisp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_MaterialDispatchDisp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p3" + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_MaterialDispatchDisp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_DispatchId not in (select top(" + Count + ") N_DispatchId from vw_MaterialDispatchDisp where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_MaterialDispatchDisp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p3" + Searchkey + " and N_DispatchId not in (select top(" + Count + ") N_DispatchId from vw_MaterialDispatchDisp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p2" + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
+            Params.Add("@p3", FormID);
             SortedList OutPut = new SortedList();
 
 
@@ -76,7 +77,8 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_MaterialDispatchDisp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_MaterialDispatchDisp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p3" + Searchkey + "";
+
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -178,10 +180,13 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
                     DataTable DetailTable;
+                    DataTable Approvals;
                     string values = "";
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
+                     Approvals = ds.Tables["approval"];
                     DataRow MasterRow = MasterTable.Rows[0];
+                    DataRow ApprovalRow = Approvals.Rows[0];
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     bool bDeptEnabled = false;
@@ -191,7 +196,49 @@ namespace SmartxAPI.Controllers
                     int nSaveDraft = myFunctions.getIntVAL(MasterTable.Rows[0]["B_IsSaveDraft"].ToString());
                     int N_UserID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
                     string X_DispatchNo = MasterTable.Rows[0]["X_DispatchNo"].ToString();
-                    if (nDispatchID > 0)
+                    string transType = MasterTable.Rows[0]["transType"].ToString();
+                    int nLastActionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LastActionID"].ToString());
+                     int FormID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FormID"].ToString());
+                    int N_NextApproverID = 0;
+                    int N_DispatchDetailsID=0;
+                     values = MasterRow["X_DispatchNo"].ToString();
+
+                     if( myFunctions.getIntVAL(MasterTable.Rows[0]["n_DepartmentID"].ToString())>0){
+                        bDeptEnabled=true;
+                     }
+                     else{
+                        bDeptEnabled=false;
+                     }
+
+                   
+
+                    if (values == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
+                        Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
+                        Params.Add("N_FormID",FormID);
+                        //Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
+                        X_DispatchNo = dLayer.GetAutoNumber("Inv_MaterialDispatch", "X_DispatchNo", Params, connection, transaction);
+                        if (X_DispatchNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Return Number")); }
+                        MasterTable.Rows[0]["X_DispatchNo"] = X_DispatchNo;
+                    }
+
+                     if (MasterTable.Columns.Contains("transType"))
+                        MasterTable.Columns.Remove("transType");
+
+                          
+                          
+                if(nLastActionID==2){
+
+                     if (nDispatchID > 0)
+                    {
+                         dLayer.ExecuteNonQuery("update Inv_MaterialDispatch set N_LastActionID="+nLastActionID+" where N_CompanyID=" + nCompanyID + " and N_DispatchID=" + nDispatchID, Params, connection, transaction);
+                         transaction.Commit();
+                         return Ok(_api.Success("Material Request saved"));
+                    }
+                 }
+
+                   if (nDispatchID > 0)
                     {
                         SortedList DeleteParams = new SortedList(){
                                     {"N_CompanyID",nCompanyID},
@@ -202,19 +249,9 @@ namespace SmartxAPI.Controllers
 
                         dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
                     }
-                    values = MasterRow["X_DispatchNo"].ToString();
 
-                    if (values == "@Auto")
-                    {
-                        Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
-                        Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
-                        Params.Add("N_FormID", this.FormID);
-                        //Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
-                        X_DispatchNo = dLayer.GetAutoNumber("Inv_MaterialDispatch", "X_DispatchNo", Params, connection, transaction);
-                        if (X_DispatchNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Return Number")); }
-                        MasterTable.Rows[0]["X_DispatchNo"] = X_DispatchNo;
-                    }
 
+                    MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
                     nDispatchID = dLayer.SaveData("Inv_MaterialDispatch", "N_DispatchID", MasterTable, connection, transaction);
                     if (nDispatchID <= 0)
                     {
@@ -225,17 +262,25 @@ namespace SmartxAPI.Controllers
                     {
                         DetailTable.Rows[i]["N_DispatchID"] = nDispatchID;
                     }
-                    int N_DispatchDetailsID = dLayer.SaveData("Inv_MaterialDispatchDetails", "N_DispatchDetailsID", DetailTable, connection, transaction);
+                     N_DispatchDetailsID = dLayer.SaveData("Inv_MaterialDispatchDetails", "N_DispatchDetailsID", DetailTable, connection, transaction);
                     if (N_DispatchDetailsID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable To Save"));
                     }
-                    if (nSaveDraft == 0)
-                        dLayer.ExecuteScalar("update Inv_PRS set N_Processed=1 where N_PRSID=" + N_RSID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_TransTypeID=8", connection, transaction);
-                        dLayer.ExecuteScalar("update Inv_PRS set N_Processed=1 where N_PRSID=" + N_RSID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_FormID=1309", connection, transaction);
 
-                    SortedList UpdateStockParam = new SortedList();
+                    if(nLastActionID==3){
+                             if ((!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())))
+                    {
+                        int N_PkeyID = nDispatchID;
+                        string X_Criteria = "N_DispatchID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID;
+                        myFunctions.UpdateApproverEntry(Approvals, "Inv_MaterialDispatch", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID,transType, N_PkeyID, values, 1,"", 0, "",0, User, dLayer, connection, transaction);
+                    nSaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from Inv_MaterialDispatch where N_DispatchID=" + nDispatchID + " and N_CompanyID=" + nCompanyID , connection, transaction).ToString());
+                   if (nSaveDraft == 0){
+                        
+             
+                      SortedList UpdateStockParam = new SortedList();
                     UpdateStockParam.Add("N_CompanyID", nCompanyID);
                     UpdateStockParam.Add("N_DispatchId", nDispatchID);
                     UpdateStockParam.Add("N_UserID", N_UserID);
@@ -251,9 +296,18 @@ namespace SmartxAPI.Controllers
                     PostParam.Add("N_InternalID", nDispatchID);
                     PostParam.Add("N_UserID", N_UserID);
 
-                    if (!bDeptEnabled)
-                        dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostParam, connection, transaction);
-
+                     dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostParam, connection, transaction);
+                    }
+                
+                        transaction.Commit();
+                        //myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_PkeyID, this.xTransType, values, dLayer, connection, transaction, User);
+                        return Ok(_api.Success("Material Request Approved " + "-" + values));
+                    }
+                    }
+                    
+                    
+         
+                     N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, transType, nDispatchID, X_DispatchNo, 1, "", 0, "",0, User, dLayer, connection, transaction);
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
                 }
@@ -266,17 +320,60 @@ namespace SmartxAPI.Controllers
 
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nDispatchID, int N_RSID, int nCompanyID, int nFnYearID, int nBranchID)
+        public ActionResult DeleteData(int nDispatchID, int nCompanyID, int nFormID,int nFnYearID, int nBranchID, string comments)
         {
+             if (comments == null)
+            {
+                comments = "";
+            }
             int Results = 0;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
+                   
                     var nUserID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                    SortedList DeleteParams = new SortedList(){
+                     DataTable TransData = new DataTable();
+                     SortedList Params = new SortedList();
+                     string xTransType="";
+                     if (nFormID == 1309)
+                     xTransType = "material Request";
+                    else if(nFormID == 1592)
+                    xTransType = "transfer Request";
+                    else
+                     xTransType = "purchase Request";
+
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@nDispatchID", nDispatchID);
+
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,X_DispatchNo,N_DispatchID from Inv_MaterialDispatch where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_DispatchId=@nDispatchID";
+                    TransData = dLayer.ExecuteDataTable(Sql,Params,connection);
+                    if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+                    string X_Criteria = "N_DispatchID=" + nDispatchID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) ;
+
+                DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, nFormID, nDispatchID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID,0, 0, User, dLayer, connection));
+                 Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
+                  SqlTransaction transaction = connection.BeginTransaction();
+                   string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
+                  
+                   string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, xTransType, nDispatchID, TransRow["X_DispatchNo"].ToString(), ProcStatus, "Inv_MaterialDispatch", X_Criteria, "", User, dLayer, connection, transaction);
+                   
+                   if (status != "Error"){
+                    if(ButtonTag=="3"){
+                        dLayer.ExecuteNonQuery("update Inv_MaterialDispatch set N_LastActionID=4 where N_CompanyID=" + nCompanyID + " and N_DispatchID=" + nDispatchID, Params, connection, transaction);
+                         transaction.Commit();
+                         return Ok(_api.Success("Material Request saved"));
+                    }
+
+                     if (ButtonTag == "6" || ButtonTag == "0"){
+                              SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
                                 {"N_UserID",nUserID},
                                 {"X_TransType","MATERIAL DISPATCH"},
@@ -289,13 +386,28 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to delete Material Dispatch."));
                     }
-                    else
-                    {
-                        if (N_RSID > 0)
-                            dLayer.ExecuteScalar("update Inv_PRS set N_Processed=0 where N_PRSID=" + N_RSID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction);
-                    }
-                    transaction.Commit();
+                      transaction.Commit();
                     return Ok(_api.Success("Material Dispatch deleted"));
+                     }
+
+                     else{
+                        transaction.Commit();
+                            return Ok(_api.Success("Material " + status + " Successfully"));
+                     }
+                
+                    // else
+                    // {
+                    //     if (N_RSID > 0)
+                    //         dLayer.ExecuteScalar("update Inv_PRS set N_Processed=0 where N_PRSID=" + N_RSID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction);
+                    // }
+                  
+                   }
+                    else
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to delete Material Dispatch"));
+                        }
+                  
                 }
             }
             catch (Exception ex)

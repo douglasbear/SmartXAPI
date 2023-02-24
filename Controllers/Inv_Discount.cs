@@ -345,11 +345,11 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    object objSInvoice = dLayer.ExecuteScalar("select COUNT(*) from Inv_Sales where N_CompanyId="+nCompanyID+" and N_FnYearId="+nFnYearID+" and N_DiscID="+n_DiscountId, connection);
-                    object objSInvoiceDetails = dLayer.ExecuteScalar("select COUNT(*) from Inv_SalesDetails where N_CompanyID="+nCompanyID+" and N_PriceListID="+n_DiscountId, connection);
-                    object objSOrder = dLayer.ExecuteScalar("select COUNT(*) from Inv_SalesOrder where N_CompanyId="+nCompanyID+" and N_FnYearId="+nFnYearID+" and N_PriceTypeID="+n_DiscountId, connection);
-                    object objSOrderDetails = dLayer.ExecuteScalar("select COUNT(*) from Inv_SalesOrderDetails where N_CompanyID="+nCompanyID+" and N_PriceListID="+n_DiscountId, connection);
-                    object objCustomer = dLayer.ExecuteScalar("select COUNT(*) from Inv_Customer where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+" and N_DiscID="+n_DiscountId, connection);
+                    object objSInvoice = dLayer.ExecuteScalar("select count(1) from Inv_Sales where N_CompanyId="+nCompanyID+" and N_FnYearId="+nFnYearID+" and N_DiscID="+n_DiscountId, connection);
+                    object objSInvoiceDetails = dLayer.ExecuteScalar("select count(1) from Inv_SalesDetails where N_CompanyID="+nCompanyID+" and N_PriceListID="+n_DiscountId, connection);
+                    object objSOrder = dLayer.ExecuteScalar("select count(1) from Inv_SalesOrder where N_CompanyId="+nCompanyID+" and N_FnYearId="+nFnYearID+" and N_PriceTypeID="+n_DiscountId, connection);
+                    object objSOrderDetails = dLayer.ExecuteScalar("select count(1) from Inv_SalesOrderDetails where N_CompanyID="+nCompanyID+" and N_PriceListID="+n_DiscountId, connection);
+                    object objCustomer = dLayer.ExecuteScalar("select count(1) from Inv_Customer where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+" and N_DiscID="+n_DiscountId, connection);
                     if (objSInvoice == null) objSInvoice = 0; if (objSInvoiceDetails == null) objSInvoiceDetails = 0; if (objSOrder == null) objSOrder = 0;
                     if (objSOrderDetails == null) objSOrderDetails = 0; if (objCustomer == null) objCustomer = 0;
 
@@ -422,7 +422,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_inv_DiscountMaster where N_CompanyID=@nCompanyID " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count  from vw_inv_DiscountMaster where N_CompanyID=@nCompanyID " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

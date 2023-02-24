@@ -98,7 +98,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(NetAmount,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvAssetInventoryInvoiceNo_Search where " + sqlCondition + " " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(NetAmount,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvAssetInventoryInvoiceNo_Search where " + sqlCondition + " " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -306,6 +306,7 @@ namespace SmartxAPI.Controllers
             AssMasterTable = ds.Tables["assetmaster"];
             SortedList Params = new SortedList();
             DataTable Attachment = ds.Tables["attachments"];
+            
             // Auto Gen
             try
             {
@@ -321,7 +322,7 @@ namespace SmartxAPI.Controllers
                     int N_UserID = myFunctions.GetUserID(User);
                      int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-
+                     String xButtonAction="";
                     if (FormID == 1293) xTransType = "AR";
                     else xTransType = "AP";
 
@@ -350,6 +351,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", FormID);
                         Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         ReturnNo = dLayer.GetAutoNumber("Ass_PurchaseMaster", "X_InvoiceNo", Params, connection, transaction);
+                         xButtonAction="Insert"; 
                         if (ReturnNo == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate Invoice Number")); }
                         MasterTable.Rows[0]["X_InvoiceNo"] = ReturnNo;
                         X_InvoiceNo = ReturnNo;
@@ -366,6 +368,7 @@ namespace SmartxAPI.Controllers
                         try
                         {
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts ", DeleteParams, connection, transaction);
+                             xButtonAction="Update"; 
                         }
                         catch (Exception ex)
                         {
@@ -581,6 +584,14 @@ namespace SmartxAPI.Controllers
                             // }
                         }
                     }
+
+                                     //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(N_FnYearID,N_AssetInventoryID,X_InvoiceNo,129,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
                       SortedList assetPurchaseParams = new SortedList();
                            assetPurchaseParams.Add("@N_AssetInventoryID", N_AssetInventoryID);
 

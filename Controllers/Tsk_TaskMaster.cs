@@ -108,7 +108,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from [vw_TaskCurrentStatus] where N_CompanyID=@p1 ";
+                    sqlCommandCount = "select count(1) as N_Count  from [vw_TaskCurrentStatus] where N_CompanyID=@p1 ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -764,7 +764,7 @@ namespace SmartxAPI.Controllers
 
                     if (myFunctions.getIntVAL(nStatus.ToString()) == 4)
                     {
-                        object N_ClosedTaskStatus = dLayer.ExecuteScalar("select COUNT(*) from Tsk_TaskMaster where N_ParentID=" + nTaskID + " and ISNULL(B_Closed,0)=0 and N_CompanyID=" + nCompanyID.ToString(), Params, connection, transaction);
+                        object N_ClosedTaskStatus = dLayer.ExecuteScalar("select count(1) from Tsk_TaskMaster where N_ParentID=" + nTaskID + " and ISNULL(B_Closed,0)=0 and N_CompanyID=" + nCompanyID.ToString(), Params, connection, transaction);
                         int N_Count = myFunctions.getIntVAL(N_ClosedTaskStatus.ToString());
                         if (N_Count > 0)
                         {

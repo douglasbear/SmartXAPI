@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_Sch_ParentDetails_Disp where N_CompanyID=@nCompanyId " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count  from vw_Sch_ParentDetails_Disp where N_CompanyID=@nCompanyId " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
