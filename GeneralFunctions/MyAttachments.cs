@@ -48,10 +48,6 @@ namespace SmartxAPI.GeneralFunctions
             int N_remCategory = 0;
             int N_FolderID = 0;
 
-
-
-
-
             if (dsAttachment.Rows.Count > 0)
             {
                 if (dsAttachment.Columns.Contains("deleted"))

@@ -499,6 +499,9 @@ namespace SmartxAPI.GeneralFunctions
             Response.Add("approvalID", nApprovalID);
             Response.Add("formID", nFormID);
             Response.Add("addSign", false);
+            Response.Add("addButton", false);
+            Response.Add("allowPrint", false);
+            Response.Add("attachmentCount", false);
 
             /* Approval Param Set */
             SortedList ApprovalParams = new SortedList();
@@ -734,6 +737,53 @@ namespace SmartxAPI.GeneralFunctions
                 {
                     Response["addSign"] = false;
                 }
+
+                object bAddButton = false;
+                if (nTransID == 0)
+                    bAddButton = dLayer.ExecuteScalar("SELECT Isnull (B_AddButton,0) from Gen_ApprovalCodesDetails where N_CompanyID=@nCompanyID and N_level=1 and N_ApprovalID=@nApprovalID", ApprovalParams, connection);
+                else
+                    bAddButton = dLayer.ExecuteScalar("Select Isnull (B_AddButton,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID and N_LevelID=@nNextApprovalID", ApprovalParams, connection);
+
+                if (bAddButton == null)
+                    bAddButton = false;
+
+                if (this.getBoolVAL(bAddButton.ToString()))
+                {
+                    Response["addButton"] = true;
+                }
+                else
+                {
+                    Response["addButton"] = false;
+                }
+
+                object bAllowPrint = false;
+                if (nTransID == 0)
+                    bAllowPrint = dLayer.ExecuteScalar("SELECT Isnull (B_AllowPrint,0) from Gen_ApprovalCodesDetails where N_CompanyID=@nCompanyID and N_level=1 and N_ApprovalID=@nApprovalID", ApprovalParams, connection);
+                else
+                    bAllowPrint = dLayer.ExecuteScalar("Select Isnull (B_AllowPrint,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID and N_LevelID=@nNextApprovalID", ApprovalParams, connection);
+
+                if (bAllowPrint == null)
+                    bAllowPrint = false;
+
+                if (this.getBoolVAL(bAllowPrint.ToString()))
+                {
+                    Response["allowPrint"] = true;
+                }
+                else
+                {
+                    Response["allowPrint"] = false;
+                }
+
+                object nAttachmentCount = false;
+                if (nTransID == 0)
+                    nAttachmentCount = dLayer.ExecuteScalar("SELECT N_AttachmentCount from Gen_ApprovalCodesDetails where N_CompanyID=@nCompanyID and N_level=1 and N_ApprovalID=@nApprovalID", ApprovalParams, connection);
+                else
+                    nAttachmentCount = dLayer.ExecuteScalar("Select N_AttachmentCount from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID and N_LevelID=@nNextApprovalID", ApprovalParams, connection);
+
+                if (nAttachmentCount == null)
+                    Response["attachmentCount"] = null;
+                else
+                    Response["attachmentCount"] = this.getBoolVAL(nAttachmentCount.ToString());
 
                 if (nTransID > 0)
                 {
