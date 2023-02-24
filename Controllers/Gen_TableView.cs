@@ -24,6 +24,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
+        private readonly string cliConnectionString;
 
         public Gen_TableView(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
@@ -32,6 +33,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            cliConnectionString = conf.GetConnectionString("OlivoClientConnection");
             FormID = 1056;
         }
 
@@ -161,7 +163,7 @@ namespace SmartxAPI.Controllers
                             }
                         }
 
-                        FieldList = FieldList + ",[" + cRow["X_FieldName"].ToString()+"]";
+                        FieldList = FieldList + ",[" + cRow["X_FieldName"].ToString() + "]";
 
                     }
                     if (xSearchField != "All")
@@ -287,7 +289,19 @@ namespace SmartxAPI.Controllers
                     {
                         sqlCommandText = "select " + FieldList + " from " + DataSource + Criterea + SortBy;
                         string fileName = "Exported_List_" + RandomString();
-                        myFunctions.QryToExcel(User, sqlCommandText, fileName, Params, dLayer, connection);
+                        if (nFormID == 1650)
+                        {
+                            using (SqlConnection cliConn = new SqlConnection(cliConnectionString))
+                            {
+                                cliConn.Open();
+                                myFunctions.QryToExcel(User, sqlCommandText, fileName, Params, dLayer, cliConn);
+                            }
+                        }
+                        else
+                        {
+                            myFunctions.QryToExcel(User, sqlCommandText, fileName, Params, dLayer, connection);
+                        }
+
                         fileName = fileName + ".xls";
                         return Ok(_api.Success(new SortedList() { { "FileName", fileName } }));
                     }
@@ -297,7 +311,18 @@ namespace SmartxAPI.Controllers
                         if (SumField == null)
                         { SumField = ""; }
 
-                        dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                        if (nFormID == 1650)
+                        {
+                            using (SqlConnection cliConn = new SqlConnection(cliConnectionString))
+                            {
+                                cliConn.Open();
+                                dt = dLayer.ExecuteDataTable(sqlCommandText, Params, cliConn);
+                            }
+                        }
+                        else
+                        {
+                            dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                        }
 
                         sqlCommandCount = "select count(*) as N_Count,0 as TotalAmount  from " + DataSource + Criterea;
 
@@ -305,8 +330,21 @@ namespace SmartxAPI.Controllers
                         {
                             sqlCommandCount = "select count(*) as N_Count ,sum(Cast(REPLACE(" + SumField + ",',','') as Numeric(16," + nDecimalPlace + ")) ) as TotalAmount  from " + DataSource + Criterea;
                         }
+                        DataTable Summary = new DataTable();
+                        if (nFormID == 1650)
+                        {
+                            using (SqlConnection cliConn = new SqlConnection(cliConnectionString))
+                            {
+                                cliConn.Open();
+                                Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, cliConn);
+                            }
+                        }
+                        else
+                        {
+                            Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                        }
 
-                        DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+
                         string TotalCount = "0";
                         string TotalSum = "0";
                         if (Summary.Rows.Count > 0)
