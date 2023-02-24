@@ -642,6 +642,35 @@ namespace SmartxAPI.Controllers
                             }
                         }
 
+                        //Approval Signature
+
+                        DataTable ApprovalSig = dLayer.ExecuteDataTable("select i_sign,N_ActionID from vw_ApprovalLog where n_transid=" + nPkeyID + " and N_FormID="+nFormID+" and N_CompanyID=" + nCompanyId + " and i_sign is not null", QueryParams, connection, transaction);
+
+                        if (ApprovalSig.Rows.Count>0)
+                        {
+                            foreach (DataRow var in ApprovalSig.Rows)
+                            {
+                                SqlCommand cmd = new SqlCommand("Select isnull(i_sign,'') as  i_sign from vw_ApprovalLog where N_ActionID=" + var["N_ActionID"].ToString(), connection, transaction);
+                                if ((cmd.ExecuteScalar().ToString()) != "" && cmd.ExecuteScalar().ToString() != "0x" && cmd.ExecuteScalar().ToString() != "System.Byte[]")
+                                {
+                                    byte[] content = (byte[])cmd.ExecuteScalar();
+                                    MemoryStream stream = new MemoryStream(content);
+                                    Image Sign = Image.FromStream(stream);
+                                    using (var b = new Bitmap(Sign.Width, Sign.Height))
+                                    {
+                                        b.SetResolution(Sign.HorizontalResolution, Sign.VerticalResolution);
+
+                                        using (var g = Graphics.FromImage(b))
+                                        {
+                                            g.Clear(Color.White);
+                                            g.DrawImageUnscaled(Sign, 0, 0);
+                                        }
+                                        b.Save("C://OLIVOSERVER2020/Images/" + var["N_ActionID"].ToString() + ".png");
+                                    }
+                                }
+                            }
+                        }
+
 
                         string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
                         var path = client.GetAsync(URL);
@@ -1339,7 +1368,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     dbName = connection.Database;
-                    if (x_comments == "" && MainMenuID!=1680)
+                    if (x_comments == "" && MainMenuID != 1680)
                     {
                         object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyID, connection);
                         object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection);
