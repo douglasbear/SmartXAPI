@@ -211,7 +211,7 @@ namespace SmartxAPI.Controllers
                                     dLayer.ExecuteScalar(appUpdate, paramList, olivCnn);
                                 }
 
-                                int rows = dLayer.ExecuteNonQuery("insert into ClientApps select @nClientID,@nAppID,@xAppUrl,@xDBUri,@nUserLimit,0,'Service',max(N_RefID)+1,@dExpDate,0,null,@isAttachment from ClientApps", paramList, olivCnn);
+                                int rows = dLayer.ExecuteNonQuery("insert into ClientApps select @nClientID,@nAppID,@xAppUrl,@xDBUri,@nUserLimit,0,'Service',max(N_RefID)+1,@dExpDate,0,null,@isAttachment,null,null,null from ClientApps", paramList, olivCnn);
                                 // string appUpdate = "Update Users set N_ActiveAppID=@nAppID WHERE (X_EmailID =@xEmailID and N_UserID=@nGlobalUserID)";
                                 
                              
