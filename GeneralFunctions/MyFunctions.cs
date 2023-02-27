@@ -783,7 +783,7 @@ namespace SmartxAPI.GeneralFunctions
                 if (nAttachmentCount == null)
                     Response["attachmentCount"] = null;
                 else
-                    Response["attachmentCount"] = this.getBoolVAL(nAttachmentCount.ToString());
+                    Response["attachmentCount"] = this.getIntVAL(nAttachmentCount.ToString());
 
                 if (nTransID > 0)
                 {
@@ -1529,6 +1529,18 @@ namespace SmartxAPI.GeneralFunctions
                         string TableID = dLayer.ExecuteScalar("select X_IDName from vw_ScreenTables where N_FormID=@nFormID", NewParam, connection, transaction).ToString();
 
                         dLayer.ExecuteScalar("update " + TableName + " set B_IssaveDraft=0 where " + TableID + "=@nTransID and N_CompanyID=@nCompanyID", NewParam, connection, transaction);
+                        if(N_FormID==1309)
+                        {
+                             SortedList statusParams = new SortedList();
+                             statusParams.Add("@N_CompanyID", N_CompanyID);
+                             statusParams.Add("@N_TransID", N_TransID);
+                             statusParams.Add("@N_FormID", N_FormID);
+                             statusParams.Add("@N_ForceUpdate", 1);  
+                         
+                              dLayer.ExecuteNonQueryPro("SP_TxnStatusUpdate", statusParams, connection, transaction);
+                          
+                         }
+
                         object UserObj = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=108", NewParam, connection, transaction);
                         if (UserObj == null)
                             UserObj = 0;
@@ -1547,6 +1559,7 @@ namespace SmartxAPI.GeneralFunctions
 
 
                         SendApprovalMail(EntrUsrID, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User, Subject, body);
+                       
                     }
                 }
 
