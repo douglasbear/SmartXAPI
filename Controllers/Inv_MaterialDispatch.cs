@@ -78,6 +78,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     sqlCommandCount = "select count(*) as N_Count  from vw_MaterialDispatchDisp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p3" + Searchkey + "";
+
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -200,6 +201,8 @@ namespace SmartxAPI.Controllers
                      int FormID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FormID"].ToString());
                     int N_NextApproverID = 0;
                     int N_DispatchDetailsID=0;
+                    bool b_Action= myFunctions.getBoolVAL(MasterTable.Rows[0]["b_Action"].ToString());
+
                      values = MasterRow["X_DispatchNo"].ToString();
 
                      if( myFunctions.getIntVAL(MasterTable.Rows[0]["n_DepartmentID"].ToString())>0){
@@ -224,18 +227,10 @@ namespace SmartxAPI.Controllers
 
                      if (MasterTable.Columns.Contains("transType"))
                         MasterTable.Columns.Remove("transType");
-
+                     if (MasterTable.Columns.Contains("b_Action"))
+                        MasterTable.Columns.Remove("b_Action");
                           
-                          
-                if(nLastActionID==2){
-
-                     if (nDispatchID > 0)
-                    {
-                         dLayer.ExecuteNonQuery("update Inv_MaterialDispatch set N_LastActionID="+nLastActionID+" where N_CompanyID=" + nCompanyID + " and N_DispatchID=" + nDispatchID, Params, connection, transaction);
-                         transaction.Commit();
-                         return Ok(_api.Success("Material Request saved"));
-                    }
-                 }
+        
 
                    if (nDispatchID > 0)
                     {
@@ -267,16 +262,16 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable To Save"));
                     }
-
-                    if(nLastActionID==3){
-                             if ((!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())))
+                                      
+        
+                    if ((!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())))
                     {
                         int N_PkeyID = nDispatchID;
                         string X_Criteria = "N_DispatchID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID;
                         myFunctions.UpdateApproverEntry(Approvals, "Inv_MaterialDispatch", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID,transType, N_PkeyID, values, 1,"", 0, "",0, User, dLayer, connection, transaction);
-                    nSaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from Inv_MaterialDispatch where N_DispatchID=" + nDispatchID + " and N_CompanyID=" + nCompanyID , connection, transaction).ToString());
-                   if (nSaveDraft == 0){
+                        nSaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from Inv_MaterialDispatch where N_DispatchID=" + nDispatchID + " and N_CompanyID=" + nCompanyID , connection, transaction).ToString());
+                         if (nSaveDraft == 0){
                         
              
                       SortedList UpdateStockParam = new SortedList();
@@ -284,10 +279,10 @@ namespace SmartxAPI.Controllers
                     UpdateStockParam.Add("N_DispatchId", nDispatchID);
                     UpdateStockParam.Add("N_UserID", N_UserID);
 
-                    if (!bDeptEnabled)
-                        dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch", UpdateStockParam, connection, transaction);
-                    else
-                        dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch_Department", UpdateStockParam, connection, transaction);
+                     if (bDeptEnabled)
+                       dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch_Department", UpdateStockParam, connection, transaction);
+                     else
+                       dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch", UpdateStockParam, connection, transaction);
 
                     SortedList PostParam = new SortedList();
                     PostParam.Add("N_CompanyID", nCompanyID);
@@ -302,7 +297,10 @@ namespace SmartxAPI.Controllers
                         //myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_PkeyID, this.xTransType, values, dLayer, connection, transaction, User);
                         return Ok(_api.Success("Material Request Approved " + "-" + values));
                     }
-                    }
+                   
+    
+              
+          
                     
                     
          
@@ -416,6 +414,69 @@ namespace SmartxAPI.Controllers
 
 
         }
+        [HttpPost("updateStatus")]
+        public ActionResult updateTransStatus([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                DataTable MasterTable;
+                MasterTable = ds.Tables["master"];
+                 DataRow MasterRow = MasterTable.Rows[0];
+                 int Results=0;
+
+                SortedList Params = new SortedList();
+                 int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+                 int N_DispatchID = myFunctions.getIntVAL(MasterRow["N_DispatchID"].ToString());
+                 int N_ActionID = myFunctions.getIntVAL(MasterRow["N_LastActionID"].ToString());
+
+               
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                       SortedList statusParams = new SortedList();
+                             statusParams.Add("@N_CompanyID", N_CompanyID);
+                             statusParams.Add("@N_TransID", N_DispatchID);
+                             statusParams.Add("@N_FormID", 1309);
+                             statusParams.Add("@N_ForceUpdate", 1);  
+                              statusParams.Add("@N_ActionID", N_ActionID);  
+                            try
+                            {
+                             Results= dLayer.ExecuteNonQueryPro("SP_TxnStatusUpdate", statusParams, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
+                             if (Results <= 0)
+                              {
+                                     transaction.Rollback();
+                                     return Ok(_api.Error(User,"error"));
+                              }
+                             else
+                             {
+                                      transaction.Commit();
+                                      return Ok(_api.Success("Status Updated"));
+                             }  
+                }
+                
+
+            }
+
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User,ex));
+            }
+        }
+           
+            
+
+                
+        
+
+
+
 
     }
 }
