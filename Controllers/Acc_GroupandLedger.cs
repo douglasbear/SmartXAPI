@@ -481,14 +481,15 @@ namespace SmartxAPI.Controllers
                     if (accountType == "AL")
                     {
 
-                        if (CheckTransaction(accountID, connection) == 1)
-                        {
+                        if(CheckPrevYearsClosed(accountID, nFnYearID, connection)==1)
+                            return Ok(api.Error(User, "Previous Year Not Closed"));
+                        else if(CheckPrevYearsBalance(accountID, nFnYearID, connection)==1)
+                            return Ok(api.Error(User, "Balance exists"));
+                        else if (CheckTransaction(accountID,nFnYearID, connection) == 1)
                             return Ok(api.Error(User, "Transaction Started"));
-                        }
                         else if (CheckTransactionNotPosted(accountID, nFnYearID, connection) == 1)
-                        {
                             return Ok(api.Error(User, "Transaction Pending"));
-                        }
+
                         Result = dLayer.DeleteData("Acc_MastLedger", "N_LedgerID", accountID, "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID, connection);
 
                     }
@@ -518,9 +519,9 @@ namespace SmartxAPI.Controllers
         }
 
 
-        private int CheckTransaction(int N_LedgerID, SqlConnection connection)
+        private int CheckTransaction(int N_LedgerID, int nFnYearID, SqlConnection connection)
         {
-            object value = dLayer.ExecuteScalar("SELECT DISTINCT 1 from Acc_MastLedger inner join Acc_VoucherDetails on Acc_MastLedger.N_CompanyID = Acc_VoucherDetails.N_CompanyID and Acc_MastLedger.N_FnYearID = Acc_VoucherDetails.N_FnYearID and Acc_MastLedger.N_LedgerID = Acc_VoucherDetails.N_LedgerID where  Acc_VoucherDetails.N_LedgerID=" + N_LedgerID + "and Acc_MastLedger.N_CompanyID=" + myFunctions.GetCompanyID(User) + " ", connection);
+            object value = dLayer.ExecuteScalar("SELECT DISTINCT 1 from Acc_MastLedger inner join Acc_VoucherDetails on Acc_MastLedger.N_CompanyID = Acc_VoucherDetails.N_CompanyID and Acc_MastLedger.N_FnYearID = Acc_VoucherDetails.N_FnYearID and Acc_MastLedger.N_LedgerID = Acc_VoucherDetails.N_LedgerID where  Acc_VoucherDetails.N_LedgerID=" + N_LedgerID + "and Acc_MastLedger.N_CompanyID=" + myFunctions.GetCompanyID(User) + " AND Acc_MastLedger.N_FnYearID="+nFnYearID, connection);
             if (value == null)
                 return 0;
             else if (myFunctions.getIntVAL(value.ToString()) == 1)
@@ -535,6 +536,29 @@ namespace SmartxAPI.Controllers
             if (value == null)
                 return 0;
             else if (myFunctions.getIntVAL(value.ToString()) == 1)
+                return 1;
+            else
+                return 0;
+        }
+        private int CheckPrevYearsClosed(int N_LedgerID, int nFnYearID, SqlConnection connection)
+        {            
+            object value = dLayer.ExecuteScalar("SELECT DISTINCT 1 FROM Acc_FnYear INNER JOIN Acc_MastLedger ON Acc_FnYear.N_CompanyID = Acc_MastLedger.N_CompanyID AND Acc_FnYear.N_FnYearID = Acc_MastLedger.N_FnYearID "+
+                                                " WHERE     (Acc_FnYear.N_CompanyID = "+ myFunctions.GetCompanyID(User)+") AND Acc_MastLedger.N_LedgerID="+N_LedgerID+" and Acc_FnYear.B_YearEndProcess=0 AND Acc_FnYear.D_End< "+
+                                                " (SELECT D_Start from Acc_FnYear WHERE N_CompanyID="+ myFunctions.GetCompanyID(User)+" AND N_FnYearID="+nFnYearID+")", connection);
+            if (value == null)
+                return 0;
+            else if (myFunctions.getIntVAL(value.ToString()) == 1)
+                return 1;
+            else
+                return 0;
+        }
+         private int CheckPrevYearsBalance(int N_LedgerID, int nFnYearID, SqlConnection connection)
+        {            
+            object value = dLayer.ExecuteScalar("select SUM(N_Amount) from Acc_VoucherDetails where N_CompanyID="+myFunctions.GetCompanyID(User)+" and N_LedgerID="+N_LedgerID+" and N_FnYearID=(select TOP 1 N_FnYearID from Acc_FnYear where N_CompanyID="+myFunctions.GetCompanyID(User)+" and D_End< "+
+                                                " (select D_Start from Acc_FnYear where N_CompanyID="+myFunctions.GetCompanyID(User)+" and N_FnYearID="+nFnYearID+") order by D_Start desc)", connection);
+            if (value == null)
+                return 0;
+            else if (myFunctions.getVAL(value.ToString()) == 0)
                 return 1;
             else
                 return 0;

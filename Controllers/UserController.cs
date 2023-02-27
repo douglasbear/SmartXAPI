@@ -686,6 +686,59 @@ namespace SmartxAPI.Controllers
             }
         }
 
+
+// [HttpGet("forgotPassword")]
+//         public ActionResult GenerateOTP(string emailID,int nGlobalUserID)
+//         {
+//             try
+//             {
+//                 using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+//                 {
+//                     olivoCon.Open();
+//                     SortedList userParams = new SortedList();
+//                     userParams.Add("@xEmail", emailID);
+
+//                     object clientID = dLayer.ExecuteScalar("select N_ClientID from Users where X_EmailID=@xEmail", userParams, olivoCon);
+//                     object globalUserID = dLayer.ExecuteScalar("select N_UserID from Users where X_EmailID=@xEmail", userParams, olivoCon);
+//                     object userName = dLayer.ExecuteScalar("select X_UserName from Users where X_EmailID=@xEmail", userParams, olivoCon);
+//                     userParams.Add("@nClientID", clientID);
+
+//                     object appUrl = dLayer.ExecuteScalar("select Top 1 X_AppUrl from ClientApps where N_ClientID=@nClientID ", userParams, olivoCon);
+
+//                     if (appUrl == null)
+//                     {
+//                         return Ok(_api.Error(User, "Unable to request - App Url Not Found"));
+//                     }
+//                     // format -> userid + email + clientid 
+//                     string inviteCode = myFunctions.EncryptString(globalUserID.ToString()) + seperator + myFunctions.EncryptString(emailID) + seperator + myFunctions.EncryptString(clientID.ToString());
+
+//                     string EmailBody = "<div style='font-size: 18px;font-weight: 400;width: 600px;margin: 0 auto;color: #2d2f36;font-family: sans-serif;'><span style='font-weight: 500;margin: 56px 0 20px;'><span style='color: #2c6af6;'> "
+// + "Forgot Your Password?"
+// + "</span><h1 style='font-size: 32px;font-weight: 600;margin:40px 0 12px;'>"
+// + "</h1><p style='margin: 0 0 24px;'> That's okay, it happens! Click on the button below to reset your password."
+// + "</p><a href='" +appUrl+ "/verifyUser#" + inviteCode + "' style='text-decoration: none;display: block;width: max-content;font-size: 18px;margin: 0 auto 24px;padding: 20px 40px;color: #ffffff;border-radius: 4px;background-color: #2c6af6;'>Reset Your Password</a><p style='margin: 24px 0 0 ;padding: 17px 0;text-align: center;background: #f4f5f6;color: #86898e;font-size: 14px;'>Copyright © 2021 Olivo Tech., All rights reserved.</p></div>";
+//                     string EmailSubject = "Olivo Cloud Solutions - Reset Password";
+//                     if(senderMail!="")
+//                     {
+
+//                      myFunctions.SendMail(senderMail.ToString(), EmailBody, EmailSubject, dLayer, 1, 1, 1);
+//                      dLayer.ExecuteNonQuery("update users set N_PswdDuraHours="+nPswdDuraHours+" ,D_PswdResetTime='"+dPswdResetTime+"' where N_ClientID=" + clientID+ "and  X_EmailID=@xEmail", userParams,olivoCon); 
+               
+//                     }
+//                     else{
+//                      myFunctions.SendMail(emailID.ToString(), EmailBody, EmailSubject, dLayer, 1, 1, 1);
+//                     }
+                   
+
+//                 }
+//                  return Ok(_api.Success("Password Reset Mail Send"));
+//             }
+//             catch (Exception ex)
+//             {
+//                 return StatusCode(403, _api.Error(User, "An error occurred while sending mail"));
+//             }
+//         }
+
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet("all")]
         public ActionResult GetCustomer(int nFnYearId)
