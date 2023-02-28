@@ -140,6 +140,7 @@ namespace SmartxAPI.Controllers
             string DataSource = "";
             string PKey = "";
             string BranchCriterea = "";
+            string LocationCriterea = "";
             string SortBy = "";
             string PatternCriteria = "";
             string SumField = "";
@@ -221,7 +222,7 @@ namespace SmartxAPI.Controllers
                     }
                       if (dRow["X_LocationCriteria"].ToString() != "")
                     {
-                        Criterea = Criterea + " and " + " ( " + dRow["X_LocationCriteria"].ToString() + " ) ";
+                        LocationCriterea = " ( " + dRow["X_LocationCriteria"].ToString() + " ) ";
                     }
 
                     if (BranchCriterea.Trim().Length > 0)
@@ -257,6 +258,19 @@ namespace SmartxAPI.Controllers
                         else
                         {
                             Criterea = PatternCriteria;
+                        }
+                    }
+
+
+                      if (LocationCriterea.Trim().Length > 0)
+                    {
+                        if (Criterea.Trim().Length > 0)
+                        {
+                            Criterea = Criterea + " and " + LocationCriterea;
+                        }
+                        else
+                        {
+                            Criterea = LocationCriterea;
                         }
                     }
 
