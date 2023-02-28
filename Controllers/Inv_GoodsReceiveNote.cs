@@ -597,7 +597,7 @@ namespace SmartxAPI.Controllers
                     SortedList ParamList = new SortedList();
                     ParamList.Add("@nTransID", nGRNID);
                     ParamList.Add("@nCompanyID", nCompanyID);
-                    string Sql = "select N_VendorID,N_FnYearID from Inv_MRN where N_MRNID=@nTransID and N_CompanyID=@nCompanyID";
+                    string Sql = "select N_VendorID,N_FnYearID,X_MRNNo from Inv_MRN where N_MRNID=@nTransID and N_CompanyID=@nCompanyID";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                      string xButtonAction = "Delete";
                     if (TransData.Rows.Count == 0)
@@ -637,7 +637,7 @@ namespace SmartxAPI.Controllers
                     ipAddress = Request.Headers["X-Forwarded-For"];
                 else
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nGRNID,TransRow["GRNNo"].ToString(),555,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nGRNID,TransRow["X_MRNNo"].ToString(),555,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
 
                         SortedList DeleteParams = new SortedList(){

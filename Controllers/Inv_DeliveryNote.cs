@@ -1002,24 +1002,25 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     var xUserCategory = User.FindFirst(ClaimTypes.GroupSid)?.Value;
                     var nUserID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                       string xButtonAction="Delete";
-                     String invoiceNo="";
+                     //  string xButtonAction="Delete";
+                    // String invoiceNo="";
+                     
 
                      
-                    if (TransData.Rows.Count == 0)
-                    {
-                        return Ok(_api.Error(User, "Transaction not Found"));
-                    }
-                    DataRow TransRow = TransData.Rows[0];
+                    // if (TransData.Rows.Count == 0)
+                    // {
+                    //     return Ok(_api.Error(User, "Transaction not Found"));
+                    // }
+                    // DataRow TransRow = TransData.Rows[0];
 
                      
            //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nDeliveryNoteID,TransRow["invoiceNo"].ToString(),884,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                // string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nDeliveryNoteID,TransRow["invoiceNo"].ToString(),884,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
 
                     //Results = dLayer.DeleteData("Inv_SalesInvoice", "n_InvoiceID", N_InvoiceID, "",connection,transaction);

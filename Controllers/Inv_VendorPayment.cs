@@ -405,7 +405,6 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
                 DataTable Attachment = ds.Tables["attachments"];
-
                 DataTable Approvals;
                 Approvals = ds.Tables["approval"];
                 DataRow ApprovalRow = Approvals.Rows[0];
@@ -517,7 +516,7 @@ namespace SmartxAPI.Controllers
 
                     
                     {
-                        PayReceiptNo = MasterTable.Rows[0]["PayReceiptNo"].ToString();
+                        PayReceiptNo = MasterTable.Rows[0]["x_VoucherNo"].ToString();
 
                         if (n_PayReceiptID > 0)
                         {
@@ -633,9 +632,11 @@ namespace SmartxAPI.Controllers
 
                         if (DetailTable.Columns.Contains("N_ProjectID"))
                             row["N_ProjectID"] = myFunctions.getIntVAL(Master["N_ProjectID"].ToString());
-                        else
+                        else if(MasterTable.Columns.Contains("N_ProjectID"))
                             myFunctions.AddNewColumnToDataTable(DetailTable, "N_ProjectID", typeof(int), myFunctions.getIntVAL(Master["N_ProjectID"].ToString()));
-
+                        else 
+                           myFunctions.AddNewColumnToDataTable(DetailTable, "N_ProjectID", typeof(int), 0);
+                            
                         // row["N_CompanyID"] = myFunctions.getIntVAL(Master["n_CompanyID"].ToString());
                         // row["N_PayReceiptId"] = n_PayReceiptID;
                         // row["N_InventoryId"] = n_PayReceiptID;
@@ -781,7 +782,7 @@ namespace SmartxAPI.Controllers
                     ipAddress = Request.Headers["X-Forwarded-For"];
                 else
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nPayReceiptId,TransRow["PayReceiptNo"].ToString(),67,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nPayReceiptId,TransRow["X_VoucherNo"].ToString(),67,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
 
 
