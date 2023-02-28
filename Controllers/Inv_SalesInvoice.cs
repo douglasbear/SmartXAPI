@@ -2016,6 +2016,8 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nCompanyID", nCompanyID);
                     string xButtonAction = "Delete";
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_CustomerId,0) as N_CustomerId,X_ReceiptNo,N_SalesOrderID from Inv_Sales where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_SalesID=@nTransID";
+                    string x_ReceiptNo="";
+                  
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
@@ -2085,6 +2087,17 @@ namespace SmartxAPI.Controllers
                                     {"@nBranchID",nBranchID}
                                    };
 
+            //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nInvoiceID,TransRow["x_ReceiptNo"].ToString(),this.N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
+
+
+
 
                         string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "SALES", nInvoiceID, TransRow["X_ReceiptNo"].ToString(), ProcStatus, "Inv_Sales", X_Criteria, objCustName.ToString(), User, dLayer, connection, transaction);
                         if (status != "Error")
@@ -2136,11 +2149,11 @@ namespace SmartxAPI.Controllers
                             }
                             //Activity Log
 
-                            string ipAddress = "";
-                            if (Request.Headers.ContainsKey("X-Forwarded-For"))
-                                ipAddress = Request.Headers["X-Forwarded-For"];
-                            else
-                                ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                            // string ipAddress = "";
+                            // if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                            //     ipAddress = Request.Headers["X-Forwarded-For"];
+                            // else
+                            //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
                             // SortedList LogParams = new SortedList();
                             // LogParams.Add("N_CompanyID", nCompanyID);
                             // LogParams.Add("N_FnYearID", nFnYearID);
@@ -2154,8 +2167,8 @@ namespace SmartxAPI.Controllers
                             // LogParams.Add("X_TransCode", InvoiceNO);
                             // LogParams.Add("X_Remark", " ");
                             // dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);
-                            DataTable MasterTable =new DataTable();
-                            myFunctions.LogScreenActivitys(nFnYearID,nInvoiceID,InvoiceNO.ToString(),this.N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                            // DataTable MasterTable =new DataTable();
+                            // myFunctions.LogScreenActivitys(nFnYearID,nInvoiceID,TransRow["x_ReceiptNo"].ToString(),this.N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
 
                             //StatusUpdate
