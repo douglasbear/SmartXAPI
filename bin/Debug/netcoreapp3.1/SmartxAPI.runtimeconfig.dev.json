@@ -3,6 +3,7 @@
     "additionalProbingPaths": [
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\rathe\\.nuget\\packages"
 =======
@@ -14,6 +15,10 @@
       "C:\\Users\\Administrator\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Administrator\\.nuget\\packages"
 >>>>>>> 3088983ec2d48166bb6a6d6b7507511ed29d2a9a
+=======
+      "C:\\Users\\olivouser2\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\olivouser2\\.nuget\\packages"
+>>>>>>> 7227b0e267cc7e039d3e61486375310c7877d6f1
     ]
   }
 }
