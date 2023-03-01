@@ -327,6 +327,7 @@ namespace SmartxAPI.Controllers
                 else
                 if (ex.Message == "Login Failed")
                     Res.Add("Message", "Login Failed");
+                else
                 if (ex.Message == "Password Expiry")
                     Res.Add("Message", "Password Expired");
                 else
