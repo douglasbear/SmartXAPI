@@ -66,30 +66,32 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("userlist")]
-        public ActionResult GetUserlist(int nCompanyId,int nCategoryID,int nAnyUserUsed)
+        public ActionResult GetUserlist(int nCompanyId)//,int nCategoryID,int nAnyUserUsed)
         {
             DataTable dt = new DataTable(); 
             SortedList Params = new SortedList();
 
             string sqlCommandText = "";
             
-            if(nAnyUserUsed==0)
-            {
-                if(nCategoryID!=0)
-                    sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID in (@p2,-11,-22) and B_Active=1 and N_UserCategoryID<>1";
-                else
-                    sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID >= -22 and B_Active=1 and N_UserCategoryID<>1";
-            }
-            else
-            {
-                if(nCategoryID!=0)
-                    sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and (N_UserCategoryID=@p2 OR N_UserCategoryID<= -22) and B_Active=1 and N_UserCategoryID<>1";
-                else
-                    sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID <>-11 and B_Active=1 and N_UserCategoryID<>1";
-            }
+            // if(nAnyUserUsed==0)
+            // {
+            //     if(nCategoryID!=0)
+            //         sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID in (@p2,-11,-22) and B_Active=1 and N_UserCategoryID<>1";
+            //     else
+            //         sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID >= -24 and B_Active=1 and N_UserCategoryID<>1";
+            // }
+            // else
+            // {
+            //     if(nCategoryID!=0)
+            //         sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and (N_UserCategoryID=@p2 OR N_UserCategoryID<= -22) and B_Active=1 and N_UserCategoryID<>1";
+            //     else
+             //       sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID <>-11 and B_Active=1 and N_UserCategoryID<>1";
+            //}
+
+             sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and B_Active=1 and N_UserCategoryID<>1";
 
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nCategoryID);
+            // Params.Add("@p2", nCategoryID);
 
 
             try
@@ -119,7 +121,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from gen_defaults where n_DefaultId=33 ";
+            string sqlCommandText = "select * from gen_defaults where n_DefaultId=33 order by N_Sort asc";
             //Params.Add("@p1", nDefaultId);
             //Params.Add("@p1", nTypeId);
             try
@@ -192,12 +194,6 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_ApprovalCode"] = X_ApprovalCode;
 
                     }
-                    else
-                    {
-                        
-                        dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID, "", connection, transaction);
-                    }
-
 
                     nApprovalID = dLayer.SaveData("Gen_ApprovalCodes", "N_ApprovalID", MasterTable, connection, transaction);
                     if (nApprovalID <= 0)
@@ -259,7 +255,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nApproovalID", ApproovalID);
 
                     MasterTable = _api.Format(MasterTable, "Master");
-                    DetailSql = "select * from vw_ApprovalCodeDetails where N_CompanyId=@nCompanyID and N_ApprovalID=@nApproovalID ";
+                    DetailSql = "select * from vw_ApprovalCodeDetails where N_CompanyId=@nCompanyID and N_ApprovalID=@nApproovalID order by N_level asc";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(MasterTable);
@@ -288,7 +284,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_ApprovalDescription like '% " + xSearchkey + ")";
+                Searchkey = "and (X_ApprovalDescription like '%"+ xSearchkey +"%' or X_ApprovalCode like '%"+ xSearchkey +"%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ApprovalID desc";
@@ -297,9 +293,9 @@ namespace SmartxAPI.Controllers
 
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Gen_ApprovalCodes where N_CompanyID=@p1 ";
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Gen_ApprovalCodes where N_CompanyID=@p1 " + Searchkey +" "+ xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Gen_ApprovalCodes where N_CompanyID=@nCompanyId and  N_ApprovalID not in (select top(" + Count + ") N_ApprovalID from Gen_ApprovalCodes  where N_CompanyID=@p1 )";
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Gen_ApprovalCodes where N_CompanyID=@p1 " + Searchkey +" and  N_ApprovalID not in (select top(" + Count + ") N_ApprovalID from Gen_ApprovalCodes  where N_CompanyID=@p1 " +Searchkey + xSortBy + ") "  + Searchkey +" "+ xSortBy;
 
             Params.Add("@p1", nCompanyId);
             // Params.Add("@nFnYearId", nFnYearId);
@@ -311,7 +307,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from Gen_ApprovalCodes where N_CompanyID=@p1 ";
+                    sqlCommandCount = "select count(1) as N_Count  from Gen_ApprovalCodes where N_CompanyID=@p1 ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -337,17 +333,35 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nApprovalID)
         {
             int Results = 0;
+             int nCompanyID=myFunctions.GetCompanyID(User);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     
                     connection.Open();
-                    Results = dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID, "", connection);
+                     SqlTransaction transaction = connection.BeginTransaction();
+                     if ( nApprovalID > 0)
+                    {
+                        object appCount = dLayer.ExecuteScalar("select count(1) From Sec_ApprovalSettings_EmployeeDetails where N_ApprovalID =" + nApprovalID + " and N_CompanyID =" + nCompanyID, connection, transaction);
+                        appCount = appCount == null ? 0 : appCount;
+                        if (myFunctions.getIntVAL(appCount.ToString()) > 0){
+                            return Ok(_api.Error(User, "Already In Use !!"));
+                        }
+                    }
+                       if ( nApprovalID > 0)
+                    {
+                        object appCount = dLayer.ExecuteScalar("select count(1) From Sec_ApprovalSettings_General where N_ApprovalID =" + nApprovalID + " and N_CompanyID =" + nCompanyID, connection, transaction);
+                        appCount = appCount == null ? 0 : appCount;
+                        if (myFunctions.getIntVAL(appCount.ToString()) > 0){
+                            return Ok(_api.Error(User, "Already In Use !!"));
+                        }
+                    }
+                    Results = dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID,"N_CompanyID =" + nCompanyID , connection,transaction);
                     if (Results > 0)
                     {
-                    
-                        dLayer.DeleteData("Gen_ApprovalCodesDetails", "N_ApprovalID", nApprovalID, "", connection);
+                      transaction.Commit();
+                        dLayer.DeleteData("Gen_ApprovalCodesDetails", "N_ApprovalID", nApprovalID, "N_CompanyID =" + nCompanyID , connection,transaction);
                         return Ok(_api.Success("Approval Code deleted"));
                     }
                     else

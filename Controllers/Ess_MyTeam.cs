@@ -74,7 +74,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_PayEmployee_Disp " + Criteria + Searchkey + groupBy;
+                    sqlCommandCount = "select count(1) as N_Count  from vw_PayEmployee_Disp " + Criteria + Searchkey + groupBy;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -118,24 +118,27 @@ namespace SmartxAPI.Controllers
 
                     // string Criteria = " Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_SupervisorID=@nEmpID and N_EmpID<>@nEmpID "; //and N_EmpID<>@nEmpID and (N_ManagerID=@nEmpID or N_SupervisorID=@nEmpID)
                     string Criteria = " Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ";
-                    int PositionID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_PositionID from Pay_employee where N_EmpID=" + nEmpID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", Params, connection).ToString());
-                    if (PositionID > 0)
-                    {
-                        string xPattern = dLayer.ExecuteScalar("select X_LevelPattern from Pay_Position Where  N_CompanyID=" + nCompanyID + " and N_PositionID=" + PositionID + " ", Params, connection).ToString();
-                        if(xPattern!=null)
-                        Pattern = " and N_EmpID<>"+nEmpID +" and Left(X_LevelPattern,Len(" + xPattern + "))=" + xPattern;
-                    }
+                    // int PositionID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_PositionID from Pay_employee where N_EmpID=" + nEmpID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", Params, connection).ToString());
+                    // if (PositionID > 0)
+                    // {
+                    //     string xPattern = dLayer.ExecuteScalar("select X_LevelPattern from Pay_Position Where  N_CompanyID=" + nCompanyID + " and N_PositionID=" + PositionID + " ", Params, connection).ToString();
+                    //     if(xPattern!=null)
+                    //     Pattern = " and N_EmpID<>"+nEmpID +" and Left(X_LevelPattern,Len(" + xPattern + "))=" + xPattern;
+                    // }
 
+                    object nDepartmentID= myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(N_DepartmentID,null) from Pay_Employee Where  N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and N_FnYearID=@nFnYearID ", Params, connection).ToString());
+
+                    
 
                     if (listType == "myDepartment")
                     {
-                        Criteria = Criteria + " and N_ManagerID=@nEmpID";
+                        Criteria = Criteria + " and N_DepartmentID="+nDepartmentID;
                     }
-                    // else if (listType == "myTeam")
-                    // {
-                    //     Criteria = Criteria + " and N_SupervisorID=@nEmpID and N_EmpID<>@nEmpID ";
+                    else if (listType == "myTeam")
+                    {
+                        Criteria = Criteria + " and N_DepartmentID in (select N_DepartmentID from Pay_Department where N_ManagerID=@nEmpID and N_FnYearID=@nFnYearID ) and N_EmpID<>@nEmpID ";
 
-                    // }
+                    }
 
                     if (bAllBranchData == false)
                     {
@@ -162,7 +165,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from Vw_Web_MyTeamList " + Criteria +Pattern + Searchkey;
+                    sqlCommandCount = "select count(1) as N_Count  from Vw_Web_MyTeamList " + Criteria +Pattern + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

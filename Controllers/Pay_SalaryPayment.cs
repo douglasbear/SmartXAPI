@@ -87,7 +87,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             if (xBatchCode == "")
             {
-                sqlCommandText = "select * from vw_PayEmployeeSalaryPaymentsByEmployeeGroup where  N_CompanyID=@nCompanyID ";
+                sqlCommandText = "select N_CompanyID,N_EmpID,X_EmpCode,N_BranchID,X_EmpName  from vw_PayEmployeeSalaryPaymentsByEmployeeGroup where  N_CompanyID=@nCompanyID Group By N_CompanyID,N_EmpID,X_EmpCode,N_BranchID,X_EmpName ";
             }
             else
             {
@@ -295,7 +295,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult SalaryPayList(int nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult SalaryPayList(int nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nFnYearID,bool bAllBranchData,int nBranchID)
         {
             //int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
@@ -326,14 +326,22 @@ namespace SmartxAPI.Controllers
                         }
                         xSortBy = " order by " + xSortBy;
                     }
+                      if (bAllBranchData == true)
+                        {
+                            Searchkey = Searchkey + " ";
+                        }
+                        else
+                        {
+                            Searchkey = Searchkey + " and N_BranchID=" + nBranchID + " ";
+                        }    
 
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId and n_AcYearID=@nFnYearID " + Searchkey + Criteria + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_ReceiptID not in (select top(" + Count + ") N_ReceiptID from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId and n_AcYearID=@nFnYearID " + Searchkey + Criteria + " and N_ReceiptID not in (select top(" + Count + ") N_ReceiptID from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId and n_AcYearID=@nFnYearID" + Criteria + xSortBy + " ) " + xSortBy;
             Params.Add("@nCompanyId", nCompanyId);
-
+            Params.Add("@nFnYearID", nFnYearID);
             SortedList OutPut = new SortedList();
 
 
@@ -344,12 +352,12 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria;
+                    sqlCommandCount = "select count(1) as N_Count  from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId and n_AcYearID=@nFnYearID " ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
-                    {
+                    { 
                         return Ok(_api.Warning("No Results Found"));
                     }
                     else

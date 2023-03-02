@@ -179,6 +179,13 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error(User, "Unable to generate Invoice Number"));
                         }
                         MasterTable.Rows[0]["X_TruckCode"] = X_TruckCode;
+
+                    object Count=dLayer.ExecuteScalar("select count(1) from Inv_TruckMaster  where N_CompanyID="+ nCompanyID +" and  X_PlateNumber='"+X_PlateNumber+"'", Params, connection, transaction);
+
+                      if (myFunctions.getIntVAL(Count.ToString()) > 0){
+
+                             return Ok(api.Error(User, "Plate Number already exist"));
+                           }
                     }
                     string DupCriteria = "N_companyID=" + nCompanyID + " And X_PlateNumber = '" + X_PlateNumber + "' and X_TruckCode='" + X_TruckCode + "'";
 

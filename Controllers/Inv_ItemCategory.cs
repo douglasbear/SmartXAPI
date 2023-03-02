@@ -39,7 +39,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select Inv_ItemCategory.N_CompanyID,Inv_ItemCategory.N_CategoryID, Inv_ItemCategory.X_Category, Inv_ItemCategory.X_CategoryCode,Inv_ItemCategory.N_ParentCategoryID, Inv_ItemCategory_1.X_Category as X_ParentCategory from Inv_ItemCategory LEFT OUTER JOIN Inv_ItemCategory AS Inv_ItemCategory_1 ON Inv_ItemCategory.N_CompanyID = Inv_ItemCategory_1.N_CompanyID AND Inv_ItemCategory.N_ParentCategoryID = Inv_ItemCategory_1.N_CategoryID where Inv_ItemCategory.N_CompanyID=@p1";
+            string sqlCommandText = "select Inv_ItemCategory.N_CompanyID,Inv_ItemCategory.N_CategoryID, Inv_ItemCategory.X_Category, isnull(Inv_ItemCategory.X_Category_Ar,Inv_ItemCategory.X_Category) as X_Category_Ar,Inv_ItemCategory.X_CategoryCode,Inv_ItemCategory.N_ParentCategoryID, Inv_ItemCategory_1.X_Category as X_ParentCategory from Inv_ItemCategory LEFT OUTER JOIN Inv_ItemCategory AS Inv_ItemCategory_1 ON Inv_ItemCategory.N_CompanyID = Inv_ItemCategory_1.N_CompanyID AND Inv_ItemCategory.N_ParentCategoryID = Inv_ItemCategory_1.N_CategoryID where Inv_ItemCategory.N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
 
             try
@@ -129,7 +129,7 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
                     }
                     MasterTable.Columns.Remove("N_FnYearId");
-                    MasterTable.Columns.Remove("b_IsParent");
+                    //MasterTable.Columns.Remove("b_IsParent");
                     string X_Category = MasterTable.Rows[0]["X_Category"].ToString();
                     string DupCriteria = "X_Category='" + X_Category + "' and N_CompanyID="+nCompanyID+"";
                     N_CategoryID = dLayer.SaveData("Inv_ItemCategory", "N_CategoryID", DupCriteria, "", MasterTable, connection, transaction);
@@ -163,7 +163,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     object xCategory = dLayer.ExecuteScalar("Select X_Category From Inv_ItemCategory Where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User), connection);
-                    object Objcount = dLayer.ExecuteScalar("Select count(*) From Inv_ItemMaster where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User), connection);
+                    object Objcount = dLayer.ExecuteScalar("Select count(1) From Inv_ItemMaster where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User), connection);
                     int Obcount = myFunctions.getIntVAL(Objcount.ToString());
                     if (Obcount != 0)
                     {
@@ -192,5 +192,68 @@ namespace SmartxAPI.Controllers
 
 
         }
+
+           [HttpGet("dashboardList")]
+        public ActionResult GetProductUnitList(int nPage,bool adjustment,int nSizeperpage, string xSearchkey, string xSortBy,int nCategoryID,int nCompanyId)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                     nCompanyId = myFunctions.GetCompanyID(User);
+                    string sqlCommandCount = "", xCriteria = "";
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string criteria = "";
+                    string cndn = "";
+                    Params.Add("@p1", nCompanyId);
+                    string Searchkey = "";
+      
+                //    if (xSearchkey != null && xSearchkey.Trim() != "")
+                //     Searchkey = "and (X_CategoryCode like '%" + xSearchkey + "%' OR X_Category like '%" + xSearchkey + "%')";
+
+                    
+                   
+                //    if (xSortBy == null || xSortBy.Trim() == "")
+                //         xSortBy = "order by N_CategoryID desc";
+                      
+                   if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") X_Category,N_CategoryID,X_CategoryCode from Inv_ItemCategory where N_CompanyID=@p1"+ criteria + cndn + Searchkey + " " + xSortBy;
+                    else
+                       // sqlCommandText = "select top(" + nSizeperpage + ") ,X_Category,N_CategoryID,X_CategoryCode from Inv_ItemCategory where N_CompanyID=@p1";
+                         sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_ItemCategory where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1 and N_CategoryID not in (select top(" + Count + ") N_CategoryID from Inv_ItemCategory where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1)"+ criteria + cndn + Searchkey + " " + xSortBy;
+
+
+
+
+                    SortedList OutPut = new SortedList();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
+                   sqlCommandCount = "select count(1) as N_Count  from Inv_ItemCategory where N_CompanyID=@p1";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+                }
+            }
+              catch (Exception e)
+                {
+                return BadRequest(_api.Error(User, e));
+                }
+            
+
+        }
+
+
     }
 }

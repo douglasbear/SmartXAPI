@@ -40,7 +40,7 @@ namespace SmartxAPI.Controllers
 
         //Save....
         [HttpGet("ChangePassword")]
-        public ActionResult savedata(string xOldPasswd, string xNewpasswd, string xConfirmpasswd)
+        public ActionResult savedata(string xOldPasswd, string xNewpasswd, string xConfirmpasswd, DateTime dEntryDate)
         {
             try
             {
@@ -82,7 +82,7 @@ namespace SmartxAPI.Controllers
                     {
                         olivCon.Open();
 
-                        dLayer.ExecuteNonQuery("Update Users set X_Password='" + password + "' where N_UserID=" + myFunctions.GetGlobalUserID(User) + " and N_ClientID=" + myFunctions.GetClientID(User) + " and X_EmailID='" + myFunctions.GetEmailID(User) + "'", olivCon);
+                        dLayer.ExecuteNonQuery("Update Users set X_Password='" + password + "', D_PswdResetTime='" + dEntryDate + "' where N_UserID=" + myFunctions.GetGlobalUserID(User) + " and N_ClientID=" + myFunctions.GetClientID(User) + " and X_EmailID='" + myFunctions.GetEmailID(User) + "'", olivCon);
 
                     }
 

@@ -69,7 +69,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count from Veh_Drivers where" + xCriteria + Searchkey;
+                    sqlCommandCount = "select count(1) as N_Count from Veh_Drivers where" + xCriteria + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -105,7 +105,7 @@ namespace SmartxAPI.Controllers
             else
                 xCriteria = " N_CompanyID=@p1 and N_BranchID=@p2 ";
 
-            sqlCommandText = "select * from Veh_Drivers where " + xCriteria + " and N_DriversID=@p3";
+            sqlCommandText = "select * from vw_Veh_Drivers where " + xCriteria + " and N_DriversID=@p3";
 
             try
             {

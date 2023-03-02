@@ -38,20 +38,20 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
 
-            string sqlCurrentLead = "SELECT COUNT(*) as N_ThisMonth FROM crm_leads WHERE MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + " ";
-            string sqlPreviousLead = "SELECT COUNT(*) as N_LastMonth FROM crm_leads WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate())) and N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + " ";
-            string sqlCurrentCustomer = "SELECT COUNT(*) as N_ThisMonth FROM CRM_Customer WHERE MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + " ";
-            string sqlPreviousCustomer = "SELECT COUNT(*) as N_LastMonth FROM CRM_Customer WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate())) and N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + " ";
-            string sqlPerformance = "SELECT 'Leads Created' as X_Status,COUNT(*) as N_Count FROM crm_leads WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE()) and N_SalesmanID =" + nSalesmanId + " union SELECT 'Opportunities Created' as X_Status,COUNT(*) as N_Count FROM CRM_Opportunity WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE()) and N_SalesmanID =" + nSalesmanId + " union SELECT 'Customer Created' as X_Status,COUNT(*) as N_Count FROM CRM_Customer WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE()) and N_SalesmanID =" + nSalesmanId + " union SELECT  'Revenue Generated' as X_Status,sum(N_TotAmt) as N_Count FROM vw_InvSalesOrderNo_Search WHERE D_OrderDate >= DATEADD(DAY, -90, GETDATE()) and N_SalesmanID =" + nSalesmanId + "--'Contacts Created' as X_Status,COUNT(*) as N_Count FROM CRM_Contact WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE())  union SELECT 'Projects Created' as X_Status,COUNT(*) as N_Count FROM CRM_Project WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE())";
-            // string sqlOpportunitiesStage = "select X_Stage,CAST(COUNT(*) as varchar(50)) as N_Percentage  from vw_CRMOpportunity group by X_Stage";
-            string sqlOpportunitiesStage = "select isNull(X_Stage,'Others') as X_Stage,CAST(COUNT(*) as varchar(50)) as N_Percentage  from vw_CRMOpportunity where  N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + "  group by X_Stage";
-            string sqlLeadsbySource = "select X_LeadSource,CAST(COUNT(*) as varchar(50)) as N_Percentage from vw_CRMLeads where  N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + "  group by X_LeadSource";
-            string sqlPipelineoppotunity = "select count(*) as N_Count from CRM_Opportunity where (N_ClosingStatusID=0 or N_ClosingStatusID is null) and N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + " ";
-            string sqlWin = "select count(*) as N_ThisMonth from CRM_Opportunity where N_StatusTypeID=308 and MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + " ";
-            string sqlLose = "select count(*) as N_ThisMonth from CRM_Opportunity where N_StatusTypeID=309 and  MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + " ";
-            string sqlCurrentRevenue = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM CRM_Opportunity WHERE MONTH(D_EntryDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_EntryDate) = YEAR(CURRENT_TIMESTAMP) and N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + " ";
-            string sqlPreviousRevenue = "SELECT COUNT(*) as N_LastMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM CRM_Opportunity WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate())) and N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + " ";
-            string sqlQuarterlyRevenue = "select sum(N_TotAmt) as N_Amount,quarter from vw_QtoQRevenue where N_CompanyID = " + nCompanyID + " and N_FnyearID =" + nFnYearId + " group by quarter";
+            string sqlCurrentLead = "SELECT count(1) as N_ThisMonth FROM crm_leads WHERE MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + " ";
+            string sqlPreviousLead = "SELECT count(1) as N_LastMonth FROM crm_leads WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate())) and N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + " ";
+            string sqlCurrentCustomer = "SELECT count(1) as N_ThisMonth FROM CRM_Customer WHERE MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + " ";
+            string sqlPreviousCustomer = "SELECT count(1) as N_LastMonth FROM CRM_Customer WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate())) and N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + " ";
+            string sqlPerformance = "SELECT 'Leads Created' as X_Status,count(1) as N_Count FROM crm_leads WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE()) and N_SalesmanID =" + nSalesmanId + " union SELECT 'Opportunities Created' as X_Status,count(1) as N_Count FROM CRM_Opportunity WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE()) and N_SalesmanID =" + nSalesmanId + " union SELECT 'Customer Created' as X_Status,count(1) as N_Count FROM CRM_Customer WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE()) and N_SalesmanID =" + nSalesmanId + " union SELECT  'Revenue Generated' as X_Status,sum(N_TotAmt) as N_Count FROM vw_InvSalesOrderNo_Search WHERE D_OrderDate >= DATEADD(DAY, -90, GETDATE()) and N_SalesmanID =" + nSalesmanId + "--'Contacts Created' as X_Status,count(1) as N_Count FROM CRM_Contact WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE())  union SELECT 'Projects Created' as X_Status,count(1) as N_Count FROM CRM_Project WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE())";
+            // string sqlOpportunitiesStage = "select X_Stage,CAST(count(1) as varchar(50)) as N_Percentage  from vw_CRMOpportunity group by X_Stage";
+            string sqlOpportunitiesStage = "select isNull(X_Stage,'Others') as X_Stage,CAST(count(1) as varchar(50)) as N_Percentage  from vw_CRMOpportunity where  N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + "  group by X_Stage";
+            string sqlLeadsbySource = "select X_LeadSource,CAST(count(1) as varchar(50)) as N_Percentage from vw_CRMLeads where  N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + "  group by X_LeadSource";
+            string sqlPipelineoppotunity = "select count(1) as N_Count from CRM_Opportunity where (N_ClosingStatusID=0 or N_ClosingStatusID is null) and N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + " ";
+            string sqlWin = "select count(1) as N_ThisMonth from CRM_Opportunity where N_StatusTypeID=308 and MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + " ";
+            string sqlLose = "select count(1) as N_ThisMonth from CRM_Opportunity where N_StatusTypeID=309 and  MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + " ";
+            string sqlCurrentRevenue = "SELECT count(1) as N_ThisMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM CRM_Opportunity WHERE MONTH(D_EntryDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_EntryDate) = YEAR(CURRENT_TIMESTAMP) and N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + " ";
+            string sqlPreviousRevenue = "SELECT count(1) as N_LastMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM CRM_Opportunity WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate())) and N_SalesmanID =" + nSalesmanId + " and N_CompanyID = " + nCompanyID + " ";
+       // string sqlQuarterlyRevenue = "select sum(N_TotAmt) as N_Amount,quarter from vw_QtoQRevenue where N_CompanyID = " + nCompanyID + " and N_FnyearID =" + nFnYearId + " group by quarter";
             string sqlTargetRevenue = "SELECT (Cast(REPLACE(N_TargetAmount,',','') as Numeric(10,2)) ) as TotalAmount FROM Inv_Salesman WHERE N_CompanyID = " + nCompanyID + " and  N_SalesmanID =" + nSalesmanId + "";
 
             SortedList Data = new SortedList();
@@ -64,7 +64,7 @@ namespace SmartxAPI.Controllers
             DataTable CurrentRevenue = new DataTable();
             DataTable Win = new DataTable();
             DataTable Lose = new DataTable();
-            DataTable QuarterlyRevenue = new DataTable();
+            //DataTable QuarterlyRevenue = new DataTable();
             DataTable TargetRevenue = new DataTable();
 
             object LeadLastMonth = "";
@@ -94,7 +94,7 @@ namespace SmartxAPI.Controllers
                     CustomerLastMonth = dLayer.ExecuteScalar(sqlPreviousCustomer, Params, connection);
                     CurrentRevenue = dLayer.ExecuteDataTable(sqlCurrentRevenue, Params, connection);
                     RevenueLastMonth = dLayer.ExecuteDataTable(sqlPreviousRevenue, Params, connection);
-                    QuarterlyRevenue = dLayer.ExecuteDataTable(sqlQuarterlyRevenue, Params, connection);
+                   // QuarterlyRevenue = dLayer.ExecuteDataTable(sqlQuarterlyRevenue, Params, connection);
                     TargetRevenue = dLayer.ExecuteDataTable(sqlTargetRevenue, Params, connection);
                     if (myFunctions.getVAL(LeadLastMonth.ToString()) != 0)
                         LeadPercentage = ((myFunctions.getVAL(CurrentLead.Rows[0]["N_ThisMonth"].ToString()) - myFunctions.getVAL(LeadLastMonth.ToString())) / myFunctions.getVAL(LeadLastMonth.ToString()) * 100).ToString();
@@ -136,7 +136,7 @@ namespace SmartxAPI.Controllers
                 if (Win.Rows.Count > 0) Data.Add("winData", Win);
                 if (Lose.Rows.Count > 0) Data.Add("loseData", Lose);
                 if (CurrentRevenue.Rows.Count > 0) Data.Add("revenueData", CurrentRevenue);
-                if (QuarterlyRevenue.Rows.Count > 0) Data.Add("quarterlyRevenueData", QuarterlyRevenue);
+               // if (QuarterlyRevenue.Rows.Count > 0) Data.Add("quarterlyRevenueData", QuarterlyRevenue);
                 if (TargetRevenue.Rows.Count > 0) Data.Add("targetRevenuewData", TargetRevenue);
 
                 return Ok(api.Success(Data));
@@ -294,7 +294,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMCustomer where MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)";
+                    sqlCommandCount = "select count(1) as N_Count  from vw_CRMCustomer where MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -350,7 +350,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMOpportunity where N_CompanyID=@p1";
+                    sqlCommandCount = "select count(1) as N_Count  from vw_CRMOpportunity where N_CompanyID=@p1";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

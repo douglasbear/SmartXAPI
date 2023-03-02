@@ -81,6 +81,7 @@ namespace SmartxAPI.Controllers
                     else
                         sqlCondition = "N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and N_BranchID=@nBranchID";
 
+
                     if (Count == 0)
                         sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_RFQDecisionMaster where " + sqlCondition + " " + Searchkey + " " + xSortBy;
                     else
@@ -88,7 +89,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_RFQDecisionMaster where " + sqlCondition + " " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count from vw_RFQDecisionMaster where " + sqlCondition + " " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -111,16 +112,32 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nRFQDecisionID)
+        public ActionResult DeleteData(int nRFQDecisionID,int nFnYearID)
         {
             int Results = 0;
+             SortedList ParamList=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
+             SortedList Params = new SortedList();
+             ParamList.Add("@nFnYearID",nFnYearID);
+              string xButtonAction="Delete";
+              String X_RFQDecisionCode="";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+
+                    
+              object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Inv_RFQDecisionMaster where N_RFQDecisionID =" + nRFQDecisionID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
+                    //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nRFQDecisionID,X_RFQDecisionCode,955,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                   
                     dLayer.DeleteData("Inv_RFQDecisionDetails", "N_RFQDecisionID", nRFQDecisionID, "N_CompanyID=" + nCompanyID + " and N_RFQDecisionID=" + nRFQDecisionID, connection, transaction);
                     Results = dLayer.DeleteData("Inv_RFQDecisionMaster", "N_RFQDecisionID", nRFQDecisionID, "N_CompanyID=" + nCompanyID + " and N_RFQDecisionID=" + nRFQDecisionID, connection, transaction);
 
@@ -154,6 +171,7 @@ namespace SmartxAPI.Controllers
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
             SortedList Params = new SortedList();
+            String xButtonAction="";
             // Auto Gen
             try
             {
@@ -174,6 +192,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", N_FnYearID);
                         Params.Add("N_FormID", FormID);
                         X_RFQDecisionCode = dLayer.GetAutoNumber("Inv_RFQDecisionMaster", "X_RFQDecisionCode", Params, connection, transaction);
+                         xButtonAction="Insert"; 
                         if (X_RFQDecisionCode == "") { transaction.Rollback(); return Ok(api.Warning("Unable to generate Request Decision Number")); }
                         MasterTable.Rows[0]["X_RFQDecisionCode"] = X_RFQDecisionCode;
                     }
@@ -185,6 +204,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     N_RFQDecisionID = dLayer.SaveData("Inv_RFQDecisionMaster", "N_RFQDecisionID", MasterTable, connection, transaction);
+                   xButtonAction="Update"; 
                     if (N_RFQDecisionID <= 0)
                     {
                         transaction.Rollback();
@@ -194,6 +214,16 @@ namespace SmartxAPI.Controllers
                     {
                         DetailTable.Rows[j]["N_RFQDecisionID"] = N_RFQDecisionID;
                     }
+
+            // Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(N_FnYearID,N_RFQDecisionID,X_RFQDecisionCode,955,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
+                          
                     int N_RFQDecisionDetailsID = dLayer.SaveData("Inv_RFQDecisionDetails", "N_RFQDecisionDetailsID", DetailTable, connection, transaction);
 
                     if (N_RFQDecisionDetailsID <= 0)

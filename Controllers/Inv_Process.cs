@@ -7,7 +7,6 @@ using System.Data;
 using System.Collections;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using System;
 
 namespace SmartxAPI.Controllers
 
@@ -57,9 +56,9 @@ namespace SmartxAPI.Controllers
             if (b_IsProcess == true)
             {
                 if (Count == 0)
-                    sqlCommandText = "select top(" + nSizeperpage + ")  * from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build'   " + Searchkey;
+                    sqlCommandText = "select top(" + nSizeperpage + ")  * from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build' " + Searchkey;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build' " + Searchkey + "and N_AssemblyID not in (select top(" + Count + ") N_AssemblyID from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build' ) " + Searchkey;
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build'" + Searchkey + "and N_AssemblyID not in (select top(" + Count + ") N_AssemblyID from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build' ) " + Searchkey;
 
             }
             else
@@ -80,7 +79,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
+                    sqlCommandCount = "select count(1) as N_Count  from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -98,14 +97,14 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(User,e));
+                return BadRequest(_api.Error(User, e));
             }
         }
         [HttpGet("productList")]
         public ActionResult ProductList(int nFnYearID, int n_LocationID, bool b_IsProcess)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
-            
+
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             Params.Add("@nCompanyID", nCompanyID);
@@ -137,7 +136,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
 
         }
@@ -163,7 +162,7 @@ namespace SmartxAPI.Controllers
                     DataTable ItemStockUnit = new DataTable();
 
                     string StockQuerry = "";
-                    string ScrapDetailssql="";
+                    string ScrapDetailssql = "";
 
 
 
@@ -172,7 +171,7 @@ namespace SmartxAPI.Controllers
 
                     string ItemCondition = "([Item Code] ='" + xInputVal + "' OR X_Barcode ='" + xInputVal + "')";
                     string SQL = "Select *,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID," + nLocationID + ",'','Location') As N_Stock ,dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit) As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where " + ItemCondition + " and N_CompanyID=" + nCompanyID;
-                    
+
                     ItemDetails = dLayer.ExecuteDataTable(SQL, Params, connection);
                     // if (ElementsTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     ItemDetails.AcceptChanges();
@@ -221,7 +220,7 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                     ScrapDetailssql = "select *,dbo.SP_GenGetStock(vw_InvItemDetails.N_ItemID," + nLocationID + ",'','Location') As N_Stock,dbo.SP_Cost(vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID,'') As N_Cost,dbo.SP_SellingPrice(vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID) As N_SPrice From vw_InvItemDetails Where N_MainItemID =" + N_ItemID + " and N_CompanyID=" + nCompanyID + " and N_Type=2";
+                    ScrapDetailssql = "select *,dbo.SP_GenGetStock(vw_InvItemDetails.N_ItemID," + nLocationID + ",'','Location') As N_Stock,dbo.SP_Cost(vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID,'') As N_Cost,dbo.SP_SellingPrice(vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID) As N_SPrice From vw_InvItemDetails Where N_MainItemID =" + N_ItemID + " and N_CompanyID=" + nCompanyID + " and N_Type=2";
 
                     ScrapDetails = dLayer.ExecuteDataTable(ScrapDetailssql, Params, connection);
                     // if (ElementsTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -230,8 +229,8 @@ namespace SmartxAPI.Controllers
                     ItemDetails.AcceptChanges();
 
 
-                    string sql1="Select *,dbo.SP_GenGetStock(vw_InvItemDetails.N_ItemID," + nLocationID + ",'','Location') As N_Stock,dbo.[SP_Cost_Loc](vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID,''," + nLocationID + ") As N_Cost,dbo.SP_Cost(vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID,'') As N_Cost1,dbo.SP_SellingPrice(vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID) As N_SPrice From vw_InvItemDetails Where N_MainItemID =" + N_ItemID + " and N_CompanyID=" + nCompanyID + " and N_Type=1";
-                     ByProductDetails = dLayer.ExecuteDataTable(sql1, Params, connection);
+                    string sql1 = "Select *,dbo.SP_GenGetStock(vw_InvItemDetails.N_ItemID," + nLocationID + ",'','Location') As N_Stock,dbo.[SP_Cost_Loc](vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID,''," + nLocationID + ") As N_Cost,dbo.SP_Cost(vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID,'') As N_Cost1,dbo.SP_SellingPrice(vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID) As N_SPrice From vw_InvItemDetails Where N_MainItemID =" + N_ItemID + " and N_CompanyID=" + nCompanyID + " and N_Type=1";
+                    ByProductDetails = dLayer.ExecuteDataTable(sql1, Params, connection);
                     // if (ElementsTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     ByProductDetails.AcceptChanges();
                     // string StockQuerry = "Select Inv_ItemDetails.N_MainItemID,Inv_ItemDetails.N_ItemID," + nLocationID + " as N_locationID,dbo.SP_GenGetStock(Inv_ItemDetails.N_ItemID," + nLocationID + ",'','Location') as N_CurrentStock from Inv_ItemDetails inner join Inv_StockMaster on Inv_ItemDetails.N_ItemID=Inv_StockMaster.N_ItemID  group by Inv_ItemDetails.N_ItemID,Inv_ItemDetails.N_MainItemID having Inv_ItemDetails.N_MainItemID=" + N_ItemID;
@@ -250,13 +249,13 @@ namespace SmartxAPI.Controllers
 
 
 
-                    ItemDetails = _api.Format(ItemDetails,"ItemDetails");
-                    ItemStock = _api.Format(ItemStock,"ItemStock");
-                    ProducionLabourCost = _api.Format(ProducionLabourCost,"ProducionLabourCost");
-                    ProductionMachineCost = _api.Format(ProductionMachineCost,"ProductionMachineCost");
-                    ItemStockUnit = _api.Format(ItemStockUnit,"ItemStockUnit");
-                    ByProductDetails = _api.Format(ByProductDetails,"ByProductDetails");
-                    ScrapDetails = _api.Format(ScrapDetails,"ScrapDetails");
+                    ItemDetails = _api.Format(ItemDetails, "ItemDetails");
+                    ItemStock = _api.Format(ItemStock, "ItemStock");
+                    ProducionLabourCost = _api.Format(ProducionLabourCost, "ProducionLabourCost");
+                    ProductionMachineCost = _api.Format(ProductionMachineCost, "ProductionMachineCost");
+                    ItemStockUnit = _api.Format(ItemStockUnit, "ItemStockUnit");
+                    ByProductDetails = _api.Format(ByProductDetails, "ByProductDetails");
+                    ScrapDetails = _api.Format(ScrapDetails, "ScrapDetails");
                     dt.Tables.Add(ItemDetails);
                     dt.Tables.Add(ItemStock);
                     dt.Tables.Add(ProducionLabourCost);
@@ -264,7 +263,7 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(ByProductDetails);
                     dt.Tables.Add(ItemStockUnit);
                     dt.Tables.Add(ScrapDetails);
-                    
+
 
 
                     return Ok(_api.Success(dt));
@@ -272,7 +271,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -309,18 +308,46 @@ namespace SmartxAPI.Controllers
                     int N_ItemID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ItemID"].ToString());
                     int N_BOMUnitId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BOMUnitId"].ToString());
                     int N_ReqId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ReqId"].ToString());
-                    int N_LabourCostID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LabourCostID"].ToString());
-                    int N_MachineCostID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_MachineCostID"].ToString());
+                    int N_LabourCostID = 0;
+                    int N_MachineCostID = 0;
+                    if (MasterTable.Columns.Contains("N_LabourCostID"))
+                        N_LabourCostID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LabourCostID"].ToString());
+                    if (MasterTable.Columns.Contains("N_MachineCostID"))
+                        N_MachineCostID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_MachineCostID"].ToString());
                     int N_LocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationID"].ToString());
                     bool B_IsProcess = myFunctions.getBoolVAL(MasterTable.Rows[0]["B_IsProcess"].ToString());
-
-                    MasterTable.Columns.Remove("N_LabourCostID");
-                    MasterTable.Columns.Remove("N_MachineCostID");
+                    if (MasterTable.Columns.Contains("N_LabourCostID"))
+                        MasterTable.Columns.Remove("N_LabourCostID");
+                    if (MasterTable.Columns.Contains("N_MachineCostID"))
+                        MasterTable.Columns.Remove("N_MachineCostID");
                     MasterTable.Columns.Remove("N_BOMUnitId");
                     bool B_AddItem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("825", "AddItem", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
 
                     SqlTransaction transaction = connection.BeginTransaction();
                     DocNo = MasterRow["X_ReferenceNo"].ToString();
+                  if (!myFunctions.CheckActiveYearTransaction(nCompanyID,nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_Date"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                 
+                  {
+                   object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_Date"].ToString() + "') between D_Start and D_End", connection, transaction);
+                  if (DiffFnYearID != null)
+                   {
+                     MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                    nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                   
+                  }
+                  else
+                  {
+                
+                      return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                   }
+                 }
+                 object B_YearEndProcess=dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID="+nCompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_Date"].ToString() + "') between D_Start and D_End", connection, transaction);
+                 if(myFunctions.getBoolVAL(B_YearEndProcess.ToString()))
+                 {
+                     return Ok(_api.Error(User, "Year Closed"));
+                 }
+
+
                     if (X_ReferenceNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
@@ -337,19 +364,20 @@ namespace SmartxAPI.Controllers
                         X_ReferenceNo = DocNo;
 
 
-                        if (X_ReferenceNo == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate")); }
+                        if (X_ReferenceNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate")); }
                         MasterTable.Rows[0]["X_ReferenceNo"] = X_ReferenceNo;
 
                     }
                     if (nAssemblyID > 0)
                     {
-                        object result = dLayer.ExecuteScalar("[SP_BuildorUnbuild] 'delete'," + nAssemblyID.ToString() + "," + nAssemblyID.ToString(), connection, transaction);
+                        object result = dLayer.ExecuteScalar("[SP_BuildorUnbuild] 'delete'," + nAssemblyID.ToString() + "," + N_LocationID.ToString() + ",'PRODUCTION ORDER'", connection, transaction);
                         if (result == null || myFunctions.getIntVAL(result.ToString()) < 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,"Unable To Save"));
+                            return Ok(_api.Error(User, "Unable To Save"));
                         }
-
+                        // transaction.Commit();
+                        // return Ok(_api.Success("Saved Successfully"));
                         // N_AssemblyID = 0;
                     }
 
@@ -368,7 +396,7 @@ namespace SmartxAPI.Controllers
                         for (int i = 0; i < DetailTable.Rows.Count; i++)
                         {
                             if (myFunctions.getIntVAL(DetailTable.Rows[i]["n_ItemID"].ToString()) <= 0) continue;
-                            string sql = "select count(*) from Inv_ItemDetails where N_CompanyID=" + nCompanyID + " and N_MainItemID=" + N_ItemID + " and N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[i]["n_ItemID"].ToString()) + " and N_Type=1";
+                            string sql = "select count(1) from Inv_ItemDetails where N_CompanyID=" + nCompanyID + " and N_MainItemID=" + N_ItemID + " and N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[i]["n_ItemID"].ToString()) + " and N_Type=1";
                             object Itemcount = dLayer.ExecuteScalar(sql, connection, transaction);
                             if (myFunctions.getIntVAL(Itemcount.ToString()) != 0) continue;
                             int type = 1;  //bom items
@@ -379,25 +407,27 @@ namespace SmartxAPI.Controllers
                             row["N_CompanyID"] = nCompanyID;
                             row["N_MainItemID"] = N_ItemID;
                             row["N_ItemID"] = myFunctions.getIntVAL(DetailTable.Rows[i]["n_ItemID"].ToString());
-                            row["N_Qty"] = myFunctions.getIntVAL(DetailTable.Rows[i]["n_Qty"].ToString());
+                            row["N_Qty"] = myFunctions.getVAL(DetailTable.Rows[i]["n_Qty"].ToString());
                             row["N_Type"] = type;
                             dt.Rows.Add(row);
 
                         }
-                        int N_ItemDetailsID = dLayer.SaveData("Inv_ItemDetails", "N_ItemDetailsID", dt, connection, transaction);
-                        if (N_ItemDetailsID <= 0)
+                        for (int j = 0; j < dt.Rows.Count; j++)
                         {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User,"Unable to save Item Details "));
-                        }
+                            string DupCriteriaDetails = "N_CompanyID=" + nCompanyID + " and N_MainItemID=" + N_ItemID + " and N_ItemID=" + myFunctions.getIntVAL(dt.Rows[j]["n_ItemID"].ToString()) + " and N_Type=1";
+                            int N_ItemDetailsID = dLayer.SaveDataWithIndex("Inv_ItemDetails", "N_ItemDetailsID", DupCriteriaDetails, "", j, dt, connection, transaction);
 
+
+
+
+
+                        }
                     }
                     string qry = "select N_Qty from Inv_ItemUnit inner join Inv_ItemMaster on Inv_ItemUnit.N_ItemUnitID=Inv_ItemMaster.n_BOMUnitID  where Inv_ItemMaster.N_ItemID=" + N_ItemID + " and Inv_ItemUnit.N_CompanyID=" + nCompanyID + " and Inv_ItemUnit.N_ItemUnitID=" + N_BOMUnitId;
                     object BOMQty = dLayer.ExecuteScalar(qry, connection, transaction);
-                    double TotalQty = 0;
+                    double TotalQty = myFunctions.getVAL(MasterTable.Rows[0]["N_Qty"].ToString());
                     if (BOMQty != null)
                         TotalQty = myFunctions.getVAL(BOMQty.ToString()) * TotalQty;
-                    int N_Process = 1;
                     MasterTable.Rows[0]["n_Qty"] = TotalQty;
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_ReferenceNo='" + X_ReferenceNo + "'";
                     nAssemblyID = dLayer.SaveData("Inv_Assembly", "N_AssemblyID", DupCriteria, "", MasterTable, connection, transaction);
@@ -464,8 +494,42 @@ namespace SmartxAPI.Controllers
                         }
                     }
                     if (B_IsProcess)
-                        dLayer.ExecuteNonQuery("[SP_BuildorUnbuild] 'insert'," + nAssemblyID.ToString() + "," + N_LocationID, connection, transaction);
-                    dLayer.ExecuteNonQuery("SP_Acc_InventoryPosting " + nCompanyID.ToString() + ",'PRODUCTION ORDER'," + nAssemblyID.ToString() + "," + myFunctions.GetUserID(User).ToString() + ",'" + System.Environment.MachineName + "'", connection, transaction);
+                    {
+                        SortedList InsertParams = new SortedList(){
+                    {"X_Task","insert"},
+                    {"N_AssemblyID",nAssemblyID},
+                    {"N_LocationID",N_LocationID} };//,
+
+
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_BuildorUnbuild", InsertParams, connection, transaction);
+                        }
+                        catch (Exception)
+                        {
+                            transaction.Rollback();
+
+                            return Ok(_api.Error(User, "No Enough Quantity for Product"));
+                        }
+                    }
+
+                    SortedList PostingParam = new SortedList();
+                    PostingParam.Add("N_CompanyID", nCompanyID);
+                    PostingParam.Add("X_InventoryMode", "PRODUCTION ORDER");
+                    PostingParam.Add("N_InternalID", nAssemblyID);
+                    PostingParam.Add("N_UserID", myFunctions.GetUserID(User).ToString());
+                    PostingParam.Add("X_SystemName", "ERP Cloud");
+                    try
+                    {
+                        dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting", PostingParam, connection, transaction);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, ex));
+                    }
+
+
 
 
                     transaction.Commit();
@@ -475,7 +539,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
         [HttpGet("itemList")]
@@ -507,7 +571,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
 
         }
@@ -539,7 +603,16 @@ namespace SmartxAPI.Controllers
                     int N_ItemID = myFunctions.getIntVAL(Master.Rows[0]["N_ItemID"].ToString());
                     string sql = "select N_BOMUnitId from Inv_ItemMaster where N_ItemID=" + N_ItemID;
                     object N_BOMUnitIdLoc = dLayer.ExecuteScalar(sql, QueryParamsList, connection);
-                    int N_BOMUnitId = myFunctions.getIntVAL(N_BOMUnitIdLoc.ToString());
+                    int N_BOMUnitId = 0;
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "n_BOMUnitId", typeof(int), 0);
+                    if (N_BOMUnitIdLoc != null)
+                    {
+                        N_BOMUnitId = myFunctions.getIntVAL(N_BOMUnitIdLoc.ToString());
+                        Master.Rows[0]["N_BOMUnitId"] = N_BOMUnitId;
+                        // Master = myFunctions.AddNewColumnToDataTable(Master, "n_BOMUnitId", typeof(int), 0);
+                    }
+
+
 
 
                     string qry = "select N_Qty from Inv_ItemUnit inner join Inv_ItemMaster on Inv_ItemUnit.N_ItemUnitID=Inv_ItemMaster.n_BOMUnitID  where Inv_ItemMaster.N_ItemID=" + N_ItemID + " and Inv_ItemUnit.N_CompanyID=" + nCompanyID + " and Inv_ItemUnit.N_ItemUnitID=" + N_BOMUnitId;
@@ -557,12 +630,13 @@ namespace SmartxAPI.Controllers
 
                     if (ItemStock.Rows.Count > 0)
                     {
-                        string sql1 = "select X_ItemUnit from Inv_ItemUnit inner join Inv_ItemMaster on Inv_ItemMaster.N_ItemUnitID=Inv_ItemUnit.N_ItemUnitID where Inv_ItemMaster.N_ItemID= " + N_ItemID;
+                        string sql89 = "select X_ItemUnit from Inv_ItemUnit inner join Inv_ItemMaster on Inv_ItemMaster.N_ItemUnitID=Inv_ItemUnit.N_ItemUnitID where Inv_ItemMaster.N_ItemID= " + N_ItemID;
 
-                        ItemStockUnit = dLayer.ExecuteDataTable(sql1, QueryParamsList, connection);
+                        ItemStockUnit = dLayer.ExecuteDataTable(sql89, QueryParamsList, connection);
                         ItemStockUnit.AcceptChanges();
 
                     }
+
                     int N_AssemblyID = myFunctions.getIntVAL(Master.Rows[0]["N_AssemblyID"].ToString());
 
                     _sqlQuery = "Select * from vw_InvAssemblyDetails Where N_CompanyID=" + nCompanyID + " and N_AssemblyID=" + N_AssemblyID + " and N_Type=1";
@@ -583,10 +657,10 @@ namespace SmartxAPI.Controllers
 
                     Details = _api.Format(Details, "Details");
                     Master = _api.Format(Master, "Master");
-                    ItemStock = _api.Format(ItemStock);
-                    ProducionLabourCost = _api.Format(ProducionLabourCost);
-                    ProductionMachineCost = _api.Format(ProductionMachineCost);
-                    ItemStockUnit = _api.Format(ItemStockUnit);
+                    ItemStock = _api.Format(ItemStock, "ItemStock");
+                    ProducionLabourCost = _api.Format(ProducionLabourCost, "ProducionLabourCost");
+                    ProductionMachineCost = _api.Format(ProductionMachineCost, "ProductionMachineCost");
+                    ItemStockUnit = _api.Format(ItemStockUnit, "ItemStockUnit");
 
                     dt.Tables.Add(Details);
                     dt.Tables.Add(Master);
@@ -599,7 +673,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -613,7 +687,6 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     DataTable MasterTable;
                     DataTable DetailTable;
-                    string DocNo = "";
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
                     bool B_IsProcess = myFunctions.getBoolVAL(MasterTable.Rows[0]["B_IsProcess"].ToString());
@@ -629,13 +702,36 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
 
+            //  if (!myFunctions.CheckActiveYearTransaction(nCompanyID,nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["d_ReleaseDate"].ToString()), dLayer, connection, transaction))
+            //       {
+            //        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyID+" and convert(date ,'" + MasterTable.Rows[0]["d_ReleaseDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+            //       if (DiffFnYearID != null)
+            //        {
+            //          MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+            //         nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                   
+            //       }
+            //       else
+            //       {
+                
+            //           return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+            //        }
+            //      }
+            //      object B_YearEndProcess=dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID="+nCompanyID+" and convert(date ,'" + MasterTable.Rows[0]["d_ReleaseDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+            //      if(myFunctions.getBoolVAL(B_YearEndProcess.ToString()))
+            //      {
+            //          return Ok(_api.Error(User, "Year Closed"));
+            //      }
+
+
+
                     if (!B_IsProcess)
                     {
                         object result = dLayer.ExecuteScalar("[SP_BuildorUnbuild] 'deleteAdd'," + n_AssemblyID.ToString() + "," + N_locationID.ToString() + ",'PRODUCTION RELEASE'", connection, transaction);
                         if (result == null || myFunctions.getIntVAL(result.ToString()) < 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,"Unable to edit"));
+                            return Ok(_api.Error(User, "Unable to edit"));
 
                         }
 
@@ -660,7 +756,7 @@ namespace SmartxAPI.Controllers
                         return Ok("Unable to save");
 
                     }
-                    string qry1 = "update Inv_AssemblyDetails set B_IsProcess=0  where N_AssemblyID=" + n_AssemblyID + " and N_CompanyID=" + nCompanyID;
+                    string qry1 = "update Inv_AssemblyDetails set B_IsProcess=0  where N_AssemblyID=" + n_AssemblyID + " and N_CompanyID=" + nCompanyID ;
                     object Result1 = dLayer.ExecuteNonQuery(qry1, Params, connection, transaction);
                     if (myFunctions.getIntVAL(Result1.ToString()) <= 0)
                     {
@@ -684,12 +780,116 @@ namespace SmartxAPI.Controllers
                     return Ok(_api.Success("Saved Successfully"));
                 }
             }
-               catch (Exception e)
+            catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
 
         }
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nAssemblyID, int nLocationID, bool b_isProcessed)
+        {
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    if (b_isProcessed == true)
+                    {
+                        SortedList DeleteParams = new SortedList()
+                    {
+                    {"X_Task","delete"},
+                    { "N_AssemblyID",nAssemblyID},
+                    { "N_LocationID",nLocationID}
+
+                    };
+                        int Results = dLayer.ExecuteNonQueryPro("SP_BuildorUnbuild", DeleteParams, connection, transaction);
+
+                        if (Results <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to delete Purchase"));
+                        }
+                        transaction.Commit();
+                        return Ok(_api.Success(" Production Order deleted"));
+                    }
+                    else
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Production already released"));
+
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+        }
+        [HttpDelete("deleteRelease")]
+        public ActionResult DeleteDataRelease(int nAssemblyID, int nLocationID)
+        {
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    SortedList Params = new SortedList();
+                    Params.Add("@nCompanyID", nCompanyID);
+
+                        SortedList DeleteParams = new SortedList()
+                    {
+                    {"X_Task","deleteAdd"},
+                    { "N_AssemblyID",nAssemblyID},
+                    { "N_LocationID",nLocationID},
+                    {"@X_TransType","PRODUCTION RELEASE"}
+                    };
+                        int Results = dLayer.ExecuteNonQueryPro("SP_BuildorUnbuild", DeleteParams, connection, transaction);
+
+                        if (Results <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to delete Purchase"));
+                        }
+
+                        string qry = "update Inv_Assembly set B_IsProcess=1, D_ReleaseDate=NULL where N_AssemblyID=" + nAssemblyID + " and N_CompanyID=" + nCompanyID;
+                        dLayer.ExecuteNonQuery(qry, Params, connection, transaction);
+                        string qry1 = "update Inv_AssemblyDetails set B_IsProcess=1  where N_AssemblyID=" + nAssemblyID + " and N_CompanyID=" + nCompanyID;
+                        dLayer.ExecuteNonQuery(qry1, Params, connection, transaction);
+
+
+
+                        transaction.Commit();
+                        return Ok(_api.Success(" Production release deleted"));
+                   
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 }
 
