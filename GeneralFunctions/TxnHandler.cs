@@ -76,7 +76,7 @@ namespace SmartxAPI.GeneralFunctions
             DetailsToImport = ds.Tables["detailsImport"];
             bool B_isImport = false;
             bool showSellingPrice =false;
-              String xButtonAction="";
+            string xButtonAction="";
 
             if(MasterTable.Columns.Contains("showSellingPrice")) 
                showSellingPrice=myFunctions.getBoolVAL(masterRow["showSellingPrice"].ToString());
@@ -307,6 +307,8 @@ namespace SmartxAPI.GeneralFunctions
                             return Result;
                         }
                         MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
+
+                        
                         // object invoiceCount ;
                         if(vendorInvoice!="")
                         {
@@ -322,6 +324,7 @@ namespace SmartxAPI.GeneralFunctions
                             }
                         }
                     }
+                    InvoiceNo = MasterTable.Rows[0]["x_InvoiceNo"].ToString();
 
                     if (N_PurchaseID > 0)
                     {
@@ -401,7 +404,7 @@ namespace SmartxAPI.GeneralFunctions
 	                            {"X_TransType", "PURCHASE"}};
 
                         dLayer.ExecuteNonQueryPro("SP_StockDeleteUpdate", StockUpdateParams, connection, transaction);
-                         xButtonAction="Update"; 
+                        // xButtonAction="Update"; 
                     }
                     MasterTable.Rows[0]["n_userID"] = myFunctions.GetUserID(User);
 
@@ -1579,7 +1582,7 @@ namespace SmartxAPI.GeneralFunctions
             MasterTable.Rows[0]["N_TotalPaidAmount"] = N_TotalPaid;
             double N_TotalPaidF = myFunctions.getVAL(MasterTable.Rows[0]["n_TotalPaidAmountF"].ToString());
             MasterTable.Rows[0]["n_TotalPaidAmountF"] = N_TotalPaidF;
-               String xButtonAction="";
+            string xButtonAction="";
 
             if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_ReturnDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
             {
@@ -1607,7 +1610,7 @@ namespace SmartxAPI.GeneralFunctions
                 Params.Add("N_FormID", 55);
                 Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
                 InvoiceNo = dLayer.GetAutoNumber("Inv_SalesReturnMaster", "X_DebitNoteNo", Params, connection, transaction);
-                 xButtonAction="Insert"; 
+                  xButtonAction="Insert"; 
                 if (InvoiceNo == "") 
                 {
                      //transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Return Number")); 
@@ -1617,6 +1620,7 @@ namespace SmartxAPI.GeneralFunctions
                 }
                 MasterTable.Rows[0]["X_DebitNoteNo"] = InvoiceNo;
             }
+           
              InvoiceNo = MasterTable.Rows[0]["X_DebitNoteNo"].ToString();
 
             if (N_DebitNoteId > 0)
@@ -1627,7 +1631,7 @@ namespace SmartxAPI.GeneralFunctions
 	                            {"X_TransType", "SALES RETURN"}};
 
                 dLayer.ExecuteNonQueryPro("SP_StockDeleteUpdate", StockUpdateParams, connection, transaction);
-                xButtonAction="Update"; 
+               xButtonAction="Update"; 
                 SortedList DeleteParams = new SortedList(){
                         {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
                         {"X_TransType","SALES RETURN"},
@@ -1659,9 +1663,9 @@ namespace SmartxAPI.GeneralFunctions
                 // DeleteParams.Add("@N_DebitNoteId", N_DebitNoteId);
 
                 // dLayer.ExecuteDataTable(sqlCommandText, DeleteParams, connection);
-
+                
             }
-
+               
             // dLayer.setTransaction();
            
             MasterTable.Columns.Remove("n_ProjectID");
@@ -1679,11 +1683,12 @@ namespace SmartxAPI.GeneralFunctions
             }
             int N_InvoiceDetailId = dLayer.SaveData("Inv_SalesReturnDetails", "N_DebitnoteDetailsID", DetailTable, connection, transaction);
 
+          
+
             SortedList CustomerParams = new SortedList();
             CustomerParams.Add("@nCustomerID", N_CustomerID);
             DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID=@nCustomerID", CustomerParams, connection, transaction);
-                myFunctions.LogScreenActivitys(nFnYearID,N_DebitNoteId,InvoiceNo,55,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-           
+       
             if (CustomerInfo.Rows.Count > 0)
             {
                 try
@@ -1701,7 +1706,8 @@ namespace SmartxAPI.GeneralFunctions
                 }
             }
 
-          
+       
+           
 
             SortedList InsParams = new SortedList();
             InsParams.Add("N_CompanyID", N_CompanyID);
@@ -1709,6 +1715,9 @@ namespace SmartxAPI.GeneralFunctions
             InsParams.Add("N_DeliveryNote", N_DeliveryNote);
 
             dLayer.ExecuteNonQueryPro("SP_SalesReturn_Ins_New", InsParams, connection, transaction);
+
+             myFunctions.LogScreenActivitys(nFnYearID,N_InvoiceId,InvoiceNo,55,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+           
 
             SortedList StockPostingParams = new SortedList();
             StockPostingParams.Add("N_CompanyID", N_CompanyID);
@@ -1743,6 +1752,7 @@ namespace SmartxAPI.GeneralFunctions
             DataTable DetailTable;
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
+            DataRow masterRow = MasterTable.Rows[0];
             SortedList Params = new SortedList();
             SortedList Result = new SortedList();
 
@@ -1756,7 +1766,8 @@ namespace SmartxAPI.GeneralFunctions
             var values = MasterTable.Rows[0]["X_CreditNoteNo"].ToString();
             int nCompanyID = myFunctions.GetCompanyID(User);
             int N_VendorID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_VendorID"].ToString());
-            String xButtonAction="";
+             int nFnYearID = myFunctions.getIntVAL(masterRow["N_fnYearId"].ToString());;
+            string xButtonAction="";
 
             if (!myFunctions.CheckActiveYearTransaction(myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString()), Convert.ToDateTime(MasterTable.Rows[0]["D_RetDate"].ToString()), dLayer, connection, transaction))
             {
@@ -1795,7 +1806,7 @@ namespace SmartxAPI.GeneralFunctions
                 MasterTable.Rows[0]["X_CreditNoteNo"] = ReturnNo;
             }
   
-
+               ReturnNo = MasterTable.Rows[0]["X_CreditNoteNo"].ToString();
        
             if (N_CreditNoteID > 0)
             {
@@ -1845,7 +1856,7 @@ namespace SmartxAPI.GeneralFunctions
                 //     ipAddress = Request.Headers["X-Forwarded-For"];
                 // else
                 //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                    //   myFunctions.LogScreenActivitys(nFnYearId,N_CreditNoteID,ReturnNo,68,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                      myFunctions.LogScreenActivitys(nFnYearID,N_CreditNoteID,ReturnNo,68,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
 
 
