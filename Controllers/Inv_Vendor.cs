@@ -399,13 +399,26 @@ namespace SmartxAPI.Controllers
                 QueryParams.Add("@nFnYearID", nFnYearID);
                 QueryParams.Add("@nFormID", 52);
                 QueryParams.Add("@nVendorID", nVendorID);
-
+                object vendorCount,vendortxnCount=0;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
 
-                    if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
-                        return Ok(_api.Error(User, "Year is closed, Cannot create new Vendor..."));
+                   if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
+                            return Ok(_api.Error(User, "Year is closed, Cannot create new Vendor..."));
+                            vendorCount = dLayer.ExecuteScalar("select count(N_PartyID) from Inv_PayReceipt  Where N_CompanyID=" + nCompanyID + " and  N_PartyID=" + nVendorID,  QueryParams, connection);
+
+                        if( myFunctions.getIntVAL(vendorCount.ToString())>0)
+                    {
+                        return Ok(_api.Error(User, "Unable to delete vendor! transaction started"));
+                    }
+                    vendortxnCount = dLayer.ExecuteScalar("select count(N_PartyID) from Inv_BalanceAdjustmentMaster  Where N_CompanyID=" + nCompanyID + " and  N_PartyID=" + nVendorID,  QueryParams, connection);
+
+                        if( myFunctions.getIntVAL(vendortxnCount.ToString())>0)
+                    {
+                        return Ok(_api.Error(User, "Unable to delete vendor! It has been used."));
+                    }
+                    
 
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Inv_Vendor", "N_VendorID", nVendorID, "N_CompanyID="+nCompanyID, connection, transaction);
