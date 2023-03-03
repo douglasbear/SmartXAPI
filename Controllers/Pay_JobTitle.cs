@@ -40,7 +40,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
-            string sqlCommandText = "Select N_CompanyID,N_PositionID,N_EmpID,N_SalaryGradeID,B_Edit,Code,Description,X_GradeCode,X_Gradename from vw_PayPosition_DispAdvanced Where N_CompanyID=@nCompanyID Group By N_CompanyID,N_PositionID,N_EmpID,N_SalaryGradeID,B_Edit,Code,Description,X_GradeCode,X_Gradename";
+            string sqlCommandText = "Select N_CompanyID,N_PositionID,N_EmpID,isNull(N_SalaryGradeID,0) as N_SalaryGradeID,B_Edit,Code,Description,isNull(X_GradeCode,'') as X_GradeCode,isNull(X_Gradename,'') as X_Gradename from vw_PayPosition_DispAdvanced Where N_CompanyID=@nCompanyID Group By N_CompanyID,N_PositionID,N_EmpID,N_SalaryGradeID,B_Edit,Code,Description,X_GradeCode,X_Gradename";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -86,7 +86,13 @@ namespace SmartxAPI.Controllers
                     int N_PositionID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PositionID"].ToString());
                     int N_SupervisorID = myFunctions.getIntVAL(dtSupervisor.Rows[0]["n_SupervisorID"].ToString());
                     int N_IsSupervisor = myFunctions.getIntVAL(MasterTable.Rows[0]["b_IsSupervisor"].ToString());
+                    string x_FunctionalJobTitle ="";
                     bool B_IsSupervisor = false;
+                if( MasterTable.Columns.Contains("x_FunctionalJobTitle"))
+                {
+                    x_FunctionalJobTitle=MasterTable.Rows[0]["x_FunctionalJobTitle"].ToString();
+
+                }
                     if (N_IsSupervisor == 1) B_IsSupervisor = true;
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nPositionID", N_PositionID);
@@ -96,10 +102,31 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_YearID", N_FnYearID);
                         Params.Add("N_FormID", this.FormID);
+                        Params.Add("X_Position",X_Position);
+                        Params.Add("x_FunctionalJobTitle",x_FunctionalJobTitle);
+
                         X_PositionCode = dLayer.GetAutoNumber("Pay_Position", "x_PositionCode", Params, connection, transaction);
                         if (X_PositionCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Job title Code")); }
                         MasterTable.Rows[0]["x_PositionCode"] = X_PositionCode;
+
+                        if(x_FunctionalJobTitle!=""){
+                             object nCount = dLayer.ExecuteScalar("Select count(*) From Pay_Position where N_CompanyID=@N_CompanyID and X_Position=@X_Position and x_FunctionalJobTitle=@x_FunctionalJobTitle", Params, connection,transaction);
+                             object status = dLayer.ExecuteScalar("select x_Position from Pay_Position where N_CompanyID=@N_CompanyID and X_Position=@X_Position and x_FunctionalJobTitle=@x_FunctionalJobTitle",Params, connection,transaction);
+
+                                  if(myFunctions.getIntVAL(nCount.ToString())>0){
+                                 return Ok(_api.Error(User, x_FunctionalJobTitle+" Under " + status + " Already Exist"));
+                                 }
+                        }
+                       if(x_FunctionalJobTitle==""){
+                            object jobtitle = dLayer.ExecuteScalar("Select count(*) From Pay_Position where N_CompanyID=@N_CompanyID and X_Position=@X_Position and ISNULL(Pay_Position.X_FunctionalJobTitle,'')=''", Params, connection,transaction);
+                       if(myFunctions.getIntVAL(jobtitle.ToString())>=1){
+                       return Ok(_api.Error(User,"Job Title Already Exist"));
+                       }
+                       }
+                     
                     }
+
+                
                     MasterTable.Columns.Remove("N_FnYearID");
 
 
@@ -121,9 +148,12 @@ namespace SmartxAPI.Controllers
                         {
                             dLayer.ExecuteNonQuery("DELETE FROM Pay_Supervisor WHERE N_CompanyID =" + N_CompanyID + " and x_SupervisorCode= "+X_PositionCode+" and N_PositionID="+N_PositionID+"", Params, connection, transaction);
                             N_SupervisorID = dLayer.SaveData("Pay_Supervisor", "N_SupervisorID", dtSupervisor, connection, transaction);
+                            //  object N_EmpID=dLayer.ExecuteScalar("select N_EmpID  from ")
+
+
                         }
                         else
-                            dLayer.DeleteData("Pay_Supervisor", "N_SupervisorID", N_SupervisorID, "N_CompanyID=" + N_CompanyID + "", connection, transaction);
+                            dLayer.DeleteData("Pay_Supervisor", "N_PositionID", N_PositionID, "N_CompanyID=" + N_CompanyID + "", connection, transaction);
 
                         transaction.Commit();
                     }
@@ -277,7 +307,6 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-
 
     }
 }

@@ -74,7 +74,7 @@ namespace SmartxAPI.Controllers
                             " LEFT OUTER JOIN Pay_Department ON Pay_Employee.N_DepartmentID = Pay_Department.N_DepartmentID and Pay_Employee.N_FnYearID = Pay_Department.N_FnYearID " +
                             " WHERE Pay_Employee.N_EmpID = @nEmpID AND Pay_Employee.N_CompanyID = @nCompanyID and Pay_Employee.N_FnYearID = @nFnYearID";
 
-                    string _Earnings="select X_paycodeDescription,N_Payrate from vw_Pay_EmployeePayments_RPT where N_Type = 0 and N_PayTypeID<>11 and  X_PayrunText =@xPayrun  and N_CompanyID  = @nCompanyID and  N_EmpID =@nEmpID";
+                    string _Earnings="select X_paycodeDescription,N_Payrate from vw_Pay_EmployeePayments_RPT where N_Type = 0 and N_PayTypeID<>11 and N_PaymentId<>6 and  X_PayrunText =@xPayrun  and N_CompanyID  = @nCompanyID and  N_EmpID =@nEmpID";
                     string _Deduction="select X_paycodeDescription,N_Payrate from vw_Pay_EmployeePayments_RPT where N_Type = 1  and  X_PayrunText =@xPayrun  and N_CompanyID  = @nCompanyID and  N_EmpID =@nEmpID";
 
 
@@ -141,7 +141,7 @@ namespace SmartxAPI.Controllers
                         int N_PkeyID = nRequestID;
                         string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpBussinessTripRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        myFunctions.LogApprovals(Approvals, nFnYearID, "Travel Order Request", N_PkeyID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        myFunctions.LogApprovals(Approvals, nFnYearID, "Travel Order Request", N_PkeyID, x_RequestCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
                         transaction.Commit();
                         return Ok(api.Success("Travel Order Request Approval updated" + "-" + x_RequestCode));
                     }
@@ -172,7 +172,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        myFunctions.LogApprovals(Approvals, nFnYearID, "Travel Order Request", nRequestID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        myFunctions.LogApprovals(Approvals, nFnYearID, "Travel Order Request", nRequestID, x_RequestCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
 
                         transaction.Commit();
                     }

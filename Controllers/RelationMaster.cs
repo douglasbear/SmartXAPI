@@ -45,19 +45,34 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
-                    // Auto Gen
-                  
-                    nRelationID = dLayer.SaveData("Pay_Relation", "N_RelationID", MasterTable, connection, transaction);
+
+                    // string sqlCommandCount = "select count(1) as N_Count  from Pay_Relation where N_CompanyID="+ nCompanyID +"and N_RelationID not in ("+ nRelationID +")";
+                    // object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection, transaction);
+                    
+                    string X_Relation = MasterTable.Rows[0]["X_Relation"].ToString();
+                    string DupCriteria = "X_Relation='" + X_Relation + "' and N_CompanyID="+ nCompanyID +"";
+                    nRelationID = dLayer.SaveData("Pay_Relation", "N_RelationID", DupCriteria, "", MasterTable, connection, transaction);
                     if (nRelationID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save...Relation Name Exists"));
                     }
                     else
                     {
                         transaction.Commit();
                         return Ok(_api.Success("Relation Master Created"));
                     }
+
+                    // if (nRelationID <= 0)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(_api.Error(User,"Unable to save"));
+                    // }
+                    // else
+                    // {
+                    //     transaction.Commit();
+                    //     return Ok(_api.Success("Relation Master Created"));
+                    // }
                 }
             }
             catch (Exception ex)

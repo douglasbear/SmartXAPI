@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
             }
             else
             {
-                Pattern = " and N_UserID=" + nUserID;
+                Pattern = " and N_CreatedUser=" + nUserID;
 
             }
             string sqlCommandCount = "";
@@ -65,9 +65,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMLeads where N_CompanyID=@p1 and N_FnYearId=@p3 and N_LeadID not in (select isnull(N_LeadID,0) from crm_Opportunity) " + Pattern + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMLeads where N_CompanyID=@p1  and N_LeadID not in (select isnull(N_LeadID,0) from crm_Opportunity) " + Pattern + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMLeads where N_CompanyID=@p1 and N_FnYearId=@p3 and N_LeadID not in (select isnull(N_LeadID,0) from crm_Opportunity) " + Pattern + Searchkey + " and N_LeadID not in (select top(" + Count + ") N_LeadID from vw_CRMLeads where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMLeads where N_CompanyID=@p1  and N_LeadID not in (select isnull(N_LeadID,0) from crm_Opportunity) " + Pattern + Searchkey + " and N_LeadID not in (select top(" + Count + ") N_LeadID from vw_CRMLeads where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", nFnYearId);
             SortedList OutPut = new SortedList();
@@ -80,7 +80,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMLeads where N_CompanyID=@p1 and N_FnYearId=@p3 " + Pattern;
+                    sqlCommandCount = "select count(1) as N_Count  from vw_CRMLeads where N_CompanyID=@p1  " + Pattern;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

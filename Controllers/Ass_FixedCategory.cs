@@ -34,53 +34,59 @@ namespace SmartxAPI.Controllers
         }
 
 
-        // [HttpGet("list")]
-        // public ActionResult FixedAssetList(int nFnYearId,int nPage,int nSizeperpage)
-        // {
-        //     DataTable dt = new DataTable();
-        //     SortedList Params = new SortedList();
-        //     int nCompanyId = myFunctions.GetCompanyID(User);
-        //     string sqlCommandCount = "";
-        //     int Count= (nPage - 1) * nSizeperpage;
-        //     string sqlCommandText ="";
+        [HttpGet("list")]
+        public ActionResult FixedAssetList(int nFnYearId,int nPage,int nSizeperpage,string xSortBy)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string sqlCommandCount = "";
+            int Count= (nPage - 1) * nSizeperpage;
+            string sqlCommandText ="";
              
-        //      if(Count==0)
-        //         sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1  ";
-        //     else
-        //         sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and N_CategoryID not in (select top("+ Count +") N_CategoryID fromvw_InvAssetCategory_Disp  where N_CompanyID=@p1 )";
-        //     Params.Add("@p1", nCompanyId);
+              if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_CategoryID desc";
+            else
+                xSortBy = " order by " + xSortBy;
 
-        //     SortedList OutPut = new SortedList();
+             if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 "+ xSortBy;
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and N_CategoryID not in (select top("+ Count +") N_CategoryID fromvw_InvAssetCategory_Disp  where N_CompanyID=@p1 )" + xSortBy;
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearId);
+
+            SortedList OutPut = new SortedList();
 
 
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-        //             sqlCommandCount = "select count(*) as N_Count  from vw_InvAssetCategory_Disp where N_CompanyID=@p1 ";
-        //             object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-        //             OutPut.Add("Details", api.Format(dt));
-        //             OutPut.Add("TotalCount", TotalCount);
-        //             if (dt.Rows.Count == 0)
-        //             {
-        //                 return Ok(api.Warning("No Results Found"));
-        //             }
-        //             else
-        //             {
-        //                 return Ok(api.Success(OutPut));
-        //             }
+                    sqlCommandCount = "select count(1) as N_Count  from vw_InvAssetCategory_Disp where N_CompanyID=@p1 ";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
 
-        //         }
+                }
                 
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return BadRequest(api.Error(User,e));
-        //     }
-        // }
+            }
+            catch (Exception e)
+            {
+                return BadRequest(api.Error(User,e));
+            }
+        }
 
 
 
@@ -197,7 +203,7 @@ namespace SmartxAPI.Controllers
                         if (CategoryCode == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Category Code")); }
                         MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
                     }
-
+                    MasterTable.Columns.Remove("x_DeprCalculation");
 
                     nCategoryID = dLayer.SaveData("Ass_AssetCategory", "N_CategoryID", MasterTable, connection, transaction);
                     if (nCategoryID <= 0)
@@ -231,7 +237,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("X_Category", "N_CategoryID", nCategoryID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Ass_AssetCategory", "N_CategoryID", nCategoryID, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)

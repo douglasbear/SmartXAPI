@@ -66,9 +66,9 @@ namespace SmartxAPI.Controllers
                 string groupBy=" group by N_CompanyID,N_RequestID,N_UserID,N_EmpID,B_ISsaveDraft,X_RequestDate,X_Date,X_RequestCode,X_Notes ";
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") N_CompanyID,N_RequestID,N_UserID,N_EmpID,B_ISsaveDraft,X_RequestDate,X_Date,X_RequestCode,X_Notes from vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and  N_ReqByEmp=@nEmpID  and B_IsSaveDraft=0 " + Searchkey+ groupBy + " " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") N_CompanyID,N_RequestID,N_UserID,N_EmpID,B_ISsaveDraft,X_RequestDate,X_Date,X_RequestCode,X_Notes from vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and  N_ReqByEmp=@nEmpID  and isnull(B_IsSaveDraft,0)=0 " + Searchkey+ groupBy + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") N_CompanyID,N_RequestID,N_UserID,N_EmpID,B_ISsaveDraft,X_RequestDate,X_Date,X_RequestCode,X_Notes from vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and  N_ReqByEmp=@nEmpID  and B_IsSaveDraft=0 " + Searchkey + " and N_RequestID not in (select top("+ Count +") N_RequestID from vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  and B_IsSaveDraft=0 and N_UserID=@nUserID " + groupBy  + xSortBy + " ) " + groupBy + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") N_CompanyID,N_RequestID,N_UserID,N_EmpID,B_ISsaveDraft,X_RequestDate,X_Date,X_RequestCode,X_Notes from vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and  N_ReqByEmp=@nEmpID  and isnull(B_IsSaveDraft,0)=0 " + Searchkey + " and N_RequestID not in (select top("+ Count +") N_RequestID from vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  and isnull(B_IsSaveDraft,0)=0 and N_UserID=@nUserID " + groupBy  + xSortBy + " ) " + groupBy + xSortBy;
 
             SortedList OutPut = new SortedList();
 
@@ -82,7 +82,7 @@ namespace SmartxAPI.Controllers
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
                         dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                        sqlCommandCount = "select count(*) as N_Count From vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and  N_ReqByEmp=@nEmpID and B_IsSaveDraft=0 " + Searchkey + "";
+                        sqlCommandCount = "select count(1) as N_Count From vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and  N_ReqByEmp=@nEmpID and B_IsSaveDraft=0 " + Searchkey + "";
                         object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
                         OutPut.Add("Details", api.Format(dt));
                         OutPut.Add("TotalCount", TotalCount);
@@ -239,9 +239,9 @@ namespace SmartxAPI.Controllers
                         int N_PkeyID = nRequestID;
                         string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_AnytimeRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID=myFunctions.LogApprovals(Approvals, nFnYearID, "Waive Request", N_PkeyID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID=myFunctions.LogApprovals(Approvals, nFnYearID, "Waive Request", N_PkeyID, x_RequestCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
                         transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID,FormID,nRequestID,"Waive Request",x_RequestCode,dLayer,connection,transaction,User);
+                        //myFunctions.SendApprovalMail(N_NextApproverID,FormID,nRequestID,"Waive Request",x_RequestCode,dLayer,connection,transaction,User);
                         return Ok(api.Success("Waive Request Approval updated" + "-" + x_RequestCode));
                     }
 
@@ -273,9 +273,9 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                         N_NextApproverID=myFunctions.LogApprovals(Approvals, nFnYearID, "Waive Request", nRequestID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                         N_NextApproverID=myFunctions.LogApprovals(Approvals, nFnYearID, "Waive Request", nRequestID, x_RequestCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
                          transaction.Commit();
-                         myFunctions.SendApprovalMail(N_NextApproverID,FormID,nRequestID,"Waive Request",x_RequestCode,dLayer,connection,transaction,User);
+                        // myFunctions.SendApprovalMail(N_NextApproverID,FormID,nRequestID,"Waive Request",x_RequestCode,dLayer,connection,transaction,User);
                     }
                     Dictionary<string,string> res=new Dictionary<string, string>();
                     res.Add("x_RequestCode",x_RequestCode.ToString());

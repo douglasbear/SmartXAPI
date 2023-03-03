@@ -1,3 +1,5 @@
+
+
 using AutoMapper;
 using SmartxAPI.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -64,7 +66,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from VW_SalaryRivisionDisp where N_CompanyID=@nCompanyID " + Searchkey;
+                    sqlCommandCount = "select count(1) as N_Count  from VW_SalaryRivisionDisp where N_CompanyID=@nCompanyID " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -98,10 +100,11 @@ namespace SmartxAPI.Controllers
             int nCompanyId = myFunctions.GetCompanyID(User);
 
 
-            //string sqlAcrual = "Select *,(Select COUNT(*) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@p1 and N_EmpID=@p3";
-            string sqlAcrual = "Select *,(Select COUNT(*) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@p1 and N_EmpID=@p3";
-            string sqlBenefits = "Select *,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformationAmendments.N_CompanyID AND N_EmpID = vw_EmpPayInformationAmendments.N_EmpID AND N_PayID = vw_EmpPayInformationAmendments.N_PayID AND N_Value = vw_EmpPayInformationAmendments.N_value ) AS N_NoEdit from vw_EmpPayInformationAmendments  Where N_CompanyID=@p1 and N_EmpID=@p3 and N_FnYearID=@p2 and N_PaymentID in (6,7)";
+            //string sqlAcrual = "Select *,(Select count(1) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@p1 and N_EmpID=@p3";
+            string sqlAcrual = "Select *,(Select count(1) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@p1 and N_EmpID=@p3";
+            string sqlBenefits = "Select *,(Select count(1) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformationAmendments.N_CompanyID AND N_EmpID = vw_EmpPayInformationAmendments.N_EmpID AND N_PayID = vw_EmpPayInformationAmendments.N_PayID AND N_Value = vw_EmpPayInformationAmendments.N_value ) AS N_NoEdit from vw_EmpPayInformationAmendments  Where N_CompanyID=@p1 and N_EmpID=@p3 and N_FnYearID=@p2 and N_PaymentID in (6,7)";
             string sqlOtherinfo = "select * from vw_SalaryRevision Where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 order by n_type";
+
 
 
             Params.Add("@p1", nCompanyId);
@@ -121,13 +124,28 @@ namespace SmartxAPI.Controllers
                     dtAccrual = dLayer.ExecuteDataTable(sqlAcrual, Params, connection);
                     dtBenefits = dLayer.ExecuteDataTable(sqlBenefits, Params, connection);
                     dtOtherinfo = dLayer.ExecuteDataTable(sqlOtherinfo, Params, connection);
+                      if(dtOtherinfo.Rows.Count>0)
+                {
+                      if (!dtOtherinfo.Columns.Contains("n_SalaryFrom"))
+                        dtOtherinfo = myFunctions.AddNewColumnToDataTable(dtOtherinfo, "n_SalaryFrom", typeof(string), 0);
+                    if (!dtOtherinfo.Columns.Contains("n_SalaryTo"))
+                        dtOtherinfo = myFunctions.AddNewColumnToDataTable(dtOtherinfo, "n_SalaryTo", typeof(string), 0);
+                  
+                    if (dtOtherinfo.Columns.Contains("N_Value"))
+                    {
+                    dtOtherinfo.Rows[0]["n_SalaryFrom"] = dLayer.ExecuteScalar("Select n_SalaryFrom from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3", Params, connection);
+                    dtOtherinfo.Rows[0]["n_SalaryTo"] = dLayer.ExecuteScalar("Select n_SalaryTo from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3", Params, connection);
 
                 }
+                }
+
+                }
+              
                 dtSalaryHistory = api.Format(dtSalaryHistory, "Salaryhistory");
                 dtAccrual = api.Format(dtAccrual, "Accrual");
                 dtBenefits = api.Format(dtBenefits, "Benefits");
                 dtOtherinfo = api.Format(dtOtherinfo, "Otherinfo");
-
+                
                 DS.Tables.Add(dtSalaryHistory);
                 DS.Tables.Add(dtAccrual);
                 DS.Tables.Add(dtBenefits);
@@ -157,8 +175,8 @@ namespace SmartxAPI.Controllers
             int nCompanyId = myFunctions.GetCompanyID(User);
 
 
-            string sqlAcrual = "Select *,(Select COUNT(*) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@p1 and N_EmpID=@p2";
-            string sqlBenefits = "Select *,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformationAmendments.N_CompanyID AND N_EmpID = vw_EmpPayInformationAmendments.N_EmpID AND N_PayID = vw_EmpPayInformationAmendments.N_PayID AND N_Value = vw_EmpPayInformationAmendments.N_value ) AS N_NoEdit from vw_EmpPayInformationAmendments  Where N_CompanyID=@p1 and N_EmpID=@p2 and N_FnYearID=@p3";
+            string sqlAcrual = "Select *,(Select count(1) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@p1 and N_EmpID=@p2";
+            string sqlBenefits = "Select *,(Select count(1) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformationAmendments.N_CompanyID AND N_EmpID = vw_EmpPayInformationAmendments.N_EmpID AND N_PayID = vw_EmpPayInformationAmendments.N_PayID AND N_Value = vw_EmpPayInformationAmendments.N_value ) AS N_NoEdit from vw_EmpPayInformationAmendments  Where N_CompanyID=@p1 and N_EmpID=@p2 and N_FnYearID=@p3 and N_HistoryID=@p4";
             //string sqlSalaryHistory = "select top 1 * from vw_Pay_EmployeeAdditionalInfo Where N_CompanyID=@p1 and N_HistoryID=@p4";
             string sqlMaster = "select  * from VW_SalaryRivisionDisp Where N_CompanyID=@p1 and x_HistoryCode=" + x_HistoryCode;
             string sqlOtherinfo = "select * from vw_SalaryRevision Where N_CompanyID=@p1 and N_FnYearID=@p3 and N_EmpID=@p2 order by n_type";
@@ -179,11 +197,26 @@ namespace SmartxAPI.Controllers
                     dParamList.Add("@N_FnYearID", nFnYearID);
                     dParamList.Add("@N_EmpID", Convert.ToUInt32(dtMaster.Rows[0]["n_EmpID"].ToString()));
                     dParamList.Add("@Date", Convert.ToDateTime(dtMaster.Rows[0]["D_EffectiveDate"].ToString()));
-
-                    dtSalaryHistory = dLayer.ExecuteDataTablePro("SP_Pay_SalaryRevisionDisp", dParamList, connection);
+                    dParamList.Add("@N_HistoryID",  Convert.ToUInt32(dtMaster.Rows[0]["n_HistoryID"].ToString()));
+               
+                    dtSalaryHistory = dLayer.ExecuteDataTablePro("SP_Pay_SalaryHistoryDisp", dParamList, connection);
                     dtAccrual = dLayer.ExecuteDataTable(sqlAcrual, Params, connection);
                     dtBenefits = dLayer.ExecuteDataTable(sqlBenefits, Params, connection);
                     dtOtherinfo = dLayer.ExecuteDataTable(sqlOtherinfo, Params, connection);
+                     if(dtOtherinfo.Rows.Count>0)
+                {
+                      if (!dtOtherinfo.Columns.Contains("n_SalaryFrom"))
+                        dtOtherinfo = myFunctions.AddNewColumnToDataTable(dtOtherinfo, "n_SalaryFrom", typeof(string), 0);
+                    if (!dtOtherinfo.Columns.Contains("n_SalaryTo"))
+                        dtOtherinfo = myFunctions.AddNewColumnToDataTable(dtOtherinfo, "n_SalaryTo", typeof(string), 0);
+                  
+                    if (dtOtherinfo.Columns.Contains("N_Value"))
+                    {
+                    dtOtherinfo.Rows[0]["n_SalaryFrom"] = dLayer.ExecuteScalar("Select n_SalaryFrom from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p3 and N_EmpID=@p2", Params, connection);
+                    dtOtherinfo.Rows[0]["n_SalaryTo"] = dLayer.ExecuteScalar("Select n_SalaryTo from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p3 and N_EmpID=@p2", Params, connection);
+
+                }
+                }
 
                 }
                 dtSalaryHistory = api.Format(dtSalaryHistory, "Salaryhistory");
@@ -293,16 +326,22 @@ if(MasterTable.Columns.Contains("n_FnYearID")){
                         dLayer.ExecuteNonQuery("update Pay_Employee set N_PositionID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
                     if (Otherinfo.Rows[0]["n_NDepartmentID"].ToString() != "0")
                         dLayer.ExecuteNonQuery("update Pay_Employee set N_DepartmentID=" + Otherinfo.Rows[0]["n_NDepartmentID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
-                    if (Otherinfo.Rows[0]["n_NProjectID"].ToString() != "0")
+                    
+                  if(Otherinfo.Columns.Contains("N_NProjectID")){
+                   if (Otherinfo.Rows[0]["n_NProjectID"].ToString() != "0")
                         dLayer.ExecuteNonQuery("update Pay_Employee set N_ProjectID=" + Otherinfo.Rows[0]["n_NProjectID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
+                  }
+                 
                     if (Otherinfo.Rows[0]["n_NBranchID"].ToString() != "0")
                         dLayer.ExecuteNonQuery("update Pay_Employee set N_BranchID=" + Otherinfo.Rows[0]["n_NBranchID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
                     if (Otherinfo.Rows[0]["n_NEmpTypeID"].ToString() != "0")
                         dLayer.ExecuteNonQuery("update Pay_Employee set N_EmpTypeID=" + Otherinfo.Rows[0]["n_NEmpTypeID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
                     if (Otherinfo.Rows[0]["n_NLocation"].ToString() != "0")
-                        dLayer.ExecuteNonQuery("update pay_employee set N_WorkLocationID='" + Otherinfo.Rows[0]["n_NLocation"].ToString() + "' where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID, connection, transaction);
-                    // if (Otherinfo.Rows[0]["n_NInsClassID"].ToString() != "0")
-                    //     dLayer.ExecuteNonQuery("update Pay_Employee set N_InsClassID=" + Otherinfo.Rows[0]["n_NInsClassID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
+                        dLayer.ExecuteNonQuery("update pay_employee set X_WorkLocationID='" + Otherinfo.Rows[0]["n_NLocation"].ToString() + "' where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID, connection, transaction);
+                   if(Otherinfo.Columns.Contains("n_NInsClassID")){
+                    if (Otherinfo.Rows[0]["n_NInsClassID"].ToString() != "0")
+                        dLayer.ExecuteNonQuery("update Pay_Employee set N_InsClassID=" + Otherinfo.Rows[0]["n_NInsClassID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
+                   }
                     if (Otherinfo.Rows[0]["n_NSalaryGrade"].ToString() != "0")
                         dLayer.ExecuteNonQuery("update Pay_Employee set n_SalaryGrade=" + Otherinfo.Rows[0]["n_NSalaryGrade"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
 

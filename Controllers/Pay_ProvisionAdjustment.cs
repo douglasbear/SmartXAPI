@@ -399,7 +399,7 @@ namespace SmartxAPI.Controllers
                         sqlCommandText = "select top(" + nSizeperpage + ") * from "+TableName+" where "+sqlCondition+" and  N_AdjustmentID not in (select top(" + Count + ") N_AdjustmentID from "+TableName+"  where "+sqlCondition+" )";
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from "+TableName+" where "+sqlCondition1+" ";
+                    sqlCommandCount = "select count(1) as N_Count  from "+TableName+" where "+sqlCondition1+" ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
