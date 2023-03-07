@@ -8,16 +8,9 @@
       "TRACE",
       "DEBUG",
       "NETCOREAPP",
-      "NETCOREAPP3_1",
-      "NETCOREAPP1_0_OR_GREATER",
-      "NETCOREAPP1_1_OR_GREATER",
-      "NETCOREAPP2_0_OR_GREATER",
-      "NETCOREAPP2_1_OR_GREATER",
-      "NETCOREAPP2_2_OR_GREATER",
-      "NETCOREAPP3_0_OR_GREATER",
-      "NETCOREAPP3_1_OR_GREATER"
+      "NETCOREAPP3_1"
     ],
-    "languageVersion": "8.0",
+    "languageVersion": "",
     "platform": "",
     "allowUnsafe": false,
     "warningsAsErrors": false,
@@ -1272,7 +1265,11 @@
           "System.Threading.Tasks": "4.3.0"
         }
       },
-      "System.Collections.Immutable/1.7.0": {},
+      "System.Collections.Immutable/1.7.0": {
+        "compile": {
+          "lib/netstandard2.0/System.Collections.Immutable.dll": {}
+        }
+      },
       "System.Collections.NonGeneric/4.3.0": {
         "dependencies": {
           "System.Diagnostics.Debug": "4.3.0",
@@ -1299,7 +1296,11 @@
           "System.Runtime": "4.3.0"
         }
       },
-      "System.ComponentModel.Annotations/4.7.0": {},
+      "System.ComponentModel.Annotations/4.7.0": {
+        "compile": {
+          "ref/netstandard2.1/System.ComponentModel.Annotations.dll": {}
+        }
+      },
       "System.ComponentModel.Primitives/4.3.0": {
         "dependencies": {
           "System.ComponentModel": "4.3.0",
@@ -1375,7 +1376,11 @@
           "System.Runtime": "4.3.0"
         }
       },
-      "System.Diagnostics.DiagnosticSource/4.7.0": {},
+      "System.Diagnostics.DiagnosticSource/4.7.0": {
+        "compile": {
+          "lib/netstandard1.3/System.Diagnostics.DiagnosticSource.dll": {}
+        }
+      },
       "System.Diagnostics.Tools/4.3.0": {
         "dependencies": {
           "Microsoft.NETCore.Platforms": "3.1.9",
@@ -1692,9 +1697,6 @@
           "System.Security.Principal.Windows": "4.7.0"
         }
       },
-<<<<<<< HEAD
-      "System.Security.Cryptography.Cng/4.5.0": {},
-=======
       "System.Security.Cryptography.Cng/4.7.0": {},
       "System.Security.Cryptography.Pkcs/4.7.0": {
         "dependencies": {
@@ -1704,7 +1706,6 @@
           "ref/netcoreapp3.0/System.Security.Cryptography.Pkcs.dll": {}
         }
       },
->>>>>>> 4987505dbf2814c09cff2eecd66f557ed3952be8
       "System.Security.Cryptography.Primitives/4.3.0": {
         "dependencies": {
           "System.Diagnostics.Debug": "4.3.0",
@@ -5705,14 +5706,6 @@
       "sha512": ""
     },
     "System.Security.Principal.Windows.Reference/4.1.1.0": {
-<<<<<<< HEAD
-      "type": "referenceassembly",
-      "serviceable": false,
-      "sha512": ""
-    },
-    "System.Security.SecureString.Reference/4.1.2.0": {
-=======
->>>>>>> 4987505dbf2814c09cff2eecd66f557ed3952be8
       "type": "referenceassembly",
       "serviceable": false,
       "sha512": ""
