@@ -229,7 +229,7 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
                 SortedList Params = new SortedList();
-
+                string xButtonAction = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -351,6 +351,7 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                         Params.Add("N_BranchID", Master["n_BranchId"].ToString());
 
                         AdjustmentNo = dLayer.GetAutoNumber("Inv_BalanceAdjustmentMaster", "X_VoucherNo", Params, connection, transaction);
+                        xButtonAction="Insert"; 
                         if (AdjustmentNo == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Adjustment Number")); }
                         MasterTable.Rows[0]["X_VoucherNo"] = AdjustmentNo;
 
@@ -364,8 +365,19 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                                 {"X_TransType",X_Trasnaction},
                                 {"N_VoucherID",N_AdjustmentID}};
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+                             xButtonAction="Update"; 
                         }
                     }
+
+                         //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(N_FnYearID,N_AdjustmentID,AdjustmentNo,N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
+                          
 
                     N_AdjustmentID = dLayer.SaveData("Inv_BalanceAdjustmentMaster", "N_AdjustmentID", MasterTable, connection, transaction);
                     if (N_AdjustmentID <= 0)
@@ -417,6 +429,16 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                         }
                         transaction.Commit();
                     }
+                    
+                        //Activity Log
+
+                // string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(N_FnYearID,N_AdjustmentID,AdjustmentNo,504,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
                        SortedList Result = new SortedList();
                        Result.Add("AdjustmentNo", MasterTable.Rows[0]["X_VoucherNo"] );
                        Result.Add("N_AdjustmentID", N_AdjustmentID);

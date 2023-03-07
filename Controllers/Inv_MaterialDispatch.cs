@@ -204,15 +204,32 @@ namespace SmartxAPI.Controllers
                     bool b_Action= myFunctions.getBoolVAL(MasterTable.Rows[0]["b_Action"].ToString());
 
                      values = MasterRow["X_DispatchNo"].ToString();
-
-                     if( myFunctions.getIntVAL(MasterTable.Rows[0]["n_DepartmentID"].ToString())>0){
+                     if (MasterTable.Columns.Contains("n_DepartmentID"))
+                     {
+                       if( myFunctions.getIntVAL(MasterTable.Rows[0]["n_DepartmentID"].ToString())>0){
                         bDeptEnabled=true;
                      }
                      else{
                         bDeptEnabled=false;
                      }
+                     }
+                    
 
                    
+                    string xButtonAction="";
+                    if (nDispatchID > 0)
+                    {
+                        SortedList DeleteParams = new SortedList(){
+                                    {"N_CompanyID",nCompanyID},
+                                    {"N_UserID",N_UserID},
+                                    {"X_TransType","MATERIAL DISPATCH"},
+                                    {"X_SystemName","WebRequest"},
+                                    {"N_VoucherID",nDispatchID}};
+
+                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                     xButtonAction="Update"; 
+                    }
+                    values = MasterRow["X_DispatchNo"].ToString();
 
                     if (values == "@Auto")
                     {
@@ -221,9 +238,11 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID",FormID);
                         //Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         X_DispatchNo = dLayer.GetAutoNumber("Inv_MaterialDispatch", "X_DispatchNo", Params, connection, transaction);
+                        xButtonAction="Insert"; 
                         if (X_DispatchNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Return Number")); }
                         MasterTable.Rows[0]["X_DispatchNo"] = X_DispatchNo;
                     }
+                      X_DispatchNo = MasterTable.Rows[0]["X_DispatchNo"].ToString();
 
                      if (MasterTable.Columns.Contains("transType"))
                         MasterTable.Columns.Remove("transType");
@@ -279,11 +298,21 @@ namespace SmartxAPI.Controllers
                     UpdateStockParam.Add("N_DispatchId", nDispatchID);
                     UpdateStockParam.Add("N_UserID", N_UserID);
 
-                     if (bDeptEnabled)
-                       dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch_Department", UpdateStockParam, connection, transaction);
-                     else
-                       dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch", UpdateStockParam, connection, transaction);
+                    if (!bDeptEnabled)
+                        dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch", UpdateStockParam, connection, transaction);
+                    else
+                        dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch_Department", UpdateStockParam, connection, transaction);
+                    
 
+                    //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nDispatchID,X_DispatchNo,684,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
+                          
                     SortedList PostParam = new SortedList();
                     PostParam.Add("N_CompanyID", nCompanyID);
                     PostParam.Add("X_InventoryMode", "MATERIAL DISPATCH");

@@ -140,6 +140,7 @@ namespace SmartxAPI.Controllers
             string DataSource = "";
             string PKey = "";
             string BranchCriterea = "";
+            string LocationCriterea = "";
             string SortBy = "";
             string PatternCriteria = "";
             string SumField = "";
@@ -188,7 +189,7 @@ namespace SmartxAPI.Controllers
                         SortBy = " order by " + xSortBy;
                     }
 
-                    string CriteriaSql = "select isnull(X_DataSource,'') as X_DataSource,isnull(X_DefaultCriteria,'') as X_DefaultCriteria,isnull(X_BranchCriteria,'') as X_BranchCriteria,isnull(X_DefaultSortField,'') as X_DefaultSortField,isnull(X_PKey,'') as X_PKey,isnull(X_PatternCriteria,'') as X_PatternCriteria,X_TotalField from Gen_TableView where (N_TableViewID = @tbvVal) AND (N_MenuID=@mnuVal)";
+                    string CriteriaSql = "select isnull(X_DataSource,'') as X_DataSource,isnull(X_DefaultCriteria,'') as X_DefaultCriteria,isnull(X_BranchCriteria,'') as X_BranchCriteria,isnull(X_LocationCriteria,'') as X_LocationCriteria,isnull(X_DefaultSortField,'') as X_DefaultSortField,isnull(X_PKey,'') as X_PKey,isnull(X_PatternCriteria,'') as X_PatternCriteria,X_TotalField from Gen_TableView where (N_TableViewID = @tbvVal) AND (N_MenuID=@mnuVal)";
                     DataTable CriteriaList = dLayer.ExecuteDataTable(CriteriaSql, Params, connection);
 
                     if (CriteriaList.Rows.Count == 0)
@@ -218,6 +219,10 @@ namespace SmartxAPI.Controllers
                     if (UserPattern != "" && dRow["X_PatternCriteria"].ToString() != "")
                     {
                         PatternCriteria = " (  Left(X_Pattern,Len(@userPattern))=@userPattern ) ";
+                    }
+                      if (dRow["X_LocationCriteria"].ToString() != "")
+                    {
+                        LocationCriterea = " ( " + dRow["X_LocationCriteria"].ToString() + " ) ";
                     }
 
                     if (BranchCriterea.Trim().Length > 0)
@@ -253,6 +258,19 @@ namespace SmartxAPI.Controllers
                         else
                         {
                             Criterea = PatternCriteria;
+                        }
+                    }
+
+
+                      if (LocationCriterea.Trim().Length > 0)
+                    {
+                        if (Criterea.Trim().Length > 0)
+                        {
+                            Criterea = Criterea + " and " + LocationCriterea;
+                        }
+                        else
+                        {
+                            Criterea = LocationCriterea;
                         }
                     }
 

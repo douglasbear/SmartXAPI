@@ -322,7 +322,7 @@ namespace SmartxAPI.Controllers
                     ipAddress = Request.Headers["X-Forwarded-For"];
                 else
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(N_FnYearID,N_AssetInventoryID,X_InvoiceNo,404,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       myFunctions.LogScreenActivitys(N_FnYearID,N_AssetInventoryID,ReturnNo,404,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
 
                     SortedList PostingParam = new SortedList();
@@ -450,11 +450,19 @@ namespace SmartxAPI.Controllers
                     SortedList ParamList=new SortedList();
                     SqlTransaction transaction = connection.BeginTransaction();
                      SortedList Params = new SortedList();
+                      ParamList.Add("@nTransID", N_AssetInventoryID);
+                     ParamList.Add("@nCompanyID", nCompanyID);
                     ParamList.Add("@nFnYearID",nFnYearID);
+                      string Sql = "select N_AssetInventoryID,X_InvoiceNo from Ass_SalesMaster where N_AssetInventoryID=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
                     string xButtonAction="Delete";
-                     String X_InvoiceNo="";
-
-                   
+                     string X_InvoiceNo="";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+  
+                    if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error(User, "Transaction not Found"));
+                    }
+                  
                     DataRow TransRow = TransData.Rows[0];
 
              object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Ass_SalesMaster where N_AssetInventoryID =" + N_AssetInventoryID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);

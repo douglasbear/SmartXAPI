@@ -153,6 +153,16 @@ namespace SmartxAPI.Controllers
                                     dtRow["N_CompanyID"] = nCompanyID;
                                 }
                                 break;
+                            case "payment voucher":
+                            case "receipt voucher":   
+                            case "journel voucher":
+                                xTableName = "Mig_Vouchers";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;
                             case "category":
                                 xTableName = "Mig_POSCategory";
                                 Mastertable.Columns.Add("N_CompanyID");
@@ -324,15 +334,15 @@ namespace SmartxAPI.Controllers
                             ValidationParam.Add("N_CompanyID", nCompanyID);
                             ValidationParam.Add("N_FnYearID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_FnYearID"].ToString()));
                             ValidationParam.Add("X_Type", dt.TableName);
-                            try
-                            {
-                             dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
-                            }
-                            catch (Exception ex)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, ex));
-                            }
+                            // try
+                            // // {
+                            // //  dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
+                            // // }
+                            // catch (Exception ex)
+                            // {
+                            //     transaction.Rollback();
+                            //     return Ok(_api.Error(User, ex));
+                            // }
 
                             if (dt.TableName.ToString().ToLower() == "sales invoice")
                             {
@@ -344,10 +354,10 @@ namespace SmartxAPI.Controllers
                                 SalesInvParam.Add("N_LocationID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_LocationID"].ToString()));
                                 dLayer.ExecuteNonQueryPro("SP_SalesInvoiceImport", SalesInvParam, connection, transaction);
                             }
-                            else
-                            {
-                               dLayer.ExecuteNonQueryPro("SP_SetupData_cloud", Params, connection, transaction);
-                            }
+                            // else
+                            // {
+                            //    dLayer.ExecuteNonQueryPro("SP_SetupData_cloud", Params, connection, transaction);
+                            // }
 
                             if (nMasterID <= 0)
                             {

@@ -741,7 +741,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCompanyID, int N_AssetInventoryID, int FormID)
+        public ActionResult DeleteData(int nCompanyID, int N_AssetInventoryID, int FormID,int nFnYearID)
         {
             int Results = 0;
              string xTransType = "";
@@ -753,9 +753,33 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable TransData=new DataTable();
+                     SortedList ParamList=new SortedList();
                     SqlTransaction transaction = connection.BeginTransaction();
+                    ParamList.Add("@nFnYearID",nFnYearID);
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@N_AssetInventoryID", N_AssetInventoryID);
+                    string xButtonAction="Delete";
+                    string X_InvoiceNo="";
+                     string Sql = "select N_AssetInventoryID,X_InvoiceNo from Ass_PurchaseMaster where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_AssetInventoryID=@N_AssetInventoryID";
+                     TransData=dLayer.ExecuteDataTable(Sql,ParamList,connection,transaction);
+
+                   if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error(User, "Transaction not Found"));
+                    }
+                     DataRow TransRow=TransData.Rows[0];
+                      object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Ass_PurchaseMaster where N_AssetInventoryID =" + N_AssetInventoryID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
+                
+
+                     //Activity Log
+                // string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),N_AssetInventoryID,TransRow["X_InvoiceNo"].ToString(),129,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
         
                     if (FormID == 1293)
                      xTransType = "AR";

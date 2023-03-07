@@ -1545,6 +1545,10 @@ namespace SmartxAPI.GeneralFunctions
                         if (UserObj == null)
                             UserObj = 0;
 
+                     object mailCount = dLayer.ExecuteScalar("select count(1) from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='approved to requester'", NewParam, connection,transaction);
+                     if(this.getIntVAL(mailCount.ToString())>0)
+                     {   
+
                         body = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='approved to requester'", NewParam, connection, transaction).ToString();
                         Subject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='approved to requester'", NewParam, connection, transaction).ToString();
 
@@ -1560,6 +1564,7 @@ namespace SmartxAPI.GeneralFunctions
 
                         SendApprovalMail(EntrUsrID, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User, Subject, body);
                        
+                    }
                     }
                 }
 
@@ -1580,9 +1585,13 @@ namespace SmartxAPI.GeneralFunctions
 
                         if (Type != "")
                         {
-                            body = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='" + Type + "'", LogParams, connection, transaction).ToString();
-                            Subject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='" + Type + "'", LogParams, connection, transaction).ToString();
-                        }
+                           
+                             object mailCount = dLayer.ExecuteScalar("select count(1) from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='" + Type + "'", LogParams, connection,transaction);
+                     if(this.getIntVAL(mailCount.ToString())>0)
+                     {
+                         body = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='" + Type + "'", LogParams, connection, transaction).ToString();
+                        Subject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='" + Type + "'", LogParams, connection, transaction).ToString();
+                        
 
                         body = body.Replace("@PartyName", PartyName);
                         body = body.Replace("@TransCode", X_TransCode);
@@ -1594,6 +1603,9 @@ namespace SmartxAPI.GeneralFunctions
                         body = body.Replace("@URL", ApprovalLink + "/approvalDashboard");
 
                         SendApprovalMail(N_NextUser, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User, Subject, body);
+                            }
+                        }
+                           
 
                         // int ReminderId = ReminderSave(dLayer, N_FormID, 0, DateTime.Now.ToString("dd/MMM/yyyy"), 24, User, transaction, connection);
                     }
@@ -2776,6 +2788,7 @@ namespace SmartxAPI.GeneralFunctions
                 SortedList Params =new SortedList();
                 Params.Add("@nFormID",nFormID);
                 Params.Add("@keyVal",nTransID);
+                Params.Add("@fVal",nFnYearID);
                 Params.Add("@cVal",this.GetCompanyID(User));
                 DataTable LogDataSrc = dLayer.ExecuteDataTable("select * from Log_ActivityConfig where N_FormID=@nFormID",Params,connection,transaction);
 
