@@ -530,13 +530,15 @@ namespace SmartxAPI.Controllers
                       ParamList.Add("@nFnYearID",nFnYearID);
                       ParamList.Add("@nCompanyID", nCompanyID);
                      string xButtonAction="Delete";
-                     String X_InvoiceNo="";
-                     string Sql = "select X_InvoiceNo,n_PurchaseID from Inv_Purchase where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and n_PurchaseID=@nTransID";
+                     string X_InvoiceNo="";
+                     string Sql = "select X_InvoiceNo,N_PurchaseID from Inv_Purchase where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID and N_PurchaseID=@nTransID";
+                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+                
+                     
                     
-
-                         if (TransData.Rows.Count == 0)
+                 if (TransData.Rows.Count == 0)
                     {
-                        return Ok(_api.Error(User, "Transaction not Found"));
+                        return Ok(_api.Error(User,"Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
 
@@ -547,7 +549,7 @@ namespace SmartxAPI.Controllers
                     ipAddress = Request.Headers["X-Forwarded-For"];
                 else
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nPurchaseID,TransRow["X_InvoiceNo"].ToString(),380,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nPurchaseID,TransRow["X_InvoiceNo"].ToString(),380,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
                    
                     SortedList DeleteParams = new SortedList(){

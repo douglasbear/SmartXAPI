@@ -475,7 +475,9 @@ namespace SmartxAPI.Controllers
                 DetailsToImport = ds.Tables["detailsImport"];
                 bool B_isImport = false;
                 SortedList Params = new SortedList();
+                String xButtonAction="";
                 int N_POrderID = 0; var X_POrderNo = "";
+              
 
                 if (ds.Tables.Contains("detailsImport"))
                     B_isImport = true;
@@ -495,6 +497,7 @@ namespace SmartxAPI.Controllers
                     X_POrderNo = MasterTable.Rows[0]["x_POrderNo"].ToString();
                     DataRow Master = MasterTable.Rows[0];
                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
+                    int N_FnYearID = myFunctions.getIntVAL(Master["N_FnYearID"].ToString());
 
                     N_POrderID = myFunctions.getIntVAL(Master["n_POrderID"].ToString());
                     if (N_POrderID > 0)
@@ -517,7 +520,7 @@ namespace SmartxAPI.Controllers
                    {
                      Master["n_FnYearId"] = DiffFnYearID.ToString();
                     MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
-                     int N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                    N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
 
                            SortedList QueryParams = new SortedList();
                             QueryParams["@nFnYearID"] = N_FnYearID;
@@ -572,10 +575,12 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.FormID);
 
                         X_POrderNo = dLayer.GetAutoNumber("Inv_PurchaseOrder", "x_POrderNo", Params, connection, transaction);
+                        xButtonAction="Insert"; 
                         if (X_POrderNo == "") { transaction.Rollback(); return Ok(api.Warning("Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["x_POrderNo"] = X_POrderNo;
                     }
                     else
+                          X_POrderNo = MasterTable.Rows[0]["x_POrderNo"].ToString();
                     {
                         SortedList AdvParams = new SortedList();
                         AdvParams.Add("@companyId", Master["n_CompanyId"].ToString());
@@ -597,7 +602,7 @@ namespace SmartxAPI.Controllers
                             bool B_PRSVisible = false;
                             bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", "X_UserCategory", dLayer, connection, transaction);
                             bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Administrator", "X_UserCategory", dLayer, connection, transaction);
-
+                             xButtonAction="Update"; 
                             if (MaterailRequestVisible || PurchaseRequestVisible)
                                 B_PRSVisible = true;
 
@@ -709,6 +714,8 @@ namespace SmartxAPI.Controllers
                                         return Ok(api.Error(User, "Unable To Update Txn Status"));
                                     }
                                 }
+
+                 
                     SortedList VendorParams = new SortedList();
                     VendorParams.Add("@nVendorID", N_VendorID);
                     DataTable VendorInfo = dLayer.ExecuteDataTable("Select X_VendorCode,X_VendorName from Inv_Vendor where N_VendorID=@nVendorID", VendorParams, connection, transaction);
@@ -724,6 +731,15 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error(User, ex));
                         }
                     }
+                         
+                    // Activity Log
+                   string ipAddress = "";
+                   if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                  else
+                       ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(N_FnYearID,N_POrderID,X_POrderNo,82,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                        
 
                     transaction.Commit();
                 }
@@ -773,6 +789,8 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nCompanyID", nCompanyID);
                     ParamList.Add("@nFnYearID", nFnYearID);
                     string Sql = "select N_VendorID from Inv_PurchaseOrder where N_POrderID=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+                     string xButtonAction="Delete";
+                     String X_POrderNo="";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
@@ -793,6 +811,16 @@ namespace SmartxAPI.Controllers
                     object objGRNProcessed = dLayer.ExecuteScalar("Select Isnull(N_MRNID,0) from Inv_MRN where N_CompanyID=" + nCompanyID + " and N_POrderID=" + nPOrderID + " and ISNULL(B_IsSaveDraft,0) = 0", connection, transaction);
                     if (objGRNProcessed == null)
                         objGRNProcessed = 0;
+                
+               // Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nPOrderID,TransRow["X_POrderNo"].ToString(),82,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
+
 
                     if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) == 0 && myFunctions.getIntVAL(objGRNProcessed.ToString()) == 0)
                     {
