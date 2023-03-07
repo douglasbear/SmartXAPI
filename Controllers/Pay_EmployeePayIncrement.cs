@@ -274,6 +274,7 @@ namespace SmartxAPI.Controllers
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     string x_HistoryNo = MasterRow["x_HistoryCode"].ToString();
                     int N_EmpID = myFunctions.getIntVAL(MasterRow["N_EmpID"].ToString());
+                     string xButtonAction="";
 
 if(MasterTable.Columns.Contains("n_FnYearID")){
       MasterTable.Columns.Remove("n_FnYearID");
@@ -286,13 +287,17 @@ if(MasterTable.Columns.Contains("n_FnYearID")){
                         Params.Add("N_FormID", 305);
                         Params.Add("N_BranchID", myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString()));
                         x_HistoryNo = dLayer.GetAutoNumber("Pay_PayHistoryMaster", "X_HistoryCode", Params, connection, transaction);
+                         xButtonAction="Insert"; 
                         if (x_HistoryNo == "")
                         {
                             transaction.Rollback();
                             return Ok("Unable to generate Invoice Number");
-                        }
+                        } 
                         MasterTable.Rows[0]["X_HistoryCode"] = x_HistoryNo;
+                    } else {
+                        xButtonAction="Update"; 
                     }
+                          x_HistoryNo = MasterTable.Rows[0]["X_HistoryCode"].ToString();
                     string DupCriteria = "";
 
 
@@ -320,7 +325,8 @@ if(MasterTable.Columns.Contains("n_FnYearID")){
 
                     dLayer.SaveData("Pay_PaySetup", "N_PaySetupID", pay_PaySetup, connection, transaction);
                     dLayer.SaveData("Pay_EmployeePayHistory", "N_PayHistoryID", pay_EmployeePayHistory, connection, transaction);
-
+                     
+                    
                     // Other Details
                     if (Otherinfo.Rows[0]["n_NPositionID"].ToString() != "0")
                         dLayer.ExecuteNonQuery("update Pay_Employee set N_PositionID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
@@ -349,6 +355,15 @@ if(MasterTable.Columns.Contains("n_FnYearID")){
 
                     dLayer.SaveData("Pay_EmployeeAdditionalInfo", "N_DetailsID", Otherinfo, connection, transaction);
 
+                //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(N_FnYearID,n_HistoryId,x_HistoryNo,305,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
+                          
 
                     //Accrual Save
                     if(!Accrual.Columns.Contains("N_EmpAccID"))

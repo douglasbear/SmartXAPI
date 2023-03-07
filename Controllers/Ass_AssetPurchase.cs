@@ -773,12 +773,12 @@ namespace SmartxAPI.Controllers
                 
 
                      //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),N_AssetInventoryID,TransRow["X_InvoiceNo"].ToString(),129,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                // string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),N_AssetInventoryID,TransRow["X_InvoiceNo"].ToString(),129,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
         
                     if (FormID == 1293)

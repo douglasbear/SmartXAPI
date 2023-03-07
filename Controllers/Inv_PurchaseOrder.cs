@@ -788,9 +788,9 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nTransID", nPOrderID);
                     ParamList.Add("@nCompanyID", nCompanyID);
                     ParamList.Add("@nFnYearID", nFnYearID);
-                    string Sql = "select N_VendorID from Inv_PurchaseOrder where N_POrderID=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+                    string Sql = "select N_POrderID,N_VendorID,X_POrderNo from Inv_PurchaseOrder where N_POrderID=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
                      string xButtonAction="Delete";
-                     String X_POrderNo="";
+                     string X_POrderNo="";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
