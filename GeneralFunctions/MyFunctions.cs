@@ -2713,6 +2713,7 @@ namespace SmartxAPI.GeneralFunctions
                 SortedList Params =new SortedList();
                 Params.Add("@nFormID",nFormID);
                 Params.Add("@keyVal",nTransID);
+                Params.Add("@fVal",nFnYearID);
                 Params.Add("@cVal",this.GetCompanyID(User));
                 DataTable LogDataSrc = dLayer.ExecuteDataTable("select * from Log_ActivityConfig where N_FormID=@nFormID",Params,connection,transaction);
 

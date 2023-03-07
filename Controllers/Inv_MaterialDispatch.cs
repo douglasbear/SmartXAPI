@@ -191,6 +191,7 @@ namespace SmartxAPI.Controllers
                     int nSaveDraft = myFunctions.getIntVAL(MasterTable.Rows[0]["B_IsSaveDraft"].ToString());
                     int N_UserID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
                     string X_DispatchNo = MasterTable.Rows[0]["X_DispatchNo"].ToString();
+                    string xButtonAction="";
                     if (nDispatchID > 0)
                     {
                         SortedList DeleteParams = new SortedList(){
@@ -201,6 +202,7 @@ namespace SmartxAPI.Controllers
                                     {"N_VoucherID",nDispatchID}};
 
                         dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                     xButtonAction="Update"; 
                     }
                     values = MasterRow["X_DispatchNo"].ToString();
 
@@ -211,9 +213,11 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.FormID);
                         //Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         X_DispatchNo = dLayer.GetAutoNumber("Inv_MaterialDispatch", "X_DispatchNo", Params, connection, transaction);
+                        xButtonAction="Insert"; 
                         if (X_DispatchNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Return Number")); }
                         MasterTable.Rows[0]["X_DispatchNo"] = X_DispatchNo;
                     }
+                      X_DispatchNo = MasterTable.Rows[0]["X_DispatchNo"].ToString();
 
                     nDispatchID = dLayer.SaveData("Inv_MaterialDispatch", "N_DispatchID", MasterTable, connection, transaction);
                     if (nDispatchID <= 0)
@@ -244,7 +248,17 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch", UpdateStockParam, connection, transaction);
                     else
                         dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch_Department", UpdateStockParam, connection, transaction);
+                    
 
+                    //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nDispatchID,X_DispatchNo,684,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
+                          
                     SortedList PostParam = new SortedList();
                     PostParam.Add("N_CompanyID", nCompanyID);
                     PostParam.Add("X_InventoryMode", "MATERIAL DISPATCH");
@@ -274,8 +288,33 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList();
                     SqlTransaction transaction = connection.BeginTransaction();
                     var nUserID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    ParamList.Add("@nTransID", nDispatchID);
+                     ParamList.Add("@nCompanyID", nCompanyID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                     string xButtonAction="Delete";
+                    string X_DispatchNo="";
+                   string Sql = "select N_DispatchID,X_DispatchNo from Inv_MaterialDispatch where N_DispatchID=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+                      if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+                    //Activity Log
+                      string ipAddress = "";
+                   if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                   else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nDispatchID,TransRow["X_DispatchNo"].ToString(),684,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                         
+                     
+                     
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
                                 {"N_UserID",nUserID},

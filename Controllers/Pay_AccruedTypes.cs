@@ -217,6 +217,7 @@ namespace SmartxAPI.Controllers
                     string X_VacType=(MasterRow["X_VacType"].ToString());
               
                     string x_VacCode = MasterRow["X_VacCode"].ToString();
+                    string xButtonAction="";
                     var values = MasterTable.Rows[0]["X_VacCode"].ToString();
                     if (n_VacTypeID > 0)
                     {
@@ -239,6 +240,7 @@ namespace SmartxAPI.Controllers
                         // }
 
                         dLayer.DeleteData("Pay_VacationTypeDetails", "N_VacTypeID", n_VacTypeID, " N_CompanyID=" +N_CompanyID+"", connection, transaction);
+                              xButtonAction="Update"; 
                     }
                     if (x_VacCode == "@Auto")
                     {
@@ -246,6 +248,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", N_FnYearID);
                         Params.Add("N_FormID", N_FormID);
                         x_VacCode = dLayer.GetAutoNumber("Pay_VacationType", "X_VacCode", Params, connection, transaction);
+                         xButtonAction="Insert"; 
                         if (x_VacCode == "")
                         {
                             transaction.Rollback();
@@ -268,6 +271,17 @@ namespace SmartxAPI.Controllers
                     {
                         DetailTable.Rows[j]["n_VacTypeID"] = n_VacTypeID;
                     }
+
+                          //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(N_FnYearID,n_VacTypeID,x_VacCode,587,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
+
+
                     int n_VacTypeDetailsID = dLayer.SaveData("Pay_VacationTypeDetails", "n_VacTypeDetailsID", DetailTable, connection, transaction);
                     if (n_VacTypeDetailsID <= 0)
                     {
@@ -307,9 +321,35 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                      DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList();
+                    ParamList.Add("@nTransID", nVacTypeID);
+                    ParamList.Add("@fnYearID", fnYearID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
                     SqlTransaction transaction = connection.BeginTransaction();
+                    string xButtonAction="Delete";
+                    string X_VacCode="";
+                    string Sql = "select N_VacTypeID,X_VacCode from Pay_VacationType where N_VacTypeID=@nTransID and N_CompanyID=@nCompanyID ";
                     objAssigned = dLayer.ExecuteScalar("select 1 FRom Pay_EmpAccruls Where N_VacTypeID= " + nVacTypeID + " and N_CompanyID=" + nCompanyID + "", connection, transaction);
                     objVacationStarted = dLayer.ExecuteScalar("select 1 FRom Pay_VacationDetails Where N_VacTypeID= " + nVacTypeID + " and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + fnYearID, connection, transaction);
+                  
+                
+                       TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+                    if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+                       // object n_FnYearID = dLayer.ExecuteScalar("select N_FnYearID from Pay_VacationType where N_VacTypeID =" + nVacTypeID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
+
+                    //Activity Log
+                        string ipAddress = "";
+                   if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                   else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(fnYearID,nVacTypeID,TransRow["X_VacCode"].ToString(),587,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                  
                     if (objVacationStarted != null)
                     {
 
@@ -329,6 +369,8 @@ namespace SmartxAPI.Controllers
                         transaction.Commit();
                     }
                 }
+                  
+              
                 if (Results > 0)
                 {
                     Dictionary<string, string> res = new Dictionary<string, string>();
