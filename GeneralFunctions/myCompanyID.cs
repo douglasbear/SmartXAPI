@@ -120,6 +120,7 @@ namespace SmartxAPI
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -140,6 +141,9 @@ namespace SmartxAPI
 =======
         public static string _APIVersion = "23.3.1.1";
 >>>>>>> 5a214836d1793e57cd4e3424454ade7acdf8fc08
+=======
+        public static string _APIVersion = "23.3.1.1";
+>>>>>>> 32ad943a478d6efe259c8cacdea44a6807957f0f
 
     }
 }
