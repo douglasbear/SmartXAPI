@@ -50,7 +50,7 @@ namespace SmartxAPI.Controllers
             crieteria = " and  N_Hold=1 ";
             }
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%')";
+                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or type like '%" + xSearchkey + "%' or x_BillAmt like '%" + xSearchkey + "%' or [Invoice Date] like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_SalesId desc";
@@ -83,11 +83,19 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(1) as N_Count  from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_TerminalID,0)= " + nTerminalID + " "+crieteria+" " + xSearchkey;
+                    sqlCommandCount = "select count(1) as N_Count  from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_TerminalID,0)= " + nTerminalID + " "+crieteria+" " + Searchkey;
 
                     object TotalHoldCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
+                    if(isHoldList)
+                    {
                     OutPut.Add("TotalHoldCount", TotalHoldCount);
+                    }
+                    else
+                    {
+                    OutPut.Add("TotalsalesCount", TotalHoldCount);
+                    }
+                   
 
                     if (dt.Rows.Count == 0)
                     {
