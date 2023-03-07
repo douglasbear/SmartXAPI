@@ -1697,14 +1697,7 @@
           "System.Security.Principal.Windows": "4.7.0"
         }
       },
-<<<<<<< HEAD
-      "System.Security.Cryptography.Cng/4.5.0": {},
-=======
-      "System.Security.Cryptography.Cng/4.7.0": {
-        "compile": {
-          "ref/netcoreapp3.0/System.Security.Cryptography.Cng.dll": {}
-        }
-      },
+      "System.Security.Cryptography.Cng/4.7.0": {},
       "System.Security.Cryptography.Pkcs/4.7.0": {
         "dependencies": {
           "System.Security.Cryptography.Cng": "4.7.0"
@@ -1713,7 +1706,6 @@
           "ref/netcoreapp3.0/System.Security.Cryptography.Pkcs.dll": {}
         }
       },
->>>>>>> f8d1c01bcb575e790181640eb9e017a87a910b17
       "System.Security.Cryptography.Primitives/4.3.0": {
         "dependencies": {
           "System.Diagnostics.Debug": "4.3.0",
