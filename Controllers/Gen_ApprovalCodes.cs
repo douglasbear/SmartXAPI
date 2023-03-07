@@ -307,7 +307,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from Gen_ApprovalCodes where N_CompanyID=@p1 ";
+                    sqlCommandCount = "select count(1) as N_Count  from Gen_ApprovalCodes where N_CompanyID=@p1 ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -343,7 +343,7 @@ namespace SmartxAPI.Controllers
                      SqlTransaction transaction = connection.BeginTransaction();
                      if ( nApprovalID > 0)
                     {
-                        object appCount = dLayer.ExecuteScalar("select COUNT(*) From Sec_ApprovalSettings_EmployeeDetails where N_ApprovalID =" + nApprovalID + " and N_CompanyID =" + nCompanyID, connection, transaction);
+                        object appCount = dLayer.ExecuteScalar("select count(1) From Sec_ApprovalSettings_EmployeeDetails where N_ApprovalID =" + nApprovalID + " and N_CompanyID =" + nCompanyID, connection, transaction);
                         appCount = appCount == null ? 0 : appCount;
                         if (myFunctions.getIntVAL(appCount.ToString()) > 0){
                             return Ok(_api.Error(User, "Already In Use !!"));
@@ -351,7 +351,7 @@ namespace SmartxAPI.Controllers
                     }
                        if ( nApprovalID > 0)
                     {
-                        object appCount = dLayer.ExecuteScalar("select COUNT(*) From Sec_ApprovalSettings_General where N_ApprovalID =" + nApprovalID + " and N_CompanyID =" + nCompanyID, connection, transaction);
+                        object appCount = dLayer.ExecuteScalar("select count(1) From Sec_ApprovalSettings_General where N_ApprovalID =" + nApprovalID + " and N_CompanyID =" + nCompanyID, connection, transaction);
                         appCount = appCount == null ? 0 : appCount;
                         if (myFunctions.getIntVAL(appCount.ToString()) > 0){
                             return Ok(_api.Error(User, "Already In Use !!"));

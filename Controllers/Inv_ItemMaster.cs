@@ -791,7 +791,7 @@ namespace SmartxAPI.Controllers
                         QueryParams.Add("@nItemID", myFunctions.getIntVAL(MasterTable.Rows[k]["N_ItemID"].ToString()));
                         QueryParams.Add("@xItemName", MasterTable.Rows[k]["X_ItemName"].ToString());
                         int count = 0;
-                        object res = dLayer.ExecuteScalar("Select count(*) as count from Inv_ItemMaster where X_ItemName =@xItemName and N_ItemID <> @nItemID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                        object res = dLayer.ExecuteScalar("Select count(1) as count from Inv_ItemMaster where X_ItemName =@xItemName and N_ItemID <> @nItemID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                         if (res != null)
                             count = myFunctions.getIntVAL(res.ToString());
 
@@ -807,7 +807,7 @@ namespace SmartxAPI.Controllers
                             string XCustomerSKU = MasterTableNew.Rows[0]["x_CustomerSKU"].ToString();
                             if (XCustomerSKU != "")
                             {
-                                object SKUCount = dLayer.ExecuteScalar("Select Count(*) from Inv_ItemMaster Where N_CustomerID =" + NCustomerID + " and N_ItemID <> " + myFunctions.getIntVAL(MasterTable.Rows[k]["N_ItemID"].ToString()) + " and X_CustomerSKU='" + XCustomerSKU + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                                object SKUCount = dLayer.ExecuteScalar("Select count(1) from Inv_ItemMaster Where N_CustomerID =" + NCustomerID + " and N_ItemID <> " + myFunctions.getIntVAL(MasterTable.Rows[k]["N_ItemID"].ToString()) + " and X_CustomerSKU='" + XCustomerSKU + "' and N_CompanyID= " + nCompanyID, connection, transaction);
                                 if (myFunctions.getVAL(SKUCount.ToString()) >= 1)
                                 {
                                     transaction.Rollback();
@@ -1053,7 +1053,7 @@ namespace SmartxAPI.Controllers
                             {
                                 int n_StoreID = myFunctions.getIntVAL(storeAllocation.Rows[l]["N_StoreID"].ToString());
                                 int n_StoreDetailID = myFunctions.getIntVAL(storeAllocation.Rows[l]["N_StoreDetailID"].ToString());
-                                object storeCount = dLayer.ExecuteScalar("select count(*) from Inv_OnlineStoreDetail  where N_StoreID = " + n_StoreID + " and N_StoreDetailID=" + n_StoreDetailID + " and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                                object storeCount = dLayer.ExecuteScalar("select count(1) from Inv_OnlineStoreDetail  where N_StoreID = " + n_StoreID + " and N_StoreDetailID=" + n_StoreDetailID + " and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
 
                                 if (myFunctions.getIntVAL(storeCount.ToString()) > 0)
                                 {
@@ -1582,11 +1582,11 @@ namespace SmartxAPI.Controllers
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    // sqlCommandCount = "select count(*) as N_Count from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 " + Searchkey + "";
+                    // sqlCommandCount = "select count(1) as N_Count from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 " + Searchkey + "";
                     if (nShowCustomer == true)
-                        sqlCommandCount = "select count(*) as N_Count from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2  and X_Type=@p4 " + Searchkey + "";
+                        sqlCommandCount = "select count(1) as N_Count from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2  and X_Type=@p4 " + Searchkey + "";
                     else
-                        sqlCommandCount = "select count(*) as N_Count from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3  and X_Type=@p4 " + Searchkey + "";
+                        sqlCommandCount = "select count(1) as N_Count from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3  and X_Type=@p4 " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
 
                     OutPut.Add("Details", _api.Format(dt));
@@ -1668,8 +1668,8 @@ namespace SmartxAPI.Controllers
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    // sqlCommandCount = "select count(*) as N_Count from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + "" + Cond + " ";
-                    sqlCommandCount = "select count(*) as N_Count from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 and N_VendorID=@p3" + Searchkey + "";
+                    // sqlCommandCount = "select count(1) as N_Count from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + "" + Cond + " ";
+                    sqlCommandCount = "select count(1) as N_Count from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 and N_VendorID=@p3" + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
 
                     OutPut.Add("Details", _api.Format(dt));

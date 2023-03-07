@@ -97,7 +97,7 @@ namespace SmartxAPI.Controllers
 
                                 if(N_PayReceiptDetailsID!= "" && N_PayReceiptDetailsID != null)
                                 {
-                                adjustedCount = dLayer.ExecuteScalar("select Count(*) from Inv_PayReceiptDetails where N_CompanyID=" + nCompanyID + " and X_TransType='SA' and N_InventoryId = " + N_TransID, connection, transaction);
+                                adjustedCount = dLayer.ExecuteScalar("select count(1) from Inv_PayReceiptDetails where N_CompanyID=" + nCompanyID + " and X_TransType='SA' and N_InventoryId = " + N_TransID, connection, transaction);
                                 if (adjustedCount == null) { adjustedCount = 0; }
                                 }
 
@@ -135,7 +135,7 @@ namespace SmartxAPI.Controllers
                                 netAmount = dLayer.ExecuteScalar("select NetAmount from vw_InvPayables where N_CompanyID=" + nCompanyID + " and N_PurchaseID = " + N_TransID, connection, transaction);
                                 if(N_PayReceiptDetailsID!= "" && N_PayReceiptDetailsID != null)
                                 {
-                                adjustedCount = dLayer.ExecuteScalar("select Count(*) from Inv_PayReceiptDetails where N_CompanyID=" + nCompanyID + " and X_TransType='PA' and N_InventoryId = " + N_TransID, connection, transaction);
+                                adjustedCount = dLayer.ExecuteScalar("select count(1) from Inv_PayReceiptDetails where N_CompanyID=" + nCompanyID + " and X_TransType='PA' and N_InventoryId = " + N_TransID, connection, transaction);
                                 if (adjustedCount == null) { adjustedCount = 0; }
                                 }
                             }

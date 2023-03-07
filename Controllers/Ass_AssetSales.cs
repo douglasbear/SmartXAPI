@@ -97,7 +97,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_InvAssetInventoryReceiptNo_Search where "+sqlCondition+" " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count from vw_InvAssetInventoryReceiptNo_Search where "+sqlCondition+" " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     //string TotalSum = "0";

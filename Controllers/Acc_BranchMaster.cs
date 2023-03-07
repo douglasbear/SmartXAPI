@@ -324,7 +324,7 @@ namespace SmartxAPI.Controllers
                     // dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     Params.Add("@nBranchID", nBranchID);
                     int nCompanyId = myFunctions.GetCompanyID(User);
-                    object count = dLayer.ExecuteScalar("select count(*) as N_Count from Vw_Acc_BranchMaster_Disp where N_BranchID=@nBranchID and N_CompanyID=N_CompanyID", Params, connection);
+                    object count = dLayer.ExecuteScalar("select count(1) as N_Count from Vw_Acc_BranchMaster_Disp where N_BranchID=@nBranchID and N_CompanyID=N_CompanyID", Params, connection);
                     int N_Count = myFunctions.getIntVAL(count.ToString());
                     if (N_Count <= 0)
                     {

@@ -83,7 +83,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_TerminalID,0)= " + nTerminalID + " "+crieteria+" " + xSearchkey;
+                    sqlCommandCount = "select count(1) as N_Count  from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_TerminalID,0)= " + nTerminalID + " "+crieteria+" " + xSearchkey;
 
                     object TotalHoldCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
@@ -140,7 +140,7 @@ namespace SmartxAPI.Controllers
         //         {
         //             connection.Open();
         //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-        //             sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=0 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey;
+        //             sqlCommandCount = "select count(1) as N_Count  from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=0 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey;
         //             object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
         //             OutPut.Add("Details", _api.Format(dt));
         //             OutPut.Add("TotalCount", TotalCount);
@@ -353,7 +353,7 @@ namespace SmartxAPI.Controllers
                     }
                     dt.AcceptChanges();
 
-                    sqlCommandCount = "select count(*) from vw_InvItem_Search where N_CompanyID=@p1 and [Item Code]<>'001' and N_CategoryID=@p2";
+                    sqlCommandCount = "select count(1) from vw_InvItem_Search where N_CompanyID=@p1 and [Item Code]<>'001' and N_CategoryID=@p2";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
