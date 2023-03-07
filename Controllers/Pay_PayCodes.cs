@@ -92,7 +92,7 @@ namespace SmartxAPI.Controllers
                 int nPayID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PayID"].ToString());
                 int nPayTypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayTypeID"].ToString());
                 var d_Entrydate = MasterTable.Rows[0]["d_Entrydate"].ToString();
-
+                 string xButtonAction="";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -109,16 +109,25 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         PayCode = dLayer.GetAutoNumber("Pay_PayMaster", "X_PayCode", Params, connection, transaction);
-                        if (PayCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Pay Code")); }
+                     
+                        if (PayCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Pay Code"));
+                        
+                        }
+                            xButtonAction="Insert";
+
                         MasterTable.Rows[0]["X_PayCode"] = PayCode;
+                    }else {
+                            xButtonAction="Update"; 
                     }
+                    PayCode = MasterTable.Rows[0]["X_PayCode"].ToString();
 
 
 
                     string DupCriteria = "N_companyID=" + nCompanyID + " And X_Paycode = '" + values + "' and N_FnYearID=" + nFnYearId;
-
+                  
                     nPayID = dLayer.SaveData("Pay_PayMaster", "N_PayID", DupCriteria, "N_companyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId, MasterTable, connection, transaction);
                     dLayer.DeleteData("Pay_SummaryPercentage", "N_PayID", nPayID, "N_CompanyID=" + nCompanyID, connection, transaction);
+                  
                     if (nPayID <= 0)
                     {
                         transaction.Rollback();
@@ -173,6 +182,14 @@ namespace SmartxAPI.Controllers
 
 
                         }
+                              //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearId,nPayID,PayCode,186,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
 
                         transaction.Commit();
                         return Ok(api.Success("Paycode Created"));
@@ -373,7 +390,7 @@ namespace SmartxAPI.Controllers
             
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nPayCodeId, int flag)
+        public ActionResult DeleteData(int nPayCodeId, int flag,int nFnYearID,int nPayID,int nCompanyID)
         {
 
             int Results = 0;
@@ -388,6 +405,20 @@ namespace SmartxAPI.Controllers
 
                 {
                     connection.Open();
+                    
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList();
+                    ParamList.Add("@nTransID", nPayCodeId);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                     string xButtonAction="Delete";
+                      string X_PayCode="";
+                   string Sql = "select N_PayID,X_PayCode from Pay_PayMaster where N_PayID=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+
+                     
+
+
+
                     obj = dLayer.ExecuteScalar("Select N_PayID From Pay_PaySetup Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PayID=" + nPayCodeId.ToString(), Params, connection);
                     if (obj == null)
                     {
@@ -400,6 +431,7 @@ namespace SmartxAPI.Controllers
                             }
 
                         }
+                        
 
                         obj1 = dLayer.ExecuteScalar("Select N_PayID From Pay_MonthlyAddOrDedDetails Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PayID=" + nPayCodeId.ToString(), Params, connection);
                         {
@@ -435,6 +467,20 @@ namespace SmartxAPI.Controllers
                                     }
 
                                     SqlTransaction transaction = connection.BeginTransaction();
+                                      TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+                      if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+
+                    //Activity Log
+                        string ipAddress = "";
+                   if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                   else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nPayCodeId,TransRow["X_PayCode"].ToString(),186,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
                                     Results = dLayer.DeleteData("Pay_PayMaster ", "N_PayID", nPayCodeId, "", connection, transaction);
                                     transaction.Commit();
                                 }
@@ -459,6 +505,7 @@ namespace SmartxAPI.Controllers
                     }
 
                 }
+                
                 if (Results > 0)
                 {
                     Dictionary<string, string> res = new Dictionary<string, string>();

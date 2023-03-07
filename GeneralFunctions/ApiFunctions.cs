@@ -37,6 +37,10 @@ namespace SmartxAPI.GeneralFunctions
         {
             return (new { type = "error", Message = message, Data = "" });
         }
+        public object Error(string message)
+        {
+            return (new { type = "error", Message = message, Data = "" });
+        }
         public object Success(DataTable dataTable)
         {
             return (new { type = "success", Message = "null", Data = dataTable });
@@ -252,6 +256,7 @@ namespace SmartxAPI.GeneralFunctions
         /*  End Of Deprecated Method  */
 
         public object Error(ClaimsPrincipal User, Exception ex);
+        public object Error(string message);
         public DataTable Format(DataTable table, string tableName);
         public DataTable Format(DataTable dt);
         public object Error(ClaimsPrincipal User, string message);

@@ -193,7 +193,7 @@ namespace SmartxAPI.Data
                             {
                                 cnn2.Open();
 
-                                string sqlGUserInfo = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.B_EnableAttachment,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,users.N_LanguageID, CASE WHEN Users.N_UserType=0 THEN 1 ELSE 0 end as isAdminUser,Users.X_UserID FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_UserID ='" + username + "')";
+                                string sqlGUserInfo = "select * from vw_Users WHERE (X_UserID ='" + username + "')";
                                 DataTable globalInfo = dLayer.ExecuteDataTable(sqlGUserInfo, cnn2);
                                 if (globalInfo.Rows.Count > 0)
                                 {

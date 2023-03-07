@@ -76,7 +76,7 @@ namespace SmartxAPI.GeneralFunctions
             DetailsToImport = ds.Tables["detailsImport"];
             bool B_isImport = false;
             bool showSellingPrice =false;
-              String xButtonAction="";
+            string xButtonAction="";
 
             if(MasterTable.Columns.Contains("showSellingPrice")) 
                showSellingPrice=myFunctions.getBoolVAL(masterRow["showSellingPrice"].ToString());
@@ -307,6 +307,8 @@ namespace SmartxAPI.GeneralFunctions
                             return Result;
                         }
                         MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
+
+                        
                         // object invoiceCount ;
                         if(vendorInvoice!="")
                         {
@@ -322,6 +324,7 @@ namespace SmartxAPI.GeneralFunctions
                             }
                         }
                     }
+                    InvoiceNo = MasterTable.Rows[0]["x_InvoiceNo"].ToString();
 
                     if (N_PurchaseID > 0)
                     {
@@ -401,7 +404,7 @@ namespace SmartxAPI.GeneralFunctions
 	                            {"X_TransType", "PURCHASE"}};
 
                         dLayer.ExecuteNonQueryPro("SP_StockDeleteUpdate", StockUpdateParams, connection, transaction);
-                         xButtonAction="Update"; 
+                        // xButtonAction="Update"; 
                     }
                     MasterTable.Rows[0]["n_userID"] = myFunctions.GetUserID(User);
 
@@ -1188,35 +1191,45 @@ namespace SmartxAPI.GeneralFunctions
                 else
                 {
                         if (N_SaveDraft == 0)
-                    {
-                    //   foreach (DataRow data in dtsaleamountdetails.Rows)
-                    //   {
-                    //          double N_SChrgAmt = 0;
-                    //         double N_SChrgAmtMax = 0;
-                    //          object N_ServiceCharge = dLayer.ExecuteScalar("Select ISNULL(N_ServiceCharge , 0) from Inv_Customer where N_CustomerID=" + myFunctions.getVAL(data["N_CustomerID"].ToString()) + " and N_CompanyID=" + N_CompanyID + "and N_FnYearID=" +N_FnYearID, QueryParams, connection, transaction);
-                    //         object N_ServiceChargeMax = dLayer.ExecuteScalar("Select ISNULL(N_ServiceChargeLimit , 0) from Inv_Customer where N_CustomerID=" +  myFunctions.getVAL(data["N_CustomerID"].ToString()) + " and N_CompanyID=" + N_CompanyID + "and N_FnYearID=" + N_FnYearID,  QueryParams, connection, transaction);
-                    //         object N_TaxID = dLayer.ExecuteScalar("Select ISNULL(N_TaxCategoryID , 0) from Inv_Customer where N_CustomerID=" +  myFunctions.getVAL(data["N_CustomerID"].ToString()) + " and N_CompanyID=" + N_CompanyID + "and N_FnYearID=" + N_FnYearID,  QueryParams, connection, transaction);
-                    //          if (myFunctions.getVAL(N_ServiceCharge.ToString()) > 0)
-                    //         {
-                    //              N_SChrgAmt = (myFunctions.getVAL(data["N_Amount"].ToString()) * myFunctions.getVAL((N_ServiceCharge.ToString())) / 100);
-                    //              N_SChrgAmtMax = myFunctions.getVAL(N_ServiceChargeMax.ToString());
-                    //          if (N_SChrgAmtMax > 0)
-                    //              {
-                    //                 if (N_SChrgAmt > N_SChrgAmtMax)
-                    //                      N_SChrgAmt = myFunctions.getVAL(N_ServiceChargeMax.ToString());
-                    //                 }
-                    //          }
-                    //           double AmountH = myFunctions.getVAL((myFunctions.getVAL(data["N_Amount"].ToString()) * myFunctions.getVAL(data["N_Amount"].ToString())).ToString());
-                    //           double CommissionAmtH = N_SChrgAmt * (myFunctions.getVAL(data["N_Amount"].ToString()));
-                    //           if(myFunctions.getVAL(N_ServiceCharge.ToString())>0)
-                    //         {
-                    //             data["N_CommissionAmt"]=CommissionAmtH;
-                    //             data["N_Amount"]=AmountH;
-                    //             data["N_CommissionPer"]=N_ServiceCharge;
-                    //            data["N_CommissionPer"]=N_SChrgAmt;
-                    //          data["N_TaxID"]=N_TaxID;
-                    //          }
-                    //   }
+                        {
+                            if (dtsaleamountdetails.Columns.Contains("N_CommissionAmtF"))
+                                dtsaleamountdetails.Columns.Remove("N_CommissionAmtF");
+                            if (dtsaleamountdetails.Columns.Contains("N_CommissionAmt"))
+                                dtsaleamountdetails.Columns.Remove("N_CommissionAmt");
+
+                             dtsaleamountdetails = myFunctions.AddNewColumnToDataTable(dtsaleamountdetails, "N_CommissionAmtF", typeof(double), 0);
+                             dtsaleamountdetails = myFunctions.AddNewColumnToDataTable(dtsaleamountdetails, "N_CommissionAmt", typeof(double), 0);
+                            //foreach (DataRow data in dtsaleamountdetails.Rows)
+                            for (int i = 0; i < dtsaleamountdetails.Rows.Count; i++)
+                            {
+                                    double N_SChrgAmt = 0;
+                                    double N_SChrgAmtMax = 0;
+                                    object N_ServiceCharge = dLayer.ExecuteScalar("Select ISNULL(N_ServiceCharge , 0) from Inv_Customer where N_CustomerID=" + myFunctions.getVAL(dtsaleamountdetails.Rows[i]["N_CustomerID"].ToString()) + " and N_CompanyID=" + N_CompanyID + "and N_FnYearID=" +N_FnYearID, QueryParams, connection, transaction);
+                                    object N_ServiceChargeMax = dLayer.ExecuteScalar("Select ISNULL(N_ServiceChargeLimit , 0) from Inv_Customer where N_CustomerID=" +  myFunctions.getVAL(dtsaleamountdetails.Rows[i]["N_CustomerID"].ToString()) + " and N_CompanyID=" + N_CompanyID + "and N_FnYearID=" + N_FnYearID,  QueryParams, connection, transaction);
+                                    object N_TaxID = dLayer.ExecuteScalar("Select ISNULL(N_TaxCategoryID , 0) from Inv_Customer where N_CustomerID=" +  myFunctions.getVAL(dtsaleamountdetails.Rows[i]["N_CustomerID"].ToString()) + " and N_CompanyID=" + N_CompanyID + "and N_FnYearID=" + N_FnYearID,  QueryParams, connection, transaction);
+                                    if (myFunctions.getVAL(N_ServiceCharge.ToString()) > 0)
+                                    {
+                                        N_SChrgAmt = (myFunctions.getVAL(dtsaleamountdetails.Rows[i]["N_AmountF"].ToString()) * myFunctions.getVAL((N_ServiceCharge.ToString())) / 100);
+                                        N_SChrgAmtMax = myFunctions.getVAL(N_ServiceChargeMax.ToString());
+                                        if (N_SChrgAmtMax > 0)
+                                        {
+                                            if (N_SChrgAmt > N_SChrgAmtMax)
+                                                N_SChrgAmt = myFunctions.getVAL(N_ServiceChargeMax.ToString());
+                                        }
+                                    }                                    
+                                    double CommissionAmtH = N_SChrgAmt * (myFunctions.getVAL(MasterRow["n_ExchangeRate"].ToString()));
+                                    if(myFunctions.getVAL(N_SChrgAmt.ToString())>0)
+                                    {
+                                        dtsaleamountdetails.Rows[i]["N_CommissionAmtF"]=myFunctions.getVAL(N_SChrgAmt.ToString());
+                                        dtsaleamountdetails.Rows[i]["N_CommissionAmt"]=myFunctions.getVAL(CommissionAmtH.ToString());
+                                        dtsaleamountdetails.Rows[i]["N_CommissionPer"]=N_ServiceCharge;
+                                        dtsaleamountdetails.Rows[i]["N_TaxID"]=N_TaxID;
+                                        // data["N_CommissionAmtF"]=myFunctions.getVAL(N_SChrgAmt.ToString());
+                                        // data["N_CommissionAmt"]=myFunctions.getVAL(CommissionAmtH.ToString());
+                                        // data["N_CommissionPer"]=N_ServiceCharge;                            
+                                        // data["N_TaxID"]=N_TaxID;
+                                    }
+                            }
 
                     //service charge
             
@@ -1384,7 +1397,7 @@ namespace SmartxAPI.GeneralFunctions
                     PostingParam.Add("X_SystemName", "ERP Cloud");
                     try
                     {
-                        dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
+                         dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
                     }
                     catch (Exception ex)
                     {
@@ -1579,7 +1592,7 @@ namespace SmartxAPI.GeneralFunctions
             MasterTable.Rows[0]["N_TotalPaidAmount"] = N_TotalPaid;
             double N_TotalPaidF = myFunctions.getVAL(MasterTable.Rows[0]["n_TotalPaidAmountF"].ToString());
             MasterTable.Rows[0]["n_TotalPaidAmountF"] = N_TotalPaidF;
-               String xButtonAction="";
+            string xButtonAction="";
 
             if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_ReturnDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
             {
@@ -1607,7 +1620,7 @@ namespace SmartxAPI.GeneralFunctions
                 Params.Add("N_FormID", 55);
                 Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
                 InvoiceNo = dLayer.GetAutoNumber("Inv_SalesReturnMaster", "X_DebitNoteNo", Params, connection, transaction);
-                 xButtonAction="Insert"; 
+                  xButtonAction="Insert"; 
                 if (InvoiceNo == "") 
                 {
                      //transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Return Number")); 
@@ -1617,6 +1630,7 @@ namespace SmartxAPI.GeneralFunctions
                 }
                 MasterTable.Rows[0]["X_DebitNoteNo"] = InvoiceNo;
             }
+           
              InvoiceNo = MasterTable.Rows[0]["X_DebitNoteNo"].ToString();
 
             if (N_DebitNoteId > 0)
@@ -1627,7 +1641,7 @@ namespace SmartxAPI.GeneralFunctions
 	                            {"X_TransType", "SALES RETURN"}};
 
                 dLayer.ExecuteNonQueryPro("SP_StockDeleteUpdate", StockUpdateParams, connection, transaction);
-                xButtonAction="Update"; 
+               xButtonAction="Update"; 
                 SortedList DeleteParams = new SortedList(){
                         {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
                         {"X_TransType","SALES RETURN"},
@@ -1659,9 +1673,9 @@ namespace SmartxAPI.GeneralFunctions
                 // DeleteParams.Add("@N_DebitNoteId", N_DebitNoteId);
 
                 // dLayer.ExecuteDataTable(sqlCommandText, DeleteParams, connection);
-
+                
             }
-
+               
             // dLayer.setTransaction();
            
             MasterTable.Columns.Remove("n_ProjectID");
@@ -1679,11 +1693,12 @@ namespace SmartxAPI.GeneralFunctions
             }
             int N_InvoiceDetailId = dLayer.SaveData("Inv_SalesReturnDetails", "N_DebitnoteDetailsID", DetailTable, connection, transaction);
 
+          
+
             SortedList CustomerParams = new SortedList();
             CustomerParams.Add("@nCustomerID", N_CustomerID);
             DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID=@nCustomerID", CustomerParams, connection, transaction);
-                myFunctions.LogScreenActivitys(nFnYearID,N_DebitNoteId,InvoiceNo,55,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-           
+       
             if (CustomerInfo.Rows.Count > 0)
             {
                 try
@@ -1701,7 +1716,8 @@ namespace SmartxAPI.GeneralFunctions
                 }
             }
 
-          
+       
+           
 
             SortedList InsParams = new SortedList();
             InsParams.Add("N_CompanyID", N_CompanyID);
@@ -1709,6 +1725,9 @@ namespace SmartxAPI.GeneralFunctions
             InsParams.Add("N_DeliveryNote", N_DeliveryNote);
 
             dLayer.ExecuteNonQueryPro("SP_SalesReturn_Ins_New", InsParams, connection, transaction);
+
+             myFunctions.LogScreenActivitys(nFnYearID,N_InvoiceId,InvoiceNo,55,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+           
 
             SortedList StockPostingParams = new SortedList();
             StockPostingParams.Add("N_CompanyID", N_CompanyID);
@@ -1743,6 +1762,7 @@ namespace SmartxAPI.GeneralFunctions
             DataTable DetailTable;
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
+            DataRow masterRow = MasterTable.Rows[0];
             SortedList Params = new SortedList();
             SortedList Result = new SortedList();
 
@@ -1756,7 +1776,8 @@ namespace SmartxAPI.GeneralFunctions
             var values = MasterTable.Rows[0]["X_CreditNoteNo"].ToString();
             int nCompanyID = myFunctions.GetCompanyID(User);
             int N_VendorID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_VendorID"].ToString());
-            String xButtonAction="";
+             int nFnYearID = myFunctions.getIntVAL(masterRow["N_fnYearId"].ToString());;
+            string xButtonAction="";
 
             if (!myFunctions.CheckActiveYearTransaction(myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString()), Convert.ToDateTime(MasterTable.Rows[0]["D_RetDate"].ToString()), dLayer, connection, transaction))
             {
@@ -1795,7 +1816,7 @@ namespace SmartxAPI.GeneralFunctions
                 MasterTable.Rows[0]["X_CreditNoteNo"] = ReturnNo;
             }
   
-
+               ReturnNo = MasterTable.Rows[0]["X_CreditNoteNo"].ToString();
        
             if (N_CreditNoteID > 0)
             {
@@ -1845,7 +1866,7 @@ namespace SmartxAPI.GeneralFunctions
                 //     ipAddress = Request.Headers["X-Forwarded-For"];
                 // else
                 //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                    //   myFunctions.LogScreenActivitys(nFnYearId,N_CreditNoteID,ReturnNo,68,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                      myFunctions.LogScreenActivitys(nFnYearID,N_CreditNoteID,ReturnNo,68,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
 
 
