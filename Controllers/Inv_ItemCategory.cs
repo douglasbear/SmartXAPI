@@ -142,7 +142,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(_api.Success("Product Category Saved"));
+                        return Ok(_api.Success("Financial Category Saved"));
                     }
                 }
             }
@@ -168,7 +168,7 @@ namespace SmartxAPI.Controllers
                     if (Obcount != 0)
                     {
 
-                        return Ok(_api.Error(User,"Unable to Delete.Product category Allready Used"));
+                        return Ok(_api.Error(User,"Unable to Delete.Financial category Allready Used"));
                     }
 
                     Results = dLayer.DeleteData("Inv_ItemCategory", "N_CategoryID", nCategoryID, "", connection);
@@ -177,11 +177,11 @@ namespace SmartxAPI.Controllers
 
                         dLayer.ExecuteNonQuery("Update  Gen_Settings SET  X_Value='' Where X_Group ='Inventory' and X_Description='Default Item Category' and X_Value='" + xCategory.ToString() + "'", connection);
 
-                        return Ok(_api.Success("Product category deleted"));
+                        return Ok(_api.Success("Financial category deleted"));
                     }
                     else
                     {
-                        return Ok(_api.Error(User,"Unable to delete product category"));
+                        return Ok(_api.Error(User,"Unable to delete Financial category"));
                     }
                 }
             }
