@@ -711,7 +711,6 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Error(User, "Unable to delete Customer! transaction started"));
                     }
                    customertxnCount = dLayer.ExecuteScalar("select count(N_PartyID) from Inv_BalanceAdjustmentMaster  Where N_CompanyID=" + nCompanyID + " and  N_PartyID=" + nCustomerID,  QueryParams, connection);
-
                         if( myFunctions.getIntVAL(customertxnCount.ToString())>0)
                     {
                         return Ok(api.Error(User, "Unable to delete Customer! It has been used."));
