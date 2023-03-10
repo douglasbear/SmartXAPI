@@ -427,7 +427,6 @@ namespace SmartxAPI.Controllers
                   object vendorCount,vendortxnCount=0;
                      String VendorCode="";
 
-                object vendorCount,vendortxnCount=0;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();

@@ -350,7 +350,6 @@ namespace SmartxAPI.Controllers
 
                     //object paswd=myFunctions.EncryptString(GeneralTable.Rows[0]["x_AdminPwd"].ToString())
 
-
                     int N_CompanyId = dLayer.SaveData("Acc_Company", "N_CompanyID", MasterTable, connection, transaction);
                     if (N_CompanyId <= 0)
                     {
@@ -491,7 +490,7 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error(User, ex));
                         }
                     }
-                      transaction.Commit();
+                    transaction.Commit();
 
                         return Ok(api.Success("Company successfully saved"));
                     }
