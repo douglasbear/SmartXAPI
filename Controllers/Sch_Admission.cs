@@ -281,7 +281,8 @@ namespace SmartxAPI.Controllers
 
                     if(nAdmissionID>0)
                     {
-                        object PayCount = dLayer.ExecuteScalar("select COUNT(Inv_PayReceiptDetails.N_InventoryID) from Inv_PayReceiptDetails INNER JOIN Sch_Sales ON Sch_Sales.N_CompanyID=Inv_PayReceiptDetails.n_companyid and Sch_Sales.N_RefSalesID=Inv_PayReceiptDetails.N_InventoryID where Inv_PayReceiptDetails.N_CompanyID="+ nCompanyID +" and Inv_PayReceiptDetails.X_TransType='SALES' and Sch_Sales.N_Type=1 and Sch_Sales.N_RefId="+ nAdmissionID, Params, connection, transaction);
+                        // object PayCount = dLayer.ExecuteScalar("select COUNT(Inv_PayReceiptDetails.N_InventoryID) from Inv_PayReceiptDetails INNER JOIN Sch_Sales ON Sch_Sales.N_CompanyID=Inv_PayReceiptDetails.n_companyid and Sch_Sales.N_RefSalesID=Inv_PayReceiptDetails.N_InventoryID where Inv_PayReceiptDetails.N_CompanyID="+ nCompanyID +" and Inv_PayReceiptDetails.X_TransType='SALES' and Sch_Sales.N_Type=1 and Sch_Sales.N_RefId="+ nAdmissionID, Params, connection, transaction);
+                        object PayCount = dLayer.ExecuteScalar("select COUNT(*) from Inv_SalesDetails where N_CompanyID="+ nCompanyID +" and N_SalesID in (select N_SalesId from Inv_Sales where N_CompanyID="+ nCompanyID +" and N_FnYearId="+ nFnYearId +" and N_CustomerId="+ nCustomerID +")", Params, connection, transaction);
                         if (PayCount != null)
                         {
                             if(myFunctions.getIntVAL(PayCount.ToString())==0)
@@ -379,7 +380,8 @@ namespace SmartxAPI.Controllers
                     //--------------------------------------------^^^^^^^^^^^^---------------------------------------------------- 
                     dLayer.ExecuteNonQuery("update Sch_Admission set N_CustomerID="+nCustomerID+"  where N_CompanyID="+nCompanyID+" and N_AcYearID="+nAcYearID+" and N_AdmissionID="+nAdmissionID, Params, connection, transaction);
 
-                    object PayCount1 = dLayer.ExecuteScalar("select COUNT(Inv_PayReceiptDetails.N_InventoryID) from Inv_PayReceiptDetails INNER JOIN Sch_Sales ON Sch_Sales.N_CompanyID=Inv_PayReceiptDetails.n_companyid and Sch_Sales.N_RefSalesID=Inv_PayReceiptDetails.N_InventoryID where Inv_PayReceiptDetails.N_CompanyID="+ nCompanyID +" and Inv_PayReceiptDetails.X_TransType='SALES'  and Sch_Sales.N_Type=1 and Sch_Sales.N_RefId="+ nAdmissionID, Params, connection, transaction);
+                    // object PayCount1 = dLayer.ExecuteScalar("select COUNT(Inv_PayReceiptDetails.N_InventoryID) from Inv_PayReceiptDetails INNER JOIN Sch_Sales ON Sch_Sales.N_CompanyID=Inv_PayReceiptDetails.n_companyid and Sch_Sales.N_RefSalesID=Inv_PayReceiptDetails.N_InventoryID where Inv_PayReceiptDetails.N_CompanyID="+ nCompanyID +" and Inv_PayReceiptDetails.X_TransType='SALES'  and Sch_Sales.N_Type=1 and Sch_Sales.N_RefId="+ nAdmissionID, Params, connection, transaction);
+                    object PayCount1 = dLayer.ExecuteScalar("select COUNT(*) from Inv_SalesDetails where N_CompanyID="+ nCompanyID +" and N_SalesID in (select N_SalesId from Inv_Sales where N_CompanyID="+ nCompanyID +" and N_FnYearId="+ nFnYearId +" and N_CustomerId="+ nCustomerID +")", Params, connection, transaction);
                     if (PayCount1 != null)
                     {
                         if(myFunctions.getIntVAL(PayCount1.ToString())==0)

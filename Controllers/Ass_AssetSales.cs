@@ -322,7 +322,7 @@ namespace SmartxAPI.Controllers
                     ipAddress = Request.Headers["X-Forwarded-For"];
                 else
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(N_FnYearID,N_AssetInventoryID,X_InvoiceNo,404,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       myFunctions.LogScreenActivitys(N_FnYearID,N_AssetInventoryID,ReturnNo,404,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
 
                     SortedList PostingParam = new SortedList();

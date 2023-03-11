@@ -262,9 +262,35 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList();
                     SqlTransaction transaction = connection.BeginTransaction();
+                     ParamList.Add("@nTransID", nPRSID);
+                     ParamList.Add("@nCompanyID", nCompanyID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
                     string xButtonAction="Delete";
-                     String X_PRSNo="";
+                    string X_PRSNo="";
+                     string Sql = "select N_PRSID,X_PRSNo from Inv_PRS where N_PRSID=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+                     
+                     
+                    if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+
+                //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nPRSID,TransRow["X_PRSNo"].ToString(),1309,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                         
+
+
                     dLayer.DeleteData("Inv_PRSDetails", "N_PRSID", nPRSID, "N_CompanyID=" + nCompanyID + " and N_PRSID=" + nPRSID, connection, transaction);
                     Results = dLayer.DeleteData("Inv_PRS", "N_PRSID", nPRSID, "N_CompanyID=" + nCompanyID + " and N_PRSID=" + nPRSID, connection, transaction);
                   object objMDProcessed = dLayer.ExecuteScalar("Select Isnull(N_RSID,0) from Inv_MaterialDispatch where N_CompanyId=" + nCompanyID + " and N_RSID=" +nPRSID  + " ", connection, transaction);
@@ -279,14 +305,7 @@ namespace SmartxAPI.Controllers
 
                         dLayer.ExecuteNonQueryPro("SP_SalesOrderProcessUpdate", DeleteParams, connection, transaction);
                     }
-                      string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(nFnYearID,nPRSID,X_PRSNo,1592,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-                         
-
+           
                        if (myFunctions.getIntVAL(objMDProcessed.ToString()) > 0)
                        {
                        return Ok(api.Error(User, "Unable to delete"));
@@ -325,7 +344,7 @@ namespace SmartxAPI.Controllers
             // DataTable Approvals;
             // Approvals = ds.Tables["approval"];
             SortedList Params = new SortedList();
-            String xButtonAction="";
+            string xButtonAction="";
             // Auto Gen
             try
             {
@@ -355,14 +374,17 @@ namespace SmartxAPI.Controllers
                         if (X_PRSNo == "") { transaction.Rollback(); return Ok(api.Warning("Unable to generate Request Number")); }
                         MasterTable.Rows[0]["X_PRSNo"] = X_PRSNo;
                     }
+                      X_PRSNo = MasterTable.Rows[0]["X_PRSNo"].ToString();
 
                     if (N_PRSID > 0)
                     {
                         dLayer.DeleteData("Inv_PRSDetails", "N_PRSID", N_PRSID, "N_CompanyID=" + N_CompanyID + " and N_PRSID=" + N_PRSID, connection, transaction);
                         dLayer.DeleteData("Inv_PRS", "N_PRSID", N_PRSID, "N_CompanyID=" + N_CompanyID + " and N_PRSID=" + N_PRSID, connection, transaction);
+                          xButtonAction="Update"; 
                     }
 
                     N_PRSID = dLayer.SaveData("Inv_PRS", "N_PRSID", MasterTable, connection, transaction);
+                  
                     if (N_PRSID <= 0)
                     {
                         transaction.Rollback();
@@ -382,15 +404,15 @@ namespace SmartxAPI.Controllers
                         QueryParams.Add("@N_FnYearID", N_FnYearID);
 
                         dLayer.ExecuteNonQuery("Update Inv_SalesOrder set N_Processed=1,N_TranTypeID=@N_TransTypeID Where N_SalesOrderId=@N_SalesOrderId and N_CompanyID=@N_CompanyID and N_FnYearID=@N_FnYearID", QueryParams, connection, transaction);
-                        xButtonAction="Update"; 
+                       
                     }
                 //Activity Log
-                // string ipAddress = "";
-                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                //     ipAddress = Request.Headers["X-Forwarded-For"];
-                // else
-                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                //        myFunctions.LogScreenActivitys(nFnYearID,nPRSID,X_PRSNo,1592,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(N_FnYearID,N_PRSID,X_PRSNo,N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
                           
                           
 

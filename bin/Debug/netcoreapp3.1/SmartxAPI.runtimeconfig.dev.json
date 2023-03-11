@@ -3,6 +3,7 @@
     "additionalProbingPaths": [
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       "C:\\Users\\Administrator\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Administrator\\.nuget\\packages"
 =======
@@ -28,6 +29,11 @@
       "C:\\Users\\Dell\\.nuget\\packages"
 >>>>>>> 6099b3b91b57e934503537ce9d8922b9d786d3d5
 >>>>>>> c7c764123774b74de4c4e733c62b654128d69eb7
+=======
+      "C:\\Users\\user\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\user\\.nuget\\packages",
+      "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+>>>>>>> d370d59a0b25274853be032d12afa64cfbfe791f
     ]
   }
 }
