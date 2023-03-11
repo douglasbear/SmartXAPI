@@ -1188,35 +1188,45 @@ namespace SmartxAPI.GeneralFunctions
                 else
                 {
                         if (N_SaveDraft == 0)
-                    {
-                    //   foreach (DataRow data in dtsaleamountdetails.Rows)
-                    //   {
-                    //          double N_SChrgAmt = 0;
-                    //         double N_SChrgAmtMax = 0;
-                    //          object N_ServiceCharge = dLayer.ExecuteScalar("Select ISNULL(N_ServiceCharge , 0) from Inv_Customer where N_CustomerID=" + myFunctions.getVAL(data["N_CustomerID"].ToString()) + " and N_CompanyID=" + N_CompanyID + "and N_FnYearID=" +N_FnYearID, QueryParams, connection, transaction);
-                    //         object N_ServiceChargeMax = dLayer.ExecuteScalar("Select ISNULL(N_ServiceChargeLimit , 0) from Inv_Customer where N_CustomerID=" +  myFunctions.getVAL(data["N_CustomerID"].ToString()) + " and N_CompanyID=" + N_CompanyID + "and N_FnYearID=" + N_FnYearID,  QueryParams, connection, transaction);
-                    //         object N_TaxID = dLayer.ExecuteScalar("Select ISNULL(N_TaxCategoryID , 0) from Inv_Customer where N_CustomerID=" +  myFunctions.getVAL(data["N_CustomerID"].ToString()) + " and N_CompanyID=" + N_CompanyID + "and N_FnYearID=" + N_FnYearID,  QueryParams, connection, transaction);
-                    //          if (myFunctions.getVAL(N_ServiceCharge.ToString()) > 0)
-                    //         {
-                    //              N_SChrgAmt = (myFunctions.getVAL(data["N_Amount"].ToString()) * myFunctions.getVAL((N_ServiceCharge.ToString())) / 100);
-                    //              N_SChrgAmtMax = myFunctions.getVAL(N_ServiceChargeMax.ToString());
-                    //          if (N_SChrgAmtMax > 0)
-                    //              {
-                    //                 if (N_SChrgAmt > N_SChrgAmtMax)
-                    //                      N_SChrgAmt = myFunctions.getVAL(N_ServiceChargeMax.ToString());
-                    //                 }
-                    //          }
-                    //           double AmountH = myFunctions.getVAL((myFunctions.getVAL(data["N_Amount"].ToString()) * myFunctions.getVAL(data["N_Amount"].ToString())).ToString());
-                    //           double CommissionAmtH = N_SChrgAmt * (myFunctions.getVAL(data["N_Amount"].ToString()));
-                    //           if(myFunctions.getVAL(N_ServiceCharge.ToString())>0)
-                    //         {
-                    //             data["N_CommissionAmt"]=CommissionAmtH;
-                    //             data["N_Amount"]=AmountH;
-                    //             data["N_CommissionPer"]=N_ServiceCharge;
-                    //            data["N_CommissionPer"]=N_SChrgAmt;
-                    //          data["N_TaxID"]=N_TaxID;
-                    //          }
-                    //   }
+                        {
+                            if (dtsaleamountdetails.Columns.Contains("N_CommissionAmtF"))
+                                dtsaleamountdetails.Columns.Remove("N_CommissionAmtF");
+                            if (dtsaleamountdetails.Columns.Contains("N_CommissionAmt"))
+                                dtsaleamountdetails.Columns.Remove("N_CommissionAmt");
+
+                             dtsaleamountdetails = myFunctions.AddNewColumnToDataTable(dtsaleamountdetails, "N_CommissionAmtF", typeof(double), 0);
+                             dtsaleamountdetails = myFunctions.AddNewColumnToDataTable(dtsaleamountdetails, "N_CommissionAmt", typeof(double), 0);
+                            //foreach (DataRow data in dtsaleamountdetails.Rows)
+                            for (int i = 0; i < dtsaleamountdetails.Rows.Count; i++)
+                            {
+                                    double N_SChrgAmt = 0;
+                                    double N_SChrgAmtMax = 0;
+                                    object N_ServiceCharge = dLayer.ExecuteScalar("Select ISNULL(N_ServiceCharge , 0) from Inv_Customer where N_CustomerID=" + myFunctions.getVAL(dtsaleamountdetails.Rows[i]["N_CustomerID"].ToString()) + " and N_CompanyID=" + N_CompanyID + "and N_FnYearID=" +N_FnYearID, QueryParams, connection, transaction);
+                                    object N_ServiceChargeMax = dLayer.ExecuteScalar("Select ISNULL(N_ServiceChargeLimit , 0) from Inv_Customer where N_CustomerID=" +  myFunctions.getVAL(dtsaleamountdetails.Rows[i]["N_CustomerID"].ToString()) + " and N_CompanyID=" + N_CompanyID + "and N_FnYearID=" + N_FnYearID,  QueryParams, connection, transaction);
+                                    object N_TaxID = dLayer.ExecuteScalar("Select ISNULL(N_TaxCategoryID , 0) from Inv_Customer where N_CustomerID=" +  myFunctions.getVAL(dtsaleamountdetails.Rows[i]["N_CustomerID"].ToString()) + " and N_CompanyID=" + N_CompanyID + "and N_FnYearID=" + N_FnYearID,  QueryParams, connection, transaction);
+                                    if (myFunctions.getVAL(N_ServiceCharge.ToString()) > 0)
+                                    {
+                                        N_SChrgAmt = (myFunctions.getVAL(dtsaleamountdetails.Rows[i]["N_AmountF"].ToString()) * myFunctions.getVAL((N_ServiceCharge.ToString())) / 100);
+                                        N_SChrgAmtMax = myFunctions.getVAL(N_ServiceChargeMax.ToString());
+                                        if (N_SChrgAmtMax > 0)
+                                        {
+                                            if (N_SChrgAmt > N_SChrgAmtMax)
+                                                N_SChrgAmt = myFunctions.getVAL(N_ServiceChargeMax.ToString());
+                                        }
+                                    }                                    
+                                    double CommissionAmtH = N_SChrgAmt * (myFunctions.getVAL(MasterRow["n_ExchangeRate"].ToString()));
+                                    if(myFunctions.getVAL(N_SChrgAmt.ToString())>0)
+                                    {
+                                        dtsaleamountdetails.Rows[i]["N_CommissionAmtF"]=myFunctions.getVAL(N_SChrgAmt.ToString());
+                                        dtsaleamountdetails.Rows[i]["N_CommissionAmt"]=myFunctions.getVAL(CommissionAmtH.ToString());
+                                        dtsaleamountdetails.Rows[i]["N_CommissionPer"]=N_ServiceCharge;
+                                        dtsaleamountdetails.Rows[i]["N_TaxID"]=N_TaxID;
+                                        // data["N_CommissionAmtF"]=myFunctions.getVAL(N_SChrgAmt.ToString());
+                                        // data["N_CommissionAmt"]=myFunctions.getVAL(CommissionAmtH.ToString());
+                                        // data["N_CommissionPer"]=N_ServiceCharge;                            
+                                        // data["N_TaxID"]=N_TaxID;
+                                    }
+                            }
 
                     //service charge
             
@@ -1384,7 +1394,7 @@ namespace SmartxAPI.GeneralFunctions
                     PostingParam.Add("X_SystemName", "ERP Cloud");
                     try
                     {
-                        dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
+                         dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
                     }
                     catch (Exception ex)
                     {
