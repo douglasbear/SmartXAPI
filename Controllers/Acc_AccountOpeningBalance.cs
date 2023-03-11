@@ -279,7 +279,9 @@ namespace SmartxAPI.Controllers
                                     {"N_LedgerID",myFunctions.getIntVAL(DetailTable.Rows[j]["N_LedgerID"].ToString())},
                                     {"N_VoucherID",myFunctions.getIntVAL(MasterTable.Rows[0]["n_VoucherID"].ToString())},
                                     {"N_CompanyID",nCompanyID},
+                                    {"N_AccTypeID",0},
                                     {"N_FnYearID",nFnYearID}};
+                                
 
                         dLayer.ExecuteNonQueryPro("SP_Delete_VoucherMaster_Details", DeleteParams, connection, transaction);
 
