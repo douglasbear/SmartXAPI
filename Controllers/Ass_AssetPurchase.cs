@@ -754,15 +754,14 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     DataTable TransData=new DataTable();
-                     SortedList ParamList=new SortedList();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    ParamList.Add("@nFnYearID",nFnYearID);
+                    Params.Add("@nFnYearID",nFnYearID);
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@N_AssetInventoryID", N_AssetInventoryID);
                     string xButtonAction="Delete";
                     string X_InvoiceNo="";
-                     string Sql = "select N_AssetInventoryID,X_InvoiceNo from Ass_PurchaseMaster where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_AssetInventoryID=@N_AssetInventoryID";
-                     TransData=dLayer.ExecuteDataTable(Sql,ParamList,connection,transaction);
+                    string Sql = "select N_AssetInventoryID,X_InvoiceNo from Ass_PurchaseMaster where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_AssetInventoryID=@N_AssetInventoryID";
+                     TransData=dLayer.ExecuteDataTable(Sql,Params,connection,transaction);
 
                    if (TransData.Rows.Count == 0)
                     {

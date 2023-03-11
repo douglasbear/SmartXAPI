@@ -251,7 +251,10 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                if (ex.Message.Contains("REFERENCE constraint"))
+                    return Ok(_api.Error(User, "Unable to delete Tax Category! It has been used."));
+                else
+                    return Ok(_api.Error(User, ex));
             }
 
 
