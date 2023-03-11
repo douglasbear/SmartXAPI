@@ -204,7 +204,8 @@ namespace SmartxAPI.Controllers
             {
                 criteria = "N_CompanyID =" + nCompanyID+" and N_LocationID="+nLocationID;
                 criteriaValue = "vw_InvStock_Status.N_CompanyID =" + nCompanyID+" and vw_InvStock_Status.N_LocationID="+nLocationID;
-                criteria1= "N_CompanyID =" + nCompanyID+" and N_WarehouseID ="+ nLocationID;
+                criteria1= "N_CompanyID =" + nCompanyID;
+                //criteria1= "N_CompanyID =" + nCompanyID+" and N_WarehouseID ="+ nLocationID;
             }
                 
             // criteria="N_CompanyID ="+nCompanyID+" and N_LocationID="+nLocationID+" and N_BranchID="+nBranchID;
