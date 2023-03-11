@@ -365,7 +365,7 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                                 {"X_TransType",X_Trasnaction},
                                 {"N_VoucherID",N_AdjustmentID}};
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
-                             xButtonAction="Update"; 
+                            xButtonAction="Update"; 
                         }
                     }
 
