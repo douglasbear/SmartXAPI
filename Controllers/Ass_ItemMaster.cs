@@ -109,6 +109,7 @@ namespace SmartxAPI.Controllers
                 string xItemCode = MasterTable.Rows[0]["X_ItemCode"].ToString();
                 bool bAssetItem= myFunctions.getBoolVAL(MasterTable.Rows[0]["b_AssetItem"].ToString());
                 int nAddlInfoID=0;
+                int nRentalItemID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_RentalItemID"].ToString());
                 String xButtonAction="";
                 if(ExpiryTable.Rows.Count>0)
                     nAddlInfoID = myFunctions.getIntVAL(ExpiryTable.Rows[0]["N_AddlInfoID"].ToString());
@@ -168,8 +169,8 @@ namespace SmartxAPI.Controllers
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
                        myFunctions.LogScreenActivitys(nFnyearID,nItemID,xItemCode,452,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
+                    SortedList ProcParam = new SortedList();
                     if(bAssetItem==true){
-                           SortedList ProcParam = new SortedList();
                         ProcParam.Add("N_CompanyID", nCompanyID);
                         ProcParam.Add("N_FnYearID", nFnyearID);
                         ProcParam.Add("N_TransID", nItemID);
@@ -186,10 +187,9 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error(User, ex));
                         }
                     }
+                    if (nRentalItemID)
+                        dLayer.ExecuteNonQuery("Update Inv_ItemMaster Set N_AssItemID =" + nItemID + "where N_ItemID ="+ nRentalItemID +"", ProcParam, connection, transaction);
 
-                    
-                    
-  
                     transaction.Commit();
                     return Ok(api.Success(" Saved Successfully"));
 
