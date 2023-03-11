@@ -146,18 +146,34 @@ namespace SmartxAPI.Controllers
             {
                                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    connection.Open();
+                SqlTransaction transaction = connection.BeginTransaction();
+                connection.Open();
+                object objcountryCount = dLayer.ExecuteScalar("Select count (*)  from Acc_Company where N_CountryID="+nCountryId+" and N_CompanyID="+myFunctions.GetCompanyID(User), connection, transaction);
+                 if (objcountryCount == null)
+                        objcountryCount = 0;
+                 
+                    if (myFunctions.getIntVAL(objcountryCount.ToString()) > 0 )
+                    {
+                         return Ok(_api.Warning("Unable to delete Country" )); 
+                    }
+                   
                 Results=dLayer.DeleteData("Acc_Country","N_CountryID",nCountryId,"",connection);
                 if(Results>0){
                     return Ok(_api.Success("Country deleted" ));
-                }else{
+                }
+                else{
                     return Ok(_api.Warning("Unable to delete Country" ));
                 }
                 }
                 
             }
+            
             catch (Exception ex)
                 {
+                    if (ex.Message.Contains("REFERENCE constraint"))
+                    return Ok(_api.Error(User, "Unable to delete customer! It has been used."));
+                else
+        
                     return Ok(_api.Error(User,ex));
                 }
         }
