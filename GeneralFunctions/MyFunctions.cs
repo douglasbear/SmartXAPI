@@ -723,7 +723,7 @@ namespace SmartxAPI.GeneralFunctions
                 if (nTransID == 0)
                     bAddSign = dLayer.ExecuteScalar("SELECT Isnull (B_AddSign,0) from Gen_ApprovalCodesDetails where N_CompanyID=@nCompanyID and N_level=1 and N_ApprovalID=@nApprovalID", ApprovalParams, connection);
                 else
-                    bAddSign = dLayer.ExecuteScalar("Select Isnull (B_AddSign,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID and N_LevelID=@nNextApprovalID", ApprovalParams, connection);
+                    bAddSign = dLayer.ExecuteScalar("Select Isnull (B_AddSign,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID ", ApprovalParams, connection);
 
                 if (bAddSign == null)
                     bAddSign = false;
@@ -742,7 +742,7 @@ namespace SmartxAPI.GeneralFunctions
                 if (nTransID == 0)
                     bAddButton = dLayer.ExecuteScalar("SELECT Isnull (B_AddButton,0) from Gen_ApprovalCodesDetails where N_CompanyID=@nCompanyID and N_level=1 and N_ApprovalID=@nApprovalID", ApprovalParams, connection);
                 else
-                    bAddButton = dLayer.ExecuteScalar("Select Isnull (B_AddButton,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID and N_LevelID=@nNextApprovalID", ApprovalParams, connection);
+                    bAddButton = dLayer.ExecuteScalar("Select Isnull (B_AddButton,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID ", ApprovalParams, connection);
 
                 if (bAddButton == null)
                     bAddButton = false;
@@ -760,7 +760,7 @@ namespace SmartxAPI.GeneralFunctions
                 if (nTransID == 0)
                     bAllowPrint = dLayer.ExecuteScalar("SELECT Isnull (B_AllowPrint,0) from Gen_ApprovalCodesDetails where N_CompanyID=@nCompanyID and N_level=1 and N_ApprovalID=@nApprovalID", ApprovalParams, connection);
                 else
-                    bAllowPrint = dLayer.ExecuteScalar("Select Isnull (B_AllowPrint,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID and N_LevelID=@nNextApprovalID", ApprovalParams, connection);
+                    bAllowPrint = dLayer.ExecuteScalar("Select Isnull (B_AllowPrint,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID", ApprovalParams, connection);
 
                 if (bAllowPrint == null)
                     bAllowPrint = false;
@@ -778,7 +778,7 @@ namespace SmartxAPI.GeneralFunctions
                 if (nTransID == 0)
                     nAttachmentCount = dLayer.ExecuteScalar("SELECT N_AttachmentCount from Gen_ApprovalCodesDetails where N_CompanyID=@nCompanyID and N_level=1 and N_ApprovalID=@nApprovalID", ApprovalParams, connection);
                 else
-                    nAttachmentCount = dLayer.ExecuteScalar("Select N_AttachmentCount from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID and N_LevelID=@nNextApprovalID", ApprovalParams, connection);
+                    nAttachmentCount = dLayer.ExecuteScalar("Select N_AttachmentCount from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID", ApprovalParams, connection);
 
                 if (nAttachmentCount == null)
                     Response["attachmentCount"] = null;
