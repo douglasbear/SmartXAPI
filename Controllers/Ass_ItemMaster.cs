@@ -187,8 +187,11 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error(User, ex));
                         }
                     }
-                    if (nRentalItemID)
-                        dLayer.ExecuteNonQuery("Update Inv_ItemMaster Set N_AssItemID =" + nItemID + "where N_ItemID ="+ nRentalItemID +"", ProcParam, connection, transaction);
+                        
+                    if (nRentalItemID > 0)
+                        dLayer.ExecuteNonQuery("Update Inv_ItemMaster Set N_AssItemID =" + nItemID + "where N_ItemID ="+ nRentalItemID +" and N_CompanyID ="+nCompanyID, ProcParam, connection, transaction);
+                    else if (nRentalItemID == 0)
+                        dLayer.ExecuteNonQuery("Update Inv_ItemMaster Set N_AssItemID = 0 where N_AssItemID="+ nItemID +"and N_CompanyID="+ nCompanyID, ProcParam, connection, transaction);
 
                     transaction.Commit();
                     return Ok(api.Success(" Saved Successfully"));
