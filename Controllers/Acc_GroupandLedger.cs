@@ -483,8 +483,8 @@ namespace SmartxAPI.Controllers
 
                         if(CheckPrevYearsClosed(accountID, nFnYearID, connection)==1)
                             return Ok(api.Error(User, "Previous Year Not Closed"));
-                        else if(CheckPrevYearsBalance(accountID, nFnYearID, connection)==1)
-                            return Ok(api.Error(User, "Balance exists"));
+                        // else if(CheckPrevYearsBalance(accountID, nFnYearID, connection)==1)
+                            // return Ok(api.Error(User, "Balance exists"));
                         else if (CheckTransaction(accountID,nFnYearID, connection) == 1)
                             return Ok(api.Error(User, "Transaction Started"));
                         else if (CheckTransactionNotPosted(accountID, nFnYearID, connection) == 1)
@@ -553,9 +553,14 @@ namespace SmartxAPI.Controllers
                 return 0;
         }
          private int CheckPrevYearsBalance(int N_LedgerID, int nFnYearID, SqlConnection connection)
-        {            
+        {  
             object value = dLayer.ExecuteScalar("select SUM(N_Amount) from Acc_VoucherDetails where N_CompanyID="+myFunctions.GetCompanyID(User)+" and N_LedgerID="+N_LedgerID+" and N_FnYearID=(select TOP 1 N_FnYearID from Acc_FnYear where N_CompanyID="+myFunctions.GetCompanyID(User)+" and D_End< "+
                                                 " (select D_Start from Acc_FnYear where N_CompanyID="+myFunctions.GetCompanyID(User)+" and N_FnYearID="+nFnYearID+") order by D_Start desc)", connection);
+             if (value == DBNull.Value)
+              {
+             value = null;
+              }
+   
             if (value == null)
                 return 0;
             else if (myFunctions.getVAL(value.ToString()) == 0)

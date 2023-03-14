@@ -221,6 +221,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to delete Category"));
 
                     Results = dLayer.DeleteData("sec_usercategory", "N_UserCategoryID", nUsercategoryId, "", connection,transaction);
+                    transaction.Commit();
                     if (Results > 0)
                     {
                         dLayer.ExecuteNonQuery("DELETE FROM Gen_Settings where N_UserCategoryID=@nUsercategoryID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
