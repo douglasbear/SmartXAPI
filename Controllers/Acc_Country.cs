@@ -143,12 +143,11 @@ namespace SmartxAPI.Controllers
         {
              int Results=0;
             try
-            {
-                                using (SqlConnection connection = new SqlConnection(connectionString))
+            {  using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                SqlTransaction transaction = connection.BeginTransaction();
-                connection.Open();
-                object objcountryCount = dLayer.ExecuteScalar("Select count (*)  from Acc_Company where N_CountryID="+nCountryId+" and N_CompanyID="+myFunctions.GetCompanyID(User), connection, transaction);
+                 connection.Open();
+                 SqlTransaction transaction = connection.BeginTransaction();
+                 object objcountryCount = dLayer.ExecuteScalar("Select count (*)  from Acc_Company where N_CountryID="+nCountryId+" and N_CompanyID="+myFunctions.GetCompanyID(User), connection, transaction);
                  if (objcountryCount == null)
                         objcountryCount = 0;
                  
@@ -157,7 +156,8 @@ namespace SmartxAPI.Controllers
                          return Ok(_api.Warning("Unable to delete Country" )); 
                     }
                    
-                Results=dLayer.DeleteData("Acc_Country","N_CountryID",nCountryId,"",connection);
+                Results=dLayer.DeleteData("Acc_Country","N_CountryID",nCountryId,"",connection,transaction);
+                transaction.Commit();
                 if(Results>0){
                     return Ok(_api.Success("Country deleted" ));
                 }
