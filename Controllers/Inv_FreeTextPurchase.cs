@@ -129,7 +129,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     object classID = dLayer.ExecuteScalar("select N_ClassID from Inv_itemClass where X_ClassName='Non Stock Item'", Params, connection);
-                    object itemID = dLayer.ExecuteScalar("select N_ItemID From Inv_ItemMaster where N_CompanyID=" + nCompanyID + " and X_ItemCode=001", Params, connection);
+                    object itemID = dLayer.ExecuteScalar("select N_ItemID From Inv_ItemMaster where N_CompanyID=" + nCompanyID + " and X_ItemCode='001'", Params, connection);
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "N_ItemID", typeof(int), 0);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "N_ClassID", typeof(int), 0);
