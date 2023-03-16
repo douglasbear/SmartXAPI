@@ -704,7 +704,8 @@ namespace SmartxAPI.Controllers
                       return Ok(api.Error(User, "Can not Delete Customer"));
                    }
 
-                   customerPaymntCount = dLayer.ExecuteScalar("select count(N_PartyID) from Inv_PayReceipt  Where N_CompanyID=" + nCompanyID + " and  N_PartyID=" + nCustomerID,  QueryParams, connection);
+                    customerPaymntCount = dLayer.ExecuteScalar("select count(N_PartyID) from Inv_PayReceipt  Where N_CompanyID=" + nCompanyID + " and  N_PartyID=" + nCustomerID,  QueryParams, connection);
+
                         if( myFunctions.getIntVAL(customerPaymntCount.ToString())>0)
                     {
                         return Ok(api.Error(User, "Unable to delete Customer! transaction started"));
@@ -714,6 +715,7 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(api.Error(User, "Unable to delete Customer! It has been used."));
                     }
+                    
 
                   GRNCustCount = dLayer.ExecuteScalar("select count(N_GRNID) from wh_GRN  Where N_CompanyID=" + nCompanyID + " and  N_CustomerID=" + nCustomerID,  QueryParams, connection);
                     if( myFunctions.getIntVAL(GRNCustCount.ToString())>0)

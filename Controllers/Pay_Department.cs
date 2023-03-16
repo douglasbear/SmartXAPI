@@ -351,9 +351,10 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     object Objcount = dLayer.ExecuteScalar("Select count(1) From vw_Acc_CostCentreMaster_List where N_CostCentreID=@nCostCentreID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
+                    object count = dLayer.ExecuteScalar("Select count(1) From Acc_VoucherMaster_Details_Segments where N_Segment_2=@nCostCentreID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
                     if (Objcount != null)
                     {
-                        if (myFunctions.getIntVAL(Objcount.ToString()) <= 0)
+                        if (myFunctions.getIntVAL(Objcount.ToString()) <= 0||myFunctions.getIntVAL(count.ToString()) <= 0)
                         {
                             Results = dLayer.DeleteData("Acc_CostCentreMaster", "N_CostCentreID", nDepartmentID, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection);
                         }

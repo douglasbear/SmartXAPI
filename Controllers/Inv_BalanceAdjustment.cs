@@ -246,7 +246,6 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                     int N_PartyType = myFunctions.getIntVAL(MasterRow["n_PartyType"].ToString());
                     int N_FormID = myFunctions.getIntVAL(MasterRow["N_FormID"].ToString());
                     string X_Trasnaction = "";
-      
              
                     int N_PartyID = myFunctions.getIntVAL(MasterRow["n_PartyID"].ToString());
                     int N_IsImport = 0;
@@ -366,7 +365,7 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                                 {"X_TransType",X_Trasnaction},
                                 {"N_VoucherID",N_AdjustmentID}};
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
-                             xButtonAction="Update"; 
+                            xButtonAction="Update"; 
                         }
                     }
 
