@@ -1895,9 +1895,8 @@ namespace SmartxAPI.GeneralFunctions
                 }
                 
                 object NxtUser = null;
-                NxtUser = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=0", LogParams, connection, transaction);
-                if (NxtUser != null)
-                    N_NxtUserID = this.getIntVAL(NxtUser.ToString());
+                NxtUser = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=0 and and N_ActionTypeID<>110", LogParams, connection, transaction);if (NxtUser != null)
+                N_NxtUserID = this.getIntVAL(NxtUser.ToString());
 
                 LogParams.Add("@xTransType", X_TransType);
                 LogParams.Add("@nApprovalUserCatID", N_ApprovalUserCatID);
