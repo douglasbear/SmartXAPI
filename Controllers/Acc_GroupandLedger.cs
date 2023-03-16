@@ -483,8 +483,8 @@ namespace SmartxAPI.Controllers
 
                         if(CheckPrevYearsClosed(accountID, nFnYearID, connection)==1)
                             return Ok(api.Error(User, "Previous Year Not Closed"));
-                        else if(CheckPrevYearsBalance(accountID, nFnYearID, connection)==1)
-                            return Ok(api.Error(User, "Balance exists"));
+                        // else if(CheckPrevYearsBalance(accountID, nFnYearID, connection)==1)
+                            // return Ok(api.Error(User, "Balance exists"));
                         else if (CheckTransaction(accountID,nFnYearID, connection) == 1)
                             return Ok(api.Error(User, "Transaction Started"));
                         else if (CheckTransactionNotPosted(accountID, nFnYearID, connection) == 1)

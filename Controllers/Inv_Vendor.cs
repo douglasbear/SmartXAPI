@@ -424,9 +424,10 @@ namespace SmartxAPI.Controllers
                 QueryParams.Add("@nFormID", 52);
                 QueryParams.Add("@nVendorID", nVendorID);
                   string xButtonAction="Delete";
+                  object vendorCount,vendortxnCount=0;
                      String VendorCode="";
 
-                object vendorCount,vendortxnCount=0;
+       
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -446,6 +447,18 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to delete vendor! It has been used."));
                     }
                     
+
+
+                        vendorCount = dLayer.ExecuteScalar("select count(N_PartyID) from Inv_PayReceipt  Where N_CompanyID=" + nCompanyID + " and  N_PartyID=" + nVendorID,  QueryParams, connection);
+                        if( myFunctions.getIntVAL(vendorCount.ToString())>0)
+                    {
+                        return Ok(_api.Error(User, "Unable to delete vendor! transaction started"));
+                    }
+                    vendortxnCount = dLayer.ExecuteScalar("select count(N_PartyID) from Inv_BalanceAdjustmentMaster  Where N_CompanyID=" + nCompanyID + " and  N_PartyID=" + nVendorID,  QueryParams, connection);
+                        if( myFunctions.getIntVAL(vendortxnCount.ToString())>0)
+                    {
+                        return Ok(_api.Error(User, "Unable to delete vendor! It has been used."));
+                    }
 
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Inv_Vendor", "N_VendorID", nVendorID, "N_CompanyID="+nCompanyID, connection, transaction);
