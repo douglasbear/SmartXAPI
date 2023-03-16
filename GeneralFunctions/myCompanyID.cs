@@ -120,6 +120,5 @@ namespace SmartxAPI
 
         public static string _APIVersion = "22.12.26.1";
 
-
     }
 }
