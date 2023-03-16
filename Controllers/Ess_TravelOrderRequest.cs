@@ -188,7 +188,7 @@ namespace SmartxAPI.Controllers
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
                 int N_UserID = myFunctions.getIntVAL(MasterRow["N_UserID"].ToString());
                 int N_NextApproverID=0;
-                
+                string xButtonAction="";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -214,6 +214,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("@nCompanyID", nCompanyID);
                         object objReqCode = dLayer.ExecuteScalar("Select max(isnull(N_RequestID,0))+1 as N_RequestID from Pay_EmpBussinessTripRequest where N_CompanyID=@nCompanyID", Params, connection, transaction);
+                         xButtonAction="Insert"; 
                         if (objReqCode.ToString() == "" || objReqCode.ToString() == null) { x_RequestCode = "1"; }
                         else
                         {
@@ -223,6 +224,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                          x_RequestCode = MasterTable.Rows[0]["x_RequestCode"].ToString();
                         dLayer.DeleteData("Pay_EmpBussinessTripRequest", "n_RequestID", nRequestID, "", connection, transaction);
                     }
 
@@ -231,6 +233,7 @@ namespace SmartxAPI.Controllers
                         try
                         {
                             myReminders.ReminderDelete(dLayer, nRequestID, this.FormID, connection, transaction);
+                            xButtonAction="Update"; 
                         }
                         catch (Exception ex)
                         {
@@ -238,6 +241,14 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error(User,"Unable to save"));
                         }
                     }    
+                      //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nRequestID,x_RequestCode,1235,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       
                           
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_RequestType", typeof(int), this.FormID);
                     MasterTable.AcceptChanges();
@@ -311,6 +322,8 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_EmpID,0) as N_EmpID,X_RequestCode from Pay_EmpBussinessTripRequest where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_RequestID=@nTransID";
+                     string xButtonAction="Delete";
+                    string X_RequestCode="";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
@@ -332,6 +345,18 @@ namespace SmartxAPI.Controllers
                     string X_Criteria = "N_RequestID=" + nRequestID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
+
+
+                 //  Activity Log
+                      string ipAddress = "";
+                         if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                      else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nRequestID,TransRow["X_RequestCode"].ToString(),1235,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+             
+
+
 
                     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Travel Order Request", nRequestID, TransRow["X_RequestCode"].ToString(), ProcStatus, "Pay_EmpBussinessTripRequest", X_Criteria, objEmpName.ToString(), User, dLayer, connection, transaction);
                     if (status != "Error")
