@@ -51,7 +51,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial, int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID, bool b_Asn, int nPriceListID, bool isSalesItems, bool isRentalItem, bool rentalItems, bool purchaseRentalItems,bool showStockInlist,int nitemType,bool isAssetItem)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial, int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID, bool b_Asn, int nPriceListID, bool isSalesItems, bool isRentalItem, bool rentalItems, bool purchaseRentalItems,bool showStockInlist,int nitemType,bool isAssetItem,bool ShowCostinList)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -73,6 +73,7 @@ namespace SmartxAPI.Controllers
              string showStock="";
              string otherItem="";
               string sqlComandText ="";
+              string ShowCost="";
 
              if(showStockInlist)
              {
@@ -163,9 +164,13 @@ namespace SmartxAPI.Controllers
             else{
                 otherItem = otherItem + " and N_ItemTypeID<>1";
             }
+
+            if(ShowCostinList==true){
+                ShowCost=" dbo.SP_Cost_Loc(vw_InvItem_Search_cloud.N_ItemID,vw_InvItem_Search_cloud.N_CompanyID,vw_InvItem_Search_cloud.X_ItemUnit," + nLocationID + ")  As N_LPrice,";
+            }
          
          
-                 sqlComandText = "  vw_InvItem_Search_cloud.*,"+showStock+" dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID,vw_InvItem_Search_cloud.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_SellingPrice2 FROM vw_InvItem_Search_cloud LEFT OUTER JOIN " +
+                 sqlComandText = "  vw_InvItem_Search_cloud.*,"+showStock+ShowCost+" dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID,vw_InvItem_Search_cloud.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_SellingPrice2 FROM vw_InvItem_Search_cloud LEFT OUTER JOIN " +
              " Inv_ItemUnit ON vw_InvItem_Search_cloud.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search_cloud.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search_cloud.N_CompanyID=@p1 and vw_InvItem_Search_cloud.B_Inactive=@p2 and vw_InvItem_Search_cloud.[Item Code]<> @p3  and vw_InvItem_Search_cloud.N_ItemID=Inv_ItemUnit.N_ItemID and  vw_InvItem_Search_cloud.N_ClassID!=6 " + ownAssent + RentalItem + RentalPOItem + qry + Category + Condition + itemTypeCondition + warehouseSql + priceListCondition+otherItem;
             // string sqlComandText = " * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
 
@@ -689,10 +694,15 @@ namespace SmartxAPI.Controllers
                 itemWarranty = ds.Tables["itemWarranty"];
                 storeAllocation = ds.Tables["store"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CompanyId"].ToString());
+               int nFnYearID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["n_FnYearID"].ToString());
                 int N_ItemID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString());
                 string XItemName = MasterTableNew.Rows[0]["X_ItemName"].ToString();
                 object n_MinQty = "";
                 object n_ReOrderQty = "";
+                string xButtonAction="";
+
+          
+
                 if (MasterTableNew.Columns.Contains("n_MinQty"))
                 {
                     n_MinQty = MasterTableNew.Rows[0]["n_MinQty"] == System.DBNull.Value ? "" : MasterTableNew.Rows[0]["n_MinQty"];
@@ -718,8 +728,11 @@ namespace SmartxAPI.Controllers
                     ItemCode = MasterTableNew.Rows[0]["X_ItemCode"].ToString();
                     ItemType = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CLassID"].ToString());
 
-
-
+                     if(MasterTableNew.Columns.Contains("n_FnYearID"))
+                     {
+                     MasterTableNew.Columns.Remove("n_FnYearID");
+                     }
+                         
                     if (ItemCode != "@Auto")
                     {
                         object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_ItemMaster Where X_ItemCode ='" + ItemCode + "' and N_CompanyID= " + nCompanyID + " and N_ItemID<>" + N_ItemID, connection, transaction);
@@ -741,9 +754,15 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 53);
 
                         ItemCode = dLayer.GetAutoNumber("Inv_ItemMaster", "X_ItemCode", Params, connection, transaction);
+                        xButtonAction="Insert";
                         if (ItemCode == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate product Code")); }
                         MasterTableNew.Rows[0]["X_ItemCode"] = ItemCode;
                     }
+                    else {
+                         xButtonAction="Update"; 
+
+                    }
+                    ItemCode = MasterTableNew.Rows[0]["X_ItemCode"].ToString();
 
                     if (myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()) > 0)
                     {
@@ -1083,6 +1102,17 @@ namespace SmartxAPI.Controllers
 
                     }
 
+                              
+                               //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,N_ItemID,ItemCode,53,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       
+
+
 
                     if (Attachment.Rows.Count > 0)
                     {
@@ -1290,10 +1320,41 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList Params = new SortedList();
                     DataTable dtItems = new DataTable();
                     SortedList QueryParams = new SortedList();
+                    SortedList ParamList = new SortedList();
+                    DataTable TransData = new DataTable();
                     QueryParams.Add("@nCompanyID", nCompanyID);
                     QueryParams.Add("@nItemID", nItemID);
+                     ParamList.Add("@nTransID", nItemID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+
+
+                     string Sql = "select N_ItemID,X_ItemCode from Inv_ItemMaster where N_ItemID=@nTransID and N_CompanyID=@nCompanyID ";
+                    string xButtonAction="Delete";
+                    string X_ItemCode="";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+                    
+              
+                
+                      if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+
+                    //Activity Log
+                        string ipAddress = "";
+                   if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                   else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nItemID,TransRow["X_ItemCode"].ToString(),53,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                  
+
+
                     int classID = 0;
                     object res = dLayer.ExecuteScalar("Select N_ClassID from Inv_ItemMaster where N_ItemID = @nItemID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                     if (res != null)

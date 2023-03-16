@@ -632,9 +632,11 @@ namespace SmartxAPI.Controllers
 
                         if (DetailTable.Columns.Contains("N_ProjectID"))
                             row["N_ProjectID"] = myFunctions.getIntVAL(Master["N_ProjectID"].ToString());
-                        else
+                        else if(MasterTable.Columns.Contains("N_ProjectID"))
                             myFunctions.AddNewColumnToDataTable(DetailTable, "N_ProjectID", typeof(int), myFunctions.getIntVAL(Master["N_ProjectID"].ToString()));
-
+                        else 
+                           myFunctions.AddNewColumnToDataTable(DetailTable, "N_ProjectID", typeof(int), 0);
+                            
                         // row["N_CompanyID"] = myFunctions.getIntVAL(Master["n_CompanyID"].ToString());
                         // row["N_PayReceiptId"] = n_PayReceiptID;
                         // row["N_InventoryId"] = n_PayReceiptID;

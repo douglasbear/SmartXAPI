@@ -346,6 +346,22 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                     int nCompanyID = myFunctions.GetCompanyID(User);
+                     object objNProjectIDCount = dLayer.ExecuteScalar("Select count(N_ProjectID) from inv_Sales where N_CompanyID=" + nCompanyID + " and N_ProjectID=" + nProjectID + " and N_FnYearID="+nFnyearID, connection, transaction);
+                     object objPurchaseCount = dLayer.ExecuteScalar("Select count(N_ProjectID) from inv_Purchase where N_CompanyID=" + nCompanyID + " and N_ProjectID=" + nProjectID + " and N_FnYearID="+nFnyearID, connection, transaction);
+                     object objVoucherCount = dLayer.ExecuteScalar("Select count(N_ProjectID) from Acc_VoucherMaster where N_CompanyID=" + nCompanyID + " and N_ProjectID=" + nProjectID + " and N_FnYearID="+nFnyearID, connection, transaction);
+                     if (objNProjectIDCount == null)
+                        objNProjectIDCount = 0;
+                    if (objPurchaseCount == null)
+                        objPurchaseCount = 0;
+                    if (objVoucherCount == null)
+                        objVoucherCount = 0;
+                    if (myFunctions.getIntVAL(objNProjectIDCount.ToString()) > 0 || myFunctions.getIntVAL(objPurchaseCount.ToString()) > 0 || myFunctions.getIntVAL(objVoucherCount.ToString()) > 0)
+                    {
+                       return Ok(api.Error(User, "Unable to delete! transaction processed"));     
+                    }
+                    
+
                     Results = dLayer.DeleteData("inv_CustomerProjects", "N_ProjectID", nProjectID, "", connection, transaction);
                      myAttachments.DeleteAttachment(dLayer, 1, nProjectID, nProjectID,nFnyearID,74, User, transaction, connection);
                        

@@ -499,6 +499,9 @@ namespace SmartxAPI.GeneralFunctions
             Response.Add("approvalID", nApprovalID);
             Response.Add("formID", nFormID);
             Response.Add("addSign", false);
+            Response.Add("addButton", false);
+            Response.Add("allowPrint", false);
+            Response.Add("attachmentCount", false);
 
             /* Approval Param Set */
             SortedList ApprovalParams = new SortedList();
@@ -734,6 +737,53 @@ namespace SmartxAPI.GeneralFunctions
                 {
                     Response["addSign"] = false;
                 }
+
+                object bAddButton = false;
+                if (nTransID == 0)
+                    bAddButton = dLayer.ExecuteScalar("SELECT Isnull (B_AddButton,0) from Gen_ApprovalCodesDetails where N_CompanyID=@nCompanyID and N_level=1 and N_ApprovalID=@nApprovalID", ApprovalParams, connection);
+                else
+                    bAddButton = dLayer.ExecuteScalar("Select Isnull (B_AddButton,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID and N_LevelID=@nNextApprovalID", ApprovalParams, connection);
+
+                if (bAddButton == null)
+                    bAddButton = false;
+
+                if (this.getBoolVAL(bAddButton.ToString()))
+                {
+                    Response["addButton"] = true;
+                }
+                else
+                {
+                    Response["addButton"] = false;
+                }
+
+                object bAllowPrint = false;
+                if (nTransID == 0)
+                    bAllowPrint = dLayer.ExecuteScalar("SELECT Isnull (B_AllowPrint,0) from Gen_ApprovalCodesDetails where N_CompanyID=@nCompanyID and N_level=1 and N_ApprovalID=@nApprovalID", ApprovalParams, connection);
+                else
+                    bAllowPrint = dLayer.ExecuteScalar("Select Isnull (B_AllowPrint,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID and N_LevelID=@nNextApprovalID", ApprovalParams, connection);
+
+                if (bAllowPrint == null)
+                    bAllowPrint = false;
+
+                if (this.getBoolVAL(bAllowPrint.ToString()))
+                {
+                    Response["allowPrint"] = true;
+                }
+                else
+                {
+                    Response["allowPrint"] = false;
+                }
+
+                object nAttachmentCount = false;
+                if (nTransID == 0)
+                    nAttachmentCount = dLayer.ExecuteScalar("SELECT N_AttachmentCount from Gen_ApprovalCodesDetails where N_CompanyID=@nCompanyID and N_level=1 and N_ApprovalID=@nApprovalID", ApprovalParams, connection);
+                else
+                    nAttachmentCount = dLayer.ExecuteScalar("Select N_AttachmentCount from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID and N_LevelID=@nNextApprovalID", ApprovalParams, connection);
+
+                if (nAttachmentCount == null)
+                    Response["attachmentCount"] = null;
+                else
+                    Response["attachmentCount"] = this.getIntVAL(nAttachmentCount.ToString());
 
                 if (nTransID > 0)
                 {
@@ -1479,9 +1529,25 @@ namespace SmartxAPI.GeneralFunctions
                         string TableID = dLayer.ExecuteScalar("select X_IDName from vw_ScreenTables where N_FormID=@nFormID", NewParam, connection, transaction).ToString();
 
                         dLayer.ExecuteScalar("update " + TableName + " set B_IssaveDraft=0 where " + TableID + "=@nTransID and N_CompanyID=@nCompanyID", NewParam, connection, transaction);
+                        if(N_FormID==1309)
+                        {
+                             SortedList statusParams = new SortedList();
+                             statusParams.Add("@N_CompanyID", N_CompanyID);
+                             statusParams.Add("@N_TransID", N_TransID);
+                             statusParams.Add("@N_FormID", N_FormID);
+                             statusParams.Add("@N_ForceUpdate", 1);  
+                         
+                              dLayer.ExecuteNonQueryPro("SP_TxnStatusUpdate", statusParams, connection, transaction);
+                          
+                         }
+
                         object UserObj = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=108", NewParam, connection, transaction);
                         if (UserObj == null)
                             UserObj = 0;
+
+                     object mailCount = dLayer.ExecuteScalar("select count(1) from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='approved to requester'", NewParam, connection,transaction);
+                     if(this.getIntVAL(mailCount.ToString())>0)
+                     {   
 
                         body = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='approved to requester'", NewParam, connection, transaction).ToString();
                         Subject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='approved to requester'", NewParam, connection, transaction).ToString();
@@ -1497,6 +1563,8 @@ namespace SmartxAPI.GeneralFunctions
 
 
                         SendApprovalMail(EntrUsrID, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User, Subject, body);
+                       
+                    }
                     }
                 }
 
@@ -1517,9 +1585,13 @@ namespace SmartxAPI.GeneralFunctions
 
                         if (Type != "")
                         {
-                            body = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='" + Type + "'", LogParams, connection, transaction).ToString();
-                            Subject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='" + Type + "'", LogParams, connection, transaction).ToString();
-                        }
+                           
+                             object mailCount = dLayer.ExecuteScalar("select count(1) from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='" + Type + "'", LogParams, connection,transaction);
+                     if(this.getIntVAL(mailCount.ToString())>0)
+                     {
+                         body = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='" + Type + "'", LogParams, connection, transaction).ToString();
+                        Subject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyID=@nCompanyID and X_Type='" + Type + "'", LogParams, connection, transaction).ToString();
+                        
 
                         body = body.Replace("@PartyName", PartyName);
                         body = body.Replace("@TransCode", X_TransCode);
@@ -1531,6 +1603,9 @@ namespace SmartxAPI.GeneralFunctions
                         body = body.Replace("@URL", ApprovalLink + "/approvalDashboard");
 
                         SendApprovalMail(N_NextUser, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User, Subject, body);
+                            }
+                        }
+                           
 
                         // int ReminderId = ReminderSave(dLayer, N_FormID, 0, DateTime.Now.ToString("dd/MMM/yyyy"), 24, User, transaction, connection);
                     }

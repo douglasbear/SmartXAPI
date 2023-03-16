@@ -153,6 +153,16 @@ namespace SmartxAPI.Controllers
                                     dtRow["N_CompanyID"] = nCompanyID;
                                 }
                                 break;
+                            case "payment voucher":
+                            case "receipt voucher":   
+                            case "journel voucher":
+                                xTableName = "Mig_Vouchers";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;
                             case "category":
                                 xTableName = "Mig_POSCategory";
                                 Mastertable.Columns.Add("N_CompanyID");

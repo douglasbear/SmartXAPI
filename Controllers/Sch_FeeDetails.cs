@@ -69,7 +69,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        detailsSql = "SELECT      ROW_NUMBER() over(ORDER BY  N_Type , B_Paid DESC, D_SalesDate) as SlNo,* from vw_Sch_AdmissionFee Where N_RefID="+nAdmissionID+" and N_CompanyID = " +nCompanyID + " and N_FnYearId="+nFnYearID+" and B_IsRemoved=0 ORDER By N_Type , B_Paid DESC, D_SalesDate ";
+                        detailsSql = "SELECT      ROW_NUMBER() over(ORDER BY  N_Type , B_Paid DESC, D_SalesDate) as SlNo,* from vw_Sch_AdmissionFee Where N_RefID="+nAdmissionID+" and N_CompanyID = " +nCompanyID + " and N_FnYearId="+nFnYearID+" and B_IsRemoved=0 ORDER By D_SalesDate ";
                         Detail = dLayer.ExecuteDataTable(detailsSql, QueryParams, connection);
                         Detail = _api.Format(Detail, "details");
                         if (Detail.Rows.Count == 0)

@@ -83,7 +83,7 @@ namespace SmartxAPI.Controllers
                       
                       
 
-                 string sqlCommandText= "select Sec_Menus.N_MenuID,Sec_Menus.X_RouteName,lan_multilingual.X_WText from Sec_Menus inner join  lan_multilingual ON sec_menus.n_menuID=lan_multilingual.n_FormID where N_ParentMenuID in(" + value + ")  and B_WShow=1 and ((ISNULL(sec_menus.x_RouteName, '') <> '') OR (ISNULL(sec_menus.x_RouteName, 0) <> 0)) and ((ISNULL(sec_menus.X_Caption, '') <> ''))and N_MenuID in (select N_MenuID from Sec_UserPrevileges where N_UserCategoryID in("+xUserCategoryList+")and B_Visible=1) and lan_multilingual.X_ControlNo='0' and lan_multilingual.N_LanguageId=@nLangaugeID";
+                 string sqlCommandText= "select Sec_Menus.N_MenuID,Sec_Menus.X_RouteName,lan_multilingual.X_WText from Sec_Menus inner join  lan_multilingual ON sec_menus.n_menuID=lan_multilingual.n_FormID where N_ParentMenuID in(" + value + ")  and B_WShow=1 and ((ISNULL(sec_menus.x_RouteName, '') <> '') OR (ISNULL(sec_menus.x_RouteName, 0) <> 0)) and ((ISNULL(sec_menus.X_Caption, '') <> ''))and((ISNULL(lan_multilingual.X_WText, '') <> '') OR (ISNULL(lan_multilingual.X_WText, 0) <> 0)) and N_MenuID in (select N_MenuID from Sec_UserPrevileges where N_UserCategoryID in("+xUserCategoryList+")and B_Visible=1) and lan_multilingual.X_ControlNo='0' and lan_multilingual.N_LanguageId=@nLangaugeID";
 
                      dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
