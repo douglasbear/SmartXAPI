@@ -513,5 +513,22 @@ namespace SmartxAPI.Controllers
         }
 
 
+         [HttpGet("getCompanyAPIKey")]
+        public ActionResult GetAPIKey()
+        {
+            string seperator = "$$";
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string apiKey = myFunctions.EncryptStringForUrl(myFunctions.GetCompanyID(User).ToString() + seperator + myFunctions.GetClientID(User), System.Text.Encoding.Unicode);
+            return Ok(api.Success(apiKey));
+        }
+
+
     }
+
+
+     
+
+                                  
 }
