@@ -250,6 +250,7 @@ namespace SmartxAPI.Controllers
                 Approvals = ds.Tables["approval"];
                 DataRow ApprovalRow = Approvals.Rows[0];
                  DataTable Attachment = ds.Tables["attachments"];
+                 string xButtonAction="";
 
                 DataRow masterRow = MasterTable.Rows[0];
                 var xVoucherNo = masterRow["x_VoucherNo"].ToString();
@@ -350,6 +351,7 @@ namespace SmartxAPI.Controllers
 
 
                             xVoucherNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                           xButtonAction="Insert"; 
                             object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_VoucherMaster Where X_VoucherNo ='" + xVoucherNo + "' and N_CompanyID= " + nCompanyId + " and X_TransType ='" + xTransType + "' and N_FnYearID =" + nFnYearId, connection, transaction);
                             if (N_Result == null)
                                 break;
@@ -365,7 +367,9 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_VoucherNo"] = xVoucherNo;
                     }
                     else
+
                     {
+                             xVoucherNo = MasterTable.Rows[0]["x_VoucherNo"].ToString();
                         if (N_VoucherID > 0)
                         {
                             int dltRes = dLayer.DeleteData("Acc_VoucherDetails", "N_InventoryID", N_VoucherID, "x_transtype='" + xTransType + "' and x_voucherno ='" + xVoucherNo + "' and N_CompanyID =" + nCompanyId + " and N_FnYearID =" + nFnYearId, connection, transaction);
@@ -374,7 +378,7 @@ namespace SmartxAPI.Controllers
                             // if (dltRes <= 0){transaction.Rollback();return Ok(api.Error(User,"Unable to Update"));}
                             dltRes = dLayer.DeleteData("Acc_VoucherMaster_Details", "N_VoucherID", N_VoucherID, "N_VoucherID= " + N_VoucherID + " and N_CompanyID = " + nCompanyId, connection, transaction);
                              if (dltRes <= 0){transaction.Rollback();return Ok(api.Error(User,"Unable to Update"));}
-
+                             xButtonAction="Update"; 
                         }
                     }
 
@@ -478,11 +482,11 @@ namespace SmartxAPI.Controllers
 
                                 if(Flag==1)
                                 {
-                                    if(N_Amt!=N_CCAmt)                                    
-                                    {
-                                        transaction.Rollback();
-                                        return Ok(api.Error(User, "Unable to save! Cost center distribution mismatch."));
-                                    }
+                                    // if(N_Amt!=N_CCAmt)                                    
+                                    // {
+                                    //     transaction.Rollback();
+                                    //     return Ok(api.Error(User, "Unable to save! Cost center distribution mismatch."));
+                                    // }
                                 }
 
                                 CostCenterTable.AcceptChanges();
@@ -533,6 +537,9 @@ namespace SmartxAPI.Controllers
                         }
 
                     }
+                       //Activity Log
+                      myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearId.ToString()),N_VoucherID,xVoucherNo,nFormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
                        SortedList VoucherParams = new SortedList();
                            VoucherParams.Add("@N_VoucherID", N_VoucherID);
 
@@ -600,9 +607,22 @@ namespace SmartxAPI.Controllers
                     Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
                     SqlTransaction transaction = connection.BeginTransaction();
 
+
+
+                      //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nVoucherID,TransRow["X_VoucherNo"].ToString(),nFormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                         
+
+
                     string X_Criteria = "N_VoucherID=" + nVoucherID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
+                    
 
                     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, xTransType, nVoucherID, TransRow["X_VoucherNo"].ToString(), ProcStatus, "Acc_VoucherMaster", X_Criteria, "", User, dLayer, connection, transaction);
                     if (status != "Error")

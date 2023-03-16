@@ -327,6 +327,7 @@ namespace SmartxAPI.Controllers
                 else
                 if (ex.Message == "Login Failed")
                     Res.Add("Message", "Login Failed");
+                else
                 if (ex.Message == "Password Expiry")
                     Res.Add("Message", "Password Expired");
                 else
@@ -487,27 +488,35 @@ namespace SmartxAPI.Controllers
             int nLangaugeID =  myFunctions.getIntVAL(MasterTable.Rows[0]["N_LanguageID"].ToString());
             int nClientID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ClientID"].ToString());
             string xPhoneNumber = MasterTable.Rows[0]["x_PhoneNumber"].ToString();
+            string xUserName = MasterTable.Rows[0]["x_UserName"].ToString();
 
             try
             {
+                SortedList paramList = new SortedList();
+                paramList.Add("@emailID", email);
+                paramList.Add("@nLangaugeID", nLangaugeID);
+                paramList.Add("@nClientID", nClientID);
+                paramList.Add("@xPhoneNumber", xPhoneNumber);
+                paramList.Add("@xUserName", xUserName);
+
                 using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
                 {
                     olivoCon.Open();
                     SqlTransaction transaction;
-
                     transaction = olivoCon.BeginTransaction();
-
-                    SortedList paramList = new SortedList();
-                    paramList.Add("@emailID", email);
-                    paramList.Add("@nLangaugeID", nLangaugeID);
-                    paramList.Add("@nClientID", nClientID);
-                    paramList.Add("@xPhoneNumber", xPhoneNumber);
                    
-                dLayer.ExecuteNonQuery("Update users Set N_LanguageID=@nLangaugeID, X_PhoneNumber=@xPhoneNumber Where X_EmailID=@emailID  and N_ClientID=@nClientID",paramList, olivoCon, transaction);
-                 transaction.Commit();
-                return Ok(_api.Success("Account Saved"));
+                    dLayer.ExecuteNonQuery("Update users Set X_UserName=@xUserName, N_LanguageID=@nLangaugeID, X_PhoneNumber=@xPhoneNumber Where X_EmailID=@emailID and N_ClientID=@nClientID",paramList, olivoCon, transaction);
+                    transaction.Commit();
                 }
 
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    dLayer.ExecuteNonQuery("Update Sec_User Set X_UserName=@xUserName Where X_Email=@emailID",paramList, connection);
+                }
+
+                return Ok(_api.Success("Account Saved"));
             }
             catch (Exception e)
             {

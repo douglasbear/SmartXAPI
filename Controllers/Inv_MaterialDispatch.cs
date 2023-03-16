@@ -45,7 +45,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_DispatchNo like '%" + xSearchkey + "%' or X_ProjectName like '%" + xSearchkey + "%' or D_DispatchDate like '%" + xSearchkey + "%')";
+                Searchkey = "and (X_DispatchNo like '%" + xSearchkey + "%' or X_ProjectName like '%" + xSearchkey + "%' or D_DispatchDate like '%" + xSearchkey + "%' or x_UserName like '%" +xSearchkey+ "%' or x_ActionStatus like '%" +xSearchkey+ "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by X_DispatchNo desc";
@@ -56,15 +56,18 @@ namespace SmartxAPI.Controllers
                     case "X_DispatchNo":
                         xSortBy = "X_DispatchNo " + xSortBy.Split(" ")[1];
                         break;
+                         case "d_DispatchDate":
+                                xSortBy = "d_DispatchDate" + xSortBy.Split(" ")[1];
+                                break;
                     default: break;
                 }
                 xSortBy = " order by " + xSortBy;
             }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_MaterialDispatchDisp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p3" + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_MaterialDispatchDisp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p3 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_MaterialDispatchDisp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p3" + Searchkey + " and N_DispatchId not in (select top(" + Count + ") N_DispatchId from vw_MaterialDispatchDisp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p2" + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_MaterialDispatchDisp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p3 " + Searchkey + " and N_DispatchId not in (select top(" + Count + ") N_DispatchId from vw_MaterialDispatchDisp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p2" + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             Params.Add("@p3", FormID);
@@ -77,7 +80,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_MaterialDispatchDisp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p3" + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_MaterialDispatchDisp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=@p3 " + Searchkey + "";
 
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
@@ -143,9 +146,9 @@ namespace SmartxAPI.Controllers
                     string DetailSql = "";
 
                     if (B_ProjectExists)
-                        DetailSql = "Select *,dbo.SP_BatchStock(vw_MaterialDispatchDetailDisp.N_ItemID,vw_MaterialDispatchDetailDisp.N_LocationID,'',vw_MaterialDispatchDetailDisp.N_ProjectID) as N_stock  from vw_MaterialDispatchDetailDisp  where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_DispatchId=@N_DispatchID";
+                        DetailSql = "Select *,dbo.SP_BatchStock(vw_MaterialDispatchDetailDisp.N_ItemID,vw_MaterialDispatchDetailDisp.N_LocationID,'',vw_MaterialDispatchDetailDisp.N_ProjectID) as N_stock  from vw_MaterialDispatchDetailDisp  where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_DispatchId=@N_DispatchID order by n_DispatchDetailsID";
                     else
-                        DetailSql = "Select *,dbo.SP_BatchStock(vw_MaterialDispatchDetailDisp.N_ItemID,@nLocationID,'') as N_stock  from vw_MaterialDispatchDetailDisp  where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_DispatchId=@N_DispatchID";
+                        DetailSql = "Select *,dbo.SP_BatchStock(vw_MaterialDispatchDetailDisp.N_ItemID,@nLocationID,'') as N_stock  from vw_MaterialDispatchDetailDisp  where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_DispatchId=@N_DispatchID order by n_DispatchDetailsID";
 
 
                     if (x_PrsNo != "" && x_PrsNo != null)
@@ -204,15 +207,32 @@ namespace SmartxAPI.Controllers
                     bool b_Action= myFunctions.getBoolVAL(MasterTable.Rows[0]["b_Action"].ToString());
 
                      values = MasterRow["X_DispatchNo"].ToString();
-
-                     if( myFunctions.getIntVAL(MasterTable.Rows[0]["n_DepartmentID"].ToString())>0){
+                     if (MasterTable.Columns.Contains("n_DepartmentID"))
+                     {
+                       if( myFunctions.getIntVAL(MasterTable.Rows[0]["n_DepartmentID"].ToString())>0){
                         bDeptEnabled=true;
                      }
                      else{
                         bDeptEnabled=false;
                      }
+                     }
+                    
 
                    
+                    string xButtonAction="";
+                    if (nDispatchID > 0)
+                    {
+                        SortedList DeleteParams = new SortedList(){
+                                    {"N_CompanyID",nCompanyID},
+                                    {"N_UserID",N_UserID},
+                                    {"X_TransType","MATERIAL DISPATCH"},
+                                    {"X_SystemName","WebRequest"},
+                                    {"N_VoucherID",nDispatchID}};
+
+                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                     xButtonAction="Update"; 
+                    }
+                    values = MasterRow["X_DispatchNo"].ToString();
 
                     if (values == "@Auto")
                     {
@@ -221,9 +241,11 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID",FormID);
                         //Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         X_DispatchNo = dLayer.GetAutoNumber("Inv_MaterialDispatch", "X_DispatchNo", Params, connection, transaction);
+                        xButtonAction="Insert"; 
                         if (X_DispatchNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Return Number")); }
                         MasterTable.Rows[0]["X_DispatchNo"] = X_DispatchNo;
                     }
+                      X_DispatchNo = MasterTable.Rows[0]["X_DispatchNo"].ToString();
 
                      if (MasterTable.Columns.Contains("transType"))
                         MasterTable.Columns.Remove("transType");
@@ -279,11 +301,21 @@ namespace SmartxAPI.Controllers
                     UpdateStockParam.Add("N_DispatchId", nDispatchID);
                     UpdateStockParam.Add("N_UserID", N_UserID);
 
-                     if (bDeptEnabled)
-                       dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch_Department", UpdateStockParam, connection, transaction);
-                     else
-                       dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch", UpdateStockParam, connection, transaction);
+                    if (!bDeptEnabled)
+                        dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch", UpdateStockParam, connection, transaction);
+                    else
+                        dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch_Department", UpdateStockParam, connection, transaction);
+                    
 
+                    //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nDispatchID,X_DispatchNo,684,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
+                          
                     SortedList PostParam = new SortedList();
                     PostParam.Add("N_CompanyID", nCompanyID);
                     PostParam.Add("X_InventoryMode", "MATERIAL DISPATCH");

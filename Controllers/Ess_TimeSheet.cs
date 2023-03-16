@@ -316,8 +316,6 @@ namespace SmartxAPI.Controllers
 
                     DateTime dateTime_Indian = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, India_Standard_Time);
                     DateTime date = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, Timezone.ToString());
-                    date=date.AddDays(-1);
-                    date=date.AddHours(-1);
 
                     masterRow["transactionTime"] = date.ToString();
                     masterRow["serverRecordTime"] = date.ToString();

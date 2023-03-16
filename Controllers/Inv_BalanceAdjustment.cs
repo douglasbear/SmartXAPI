@@ -246,6 +246,7 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                     int N_PartyType = myFunctions.getIntVAL(MasterRow["n_PartyType"].ToString());
                     int N_FormID = myFunctions.getIntVAL(MasterRow["N_FormID"].ToString());
                     string X_Trasnaction = "";
+                   // string xButtonAction="";
              
                     int N_PartyID = myFunctions.getIntVAL(MasterRow["n_PartyID"].ToString());
                     int N_IsImport = 0;
@@ -351,12 +352,13 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                         Params.Add("N_BranchID", Master["n_BranchId"].ToString());
 
                         AdjustmentNo = dLayer.GetAutoNumber("Inv_BalanceAdjustmentMaster", "X_VoucherNo", Params, connection, transaction);
-                         //xButtonAction = "INSERT";
+                        xButtonAction="Insert"; 
                         if (AdjustmentNo == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Adjustment Number")); }
                         MasterTable.Rows[0]["X_VoucherNo"] = AdjustmentNo;
 
                     }
                     else
+                      AdjustmentNo = MasterTable.Rows[0]["X_VoucherNo"].ToString();
                     {
                         if (N_AdjustmentID > 0)
                         {
@@ -365,9 +367,11 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                                 {"X_TransType",X_Trasnaction},
                                 {"N_VoucherID",N_AdjustmentID}};
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
-                           // xButtonAction = "Update";
+                            xButtonAction="Update"; 
                         }
                     }
+
+
 
                     N_AdjustmentID = dLayer.SaveData("Inv_BalanceAdjustmentMaster", "N_AdjustmentID", MasterTable, connection, transaction);
                     if (N_AdjustmentID <= 0)
@@ -379,7 +383,15 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                     {
                         DetailTable.Rows[j]["N_AdjustmentID"] = N_AdjustmentID;
                     }
-
+                                             //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(N_FnYearID,N_AdjustmentID,AdjustmentNo,N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
+                          
                     int N_AdjustmentDetailsId = dLayer.SaveData("Inv_BalanceAdjustmentMasterDetails", "N_AdjustmentDetailsId", DetailTable, connection, transaction);
                     if (N_AdjustmentDetailsId <= 0)
                     {
@@ -420,15 +432,7 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                         transaction.Commit();
                     }
                     
-                        //Activity Log
-
-                // string ipAddress = "";
-                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                //     ipAddress = Request.Headers["X-Forwarded-For"];
-                // else
-                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                //        myFunctions.LogScreenActivitys(N_FnYearID,N_AdjustmentID,AdjustmentNo,504,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-
+                    
                        SortedList Result = new SortedList();
                        Result.Add("AdjustmentNo", MasterTable.Rows[0]["X_VoucherNo"] );
                        Result.Add("N_AdjustmentID", N_AdjustmentID);
@@ -443,7 +447,7 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCompanyID, int nAdjustmentId, string xTransType)
+        public ActionResult DeleteData(int nCompanyID, int nAdjustmentId, string xTransType,int nFnYearID,int nFormID)
         {
             try
             {
@@ -451,6 +455,37 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                     SortedList Params = new SortedList();
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList();
+                    
+                    ParamList.Add("@nTransID", nAdjustmentId);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                     ParamList.Add("@nFormID", nFormID);
+                    
+
+                    string Sql = "select N_AdjustmentID,X_VoucherNo from Inv_BalanceAdjustmentMaster where N_AdjustmentID=@nTransID and N_CompanyID=@nCompanyID ";
+                    string xButtonAction="Delete";
+                    string X_VoucherNo="";
+                    
+                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+                   object n_FnYearID = dLayer.ExecuteScalar("select N_FnYearID from Inv_BalanceAdjustmentMaster where N_AdjustmentID =" + nAdjustmentId + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
+
+                    if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+                    //Activity Log
+                        string ipAddress = "";
+                   if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                   else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nAdjustmentId,TransRow["X_VoucherNo"].ToString(),nFormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                  
+                    
                     SortedList deleteParams = new SortedList()
                             {
                                 {"N_CompanyID",nCompanyID},

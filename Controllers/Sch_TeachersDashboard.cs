@@ -162,14 +162,15 @@ namespace SmartxAPI.Controllers
                     string sqlCommandCount1 = "select count(1) as N_Count from Vw_AssignmentByTeacher WHERE MONTH(D_AssignedDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_AssignedDate) = YEAR(CURRENT_TIMESTAMP) and isnull(B_IsSaveDraft,0)=0 and  N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID+" and N_TeacherID="+nTeacherID+" ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount1, Params, connection);
                     Data.Add("TotalCount", TotalCount);
-                     if (AssignmentDetails.Rows.Count == 0)
-                    { 
-                        return Ok(api.Warning("No Results Found"));
-                    }
-                    else
-                    {
-                        return Ok(api.Success(Data));
-                    }
+                     return Ok(api.Success(Data));
+                    //  if (AssignmentDetails.Rows.Count == 0)
+                    // { 
+                    //     return Ok(api.Warning("No Results Found"));
+                    // }
+                    // else
+                    // {
+                    //     return Ok(api.Success(Data));
+                    // }
 
                    
                     

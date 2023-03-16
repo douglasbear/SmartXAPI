@@ -161,7 +161,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        if (UserCatID == 0)
+                        if (UserCatID == 0 && FromUserCatID>0)
                         {
                             DataTable UserPrevilegesDT = new DataTable();
                             DataTable Printtemplates = new DataTable();
@@ -221,6 +221,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to delete Category"));
 
                     Results = dLayer.DeleteData("sec_usercategory", "N_UserCategoryID", nUsercategoryId, "", connection,transaction);
+                    transaction.Commit();
                     if (Results > 0)
                     {
                         dLayer.ExecuteNonQuery("DELETE FROM Gen_Settings where N_UserCategoryID=@nUsercategoryID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
