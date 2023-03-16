@@ -161,7 +161,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        if (UserCatID == 0)
+                        if (UserCatID == 0 && FromUserCatID>0)
                         {
                             DataTable UserPrevilegesDT = new DataTable();
                             DataTable Printtemplates = new DataTable();
