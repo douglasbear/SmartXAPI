@@ -83,6 +83,10 @@ namespace SmartxAPI.Controllers
                         foreach (DataRow dtRow in details.Rows)
                         {
                             bool custFlag = false;
+                            adjustedCount="";
+                            netAmount="";
+                        
+                            nBalanceAmount="";
 
                             N_TransID = dtRow["N_TransID"].ToString();
                             N_PayReceiptDetailsID = dtRow["N_PayReceiptDetailsID"].ToString();
@@ -126,10 +130,20 @@ namespace SmartxAPI.Controllers
                         foreach (DataRow dtRow in details.Rows)
                         {
                             bool custFlag = false;
-
+                            adjustedCount="";
+                            netAmount="";
+                            nBalanceAmount="";
                             N_TransID = dtRow["N_TransID"].ToString();
                             N_PayReceiptDetailsID = dtRow["N_PayReceiptDetailsID"].ToString();
-                            if (N_TransID != "")
+                            if(myFunctions.getIntVAL(dtRow["n_PartyID"].ToString())==560)
+                            {
+                                int a=1;
+                            }
+
+
+
+
+                            if (N_TransID != "" && N_TransID !=null)
                             {
                                 nBalanceAmount = dLayer.ExecuteScalar("select N_BalanceAmount from vw_InvPayables where N_CompanyID=" + nCompanyID + " and N_PurchaseID = " + N_TransID, connection, transaction);
                                 netAmount = dLayer.ExecuteScalar("select NetAmount from vw_InvPayables where N_CompanyID=" + nCompanyID + " and N_PurchaseID = " + N_TransID, connection, transaction);
@@ -148,6 +162,7 @@ namespace SmartxAPI.Controllers
                             {
                                 dtRow["advAdjustmentFlag"] = true;
                             }
+                            details.AcceptChanges();
                         }
                     }
 
