@@ -781,7 +781,7 @@ namespace SmartxAPI.GeneralFunctions
                     nAttachmentCount = dLayer.ExecuteScalar("Select N_AttachmentCount from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID", ApprovalParams, connection);
 
                 if (nAttachmentCount == null)
-                    Response["attachmentCount"] = null;
+                    Response["attachmentCount"] = 0;
                 else
                     Response["attachmentCount"] = this.getIntVAL(nAttachmentCount.ToString());
 
@@ -1507,6 +1507,19 @@ namespace SmartxAPI.GeneralFunctions
                     N_NxtAppLeveleID++;
                 }
 
+                if(N_ProcStatusID==5 && N_ApprovalLevelID==1){
+
+                 SortedList statusParams = new SortedList();
+                             statusParams.Add("@N_CompanyID", N_CompanyID);
+                             statusParams.Add("@N_TransID", N_TransID);
+                             statusParams.Add("@N_FormID", N_FormID);
+                             statusParams.Add("@N_ForceUpdate", 1); 
+                              statusParams.Add("@N_ActionID", 1); 
+
+                dLayer.ExecuteNonQueryPro("SP_TxnStatusUpdate", statusParams, connection, transaction);
+                         
+                }
+
                 object Count = null;
                 SortedList NewParam = new SortedList();
                 NewParam.Add("@nCompanyID", N_CompanyID);
@@ -1531,6 +1544,8 @@ namespace SmartxAPI.GeneralFunctions
                         dLayer.ExecuteScalar("update " + TableName + " set B_IssaveDraft=0 where " + TableID + "=@nTransID and N_CompanyID=@nCompanyID", NewParam, connection, transaction);
                         if(N_FormID==1309)
                         {
+
+                            
                              SortedList statusParams = new SortedList();
                              statusParams.Add("@N_CompanyID", N_CompanyID);
                              statusParams.Add("@N_TransID", N_TransID);

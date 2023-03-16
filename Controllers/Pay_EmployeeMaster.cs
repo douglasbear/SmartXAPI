@@ -1728,6 +1728,7 @@ namespace SmartxAPI.Controllers
                                                     dt.Columns.Add("N_LoginFlag");
                                                     dt.Columns.Add("X_UserCategoryList");
                                                     dt.Columns.Add("X_Email");
+                                                    dt.Columns.Add("N_TypeID");
 
                                                     DataRow row = dt.NewRow();
                                                     row["N_CompanyID"] = nCompanyID;
@@ -1742,6 +1743,7 @@ namespace SmartxAPI.Controllers
                                                     row["N_LoginFlag"] = 2;
                                                     row["X_UserCategoryList"] = objUserCat.ToString();
                                                     row["X_Email"] = xEmail;
+                                                    row["N_TypeID"] = 3;
                                                     dt.Rows.Add(row);
 
                                                     int UserID = dLayer.SaveData("Sec_User", "N_UserID", dt, connection, transaction);
