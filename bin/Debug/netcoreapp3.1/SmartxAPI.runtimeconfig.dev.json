@@ -4,6 +4,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\aswin\\.nuget\\packages"
 =======
@@ -49,6 +50,10 @@
       "C:\\Users\\sreej\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\sreej\\.nuget\\packages"
 >>>>>>> a78facffde2eff775058f14344a6d725ccd37eb2
+=======
+      "C:\\Users\\olivouser2\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\olivouser2\\.nuget\\packages"
+>>>>>>> 264562104321a03bd9d0fd6992e41216decae334
     ]
   }
 }
