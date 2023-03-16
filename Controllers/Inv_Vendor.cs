@@ -433,6 +433,8 @@ namespace SmartxAPI.Controllers
                      string Sql = "select N_VendorID,X_VendorCode from Inv_Vendor where N_VendorID=@nTransID and N_CompanyID=@nCompanyID ";
                   string xButtonAction="Delete";
                   string X_VendorCode="";
+                  object vendorCount="";
+                  object vendortxnCount="";
 
                    
 

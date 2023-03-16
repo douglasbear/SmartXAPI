@@ -5,6 +5,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\aswin\\.nuget\\packages"
 =======
@@ -54,6 +55,11 @@
       "C:\\Users\\olivouser2\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\olivouser2\\.nuget\\packages"
 >>>>>>> 264562104321a03bd9d0fd6992e41216decae334
+=======
+      "C:\\Users\\user\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\user\\.nuget\\packages",
+      "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+>>>>>>> 26113d8568c2fa9e18c46c2b4ba33600cc2280fc
     ]
   }
 }
