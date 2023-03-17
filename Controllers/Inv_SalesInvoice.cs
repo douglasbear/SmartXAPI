@@ -670,7 +670,7 @@ namespace SmartxAPI.Controllers
 
                         Object CRMCustomerID = null;
                         Object CustomerName = null;
-                        object CustomerID = dLayer.ExecuteScalar("Select n_customerID from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CrmCompanyID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_CrmCustomerID"].ToString()), QueryParamsList, Con);
+                        object CustomerID = dLayer.ExecuteScalar("Select n_customerID from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CrmCompanyID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["n_CrmCompanyID"].ToString()), QueryParamsList, Con);
 
                         if (CustomerID != null)
                         {

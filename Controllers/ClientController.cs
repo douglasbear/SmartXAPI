@@ -240,7 +240,7 @@ namespace SmartxAPI.Controllers
                         clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID and X_Description not in ('STUDENT LIMIT','EMPLOYEE LIMIT')";
                         break;
                     case "obs"://loan issue
-                       clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID and X_Description not in('STUDENT LIMIT','BRANCH LIMIT','EMPLOYEE LIMIT') ";
+                       clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID and X_Description not in('STUDENT LIMIT','BRANCH LIMIT','EMPLOYEE LIMIT','COMPANY LIMIT') ";
                         break;
                     case "hrp"://Salary Payment
                        clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID  and X_Description not in('STUDENT LIMIT','BRANCH LIMIT') ";
