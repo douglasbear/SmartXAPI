@@ -342,7 +342,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesInvoiceDetails(int nCompanyId, bool bAllBranchData, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID, string xDeliveryNoteID,int nServiceSheetID, string xServiceSheetID,string xSchSalesID,bool isServiceOrder)
+        public ActionResult GetSalesInvoiceDetails(int nCompanyId, bool bAllBranchData, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID, string xDeliveryNoteID,int nServiceSheetID, string xServiceSheetID,string xSchSalesID,bool isServiceOrder, int nFormID)
         {
             if (xInvoiceNo != null)
                 xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
@@ -358,6 +358,7 @@ namespace SmartxAPI.Controllers
                     QueryParamsList.Add("@nFnYearID", nFnYearId);
                     QueryParamsList.Add("@nBranchId", nBranchId);
                     QueryParamsList.Add("@xTransType", "SALES");
+                    QueryParamsList.Add("@nFormID", nFormID);
                     object N_QuotationID = 0;
                     object N_SalesOrderID = 0;
                     string DetailGetSql = "";
@@ -397,119 +398,122 @@ namespace SmartxAPI.Controllers
                             N_salesOrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_salesOrderID"].ToString());
                             xDeliveryNoteID = nDeliveryNoteId.ToString();
 
-                     if(xDeliveryNoteID!=null){
-                     object purchaseOrderNo = dLayer.ExecuteScalar("select N_SalesOrderID from Inv_DeliveryNoteDetails where N_CompanyID=" + nCompanyId +" and N_DeliveryNoteID=" + xDeliveryNoteID, QueryParamsList, Con);
-                     if(purchaseOrderNo==null)
-                      purchaseOrderNo=0;
-                if( myFunctions.getVAL(purchaseOrderNo.ToString()) > 0)
-                {
-                     IsDirectMRN=false;
-                  }
-                  else{
-                     IsDirectMRN=true;
-                 }
+                            if(xDeliveryNoteID!=null)
+                            {
+                                object purchaseOrderNo = dLayer.ExecuteScalar("select N_SalesOrderID from Inv_DeliveryNoteDetails where N_CompanyID=" + nCompanyId +" and N_DeliveryNoteID=" + xDeliveryNoteID, QueryParamsList, Con);
+                                if(purchaseOrderNo==null)
+                                    purchaseOrderNo=0;
+                                if( myFunctions.getVAL(purchaseOrderNo.ToString()) > 0)
+                                {
+                                    IsDirectMRN=false;
+                                }
+                                else{
+                                    IsDirectMRN=true;
+                                }
                    
 
-                 }
-                        }
-                        else
-                        {
-                            QueryParamsList.Add("@nDeliveryNoteID", nDeliveryNoteId);
-                            string[] X_Delivery = xDeliveryNoteID.Split(",");
-                             N_DeliveryNote = myFunctions.getIntVAL(X_Delivery[0].ToString());
-                            
-                            //  MasterTable = dLayer.ExecuteDataTable(xDeliveryNo, QueryParamsList, Con);
-                             
-                            Mastersql = "select * from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId=" + N_DeliveryNote + "";
-                            MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
-                            if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                            MasterTable = _api.Format(MasterTable, "Master");
-
-
-                        }
-
-                        string DetailSql = "";
-                        //  DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID=@nDeliveryNoteID ";
-
-
-
-                        string DeliveryNoteAppend = "0";
-                        DataTable DeliveryNoteID = new DataTable();
-
-                        if(N_salesOrderID>0)
-                            DeliveryNoteID = dLayer.ExecuteDataTable("select N_DeliveryNoteID from Inv_SalesDetails Where N_SalesOrderID=" + N_salesOrderID + "", QueryParamsList, Con);
-                       
-                        if (DeliveryNoteID.Rows.Count > 0)
-                        {
-
-                            foreach (DataRow Avar in DeliveryNoteID.Rows)
-                            {
-                                if (Avar["N_DeliveryNoteID"].ToString() != "0")
-                                    DeliveryNoteAppend = DeliveryNoteAppend + "," + Avar["N_DeliveryNoteID"].ToString();
                             }
-                            if (xDeliveryNoteID == "" || xDeliveryNoteID == null)
-                                DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") order by N_SOdetailsID ASC ";
+                            }
                             else
-                                DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") order by N_SOdetailsID ASC ";
+                            {
+                                QueryParamsList.Add("@nDeliveryNoteID", nDeliveryNoteId);
+                                string[] X_Delivery = xDeliveryNoteID.Split(",");
+                                N_DeliveryNote = myFunctions.getIntVAL(X_Delivery[0].ToString());
+                                
+                                //  MasterTable = dLayer.ExecuteDataTable(xDeliveryNo, QueryParamsList, Con);
+                                
+                                Mastersql = "select * from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId=" + N_DeliveryNote + "";
+                                MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
+                                if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                                MasterTable = _api.Format(MasterTable, "Master");
 
-                        }
-                        else
-                        {
-                            if ((xDeliveryNoteID == "" || xDeliveryNoteID == null) && N_salesOrderID>0)
-                                DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " order by N_SOdetailsID ASC ";
+
+                            }
+
+                            string DetailSql = "";
+                            //  DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID=@nDeliveryNoteID ";
+
+
+
+                            string DeliveryNoteAppend = "0";
+                            DataTable DeliveryNoteID = new DataTable();
+
+                            if (nFormID != 1601)
+                            {
+                                if(N_salesOrderID>0)
+                                    DeliveryNoteID = dLayer.ExecuteDataTable("select N_DeliveryNoteID from Inv_SalesDetails Where N_SalesOrderID=" + N_salesOrderID + "", QueryParamsList, Con);
+                            }
+                       
+                            if (DeliveryNoteID.Rows.Count > 0)
+                            {
+
+                                foreach (DataRow Avar in DeliveryNoteID.Rows)
+                                {
+                                    if (Avar["N_DeliveryNoteID"].ToString() != "0")
+                                        DeliveryNoteAppend = DeliveryNoteAppend + "," + Avar["N_DeliveryNoteID"].ToString();
+                                }
+                                if (xDeliveryNoteID == "" || xDeliveryNoteID == null)
+                                    DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") order by N_SOdetailsID ASC ";
+                                else
+                                    DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") order by N_SOdetailsID ASC ";
+
+                            }
                             else
-                                DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  order by N_SOdetailsID ASC ";
+                            {
+                                if ((xDeliveryNoteID == "" || xDeliveryNoteID == null) && N_salesOrderID>0)
+                                    DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " order by N_SOdetailsID ASC ";
+                                else
+                                    DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  order by N_SOdetailsID ASC ";
 
-                        }                                          
+                            }                                          
 
 
-                        DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
-                        DetailTable = _api.Format(DetailTable, "Details");
+                            DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+                            DetailTable = _api.Format(DetailTable, "Details");
 
 
-                     int EnableInvoicebasedtax = myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "EnableInvoicebasedtax", "N_Value", nCompanyId, dLayer, Con));
-                    if(EnableInvoicebasedtax==0 &&IsDirectMRN==true){
-                     DataTable deliveryDetails = new DataTable();
-                    string directDelivery = "SELECT Acc_TaxCategory.X_DisplayName,Inv_DeliveryNoteDetails.N_DeliveryNoteID, Acc_TaxCategory.N_Amount as N_TaxAmt1, Inv_ItemCategory.N_TaxCategoryID as N_TaxCategoryID1, Inv_DeliveryNote.N_FnYearId, Inv_DeliveryNote.N_CompanyId,Inv_ItemMaster.N_ItemID FROM Inv_ItemCategory INNER JOIN Inv_DeliveryNoteDetails INNER JOIN Inv_DeliveryNote ON Inv_DeliveryNoteDetails.N_DeliveryNoteID = Inv_DeliveryNote.N_DeliveryNoteId AND Inv_DeliveryNoteDetails.N_CompanyID = Inv_DeliveryNote.N_CompanyId INNER JOIN Inv_ItemMaster ON Inv_DeliveryNoteDetails.N_ItemID = Inv_ItemMaster.N_ItemID AND Inv_DeliveryNoteDetails.N_CompanyID = Inv_ItemMaster.N_CompanyID INNER JOIN Acc_FnYear ON Inv_DeliveryNote.N_FnYearId = Acc_FnYear.N_FnYearID AND Inv_DeliveryNote.N_CompanyId = Acc_FnYear.N_CompanyID ON Inv_ItemCategory.N_CategoryID = Inv_ItemMaster.N_CategoryID AND Inv_ItemCategory.N_CompanyID = Inv_ItemMaster.N_CompanyID INNER JOIN Acc_TaxCategory ON Inv_ItemCategory.N_TaxCategoryID = Acc_TaxCategory.N_PkeyID AND Inv_ItemCategory.N_CompanyID = Acc_TaxCategory.N_CompanyID where (Inv_DeliveryNoteDetails.n_deliveryNoteID =@nDeliveryNoteID)";
-                    deliveryDetails = dLayer.ExecuteDataTable(directDelivery, QueryParamsList, Con);
-                    // string DisplayName = "";
+                            int EnableInvoicebasedtax = myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "EnableInvoicebasedtax", "N_Value", nCompanyId, dLayer, Con));
+                            if(EnableInvoicebasedtax==0 &&IsDirectMRN==true){
+                            DataTable deliveryDetails = new DataTable();
+                            string directDelivery = "SELECT Acc_TaxCategory.X_DisplayName,Inv_DeliveryNoteDetails.N_DeliveryNoteID, Acc_TaxCategory.N_Amount as N_TaxAmt1, Inv_ItemCategory.N_TaxCategoryID as N_TaxCategoryID1, Inv_DeliveryNote.N_FnYearId, Inv_DeliveryNote.N_CompanyId,Inv_ItemMaster.N_ItemID FROM Inv_ItemCategory INNER JOIN Inv_DeliveryNoteDetails INNER JOIN Inv_DeliveryNote ON Inv_DeliveryNoteDetails.N_DeliveryNoteID = Inv_DeliveryNote.N_DeliveryNoteId AND Inv_DeliveryNoteDetails.N_CompanyID = Inv_DeliveryNote.N_CompanyId INNER JOIN Inv_ItemMaster ON Inv_DeliveryNoteDetails.N_ItemID = Inv_ItemMaster.N_ItemID AND Inv_DeliveryNoteDetails.N_CompanyID = Inv_ItemMaster.N_CompanyID INNER JOIN Acc_FnYear ON Inv_DeliveryNote.N_FnYearId = Acc_FnYear.N_FnYearID AND Inv_DeliveryNote.N_CompanyId = Acc_FnYear.N_CompanyID ON Inv_ItemCategory.N_CategoryID = Inv_ItemMaster.N_CategoryID AND Inv_ItemCategory.N_CompanyID = Inv_ItemMaster.N_CompanyID INNER JOIN Acc_TaxCategory ON Inv_ItemCategory.N_TaxCategoryID = Acc_TaxCategory.N_PkeyID AND Inv_ItemCategory.N_CompanyID = Acc_TaxCategory.N_CompanyID where (Inv_DeliveryNoteDetails.n_deliveryNoteID =@nDeliveryNoteID)";
+                            deliveryDetails = dLayer.ExecuteDataTable(directDelivery, QueryParamsList, Con);
+                            // string DisplayName = "";
                      
 
-                        foreach (DataRow dr in deliveryDetails.Rows)
+                            foreach (DataRow dr in deliveryDetails.Rows)
+                            {
+                                foreach (DataRow Row in DetailTable.Rows)
+                                {
+
+                                    if (dr["N_ItemID"].ToString() == Row["N_ItemID"].ToString())
+                                    {
+                                        Row["x_DisplayName"] = dr["X_DisplayName"].ToString();
+                                        Row["n_TaxPercentage1"]=dr["N_TaxAmt1"];
+                                        Row["n_TaxCategoryID1"]=dr["n_TaxCategoryID1"];
+                                        Row["n_TaxAmt1"]=dr["N_TaxAmt1"];
+                                    }
+                                }
+                            }
+                        }
+                        DetailTable.AcceptChanges();
+
+                        if (IsDirectMRN && EnableInvoicebasedtax==1)
                         {
-                         foreach (DataRow Row in DetailTable.Rows){
-
-                             if (dr["N_ItemID"].ToString() == Row["N_ItemID"].ToString())
-                             {
-                               Row["x_DisplayName"] = dr["X_DisplayName"].ToString();
-                               Row["n_TaxPercentage1"]=dr["N_TaxAmt1"];
-                               Row["n_TaxCategoryID1"]=dr["n_TaxCategoryID1"];
-                               Row["n_TaxAmt1"]=dr["N_TaxAmt1"];
-
-
-                             }
-                         }
-                       }
-                     }
-                     DetailTable.AcceptChanges();
-
-                    if (IsDirectMRN && EnableInvoicebasedtax==1)
-                     {
-                    object taxID = dLayer.ExecuteScalar("Select N_Value from Gen_Settings where N_CompanyId=" + nCompanyId+" and X_Description='DefaultTaxCategory' and X_Group='Inventory'", QueryParamsList, Con);
-                         if(taxID!=null)
-                         {
-                             object category = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_CompanyId=" + nCompanyId+" and X_PkeyCode=" + taxID+" ", QueryParamsList, Con);
-                             object taxCatID = dLayer.ExecuteScalar("Select N_PkeyID from Acc_TaxCategory where N_CompanyId=" + nCompanyId+" and X_PkeyCode=" + taxID+" ", QueryParamsList, Con);
-                             object percentage = dLayer.ExecuteScalar("Select Cast(REPLACE(N_Amount,',','') as Numeric(10,0)) from Acc_TaxCategory where N_PkeyID=" + taxID+" ", QueryParamsList, Con);
+                            object taxID = dLayer.ExecuteScalar("Select N_Value from Gen_Settings where N_CompanyId=" + nCompanyId+" and X_Description='DefaultTaxCategory' and X_Group='Inventory'", QueryParamsList, Con);
+                            if(taxID!=null)
+                            {
+                                object category = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_CompanyId=" + nCompanyId+" and X_PkeyCode=" + taxID+" ", QueryParamsList, Con);
+                                object taxCatID = dLayer.ExecuteScalar("Select N_PkeyID from Acc_TaxCategory where N_CompanyId=" + nCompanyId+" and X_PkeyCode=" + taxID+" ", QueryParamsList, Con);
+                                object percentage = dLayer.ExecuteScalar("Select Cast(REPLACE(N_Amount,',','') as Numeric(10,0)) from Acc_TaxCategory where N_PkeyID=" + taxID+" ", QueryParamsList, Con);
                             
                                 MasterTable.Rows[0]["X_DisplayName"] = category.ToString();
                                 MasterTable.Rows[0]["n_TaxCategoryID"] = myFunctions.getIntVAL(taxCatID.ToString());
                                 MasterTable.Rows[0]["n_TaxPercentage"] =myFunctions.getIntVAL(percentage.ToString());
                                  MasterTable.Rows[0]["n_TaxAmt"] =myFunctions.getIntVAL(percentage.ToString());
-                               }
-                               MasterTable.AcceptChanges();
+                            }
+                            MasterTable.AcceptChanges();
 
-                     }
+                        }
 
                         if (nDeliveryNoteId >0 || N_DeliveryNote>0)
                         {
@@ -666,7 +670,7 @@ namespace SmartxAPI.Controllers
 
                         Object CRMCustomerID = null;
                         Object CustomerName = null;
-                        object CustomerID = dLayer.ExecuteScalar("Select n_customerID from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CrmCompanyID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_CrmCustomerID"].ToString()), QueryParamsList, Con);
+                        object CustomerID = dLayer.ExecuteScalar("Select n_customerID from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CrmCompanyID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["n_CrmCompanyID"].ToString()), QueryParamsList, Con);
 
                         if (CustomerID != null)
                         {
@@ -1013,7 +1017,7 @@ namespace SmartxAPI.Controllers
                         if (CustomerID != null)
                         {
                             // if (myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString()) == myFunctions.getIntVAL(CustomerID.ToString()))
-                                saleamountdetails = dLayer.ExecuteDataTable("Select distinct * from vw_SalesAmount_Customer_Cloud where N_SalesID=" + masterTable.Rows[0]["n_SalesId"].ToString() + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId +" order by N_EnablePopup", Con);
+                               saleamountdetails = dLayer.ExecuteDataTable("Select distinct * from vw_SalesAmount_Customer_Cloud where N_SalesID=" + masterTable.Rows[0]["n_SalesId"].ToString() + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId +" order by N_EnablePopup", Con);
                             // else
                             //     saleamountdetails = dLayer.ExecuteDataTable("Select distinct * from vw_SalesAmount_Customer where N_SalesID=0 and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, Con);
                         }

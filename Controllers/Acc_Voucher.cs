@@ -482,11 +482,11 @@ namespace SmartxAPI.Controllers
 
                                 if(Flag==1)
                                 {
-                                    if(N_Amt!=N_CCAmt)                                    
-                                    {
-                                        transaction.Rollback();
-                                        return Ok(api.Error(User, "Unable to save! Cost center distribution mismatch."));
-                                    }
+                                    // if(N_Amt!=N_CCAmt)                                    
+                                    // {
+                                    //     transaction.Rollback();
+                                    //     return Ok(api.Error(User, "Unable to save! Cost center distribution mismatch."));
+                                    // }
                                 }
 
                                 CostCenterTable.AcceptChanges();
