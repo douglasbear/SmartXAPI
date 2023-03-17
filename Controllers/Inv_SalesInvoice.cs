@@ -1017,7 +1017,7 @@ namespace SmartxAPI.Controllers
                         if (CustomerID != null)
                         {
                             // if (myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString()) == myFunctions.getIntVAL(CustomerID.ToString()))
-                                saleamountdetails = dLayer.ExecuteDataTable("Select distinct * from vw_SalesAmount_Customer_Cloud where N_SalesID=" + masterTable.Rows[0]["n_SalesId"].ToString() + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId +" order by N_EnablePopup", Con);
+                               saleamountdetails = dLayer.ExecuteDataTable("Select distinct * from vw_SalesAmount_Customer_Cloud where N_SalesID=" + masterTable.Rows[0]["n_SalesId"].ToString() + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId +" order by N_EnablePopup", Con);
                             // else
                             //     saleamountdetails = dLayer.ExecuteDataTable("Select distinct * from vw_SalesAmount_Customer where N_SalesID=0 and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, Con);
                         }
