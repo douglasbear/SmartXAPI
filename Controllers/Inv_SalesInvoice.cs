@@ -877,7 +877,7 @@ namespace SmartxAPI.Controllers
 
 
 
-                    object objPayment = dLayer.ExecuteScalar("SELECT dbo.Inv_PayReceipt.X_Type, dbo.Inv_PayReceiptDetails.N_InventoryId,Inv_PayReceiptDetails.N_Amount FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId=@nSalesID", QueryParamsList, Con);
+                    object objPayment = dLayer.ExecuteScalar("SELECT dbo.Inv_PayReceipt.X_Type, dbo.Inv_PayReceiptDetails.N_InventoryId,Inv_PayReceiptDetails.N_Amount FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId=@nSalesID and dbo.Inv_PayReceiptDetails.N_CompanyID=@nCompanyID", QueryParamsList, Con);
                     if (objPayment != null)
                         myFunctions.AddNewColumnToDataTable(masterTable, "B_PaymentProcessed", typeof(Boolean), true);
                     else
@@ -1017,8 +1017,10 @@ namespace SmartxAPI.Controllers
                         if (CustomerID != null)
                         {
                             // if (myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString()) == myFunctions.getIntVAL(CustomerID.ToString()))
-                               saleamountdetails = dLayer.ExecuteDataTable("Select distinct * from vw_SalesAmount_Customer_Cloud where N_SalesID=" + masterTable.Rows[0]["n_SalesId"].ToString() + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId +" order by N_EnablePopup", Con);
-                            // else
+                             saleamountdetails = dLayer.ExecuteDataTable("Select distinct * from vw_SalesAmount_Customer_Cloud where N_SalesID=" + masterTable.Rows[0]["n_SalesId"].ToString() +"  and N_CompanyID=" + nCompanyId + "  and N_FnYearID=" + nFnYearId +"  "
+                                                                     +" Union  select [Customer Code] as X_CustomerCode,[Customer Name] as X_CustomerName,0 as N_SalesID,N_CustomerID,0 as N_Amount,0 as N_AmountF,0 as N_CommissionAmtt,0 as N_CommissionAmtF,0 as N_CommissionPer, N_CompanyID,N_BranchID,N_FnYearID,'' as X_CardNo,0 as TaxID, null as N_PointsOUT,0 as N_AppliedAmt,null as N_AvailPoints,0 as N_SalesAmountID,N_CashTypeID,N_CashTypeID as N_CashTypeID2, "
+                                                                     + "N_EnablePopup   from vw_PaymentType_Disp where  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId +" and  ISNULL(B_Inactive,0)=0 and N_EnablePopup=1 and  N_CustomerID not in (Select N_CustomerID from  "
+                                                                     +" vw_SalesAmount_Customer_Cloud where N_SalesID=" + masterTable.Rows[0]["n_SalesId"].ToString() + "  and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId +")",Con); // else
                             //     saleamountdetails = dLayer.ExecuteDataTable("Select distinct * from vw_SalesAmount_Customer where N_SalesID=0 and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, Con);
                         }
                         // else
@@ -1161,7 +1163,7 @@ namespace SmartxAPI.Controllers
 
 
                 //PAYMENT NO DISPLAY IN TOP LABEL ON MOUSE HOVER
-                DataTable Receipts = dLayer.ExecuteDataTable("SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId =" + nSalesID, connection);
+                DataTable Receipts = dLayer.ExecuteDataTable("SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId =" + nSalesID+" and dbo.Inv_PayReceiptDetails.N_CompanyID =" + nCompanyID, connection);
                 string InvoiceNos = "";
                 foreach (DataRow var in Receipts.Rows)
                 {
