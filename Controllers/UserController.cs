@@ -645,6 +645,10 @@ namespace SmartxAPI.Controllers
                 {
                     olivoCon.Open();
                     SortedList userParams = new SortedList();
+                    
+                    if(senderMail==null){
+                        senderMail="";
+                    }
                     userParams.Add("@xEmail", emailID);
 
                     object clientID = dLayer.ExecuteScalar("select N_ClientID from Users where X_EmailID=@xEmail", userParams, olivoCon);
