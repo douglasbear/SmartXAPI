@@ -144,6 +144,7 @@ namespace SmartxAPI.Controllers
             string SortBy = "";
             string PatternCriteria = "";
             string SumField = "";
+            string expFieldList1 = "";
             string expFieldList = "";
 
             try
@@ -167,22 +168,24 @@ namespace SmartxAPI.Controllers
                         }
                         if(cRow["X_FieldName"].ToString().Contains("_"))
                         {
-                           expFieldList =  cRow["X_FieldName"].ToString().Substring(cRow["X_FieldName"].ToString().IndexOf('_') + 1);
+                           expFieldList1=  cRow["X_FieldName"].ToString().Substring(cRow["X_FieldName"].ToString().IndexOf('_') + 1);
                            
                         }
                         else
                         {
-                            expFieldList =  cRow["X_FieldName"].ToString();
+                            expFieldList1 =  cRow["X_FieldName"].ToString();
                         }
 
-                        FieldList = FieldList + ",[" + cRow["X_FieldName"].ToString() + "]" + " AS " + expFieldList;
+                        FieldList = FieldList + ",[" + cRow["X_FieldName"].ToString() + "]";
+                        expFieldList= expFieldList+ ",[" + cRow["X_FieldName"].ToString() + "]" + " AS " + expFieldList1;
 
                     }
                     if (xSearchField != "All")
                     {
                         Searchkey = Searchkey + " or [" + xSearchField + "] like '%" + xSearchkey + "%'";
                     }
-
+                    if (expFieldList.Length > 1)
+                    { expFieldList = expFieldList.Substring(1); }
                     if (Searchkey.Length > 3)
                     { Searchkey = Searchkey.Substring(3); }
                     if (FieldList.Length > 1)
@@ -325,7 +328,7 @@ namespace SmartxAPI.Controllers
 
                     if (export)
                     {
-                        sqlCommandText = "select " + FieldList + " from " + DataSource + Criterea + SortBy;
+                        sqlCommandText = "select " + expFieldList + " from " + DataSource + Criterea + SortBy;
                         string fileName = "Exported_List_" + RandomString();
                         if (nFormID == 1650)
                         {
