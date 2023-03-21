@@ -155,7 +155,7 @@ namespace SmartxAPI.Controllers
                     }
                     else{
                     DetailsTable = dLayer.ExecuteDataTable("select top 1 (select N_Value from genSettings where N_ClientID="+n_ClientID+" and X_Description='COMPANY LIMIT')  as N_Companies,(select N_Value  from genSettings where N_ClientID="+n_ClientID+" and X_Description='BRANCH LIMIT')as N_Branches,"+
-                   "(select N_Value  from genSettings where N_ClientID="+n_ClientID+" and X_Description='EMPLOYEE LIMIT')as N_Employees,"+"(select N_Value from genSettings where N_ClientID="+n_ClientID+" and X_Description='USER LIMIT')as N_Users  from  genSettings where N_ClientID="+n_ClientID+"",paramList,connection, transaction);
+                   "(select N_Value  from genSettings where N_ClientID="+n_ClientID+" and X_Description='EMPLOYEE LIMIT')as N_Employees,"+"(select N_Value from genSettings where N_ClientID="+n_ClientID+" and X_Description='USER LIMIT') as N_Users  from  genSettings where N_ClientID="+n_ClientID+"",paramList,connection, transaction);
                     //DetailsTable = dLayer.ExecuteDataTable(,connection, transaction);
                       DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_ClientHistoryID", typeof(int), 0);
                       DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_ClientID", typeof(int), n_ClientID);

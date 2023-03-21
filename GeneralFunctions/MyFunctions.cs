@@ -2034,9 +2034,11 @@ namespace SmartxAPI.GeneralFunctions
         {
             bool result = false;
             DataTable dataTable = dLayer.ExecuteDataTable(_fillquery, _params, connection);
-
-            dataTable.Columns["Column1"].ColumnName = "NewColumn1";
-            
+            if (dataTable.Columns.Contains("Column1"))
+                {
+                    dataTable.Columns["Column1"].ColumnName = "NewColumn1";
+                }
+           
             try
             {
                 ExcelPackage.LicenseContext = LicenseContext.Commercial;
