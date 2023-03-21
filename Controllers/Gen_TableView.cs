@@ -144,7 +144,7 @@ namespace SmartxAPI.Controllers
             string SortBy = "";
             string PatternCriteria = "";
             string SumField = "";
-
+            string expFieldList = "";
 
             try
             {
@@ -161,11 +161,21 @@ namespace SmartxAPI.Controllers
                         {
                             if (myFunctions.getBoolVAL(cRow["B_Search"].ToString()))
                             {
+                                //if(cRow["X_FieldName"].ToString()) contain _ cut before _ // if underscore on  middle then replace into space '' 
                                 Searchkey = Searchkey + " or [" + cRow["X_FieldName"].ToString() + "] like '%" + xSearchkey + "%'";
                             }
                         }
+                        if(cRow["X_FieldName"].ToString().Contains("_"))
+                        {
+                           expFieldList =  cRow["X_FieldName"].ToString().Substring(cRow["X_FieldName"].ToString().IndexOf('_') + 1);
+                           
+                        }
+                        else
+                        {
+                            expFieldList =  cRow["X_FieldName"].ToString();
+                        }
 
-                        FieldList = FieldList + ",[" + cRow["X_FieldName"].ToString() + "]";
+                        FieldList = FieldList + ",[" + cRow["X_FieldName"].ToString() + "]" + " AS " + expFieldList;
 
                     }
                     if (xSearchField != "All")
@@ -218,7 +228,16 @@ namespace SmartxAPI.Controllers
 
                     if (UserPattern != "" && dRow["X_PatternCriteria"].ToString() != "")
                     {
-                        PatternCriteria = " (  Left(X_Pattern,Len(@userPattern))=@userPattern ) ";
+                        if(nFormID==1305)
+                        {
+                             PatternCriteria = " (  Left(X_Pattern,Len(@userPattern))=@userPattern OR N_CreatedUser=0) ";
+
+                        }
+                        else
+                        {
+                             PatternCriteria = " (  Left(X_Pattern,Len(@userPattern))=@userPattern ) ";
+                        }
+                       
                     }
                       if (dRow["X_LocationCriteria"].ToString() != "")
                     {
