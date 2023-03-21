@@ -205,6 +205,7 @@ namespace SmartxAPI.Controllers
                     int N_NextApproverID = 0;
                     int N_DispatchDetailsID=0;
                     bool b_Action= myFunctions.getBoolVAL(MasterTable.Rows[0]["b_Action"].ToString());
+                    int Results = 0;
 
                      values = MasterRow["X_DispatchNo"].ToString();
                      if (MasterTable.Columns.Contains("n_DepartmentID"))
@@ -300,11 +301,19 @@ namespace SmartxAPI.Controllers
                     UpdateStockParam.Add("N_CompanyID", nCompanyID);
                     UpdateStockParam.Add("N_DispatchId", nDispatchID);
                     UpdateStockParam.Add("N_UserID", N_UserID);
-
+                   
+                    try{
                     if (!bDeptEnabled)
-                        dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch", UpdateStockParam, connection, transaction);
+                  
+                    dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch", UpdateStockParam, connection, transaction);
                     else
-                        dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch_Department", UpdateStockParam, connection, transaction);
+                    dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch_Department", UpdateStockParam, connection, transaction);
+                    }
+                   catch (Exception ex)
+                    {
+
+                        return Ok(_api.Error(User, "There Is No Stock"));
+                    }
                     
 
                     //Activity Log
