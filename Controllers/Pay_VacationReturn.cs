@@ -113,6 +113,7 @@ namespace SmartxAPI.Controllers
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
                 string xVacationReturnCode = MasterRow["x_VacationReturnCode"].ToString();
+                string xButtonAction="";
                
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -169,6 +170,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", Master["n_FnYearId"].ToString());
                         Params.Add("N_FormID", 463);
                         X_VacationReturnCode = dLayer.GetAutoNumber("Pay_VacationReturn", "X_VacationReturnCode", Params, connection, transaction);
+                        xButtonAction="Insert"; 
                         if (X_VacationReturnCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["X_VacationReturnCode"] = X_VacationReturnCode;
 
@@ -211,7 +213,7 @@ namespace SmartxAPI.Controllers
                       
                     if (N_VacationReturnID > 0) 
                         dLayer.ExecuteNonQuery("delete from Pay_VacationDetails where N_VoucherID=" + N_VacationReturnID.ToString() + "and N_FormID=463 and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearId=" + N_FnYearID, connection, transaction);
-                    
+                         xButtonAction="Update"; 
                     if (DetailTable.Rows.Count > 0)
                     {
                         DetailTable.Rows[0]["n_VoucherID"] = N_VacationReturnID.ToString();
@@ -237,6 +239,15 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User,"Unable to save Vacation Return"));
                         }
                     }
+                              //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(N_FnYearID,N_VacationReturnID,X_VacationReturnCode,463,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       
+
                     // myAttachments.SaveAttachment(dLayer, Attachment, xVacationReturnCode, N_VacationReturnID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
                     transaction.Commit();
                     SortedList Result = new SortedList();
@@ -405,7 +416,8 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nVacationReturnID", nVacationReturnID);
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-
+                    string xButtonAction="Delete";
+                    string X_VacationReturnCode="";
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_EmpID,0) as N_EmpID,X_VacationReturnCode,N_VacationGroupID from Pay_VacationReturn where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_VacationReturnID=@nVacationReturnID";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
@@ -426,6 +438,15 @@ namespace SmartxAPI.Controllers
                     Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
 
                     SqlTransaction transaction = connection.BeginTransaction();
+                       //  Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nVacationReturnID,TransRow["X_VacationReturnCode"].ToString(),463,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+             
+
 
                     string X_Criteria = "N_VacationReturnID=" + nVacationReturnID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();

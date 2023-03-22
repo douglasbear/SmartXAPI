@@ -268,7 +268,7 @@ namespace SmartxAPI.Controllers
                                 if (b_AppNotExist || b_noUserCategoryExist)
                                 {
                                     paramList.Add("@companyid", companyid);
-                                    int nUserCat = dLayer.ExecuteNonQuery("insert into Sec_UserCategory SELECT @companyid, MAX(N_UserCategoryID)+1, (select X_UserCategory from Sec_UserCategory where N_CompanyID=-1 and N_AppID=@nAppID), MAX(N_UserCategoryID)+1, 12, @nAppID FROM Sec_UserCategory ", paramList, cnn);
+                                    int nUserCat = dLayer.ExecuteNonQuery("insert into Sec_UserCategory SELECT @companyid, MAX(N_UserCategoryID)+1, (select X_UserCategory from Sec_UserCategory where N_CompanyID=-1 and N_AppID=@nAppID and X_UserCategory <> 'Admin'), MAX(N_UserCategoryID)+1, 12, @nAppID,(select N_TypeID from Sec_User where N_CompanyID=" + companyid + " and N_UserID=" + myFunctions.GetUserID(User)+"),'' FROM Sec_UserCategory ", paramList, cnn);
                                     if (nUserCat <= 0)
                                     {
                                         return Ok(_api.Warning("User category creation failed"));
