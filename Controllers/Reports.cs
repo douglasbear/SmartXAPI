@@ -1318,7 +1318,10 @@ namespace SmartxAPI.Controllers
                     }
                     if (UserData != "")
                     {
-                        Criteria = Criteria + " and " + UserData + "=" + nUserID;
+                        if (Criteria == "")
+                            Criteria = UserData + "=" + nUserID;
+                        else
+                            Criteria = Criteria + " and " + UserData + "=" + nUserID;
                     }
                     if (xProCode != "")
                     {
