@@ -66,6 +66,7 @@ namespace SmartxAPI.Controllers
            string sqlMonthlySales="";
            string DraftedDelivery="";
            string DraftedInvoice="";
+        //    string draftCount="";
             // string sqlReceivedRevenue = "SELECT SUM(Inv_PayReceiptDetails.N_AmountF-Inv_PayReceiptDetails.N_DiscountAmtF)as N_ReceivedAmount FROM Inv_PayReceiptDetails INNER JOIN Inv_PayReceipt ON Inv_PayReceiptDetails.N_PayReceiptId = Inv_PayReceipt.N_PayReceiptId AND Inv_PayReceiptDetails.N_CompanyID = Inv_PayReceipt.N_CompanyID where Inv_PayReceipt.X_Type in ('SR','SA') and MONTH(Cast(Inv_PayReceiptDetails.D_Entrydate as DateTime)) ="+MonthWiseDate+"and YEAR(Inv_PayReceiptDetails.D_Entrydate)= YEAR(CURRENT_TIMESTAMP) and Inv_PayReceiptDetails.N_CompanyID = " + nCompanyID  + " and Inv_PayReceipt.N_FnyearID="+nFnYearID + crieteria1;
             // string sqlOpenQuotation = "SELECT count(1) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesQuotationNo_Search WHERE MONTH(D_QuotationDate) ="+MonthWiseDate+"AND YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)";
             // "select X_LeadSource,CAST(count(1) as varchar(50)) as N_Percentage from vw_CRMLeads group by X_LeadSource";
@@ -84,6 +85,7 @@ namespace SmartxAPI.Controllers
             DataTable MonthlySales = new DataTable();
             DataTable MnothlyDelivery= new DataTable();
             DataTable MnothlydraftedInvoice = new DataTable();
+           
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -117,8 +119,10 @@ namespace SmartxAPI.Controllers
                       sqlReceivedRevenue = "select sum(N_ReceivedAmount) as N_ReceivedAmount,N_CompanyId from (select SUM(N_BillAmt)+ SUM(N_TaxAmt) AS N_ReceivedAmount,Inv_Sales.N_CompanyId from Inv_Sales WHERE N_PaymentMethodId=1 AND MONTH(Cast(Inv_Sales.D_Entrydate as DateTime)) ="+MonthWiseDate+" and YEAR(Inv_Sales.D_Entrydate)= "+YearWiseDate+" AND N_CompanyId="+nCompanyID+" AND N_FnYearId="+nFnYearID+ crieteria +" group by Inv_Sales.N_CompanyID union SELECT SUM(Inv_PayReceiptDetails.N_AmountF-Inv_PayReceiptDetails.N_DiscountAmtF)as N_ReceivedAmount,Inv_PayReceiptDetails.N_CompanyID  FROM Inv_PayReceiptDetails INNER JOIN Inv_PayReceipt ON Inv_PayReceiptDetails.N_PayReceiptId = Inv_PayReceipt.N_PayReceiptId AND Inv_PayReceiptDetails.N_CompanyID = Inv_PayReceipt.N_CompanyID where Inv_PayReceipt.X_Type in ('SR','SA') and MONTH(Cast(Inv_PayReceiptDetails.D_Entrydate as DateTime)) ="+MonthWiseDate+"and YEAR(Inv_PayReceiptDetails.D_Entrydate)= "+YearWiseDate+" and Inv_PayReceiptDetails.N_CompanyID = " + nCompanyID  + " and Inv_PayReceipt.N_FnyearID="+nFnYearID + revCriteria+" group by Inv_PayReceiptDetails.N_CompanyID) as temp where N_CompanyID="+nCompanyID+" group by N_CompanyID";
                       sqlDailySales = " select sum(N_TotalSales) AS  TotalSales,Cast(D_SalesDate as date) as d_salesdate ,sum(N_CashSales) AS  TotalCashSales,Cast(D_SalesDate as date) as d_cashdate from vw_DateWiseTotalSales  where MONTH(Cast(D_SalesDate as DateTime)) ="+MonthWiseDate+"and YEAR(D_SalesDate)= "+YearWiseDate+" and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID + crieteria + "  group by  Cast(D_SalesDate as date)";
                       sqlMonthlySales = " select D_Start,X_Month, N_Year, N_Month, sum (N_SaleOrderAmt)AS N_SalesOrderAmt,sum (N_SalesAmt)AS N_SalesAmt,sum (N_PaidAmt)AS N_PaidAmt from vw_MonthBranchWiseSalesAmt  where  N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID + crieteria + " group by D_Start,X_Month, N_Year, N_Month order by  N_Year, N_Month";
-                      DraftedDelivery="SELECT count(1) as N_Count,sum(Cast(REPLACE(N_Sprice,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvDeliveryNoteNo_Search_Disp WHERE B_IsSaveDraft=1 and MONTH(Cast(invoiceDate as DateTime)) = "+MonthWiseDate+" and YEAR(invoiceDate) = "+YearWiseDate+" and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID + crieteria;
-                      DraftedInvoice="SELECT count(1) as N_Count,sum(Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesInvoiceNo_Search_New_Cloud WHERE B_IsSaveDraft=1 and MONTH(Cast(invoiceDate as DateTime)) = "+MonthWiseDate+" and YEAR(invoiceDate) = "+YearWiseDate+" and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID + crieteria;
+                      DraftedDelivery="SELECT sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvDeliveryNoteNo_Search_Disp WHERE B_IsSaveDraft=1  and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID;
+                      object draftCount=dLayer.ExecuteScalar( "select count(1) as N_Count from inv_deliverynote where b_IsSaveDraft=1 and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID+"",Params,connection);
+                      DraftedInvoice="SELECT sum(Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesInvoiceNo_Search_New_Cloud  WHERE B_IsSaveDraft=1 and isnull(b_Isproforma,0)=0  and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID;
+                      object draftinvoicecount=dLayer.ExecuteScalar("Select count(1) as N_Count from Inv_Sales where b_IsSaveDraft=1 and isnull(b_Isproforma,0)=0 and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID+"",Params,connection);
 
                      bool B_customer = myFunctions.CheckPermission(nCompanyID, 1302, "Administrator", "X_UserCategory", dLayer, connection);
                      CurrentOrder = dLayer.ExecuteDataTable(sqlCurrentOrder, Params, connection);
@@ -136,6 +140,8 @@ namespace SmartxAPI.Controllers
                      { 
                      Data.Add("permision",true);
                     }
+                    myFunctions.AddNewColumnToDataTable(MnothlyDelivery, "N_Count", typeof(int), draftCount);
+                    myFunctions.AddNewColumnToDataTable(MnothlydraftedInvoice, "N_Count", typeof(int), draftinvoicecount);
 
                 }
 
