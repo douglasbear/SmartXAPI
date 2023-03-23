@@ -138,6 +138,7 @@ namespace SmartxAPI.Controllers
             string Criterea = "";
             string FieldList = "";
             string DataSource = "";
+            string DataSource2 = "";
             string PKey = "";
             string BranchCriterea = "";
             string LocationCriterea = "";
@@ -202,7 +203,7 @@ namespace SmartxAPI.Controllers
                         SortBy = " order by " + xSortBy;
                     }
 
-                    string CriteriaSql = "select isnull(X_DataSource,'') as X_DataSource,isnull(X_DefaultCriteria,'') as X_DefaultCriteria,isnull(X_BranchCriteria,'') as X_BranchCriteria,isnull(X_LocationCriteria,'') as X_LocationCriteria,isnull(X_DefaultSortField,'') as X_DefaultSortField,isnull(X_PKey,'') as X_PKey,isnull(X_PatternCriteria,'') as X_PatternCriteria,X_TotalField from Gen_TableView where (N_TableViewID = @tbvVal) AND (N_MenuID=@mnuVal)";
+                    string CriteriaSql = "select isnull(X_DataSource,'') as X_DataSource,isnull(X_DefaultCriteria,'') as X_DefaultCriteria,isnull(X_BranchCriteria,'') as X_BranchCriteria,isnull(X_LocationCriteria,'') as X_LocationCriteria,isnull(X_DefaultSortField,'') as X_DefaultSortField,isnull(X_PKey,'') as X_PKey,isnull(X_PatternCriteria,'') as X_PatternCriteria,X_TotalField,isnull(X_DataSource2,'') as X_DataSource2 from Gen_TableView where (N_TableViewID = @tbvVal) AND (N_MenuID=@mnuVal)";
                     DataTable CriteriaList = dLayer.ExecuteDataTable(CriteriaSql, Params, connection);
 
                     if (CriteriaList.Rows.Count == 0)
@@ -320,11 +321,19 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Error(User, "Key Value Not Found"));
                     }
+                    if (dRow["X_DataSource2"].ToString() != "")
+                    {
+                        DataSource2 = dRow["X_DataSource2"].ToString();
+                    }
+                    else
+                    {
+                        return Ok(_api.Error(User, "Data Source2 Not Found"));
+                    }
 
                     if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + SortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + " and " + PKey + " not in " + "(select top(" + Count + ") " + PKey + " from " + DataSource + Criterea + SortBy + " ) " + SortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + " and " + PKey + " not in " + "(select top(" + Count + ") " + PKey + " from " + DataSource2 + Criterea + SortBy + " ) " + SortBy;
 
                     if (export)
                     {
