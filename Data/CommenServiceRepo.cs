@@ -66,6 +66,7 @@ namespace SmartxAPI.Data
                         {"X_CompanyName",companyname},
                         {"X_FnYearDescr",""},
                         {"X_LoginName",username}
+                        ,{"N_CompanyID",companyid}
                     };
                     DataTable loginDt = dLayer.ExecuteDataTablePro("SP_LOGIN_CLOUD", paramsList, connection);
 
