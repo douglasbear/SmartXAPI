@@ -146,16 +146,9 @@ namespace SmartxAPI.Controllers
                     paramList.Add("@clientID", n_ClientID);
 
 
-                    dLayer.DeleteData("genSettings", "n_ClientID", n_ClientID, "", connection, transaction);
-                    int settingsID = dLayer.SaveData("genSettings", "N_SettingsID", DetailTable, connection, transaction);
-                    if (settingsID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Something went wrong"));
-                    }
-                    else{
-                    DetailsTable = dLayer.ExecuteDataTable("select top 1 (select N_Value from genSettings where N_ClientID="+n_ClientID+" and X_Description='COMPANY LIMIT')  as N_Companies,(select N_Value  from genSettings where N_ClientID="+n_ClientID+" and X_Description='BRANCH LIMIT')as N_Branches,"+
-                   "(select N_Value  from genSettings where N_ClientID="+n_ClientID+" and X_Description='EMPLOYEE LIMIT')as N_Employees,"+"(select N_Value from genSettings where N_ClientID="+n_ClientID+" and X_Description='USER LIMIT')as N_Users  from  genSettings where N_ClientID="+n_ClientID+"",paramList,connection, transaction);
+
+                   DetailsTable = dLayer.ExecuteDataTable("select top 1 (select N_Value from genSettings where N_ClientID="+n_ClientID+" and X_Description='COMPANY LIMIT')  as N_Companies,(select N_Value  from genSettings where N_ClientID="+n_ClientID+" and X_Description='BRANCH LIMIT')as N_Branches,"+
+                   "(select N_Value  from genSettings where N_ClientID="+n_ClientID+" and X_Description='EMPLOYEE LIMIT')as N_Employees,"+"(select N_Value from genSettings where N_ClientID="+n_ClientID+" and X_Description='USER LIMIT') as N_Users  from  genSettings where N_ClientID="+n_ClientID+"",paramList,connection, transaction);
                     //DetailsTable = dLayer.ExecuteDataTable(,connection, transaction);
                       DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_ClientHistoryID", typeof(int), 0);
                       DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_ClientID", typeof(int), n_ClientID);
@@ -169,11 +162,19 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Something went wrong"));
                     }
-                     
+                    
+                    dLayer.DeleteData("genSettings", "n_ClientID", n_ClientID, "", connection, transaction);
+                    int settingsID = dLayer.SaveData("genSettings", "N_SettingsID", DetailTable, connection, transaction);
+                    
+                    if (settingsID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Something went wrong"));
                     }
+                    
                    
                     
-                       transaction.Commit();
+                    transaction.Commit();
                     return Ok(_api.Success(""));
                  
                 }
@@ -240,7 +241,7 @@ namespace SmartxAPI.Controllers
                         clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID and X_Description not in ('STUDENT LIMIT','EMPLOYEE LIMIT')";
                         break;
                     case "obs"://loan issue
-                       clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID and X_Description not in('STUDENT LIMIT','BRANCH LIMIT','EMPLOYEE LIMIT') ";
+                       clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID and X_Description not in('STUDENT LIMIT','BRANCH LIMIT','EMPLOYEE LIMIT','COMPANY LIMIT') ";
                         break;
                     case "hrp"://Salary Payment
                        clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID  and X_Description not in('STUDENT LIMIT','BRANCH LIMIT') ";
