@@ -2023,6 +2023,8 @@ namespace SmartxAPI.Controllers
                     string xButtonAction = "Delete";
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_CustomerId,0) as N_CustomerId,X_ReceiptNo,N_SalesOrderID from Inv_Sales where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_SalesID=@nTransID";
                     string x_ReceiptNo="";
+                    object objFormID = dLayer.ExecuteScalar("select N_FormID from Inv_Sales where N_CompanyId=@nCompanyID and N_FnYearId=@nFnYearID and N_SalesId=@nTransID", ParamList, connection);
+
                   
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
@@ -2216,12 +2218,22 @@ namespace SmartxAPI.Controllers
                             };
 
                             transaction.Commit();
-                            return Ok(_api.Success("Sales Invoice " + status + " Successfully"));
+                            if (myFunctions.getIntVAL(objFormID.ToString()) == 1665)
+                            {
+                                return Ok(_api.Success("Fee Collection " + status + " Successfully"));
+                            } else {
+                                return Ok(_api.Success("Sales Invoice " + status + " Successfully"));
+                            };
                         }
                         else
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User, "Unable to delete Sales Invoice"));
+                            if (myFunctions.getIntVAL(objFormID.ToString()) == 1665)
+                            {
+                                return Ok(_api.Error(User, "Unable to delete Fee Collection"));
+                            } else {
+                                return Ok(_api.Error(User, "Unable to delete Sales Invoice"));
+                            };
                         }
                     }
                     else

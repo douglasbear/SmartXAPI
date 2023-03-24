@@ -382,34 +382,38 @@ namespace SmartxAPI.Controllers
 
                     // object PayCount1 = dLayer.ExecuteScalar("select COUNT(Inv_PayReceiptDetails.N_InventoryID) from Inv_PayReceiptDetails INNER JOIN Sch_Sales ON Sch_Sales.N_CompanyID=Inv_PayReceiptDetails.n_companyid and Sch_Sales.N_RefSalesID=Inv_PayReceiptDetails.N_InventoryID where Inv_PayReceiptDetails.N_CompanyID="+ nCompanyID +" and Inv_PayReceiptDetails.X_TransType='SALES'  and Sch_Sales.N_Type=1 and Sch_Sales.N_RefId="+ nAdmissionID, Params, connection, transaction);
                     object PayCount1 = dLayer.ExecuteScalar("select COUNT(*) from Inv_SalesDetails where N_CompanyID="+ nCompanyID +" and N_SalesID in (select N_SalesId from Inv_Sales where N_CompanyID="+ nCompanyID +" and N_FnYearId="+ nFnYearId +" and N_CustomerId="+ nCustomerID +")", Params, connection, transaction);
-                    if (PayCount1 != null)
+                    if (myFunctions.getIntVAL(PayCount1.ToString()) > 0)
                     {
-                        if(myFunctions.getIntVAL(PayCount1.ToString())==0)
-                        {
+                        object FeeCount = dLayer.ExecuteScalar("select COUNT(*) from vw_SchStudentFee where N_CompanyID="+ nCompanyID +" and N_AcYearID="+ nAcYearID +" and N_ClassID="+ myFunctions.getIntVAL(MasterTable.Rows[0]["n_ClassID"].ToString()) +" and N_StudentTypeID="+ myFunctions.getIntVAL(MasterTable.Rows[0]["n_StudentCatID"].ToString()), Params, connection, transaction);
 
-                            //--------------------------------------Sch_Sales - SALES - Posting--------------------------------------
-                            SortedList SalesParam = new SortedList();
-                            SalesParam.Add("N_CompanyID", nCompanyID);
-                            SalesParam.Add("N_AcYearID", nAcYearID);
-                            SalesParam.Add("N_BranchID", nBranchID);
-                            SalesParam.Add("N_LocationID ", nLocationID);
-                            SalesParam.Add("N_StudentID ", nAdmissionID);
-                            //SalesParam.Add("N_CustomerID ", nCustomerID);
-                            SalesParam.Add("D_AdmDate ", Convert.ToDateTime(MasterTable.Rows[0]["D_AdmissionDate"].ToString()));
-                            SalesParam.Add("N_UserID ", nUserID);
-                            SalesParam.Add("N_Type ", 1);
-                            SalesParam.Add("N_BusRegID ", 0);
-                            try
+                        if (myFunctions.getIntVAL(FeeCount.ToString()) > 0)
+                        {
+                            if(myFunctions.getIntVAL(PayCount1.ToString())==0)
                             {
-                                dLayer.ExecuteNonQueryPro("SP_StudentAdmFee_Insert", SalesParam, connection, transaction);
-                            }
-                            catch (Exception ex)
-                            {
-                                transaction.Rollback();
-                                return Ok(api.Error(User, ex));
-                            }
+                                //--------------------------------------Sch_Sales - SALES - Posting--------------------------------------
+                                SortedList SalesParam = new SortedList();
+                                SalesParam.Add("N_CompanyID", nCompanyID);
+                                SalesParam.Add("N_AcYearID", nAcYearID);
+                                SalesParam.Add("N_BranchID", nBranchID);
+                                SalesParam.Add("N_LocationID ", nLocationID);
+                                SalesParam.Add("N_StudentID ", nAdmissionID);
+                                //SalesParam.Add("N_CustomerID ", nCustomerID);
+                                SalesParam.Add("D_AdmDate ", Convert.ToDateTime(MasterTable.Rows[0]["D_AdmissionDate"].ToString()));
+                                SalesParam.Add("N_UserID ", nUserID);
+                                SalesParam.Add("N_Type ", 1);
+                                SalesParam.Add("N_BusRegID ", 0);
+                                try
+                                {
+                                    dLayer.ExecuteNonQueryPro("SP_StudentAdmFee_Insert", SalesParam, connection, transaction);
+                                }
+                                catch (Exception ex)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(api.Error(User, ex));
+                                }
                             
-                            //----------------------------------------^^^^^^^^^^^^^^^^^^^^^^^^-------------------------------------
+                                //----------------------------------------^^^^^^^^^^^^^^^^^^^^^^^^-------------------------------------
+                            }
                         }
                     }
 
