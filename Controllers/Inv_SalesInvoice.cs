@@ -342,7 +342,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesInvoiceDetails(int nCompanyId, bool bAllBranchData, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID, string xDeliveryNoteID,int nServiceSheetID, string xServiceSheetID,string xSchSalesID,bool isServiceOrder, int nFormID)
+        public ActionResult GetSalesInvoiceDetails(int nCompanyId, bool bAllBranchData, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID, string xDeliveryNoteID,int nServiceSheetID, string xServiceSheetID,string xSchSalesID,bool isServiceOrder, int nFormID, bool enableDayWise)
         {
             if (xInvoiceNo != null)
                 xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
@@ -756,7 +756,11 @@ namespace SmartxAPI.Controllers
                         }
 
                         string DetailSql = "";
-                        DetailSql = "select * from vw_ServiceTimesheetDetailsToSales where N_CompanyId=@nCompanyID and N_ServiceSheetID in ( "+xServiceSheetID+" )";
+                        if (enableDayWise)
+                            DetailSql = "select * from vw_ServiceTimesheetDetailsToSalesDaywise where N_CompanyId=@nCompanyID and N_ServiceSheetID in ( "+xServiceSheetID+" )";
+                        else
+                            DetailSql = "select * from vw_ServiceTimesheetDetailsToSales where N_CompanyId=@nCompanyID and N_ServiceSheetID in ( "+xServiceSheetID+" )";
+
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
                         dsSalesInvoice.Tables.Add(MasterTable);
@@ -2562,7 +2566,7 @@ namespace SmartxAPI.Controllers
 
         }
         [HttpGet("deliveryNoteProduct")]
-        public ActionResult ProductList(int nFnYearID, int nCustomerID, bool bAllbranchData, int nBranchID)
+        public ActionResult ProductList(int nFnYearID, int nCustomerID, bool bAllbranchData, int nBranchID, int nFormID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
            
@@ -2574,8 +2578,35 @@ namespace SmartxAPI.Controllers
 
 
             string sqlCommandText = "";
-            if (bAllbranchData)
-                sqlCommandText = " SELECT        Inv_DeliveryNote.N_CustomerId, Inv_DeliveryNote.N_CompanyId, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, Inv_CustomerProjects.X_ProjectName, Inv_DeliveryNote.N_SalesOrderID, "
+            if (nFormID == 1601)
+            {
+                if (bAllbranchData)
+                    sqlCommandText = " SELECT        Inv_DeliveryNote.N_CustomerId, Inv_DeliveryNote.N_CompanyId, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, Inv_CustomerProjects.X_ProjectName, Inv_DeliveryNote.N_SalesOrderID, "
+                                + "Inv_DeliveryNote.N_DeliveryNoteId, Inv_DeliveryNote.N_BranchId, Inv_DeliveryNote.X_CustPONo, Inv_DeliveryNote.X_ReceiptNo AS X_DeliveryNoteNo "
+                                + " FROM            Inv_DeliveryNote INNER JOIN  "
+                                + " Inv_DeliveryNoteDetails ON Inv_DeliveryNoteDetails.N_CompanyID = Inv_DeliveryNote.N_CompanyId AND Inv_DeliveryNoteDetails.N_DeliveryNoteID = Inv_DeliveryNote.N_DeliveryNoteId LEFT OUTER JOIN "
+                                + "Inv_Customer ON Inv_DeliveryNote.N_CompanyId = Inv_Customer.N_CompanyID AND Inv_DeliveryNote.N_CustomerId = Inv_Customer.N_CustomerID AND  "
+                                + "Inv_DeliveryNote.N_FnYearId = Inv_Customer.N_FnYearID LEFT OUTER JOIN "
+                                + "Inv_CustomerProjects ON Inv_DeliveryNote.N_ProjectID = Inv_CustomerProjects.N_ProjectID AND Inv_DeliveryNote.N_CompanyId = Inv_CustomerProjects.N_CompanyID "
+                                + "WHERE        (Inv_DeliveryNote.N_CompanyId = @nCompanyID) AND (Inv_DeliveryNote.N_CustomerId = @nCustomerID) AND (isnull(Inv_DeliveryNote.B_IsSaveDraft,0) = 0) AND (isnull(Inv_DeliveryNote.B_BeginingBalEntry,0) = 0)"
+                                +" Group by Inv_DeliveryNote.N_CustomerId, Inv_DeliveryNote.N_CompanyId, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, Inv_CustomerProjects.X_ProjectName, Inv_DeliveryNote.N_SalesOrderID,  "
+                                +"       Inv_DeliveryNote.N_DeliveryNoteId, Inv_DeliveryNote.N_BranchId, Inv_DeliveryNote.X_CustPONo, Inv_DeliveryNote.X_ReceiptNo,Inv_DeliveryNote.B_BeginingBalEntry "
+                                +" order by Inv_DeliveryNote.X_ReceiptNo"; 
+                else
+                    sqlCommandText = " SELECT        Inv_DeliveryNote.N_CustomerId, Inv_DeliveryNote.N_CompanyId, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, Inv_CustomerProjects.X_ProjectName, Inv_DeliveryNote.N_SalesOrderID, "
+                                + "Inv_DeliveryNote.N_DeliveryNoteId, Inv_DeliveryNote.N_BranchId, Inv_DeliveryNote.X_CustPONo, Inv_DeliveryNote.X_ReceiptNo AS X_DeliveryNoteNo "
+                                + " FROM            Inv_DeliveryNote INNER JOIN  "
+                                + " Inv_DeliveryNoteDetails ON Inv_DeliveryNoteDetails.N_CompanyID = Inv_DeliveryNote.N_CompanyId AND Inv_DeliveryNoteDetails.N_DeliveryNoteID = Inv_DeliveryNote.N_DeliveryNoteId LEFT OUTER JOIN "
+                                + "Inv_Customer ON Inv_DeliveryNote.N_CompanyId = Inv_Customer.N_CompanyID AND Inv_DeliveryNote.N_CustomerId = Inv_Customer.N_CustomerID AND  "
+                                + "Inv_DeliveryNote.N_FnYearId = Inv_Customer.N_FnYearID LEFT OUTER JOIN "
+                                + "Inv_CustomerProjects ON Inv_DeliveryNote.N_ProjectID = Inv_CustomerProjects.N_ProjectID AND Inv_DeliveryNote.N_CompanyId = Inv_CustomerProjects.N_CompanyID "
+                                + "WHERE        (Inv_DeliveryNote.N_CompanyId = @nCompanyID) AND (Inv_DeliveryNote.N_CustomerId = @nCustomerID) AND (isnull(Inv_DeliveryNote.B_BeginingBalEntry,0) = 0) AND (isnull(Inv_DeliveryNote.B_IsSaveDraft,0) = 0)  AND (Inv_DeliveryNote.N_BranchID = "+nBranchID+") "
+                                +" Group by Inv_DeliveryNote.N_CustomerId, Inv_DeliveryNote.N_CompanyId, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, Inv_CustomerProjects.X_ProjectName, Inv_DeliveryNote.N_SalesOrderID,  "
+                                +"       Inv_DeliveryNote.N_DeliveryNoteId, Inv_DeliveryNote.N_BranchId, Inv_DeliveryNote.X_CustPONo, Inv_DeliveryNote.X_ReceiptNo,Inv_DeliveryNote.B_BeginingBalEntry "
+                                +" order by Inv_DeliveryNote.X_ReceiptNo";
+            } else {
+                if (bAllbranchData)
+                    sqlCommandText = " SELECT        Inv_DeliveryNote.N_CustomerId, Inv_DeliveryNote.N_CompanyId, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, Inv_CustomerProjects.X_ProjectName, Inv_DeliveryNote.N_SalesOrderID, "
                                 + "Inv_DeliveryNote.N_DeliveryNoteId, Inv_DeliveryNote.N_BranchId, Inv_DeliveryNote.X_CustPONo, Inv_DeliveryNote.X_ReceiptNo AS X_DeliveryNoteNo "
                                 + " FROM            Inv_DeliveryNote INNER JOIN  "
                                 + " Inv_DeliveryNoteDetails ON Inv_DeliveryNoteDetails.N_CompanyID = Inv_DeliveryNote.N_CompanyId AND Inv_DeliveryNoteDetails.N_DeliveryNoteID = Inv_DeliveryNote.N_DeliveryNoteId LEFT OUTER JOIN "
@@ -2586,12 +2617,12 @@ namespace SmartxAPI.Controllers
                                 + "    (SELECT        ISNULL(N_DeliveryNoteDtlsID, 0) AS N_DeliveryNoteDtlsID "
                                 +"     FROM            Inv_SalesDetails  "
                                 +"   WHERE        (N_CompanyID = @nCompanyID)  "
-                                 +"   GROUP BY N_DeliveryNoteDtlsID))  "
+                                +"   GROUP BY N_DeliveryNoteDtlsID))  "
                                 +" Group by Inv_DeliveryNote.N_CustomerId, Inv_DeliveryNote.N_CompanyId, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, Inv_CustomerProjects.X_ProjectName, Inv_DeliveryNote.N_SalesOrderID,  "
                                 +"       Inv_DeliveryNote.N_DeliveryNoteId, Inv_DeliveryNote.N_BranchId, Inv_DeliveryNote.X_CustPONo, Inv_DeliveryNote.X_ReceiptNo,Inv_DeliveryNote.B_BeginingBalEntry "
-                                 +" order by Inv_DeliveryNote.X_ReceiptNo"; 
-            else
-                sqlCommandText = " SELECT        Inv_DeliveryNote.N_CustomerId, Inv_DeliveryNote.N_CompanyId, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, Inv_CustomerProjects.X_ProjectName, Inv_DeliveryNote.N_SalesOrderID, "
+                                +" order by Inv_DeliveryNote.X_ReceiptNo"; 
+                else
+                    sqlCommandText = " SELECT        Inv_DeliveryNote.N_CustomerId, Inv_DeliveryNote.N_CompanyId, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, Inv_CustomerProjects.X_ProjectName, Inv_DeliveryNote.N_SalesOrderID, "
                                 + "Inv_DeliveryNote.N_DeliveryNoteId, Inv_DeliveryNote.N_BranchId, Inv_DeliveryNote.X_CustPONo, Inv_DeliveryNote.X_ReceiptNo AS X_DeliveryNoteNo "
                                 + " FROM            Inv_DeliveryNote INNER JOIN  "
                                 + " Inv_DeliveryNoteDetails ON Inv_DeliveryNoteDetails.N_CompanyID = Inv_DeliveryNote.N_CompanyId AND Inv_DeliveryNoteDetails.N_DeliveryNoteID = Inv_DeliveryNote.N_DeliveryNoteId LEFT OUTER JOIN "
@@ -2602,10 +2633,11 @@ namespace SmartxAPI.Controllers
                                 + "    (SELECT        ISNULL(N_DeliveryNoteDtlsID, 0) AS N_DeliveryNoteDtlsID "
                                 +"     FROM            Inv_SalesDetails  "
                                 +"   WHERE        (N_CompanyID = @nCompanyID)  "
-                                 +"   GROUP BY N_DeliveryNoteDtlsID))  "
+                                +"   GROUP BY N_DeliveryNoteDtlsID))  "
                                 +" Group by Inv_DeliveryNote.N_CustomerId, Inv_DeliveryNote.N_CompanyId, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, Inv_CustomerProjects.X_ProjectName, Inv_DeliveryNote.N_SalesOrderID,  "
                                 +"       Inv_DeliveryNote.N_DeliveryNoteId, Inv_DeliveryNote.N_BranchId, Inv_DeliveryNote.X_CustPONo, Inv_DeliveryNote.X_ReceiptNo,Inv_DeliveryNote.B_BeginingBalEntry "
-                                 +" order by Inv_DeliveryNote.X_ReceiptNo";
+                                +" order by Inv_DeliveryNote.X_ReceiptNo";
+            }
 
             try
             {
