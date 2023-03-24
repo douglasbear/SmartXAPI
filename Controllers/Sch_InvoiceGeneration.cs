@@ -50,7 +50,7 @@ namespace SmartxAPI.Controllers
                 sqlCondition= " and Sch_Sales.D_SalesDate <= @d_Date";
 
                 if (xSortBy == null || xSortBy.Trim() == "")
-                        xSortBy = " order by Invoice_Date";
+                        xSortBy = " order by Invoice_Date,N_FeeCodeID";
 
 
             string sqlCommandText = "SELECT     Sch_Sales.D_SalesDate AS Invoice_Date, ROW_NUMBER() over(order by Sch_Sales.N_SalesID)+(select ISNULL(MAX(N_SalesID),0) from Inv_Sales where N_CompanyID=@N_CompanyID) AS Invoice_Number, "+
