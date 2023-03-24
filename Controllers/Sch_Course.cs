@@ -205,7 +205,10 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                if (ex.Message.Contains("REFERENCE constraint"))
+                    return Ok(api.Error(User, "Unable to delete course! It has been used."));
+                else
+                    return Ok(api.Error(User, ex));
             }
 
 
