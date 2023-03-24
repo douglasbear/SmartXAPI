@@ -378,9 +378,9 @@ namespace SmartxAPI.Controllers
                         object nUserType;
                         if (nGlobalUserID > 0)
                         {
-                            xPwd = dLayer.ExecuteScalar("SELECT X_Password FROM Users where x_EmailID=@xEmailID and N_ClientID=@nClientID and N_UserID=@nGlobalUserID", userParams, olivoCon, olivoTxn);
+                            xPwd = dLayer.ExecuteScalar("SELECT X_Password FROM Users where  N_ClientID=@nClientID and N_UserID=@nGlobalUserID", userParams, olivoCon, olivoTxn);
                             globalUser.Rows[0]["n_ActiveAppID"] = apps.Rows[0]["n_AppID"].ToString();
-                            nUserType = dLayer.ExecuteScalar("SELECT N_UserType FROM Users where x_EmailID=@xEmailID and N_ClientID=@nClientID and N_UserID=@nGlobalUserID", userParams, olivoCon, olivoTxn);
+                            nUserType = dLayer.ExecuteScalar("SELECT isnull(N_UserType,0) FROM Users where  N_ClientID=@nClientID and N_UserID=@nGlobalUserID", userParams, olivoCon, olivoTxn);
                             globalUser.Rows[0]["N_UserType"] = myFunctions.getIntVAL(nUserType.ToString());
                         }
                         else
