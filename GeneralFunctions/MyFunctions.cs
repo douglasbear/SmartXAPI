@@ -1474,9 +1474,8 @@ namespace SmartxAPI.GeneralFunctions
                     return 0;
                 }
                 object NxtUser = null;
-                NxtUser = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=0 and N_ActionTypeID<>110", LogParams, connection, transaction);
-                if (NxtUser != null)
-                    N_NxtUserID = this.getIntVAL(NxtUser.ToString());
+                NxtUser = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=0 and N_ActionTypeID<>110", LogParams, connection, transaction);if (NxtUser != null)
+                N_NxtUserID = this.getIntVAL(NxtUser.ToString());
 
                 LogParams.Add("@xTransType", X_TransType);
                 LogParams.Add("@nApprovalUserCatID", N_ApprovalUserCatID);
@@ -2050,9 +2049,11 @@ namespace SmartxAPI.GeneralFunctions
         {
             bool result = false;
             DataTable dataTable = dLayer.ExecuteDataTable(_fillquery, _params, connection);
-
-            dataTable.Columns["Column1"].ColumnName = "NewColumn1";
-            
+            if (dataTable.Columns.Contains("Column1"))
+                {
+                    dataTable.Columns["Column1"].ColumnName = "NewColumn1";
+                }
+           
             try
             {
                 ExcelPackage.LicenseContext = LicenseContext.Commercial;

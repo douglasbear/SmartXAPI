@@ -144,7 +144,8 @@ namespace SmartxAPI.Controllers
             string SortBy = "";
             string PatternCriteria = "";
             string SumField = "";
-
+            string expFieldList1 = "";
+            string expFieldList = "";
 
             try
             {
@@ -161,18 +162,30 @@ namespace SmartxAPI.Controllers
                         {
                             if (myFunctions.getBoolVAL(cRow["B_Search"].ToString()))
                             {
+                                //if(cRow["X_FieldName"].ToString()) contain _ cut before _ // if underscore on  middle then replace into space '' 
                                 Searchkey = Searchkey + " or [" + cRow["X_FieldName"].ToString() + "] like '%" + xSearchkey + "%'";
                             }
                         }
+                        if(cRow["X_FieldName"].ToString().Contains("_"))
+                        {
+                           expFieldList1=  cRow["X_FieldName"].ToString().Substring(cRow["X_FieldName"].ToString().IndexOf('_') + 1);
+                           
+                        }
+                        else
+                        {
+                            expFieldList1 =  cRow["X_FieldName"].ToString();
+                        }
 
                         FieldList = FieldList + ",[" + cRow["X_FieldName"].ToString() + "]";
+                        expFieldList= expFieldList+ ",[" + cRow["X_FieldName"].ToString() + "]" + " AS " + expFieldList1;
 
                     }
                     if (xSearchField != "All")
                     {
                         Searchkey = Searchkey + " or [" + xSearchField + "] like '%" + xSearchkey + "%'";
                     }
-
+                    if (expFieldList.Length > 1)
+                    { expFieldList = expFieldList.Substring(1); }
                     if (Searchkey.Length > 3)
                     { Searchkey = Searchkey.Substring(3); }
                     if (FieldList.Length > 1)
@@ -218,7 +231,16 @@ namespace SmartxAPI.Controllers
 
                     if (UserPattern != "" && dRow["X_PatternCriteria"].ToString() != "")
                     {
-                        PatternCriteria = " (  Left(X_Pattern,Len(@userPattern))=@userPattern ) ";
+                        if(nFormID==1305)
+                        {
+                             PatternCriteria = " (  Left(X_Pattern,Len(@userPattern))=@userPattern OR N_CreatedUser=0) ";
+
+                        }
+                        else
+                        {
+                             PatternCriteria = " (  Left(X_Pattern,Len(@userPattern))=@userPattern ) ";
+                        }
+                       
                     }
                       if (dRow["X_LocationCriteria"].ToString() != "")
                     {
@@ -306,7 +328,7 @@ namespace SmartxAPI.Controllers
 
                     if (export)
                     {
-                        sqlCommandText = "select " + FieldList + " from " + DataSource + Criterea + SortBy;
+                        sqlCommandText = "select " + expFieldList + " from " + DataSource + Criterea + SortBy;
                         string fileName = "Exported_List_" + RandomString();
                         if (nFormID == 1650)
                         {
