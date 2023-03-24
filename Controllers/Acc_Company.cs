@@ -415,7 +415,7 @@ namespace SmartxAPI.Controllers
                                         {"D_Start",GeneralTable.Rows[0]["d_FromDate"].ToString()},
                                         {"D_End",GeneralTable.Rows[0]["d_ToDate"].ToString()}};
                             N_FnYearId = dLayer.ExecuteScalarPro("SP_FinancialYear_Create", proParams2, connection, transaction);
-                           dLayer.ExecuteNonQuery("insert into Sec_UserApps select "+N_CompanyId+",max(N_APPMappingID)+1,"+appID+","+userID+","+n_GBUserID+", NULL from Sec_UserApps",connection, transaction);
+                           dLayer.ExecuteNonQuery("insert into Sec_UserApps select "+N_CompanyId+",isnull(max(N_APPMappingID),0)+1,"+appID+","+userID+","+n_GBUserID+", NULL from Sec_UserApps",connection, transaction);
                             SortedList proParams3 = new SortedList(){
                                         {"N_CompanyID",N_CompanyId},
                                         {"N_FnYearID",N_FnYearId}};

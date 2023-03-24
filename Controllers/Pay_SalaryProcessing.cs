@@ -1419,12 +1419,12 @@ namespace SmartxAPI.Controllers
                     dltParams.Add("@xBatch", xBatch);
                     SortedList ParamList = new SortedList();
                     DataTable TransData = new DataTable();
-                    ParamList.Add("@nTransID", nPayRunID);
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", nCompanyID);
+                    ParamList.Add("@nTransID", nTransID);
                     string xButtonAction="Delete";
                     string x_Batch="";
-                     string Sql = "select n_PayRunID,x_Batch from Pay_PaymentMaster where n_PayRunID=@nTransID and N_CompanyID=@nCompanyID ";
+                     string Sql = "select n_PayRunID,x_Batch from Pay_PaymentMaster where n_TransID=@nTransID and N_CompanyID=@nCompanyID";
 
                     int count = myFunctions.getIntVAL(dLayer.ExecuteNonQuery("Select count(1) from Acc_VoucherMaster Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " And N_FnyearID =@nFnYearID and X_TransType = 'ESI' and B_IsAccPosted = 1 and X_ReferenceNo=@xBatch", dltParams, connection, transaction).ToString());
                       TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
