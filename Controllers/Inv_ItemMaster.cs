@@ -694,14 +694,18 @@ namespace SmartxAPI.Controllers
                 itemWarranty = ds.Tables["itemWarranty"];
                 storeAllocation = ds.Tables["store"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CompanyId"].ToString());
-               int nFnYearID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["n_FnYearID"].ToString());
+                int nFnYearID = 0;
                 int N_ItemID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString());
                 string XItemName = MasterTableNew.Rows[0]["X_ItemName"].ToString();
                 object n_MinQty = "";
                 object n_ReOrderQty = "";
                 string xButtonAction="";
 
-          
+                 if (MasterTableNew.Columns.Contains("n_FnYearID"))
+                {
+                     nFnYearID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["n_FnYearID"].ToString());
+
+                }
 
                 if (MasterTableNew.Columns.Contains("n_MinQty"))
                 {
