@@ -627,6 +627,7 @@ namespace SmartxAPI.Controllers
 
                 int N_NextApproverID = 0;
                 string xEmail = MasterRow["x_Email"].ToString();
+                string xButtonAction="";
 
 
 
@@ -682,11 +683,14 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", "210");
                         Params.Add("N_BranchID", nBranchID);
                         x_VacationGroupCode = dLayer.GetAutoNumber("Pay_VacationMaster", "x_VacationGroupCode", Params, connection, transaction);
+                         xButtonAction="Insert"; 
                         if (x_VacationGroupCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate leave Request Code")); }
                         MasterTable.Rows[0]["x_VacationGroupCode"] = x_VacationGroupCode;
                     }
                     else
                     {
+                        x_VacationGroupCode = MasterTable.Rows[0]["x_VacationGroupCode"].ToString();
+
                         dLayer.DeleteData("Pay_VacationMaster", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
                         dLayer.DeleteData("Pay_VacationDetails", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
                     }
@@ -702,10 +706,12 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(api.Error(User, "Unable to save"));
                         }
+                        xButtonAction="Update"; 
 
                     }
 
                     MasterTable.Rows[0]["N_VacTypeID"] = DetailTable.Rows[0]["N_VacTypeID"];
+
                     if (MasterTable.Columns.Contains("N_ApprovalLevelID"))
                         MasterTable.Columns.Remove("N_ApprovalLevelID");
                     if (MasterTable.Columns.Contains("N_Procstatus"))
@@ -804,6 +810,16 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(api.Error(User, "Unable to save"));
                     }
+
+                                           //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,n_VacationGroupID,x_VacationGroupCode,210,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       
+
 
                     // DataTable Files = ds.Tables["files"];
                     // if (Files.Rows.Count > 0)
@@ -958,6 +974,9 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     ParamList.Add("@nCompanyID", nCompanyID);
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_EmpID,0) as N_EmpID,X_VacationGroupCode,N_vacTypeID,B_IsAdjustEntry from Pay_VacationMaster where N_CompanyId=@nCompanyID and N_VacationGroupID=@nTransID";
+                     string xButtonAction="";
+                      string X_VacationGroupCode="";
+
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
@@ -976,7 +995,18 @@ namespace SmartxAPI.Controllers
                     
                     DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, nFormID, n_VacationGroupID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, myFunctions.getIntVAL(TransRow["N_EmpID"].ToString()), myFunctions.getIntVAL(TransRow["N_vacTypeID"].ToString()), User, dLayer, connection));
                     Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
-                    SqlTransaction transaction = connection.BeginTransaction(); ;
+                    SqlTransaction transaction = connection.BeginTransaction(); 
+
+                     //  Activity Log
+                //          string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),n_VacationGroupID,TransRow["X_VacationGroupCode"].ToString(),nFormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
+
+
 
                     string X_Criteria = "N_VacationGroupID=" + n_VacationGroupID + " and N_CompanyID=" + myFunctions.GetCompanyID(User);
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
@@ -991,6 +1021,8 @@ namespace SmartxAPI.Controllers
                     //     transaction.Rollback();
                     //     return Ok(api.Error(User, "Vacation Return requested! Unable to delete Leave Request"));
                     // };
+                      
+           
 
                     if (TransRow["B_IsAdjustEntry"].ToString()=="False")
                     {
