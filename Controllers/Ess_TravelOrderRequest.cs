@@ -206,6 +206,7 @@ namespace SmartxAPI.Controllers
                         string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpBussinessTripRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         N_NextApproverID=myFunctions.LogApprovals(Approvals, nFnYearID, "Travel Order Request", N_PkeyID, x_RequestCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
+                        myAttachments.SaveAttachment(dLayer, Attachment, x_RequestCode, nRequestID,"", x_RequestCode, nEmpID, "Travel Order Document", User, connection, transaction);
                         transaction.Commit();
                         //myFunctions.SendApprovalMail(N_NextApproverID,FormID,nRequestID,"Travel Order Request",x_RequestCode,dLayer,connection,transaction,User);
                         return Ok(api.Success("Travel Order Request Approval updated" + "-" + x_RequestCode));
@@ -276,7 +277,7 @@ namespace SmartxAPI.Controllers
                         {
                             try
                             {
-                                myAttachments.SaveAttachment(dLayer, Attachment, x_RequestCode, nRequestID, CustomerInfo.Rows[0]["X_FileName"].ToString().Trim(), CustomerInfo.Rows[0]["X_RequestCode"].ToString(), nRequestID, "Travel Order Document", User, connection, transaction);
+                                myAttachments.SaveAttachment(dLayer, Attachment, x_RequestCode, nRequestID, CustomerInfo.Rows[0]["X_FileName"].ToString().Trim(), CustomerInfo.Rows[0]["X_RequestCode"].ToString(), nEmpID, "Travel Order Document", User, connection, transaction);
                             }
                             catch (Exception ex)
                             {
@@ -336,7 +337,12 @@ namespace SmartxAPI.Controllers
                     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Travel Order Request", nRequestID, TransRow["X_RequestCode"].ToString(), ProcStatus, "Pay_EmpBussinessTripRequest", X_Criteria, objEmpName.ToString(), User, dLayer, connection, transaction);
                     if (status != "Error")
                     {
-                        transaction.Commit();
+                        if (ButtonTag == "6" || ButtonTag == "0")
+                            {
+                        myAttachments.DeleteAttachment(dLayer, 1, nRequestID, EmpID, nFnYearID, this.FormID, User, transaction, connection);
+                       
+                            }
+                             transaction.Commit();
                         return Ok(api.Success("Travel Order Request " + status + " Successfully"));
                         
                     }
