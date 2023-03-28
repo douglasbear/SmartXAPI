@@ -283,7 +283,8 @@ namespace SmartxAPI.Controllers
                     object obj = dLayer.ExecuteScalar("Select isnull(Count(X_BatchCode),0) from Pay_TimeSheetMaster where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_EmpID=" + nEmpID + " and N_BatchID=" + payRunID + " and ISNULL(N_TotalWorkingDays,0)>0", Params, connection);
                     if (obj != null)
                     {
-                        if (myFunctions.getIntVAL(obj.ToString()) > 0)
+                        
+                        if (myFunctions.getIntVAL(obj.ToString()) > 0 )
                         {
                             double additionTime = 0, deductionTime = 0, CompsateDed = 0, OfficeHours = 0, AbsentCount = 0;
                             double N_additionTime = 0, N_deductionTime = 0, N_CompsateDed = 0, N_OfficeHours = 0, N_ExtraHours = 0;
