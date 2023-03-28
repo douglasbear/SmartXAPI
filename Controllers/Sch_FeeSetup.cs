@@ -228,8 +228,8 @@ namespace SmartxAPI.Controllers
 
 
 
-                  [HttpGet("dashboardList")]
-        public ActionResult GetAssignmentList(int nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        [HttpGet("dashboardList")]
+        public ActionResult GetAssignmentList(int nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nAcYearID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -267,11 +267,12 @@ namespace SmartxAPI.Controllers
             }
        
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_FeeSetup where N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_FeeSetup where N_CompanyID=@nCompanyID and N_AcYearID=@nAcYearID " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_FeeSetup where N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Sch_FeeSetup where N_CompanyID=@nCompanyID and N_AcYearID=@nAcYearID " + Searchkey + " " + xSortBy;
 
             Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nAcYearID", nAcYearID);
            
 
             try
@@ -282,7 +283,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    sqlCommandCount = "select count(1) as N_Count  from vw_Sch_FeeSetup where N_CompanyID=@nCompanyID " + Searchkey + " ";
+                    sqlCommandCount = "select count(1) as N_Count  from vw_Sch_FeeSetup where N_CompanyID=@nCompanyID and N_AcYearID=@nAcYearID " + Searchkey + " ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

@@ -382,7 +382,7 @@ namespace SmartxAPI.Controllers
 
                     // object PayCount1 = dLayer.ExecuteScalar("select COUNT(Inv_PayReceiptDetails.N_InventoryID) from Inv_PayReceiptDetails INNER JOIN Sch_Sales ON Sch_Sales.N_CompanyID=Inv_PayReceiptDetails.n_companyid and Sch_Sales.N_RefSalesID=Inv_PayReceiptDetails.N_InventoryID where Inv_PayReceiptDetails.N_CompanyID="+ nCompanyID +" and Inv_PayReceiptDetails.X_TransType='SALES'  and Sch_Sales.N_Type=1 and Sch_Sales.N_RefId="+ nAdmissionID, Params, connection, transaction);
                     object PayCount1 = dLayer.ExecuteScalar("select COUNT(*) from Inv_SalesDetails where N_CompanyID="+ nCompanyID +" and N_SalesID in (select N_SalesId from Inv_Sales where N_CompanyID="+ nCompanyID +" and N_FnYearId="+ nFnYearId +" and N_CustomerId="+ nCustomerID +")", Params, connection, transaction);
-                    if (myFunctions.getIntVAL(PayCount1.ToString()) > 0)
+                    if (PayCount1 != null)
                     {
                         object FeeCount = dLayer.ExecuteScalar("select COUNT(*) from vw_SchStudentFee where N_CompanyID="+ nCompanyID +" and N_AcYearID="+ nAcYearID +" and N_ClassID="+ myFunctions.getIntVAL(MasterTable.Rows[0]["n_ClassID"].ToString()) +" and N_StudentTypeID="+ myFunctions.getIntVAL(MasterTable.Rows[0]["n_StudentCatID"].ToString()), Params, connection, transaction);
 
