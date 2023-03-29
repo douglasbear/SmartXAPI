@@ -298,10 +298,17 @@ namespace SmartxAPI.Controllers
                     UpdateStockParam.Add("N_DispatchId", nDispatchID);
                     UpdateStockParam.Add("N_UserID", N_UserID);
 
+                    try{
                     if (!bDeptEnabled)
-                        dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch", UpdateStockParam, connection, transaction);
+                  
+                    dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch", UpdateStockParam, connection, transaction);
                     else
-                        dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch_Department", UpdateStockParam, connection, transaction);
+                    dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch_Department", UpdateStockParam, connection, transaction);
+                    }
+                   catch (Exception ex)
+                    {
+                        return Ok(_api.Error(User, "There Is No Stock"));
+                    }
                     
 
                     //Activity Log
