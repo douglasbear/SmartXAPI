@@ -123,6 +123,7 @@ namespace SmartxAPI.Controllers
             SortedList QueryParams = new SortedList();
              DataTable Master = new DataTable();
               DataSet ds=new DataSet();
+             
 
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -134,15 +135,22 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    string _sqlQuery = "SELECT Pay_EmpBussinessTripRequest.*, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Employee.N_EmpID AS Expr1, Gen_LookupTable.X_Name as X_TypeName FROM Pay_EmpBussinessTripRequest LEFT OUTER JOIN Gen_LookupTable ON Pay_EmpBussinessTripRequest.N_TravelTypeID = Gen_LookupTable.N_PkeyId LEFT OUTER JOIN Pay_Employee ON Pay_EmpBussinessTripRequest.N_EmpID = Pay_Employee.N_EmpID AND  Pay_EmpBussinessTripRequest.N_CompanyID = Pay_Employee.N_CompanyID where Pay_EmpBussinessTripRequest.X_RequestCode=@xRequestCode and Pay_EmpBussinessTripRequest.N_CompanyID=@nCompanyID";
+                    string _sqlQuery = "SELECT Pay_EmpBussinessTripRequest.*, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Employee.N_EmpID, Gen_LookupTable.X_Name as X_TypeName FROM Pay_EmpBussinessTripRequest LEFT OUTER JOIN Gen_LookupTable ON Pay_EmpBussinessTripRequest.N_TravelTypeID = Gen_LookupTable.N_PkeyId LEFT OUTER JOIN Pay_Employee ON Pay_EmpBussinessTripRequest.N_EmpID = Pay_Employee.N_EmpID AND  Pay_EmpBussinessTripRequest.N_CompanyID = Pay_Employee.N_CompanyID where Pay_EmpBussinessTripRequest.X_RequestCode=@xRequestCode and Pay_EmpBussinessTripRequest.N_CompanyID=@nCompanyID";
 
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
-                    
+                
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Error(User,"Transaction not Found"));
+                    }
+                    DataRow TransRow = dt.Rows[0];
+                    int EmpID = myFunctions.getIntVAL(TransRow["N_EmpID"].ToString());
+                    QueryParams.Add("@EmpID", EmpID);
 
                 dt = api.Format(dt,"master");
                 ds.Tables.Add(dt);
                 
-                   DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dt.Rows[0]["N_RequestID"].ToString()), myFunctions.getIntVAL(dt.Rows[0]["N_RequestID"].ToString()), this.FormID, myFunctions.getIntVAL(dt.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                   DataTable Attachments = myAttachments.ViewAttachment(dLayer, EmpID, myFunctions.getIntVAL(dt.Rows[0]["N_RequestID"].ToString()), this.FormID, myFunctions.getIntVAL(dt.Rows[0]["N_FnYearID"].ToString()), User, connection);
                     Attachments = api.Format(Attachments, "attachments");
                     ds.Tables.Add(Attachments);
                    
@@ -206,6 +214,7 @@ namespace SmartxAPI.Controllers
                         string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpBussinessTripRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         N_NextApproverID=myFunctions.LogApprovals(Approvals, nFnYearID, "Travel Order Request", N_PkeyID, x_RequestCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
+                        myAttachments.SaveAttachment(dLayer, Attachment, x_RequestCode, nRequestID,"", x_RequestCode, nEmpID, "Travel Order Document", User, connection, transaction);
                         transaction.Commit();
                         //myFunctions.SendApprovalMail(N_NextApproverID,FormID,nRequestID,"Travel Order Request",x_RequestCode,dLayer,connection,transaction,User);
                         return Ok(api.Success("Travel Order Request Approval updated" + "-" + x_RequestCode));
@@ -287,7 +296,7 @@ namespace SmartxAPI.Controllers
                         {
                             try
                             {
-                                myAttachments.SaveAttachment(dLayer, Attachment, x_RequestCode, nRequestID, CustomerInfo.Rows[0]["X_FileName"].ToString().Trim(), CustomerInfo.Rows[0]["X_RequestCode"].ToString(), nRequestID, "Travel Order Document", User, connection, transaction);
+                                myAttachments.SaveAttachment(dLayer, Attachment, x_RequestCode, nRequestID, CustomerInfo.Rows[0]["X_FileName"].ToString().Trim(), CustomerInfo.Rows[0]["X_RequestCode"].ToString(), nEmpID, "Travel Order Document", User, connection, transaction);
                             }
                             catch (Exception ex)
                             {
@@ -361,7 +370,12 @@ namespace SmartxAPI.Controllers
                     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Travel Order Request", nRequestID, TransRow["X_RequestCode"].ToString(), ProcStatus, "Pay_EmpBussinessTripRequest", X_Criteria, objEmpName.ToString(), User, dLayer, connection, transaction);
                     if (status != "Error")
                     {
-                        transaction.Commit();
+                        if (ButtonTag == "6" || ButtonTag == "0")
+                            {
+                        myAttachments.DeleteAttachment(dLayer, 1, nRequestID, EmpID, nFnYearID, this.FormID, User, transaction, connection);
+                       
+                            }
+                             transaction.Commit();
                         return Ok(api.Success("Travel Order Request " + status + " Successfully"));
                         
                     }

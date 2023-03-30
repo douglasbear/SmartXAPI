@@ -301,7 +301,6 @@ namespace SmartxAPI.Controllers
                     UpdateStockParam.Add("N_CompanyID", nCompanyID);
                     UpdateStockParam.Add("N_DispatchId", nDispatchID);
                     UpdateStockParam.Add("N_UserID", N_UserID);
-                   
                     try{
                     if (!bDeptEnabled)
                   
@@ -311,7 +310,6 @@ namespace SmartxAPI.Controllers
                     }
                    catch (Exception ex)
                     {
-
                         return Ok(_api.Error(User, "There Is No Stock"));
                     }
                     
