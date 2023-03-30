@@ -138,13 +138,15 @@ namespace SmartxAPI.Controllers
             string Criterea = "";
             string FieldList = "";
             string DataSource = "";
+            string DataSource2 = "";
             string PKey = "";
             string BranchCriterea = "";
             string LocationCriterea = "";
             string SortBy = "";
             string PatternCriteria = "";
             string SumField = "";
-
+            string expFieldList1 = "";
+            string expFieldList = "";
 
             try
             {
@@ -161,18 +163,30 @@ namespace SmartxAPI.Controllers
                         {
                             if (myFunctions.getBoolVAL(cRow["B_Search"].ToString()))
                             {
+                                //if(cRow["X_FieldName"].ToString()) contain _ cut before _ // if underscore on  middle then replace into space '' 
                                 Searchkey = Searchkey + " or [" + cRow["X_FieldName"].ToString() + "] like '%" + xSearchkey + "%'";
                             }
                         }
+                        if(cRow["X_FieldName"].ToString().Contains("_"))
+                        {
+                           expFieldList1=  cRow["X_FieldName"].ToString().Substring(cRow["X_FieldName"].ToString().IndexOf('_') + 1);
+                           
+                        }
+                        else
+                        {
+                            expFieldList1 =  cRow["X_FieldName"].ToString();
+                        }
 
                         FieldList = FieldList + ",[" + cRow["X_FieldName"].ToString() + "]";
+                        expFieldList= expFieldList+ ",[" + cRow["X_FieldName"].ToString() + "]" + " AS " + expFieldList1;
 
                     }
                     if (xSearchField != "All")
                     {
                         Searchkey = Searchkey + " or [" + xSearchField + "] like '%" + xSearchkey + "%'";
                     }
-
+                    if (expFieldList.Length > 1)
+                    { expFieldList = expFieldList.Substring(1); }
                     if (Searchkey.Length > 3)
                     { Searchkey = Searchkey.Substring(3); }
                     if (FieldList.Length > 1)
@@ -189,7 +203,7 @@ namespace SmartxAPI.Controllers
                         SortBy = " order by " + xSortBy;
                     }
 
-                    string CriteriaSql = "select isnull(X_DataSource,'') as X_DataSource,isnull(X_DefaultCriteria,'') as X_DefaultCriteria,isnull(X_BranchCriteria,'') as X_BranchCriteria,isnull(X_LocationCriteria,'') as X_LocationCriteria,isnull(X_DefaultSortField,'') as X_DefaultSortField,isnull(X_PKey,'') as X_PKey,isnull(X_PatternCriteria,'') as X_PatternCriteria,X_TotalField from Gen_TableView where (N_TableViewID = @tbvVal) AND (N_MenuID=@mnuVal)";
+                    string CriteriaSql = "select isnull(X_DataSource,'') as X_DataSource,isnull(X_DefaultCriteria,'') as X_DefaultCriteria,isnull(X_BranchCriteria,'') as X_BranchCriteria,isnull(X_LocationCriteria,'') as X_LocationCriteria,isnull(X_DefaultSortField,'') as X_DefaultSortField,isnull(X_PKey,'') as X_PKey,isnull(X_PatternCriteria,'') as X_PatternCriteria,X_TotalField,isnull(X_DataSource2,'') as X_DataSource2 from Gen_TableView where (N_TableViewID = @tbvVal) AND (N_MenuID=@mnuVal)";
                     DataTable CriteriaList = dLayer.ExecuteDataTable(CriteriaSql, Params, connection);
 
                     if (CriteriaList.Rows.Count == 0)
@@ -218,7 +232,16 @@ namespace SmartxAPI.Controllers
 
                     if (UserPattern != "" && dRow["X_PatternCriteria"].ToString() != "")
                     {
-                        PatternCriteria = " (  Left(X_Pattern,Len(@userPattern))=@userPattern ) ";
+                        if(nFormID==1305)
+                        {
+                             PatternCriteria = " (  Left(X_Pattern,Len(@userPattern))=@userPattern OR N_CreatedUser=0) ";
+
+                        }
+                        else
+                        {
+                             PatternCriteria = " (  Left(X_Pattern,Len(@userPattern))=@userPattern ) ";
+                        }
+                       
                     }
                       if (dRow["X_LocationCriteria"].ToString() != "")
                     {
@@ -298,15 +321,23 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Error(User, "Key Value Not Found"));
                     }
+                    if (dRow["X_DataSource2"].ToString() != "")
+                    {
+                        DataSource2 = dRow["X_DataSource2"].ToString();
+                    }
+                    else
+                    {
+                        return Ok(_api.Error(User, "Data Source2 Not Found"));
+                    }
 
                     if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + SortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + " and " + PKey + " not in " + "(select top(" + Count + ") " + PKey + " from " + DataSource + Criterea + SortBy + " ) " + SortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + " and " + PKey + " not in " + "(select top(" + Count + ") " + PKey + " from " + DataSource2 + Criterea + SortBy + " ) " + SortBy;
 
                     if (export)
                     {
-                        sqlCommandText = "select " + FieldList + " from " + DataSource + Criterea + SortBy;
+                        sqlCommandText = "select " + expFieldList + " from " + DataSource + Criterea + SortBy;
                         string fileName = "Exported_List_" + RandomString();
                         if (nFormID == 1650)
                         {

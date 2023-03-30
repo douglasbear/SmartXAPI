@@ -266,6 +266,7 @@ namespace SmartxAPI.Controllers
                 string X_SalBatch = "";
                 bool B_SalProcessed = false;
                 int nTransID = 0;
+                string xButtonAction="";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -285,9 +286,14 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.N_FormID);
                         Params.Add("N_ServiceEndID", nServiceEndID);
                         ServiceEndCode = dLayer.GetAutoNumber("pay_EndOFService", "X_ServiceEndCode", Params, connection, transaction);
+                         xButtonAction="Insert"; 
+                       
                         if (ServiceEndCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Service End Code")); }
                         MasterTable.Rows[0]["X_ServiceEndCode"] = ServiceEndCode;
                     }
+                      ServiceEndCode = MasterTable.Rows[0]["X_ServiceEndCode"].ToString();
+                       
+
 
                     object _salProcessed = dLayer.ExecuteScalar("SELECT count(1) FROM Pay_PaymentDetails INNER JOIN Pay_PaymentMaster ON Pay_PaymentDetails.N_TransID = Pay_PaymentMaster.N_TransID AND Pay_PaymentDetails.N_CompanyID = Pay_PaymentMaster.N_CompanyID where N_EmpID = " + myFunctions.getIntVAL(MasterTable.Rows[0]["N_EmpID"].ToString()) + " and Pay_PaymentMaster.N_FormID = 190 and isnull(Pay_PaymentMaster.N_RefBatchID,0) = 0 and N_PayRunID = " + PayrunID + " group by  Pay_PaymentMaster.N_TransID,N_PayRunID,X_Batch,N_EmpID", QueryParams, connection, transaction);
                     if (_salProcessed != null)
@@ -321,6 +327,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_PaymentDetails", "N_TransID", nServiceEndID, "N_CompanyID=" + nCompanyID + " and N_FormID=" + this.N_FormID, connection, transaction);
                         dLayer.DeleteData("Pay_PaymentDetails", "N_TransID", nSalTransID, "N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Pay_PaymentMaster", "N_TransID", nSalTransID, "N_CompanyID=" + nCompanyID, connection, transaction);
+                        xButtonAction="Update"; 
                     }
 
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_ServiceEndCode='" + ServiceEndCode + "' and N_FnyearID=" + nFnYearId;
@@ -462,6 +469,16 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error(User, ex));
                         }
                     }
+                                          //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearId,nServiceEndID,ServiceEndCode,455,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       
+
+
 
                     if (nPayRate > 0)
                     {
@@ -520,21 +537,48 @@ namespace SmartxAPI.Controllers
             try
             {
                 SortedList Params = new SortedList();
+            
                 SortedList QueryParams = new SortedList();
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nEmpID", nEmpID);
                 QueryParams.Add("@nServiceEndID", nServiceEndID);
+             
+                 
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                        SortedList ParamList = new SortedList();
+                DataTable TransData = new DataTable();
+                       ParamList.Add("@nTransID", nServiceEndID);
+                ParamList.Add("@nFnYearID", nFnYearID);
+                ParamList.Add("@nCompanyID", nCompanyID);
+                string xButtonAction="Delete";
+                string X_ServiceEndCode="";
+                 string Sql = "select N_ServiceEndID,X_ServiceEndCode from pay_EndOFService where N_ServiceEndID=@nTransID and N_CompanyID=@nCompanyID ";
+                   TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+                    
+                      if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+                                       //  Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nServiceEndID,TransRow["X_ServiceEndCode"].ToString(),455,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+             
 
                     dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set n_RefundAmount =0  Where N_CompanyID = @nCompanyID and N_PayrunID = 0", QueryParams, connection, transaction);
                     dLayer.ExecuteNonQuery("Update Pay_Employee Set N_Status = 0,D_StatusDate = null Where N_CompanyID =@nCompanyID And N_EmpID =@nEmpID", QueryParams, connection, transaction);
                     Results = dLayer.DeleteData("pay_EndOfServiceSDetails", "N_ServiceEndID", nServiceEndID, "", connection, transaction);
                     Results = dLayer.DeleteData("pay_EndOFService", "N_ServiceEndID", nServiceEndID, "", connection, transaction);
-
+                     
+                    
 
                     SortedList SPDeleteParams = new SortedList();
                     SPDeleteParams.Add("N_CompanyID", nCompanyID);
@@ -551,8 +595,7 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(api.Error(User, ex));
                     }
-
-
+               
                     dLayer.DeleteData("Pay_PaymentDetails", "N_TransID", nServiceEndID, "N_CompanyID=" + nCompanyID + " and N_FormID=" + this.N_FormID, connection, transaction);
                     dLayer.DeleteData("Pay_PaymentDetails", "N_TransID", nSalTransID, "N_CompanyID=" + nCompanyID, connection, transaction);
                     dLayer.DeleteData("Pay_PaymentMaster", "N_TransID", nSalTransID, "N_CompanyID=" + nCompanyID, connection, transaction);
