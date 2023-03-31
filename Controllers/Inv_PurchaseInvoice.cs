@@ -1439,12 +1439,22 @@ namespace SmartxAPI.Controllers
                             DataTable DetailTable = dLayer.ExecuteDataTable("select N_POrderID from Inv_PurchaseDetails where N_CompanyID=@nCompanyID and N_PurchaseID=@nTransID group by N_POrderID order by N_POrderID", ParamList, connection, transaction);
                             DataTable DetailsTable = dLayer.ExecuteDataTable("select N_CompanyID,N_ItemID from Inv_PurchaseDetails where N_CompanyID=@nCompanyID and N_PurchaseID=@nTransID group by N_CompanyID,N_ItemID ", ParamList, connection, transaction);
                     
-                            Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
-                            if (Results <= 0)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, "Unable to Delete PurchaseInvoice"));
-                            } 
+                            // Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
+                            // if (Results <= 0)
+                            // {
+                            //     transaction.Rollback();
+                            //     return Ok(_api.Error(User, "Unable to Delete PurchaseInvoice"));
+                            // } 
+                        try
+                        {
+                           Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
+                    
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to Delete PurchaseInvoice"));
+                        }
 
                             myAttachments.DeleteAttachment(dLayer, 1, nPurchaseID, VendorID, nFnYearID, N_FormID, User, transaction, connection);
 

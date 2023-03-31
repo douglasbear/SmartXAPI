@@ -694,14 +694,18 @@ namespace SmartxAPI.Controllers
                 itemWarranty = ds.Tables["itemWarranty"];
                 storeAllocation = ds.Tables["store"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CompanyId"].ToString());
-               int nFnYearID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["n_FnYearID"].ToString());
+                int nFnYearID = 0;
                 int N_ItemID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString());
                 string XItemName = MasterTableNew.Rows[0]["X_ItemName"].ToString();
                 object n_MinQty = "";
                 object n_ReOrderQty = "";
                 string xButtonAction="";
 
-          
+                 if (MasterTableNew.Columns.Contains("n_FnYearID"))
+                {
+                     nFnYearID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["n_FnYearID"].ToString());
+
+                }
 
                 if (MasterTableNew.Columns.Contains("n_MinQty"))
                 {
@@ -1599,7 +1603,7 @@ namespace SmartxAPI.Controllers
         // }
 
         [HttpGet("productHistory")]
-        public ActionResult GetProductHistoryList(int nItemID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nCustomerID, bool nShowCustomer, string xType)
+        public ActionResult GetProductHistoryList(int nItemID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nCustomerID, bool nShowCustomer, string xType,bool isQuotation,int nFnYearID)
         {
             try
             {
@@ -1629,19 +1633,36 @@ namespace SmartxAPI.Controllers
                         xSortBy = " order by " + xSortBy;
                     }
 
-                    // if (Count == 0)
-                    //     sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and N_ItemID=@p2 and N_CustomerID=@p3 " + Searchkey + " " + xSortBy;
-                    // else
-                    //     sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 " + Searchkey + " and N_SalesDetailsID not in (select top(" + Count + ") N_SalesDetailsID from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 " + xSearchkey + xSortBy + " ) " + xSortBy;
-                    if (nCustomerID > 0)
-                    {
+
+                if (isQuotation==true) 
+                {
+                        if (nShowCustomer==false)
+                        {
+                           object customer=dLayer.ExecuteScalar("select N_CustomerID from  Inv_Customer  Where N_CrmCompanyID=" + nCustomerID + " and N_CompanyID=" + nCompanyID + "and N_FnyearID="+nFnYearID, connection);
+                           if (customer!=null) 
+                           {
+                              Params.Add("@nCustomerID", myFunctions.getIntVAL(customer.ToString()));
+                         
+                             sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and  N_ItemID=@p2 and N_CustomerID=@nCustomerID and X_Type=@p4 " + Searchkey + " " + xSortBy;
+                           }
+                        }
+                           else if(nShowCustomer==true)
+                           {
+                            sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and  N_ItemID=@p2  and X_Type=@p4 " + Searchkey + " " + xSortBy; 
+                           }
+                      
+                }
+                else
+                {
+                       if (nCustomerID > 0)
+                      {
                         if (Count == 0)
                             sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and  N_ItemID=@p2 and N_CustomerID=@p3 and X_Type=@p4 " + Searchkey + " " + xSortBy;
                         else
                             sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 and X_Type@p4 " + Searchkey + " and N_SalesDetailsID not in (select top(" + Count + ") N_SalesDetailsID from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3  " + xSearchkey + " ) " + xSortBy;
-                    }
-                    else
-                    {
+                      }
+                      else
+                      {
                         if (nShowCustomer == true)
                         {
                             if (Count == 0)
@@ -1651,7 +1672,15 @@ namespace SmartxAPI.Controllers
 
                         }
 
-                    }
+                      }
+                 }
+                     
+                   
+                    // if (Count == 0)
+                    //     sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and N_ItemID=@p2 and N_CustomerID=@p3 " + Searchkey + " " + xSortBy;
+                    // else
+                    //     sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 " + Searchkey + " and N_SalesDetailsID not in (select top(" + Count + ") N_SalesDetailsID from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 " + xSearchkey + xSortBy + " ) " + xSortBy;
+                   
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
@@ -1690,7 +1719,7 @@ namespace SmartxAPI.Controllers
                     string sqlCommandCount = "";
                     string Searchkey = "", Cond = "";
 
-                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@p2", nItemID);
                     Params.Add("@p3", nVendorID);
 
@@ -1710,27 +1739,27 @@ namespace SmartxAPI.Controllers
                         Cond = " and ISNULL(B_IsPriceQuote,0)=0";
 
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and N_ItemID=@p2 " + Searchkey + " " + Cond + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@nCompanyID and N_ItemID=@p2 " + Searchkey + " " + Cond + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + " and N_PurchaseDetailsID not in (select top(" + Count + ") N_PurchaseDetailsID from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + xSearchkey + Cond + xSortBy + " ) " + Cond + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@nCompanyID and n_ItemID=@p2 " + Searchkey + " and N_PurchaseDetailsID not in (select top(" + Count + ") N_PurchaseDetailsID from vw_inv_vendorTransactionByitem where N_CompanyID=@nCompanyID and n_ItemID=@p2 " + xSearchkey + Cond + xSortBy + " ) " + Cond + " " + xSortBy;
 
 
 
                     if (nVendorID > 0)
                     {
                         if (Count == 0)
-                            sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and  N_ItemID=@p2 and N_VendorID=@p3" + Searchkey + " " + xSortBy;
+                            sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@nCompanyID and  N_ItemID=@p2 and N_VendorID=@p3" + Searchkey + " " + xSortBy;
                         else
-                            sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 and N_VendorID=@p3" + Searchkey + " and N_PurchaseDetailsID not in (select top(" + Count + ") N_PurchaseDetailsID from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 and N_VendorID=@p3  " + xSearchkey + xSortBy + " ) " + xSortBy;
+                            sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@nCompanyID and n_ItemID=@p2 and N_VendorID=@p3" + Searchkey + " and N_PurchaseDetailsID not in (select top(" + Count + ") N_PurchaseDetailsID from vw_inv_vendorTransactionByitem where N_CompanyID=@nCompanyID and n_ItemID=@p2 and N_VendorID=@p3  " + xSearchkey + xSortBy + " ) " + xSortBy;
                     }
                     else
                     {
                         if (nShowVendor == true)
                         {
                             if (Count == 0)
-                                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and  N_ItemID=@p2" + Searchkey + " " + xSortBy;
+                                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@nCompanyID and  N_ItemID=@p2" + Searchkey + " " + xSortBy;
                             else
-                                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2" + Searchkey + " and N_PurchaseDetailsID not in (select top(" + Count + ") N_PurchaseDetailsID from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
+                                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@nCompanyID and n_ItemID=@p2" + Searchkey + " and N_PurchaseDetailsID not in (select top(" + Count + ") N_PurchaseDetailsID from vw_inv_vendorTransactionByitem where N_CompanyID=@nCompanyID and n_ItemID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
 
                         }
 
@@ -1743,7 +1772,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     // sqlCommandCount = "select count(1) as N_Count from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + "" + Cond + " ";
-                    sqlCommandCount = "select count(1) as N_Count from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 and N_VendorID=@p3" + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count from vw_inv_vendorTransactionByitem where N_CompanyID=@nCompanyID and n_ItemID=@p2 and N_VendorID=@p3" + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
 
                     OutPut.Add("Details", _api.Format(dt));
