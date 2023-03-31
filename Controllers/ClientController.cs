@@ -147,23 +147,23 @@ namespace SmartxAPI.Controllers
 
 
 
-                   DetailsTable = dLayer.ExecuteDataTable("select top 1 (select N_Value from genSettings where N_ClientID="+n_ClientID+" and X_Description='COMPANY LIMIT')  as N_Companies,(select N_Value  from genSettings where N_ClientID="+n_ClientID+" and X_Description='BRANCH LIMIT')as N_Branches,"+
-                   "(select N_Value  from genSettings where N_ClientID="+n_ClientID+" and X_Description='EMPLOYEE LIMIT')as N_Employees,"+"(select N_Value from genSettings where N_ClientID="+n_ClientID+" and X_Description='USER LIMIT') as N_Users  from  genSettings where N_ClientID="+n_ClientID+"",paramList,connection, transaction);
-                    //DetailsTable = dLayer.ExecuteDataTable(,connection, transaction);
-                      DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_ClientHistoryID", typeof(int), 0);
-                      DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_ClientID", typeof(int), n_ClientID);
-                      DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_UpdatedUserID", typeof(int),myFunctions.GetUserID(User));
-                      DetailsTable.AcceptChanges(); 
-                     dLayer.DeleteData("ClientHistory", "n_ClientID", n_ClientID,"",connection, transaction);
-                    int nClientHistoryID = dLayer.SaveData("ClientHistory", "N_ClientHistoryID", DetailsTable, connection, transaction);
-                    if (nClientHistoryID <= 0)
-                    {
+                //    DetailsTable = dLayer.ExecuteDataTable("select top 1 (select N_Value from genSettings where N_ClientID="+n_ClientID+" and X_Description='COMPANY LIMIT')  as N_Companies,(select N_Value  from genSettings where N_ClientID="+n_ClientID+" and X_Description='BRANCH LIMIT')as N_Branches,"+
+                //    "(select N_Value  from genSettings where N_ClientID="+n_ClientID+" and X_Description='EMPLOYEE LIMIT')as N_Employees,"+"(select N_Value from genSettings where N_ClientID="+n_ClientID+" and X_Description='USER LIMIT') as N_Users  from  genSettings where N_ClientID="+n_ClientID+"",paramList,connection, transaction);
+                //     //DetailsTable = dLayer.ExecuteDataTable(,connection, transaction);
+                //       DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_ClientHistoryID", typeof(int), 0);
+                //       DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_ClientID", typeof(int), n_ClientID);
+                //       DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_UpdatedUserID", typeof(int),myFunctions.GetUserID(User));
+                //       DetailsTable.AcceptChanges(); 
+                //      dLayer.DeleteData("ClientHistory", "n_ClientID", n_ClientID,"",connection, transaction);
+                //     int nClientHistoryID = dLayer.SaveData("ClientHistory", "N_ClientHistoryID", DetailsTable, connection, transaction);
+                //     if (nClientHistoryID <= 0)
+                //     {
 
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Something went wrong"));
-                    }
+                //         transaction.Rollback();
+                //         return Ok(_api.Error(User, "Something went wrong"));
+                //     }
                     
-                    dLayer.DeleteData("genSettings", "n_ClientID", n_ClientID, "", connection, transaction);
+                    //dLayer.DeleteData("genSettings", "n_ClientID", n_ClientID, "", connection, transaction);
                     int settingsID = dLayer.SaveData("genSettings", "N_SettingsID", DetailTable, connection, transaction);
                     
                     if (settingsID <= 0)

@@ -127,8 +127,9 @@ namespace SmartxAPI.Controllers
                     CustomerTable= dLayer.ExecuteDataTable("select 1 as N_CompanyID,0 as N_CustomerID, X_CompanyName AS X_CustomerName from ClientMaster  where N_ClientID="+ClientID,hqParams,connection, transaction);
                   
                    // transaction.Commit();
-
-               using (SqlConnection hqcon = new SqlConnection(hqDBConnectionString))
+                if(hqDBConnectionString !=null)
+                {
+                    using (SqlConnection hqcon = new SqlConnection(hqDBConnectionString))
                 {
                     hqcon.Open();
                    
@@ -169,7 +170,9 @@ namespace SmartxAPI.Controllers
                     trsaction.Commit();
 
                 }
-                dLayer.ExecuteScalar("Update ClientMaster set N_ProjectID="+projectID+"  where N_ClientID=" + ClientID, connection,transaction); 
+               dLayer.ExecuteScalar("Update ClientMaster set N_ProjectID="+projectID+"  where N_ClientID=" + ClientID, connection,transaction); 
+                }
+               
                 transaction.Commit();
                 }
                 
