@@ -29,6 +29,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly string connectionString;
         private readonly string masterDBConnectionString;
+        private readonly string hqDBConnectionString;
 
         public Clients(ICommenServiceRepo repository, IOptions<AppSettings> appSettings, IApiFunctions api, IMyFunctions myFun, IDataAccessLayer dl, IConfiguration conf)
         {
@@ -38,6 +39,7 @@ namespace SmartxAPI.Controllers
             _appSettings = appSettings.Value;
             connectionString = conf.GetConnectionString("SmartxConnection");
             masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
+            hqDBConnectionString = conf.GetConnectionString("HqConnection");
             config = conf;
             _repository = repository;
         }
@@ -46,7 +48,7 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, UserTable, AppTable;
+                DataTable MasterTable, UserTable,AppTable,ProjectTable,CustomerTable;
                 MasterTable = ds.Tables["master"];
                 UserTable = ds.Tables["user"];
                 // AppTable = ds.Tables["app"];
@@ -55,8 +57,9 @@ namespace SmartxAPI.Controllers
                 DataRow MasterRow = MasterTable.Rows[0];
 
                 string email = MasterRow["x_EmailID"].ToString();
-
-
+                int ClientID = 0;
+                int projectID = 0;
+                int custID = 0;
                 using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
                 {
                     connection.Open();
@@ -76,7 +79,7 @@ namespace SmartxAPI.Controllers
                     MasterTable.Rows[0]["n_UserLimit"] = 1;
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_AdminUserID", typeof(string), email);
 
-                    int ClientID = dLayer.SaveData("ClientMaster", "N_ClientID", MasterTable, connection, transaction);
+                    ClientID = dLayer.SaveData("ClientMaster", "N_ClientID", MasterTable, connection, transaction);
                     if (ClientID <= 0)
                     {
                         transaction.Rollback();
@@ -117,9 +120,63 @@ namespace SmartxAPI.Controllers
 
                     string Sql = "SELECT (select isnull(max(N_UserID),0) from Users)+1 , REPLACE (X_EmailID, '@', '_SpAdmin@'), REPLACE (X_EmailID, '@', '_SpAdmin@'), N_ClientID, N_ActiveAppID, '.', '', 0, 1, REPLACE (X_EmailID, '@', '_SpAdmin@'), N_UserType,1 FROM Users WHERE N_UserID ="+UserID;
                     int output = dLayer.ExecuteNonQuery(Sql, connection, transaction);
-                        
-                    transaction.Commit();
+                    SortedList hqParams = new SortedList();
+                    hqParams.Add("@nClientID", ClientID);
+                  
+                    ProjectTable = dLayer.ExecuteDataTable("select 1 as N_CompanyID,0 as N_ProjectID, X_CompanyName AS X_ProjectName,X_CompanyName AS X_ProjectDescription from ClientMaster  where N_ClientID="+ClientID,hqParams,connection, transaction);
+                    CustomerTable= dLayer.ExecuteDataTable("select 1 as N_CompanyID,0 as N_CustomerID, X_CompanyName AS X_CustomerName from ClientMaster  where N_ClientID="+ClientID,hqParams,connection, transaction);
+                  
+                   // transaction.Commit();
+                if(hqDBConnectionString !=null)
+                {
+                    using (SqlConnection hqcon = new SqlConnection(hqDBConnectionString))
+                {
+                    hqcon.Open();
+                   
+                  
+
+                    //string CustSql = "select TOP(1) N_FnYEarID from Acc_FnYear where N_CompanyID=1 order by N_FnYearID desc";
+                    int nfnyr =myFunctions.getIntVAL( dLayer.ExecuteScalar("select TOP(1) N_FnYearID from Acc_FnYear where N_CompanyID=1 order by N_FnYearID desc", hqcon).ToString());
+                    SqlTransaction trsaction;
+                   
+                    trsaction = hqcon.BeginTransaction();
+                    SortedList custParam = new SortedList();
+                    custParam.Add("N_CompanyID", 1);
+                    custParam.Add("N_YearID",nfnyr);
+                    custParam.Add("N_FormID", 51);
+                    var custvalues = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", custParam, hqcon, trsaction).ToString();
+                    CustomerTable = myFunctions.AddNewColumnToDataTable(CustomerTable, "X_CustomerCode", typeof(string), custvalues);
+                    CustomerTable = myFunctions.AddNewColumnToDataTable(CustomerTable, "N_FnYearID", typeof(string), nfnyr);
+                    CustomerTable = myFunctions.AddNewColumnToDataTable(CustomerTable, "N_BranchID", typeof(string), 1);
+                    custID = dLayer.SaveData("inv_Customer", "n_CustomerID", CustomerTable, hqcon, trsaction);
+                    if (custID <= 0)
+                    {
+                        trsaction.Rollback();
+                        return Ok(_api.Error(User, "Something went wrong"));
+                    }
+                    SortedList hqParam = new SortedList();
+                    hqParam.Add("N_CompanyID", 1);
+                    hqParam.Add("N_YearID", nfnyr);
+                    hqParam.Add("N_FormID", 74);
+                    var values = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", hqParam, hqcon, trsaction).ToString();
+                    ProjectTable = myFunctions.AddNewColumnToDataTable(ProjectTable, "X_ProjectCode", typeof(string), values);
+                    ProjectTable = myFunctions.AddNewColumnToDataTable(ProjectTable, "N_CustomerID", typeof(int), custID);
+                    projectID = dLayer.SaveData("inv_CustomerProjects", "n_ProjectID", ProjectTable, hqcon, trsaction);
+                    if (projectID <= 0)
+                    {
+                        trsaction.Rollback();
+                        return Ok(_api.Error(User, "Something went wrong"));
+                    }
+                    trsaction.Commit();
+
                 }
+               dLayer.ExecuteScalar("Update ClientMaster set N_ProjectID="+projectID+"  where N_ClientID=" + ClientID, connection,transaction); 
+                }
+               
+                transaction.Commit();
+                }
+                
+
                 string ipAddress = "";
                 if (Request.Headers.ContainsKey("X-Forwarded-For"))
                     ipAddress = Request.Headers["X-Forwarded-For"];
@@ -139,6 +196,8 @@ namespace SmartxAPI.Controllers
                     Res["Message"] = "Client Registration Success";
                     Res["AppStatus"] = "Registered";
                 }
+
+               
 
 
                 return Ok(_api.Success(Res, Res["Message"].ToString()));
