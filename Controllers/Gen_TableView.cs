@@ -374,11 +374,11 @@ namespace SmartxAPI.Controllers
                             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                         }
 
-                        sqlCommandCount = "select count(*) as N_Count,0 as TotalAmount  from " + DataSource + Criterea;
+                        sqlCommandCount = "select count(1) as N_Count,0 as TotalAmount  from " + DataSource2 + Criterea;
 
                         if (SumField.Trim() != "")
                         {
-                            sqlCommandCount = "select count(*) as N_Count ,sum(Cast(REPLACE(" + SumField + ",',','') as Numeric(16," + nDecimalPlace + ")) ) as TotalAmount  from " + DataSource + Criterea;
+                            sqlCommandCount = "select count(1) as N_Count ,sum(Cast(REPLACE(" + SumField + ",',','') as Numeric(16," + nDecimalPlace + ")) ) as TotalAmount  from " + DataSource + Criterea;
                         }
                         DataTable Summary = new DataTable();
                         if (nFormID == 1650)
