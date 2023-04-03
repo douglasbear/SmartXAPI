@@ -2598,8 +2598,8 @@ namespace SmartxAPI.GeneralFunctions
                     using (SqlConnection olivCnn = new SqlConnection(masterDBConnectionString))
                     {
                         olivCnn.Open();
-                        companyemail = dLayer.ExecuteScalar("select X_Value from GenSettings where N_ClientID=-1 and X_Description='OlivoEmailAddress'", olivCnn);
-                        companypassword = dLayer.ExecuteScalar("select X_Value from GenSettings where N_ClientID=-1 and X_Description='OlivoEmailPassword'", olivCnn);
+                        companyemail = dLayer.ExecuteScalar("select X_Value from GenSettings where N_ClientID=0 and X_Description='OlivoEmailAddress'", olivCnn);
+                        companypassword = dLayer.ExecuteScalar("select X_Value from GenSettings where N_ClientID=0 and X_Description='OlivoEmailPassword'", olivCnn);
 
                     }
 

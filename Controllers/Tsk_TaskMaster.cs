@@ -826,7 +826,7 @@ namespace SmartxAPI.Controllers
 
                         // dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 5  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed= 1  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection, transaction);
-
+                           
                     }
                     else if (nStatus == "9" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_SubmitterID"].ToString()))
                     {
@@ -860,6 +860,9 @@ namespace SmartxAPI.Controllers
                     {
 
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=1 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                        if (myFunctions.getVAL(MasterTable.Rows[0]["n_StageID"].ToString()) > 0)
+                            dLayer.ExecuteNonQuery("Update inv_customerprojects SET N_StageID=" + MasterTable.Rows[0]["n_StageID"].ToString()  + " where N_ProjectID=" + MasterTable.Rows[0]["n_ProjectID"].ToString()  + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+
                     }
                     if (masterStatus == 8)
                     {
