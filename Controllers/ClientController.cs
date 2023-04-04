@@ -233,6 +233,17 @@ namespace SmartxAPI.Controllers
                     string clinetdetailsSql=" SELECT  ClientMaster.*, CountryMaster.X_CountryName FROM  ClientMaster LEFT OUTER JOIN CountryMaster ON ClientMaster.N_CountryID = CountryMaster.N_CountryID where N_ClientID=@nClientID ";
                     DataTable dtClientDetails = dLayer.ExecuteDataTable(clinetdetailsSql,Params, connection);
                     dtClientDetails = _api.Format(dtClientDetails, "ClientDetails");
+
+                    dtClientDetails= myFunctions.AddNewColumnToDataTable(dtClientDetails, "x_SuperAdminUserID", typeof(string), "");
+                        dtClientDetails.AcceptChanges(); 
+                     
+                         object xSuperAdminUserID=dLayer.ExecuteScalar("select X_UserID from users where n_ClientID="+nClientID+" and N_LoginType=1", Params, connection);
+                           
+                            if(xSuperAdminUserID!=null )
+                                {
+                                  dtClientDetails.Rows[0]["x_SuperAdminUserID"]=xSuperAdminUserID;
+                                   
+                                }
                     // string clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID";
                     object xAppType = dtClientDetails.Rows[0]["x_AppType"];
                     switch (xAppType)
@@ -368,6 +379,7 @@ namespace SmartxAPI.Controllers
                              
                             }
 
+                        
 
                        }
 

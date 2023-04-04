@@ -48,12 +48,14 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, UserTable,AppTable,ProjectTable,CustomerTable;
+                DataTable MasterTable, UserTable,AppTable,ProjectTable,CustomerTable,AdminUserTable;
                 MasterTable = ds.Tables["master"];
                 UserTable = ds.Tables["user"];
+                AdminUserTable = ds.Tables["user"];
                 // AppTable = ds.Tables["app"];
 
                 string pwd = UserTable.Rows[0]["x_Password"].ToString();
+                string adminpswd = UserTable.Rows[0]["x_Password"].ToString();
                 DataRow MasterRow = MasterTable.Rows[0];
 
                 string email = MasterRow["x_EmailID"].ToString();
@@ -75,6 +77,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Warning("Email id already exists !!!"));
                     }
                     string Password = myFunctions.EncryptString(pwd);
+                    string AdminPassword = myFunctions.EncryptString(adminpswd);
                     MasterTable.Rows[0]["b_Inactive"] = true;
                     MasterTable.Rows[0]["n_UserLimit"] = 1;
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_AdminUserID", typeof(string), email);
@@ -88,7 +91,7 @@ namespace SmartxAPI.Controllers
 
 
                     // AppTable.Rows[0]["N_ClientID"] = ClientID;
-                    UserTable.Rows[0]["b_Inactive"] = true;
+                   
 
                     // AppTable = myFunctions.AddNewColumnToDataTable(AppTable, "X_DBUri", typeof(string), ConnString);
                     // AppTable = myFunctions.AddNewColumnToDataTable(AppTable, "N_UserLimit", typeof(int), 5);
@@ -100,24 +103,54 @@ namespace SmartxAPI.Controllers
                     //     transaction.Rollback();
                     //     return Ok(_api.Error(User,"Something went wrong"));
                     // }
+                   
+                    string originalUsername = AdminUserTable.Rows[0]["x_EmailID"].ToString();
+                    string newSuffix = "_OlivoAdmin";
+                    string[] usernameParts = originalUsername.Split('@');
+                    string newUsername = usernameParts[0] + newSuffix + "@" + usernameParts[1];
 
-                    UserTable.Rows[0]["N_ClientID"] = ClientID;
+                    AdminUserTable.Rows[0]["x_EmailID"] = newUsername;
+                    AdminUserTable.Rows[0]["N_ClientID"] = ClientID;
+                    AdminUserTable.Rows[0]["x_Password"] = '.';
+                    AdminUserTable.Rows[0]["b_EmailVerified"] = false;
+                    AdminUserTable.Rows[0]["b_Inactive"] = true;
+                    AdminUserTable = myFunctions.AddNewColumnToDataTable(AdminUserTable, "N_LanguageID", typeof(int), 1);
+                    AdminUserTable = myFunctions.AddNewColumnToDataTable(AdminUserTable, "N_ActiveAppID", typeof(int), 0);
+                    AdminUserTable = myFunctions.AddNewColumnToDataTable(AdminUserTable, "X_UserID", typeof(string), newUsername);
+                    AdminUserTable = myFunctions.AddNewColumnToDataTable(AdminUserTable, "N_UserType", typeof(int), 0);
+                    AdminUserTable = myFunctions.AddNewColumnToDataTable(AdminUserTable, "N_LoginType", typeof(int), 1);
+                    AdminUserTable.AcceptChanges();
+                    int AdminUserID = dLayer.SaveData("Users", "n_UserID", AdminUserTable, connection, transaction);
+                    if (AdminUserID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Something went wrong"));
+                    }
+
+                    UserTable.Rows[0]["b_Inactive"] = true;
+                    UserTable.Rows[0]["x_EmailID"] = MasterRow["x_EmailID"].ToString();
+                    UserTable.Rows[0]["n_ClientID"] = ClientID;
                     UserTable.Rows[0]["x_Password"] = Password;
                     UserTable.Rows[0]["b_EmailVerified"] = false;
                     UserTable.Rows[0]["b_Inactive"] = true;
-                    UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_ActiveAppID", typeof(int), 0);
-                    UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "X_UserID", typeof(string), email);
-                    UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_UserType", typeof(int), 0);
-                    UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_LoginType", typeof(int), 2);
-
-
+                    UserTable.Rows[0]["N_LanguageID"] = 1;
+                    UserTable.Rows[0]["X_UserID"] = email;
+                    UserTable.Rows[0]["N_UserType"] = 0;
+                    UserTable.Rows[0]["N_LoginType"] = 2;
+                   // UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_LanguageID", typeof(int), 1);
+                    // UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_ActiveAppID", typeof(int), 0);
+                    // UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "X_UserID", typeof(string), email);
+                    // UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_UserType", typeof(int), 2);
+                    // UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_LoginType", typeof(int), 2);
+                    UserTable.AcceptChanges();
                     int UserID = dLayer.SaveData("Users", "n_UserID", UserTable, connection, transaction);
                     if (UserID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Something went wrong"));
                     }
-
+                  
+                   
                     string Sql = "SELECT (select isnull(max(N_UserID),0) from Users)+1 , REPLACE (X_EmailID, '@', '_SpAdmin@'), REPLACE (X_EmailID, '@', '_SpAdmin@'), N_ClientID, N_ActiveAppID, '.', '', 0, 1, REPLACE (X_EmailID, '@', '_SpAdmin@'), N_UserType,1 FROM Users WHERE N_UserID ="+UserID;
                     int output = dLayer.ExecuteNonQuery(Sql, connection, transaction);
                     SortedList hqParams = new SortedList();
