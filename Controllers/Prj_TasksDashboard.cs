@@ -91,7 +91,8 @@ namespace SmartxAPI.Controllers
                         OrderList = dLayer.ExecuteDataTable(sqlCommandOrderList, Params, connection);
                         InvoiceList = dLayer.ExecuteDataTable(sqlCommandinvoiceList, Params, connection);
                         object N_AssigneeID = null;
-
+                        object N_Count = 0;
+                        TasksList = myFunctions.AddNewColumnToDataTable(TasksList, "n_subTask", typeof(int), 0);
                         for (int i = 0; i < TasksList.Rows.Count; i++)
                         {
                             N_AssigneeID = dLayer.ExecuteScalar("select N_AssigneeID from vw_TaskCurrentStatus where X_TaskCode=" + TasksList.Rows[i]["X_TaskCode"], Params, connection);
@@ -99,6 +100,13 @@ namespace SmartxAPI.Controllers
                             {
                             TasksList.Rows[i]["N_AssigneeID"] = N_AssigneeID;
                             }
+                            
+                            if(myFunctions.getIntVAL(TasksList.Rows[i]["N_ParentID"].ToString()) == 0 )
+                            {
+                            N_Count = dLayer.ExecuteScalar("select count(*) from Tsk_TaskMaster where N_ParentID=" + TasksList.Rows[i]["N_TaskID"], Params, connection);
+                            TasksList.Rows[i]["n_subTask"] = N_Count;
+                            }
+
                         }
                       
 
