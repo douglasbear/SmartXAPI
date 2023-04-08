@@ -123,6 +123,7 @@ namespace SmartxAPI.Controllers
             SortedList QueryParams = new SortedList();
              DataTable Master = new DataTable();
               DataSet ds=new DataSet();
+             
 
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -134,15 +135,22 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    string _sqlQuery = "SELECT Pay_EmpBussinessTripRequest.*, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Employee.N_EmpID AS Expr1, Gen_LookupTable.X_Name as X_TypeName FROM Pay_EmpBussinessTripRequest LEFT OUTER JOIN Gen_LookupTable ON Pay_EmpBussinessTripRequest.N_TravelTypeID = Gen_LookupTable.N_PkeyId LEFT OUTER JOIN Pay_Employee ON Pay_EmpBussinessTripRequest.N_EmpID = Pay_Employee.N_EmpID AND  Pay_EmpBussinessTripRequest.N_CompanyID = Pay_Employee.N_CompanyID where Pay_EmpBussinessTripRequest.X_RequestCode=@xRequestCode and Pay_EmpBussinessTripRequest.N_CompanyID=@nCompanyID";
+                    string _sqlQuery = "SELECT Pay_EmpBussinessTripRequest.*, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Employee.N_EmpID, Gen_LookupTable.X_Name as X_TypeName FROM Pay_EmpBussinessTripRequest LEFT OUTER JOIN Gen_LookupTable ON Pay_EmpBussinessTripRequest.N_TravelTypeID = Gen_LookupTable.N_PkeyId LEFT OUTER JOIN Pay_Employee ON Pay_EmpBussinessTripRequest.N_EmpID = Pay_Employee.N_EmpID AND  Pay_EmpBussinessTripRequest.N_CompanyID = Pay_Employee.N_CompanyID where Pay_EmpBussinessTripRequest.X_RequestCode=@xRequestCode and Pay_EmpBussinessTripRequest.N_CompanyID=@nCompanyID";
 
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
-                    
+                
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Error(User,"Transaction not Found"));
+                    }
+                    DataRow TransRow = dt.Rows[0];
+                    int EmpID = myFunctions.getIntVAL(TransRow["N_EmpID"].ToString());
+                    QueryParams.Add("@EmpID", EmpID);
 
                 dt = api.Format(dt,"master");
                 ds.Tables.Add(dt);
                 
-                   DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dt.Rows[0]["N_RequestID"].ToString()), myFunctions.getIntVAL(dt.Rows[0]["N_RequestID"].ToString()), this.FormID, myFunctions.getIntVAL(dt.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                   DataTable Attachments = myAttachments.ViewAttachment(dLayer, EmpID, myFunctions.getIntVAL(dt.Rows[0]["N_RequestID"].ToString()), this.FormID, myFunctions.getIntVAL(dt.Rows[0]["N_FnYearID"].ToString()), User, connection);
                     Attachments = api.Format(Attachments, "attachments");
                     ds.Tables.Add(Attachments);
                    

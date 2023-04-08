@@ -82,16 +82,16 @@ namespace SmartxAPI.Controllers
            if (bAllBranchData == true)
             {
                 if (nCustomerID > 0)
-                   Criteria =  " and ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 and   (N_CustomerID =@p3 or  N_CustomerID=0 )";
+                   Criteria =  " and ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 and   (N_CustomerID =@p3 or  N_CustomerID=0 ) and N_StatusID=1 ";
                 else
-                    Criteria=  " and ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 ";
+                    Criteria=  " and ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 and N_StatusID=1 ";
             }
             else
             {
                 if (nCustomerID > 0)
-                    Criteria = " and  ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0  and  (N_CustomerID =@p3 or  N_CustomerID=0 ) and  N_BranchID=@p4";
+                    Criteria = " and  ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0  and  (N_CustomerID =@p3 or  N_CustomerID=0 ) and  N_BranchID=@p4 and N_StatusID=1";
                 else
-                    Criteria = " and  N_BranchID=@p4 and ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 ";
+                    Criteria = " and  N_BranchID=@p4 and ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 and N_StatusID=1 ";
 
             }
 

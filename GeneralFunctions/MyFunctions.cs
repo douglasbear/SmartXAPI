@@ -2467,7 +2467,7 @@ namespace SmartxAPI.GeneralFunctions
                 }
                 else
                 {
-                    int nUserCat = dLayer.ExecuteNonQuery("insert into Sec_UserCategory SELECT " + nCompanyID + ", MAX(N_UserCategoryID)+1, (select X_UserCategory from Sec_UserCategory where N_CompanyID=-1 and N_AppID=" + nAppID + "), MAX(N_UserCategoryID)+1, 365, " + nAppID + " FROM Sec_UserCategory ", connection, transaction);
+                    int nUserCat = dLayer.ExecuteNonQuery("insert into Sec_UserCategory SELECT " + nCompanyID + ", MAX(N_UserCategoryID)+1, (select X_UserCategory from Sec_UserCategory where N_CompanyID=-1 and N_AppID=" + nAppID + "), MAX(N_UserCategoryID)+1, 365, " + nAppID + ",'','' FROM Sec_UserCategory ", connection, transaction);
                     if (nUserCat <= 0)
                     {
                         return false;
