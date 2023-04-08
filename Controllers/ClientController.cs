@@ -34,7 +34,7 @@ namespace SmartxAPI.Controllers
         private string masterDBConnectionString;
         private string AppURL;
         private readonly IDataAccessLayer dLayer;
-
+        private readonly string hqDBConnectionString;
 
 
         public ClientController(ICommenServiceRepo repository, IOptions<AppSettings> appSettings, IMyFunctions myFun, IApiFunctions api, IDataAccessLayer dl, IConfiguration conf)
@@ -46,6 +46,7 @@ namespace SmartxAPI.Controllers
             _appSettings = appSettings.Value;
             masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
             connectionString = conf.GetConnectionString("SmartxConnection");
+            hqDBConnectionString = conf.GetConnectionString("HqConnection");
             AppURL = conf.GetConnectionString("AppURL");
             cofig = conf;
         }
@@ -230,12 +231,13 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     Params.Add("@nClientID", nClientID);
                     string  clientSettingsSql="";
-                    string clinetdetailsSql=" SELECT  ClientMaster.*, CountryMaster.X_CountryName FROM  ClientMaster LEFT OUTER JOIN CountryMaster ON ClientMaster.N_CountryID = CountryMaster.N_CountryID where N_ClientID=@nClientID ";
+                    string clinetdetailsSql=" SELECT  ClientMaster.*, CountryMaster.X_CountryName FROM  ClientMaster LEFT OUTER JOIN CountryMaster ON ClientMaster.N_CountryID = CountryMaster.N_CountryID  where N_ClientID=@nClientID ";
                     DataTable dtClientDetails = dLayer.ExecuteDataTable(clinetdetailsSql,Params, connection);
                     dtClientDetails = _api.Format(dtClientDetails, "ClientDetails");
 
                     dtClientDetails= myFunctions.AddNewColumnToDataTable(dtClientDetails, "x_SuperAdminUserID", typeof(string), "");
-                        dtClientDetails.AcceptChanges(); 
+                    dtClientDetails= myFunctions.AddNewColumnToDataTable(dtClientDetails, "x_ProjectName", typeof(string), "");
+                    dtClientDetails.AcceptChanges(); 
                      
                          object xSuperAdminUserID=dLayer.ExecuteScalar("select X_UserID from users where n_ClientID="+nClientID+" and N_LoginType=1", Params, connection);
                            
@@ -353,6 +355,7 @@ namespace SmartxAPI.Controllers
                         dtAppHistoryDetails.AcceptChanges(); 
                         dtClientHistoryDetails = myFunctions.AddNewColumnToDataTable(dtClientHistoryDetails, "X_Userame", typeof(string), "");
                         dtClientHistoryDetails.AcceptChanges(); 
+                       
                         for(int i=0;i<dtAppHistoryDetails.Rows.Count;i++)
                             {
 
@@ -379,10 +382,26 @@ namespace SmartxAPI.Controllers
                              
                             }
 
-                        
+                           
 
                        }
-
+                        
+                         if(hqDBConnectionString !=null)
+                {
+                    using (SqlConnection hqcon = new SqlConnection(hqDBConnectionString))
+                {
+                    hqcon.Open();
+                    SortedList Paramshq = new SortedList();
+                    Paramshq.Add("@nClientID", nClientID);
+                   
+                               object xProjectName=dLayer.ExecuteScalar("select X_ProjectName from Inv_customerProjects where N_ProjectID="+myFunctions.getIntVAL(dtClientDetails.Rows[0]["N_ProjectID"].ToString()),Paramshq,hqcon);
+                                if(xProjectName!=null )
+                                {
+                                  dtClientDetails.Rows[0]["X_ProjectName"]=xProjectName;
+                                   
+                                }
+                    }
+                }
                        dtAppHistoryDetails = _api.Format(dtAppHistoryDetails, "appHistoryDetails");
                        dtClientHistoryDetails = _api.Format(dtClientHistoryDetails, "clientHistoryDetails");
 
