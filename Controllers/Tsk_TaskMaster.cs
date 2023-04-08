@@ -131,19 +131,23 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("parentTaskList")]
-        public ActionResult ParentTaskList()
+        public ActionResult ParentTaskList( int nProjectID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            string sqlCommandText="";
 
-
-
-            string sqlCommandText = "select  * from [vw_TaskCurrentStatus] where N_CompanyID=@p1";
-
+            if(nProjectID >0){
+                 sqlCommandText = "select  * from [vw_TaskCurrentStatus] where N_CompanyID=@p1 and N_ProjectID=@p2";
+            }
+            else{
+               sqlCommandText = "select  * from [vw_TaskCurrentStatus] where N_CompanyID=@p1";
+            }
             Params.Add("@p1", nCompanyId);
             Params.Add("@nUserID", nUserID);
+            Params.Add("@p2", nProjectID);
             // Params.Add("@nFnYearId", nFnYearId);
             SortedList OutPut = new SortedList();
 
