@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("Details")]
-        public ActionResult GetDetails(int categoryID, string xPkeyCode)
+        public ActionResult GetDetails(int categoryID, string xPkeyCode,bool isDefault)
         {
             try
             {
@@ -52,9 +52,9 @@ namespace SmartxAPI.Controllers
                     string workingHoursSql = "";
                     string AdditionalWorkingHourssql = "";
                     string sqlCommandText = "";
-                    if (xPkeyCode != null && xPkeyCode != "")
+                    if (!isDefault)
                     {
-                        sqlCommandText = "Select * From vw_EmpGrp_Workhours Where N_CompanyID=" + nCompanyID + " and X_PkeyCode='" + xPkeyCode + "'";
+                        sqlCommandText = "Select * From vw_EmpGrp_Workhours Where N_CompanyID=" + nCompanyID + " and N_PkeyID="+categoryID;
                         DataTable MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, Con);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable = _api.Format(MasterTable, "Master");
@@ -65,7 +65,7 @@ namespace SmartxAPI.Controllers
                     workingHoursSql = "Select * from Pay_WorkingHours Where N_CompanyID =" + nCompanyID + "and N_CatagoryID=" + categoryID + " order by N_WHID";
                     WorkingHours = dLayer.ExecuteDataTable(workingHoursSql, Params, Con);
                     WorkingHours = _api.Format(WorkingHours,"WorkingHours");
-                    if (WorkingHours.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                    if (WorkingHours.Rows.Count == 0) { return Ok(_api.Success(WorkingHours)); }
 
                     //Additional Business Hours
                     AdditionalWorkingHourssql = "Select * from Pay_AdditionalWorkingDays Where N_CompanyID =" + nCompanyID + "and N_CatagoryID=" + categoryID + " order by N_ID";
@@ -106,7 +106,7 @@ namespace SmartxAPI.Controllers
                     if (nPkeyID > 0)
                     {
                         dLayer.DeleteData("Pay_WorkingHours", "N_CatagoryID", nPkeyID, "", con, transaction);
-                        dLayer.DeleteData("Pay_AdditionalWorkingDays", "N_CatagoryID", nPkeyID, "", con, transaction);
+                        dLayer.DeleteData("Pay_EmployeeGroup", "N_PkeyID", nPkeyID, "", con, transaction);
                     }
                     DocNo = MasterTable.Rows[0]["X_PkeyCode"].ToString();
                     if (X_PkeyCode == "@Auto")

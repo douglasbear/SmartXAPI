@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
             }
             else
             {
-                Pattern = " and N_UserID=" + nUserID;
+                Pattern = " and N_CreatedUser=" + nUserID;
             }
             string sqlCommandCount = "";
             int Count= (nPage - 1) * nSizeperpage;
@@ -79,7 +79,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRM_Project where N_CompanyID=@p1 " + Pattern;
+                    sqlCommandCount = "select count(1) as N_Count  from vw_CRM_Project where N_CompanyID=@p1 " + Pattern;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

@@ -55,7 +55,13 @@ namespace SmartxAPI.Controllers
                     {
                     }
                     int N_PayID = myFunctions.getIntVAL(dt.Rows[0]["N_PayID"].ToString());
-                    string Pay_SummaryPercentageSql = "SELECT    * From Pay_SummaryPercentage inner join Pay_PayType on Pay_SummaryPercentage.N_PayTypeID = Pay_PayType.N_PayTypeID and Pay_SummaryPercentage.N_CompanyID = Pay_PayType.N_CompanyID  Where Pay_SummaryPercentage.N_PayID =" + N_PayID + " and Pay_SummaryPercentage.N_CompanyID=" + nCompanyId;
+                    // string Pay_SummaryPercentageSql = "SELECT    * From Pay_SummaryPercentage inner join Pay_PayType on Pay_SummaryPercentage.N_PayTypeID = Pay_PayType.N_PayTypeID and Pay_SummaryPercentage.N_CompanyID = Pay_PayType.N_CompanyID  Where Pay_SummaryPercentage.N_PayID =" + N_PayID + " and Pay_SummaryPercentage.N_CompanyID=" + nCompanyId;
+                    string Pay_SummaryPercentageSql="SELECT        Pay_PayMaster.N_CompanyID, Pay_SummaryPercentage.N_PerCalcID, Pay_SummaryPercentage.N_PayID, Pay_PayMaster.N_PayTypeID, Pay_SummaryPercentage.D_Entrydate, "+
+                         "Pay_PayType.X_PayType, Pay_PayType.N_PerPayMethod, Pay_PayType.N_Type, Pay_PayType.D_Entrydate AS Expr3, Pay_PayType.X_Cr_MappingLevel, Pay_PayType.X_Dr_MappingLevel, Pay_PayType.Cr_MappingLevel,  "+
+                         "Pay_PayType.Dr_MappingLevel, Pay_PayType.N_PerPayPayment, Pay_PayType.N_Order, Pay_PayMaster.X_Description, Pay_PayMaster.N_PayID AS N_PayCodeID "+
+"FROM            Pay_SummaryPercentage RIGHT OUTER JOIN "+
+                         "Pay_PayMaster ON Pay_SummaryPercentage.N_CompanyID = Pay_PayMaster.N_CompanyID AND Pay_SummaryPercentage.N_PayCodeID = Pay_PayMaster.N_PayID LEFT OUTER JOIN " +
+                         "Pay_PayType ON Pay_PayMaster.N_CompanyID = Pay_PayType.N_CompanyID AND Pay_PayMaster.N_PayTypeID = Pay_PayType.N_PayTypeID  Where Pay_SummaryPercentage.N_PayID =" + N_PayID + " and Pay_SummaryPercentage.N_CompanyID=" + nCompanyId;
 
                     DataTable SummryTable = dLayer.ExecuteDataTable(Pay_SummaryPercentageSql, Params, connection);
                     OutPut.Add("master", dt);
@@ -66,7 +72,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(User,e));
+                return BadRequest(api.Error(User, e));
             }
         }
 
@@ -86,7 +92,7 @@ namespace SmartxAPI.Controllers
                 int nPayID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PayID"].ToString());
                 int nPayTypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayTypeID"].ToString());
                 var d_Entrydate = MasterTable.Rows[0]["d_Entrydate"].ToString();
-
+                 string xButtonAction="";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -103,20 +109,29 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         PayCode = dLayer.GetAutoNumber("Pay_PayMaster", "X_PayCode", Params, connection, transaction);
-                        if (PayCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Pay Code")); }
+                     
+                        if (PayCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Pay Code"));
+                        
+                        }
+                            xButtonAction="Insert";
+
                         MasterTable.Rows[0]["X_PayCode"] = PayCode;
+                    }else {
+                            xButtonAction="Update"; 
                     }
+                    PayCode = MasterTable.Rows[0]["X_PayCode"].ToString();
 
 
 
                     string DupCriteria = "N_companyID=" + nCompanyID + " And X_Paycode = '" + values + "' and N_FnYearID=" + nFnYearId;
-
+                  
                     nPayID = dLayer.SaveData("Pay_PayMaster", "N_PayID", DupCriteria, "N_companyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId, MasterTable, connection, transaction);
                     dLayer.DeleteData("Pay_SummaryPercentage", "N_PayID", nPayID, "N_CompanyID=" + nCompanyID, connection, transaction);
+                  
                     if (nPayID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User,"Unable to save"));
+                        return Ok(api.Error(User, "Unable to save"));
                     }
                     else
                     {
@@ -135,7 +150,7 @@ namespace SmartxAPI.Controllers
                             if (SummaryID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(api.Error(User,"Unable to save"));
+                                return Ok(api.Error(User, "Unable to save"));
                             }
 
                         }
@@ -162,11 +177,19 @@ namespace SmartxAPI.Controllers
                             if (SummaryID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(api.Error(User,"Unable to save"));
+                                return Ok(api.Error(User, "Unable to save"));
                             }
 
 
                         }
+                              //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearId,nPayID,PayCode,186,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          
 
                         transaction.Commit();
                         return Ok(api.Success("Paycode Created"));
@@ -175,7 +198,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(User,ex));
+                return BadRequest(api.Error(User, ex));
             }
         }
 
@@ -197,13 +220,15 @@ namespace SmartxAPI.Controllers
             }
             string X_Criteria = "";
             if (id > 0)
-                X_Criteria = "where N_PayTypeID=@p1 and N_CompanyID=@nCompanyID";
+                X_Criteria = "where Pay_PayMaster.N_PayTypeID=@p1 and Pay_PayMaster.N_CompanyID=@nCompanyID";
+            else
+                X_Criteria = "where Pay_PayMaster.N_FnYearID=@nFnYearID and Pay_PayMaster.N_CompanyID=@nCompanyID";
 
             SortedList param = new SortedList() { { "@p1", id }, { "@nCompanyID", myFunctions.GetCompanyID(User) }, { "@nFnYearID", nFnyearID } };
 
             DataTable dt = new DataTable();
 
-            string sqlCommandText = "select * from Pay_PayMaster " + X_Criteria;
+            string sqlCommandText = "SELECT Pay_PayMaster.*,Pay_PayType.N_PerPayMethod, Pay_PayType.N_PerPayPayment FROM Pay_PayMaster LEFT OUTER JOIN Pay_PayType ON Pay_PayMaster.N_CompanyID = Pay_PayType.N_CompanyID AND Pay_PayMaster.N_PayTypeID = Pay_PayType.N_PayTypeID " + X_Criteria;
 
             try
             {
@@ -235,7 +260,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -287,7 +312,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_Pay_PayMaster where N_FnYearId=@p2 and N_CompanyID=@p1 " + Searchkey;
+                    sqlCommandCount = "select count(1) as N_Count  from vw_Pay_PayMaster where N_FnYearId=@p2 and N_CompanyID=@p1 " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -306,7 +331,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(User,e));
+                return BadRequest(api.Error(User, e));
             }
         }
 
@@ -329,23 +354,43 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
+                return Ok(api.Success(dt));
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
+        [HttpGet("summaryType")]
+        public ActionResult GetPayCodeForTypes(int nFnYearId)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearId", nFnYearId);
+            // string sqlCommandText = "Select * from Pay_PayType where N_CompanyID=@nCompanyID and N_PerPayMethod=0 or N_PerPayMethod=3 or N_PerPayMethod=30 and n_PerPayPayment=5 order by N_PayTypeID";
+            string sqlCommandText="SELECT Pay_PayMaster.*,Pay_PayMaster.N_PayID as N_PayCodeID,Pay_PayType.N_PerPayMethod, Pay_PayType.N_PerPayPayment FROM Pay_PayMaster LEFT OUTER JOIN Pay_PayType ON Pay_PayMaster.N_CompanyID = Pay_PayType.N_CompanyID AND Pay_PayMaster.N_PayTypeID = Pay_PayType.N_PayTypeID  where Pay_PayMaster.N_CompanyID=@nCompanyID and Pay_PayMaster.N_FnYearID=@nFnYearId";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                return Ok(api.Success(dt));
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+            
+
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nPayCodeId, int flag)
+        public ActionResult DeleteData(int nPayCodeId, int flag,int nFnYearID,int nPayID,int nCompanyID)
         {
 
             int Results = 0;
@@ -360,6 +405,20 @@ namespace SmartxAPI.Controllers
 
                 {
                     connection.Open();
+                    
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList();
+                    ParamList.Add("@nTransID", nPayCodeId);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                     string xButtonAction="Delete";
+                      string X_PayCode="";
+                   string Sql = "select N_PayID,X_PayCode from Pay_PayMaster where N_PayID=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+
+                     
+
+
+
                     obj = dLayer.ExecuteScalar("Select N_PayID From Pay_PaySetup Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PayID=" + nPayCodeId.ToString(), Params, connection);
                     if (obj == null)
                     {
@@ -368,10 +427,11 @@ namespace SmartxAPI.Controllers
                         {
                             if (myFunctions.getIntVAL(obj3.ToString()) > 0)
                             {
-                                return Ok(api.Error(User," PayCode Already used"));
+                                return Ok(api.Error(User, " PayCode Already used"));
                             }
 
                         }
+                        
 
                         obj1 = dLayer.ExecuteScalar("Select N_PayID From Pay_MonthlyAddOrDedDetails Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PayID=" + nPayCodeId.ToString(), Params, connection);
                         {
@@ -407,6 +467,20 @@ namespace SmartxAPI.Controllers
                                     }
 
                                     SqlTransaction transaction = connection.BeginTransaction();
+                                      TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+                      if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+
+                    //Activity Log
+                        string ipAddress = "";
+                   if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                   else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nPayCodeId,TransRow["X_PayCode"].ToString(),186,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
                                     Results = dLayer.DeleteData("Pay_PayMaster ", "N_PayID", nPayCodeId, "", connection, transaction);
                                     transaction.Commit();
                                 }
@@ -427,10 +501,11 @@ namespace SmartxAPI.Controllers
                     {
 
 
-                        return Ok(api.Error(User," PayCode Already used"));
+                        return Ok(api.Error(User, " PayCode Already used"));
                     }
 
                 }
+                
                 if (Results > 0)
                 {
                     Dictionary<string, string> res = new Dictionary<string, string>();
@@ -439,13 +514,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error(User,"Unable to delete PayCode"));
+                    return Ok(api.Error(User, "Unable to delete PayCode"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
 
 
@@ -480,7 +555,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -522,7 +597,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
     }

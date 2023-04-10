@@ -20,7 +20,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int N_FormID = 1234;
+        private readonly int N_FormID = 878;
         public Acc_Country(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             _api = api;
@@ -74,7 +74,9 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nCountryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CountryID"].ToString());
-               
+                int N_CountryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CountryID"].ToString());
+             
+                string xCountryName = MasterTable.Rows[0]["X_CountryName"].ToString();
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -89,23 +91,40 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
-                      
+                        // Params.Add("xCountryName",xCountryName);
+
+                        DataTable count = new DataTable();
+                        string sql = "select * from Acc_Country where X_CountryName='"+xCountryName+"' and N_CompanyID="+nCompanyID+"" ;
+                        count = dLayer.ExecuteDataTable(sql, Params, connection, transaction);
+                        if(count.Rows.Count > 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Country name already exists"));
+                        }
+                  
+
+                      char[] trim = { ',', ' ' };
                         CountryCode = dLayer.GetAutoNumber("Acc_Country", "X_CountryCode", Params, connection, transaction);
                         if (CountryCode == "") { transaction.Rollback();
                         return Ok(_api.Error(User,"Unable to generate Country Master")); }
                         MasterTable.Rows[0]["X_CountryCode"] = CountryCode;
                     }
+                    //  else
+                    // {
+                    //     dLayer.DeleteData("Acc_Country", "N_CountryID", N_CountryID, "", connection, transaction);
+                    // }
+
                      MasterTable.Columns.Remove("n_FnYearId");
                      
 
                     string X_CountryName= MasterTable.Rows[0]["X_CountryName"].ToString();
-                    string DupCriteria = "X_CountryName='" + X_CountryName + "'";
 
+                    string DupCriteria = "";
                     nCountryID = dLayer.SaveData("Acc_Country", "N_CountryID",DupCriteria,"", MasterTable, connection, transaction);
                     if (nCountryID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User,"Country name already exist"));
                     }
                     else
                     {
@@ -124,21 +143,37 @@ namespace SmartxAPI.Controllers
         {
              int Results=0;
             try
-            {
-                                using (SqlConnection connection = new SqlConnection(connectionString))
+            {  using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    connection.Open();
-                Results=dLayer.DeleteData("Acc_Country","N_CountryID",nCountryId,"",connection);
+                 connection.Open();
+                 SqlTransaction transaction = connection.BeginTransaction();
+                 object objcountryCount = dLayer.ExecuteScalar("Select count (*)  from Acc_Company where N_CountryID="+nCountryId+" and N_CompanyID="+myFunctions.GetCompanyID(User), connection, transaction);
+                 if (objcountryCount == null)
+                        objcountryCount = 0;
+                 
+                    if (myFunctions.getIntVAL(objcountryCount.ToString()) > 0 )
+                    {
+                         return Ok(_api.Warning("Unable to delete Country" )); 
+                    }
+                   
+                Results=dLayer.DeleteData("Acc_Country","N_CountryID",nCountryId,"",connection,transaction);
+                transaction.Commit();
                 if(Results>0){
                     return Ok(_api.Success("Country deleted" ));
-                }else{
+                }
+                else{
                     return Ok(_api.Warning("Unable to delete Country" ));
                 }
                 }
                 
             }
+            
             catch (Exception ex)
                 {
+                    if (ex.Message.Contains("REFERENCE constraint"))
+                    return Ok(_api.Error(User, "Unable to delete customer! It has been used."));
+                else
+        
                     return Ok(_api.Error(User,ex));
                 }
         }

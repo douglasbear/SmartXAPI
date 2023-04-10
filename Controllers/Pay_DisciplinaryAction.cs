@@ -69,7 +69,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount="select count(*) as N_Count from Vw_Pay_displinaryAction where N_CompanyId=@p1 and N_FnYearID=@p2 "+ Searchkey +" ";
+                    sqlCommandCount="select count(1) as N_Count from Vw_Pay_displinaryAction where N_CompanyId=@p1 and N_FnYearID=@p2 "+ Searchkey +" ";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                    
@@ -110,6 +110,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nActionId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ActionId"].ToString());
+                 string xButtonAction="";
  
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -126,15 +127,31 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.N_FormID);
                         
                         ActionCode = dLayer.GetAutoNumber("Pay_disciplinaryAction", "X_ActionCode", Params, connection, transaction);
+                         xButtonAction="Insert"; 
                         if (ActionCode == "") { return Ok(_api.Error(User,"Unable to generate Action Code")); }
                         MasterTable.Rows[0]["X_ActionCode"] = ActionCode;
                         
 
+                    }else {
+                         xButtonAction="Update"; 
                     }
-                   
+                     ActionCode = MasterTable.Rows[0]["X_ActionCode"].ToString();
+
+            
+                       
+
+                
 
                    nActionId = dLayer.SaveData("Pay_disciplinaryAction", "n_ActionId", MasterTable, connection, transaction);
-                   
+                             //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearId,nActionId,ActionCode,985,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       
+
 
                    if (nActionId <= 0)
                     {
@@ -183,7 +200,7 @@ namespace SmartxAPI.Controllers
         }
 
           [HttpDelete("delete")]
-        public ActionResult DeleteData(int nActionID)
+        public ActionResult DeleteData(int nActionID,int nFnYearID,int nCompanyID)
         {
             int Results = 0;
             try
@@ -191,7 +208,36 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Results = dLayer.DeleteData("Pay_DisciplinaryAction", "n_ActionID", nActionID, "", connection);
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList ParamList = new SortedList();
+                    DataTable TransData = new DataTable();
+                    ParamList.Add("@nTransID", nActionID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                    string xButtonAction="Delete";
+                    string X_ActionCode="";
+                    string Sql = "select N_ActionId,X_ActionCode from Pay_disciplinaryAction where N_ActionId=@nTransID and N_CompanyID=@nCompanyID ";
+                   TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+                    
+                      if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+                               //  Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nActionID,TransRow["X_ActionCode"].ToString(),985,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+             
+
+              
+                    Results = dLayer.DeleteData("Pay_DisciplinaryAction", "n_ActionID", nActionID, "", connection,transaction);
+                     transaction.Commit();
+          
+                  
                     if (Results > 0)
                     {
                         return Ok( _api.Success("Deleted Successfully"));
@@ -287,7 +333,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount="select count(*) as N_Count from Vw_Pay_displinaryAction where N_CompanyId=@p1 and N_EmpID=@p2 "+ Searchkey +" ";
+                    sqlCommandCount="select count(1) as N_Count from Vw_Pay_displinaryAction where N_CompanyId=@p1 and N_EmpID=@p2 "+ Searchkey +" ";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                    

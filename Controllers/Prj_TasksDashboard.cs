@@ -31,14 +31,21 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("listDetails")]
-        public ActionResult GetTasksDetails(int xProjectCode)
+        public ActionResult GetTasksDetails(int xProjectCode, int nFnYearID, int nTaskID)
         {
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
+            SortedList nEWParams = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
+
             int nUserID = myFunctions.GetUserID(User);
 
-            string sqlCommandTasksList = "select * from vw_Tsk_TaskMaster where N_CompanyID=@p1 and X_ProjectCode=@p2 and isnull(N_ParentID,0)=0 order by N_Order";
+            string sqlCommandTasksList = "";
+            if (nTaskID > 0)
+                sqlCommandTasksList = "select * from vw_TaskCurrentStatus where N_CompanyID=@p1  and  N_ParentID=@nTaskID order by N_Order";
+            else
+                sqlCommandTasksList = "select * from vw_Tsk_TaskMaster where N_CompanyID=@p1 and X_ProjectCode=@p2  and isnull(N_ParentID,0)=0 order by N_Order";
+
             string sqlCommandContactList = "Select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and X_ProjectCode=@p2";
             string sqlCommandMailLogList = "Select CONVERT(VARCHAR(10), d_Date, 103) + ' '  + convert(VARCHAR(8), d_Date, 14) as d_Entry,* from Gen_MailLog where N_CompanyID=@p1 and N_ProjectID=@p3 order by N_maillogid desc";
             string sqlCommandOrderList = "Select * from inv_salesOrder where N_CompanyID=@p1 and n_ProjectID=@p3";
@@ -49,6 +56,10 @@ namespace SmartxAPI.Controllers
 
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", xProjectCode);
+            Params.Add("@nFnYearID", nFnYearID);
+            //Params.Add("@nTaskID", nTaskID);
+            nEWParams.Add("@p1", nCompanyID);
+            nEWParams.Add("@nTaskID", nTaskID);
 
             DataTable TasksList = new DataTable();
             DataTable ContactList = new DataTable();
@@ -58,6 +69,7 @@ namespace SmartxAPI.Controllers
             // DataTable QuotationList = new DataTable();
             DataTable OrderList = new DataTable();
             DataTable InvoiceList = new DataTable();
+            DataTable TaskList = new DataTable();
 
             // DataTable ProjectList = new DataTable();
 
@@ -69,34 +81,46 @@ namespace SmartxAPI.Controllers
                     object N_ProjectID = dLayer.ExecuteScalar("select N_ProjectID from Vw_InvCustomerProjects where X_ProjectCode=@p2", Params, connection);
 
                     Params.Add("@p3", N_ProjectID);
-                    TasksList = dLayer.ExecuteDataTable(sqlCommandTasksList, Params, connection);
-                    ContactList = dLayer.ExecuteDataTable(sqlCommandContactList, Params, connection);
-                    MailLogList = dLayer.ExecuteDataTable(sqlCommandMailLogList, Params, connection);
-                    OrderList = dLayer.ExecuteDataTable(sqlCommandOrderList, Params, connection);
-                    InvoiceList = dLayer.ExecuteDataTable(sqlCommandinvoiceList, Params, connection);
-                    TasksList = myFunctions.AddNewColumnToDataTable(TasksList, "N_AssigneeID", typeof(int), 0);
-                    object N_AssigneeID = null;
-
-                    for (int i = 0; i < TasksList.Rows.Count; i++)
+                    if (nTaskID > 0)
+                        TasksList = dLayer.ExecuteDataTable(sqlCommandTasksList, nEWParams, connection);
+                    else
                     {
-                        N_AssigneeID = dLayer.ExecuteScalar("select N_AssigneeID from vw_Tsk_Taskcurrentstatus where X_TaskCode=" + TasksList.Rows[i]["X_TaskCode"], Params, connection);
-                        TasksList.Rows[i]["N_AssigneeID"] = N_AssigneeID;
+                        TasksList = dLayer.ExecuteDataTable(sqlCommandTasksList, Params, connection);
+                        ContactList = dLayer.ExecuteDataTable(sqlCommandContactList, Params, connection);
+                        MailLogList = dLayer.ExecuteDataTable(sqlCommandMailLogList, Params, connection);
+                        OrderList = dLayer.ExecuteDataTable(sqlCommandOrderList, Params, connection);
+                        InvoiceList = dLayer.ExecuteDataTable(sqlCommandinvoiceList, Params, connection);
+                        object N_AssigneeID = null;
+                        object N_Count = 0;
+                        TasksList = myFunctions.AddNewColumnToDataTable(TasksList, "n_subTask", typeof(int), 0);
+                        for (int i = 0; i < TasksList.Rows.Count; i++)
+                        {
+                            N_AssigneeID = dLayer.ExecuteScalar("select N_AssigneeID from vw_TaskCurrentStatus where X_TaskCode=" + TasksList.Rows[i]["X_TaskCode"], Params, connection);
+                            if(N_AssigneeID!=null)
+                            {
+                            TasksList.Rows[i]["N_AssigneeID"] = N_AssigneeID;
+                            }
+                            
+                            if(myFunctions.getIntVAL(TasksList.Rows[i]["N_ParentID"].ToString()) == 0 )
+                            {
+                            N_Count = dLayer.ExecuteScalar("select count(*) from Tsk_TaskMaster where N_ParentID=" + TasksList.Rows[i]["N_TaskID"], Params, connection);
+                            TasksList.Rows[i]["n_subTask"] = N_Count;
+                            }
+
+                        }
+                      
+
                     }
-
-
-
+                      ContactList = api.Format(ContactList, "ContactList");
+                        MailLogList = api.Format(MailLogList, "MailLogList");
+                        OrderList = api.Format(OrderList, "OrderList");
+                        InvoiceList = api.Format(InvoiceList, "InvoiceList");
+                        dt.Tables.Add(ContactList);
+                        dt.Tables.Add(MailLogList);
+                        dt.Tables.Add(OrderList);
+                        dt.Tables.Add(InvoiceList);
                     TasksList = api.Format(TasksList, "TasksList");
-                    ContactList = api.Format(ContactList, "ContactList");
-                    MailLogList = api.Format(MailLogList, "MailLogList");
-                    OrderList = api.Format(OrderList, "OrderList");
-                    InvoiceList = api.Format(InvoiceList, "InvoiceList");
-
                     dt.Tables.Add(TasksList);
-                    dt.Tables.Add(ContactList);
-                    dt.Tables.Add(MailLogList);
-                    dt.Tables.Add(OrderList);
-                    dt.Tables.Add(InvoiceList);
-
                     return Ok(api.Success(dt));
 
                 }
@@ -185,6 +209,7 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.ExecuteNonQuery("update tsk_taskmaster set N_Order=" + N_Order + " where N_CompanyID=@p1 and x_TaskCode=" + var["x_TaskCode"].ToString(), Params, connection);
                         N_Order++;
+                        
                     }
                 }
                 return Ok(api.Success("Order Updated"));

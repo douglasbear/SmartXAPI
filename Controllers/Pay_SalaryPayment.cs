@@ -87,7 +87,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             if (xBatchCode == "")
             {
-                sqlCommandText = "select * from vw_PayEmployeeSalaryPaymentsByEmployeeGroup where  N_CompanyID=@nCompanyID ";
+                sqlCommandText = "select N_CompanyID,N_EmpID,X_EmpCode,N_BranchID,X_EmpName  from vw_PayEmployeeSalaryPaymentsByEmployeeGroup where  N_CompanyID=@nCompanyID Group By N_CompanyID,N_EmpID,X_EmpCode,N_BranchID,X_EmpName ";
             }
             else
             {
@@ -295,7 +295,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult SalaryPayList(int nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult SalaryPayList(int nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nFnYearID,bool bAllBranchData,int nBranchID)
         {
             //int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
@@ -326,14 +326,22 @@ namespace SmartxAPI.Controllers
                         }
                         xSortBy = " order by " + xSortBy;
                     }
+                      if (bAllBranchData == true)
+                        {
+                            Searchkey = Searchkey + " ";
+                        }
+                        else
+                        {
+                            Searchkey = Searchkey + " and N_BranchID=" + nBranchID + " ";
+                        }    
 
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId and n_AcYearID=@nFnYearID " + Searchkey + Criteria + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_ReceiptID not in (select top(" + Count + ") N_ReceiptID from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId and n_AcYearID=@nFnYearID " + Searchkey + Criteria + " and N_ReceiptID not in (select top(" + Count + ") N_ReceiptID from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId and n_AcYearID=@nFnYearID" + Criteria + xSortBy + " ) " + xSortBy;
             Params.Add("@nCompanyId", nCompanyId);
-
+            Params.Add("@nFnYearID", nFnYearID);
             SortedList OutPut = new SortedList();
 
 
@@ -344,12 +352,12 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria;
+                    sqlCommandCount = "select count(1) as N_Count  from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId and n_AcYearID=@nFnYearID " ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
-                    {
+                    { 
                         return Ok(_api.Warning("No Results Found"));
                     }
                     else
@@ -384,6 +392,13 @@ namespace SmartxAPI.Controllers
                     SortedList PostingDelParam1 = new SortedList();
                     String detailSql = "";
                     DataTable DetailTable = new DataTable();
+                      SortedList ParamList = new SortedList();
+                    DataTable TransData = new DataTable();
+                    ParamList.Add("@nTransID", nReceiptId);
+                    ParamList.Add("@nAcYearID", nAcYearID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                    string xButtonAction="Delete";
+                   // string X_ReceiptNo="";
                     Params.Add("@nCompanyID", nCompanyID);
 
                     PostingDelParam.Add("N_CompanyID", nCompanyID);
@@ -399,6 +414,24 @@ namespace SmartxAPI.Controllers
                     detailSql = "select * from Pay_EmployeePaymentDetails where N_ReceiptID=" + nReceiptId + " ";
                     DetailTable = dLayer.ExecuteDataTable(detailSql, Params, connection);
                     SqlTransaction transaction = connection.BeginTransaction();
+                   ;
+                     string Sql = "select n_ReceiptID,X_ReceiptNo from Pay_EmployeePayment where n_ReceiptID=@nTransID and N_CompanyID=@nCompanyID ";
+                      TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+                     
+                      if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+                                        //  Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nAcYearID.ToString()),nReceiptId,TransRow["X_ReceiptNo"].ToString(),198,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+             
+
 
                     for (int i = DetailTable.Rows.Count - 1; i >= 0; i--)
                     {
@@ -491,6 +524,7 @@ namespace SmartxAPI.Controllers
                     string X_ReceiptNo = MasterTable.Rows[0]["x_ReceiptNo"].ToString();
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                     int nLoanFlag = 0;
+                     string xButtonAction="";
                     // QueryParams.Add("@nCompanyID", N_CompanyID);
                     // QueryParams.Add("@nFnYearID", N_FnYearID);
                     // QueryParams.Add("@nReceiptID", N_ReceiptID);
@@ -505,6 +539,7 @@ namespace SmartxAPI.Controllers
                         //         {"N_ReceiptId",nReceiptID}
                         //     };
                         dLayer.DeleteData("Pay_EmployeePaymentDetails", "N_ReceiptId", nReceiptID, "N_CompanyID = " + nCompanyID, connection, transaction);
+                        xButtonAction="Update"; 
                     }
 
                     DocNo = MasterRow["x_ReceiptNo"].ToString();
@@ -513,27 +548,35 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_FormID", FormID);
                         Params.Add("N_YearID", nAcYearID);
+                      
 
                         while (true)
                         {
                             DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                             xButtonAction="Insert"; 
                             object N_Result = dLayer.ExecuteScalar("Select 1 from Pay_EmployeePayment Where X_ReceiptNo ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                           
                             if (N_Result == null)
                                 break;
                         }
                         X_ReceiptNo = DocNo;
-
+                        
 
                         if (X_ReceiptNo == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate")); }
                         MasterTable.Rows[0]["x_ReceiptNo"] = X_ReceiptNo;
-
+                        
                     }
+                     X_ReceiptNo = MasterTable.Rows[0]["x_ReceiptNo"].ToString();
+           
+
+
                     // else
                     // {
                     //     dLayer.DeleteData("Pay_EmployeePayment", "N_ReceiptId", nReceiptID, "", connection, transaction);
                     // }
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_AcYearID=" + nAcYearID + " and X_ReceiptNo='" + X_ReceiptNo + "'";
                     string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_AcYearID=" + nAcYearID;
+          
 
                     nReceiptID = dLayer.SaveData("Pay_EmployeePayment", "N_ReceiptId", DupCriteria, X_Criteria, MasterTable, connection, transaction);
                     if (nReceiptID <= 0)
@@ -557,6 +600,8 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows[i]["N_ReceiptID"] = nReceiptID;
 
                     }
+           
+
                     int nReceiptDetailsID = dLayer.SaveData("Pay_EmployeePaymentDetails", "N_ReceiptDetailsID", DetailTable, connection, transaction);
                     if (nReceiptDetailsID <= 0)
                     {
@@ -564,6 +609,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User,"Pay not selected"));
                     }
 
+           
 
                     if (myFunctions.getIntVAL(MasterTable.Rows[0]["b_IsSaveDraft"].ToString()) == 0)
                     {
@@ -605,6 +651,16 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                         }
+
+                             //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nAcYearID,nReceiptID,X_ReceiptNo,198,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       
+         
                         SortedList PostingParam = new SortedList();
                         PostingParam.Add("N_CompanyID", nCompanyID);
                         PostingParam.Add("N_ReceiptID", nReceiptID);

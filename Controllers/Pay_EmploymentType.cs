@@ -57,12 +57,12 @@ namespace SmartxAPI.Controllers
                         string xDescription = MasterTable.Rows[0]["x_Description"].ToString();
                         string xPrefix = MasterTable.Rows[0]["x_Prefix"].ToString();
                         SortedList proParams2 = new SortedList(){
-                                        {"N_CompanyID",nCompanyID},
-                                        {"N_FormID",188},
-                                        {"N_FnYearID",nFnYearID},
-                                        {"N_BranchID",n_BranchID},
-                                        {"X_Prefix",xPrefix},
-                                        {"X_Type",xDescription}};
+                                        {"@N_CompanyID",nCompanyID},
+                                        {"@N_FormID",188},
+                                        {"@N_FnYearID",nFnYearID},
+                                        {"@N_BranchID",n_BranchID},
+                                        {"@X_Prefix",xPrefix},
+                                        {"@X_Type",xDescription}};
 
                         dLayer.ExecuteScalarPro("Sp_CreateInvoiceCounter", proParams2, connection, transaction);
 

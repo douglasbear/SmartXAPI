@@ -95,9 +95,9 @@ namespace SmartxAPI.Controllers
                 object ObjRowCount = null;
                 object ObjChildCount = null;
 
-                ObjRowCount = dLayer.ExecuteScalar("Select COUNT(*) FROM Acc_CostCentreMaster Where N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
+                ObjRowCount = dLayer.ExecuteScalar("Select count(1) FROM Acc_CostCentreMaster Where N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
                 if (higerlevelid > 0)
-                    ObjChildCount = dLayer.ExecuteScalar("Select COUNT(*) FROM Acc_CostCentreMaster Where N_GroupID=" + higerlevelid + " and N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
+                    ObjChildCount = dLayer.ExecuteScalar("Select count(1) FROM Acc_CostCentreMaster Where N_GroupID=" + higerlevelid + " and N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
                 else
                     ObjChildCount = 0;
                 if (ObjRowCount != null)
@@ -293,16 +293,27 @@ namespace SmartxAPI.Controllers
                     }
                     else if (X_CostCentreCode == "@Auto" && N_CostCentreID > 0)
                     {
+                       
                         X_CostCentreCode = GetNextChildCode(N_CostCentreID, QueryParams, connection, transaction);
                         MasterTable.Rows[0]["x_CostCentreCode"] = X_CostCentreCode;
                         MasterTable.Rows[0]["N_CostCentreID"] = 0;
+                        dLayer.DeleteData("Acc_CostCentreMaster", "N_CostCentreID", N_CostCentreID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+              
                     }
-                    // else
-                    // {
-                    //     dLayer.DeleteData("Acc_CostCentreMaster", "N_CostCentreID", N_CostCentreID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
-                    // }
+                    else
+                    {
+                        dLayer.DeleteData("Acc_CostCentreMaster", "N_CostCentreID", N_CostCentreID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+                    }
                     if (MasterTable.Columns.Contains("n_empid"))
                         MasterTable.Columns.Remove("n_empid");
+
+                    if (MasterTable.Columns.Contains("B_AllowTransactionPosting"))
+                        MasterTable.Rows[0]["B_AllowTransactionPosting"]=1;
+                    else
+                    {
+                        myFunctions.AddNewColumnToDataTable(MasterTable, "B_AllowTransactionPosting", typeof(bool), 1);
+                    }
+
                     N_CostCentreID = dLayer.SaveData("Acc_CostCentreMaster", "N_CostCentreID", MasterTable, connection, transaction);
                     if (N_CostCentreID <= 0)
                     {
@@ -314,7 +325,7 @@ namespace SmartxAPI.Controllers
                         transaction.Commit();
                     }
 
-                    return Ok(_api.Success("Department/Cost Centre Saved"));
+                    return Ok(_api.Success("Entry Saved"));
                 }
             }
             catch (Exception ex)
@@ -339,22 +350,23 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object Objcount = dLayer.ExecuteScalar("Select count(*) From vw_Acc_CostCentreMaster_List where N_CostCentreID=@nCostCentreID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
+                    object Objcount = dLayer.ExecuteScalar("Select count(1) From vw_Acc_CostCentreMaster_List where N_CostCentreID=@nCostCentreID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
+                    object count = dLayer.ExecuteScalar("Select count(1) From Acc_VoucherMaster_Details_Segments where N_Segment_2=@nCostCentreID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
                     if (Objcount != null)
                     {
-                        if (myFunctions.getIntVAL(Objcount.ToString()) <= 0)
+                        if (myFunctions.getIntVAL(Objcount.ToString()) <= 0||myFunctions.getIntVAL(count.ToString()) <= 0)
                         {
                             Results = dLayer.DeleteData("Acc_CostCentreMaster", "N_CostCentreID", nDepartmentID, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection);
                         }
                         else
                         {
-                            return Ok(_api.Error(User,"Department Allready Used"));
+                            return Ok(_api.Error(User,"Department/Costcenter Allready in use"));
                         }
                     }
                 }
                 if (Results > 0)
                 {
-                    return Ok(_api.Success("Department/Cost centre deleted"));
+                    return Ok(_api.Success("Entry deleted"));
                 }
                 else
                 {

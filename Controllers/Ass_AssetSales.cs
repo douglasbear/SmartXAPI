@@ -81,9 +81,9 @@ namespace SmartxAPI.Controllers
 
             int Count = (nPage - 1) * nSizeperpage;
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_CustomerID,N_AssetInventoryID,N_FnYearID,N_BranchID,X_InvoiceNo,D_InvoiceDate,X_CustomerName,X_Type from vw_InvAssetInventoryReceiptNo_Search where "+sqlCondition+" " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_CustomerID,N_AssetInventoryID,N_FnYearID,N_BranchID,X_InvoiceNo,D_InvoiceDate,X_CustomerName,X_Type,x_BillAmt,X_Description from vw_InvAssetInventoryReceiptNo_Search where "+sqlCondition+" " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_CustomerID,N_AssetInventoryID,N_FnYearID,N_BranchID,X_InvoiceNo,D_InvoiceDate,X_CustomerName,X_Type from vw_InvAssetInventoryReceiptNo_Search where "+sqlCondition+" " + Searchkey + " and N_AssetInventoryID not in (select top(" + Count + ") N_AssetInventoryID from vw_InvAssetInventoryReceiptNo_Search where "+sqlCondition+" " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_CustomerID,N_AssetInventoryID,N_FnYearID,N_BranchID,X_InvoiceNo,D_InvoiceDate,X_CustomerName,X_Type,x_BillAmt,X_Description from vw_InvAssetInventoryReceiptNo_Search where "+sqlCondition+" " + Searchkey + " and N_AssetInventoryID not in (select top(" + Count + ") N_AssetInventoryID from vw_InvAssetInventoryReceiptNo_Search where "+sqlCondition+" " + xSortBy + " ) " + xSortBy;
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
@@ -97,7 +97,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_InvAssetInventoryReceiptNo_Search where "+sqlCondition+" " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count from vw_InvAssetInventoryReceiptNo_Search where "+sqlCondition+" " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     //string TotalSum = "0";
@@ -181,14 +181,17 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction=connection.BeginTransaction();
-                    string ReturnNo="",xTransType="";
+                    var xTransType="";
                     int nCompanyID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
                     int N_AssetInventoryID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_AssetInventoryID"].ToString());
                     int TypeID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_TypeID"].ToString());
+                    int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
                     int nLocationID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationID"].ToString());
                     int N_UserID=myFunctions.GetUserID(User);
                     var X_InvoiceNo = MasterTable.Rows[0]["X_InvoiceNo"].ToString();
+                    string ReturnNo = MasterTable.Rows[0]["X_InvoiceNo"].ToString();
                     MasterTable.Columns.Remove("N_LocationID");
+                    String xButtonAction="";
 
                     if(X_InvoiceNo=="@Auto"){
                         Params.Add("N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString());
@@ -196,9 +199,11 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID",N_FormID);
                         Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
                         ReturnNo =  dLayer.GetAutoNumber("Ass_SalesMaster","X_InvoiceNo", Params,connection,transaction);
+                         xButtonAction="Insert"; 
                         if(ReturnNo==""){transaction.Rollback(); return Ok(_api.Warning("Unable to generate Invoice Number"));}
                         MasterTable.Rows[0]["X_InvoiceNo"] = ReturnNo;
                     }
+                    ReturnNo = MasterTable.Rows[0]["X_InvoiceNo"].ToString();
 
                     if(N_AssetInventoryID>0)
                     {
@@ -211,6 +216,7 @@ namespace SmartxAPI.Controllers
                         try
                         {
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+                              xButtonAction="Update"; 
                         }
                         catch (Exception ex)
                         {
@@ -309,6 +315,15 @@ namespace SmartxAPI.Controllers
                         else
                             dLayer.ExecuteNonQuery("update Ass_AssetMaster set N_Status=2 where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"], connection, transaction);                                  
                     }
+
+                                      //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(N_FnYearID,N_AssetInventoryID,ReturnNo,404,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
 
                     SortedList PostingParam = new SortedList();
                     PostingParam.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
@@ -422,7 +437,7 @@ namespace SmartxAPI.Controllers
         }
 
        [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCompanyID,int N_AssetInventoryID)
+        public ActionResult DeleteData(int nCompanyID,int N_AssetInventoryID,int nFnYearID)
         {
             int Results = 0;
             var nUserID = myFunctions.GetUserID(User);
@@ -431,7 +446,36 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList=new SortedList();
                     SqlTransaction transaction = connection.BeginTransaction();
+                     SortedList Params = new SortedList();
+                      ParamList.Add("@nTransID", N_AssetInventoryID);
+                     ParamList.Add("@nCompanyID", nCompanyID);
+                    ParamList.Add("@nFnYearID",nFnYearID);
+                      string Sql = "select N_AssetInventoryID,X_InvoiceNo from Ass_SalesMaster where N_AssetInventoryID=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+                    string xButtonAction="Delete";
+                     string X_InvoiceNo="";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+  
+                    if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error(User, "Transaction not Found"));
+                    }
+                  
+                    DataRow TransRow = TransData.Rows[0];
+
+             object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Ass_SalesMaster where N_AssetInventoryID =" + N_AssetInventoryID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
+
+              
+               //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),N_AssetInventoryID,TransRow["X_InvoiceNo"].ToString(),404,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
                    if(N_AssetInventoryID>0)
                     {
                         SortedList DeleteParams = new SortedList(){
@@ -450,7 +494,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User,ex));
                         }
                     }
-                    if (Results >= 0)
+                        if (Results >= 0)
                     {
                         transaction.Commit();
                         return Ok(_api.Success("Asset Sales deleted"));
@@ -460,7 +504,6 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User,"Unable to delete Asset Sales"));
                     }
-
 
                 }
             }

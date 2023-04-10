@@ -83,7 +83,7 @@ namespace SmartxAPI.Controllers
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
                         dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                        sqlCommandCount = "select count(*) as N_Count from vw_Pay_EmpAnyRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  " + Searchkey + "";
+                        sqlCommandCount = "select count(1) as N_Count from vw_Pay_EmpAnyRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  " + Searchkey + "";
                         object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
                         OutPut.Add("Details", api.Format(dt));
                         OutPut.Add("TotalCount", TotalCount);
@@ -241,6 +241,7 @@ namespace SmartxAPI.Controllers
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 int N_NextApproverID = 0;
+                string xButtonAction="";
 
 
 
@@ -261,10 +262,10 @@ namespace SmartxAPI.Controllers
                         int N_PkeyID = nRequestID;
                         string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpAnyRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
                         myAttachments.SaveAttachment(dLayer, Attachment, xReqCode, nRequestID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
                         transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Employee Request", xReqCode, dLayer, connection, transaction, User);
+                        //myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Employee Request", xReqCode, dLayer, connection, transaction, User);
                         return Ok(api.Success("Employee Request Approved" + "-" + xReqCode));
                     }
 
@@ -273,19 +274,34 @@ namespace SmartxAPI.Controllers
                         SortedList Params = new SortedList();
                         Params.Add("@nCompanyID", nCompanyID);
                         xReqCode = dLayer.ExecuteScalar("Select max(isnull(N_RequestID,0))+1 as N_RequestID from Pay_EmpAnyRequest where N_CompanyID=@nCompanyID", Params, connection, transaction).ToString();
+                        xButtonAction="Insert"; 
                         if (xReqCode == null || xReqCode == "") { xReqCode = "1"; }
                         MasterTable.Rows[0]["X_RequestCode"] = xReqCode;
+                    }else{
+                         xReqCode = MasterTable.Rows[0]["X_RequestCode"].ToString();
                     }
                    
 
                     if (nRequestID > 0)
                     {
                         dLayer.DeleteData("Pay_EmpAnyRequest", "N_RequestID", nRequestID, "", connection, transaction);
+                        xButtonAction="Update"; 
                     }
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
                    
                     nRequestID = dLayer.SaveData("Pay_EmpAnyRequest", "N_RequestID", MasterTable, connection, transaction);
+                 //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nRequestID,xReqCode,1234,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       
+                          
+                   
+                   
                     if (nRequestID <= 0)
                     {
                         transaction.Rollback();
@@ -293,7 +309,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", nRequestID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", nRequestID, xReqCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
 
                         // DataTable Files = ds.Tables["files"];
                         // if (Files.Rows.Count > 0)
@@ -308,7 +324,7 @@ namespace SmartxAPI.Controllers
 
                         myAttachments.SaveAttachment(dLayer, Attachment, xReqCode, nRequestID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
                         transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Employee Request", xReqCode, dLayer, connection, transaction, User);
+                        //myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Employee Request", xReqCode, dLayer, connection, transaction, User);
                         Dictionary<string, string> res = new Dictionary<string, string>();
                         res.Add("x_RequestCode", xReqCode.ToString());
                         return Ok(api.Success(res, "Employee Request successfully created with Request No" + "-" + xReqCode));
@@ -346,13 +362,22 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     if(N_RequestTypeID==0){
                     N_RequestTypeID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select max(isnull(N_RequestTypeID,0)) as N_RequestTypeID from Pay_EmployeeRequestType where N_CompanyID=@nCompanyID", Params, connection, transaction).ToString());
-                    if(N_RequestTypeID==0)
+                    if(N_RequestTypeID==0 || N_RequestTypeID < 3000)
                         {
                             N_RequestTypeID=3000;// Employee Request Type ID Starts From 3000
                             MasterTable.Rows[0]["n_RequestTypeID"]=N_RequestTypeID;
                             MasterTable.AcceptChanges();
                         }
+                    else
+                    {
+                        N_RequestTypeID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select max(isnull(N_RequestTypeID,0))+1 as N_RequestTypeID from Pay_EmployeeRequestType where N_CompanyID=@nCompanyID", Params, connection, transaction).ToString());
+                    }
                     }    
+                         if (N_RequestTypeID > 0) 
+                    {  
+                        dLayer.DeleteData("Pay_EmployeeRequestType", "N_RequestTypeID",N_RequestTypeID,"N_CompanyId=" + myFunctions.GetCompanyID(User), connection, transaction);                        
+                    }
+
                     N_RequestTypeID = dLayer.SaveData("Pay_EmployeeRequestType", "N_RequestTypeID", MasterTable, connection, transaction);
                     if (N_RequestTypeID <= 0)
                     {
@@ -390,6 +415,8 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_EmpID,0) as N_EmpID,X_RequestCode,N_RequestType from Pay_EmpAnyRequest where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_RequestID=@nTransID";
+                    string xButtonAction="Delete";
+                    string X_RequestCode="";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
@@ -404,6 +431,8 @@ namespace SmartxAPI.Controllers
                     EmpParams.Add("@nEmpID", EmpID);
                     EmpParams.Add("@nFnYearID", nFnYearID);
                     object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", EmpParams, connection);
+               
+
 
                     DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, nRequestID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, myFunctions.getIntVAL(TransRow["N_EmpID"].ToString()), myFunctions.getIntVAL(TransRow["N_RequestType"].ToString()), User, dLayer, connection));
                     Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
@@ -414,6 +443,19 @@ namespace SmartxAPI.Controllers
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
                     //myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString())
+
+
+                         
+                     //  Activity Log
+                      string ipAddress = "";
+                         if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                      else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nRequestID,TransRow["X_RequestCode"].ToString(),1234,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+             
+
+
 
                     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Employee Request", nRequestID, TransRow["X_RequestCode"].ToString(), ProcStatus, "Pay_EmpAnyRequest", X_Criteria, objEmpName.ToString(), User, dLayer, connection, transaction);
                     if (status != "Error")
