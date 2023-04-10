@@ -374,7 +374,7 @@ namespace SmartxAPI.Controllers
                             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                         }
 
-                        sqlCommandCount = "select count(1) as N_Count,0 as TotalAmount  from " + DataSource2 + Criterea;
+                        sqlCommandCount = "select count(1) as N_Count,0 as TotalAmount  from " + DataSource + Criterea;
 
                         if (SumField.Trim() != "")
                         {
