@@ -284,6 +284,7 @@ namespace SmartxAPI.Controllers
                                 Object NFreeLocations=dLayer.ExecuteScalar("select SUM(isnull(N_FreeLocations,0)) as N_FreeLocations  from AppMaster where N_AppID in ( select N_AppID from ClientApps where n_ClientID="+nClientID+" )", Params, connection);
                                 Object NFreeStudents=dLayer.ExecuteScalar(" select SUM(isnull(N_FreeStudents,0)) as N_FreeStudents  from AppMaster where N_AppID in ( select N_AppID from ClientApps where n_ClientID="+nClientID+" )", Params, connection);
                                 Object NFreeBranches=dLayer.ExecuteScalar(" select SUM(isnull(N_FreeBranches,0)) as N_FreeBranches  from AppMaster where N_AppID in ( select N_AppID from ClientApps where n_ClientID="+nClientID+" )", Params, connection);
+                                //Object NFreeBranches=dLayer.ExecuteScalar(" select 0 as N_FreeCompanies from AppMaster where N_AppID in ( select N_AppID from ClientApps where n_ClientID="+nClientID+" )", Params, connection);
                                 if(dtSettings.Rows[i]["x_Description"].ToString()=="USER LIMIT")
                                 {
                                     if(nFreeUsers!=null)
@@ -307,7 +308,7 @@ namespace SmartxAPI.Controllers
                                     if(NFreeBranches!=null)
                                     {
                                   dtSettings.Rows[i]["N_Free"]=NFreeBranches;
-                                  dtSettings.Rows[i]["N_Additional"]= myFunctions.getIntVAL(dtSettings.Rows[i]["N_Value"].ToString())-  myFunctions.getIntVAL(NFreeBranches.ToString());
+                                  dtSettings.Rows[i]["N_Additional"]= myFunctions.getIntVAL(dtSettings.Rows[i]["N_Value"].ToString())- myFunctions.getIntVAL(NFreeBranches.ToString());
                                 
                                     }
                                   
@@ -317,7 +318,7 @@ namespace SmartxAPI.Controllers
                                     if(NFreeStudents!=null)
                                     {
                                   dtSettings.Rows[i]["N_Free"]=NFreeStudents;
-                                  dtSettings.Rows[i]["N_Additional"]= myFunctions.getIntVAL(dtSettings.Rows[i]["N_Value"].ToString())-  myFunctions.getIntVAL(NFreeStudents.ToString());
+                                  dtSettings.Rows[i]["N_Additional"]= myFunctions.getIntVAL(dtSettings.Rows[i]["N_Value"].ToString())- myFunctions.getIntVAL(NFreeStudents.ToString());
                                 
                                     }
                                   
@@ -327,11 +328,20 @@ namespace SmartxAPI.Controllers
                                     if(NFreeLocations!=null)
                                     {
                                   dtSettings.Rows[i]["N_Free"]=NFreeLocations;
-                                  dtSettings.Rows[i]["N_Additional"]= myFunctions.getIntVAL(dtSettings.Rows[i]["N_Value"].ToString())-  myFunctions.getIntVAL(NFreeLocations.ToString());
+                                  dtSettings.Rows[i]["N_Additional"]= myFunctions.getIntVAL(dtSettings.Rows[i]["N_Value"].ToString())- myFunctions.getIntVAL(NFreeLocations.ToString());
                                 
                                     }
                                   
                                 }
+                                if(dtSettings.Rows[i]["x_Description"].ToString()=="COMPANY LIMIT")
+                                {
+                                  
+                                  dtSettings.Rows[i]["N_Free"]=0;
+                                  dtSettings.Rows[i]["N_Additional"]= myFunctions.getIntVAL(dtSettings.Rows[i]["N_Value"].ToString()) - 0;
+                        
+                                }
+                                  
+                            
                              
                             }
 
