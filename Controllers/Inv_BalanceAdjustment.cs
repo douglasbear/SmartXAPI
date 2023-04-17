@@ -155,8 +155,9 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
-            DataTable DataTable = new DataTable();
-
+            // DataTable DataTable = new DataTable();
+            DataTable Acc_CostCentreTrans = new DataTable();
+            int N_AdjustmentID = 0;
             string Mastersql = "";
 
             if (bAllBranchData == true)
@@ -189,6 +190,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                    N_AdjustmentID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AdjustmentID"].ToString());
 
                     if (MasterTable.Rows.Count == 0)
                     {
@@ -203,13 +205,26 @@ namespace SmartxAPI.Controllers
 
                     string DetailSql = "";
 
-        //             DetailSql = "Select Inv_BalanceAdjustmentMasterDetails.*,Acc_MastLedger.* from Inv_BalanceAdjustmentMasterDetails " +
-        // " Left Outer JOIN Acc_MastLedger On Inv_BalanceAdjustmentMasterDetails.N_LedgerID= Acc_MastLedger.N_LedgerID and Inv_BalanceAdjustmentMasterDetails.N_CompanyID = Acc_MastLedger.N_CompanyID" +
-        // " Where Inv_BalanceAdjustmentMasterDetails.N_CompanyID=@p1 and  Acc_MastLedger.N_FnYearID=@p3 and Inv_BalanceAdjustmentMasterDetails.N_AdjustmentId=" + N_AdjustmentId;
-DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p1 and  N_FnYearID=@p3 and N_AdjustmentId=" + N_AdjustmentId;
+                    //             DetailSql = "Select Inv_BalanceAdjustmentMasterDetails.*,Acc_MastLedger.* from Inv_BalanceAdjustmentMasterDetails " +
+                    // " Left Outer JOIN Acc_MastLedger On Inv_BalanceAdjustmentMasterDetails.N_LedgerID= Acc_MastLedger.N_LedgerID and Inv_BalanceAdjustmentMasterDetails.N_CompanyID = Acc_MastLedger.N_CompanyID" +
+                    // " Where Inv_BalanceAdjustmentMasterDetails.N_CompanyID=@p1 and  Acc_MastLedger.N_FnYearID=@p3 and Inv_BalanceAdjustmentMasterDetails.N_AdjustmentId=" + N_AdjustmentId;
+                    DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p1 and  N_FnYearID=@p3 and N_AdjustmentId=" + N_AdjustmentId;
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(DetailTable);
+
+                    string CostcenterSql = "SELECT X_EmpCode, X_EmpName, N_ProjectID as N_Segment_3,N_EmpID as N_Segment_4, X_ProjectCode,X_ProjectName,N_EmpID,N_ProjectID,N_CompanyID,N_FnYearID, " +
+                        " N_VoucherID, N_VoucherDetailsID, N_CostCentreID,X_CostCentreName,X_CostCentreCode,N_BranchID,X_BranchName,X_BranchCode , " +
+                        " N_Amount, N_LedgerID, N_CostCenterTransID, N_GridLineNo,X_Naration,0 AS N_AssetID, '' As X_AssetCode, " +
+                        " GETDATE() AS D_RepaymentDate, '' AS X_AssetName,'' AS X_PayCode,0 AS N_PayID,0 AS N_Inst,CAST(0 AS BIT) AS B_IsCategory,D_Entrydate " +
+                        " FROM   vw_InvFreeTextPurchaseCostCentreDetails where N_InventoryID = " + N_AdjustmentID + " And N_InventoryType=0 And N_FnYearID=" + nFnYearId +
+                        " And N_CompanyID=" + nCompanyId + " Order By N_InventoryID,N_VoucherDetailsID ";
+
+                    Acc_CostCentreTrans = dLayer.ExecuteDataTable(CostcenterSql, Params, connection);
+
+
+                    Acc_CostCentreTrans = _api.Format(Acc_CostCentreTrans, "costCenterTrans");
+                    dt.Tables.Add(Acc_CostCentreTrans);
                 }
                 return Ok(_api.Success(dt));
             }
@@ -226,8 +241,10 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
             {
                 DataTable MasterTable;
                 DataTable DetailTable;
+                DataTable CostCenterTable;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
+                CostCenterTable = ds.Tables["CostCenterTable"];
                 SortedList Params = new SortedList();
                 string xButtonAction = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -367,6 +384,7 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                                 {"X_TransType",X_Trasnaction},
                                 {"N_VoucherID",N_AdjustmentID}};
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+                            int dltRes = dLayer.DeleteData("Inv_CostCentreTransactions", "N_InventoryID", N_AdjustmentID, " N_CompanyID = " + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
                             xButtonAction="Update"; 
                         }
                     }
@@ -379,9 +397,68 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                         transaction.Rollback();
                         return Ok(_api.Error(User,"Unable to save Adjustment"));
                     }
+                    int N_AdjustmentDetailsId = 0;
+                    CostCenterTable = myFunctions.AddNewColumnToDataTable(CostCenterTable, "N_LedgerID", typeof(int), 0);
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["N_AdjustmentID"] = N_AdjustmentID;
+
+                        N_AdjustmentDetailsId = dLayer.SaveDataWithIndex("Inv_BalanceAdjustmentMasterDetails", "N_AdjustmentDetailsId", "", "", j, DetailTable, connection, transaction);
+                        if (N_AdjustmentDetailsId > 0)
+                        {
+                            for (int k = 0; k < CostCenterTable.Rows.Count; k++)
+                            {
+                                if (myFunctions.getIntVAL(CostCenterTable.Rows[k]["rowID"].ToString()) == j)
+                                {
+                                    CostCenterTable.Rows[k]["N_VoucherID"] = N_AdjustmentID;
+                                    CostCenterTable.Rows[k]["N_VoucherDetailsID"] = N_AdjustmentDetailsId;
+                                    CostCenterTable.Rows[k]["N_LedgerID"] = myFunctions.getIntVAL(DetailTable.Rows[j]["n_LedgerID"].ToString());
+
+                                }
+                            }
+                        }
+                    }
+
+                    CostCenterTable.AcceptChanges();
+
+                    DataTable costcenter = new DataTable();
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_CostCenterTransID", typeof(int), 0);
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_CompanyID", typeof(int), 0);
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_FnYearID", typeof(int), 0);
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_InventoryType", typeof(int), 0);
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_InventoryID", typeof(int), 0);
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_InventoryDetailsID", typeof(int), 0);
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_CostCentreID", typeof(int), 0);
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_Amount", typeof(double), 0);
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_LedgerID", typeof(int), 0);
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_BranchID", typeof(int), 0);
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "X_Narration", typeof(string), "");
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "X_Naration", typeof(string), 0);
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "D_Entrydate", typeof(DateTime), null);
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_GridLineNo", typeof(int), 0);
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_EmpID", typeof(int), 0);
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_ProjectID", typeof(int), 0);
+
+                    foreach (DataRow dRow in CostCenterTable.Rows)
+                    {
+                        DataRow row = costcenter.NewRow();
+                        row["N_CostCenterTransID"] = dRow["N_VoucherSegmentID"];
+                        row["N_CompanyID"] = dRow["N_CompanyID"];
+                        row["N_FnYearID"] = dRow["N_FnYearID"];
+                        row["N_InventoryType"] = 0;
+                        row["N_InventoryID"] = dRow["N_VoucherID"];
+                       row["N_InventoryDetailsID"] = dRow["N_VoucherDetailsID"];
+                        row["N_CostCentreID"] = dRow["n_Segment_2"];
+                        row["N_Amount"] = dRow["N_Amount"];
+                        row["N_LedgerID"] = dRow["N_LedgerID"];
+                        row["N_BranchID"] = dRow["N_BranchID"];
+                        row["X_Narration"] = "";
+                        row["X_Naration"] = dRow["X_Naration"];
+                        row["D_Entrydate"] = dRow["D_Entrydate"];
+                        row["N_GridLineNo"] = dRow["rowID"];
+                        row["N_EmpID"] = myFunctions.getIntVAL(dRow["N_Segment_4"].ToString());
+                        row["N_ProjectID"] = myFunctions.getIntVAL(dRow["N_Segment_3"].ToString());
+                        costcenter.Rows.Add(row);
                     }
                                              //Activity Log
                 string ipAddress = "";
@@ -392,7 +469,8 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                        myFunctions.LogScreenActivitys(N_FnYearID,N_AdjustmentID,AdjustmentNo,N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
                           
                           
-                    int N_AdjustmentDetailsId = dLayer.SaveData("Inv_BalanceAdjustmentMasterDetails", "N_AdjustmentDetailsId", DetailTable, connection, transaction);
+                    // int N_AdjustmentDetailsId = dLayer.SaveData("Inv_BalanceAdjustmentMasterDetails", "N_AdjustmentDetailsId", DetailTable, connection, transaction);
+                    int N_SegmentId = dLayer.SaveData("Inv_CostCentreTransactions", "N_CostCenterTransID", "", "", costcenter, connection, transaction);
                     if (N_AdjustmentDetailsId <= 0)
                     {
                         transaction.Rollback();
