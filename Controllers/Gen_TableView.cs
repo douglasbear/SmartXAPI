@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetDashboardList(int nFnYearID, int nPage, int nSizeperpage, string xSearchkey, string xSearchField, string xSortBy, int nBranchID, int nEmpID, int nUserID, int nDecimalPlace, bool bAllBranchData, int nFormID, int nTableViewID,int nLocationID, bool export)
+        public ActionResult GetDashboardList(int nFnYearID, int nPage, int nSizeperpage, string xSearchkey, string xSearchField, string xSortBy, int nBranchID, int nEmpID, int nUserID, int nDecimalPlace, bool bAllBranchData, int nFormID, int nTableViewID,int nLocationID, bool export, int nCountryID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             SortedList OutPut = new SortedList();
@@ -122,6 +122,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@empVal", nEmpID);
             Params.Add("@userVal", nUserID);
             Params.Add("@lVal", nLocationID);
+            Params.Add("@ctrVal", nCountryID);
 
             string UserPattern = myFunctions.GetUserPattern(User);
             if (UserPattern != "")
