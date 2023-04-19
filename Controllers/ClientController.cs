@@ -155,7 +155,7 @@ namespace SmartxAPI.Controllers
                       DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_ClientID", typeof(int), n_ClientID);
                       DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_UpdatedUserID", typeof(int),myFunctions.GetUserID(User));
                       DetailsTable.AcceptChanges(); 
-                     dLayer.DeleteData("ClientHistory", "n_ClientID", n_ClientID,"",connection, transaction);
+                     //dLayer.DeleteData("ClientHistory", "n_ClientID", n_ClientID,"",connection, transaction);
                     int nClientHistoryID = dLayer.SaveData("ClientHistory", "N_ClientHistoryID", DetailsTable, connection, transaction);
                     if (nClientHistoryID <= 0)
                     {
@@ -443,7 +443,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     Params.Add("@nClientID", nClientID);
                     Params.Add("@nAppID", nAppID);
-                    string AppDetailsSql=" SELECT     ClientApps.N_ClientID, ClientApps.N_AppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, ClientApps.N_UserLimit, ClientApps.B_Inactive, ClientApps.X_Sector, ClientApps.N_RefID, ClientApps.D_ExpiryDate, ClientApps.B_Licensed, ClientApps.D_LastExpiryReminder, ClientApps.B_EnableAttachment, AppMaster.X_AppName,AppMaster.b_EnableAttachment as enableAttachment,ClientApps.N_SubscriptionAmount,ClientApps.n_DiscountAmount FROM "+
+                    string AppDetailsSql=" SELECT     ClientApps.N_ClientID, ClientApps.N_AppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, ClientApps.N_UserLimit, ClientApps.B_Inactive, ClientApps.X_Sector, ClientApps.N_RefID, ClientApps.D_ExpiryDate, ClientApps.B_Licensed, ClientApps.D_LastExpiryReminder, ClientApps.B_EnableAttachment, AppMaster.X_AppName,AppMaster.b_EnableAttachment as enableAttachment,ClientApps.N_SubscriptionAmount,ClientApps.n_DiscountAmount,ClientApps.D_StartDate FROM "+
                     " ClientApps LEFT OUTER JOIN  AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID where N_ClientID=@nClientID and ClientApps.N_AppID=@nAppID";
                     DataTable AppDetails = dLayer.ExecuteDataTable(AppDetailsSql,Params, connection);
                     AppDetails = _api.Format(AppDetails, "AppDetails");
@@ -467,7 +467,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     Params.Add("@nClientID", nClientID);
                    // string AppListSql=" SELECT  * from  ClientApps where N_ClientID=@nClientID";
-                    string AppListSql="SELECT     ClientApps.N_ClientID, ClientApps.N_AppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, ClientApps.N_UserLimit, ClientApps.B_Inactive, ClientApps.X_Sector, ClientApps.N_RefID, ClientApps.D_ExpiryDate, ClientApps.B_Licensed, ClientApps.D_LastExpiryReminder, ClientApps.B_EnableAttachment, AppMaster.X_AppName FROM "+
+                    string AppListSql="SELECT     ClientApps.N_ClientID, ClientApps.N_AppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, ClientApps.N_UserLimit, ClientApps.B_Inactive, ClientApps.X_Sector, ClientApps.N_RefID, ClientApps.D_ExpiryDate, ClientApps.B_Licensed, ClientApps.D_LastExpiryReminder, ClientApps.B_EnableAttachment,ClientApps.N_SubscriptionAmount, AppMaster.X_AppName,AppMaster.N_FreeUsers,AppMaster.N_FreeEmployees,ClientApps.D_StartDate FROM "+
                     " ClientApps LEFT OUTER JOIN  AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID where N_ClientID=@nClientID";
                     DataTable AppList = dLayer.ExecuteDataTable(AppListSql,Params, connection);
                     return Ok(_api.Success(AppList));
@@ -561,9 +561,10 @@ namespace SmartxAPI.Controllers
                         MasterTable.Columns.Remove("x_DbUri");   
                     if (myFunctions.ContainColumn("x_Sector", MasterTable))
                         MasterTable.Columns.Remove("x_Sector");
-                   
+                    if (myFunctions.ContainColumn("d_StartDate", MasterTable))
+                        MasterTable.Columns.Remove("d_StartDate");
                     MasterTable.AcceptChanges();   
-                    dLayer.DeleteData("AppHistory", "n_AppID", n_AppID, "N_ClientID="+n_ClientID+"",connection, transaction);
+                    //dLayer.DeleteData("AppHistory", "n_AppID", n_AppID, "N_ClientID="+n_ClientID+"",connection, transaction);
                     int appHistoryID = dLayer.SaveData("AppHistory", "N_AppHistoryID", MasterTable, connection, transaction);
                     if (appHistoryID <= 0)
                     {
