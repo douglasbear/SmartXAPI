@@ -38,35 +38,31 @@ namespace SmartxAPI.Controllers
         }
 
 
-        [HttpGet("listlocation")] 
-        public ActionResult OpportunityList(int nEmpID, int nFnYearID,string deviceID)
+        [HttpGet("listlocation")]
+        public ActionResult OpportunityList(int nEmpID, int nFnYearID, string deviceID)
         {
             DataTable location = new DataTable();
             DataTable devices = new DataTable();
-            DataTable Approvals= new DataTable();
+            DataTable Approvals = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-
-
-            //string sqlLocation = "SELECT Pay_WorkLocation.* FROM  Pay_WorkLocation LEFT OUTER JOIN  Pay_Employee ON Pay_WorkLocation.N_LocationId = Pay_Employee.N_WorkLocationID AND Pay_WorkLocation.N_CompanyId = Pay_Employee.N_CompanyID where Pay_Employee.N_CompanyID=@p1 and Pay_Employee.N_EmpID=@p2 and Pay_Employee.N_FnYearID=@nFnYearID ";
-            string sqlLocation = "SELECT * from vw_LocationProjects where N_CompanyID=@p1 and X_EmpsID like '%"+nEmpID+"%'";
-            string sqlDevices = "SELECT * FROM  Pay_EmpDeviceIDRegistration where N_CompanyID=@p1 and N_EmpID=@p2 and X_DeviceID=@deviceID and B_Active=1";
-           
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nEmpID);
-            Params.Add("@nFnYearID", nFnYearID);
-            Params.Add("@deviceID", deviceID);
-
-
-
-            SortedList OutPut = new SortedList();
-
-
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    Params.Add("@p1", nCompanyId);
+                    Params.Add("@p2", nEmpID);
+                    Params.Add("@nFnYearID", nFnYearID);
+                    Params.Add("@deviceID", deviceID);
+
+                    object X_Location = dLayer.ExecuteScalar("SELECT X_WorkLocationID FROM  pay_employee where N_CompanyID=@p1 and N_EmpID=@p2 and N_FnyearID=@nFnYearID", Params, connection);
+                    if(X_Location=="")
+                        X_Location="0";
+                    string sqlLocation = "SELECT Pay_WorkLocation.* FROM  Pay_WorkLocation LEFT OUTER JOIN  Pay_Employee ON  Pay_WorkLocation.N_CompanyId = Pay_Employee.N_CompanyID where Pay_Employee.N_CompanyID=@p1 and Pay_Employee.N_EmpID=@p2 and Pay_Employee.N_FnYearID=@nFnYearID  and Pay_WorkLocation.N_LocationId in(" + X_Location + ")";
+                    //string sqlLocation = "SELECT * from vw_LocationProjects where N_CompanyID=@p1 and X_EmpsID like '%"+nEmpID+"%'";
+                    string sqlDevices = "SELECT * FROM  Pay_EmpDeviceIDRegistration where N_CompanyID=@p1 and N_EmpID=@p2 and X_DeviceID=@deviceID and B_Active=1";
+                    SortedList OutPut = new SortedList();
                     location = dLayer.ExecuteDataTable(sqlLocation, Params, connection);
                     devices = dLayer.ExecuteDataTable(sqlDevices, Params, connection);
 
@@ -79,7 +75,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
         [HttpPost("save")]
@@ -106,12 +102,12 @@ namespace SmartxAPI.Controllers
                     string LocationCode = "";
                     var values = MasterTable.Rows[0]["X_LocationCode"].ToString();
 
-                    if ((!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())) && nLocationId>0)
+                    if ((!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())) && nLocationId > 0)
                     {
                         int N_PkeyID = nLocationId;
                         string X_Criteria = "N_LocationId=" + N_PkeyID + " and N_CompanyID=" + nCompanyID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_WorkLocation", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearId, this.xTransType, N_PkeyID, values, 1,"", 0, "",0, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearId, this.xTransType, N_PkeyID, values, 1, "", 0, "", 0, User, dLayer, connection, transaction);
                         transaction.Commit();
                         //myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_PkeyID, this.xTransType, values, dLayer, connection, transaction, User);
                         return Ok(api.Success("Work Location Approved " + "-" + values));
@@ -124,7 +120,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.FormID);
                         LocationCode = dLayer.GetAutoNumber("Pay_WorkLocation", "X_LocationCode", Params, connection, transaction);
-                        if (LocationCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Location Code")); }
+                        if (LocationCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Location Code")); }
                         MasterTable.Rows[0]["X_LocationCode"] = LocationCode;
                     }
                     MasterTable.Columns.Remove("n_FnYearId");
@@ -135,11 +131,11 @@ namespace SmartxAPI.Controllers
                     if (nLocationId <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User,"Unable to save"));
+                        return Ok(api.Error(User, "Unable to save"));
                     }
                     else
                     {
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearId, this.xTransType, nLocationId, LocationCode, 1, "", 0, "",0, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearId, this.xTransType, nLocationId, LocationCode, 1, "", 0, "", 0, User, dLayer, connection, transaction);
 
                         transaction.Commit();
 
@@ -151,7 +147,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
         }
         [HttpDelete("delete")]
@@ -171,15 +167,15 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
-                        return Ok(api.Error(User,"Transaction not Found"));
+                        return Ok(api.Error(User, "Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
 
-                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, nLocationID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID,0, 0, User, dLayer, connection));
+                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, nLocationID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
                     Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), "");
                     SqlTransaction transaction = connection.BeginTransaction(); ;
 
-                    string X_Criteria = "N_LocationId=" + nLocationID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) ;
+                    string X_Criteria = "N_LocationId=" + nLocationID + " and N_CompanyID=" + myFunctions.GetCompanyID(User);
 
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
@@ -192,7 +188,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User,"Unable to delete Loan request"));
+                        return Ok(api.Error(User, "Unable to delete Loan request"));
                     }
 
 
@@ -200,7 +196,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
         }
 

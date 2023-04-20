@@ -492,6 +492,7 @@ namespace SmartxAPI.Controllers
                 int n_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
                 int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                 string x_LocationCode = MasterRow["x_LocationCode"].ToString();
+                bool b_Enableall = myFunctions.getBoolVAL(MasterRow["b_Enableall"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -500,11 +501,12 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList EmpParams = new SortedList();
                     EmpParams.Add("@nCompanyID", nCompanyID);
+                    SortedList Params = new SortedList();
 
 
                     if (x_LocationCode == "@Auto")
                     {
-                        SortedList Params = new SortedList();
+
                         Params.Add("@nCompanyID", nCompanyID);
                         x_LocationCode = dLayer.ExecuteScalar("Select max(isnull(x_LocationCode,0))+1 as x_LocationCode from Pay_workLocation where N_CompanyID=@nCompanyID", Params, connection, transaction).ToString();
                         if (x_LocationCode == null || x_LocationCode == "") { x_LocationCode = "1"; }
@@ -521,6 +523,9 @@ namespace SmartxAPI.Controllers
                     MasterTable.Columns.Remove("N_EmpID");
 
                     n_LocationID = dLayer.SaveData("Pay_workLocation", "n_LocationID", MasterTable, connection, transaction);
+                    if (b_Enableall)
+                        dLayer.ExecuteNonQuery("update Pay_employee set x_worklocationid=" + n_LocationID + " where N_CompanyID=" + nCompanyID, Params, connection, transaction);
+
                     if (n_LocationID <= 0)
                     {
                         transaction.Rollback();
