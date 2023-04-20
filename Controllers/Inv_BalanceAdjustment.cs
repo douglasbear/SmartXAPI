@@ -146,7 +146,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listDetails")]
-        public ActionResult GetBalanceListDetails(int N_PartyType, string N_TransType, int nFnYearId, string X_ReceiptNo, bool bAllBranchData, int nBranchID)
+        public ActionResult GetBalanceListDetails(int N_PartyType, string N_TransType, int nFnYearId, string X_ReceiptNo, bool bAllBranchData, int nBranchID, int nFormID)
         {
               if (X_ReceiptNo != null)
                 X_ReceiptNo = X_ReceiptNo.Replace("%2F", "/");
@@ -181,6 +181,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p3", nFnYearId);
             Params.Add("@p4", X_ReceiptNo);
             Params.Add("@p5", N_PartyType);
+            Params.Add("@p6", nFormID);
             
 
             try
@@ -216,9 +217,9 @@ namespace SmartxAPI.Controllers
                     string CostcenterSql = "SELECT X_EmpCode, X_EmpName, N_ProjectID as N_Segment_3,N_EmpID as N_Segment_4, X_ProjectCode,X_ProjectName,N_EmpID,N_ProjectID,N_CompanyID,N_FnYearID, " +
                         " N_VoucherID, N_VoucherDetailsID, N_CostCentreID,X_CostCentreName,X_CostCentreCode,N_BranchID,X_BranchName,X_BranchCode , " +
                         " N_Amount, N_LedgerID, N_CostCenterTransID, N_GridLineNo,X_Naration,0 AS N_AssetID, '' As X_AssetCode, " +
-                        " GETDATE() AS D_RepaymentDate, '' AS X_AssetName,'' AS X_PayCode,0 AS N_PayID,0 AS N_Inst,CAST(0 AS BIT) AS B_IsCategory,D_Entrydate " +
+                        " GETDATE() AS D_RepaymentDate, '' AS X_AssetName,'' AS X_PayCode,0 AS N_PayID,0 AS N_Inst,CAST(0 AS BIT) AS B_IsCategory,D_Entrydate, N_FormID " +
                         " FROM   vw_InvFreeTextPurchaseCostCentreDetails where N_InventoryID = " + N_AdjustmentID + " And N_InventoryType=0 And N_FnYearID=" + nFnYearId +
-                        " And N_CompanyID=" + nCompanyId + " Order By N_InventoryID,N_VoucherDetailsID ";
+                        " And N_CompanyID=" + nCompanyId + " and N_FormID=@p6 Order By N_InventoryID,N_VoucherDetailsID ";
 
                     Acc_CostCentreTrans = dLayer.ExecuteDataTable(CostcenterSql, Params, connection);
 
@@ -438,6 +439,7 @@ namespace SmartxAPI.Controllers
                     costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_GridLineNo", typeof(int), 0);
                     costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_EmpID", typeof(int), 0);
                     costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_ProjectID", typeof(int), 0);
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_FormID", typeof(int), 0);
 
                     foreach (DataRow dRow in CostCenterTable.Rows)
                     {
@@ -447,7 +449,7 @@ namespace SmartxAPI.Controllers
                         row["N_FnYearID"] = dRow["N_FnYearID"];
                         row["N_InventoryType"] = 0;
                         row["N_InventoryID"] = dRow["N_VoucherID"];
-                       row["N_InventoryDetailsID"] = dRow["N_VoucherDetailsID"];
+                        row["N_InventoryDetailsID"] = dRow["N_VoucherDetailsID"];
                         row["N_CostCentreID"] = dRow["n_Segment_2"];
                         row["N_Amount"] = dRow["N_Amount"];
                         row["N_LedgerID"] = dRow["N_LedgerID"];
@@ -458,6 +460,7 @@ namespace SmartxAPI.Controllers
                         row["N_GridLineNo"] = dRow["rowID"];
                         row["N_EmpID"] = myFunctions.getIntVAL(dRow["N_Segment_4"].ToString());
                         row["N_ProjectID"] = myFunctions.getIntVAL(dRow["N_Segment_3"].ToString());
+                        row["N_FormID"] = dRow["N_FormID"];
                         costcenter.Rows.Add(row);
                     }
                                              //Activity Log
