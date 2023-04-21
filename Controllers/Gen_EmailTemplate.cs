@@ -129,7 +129,7 @@ namespace SmartxAPI.Controllers
                             string Sender = companyemail.ToString();
                             Subject = Subjectval;
                             MailBody = body.ToString();
-                            myFunctions.SendMail(Toemail, Body, Subject, dLayer, 1348, nTemplateID, companyid);
+                            myFunctions.SendMail(Toemail, Body, Subject, dLayer, 1348, nTemplateID, companyid,false);
 
                         }
                     }
