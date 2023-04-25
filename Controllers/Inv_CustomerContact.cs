@@ -162,6 +162,12 @@ namespace SmartxAPI.Controllers
                         MasterTable.Columns.Remove("X_SalesmanName");
 
                     }
+                       if (MasterTable.Columns.Contains("x_Customer"))
+                    {
+
+                        MasterTable.Columns.Remove("x_Customer");
+
+                    }
 
                     else
                     {
