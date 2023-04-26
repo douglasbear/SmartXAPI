@@ -604,7 +604,7 @@ namespace SmartxAPI.Controllers
                     {
                         DateTime validDateTime = DateTime.Now;
 
-                        object nPswdDuraHours = dLayer.ExecuteScalar("select isnull(N_PswdDuraHours,0) ASN_PswdDuraHours  from Users where  N_ClientID=" + clientID + " and X_EmailID=@xUserID", userParams, olivoCon, olivoTxn);
+                        object nPswdDuraHours = dLayer.ExecuteScalar("select isnull(N_PswdDuraHours,0) AS N_PswdDuraHours  from Users where  N_ClientID=" + clientID + " and X_EmailID=@xUserID", userParams, olivoCon, olivoTxn);
                         if (myFunctions.getIntVAL(nPswdDuraHours.ToString()) > 0)
                         {
                             int daysToAdd = myFunctions.getIntVAL(nPswdDuraHours.ToString());
