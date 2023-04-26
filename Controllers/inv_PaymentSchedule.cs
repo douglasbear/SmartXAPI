@@ -181,16 +181,60 @@ namespace SmartxAPI.Controllers
 
  
 
- [HttpGet("fillDetails")]
-        public ActionResult InvPaymentScheduleDetails(int nCompanyID,int N_VendorID)
+//  [HttpGet("fillDetails")]
+//         public ActionResult InvPaymentScheduleDetails(int nCompanyID,int N_VendorID)
+//         {
+//             DataTable dt = new DataTable();
+//             SortedList Params = new SortedList();
+//             nCompanyID = myFunctions.GetCompanyID(User);
+//             string sqlCommandText = "Select * from vw_InvPurhcaseForVendorPayment where N_CompanyID=@p1  and N_VendorID=@p2";
+//             Params.Add("@p1", nCompanyID);
+//            // Params.Add("@p2", N_FnYearID);
+//              Params.Add("@p2", N_VendorID);
+            
+
+
+//             try
+//             {
+//                 using (SqlConnection connection = new SqlConnection(connectionString))
+//                 {
+//                     connection.Open();
+//                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+//                 }
+//                 dt = _api.Format(dt);
+//                 if (dt.Rows.Count == 0)
+//                 {
+//                     return Ok(_api.Warning("No Results Found"));
+//                 }
+//                 else
+//                 {
+//                     return Ok(_api.Success(dt));
+//                 }
+//             }
+//             catch (Exception e)
+//             {
+//                 return Ok(_api.Error(User, e));
+//             }
+//         }
+
+
+        [HttpGet("fillDetails")]
+        public ActionResult InvPaymentScheduleDetails(int nCompanyID,int N_VendorID,bool Schedule,DateTime dDate)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "Select * from vw_InvPurhcaseForVendorPayment where N_CompanyID=@p1  and N_VendorID=@p2";
+            string sqlCommandText=" ";
+            // if(Schedule)
+            // {
+                sqlCommandText = "select * from vw_InvPayables where N_CompanyID=@p1  and X_Type='PURCHASE' and N_BalanceAmount>0 and D_Date<='" + dDate + "' and n_VendorID="+N_VendorID;
+           // }
+            // else{
+            //     sqlCommandText = "select * from vw_InvPayables where N_CompanyID=@p1  and X_Type='PURCHASE' and N_BalanceAmount>0 and D_ScheduleDate is null "; 
+            // }
             Params.Add("@p1", nCompanyID);
-           // Params.Add("@p2", N_FnYearID);
-             Params.Add("@p2", N_VendorID);
+           
+            Params.Add("@p2", N_VendorID);
             
 
 
@@ -234,26 +278,7 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    connection.Open();
-                    MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
-
-                    if (MasterTable.Rows.Count == 0)
-                    {
-                        return Ok(_api.Warning("No Results Found"));
-                    }
-                
-                    MasterTable = _api.Format(MasterTable, "Master");
-                    dt.Tables.Add(MasterTable);
-
-                    int N_ScheduleID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ScheduleID"].ToString());
-                    Params.Add("@p3", N_ScheduleID);
-
-                    string DetailSql = "select * from vw_InvVendorPaymentScheduleDetails where N_CompanyID=@p1 and N_ScheduleID=@p3";
-
-                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
-                    DetailTable = _api.Format(DetailTable, "Details");
-                    dt.Tables.Add(DetailTable);
-
+ 
                    
 
                 }
@@ -268,7 +293,7 @@ namespace SmartxAPI.Controllers
 
 
 
-            [HttpPost("Save")]
+              [HttpPost("Save")]
           public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
@@ -291,51 +316,23 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     string xScheduleCode = MasterRow["X_ScheduleCode"].ToString();
 
-                    string X_ScheduleCode = "";
-                    if (xScheduleCode == "@Auto")
-                    {
-                        Params.Add("N_CompanyID", nCompanyID);
-                        Params.Add("N_YearID", nFnYearID);
-                        Params.Add("N_FormID", this.FormID);
-                        X_ScheduleCode = dLayer.GetAutoNumber("Inv_VendorPaymentSchedule", "X_ScheduleCode", Params, connection, transaction);
-                        if (X_ScheduleCode == "")
-                        {
-                            transaction.Rollback();
-                            return Ok("Unable to generate Payment schedule");
-                        }
-                        MasterTable.Rows[0]["X_ScheduleCode"] = X_ScheduleCode;
-                    }
-                    else
-                    {
-                         dLayer.DeleteData("Inv_VendorPaymentSchedule", "N_ScheduleID", nScheduleID, "", connection,transaction);
-                          dLayer.DeleteData("Inv_VendorPaymentScheduleDetails", "N_ScheduleID", nScheduleID, "", connection,transaction);
-                    }
-                    MasterTable.Columns.Remove("n_FnYearID");
+                     for (int j = 0; j < DetailTable.Rows.Count; j++)
+                     {
 
-                    int N_ScheduleID = dLayer.SaveData("Inv_VendorPaymentSchedule", "N_ScheduleID", "", "", MasterTable, connection, transaction);
-                    if (N_ScheduleID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok("Unable to save Payment Schedule ");
+                        int purchaseID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_PurchaseID"].ToString());
+                        if (purchaseID > 0)
+                        {
+                            dLayer.ExecuteNonQuery("Update Inv_Purchase SET D_ScheduleDate=" + myFunctions.getVAL(DetailTable.Rows[j]["D_ScheduleDate"].ToString()) + ",N_ScheduledAmtF=" + myFunctions.getVAL(DetailTable.Rows[j]["N_ScheduledAmtF"].ToString()) + " WHERE N_PurchaseID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_PurchaseID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", Params, connection, transaction);
+                        
+                        }
+                     
+
                     }
-                    for (int j = 0; j < DetailTable.Rows.Count; j++)
-                    {
-                        DetailTable.Rows[j]["N_ScheduleID"] = N_ScheduleID;
-                    }
-                    int N_ScheduleDetailsID = dLayer.SaveData("Inv_VendorPaymentScheduleDetails", "N_ScheduleDetailsID", DetailTable, connection, transaction);
-                    if (N_ScheduleDetailsID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok("Unable to save Payment Schedule");
-                    }
+                    DetailTable.AcceptChanges();
 
                     transaction.Commit();
-                    SortedList Result = new SortedList();
-                    Result.Add("N_ScheduleID", N_ScheduleID);
-                    Result.Add("X_ScheduleCode", X_ScheduleCode);
-                    Result.Add("N_ScheduleDetailsID", N_ScheduleDetailsID);
-
-                    return Ok(_api.Success(Result, "Payment Schedule Created"));
+                 
+                    return Ok(_api.Success("Payment Schedule Created"));
                 }
             }
             
@@ -344,6 +341,87 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User,ex));
             }
         }
+
+
+
+
+
+        //     [HttpPost("Save")]
+        //   public ActionResult SaveData([FromBody] DataSet ds)
+        // {
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             SqlTransaction transaction = connection.BeginTransaction();
+        //             DataTable MasterTable;
+        //             DataTable DetailTable;
+        //             MasterTable = ds.Tables["master"];
+        //             DetailTable = ds.Tables["details"];
+        //             DataRow MasterRow = MasterTable.Rows[0];
+        //              DataRow DetailRow = DetailTable.Rows[0];
+        //             SortedList Params = new SortedList();
+
+        //             int nScheduleID = myFunctions.getIntVAL(MasterRow["N_ScheduleID"].ToString());
+        //             int nScheduleDetailsID = myFunctions.getIntVAL(DetailRow["N_ScheduleDetailsID"].ToString());
+        //             int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
+        //             int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+        //             string xScheduleCode = MasterRow["X_ScheduleCode"].ToString();
+
+        //             string X_ScheduleCode = "";
+        //             if (xScheduleCode == "@Auto")
+        //             {
+        //                 Params.Add("N_CompanyID", nCompanyID);
+        //                 Params.Add("N_YearID", nFnYearID);
+        //                 Params.Add("N_FormID", this.FormID);
+        //                 X_ScheduleCode = dLayer.GetAutoNumber("Inv_VendorPaymentSchedule", "X_ScheduleCode", Params, connection, transaction);
+        //                 if (X_ScheduleCode == "")
+        //                 {
+        //                     transaction.Rollback();
+        //                     return Ok("Unable to generate Payment schedule");
+        //                 }
+        //                 MasterTable.Rows[0]["X_ScheduleCode"] = X_ScheduleCode;
+        //             }
+        //             else
+        //             {
+        //                  dLayer.DeleteData("Inv_VendorPaymentSchedule", "N_ScheduleID", nScheduleID, "", connection,transaction);
+        //                   dLayer.DeleteData("Inv_VendorPaymentScheduleDetails", "N_ScheduleID", nScheduleID, "", connection,transaction);
+        //             }
+        //             MasterTable.Columns.Remove("n_FnYearID");
+
+        //             int N_ScheduleID = dLayer.SaveData("Inv_VendorPaymentSchedule", "N_ScheduleID", "", "", MasterTable, connection, transaction);
+        //             if (N_ScheduleID <= 0)
+        //             {
+        //                 transaction.Rollback();
+        //                 return Ok("Unable to save Payment Schedule ");
+        //             }
+        //             for (int j = 0; j < DetailTable.Rows.Count; j++)
+        //             {
+        //                 DetailTable.Rows[j]["N_ScheduleID"] = N_ScheduleID;
+        //             }
+        //             int N_ScheduleDetailsID = dLayer.SaveData("Inv_VendorPaymentScheduleDetails", "N_ScheduleDetailsID", DetailTable, connection, transaction);
+        //             if (N_ScheduleDetailsID <= 0)
+        //             {
+        //                 transaction.Rollback();
+        //                 return Ok("Unable to save Payment Schedule");
+        //             }
+
+        //             transaction.Commit();
+        //             SortedList Result = new SortedList();
+        //             Result.Add("N_ScheduleID", N_ScheduleID);
+        //             Result.Add("X_ScheduleCode", X_ScheduleCode);
+        //             Result.Add("N_ScheduleDetailsID", N_ScheduleDetailsID);
+
+        //             return Ok(_api.Success(Result, "Payment Schedule Created"));
+        //         }
+        //     }
+            
+        //     catch (Exception ex)
+        //     {
+        //         return Ok(_api.Error(User,ex));
+        //     }
+        // }
 
      [HttpDelete("delete")]
         public ActionResult DeleteData(int nScheduleID)
