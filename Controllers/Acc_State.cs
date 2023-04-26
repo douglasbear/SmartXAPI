@@ -31,18 +31,19 @@ namespace SmartxAPI.Controllers
         [HttpGet("list")]
         public ActionResult GetStateList(int nCountryID)
         {
+            int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable(); 
             SortedList Params = new SortedList();
             string sqlCommandText ;
           if (nCountryID>0)
           {
-            sqlCommandText = "select * from Acc_State where N_CountryID=@p1 order by N_StateID";  
+            sqlCommandText = "select * from Acc_State where N_CompanyID=@p1 and N_CountryID=@p2 order by N_StateID";  
           }
           else {
-            sqlCommandText = "select * from Acc_State order by N_StateID";
+            sqlCommandText = "select * from Acc_State where N_CompanyID=@p1 order by N_StateID";
           }
-          
-            Params.Add("@p1", nCountryID);
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nCountryID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
