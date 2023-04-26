@@ -117,37 +117,8 @@ namespace SmartxAPI
         public static string _FontName = "Verdana";
         public static string prevVal = "";
         public static string newVal = "";
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-<<<<<<< HEAD
-<<<<<<< HEAD
         public static string _APIVersion = "22.12.26.1";
-=======
-        public static string _APIVersion = "23.3.4.1";
->>>>>>> 96c7337399ca9433183e606f096e668075c9a0c9
-=======
-        public static string _APIVersion = "23.2.23.3";
-
->>>>>>> f220995c4e08dafc1d6b0bdad90294d0c7be8926
-=======
-        public static string _APIVersion = "23.2.24.1";
->>>>>>> 8c19c6312c2b1b95a6a27d6624b5702576f14d16
-=======
-        public static string _APIVersion = "23.2.23.3";
->>>>>>> 63a26b0f09634df66d69fdd672cf0a3bede4c426
-=======
-        public static string _APIVersion = "23.3.1.1";
->>>>>>> 5a214836d1793e57cd4e3424454ade7acdf8fc08
-=======
-        public static string _APIVersion = "23.3.1.1";
->>>>>>> 32ad943a478d6efe259c8cacdea44a6807957f0f
-=======
-        public static string _APIVersion = "23.3.4.1";
->>>>>>> 313f9a2b680d7a0021812a04bd1f41032e2f1855
 
     }
 }
