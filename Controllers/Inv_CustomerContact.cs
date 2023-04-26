@@ -148,31 +148,19 @@ namespace SmartxAPI.Controllers
                         }
                         MasterTable.Rows[0]["x_ContactNo"] = xContactNo;
                     }
-
-                    if (MasterTable.Columns.Contains("n_FnYearID"))
-                    {
-
-                        MasterTable.Columns.Remove("n_FnYearID");
-
-                    }
-
-                    if (MasterTable.Columns.Contains("X_SalesmanName"))
-                    {
-
-                        MasterTable.Columns.Remove("X_SalesmanName");
-
-                    }
-                       if (MasterTable.Columns.Contains("x_Customer"))
-                    {
-
-                        MasterTable.Columns.Remove("x_Customer");
-
-                    }
-
                     else
                     {
                         dLayer.DeleteData("Inv_Customer_Contacts", "N_ContactID", ncontactID, "", connection, transaction);
                     }
+                    if (MasterTable.Columns.Contains("n_FnYearID"))
+                        MasterTable.Columns.Remove("n_FnYearID");
+
+                    if (MasterTable.Columns.Contains("X_SalesmanName"))
+                        MasterTable.Columns.Remove("X_SalesmanName");
+
+                    if (MasterTable.Columns.Contains("X_Customer"))
+                        MasterTable.Columns.Remove("X_Customer");
+
                     ncontactID = dLayer.SaveData("Inv_Customer_Contacts", "N_ContactID", MasterTable, connection, transaction);
 
                     if (ncontactID <= 0)
