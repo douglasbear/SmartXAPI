@@ -34,7 +34,7 @@ namespace SmartxAPI.Controllers
         private string masterDBConnectionString;
         private string AppURL;
         private readonly IDataAccessLayer dLayer;
-
+        private readonly string hqDBConnectionString;
 
 
         public ClientController(ICommenServiceRepo repository, IOptions<AppSettings> appSettings, IMyFunctions myFun, IApiFunctions api, IDataAccessLayer dl, IConfiguration conf)
@@ -46,6 +46,7 @@ namespace SmartxAPI.Controllers
             _appSettings = appSettings.Value;
             masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
             connectionString = conf.GetConnectionString("SmartxConnection");
+            hqDBConnectionString = conf.GetConnectionString("HqConnection");
             AppURL = conf.GetConnectionString("AppURL");
             cofig = conf;
         }
@@ -147,23 +148,24 @@ namespace SmartxAPI.Controllers
 
 
 
-                //    DetailsTable = dLayer.ExecuteDataTable("select top 1 (select N_Value from genSettings where N_ClientID="+n_ClientID+" and X_Description='COMPANY LIMIT')  as N_Companies,(select N_Value  from genSettings where N_ClientID="+n_ClientID+" and X_Description='BRANCH LIMIT')as N_Branches,"+
-                //    "(select N_Value  from genSettings where N_ClientID="+n_ClientID+" and X_Description='EMPLOYEE LIMIT')as N_Employees,"+"(select N_Value from genSettings where N_ClientID="+n_ClientID+" and X_Description='USER LIMIT') as N_Users  from  genSettings where N_ClientID="+n_ClientID+"",paramList,connection, transaction);
-                //     //DetailsTable = dLayer.ExecuteDataTable(,connection, transaction);
-                //       DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_ClientHistoryID", typeof(int), 0);
-                //       DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_ClientID", typeof(int), n_ClientID);
-                //       DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_UpdatedUserID", typeof(int),myFunctions.GetUserID(User));
-                //       DetailsTable.AcceptChanges(); 
-                //      dLayer.DeleteData("ClientHistory", "n_ClientID", n_ClientID,"",connection, transaction);
-                //     int nClientHistoryID = dLayer.SaveData("ClientHistory", "N_ClientHistoryID", DetailsTable, connection, transaction);
-                //     if (nClientHistoryID <= 0)
-                //     {
+                   DetailsTable = dLayer.ExecuteDataTable("select top 1 (select N_Value from genSettings where N_ClientID="+n_ClientID+" and X_Description='COMPANY LIMIT')  as N_Companies,(select N_Value  from genSettings where N_ClientID="+n_ClientID+" and X_Description='BRANCH LIMIT')as N_Branches,"+
+                   "(select N_Value  from genSettings where N_ClientID="+n_ClientID+" and X_Description='EMPLOYEE LIMIT')as N_Employees,"+"(select N_Value from genSettings where N_ClientID="+n_ClientID+" and X_Description='USER LIMIT') as N_Users  from  genSettings where N_ClientID="+n_ClientID+"",paramList,connection, transaction);
+                    //DetailsTable = dLayer.ExecuteDataTable(,connection, transaction);
+                      DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_ClientHistoryID", typeof(int), 0);
+                      DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "D_UpdatedDate", typeof(DateTime),DateTime.Now);
+                      DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_ClientID", typeof(int), n_ClientID);
+                      DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_UpdatedUserID", typeof(int),myFunctions.GetUserID(User));
+                      DetailsTable.AcceptChanges(); 
+                     dLayer.DeleteData("ClientHistory", "n_ClientID", n_ClientID,"",connection, transaction);
+                    int nClientHistoryID = dLayer.SaveData("ClientHistory", "N_ClientHistoryID", DetailsTable, connection, transaction);
+                    if (nClientHistoryID <= 0)
+                    {
 
-                //         transaction.Rollback();
-                //         return Ok(_api.Error(User, "Something went wrong"));
-                //     }
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Something went wrong"));
+                    }
                     
-                    //dLayer.DeleteData("genSettings", "n_ClientID", n_ClientID, "", connection, transaction);
+                    dLayer.DeleteData("genSettings", "n_ClientID", n_ClientID, "", connection, transaction);
                     int settingsID = dLayer.SaveData("genSettings", "N_SettingsID", DetailTable, connection, transaction);
                     
                     if (settingsID <= 0)
@@ -230,9 +232,21 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     Params.Add("@nClientID", nClientID);
                     string  clientSettingsSql="";
-                    string clinetdetailsSql=" SELECT  ClientMaster.*, CountryMaster.X_CountryName FROM  ClientMaster LEFT OUTER JOIN CountryMaster ON ClientMaster.N_CountryID = CountryMaster.N_CountryID where N_ClientID=@nClientID ";
+                    string clinetdetailsSql=" SELECT  ClientMaster.*, CountryMaster.X_CountryName FROM  ClientMaster LEFT OUTER JOIN CountryMaster ON ClientMaster.N_CountryID = CountryMaster.N_CountryID  where N_ClientID=@nClientID ";
                     DataTable dtClientDetails = dLayer.ExecuteDataTable(clinetdetailsSql,Params, connection);
                     dtClientDetails = _api.Format(dtClientDetails, "ClientDetails");
+
+                    dtClientDetails= myFunctions.AddNewColumnToDataTable(dtClientDetails, "x_SuperAdminUserID", typeof(string), "");
+                    dtClientDetails= myFunctions.AddNewColumnToDataTable(dtClientDetails, "x_ProjectName", typeof(string), "");
+                    dtClientDetails.AcceptChanges(); 
+                     
+                         object xSuperAdminUserID=dLayer.ExecuteScalar("select X_UserID from users where n_ClientID="+nClientID+" and N_LoginType=1", Params, connection);
+                           
+                            if(xSuperAdminUserID!=null )
+                                {
+                                  dtClientDetails.Rows[0]["x_SuperAdminUserID"]=xSuperAdminUserID;
+                                   
+                                }
                     // string clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID";
                     object xAppType = dtClientDetails.Rows[0]["x_AppType"];
                     switch (xAppType)
@@ -342,6 +356,7 @@ namespace SmartxAPI.Controllers
                         dtAppHistoryDetails.AcceptChanges(); 
                         dtClientHistoryDetails = myFunctions.AddNewColumnToDataTable(dtClientHistoryDetails, "X_Userame", typeof(string), "");
                         dtClientHistoryDetails.AcceptChanges(); 
+                       
                         for(int i=0;i<dtAppHistoryDetails.Rows.Count;i++)
                             {
 
@@ -368,9 +383,26 @@ namespace SmartxAPI.Controllers
                              
                             }
 
+                           
 
                        }
-
+                        
+                         if(hqDBConnectionString !=null)
+                {
+                    using (SqlConnection hqcon = new SqlConnection(hqDBConnectionString))
+                {
+                    hqcon.Open();
+                    SortedList Paramshq = new SortedList();
+                    Paramshq.Add("@nClientID", nClientID);
+                   
+                               object xProjectName=dLayer.ExecuteScalar("select X_ProjectName from Inv_customerProjects where N_ProjectID="+myFunctions.getIntVAL(dtClientDetails.Rows[0]["N_ProjectID"].ToString()),Paramshq,hqcon);
+                                if(xProjectName!=null )
+                                {
+                                  dtClientDetails.Rows[0]["X_ProjectName"]=xProjectName;
+                                   
+                                }
+                    }
+                }
                        dtAppHistoryDetails = _api.Format(dtAppHistoryDetails, "appHistoryDetails");
                        dtClientHistoryDetails = _api.Format(dtClientHistoryDetails, "clientHistoryDetails");
 
@@ -401,7 +433,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     Params.Add("@nClientID", nClientID);
                     Params.Add("@nAppID", nAppID);
-                    string AppDetailsSql=" SELECT     ClientApps.N_ClientID, ClientApps.N_AppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, ClientApps.N_UserLimit, ClientApps.B_Inactive, ClientApps.X_Sector, ClientApps.N_RefID, ClientApps.D_ExpiryDate, ClientApps.B_Licensed, ClientApps.D_LastExpiryReminder, ClientApps.B_EnableAttachment, AppMaster.X_AppName,AppMaster.b_EnableAttachment as enableAttachment,ClientApps.N_SubscriptionAmount,ClientApps.n_DiscountAmount FROM "+
+                    string AppDetailsSql=" SELECT     ClientApps.N_ClientID, ClientApps.N_AppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, ClientApps.N_UserLimit, ClientApps.B_Inactive, ClientApps.X_Sector, ClientApps.N_RefID, ClientApps.D_ExpiryDate, ClientApps.B_Licensed, ClientApps.D_LastExpiryReminder, ClientApps.B_EnableAttachment, AppMaster.X_AppName,AppMaster.b_EnableAttachment as enableAttachment,ClientApps.N_SubscriptionAmount,ClientApps.n_DiscountAmount,ClientApps.B_EnableApproval FROM "+
                     " ClientApps LEFT OUTER JOIN  AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID where N_ClientID=@nClientID and ClientApps.N_AppID=@nAppID";
                     DataTable AppDetails = dLayer.ExecuteDataTable(AppDetailsSql,Params, connection);
                     AppDetails = _api.Format(AppDetails, "AppDetails");
@@ -424,7 +456,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SortedList Params = new SortedList();
                     Params.Add("@nClientID", nClientID);
-                   // string AppListSql=" SELECT  * from  ClientApps where N_ClientID=@nClientID";
+                   // string AppListSql=" SELECT  * from  ClientApps where N_ClientID=@nClientID";n  
                     string AppListSql="SELECT     ClientApps.N_ClientID, ClientApps.N_AppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, ClientApps.N_UserLimit, ClientApps.B_Inactive, ClientApps.X_Sector, ClientApps.N_RefID, ClientApps.D_ExpiryDate, ClientApps.B_Licensed, ClientApps.D_LastExpiryReminder, ClientApps.B_EnableAttachment, AppMaster.X_AppName FROM "+
                     " ClientApps LEFT OUTER JOIN  AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID where N_ClientID=@nClientID";
                     DataTable AppList = dLayer.ExecuteDataTable(AppListSql,Params, connection);

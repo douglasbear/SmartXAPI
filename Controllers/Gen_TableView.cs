@@ -363,6 +363,10 @@ namespace SmartxAPI.Controllers
 
                         if (nFormID == 1650)
                         {
+                            if (Count != 0)
+                              {
+                               sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + " where " + PKey + " not in " + "(select top(" + Count + ") " + PKey + " from " + DataSource2 + Criterea + SortBy + " ) " + SortBy;
+                              }
                             using (SqlConnection cliConn = new SqlConnection(cliConnectionString))
                             {
                                 cliConn.Open();
@@ -383,6 +387,7 @@ namespace SmartxAPI.Controllers
                         DataTable Summary = new DataTable();
                         if (nFormID == 1650)
                         {
+                             
                             using (SqlConnection cliConn = new SqlConnection(cliConnectionString))
                             {
                                 cliConn.Open();

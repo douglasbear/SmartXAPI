@@ -171,7 +171,7 @@ namespace SmartxAPI.Controllers
         }
 
         //Save....
-        [HttpPost("save")]
+         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
@@ -205,8 +205,13 @@ namespace SmartxAPI.Controllers
                     int N_NextApproverID = 0;
                     int N_DispatchDetailsID=0;
                     bool b_Action= myFunctions.getBoolVAL(MasterTable.Rows[0]["b_Action"].ToString());
-
+                    int Results = 0;
                      values = MasterRow["X_DispatchNo"].ToString();
+                     
+                        SortedList UpdateStockParam = new SortedList();                 
+                         SortedList PostParam = new SortedList();
+                        
+
                      if (MasterTable.Columns.Contains("n_DepartmentID"))
                      {
                        if( myFunctions.getIntVAL(MasterTable.Rows[0]["n_DepartmentID"].ToString())>0){
@@ -216,8 +221,7 @@ namespace SmartxAPI.Controllers
                         bDeptEnabled=false;
                      }
                      }
-                    
-
+                
                    
                     string xButtonAction="";
                     if (nDispatchID > 0)
@@ -252,20 +256,6 @@ namespace SmartxAPI.Controllers
                      if (MasterTable.Columns.Contains("b_Action"))
                         MasterTable.Columns.Remove("b_Action");
                           
-        
-
-                   if (nDispatchID > 0)
-                    {
-                        SortedList DeleteParams = new SortedList(){
-                                    {"N_CompanyID",nCompanyID},
-                                    {"N_UserID",N_UserID},
-                                    {"X_TransType","MATERIAL DISPATCH"},
-                                    {"X_SystemName","WebRequest"},
-                                    {"N_VoucherID",nDispatchID}};
-
-                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
-                    }
-
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
                     nDispatchID = dLayer.SaveData("Inv_MaterialDispatch", "N_DispatchID", MasterTable, connection, transaction);
@@ -284,61 +274,87 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable To Save"));
                     }
+  
+                           UpdateStockParam.Add("N_CompanyID", nCompanyID);
+                            UpdateStockParam.Add("N_DispatchId", nDispatchID);
+                            UpdateStockParam.Add("N_UserID", N_UserID);
+
+                         PostParam.Add("N_CompanyID", nCompanyID);
+                         PostParam.Add("X_InventoryMode", "MATERIAL DISPATCH");
+                         PostParam.Add("N_InternalID", nDispatchID);
+                         PostParam.Add("N_UserID", N_UserID);
                                       
         
                     if ((!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())))
                     {
-                        int N_PkeyID = nDispatchID;
-                        string X_Criteria = "N_DispatchID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID;
-                        myFunctions.UpdateApproverEntry(Approvals, "Inv_MaterialDispatch", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID,transType, N_PkeyID, values, 1,"", 0, "",0, User, dLayer, connection, transaction);
-                        nSaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from Inv_MaterialDispatch where N_DispatchID=" + nDispatchID + " and N_CompanyID=" + nCompanyID , connection, transaction).ToString());
-                         if (nSaveDraft == 0){
-                        
-             
-                      SortedList UpdateStockParam = new SortedList();
-                    UpdateStockParam.Add("N_CompanyID", nCompanyID);
-                    UpdateStockParam.Add("N_DispatchId", nDispatchID);
-                    UpdateStockParam.Add("N_UserID", N_UserID);
+                          int N_PkeyID = nDispatchID;
+                          string X_Criteria = "N_DispatchID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID;
+                          myFunctions.UpdateApproverEntry(Approvals, "Inv_MaterialDispatch", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                          N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID,transType, N_PkeyID, values, 1,"", 0, "",0, User, dLayer, connection, transaction);
+                          nSaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from Inv_MaterialDispatch where N_DispatchID=" + nDispatchID + " and N_CompanyID=" + nCompanyID , connection, transaction).ToString());
 
-                    if (!bDeptEnabled)
-                        dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch", UpdateStockParam, connection, transaction);
-                    else
-                        dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch_Department", UpdateStockParam, connection, transaction);
-                    
+                         if (nSaveDraft == 0)
+                         {
+                        try
+                        {
+                          if (!bDeptEnabled)
+                  
+                          dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch", UpdateStockParam, connection, transaction);
+                         else
+                          dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch_Department", UpdateStockParam, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                           return Ok(_api.Error(User, "There Is No Stock"));
+                        }
 
-                    //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(nFnYearID,nDispatchID,X_DispatchNo,684,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-                          
-                          
-                    SortedList PostParam = new SortedList();
-                    PostParam.Add("N_CompanyID", nCompanyID);
-                    PostParam.Add("X_InventoryMode", "MATERIAL DISPATCH");
-                    PostParam.Add("N_InternalID", nDispatchID);
-                    PostParam.Add("N_UserID", N_UserID);
+                        //Activity Log
+                         string ipAddress = "";
+                         if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                         ipAddress = Request.Headers["X-Forwarded-For"];
+                         else
+                         ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                          myFunctions.LogScreenActivitys(nFnYearID,nDispatchID,X_DispatchNo,684,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
-                     dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostParam, connection, transaction);
-                    }
+                         dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostParam, connection, transaction);
+                        }
                 
-                        transaction.Commit();
-                        //myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_PkeyID, this.xTransType, values, dLayer, connection, transaction, User);
-                        return Ok(_api.Success("Material Request Approved " + "-" + values));
-                    }
-                   
-    
-              
-          
-                    
-                    
-         
+                          transaction.Commit();
+                          //myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_PkeyID, this.xTransType, values, dLayer, connection, transaction, User);
+                          return Ok(_api.Success("Material Request Approved " + "-" + values));
+                     }
+
+                     else{
+                        nSaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from Inv_MaterialDispatch where N_DispatchID=" + nDispatchID + " and N_CompanyID=" + nCompanyID , connection, transaction).ToString());
+
+                         if (nSaveDraft == 0){
+                        try
+                        {
+                          if (!bDeptEnabled)
+                  
+                          dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch", UpdateStockParam, connection, transaction);
+                         else
+                          dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch_Department", UpdateStockParam, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                           return Ok(_api.Error(User, "There Is No Stock"));
+                        }
+                          SortedList statusParams = new SortedList();
+                          dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostParam, connection, transaction);
+                            statusParams.Add("@N_CompanyID", nCompanyID);
+                            statusParams.Add("@N_TransID", nDispatchID);
+                            statusParams.Add("@N_FormID", 1309);
+                            statusParams.Add("@N_ForceUpdate", 1);  
+                            statusParams.Add("@N_ActionID", 0);  
+                             dLayer.ExecuteNonQueryPro("SP_TxnStatusUpdate", statusParams, connection, transaction);
+                         }
+               
+                     }
+
                      N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, transType, nDispatchID, X_DispatchNo, 1, "", 0, "",0, User, dLayer, connection, transaction);
-                    transaction.Commit();
-                    return Ok(_api.Success("Saved"));
+                     transaction.Commit();
+                     return Ok(_api.Success("Saved"));
                 }
             }
             catch (Exception ex)
@@ -346,7 +362,6 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
         }
-
         //Delete....
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nDispatchID, int nCompanyID, int nFormID,int nFnYearID, int nBranchID, string comments)

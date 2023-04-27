@@ -1367,7 +1367,7 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteDataTablePro("SP_OpeningBalanceGenerate", mParamsList, connection);
                             // if(xInstanceCode!="")
                             // Criteria = Criteria == "" ? xInstanceCode + "='"+random+"' " : Criteria + " and "+xInstanceCode+"='"+random+"' ";
-                        //}
+                        // }
                     }
 
                     dbName = connection.Database;

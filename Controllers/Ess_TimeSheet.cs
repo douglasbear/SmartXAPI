@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using System.Net.Mail;
 using System.Net.Http;
-
+using System.Threading;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -157,9 +157,9 @@ namespace SmartxAPI.Controllers
                     Master.Add("toDate", toDate);
                     Master.Add("days", days);
                     //DateTime.ParseExact(fromDate.ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture);
-            
-                    DateTime.ParseExact(fromDate.ToString(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
-                    DateTime.ParseExact(toDate.ToString(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+
+                    // DateTime.ParseExact(fromDate.ToString(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+                    // DateTime.ParseExact(toDate.ToString(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
                     Details = dLayer.ExecuteDataTablePro("SP_Pay_TimeSheet", QueryParams, connection);
 
 
@@ -371,6 +371,10 @@ namespace SmartxAPI.Controllers
                                 var clientFile = new HttpClient(handler);
                                 var MSG = client.GetAsync(URLAPI);
                                 MSG.Wait();
+                                Thread.Sleep(6000);
+                                URLAPI = "https://api.textmebot.com/send.php?recipient=+918547686435&apikey=" + WhatsappAPI + "&text=" + body;
+                                var MSG1 = client.GetAsync(URLAPI);
+                                MSG1.Wait();
 
                             }
                         }
