@@ -108,6 +108,9 @@ namespace SmartxAPI.Controllers
                             case "employees":
                                 xTableName = "Mig_Employee";
                                 break;
+                            case "product transfer":
+                                xTableName = "Mig_ProductTransfer";
+                                break;
                             case "fixedassets list":
                                 xTableName = "_Mig_AssetList";
                                 break;
