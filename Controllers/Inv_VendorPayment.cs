@@ -672,7 +672,11 @@ namespace SmartxAPI.Controllers
                         object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
 
                     }
-
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        dLayer.ExecuteNonQuery("Update Inv_Purchase SET D_ScheduleDate=NULL,N_ScheduledAmtF=NULL WHERE N_PurchaseID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_InventoryID"].ToString()) + " and N_CompanyID=" + nCompanyId + "", Params, connection, transaction);
+                       
+                    }
                   //Activity Log
                 string ipAddress = "";
                 if (  Request.Headers.ContainsKey("X-Forwarded-For"))
