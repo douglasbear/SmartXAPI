@@ -54,20 +54,18 @@ namespace SmartxAPI.Controllers
 
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([X_ScheduleCode] like '%" + xSearchkey + "%' or N_ScheduleID like '%" + xSearchkey + "%')";
+                        Searchkey = "and (X_VendorName like '%" + xSearchkey + "%' or X_ReferenceNo like '%" + xSearchkey + "%'  or D_ScheduleDate like '%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
-                        xSortBy = " order by N_PurchaseID desc";
+                        xSortBy = " order by D_ScheduleDate asc";
                     else
                     {
                         switch (xSortBy.Split(" ")[0])
                         {
-                            case "X_ReferenceCode":
-                                xSortBy = "X_ReferenceCode " + xSortBy.Split(" ")[1];
+                            case "X_ReferenceNo":
+                                xSortBy = "X_ReferenceNo " + xSortBy.Split(" ")[1];
                                 break;
-                            case "N_PurchaseID":
-                                xSortBy = "N_PurchaseID " + xSortBy.Split(" ")[1];
-                                break;
+                           
                             default: break;
                         }
                         xSortBy = " order by " + xSortBy;
@@ -86,7 +84,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_InvPayables_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type='PURCHASE' and N_BalanceAmount>0 and  D_ScheduleDate is not null" + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count from vw_InvPayables_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type='PURCHASE' and  D_ScheduleDate is not null" + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     if (Summary.Rows.Count > 0)
