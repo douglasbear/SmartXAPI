@@ -430,8 +430,7 @@ namespace SmartxAPI.Controllers
                 return Res;
             }
         }
-
-        private bool sendLicenseReminder(int nClientID)
+      private bool sendLicenseReminder(int nClientID)
         {
             try
             {
@@ -439,12 +438,11 @@ namespace SmartxAPI.Controllers
                 {
                     cnn.Open();
                     int DaysToExpire = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_ExpiryDate)),0) as expiry from ClientApps where N_ClientID=" + nClientID, cnn).ToString());
-
                     if (DaysToExpire <= 10)
                     {
                         object LastExpiryReminder = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_LastExpiryReminder)),5) as expiry from ClientApps where N_ClientID=" + nClientID, cnn).ToString());
-                        if (Math.Abs(myFunctions.getIntVAL(LastExpiryReminder.ToString())) >= 5)
-                        {
+                        // if (Math.Abs(myFunctions.getIntVAL(LastExpiryReminder.ToString())) >= 5)
+                        // {
                             string xClientName = dLayer.ExecuteScalar("select X_ClientName from ClientMaster where N_ClientID=" + nClientID, cnn).ToString();
                             string xEmail = dLayer.ExecuteScalar("select X_EmailID from ClientMaster where N_ClientID=" + nClientID, cnn).ToString();
                             string xExpiryInfo = DaysToExpire > 0 ? "expiring within " + DaysToExpire + " days " : "expired";
@@ -452,11 +450,11 @@ namespace SmartxAPI.Controllers
                             string xProductName = dLayer.ExecuteScalar("SELECT X_AppDescription FROM AppMaster INNER JOIN ClientMaster ON ClientMaster.N_DefaultAppID = AppMaster.N_AppID where N_ClientID=" + nClientID, cnn).ToString();
                             string EmailBody = "<div><div><div>Hello " + xClientName + ",</div>&nbsp;<div>Your subscription for " + xProductName + " is " + xExpiryInfo + ". It is time to renew.</div>&nbsp;<div>It is important to keep your subscription up to date in order to continue using service.</div>&nbsp;<div>If you wish to renew your subscription, contact your salesperson.</div>&nbsp;<div>Your license expires on: " + dExpiryDate + ".</div>&nbsp;<div>Your product name: " + xProductName + ".</div>&nbsp;<div>Best regards,<br /><br /><span style=\"background-color:rgb(255, 255, 255); color:rgb(44, 106, 246); font-family:sans-serif\">Olivo Cloud Solutions</span><br /><br /><span style=\"background-color:rgb(244, 245, 246); color:rgb(134, 137, 142); font-family:sans-serif; font-size:14px\">Copyright &copy; 2021 Olivo Cloud Solutions, All rights reserved.</span><span style=\"color:rgb(0, 0, 0)\"> </span></div></div><div>&nbsp;</div></div>";
                             string EmailSubject = "Renewal Reminder";
-                            if (myFunctions.SendMail(xEmail, EmailBody, EmailSubject, dLayer, 1, 1, 1))
+                            if (myFunctions.SendMail(xEmail, EmailBody, EmailSubject, dLayer, 1, 1, 1,true))
                             {
                                 dLayer.ExecuteScalar("Update ClientApps set D_LastExpiryReminder=GETDATE()  where N_ClientID=" + nClientID, cnn);
                             }
-                        }
+                        //}
                     }
                 }
                 return true;
@@ -466,6 +464,84 @@ namespace SmartxAPI.Controllers
                 return false;
             }
         }
+        // private bool sendLicenseReminder(int nClientID, int AppID)
+        // {
+        //     try
+        //     {
+        //         using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
+        //         {
+        //             cnn.Open();
+        //             int DaysToExpire = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GetDate(),min(D_ExpiryDate)),0) as expiry from ClientApps where N_ClientID=" + nClientID+" and N_AppID="+AppID+"", cnn).ToString());
+        //             object  LiscensedFlag =dLayer.ExecuteScalar("select isnull(B_Licensed,0) as B_Licensed from ClientApps where  N_ClientID=" + nClientID+" and N_AppID="+AppID+"", cnn);
+        //             int NotifiatiionPeriod=0;
+        //             int lastExpiryDays=0;
+        //             if(myFunctions.getBoolVAL(LiscensedFlag.ToString())){NotifiatiionPeriod=30;}else{NotifiatiionPeriod=10;}
+
+        //             if(DaysToExpire>=21){lastExpiryDays=29;}
+        //             else if(DaysToExpire>=11){lastExpiryDays=19;}
+        //             else if(DaysToExpire>=3){lastExpiryDays=2;}
+        //             else if(DaysToExpire>=1){lastExpiryDays=1;}
+                   
+                   
+        //             object LastExpiryDate1=dLayer.ExecuteScalar("select D_LastExpiryReminder from ClientApps where N_ClientID=" + nClientID+" and N_AppID="+AppID+"", cnn);
+
+        //             int DaysToMailSend = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day,D_LastExpiryReminder ,min(D_ExpiryDate)),0) as expiry from ClientApps where N_ClientID=" + nClientID+" and N_AppID="+AppID+" Group By D_LastExpiryReminder,D_ExpiryDate", cnn).ToString());
+
+                  
+
+
+
+        //             if (DaysToExpire <= NotifiatiionPeriod  )
+        //             {
+
+        //                 if (Math.Abs(myFunctions.getIntVAL(DaysToMailSend.ToString())) > lastExpiryDays)
+        //                 {
+        //                     string xClientName = dLayer.ExecuteScalar("select X_ClientName from ClientMaster where N_ClientID=" + nClientID, cnn).ToString();
+        //                     string xEmail = dLayer.ExecuteScalar("select X_EmailID from ClientMaster where N_ClientID=" + nClientID, cnn).ToString();
+        //                     string xExpiryInfo = DaysToExpire > 0 ? "expiring within " + DaysToExpire + " days " : "expired";
+        //                     string dExpiryDate = dLayer.ExecuteScalar("select cast(FORMAT (min(D_ExpiryDate), 'dd MMMM yyyy') as varchar)  as expiry from ClientApps where N_ClientID=" + nClientID+" and N_AppID="+AppID+"", cnn).ToString();
+        //                     string xProductName = dLayer.ExecuteScalar("SELECT X_AppDescription FROM AppMaster INNER JOIN ClientApps ON ClientApps.N_AppID = AppMaster.N_AppID where ClientApps.N_ClientID=" + nClientID+" and ClientApps.N_AppID="+AppID+"", cnn).ToString();
+        //                             string htmlTable = "<table>";
+
+        //                       // Add the table headers
+        //                     htmlTable += "<tr><th>"+xProductName+"</th><th>"+dExpiryDate+"</th></tr>";
+        //                     string EmailBody = "<div><div><div>Hello " + xClientName + ",</div>&nbsp;<div>Your subscription for " + xProductName + " is " + xExpiryInfo + ". It is time to renew.</div>&nbsp;<div>It is important to keep your subscription up to date in order to continue using service.</div>&nbsp;<div>If you wish to renew your subscription, contact your salesperson.</div>&nbsp;<div>Your license expires on: " + dExpiryDate + ".</div>&nbsp;<div>Your product name: " + xProductName + ".</div>&nbsp;<div>Best regards,<br /><br /><span style=\"background-color:rgb(255, 255, 255); color:rgb(44, 106, 246); font-family:sans-serif\">Olivo Cloud Solutions</span><br /><br /><span style=\"background-color:rgb(244, 245, 246); color:rgb(134, 137, 142); font-family:sans-serif; font-size:14px\">Copyright &copy; 2021 Olivo Cloud Solutions, All rights reserved.</span><span style=\"color:rgb(0, 0, 0)\"> </span></div></div><div>&nbsp;</div></div> +"+htmlTable+"";
+        //                     string EmailSubject = "Renewal Reminder";
+                           
+        //                       // Assuming you have a DataTable named "appsTable" with two columns named "AppName" and "ExpiryDate"
+
+        //                       // Define the start of the HTML table
+                       
+
+        //                   // Loop through the rows of the DataTable and add them to the HTML table
+        //             //    foreach (DataRow row in appsTable.Rows)
+        //             //     {
+        //             //      htmlTable += "<tr>";
+        //             //     htmlTable += "<td>" + row["AppName"].ToString() + "</td>";
+        //             //   htmlTable += "<td>" + ((DateTime)row["ExpiryDate"]).ToString("dd/MM/yyyy") + "</td>";
+        //             //     htmlTable += "</tr>";
+        //             //    }
+                         
+        //             //     // Define the end of the HTML table
+        //             //   htmlTable += "</table>";
+                           
+
+                           
+                           
+        //                     if (myFunctions.SendMail(xEmail, EmailBody, EmailSubject, dLayer, 1, 1, 1))
+        //                     {
+        //                         dLayer.ExecuteScalar("Update ClientApps set D_LastExpiryReminder=GetDate()  where N_ClientID=" + nClientID, cnn);
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //         return true;
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return false;
+        //     }
+        // }
 
         private string generateRefreshToken()
         {

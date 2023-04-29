@@ -81,7 +81,7 @@ namespace SmartxAPI.Controllers
                             string Data = "Product : "+Details.Rows[0]["product"].ToString()+"<br>Date : " + Details.Rows[0]["date"].ToString() + "<br>Time : " + Details.Rows[0]["time"].ToString()+ "<br>Company : " + Details.Rows[0]["companyname"].ToString() + "<br>Contact : " + Details.Rows[0]["contactname"].ToString() + "<br>Email : " + Details.Rows[0]["email"].ToString() + "<br>Phone : " + Details.Rows[0]["phone"].ToString() + "<br>";
                             string body = Maildata.Rows[0]["x_body"].ToString().Replace("@message", Data);
 
-                            myFunctions.SendMail("sales@olivotech.com", body, Maildata.Rows[0]["x_subject"].ToString(), dLayer, 0, 0, 0);
+                            myFunctions.SendMail("sales@olivotech.com", body, Maildata.Rows[0]["x_subject"].ToString(), dLayer, 0, 0, 0,false);
                             //Whatsapp
                             string Company = myFunctions.GetCompanyName(User);
                             object WhatsappAPI = dLayer.ExecuteScalar("select X_Value from Gen_Settings where N_CompanyID=1 and X_Group='1334' and X_Description='Whatsapp Message'", Params, connection, transaction);

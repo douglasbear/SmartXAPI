@@ -227,16 +227,16 @@ namespace SmartxAPI.Controllers
                     int B_Custom = myFunctions.getIntVAL(MasterTable.Rows[0]["B_Custom"].ToString());
                     int B_PrintAfterSave = myFunctions.getIntVAL(MasterTable.Rows[0]["B_PrintAfterSave"].ToString());
                     if (x_SelectedReport.Contains(".rpt")) { }
-                    else { x_SelectedReport = x_SelectedReport + ".rpt"; }
+                    else if (x_SelectedReport != "") { x_SelectedReport = x_SelectedReport + ".rpt"; }
                     int n_CopyNos = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CopyNos"].ToString());
                     int a = 1;
                     object result = 0;
                     dLayer.ExecuteNonQuery("SP_GeneralDefaults_ins " + nCompanyID + ",'" + ReportSelectingScreenID + "' ,'PrintTemplate',1,'" + x_SelectedReport + "','" + X_UserCategoryName + "'", connection, transaction);
                     dLayer.ExecuteNonQuery("SP_GeneralDefaults_ins " + nCompanyID + ",'" + ReportSelectingScreenID + "' ,'PrintCopy'," + n_CopyNos + ",''", connection, transaction);
-                    dLayer.ExecuteNonQuery("SP_GenPrintTemplatess_ins " + nCompanyID + "," + ReportSelectingScreenID + " ,'" + x_SelectedReport + "'," + N_UserCategoryId + "," + n_CopyNos + "," + a + ","+B_Custom+","+B_PrintAfterSave+" ", connection, transaction);
+                    dLayer.ExecuteNonQuery("SP_GenPrintTemplatess_ins " + nCompanyID + "," + ReportSelectingScreenID + " ,'" + x_SelectedReport + "'," + N_UserCategoryId + "," + n_CopyNos + "," + a + "," + B_Custom + "," + B_PrintAfterSave + " ", connection, transaction);
 
-                    if (B_Custom==1)
-                        CreateCustomTemplate(ReportSelectingScreenID, x_SelectedReport,connection,transaction);
+                    if (B_Custom == 1)
+                        CreateCustomTemplate(ReportSelectingScreenID, x_SelectedReport, connection, transaction);
                     transaction.Commit();
                 }
                 return Ok(_api.Success("Template Saved"));
@@ -247,7 +247,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-        private bool CreateCustomTemplate(int nFormID, string x_SelectedReport,SqlConnection connection,SqlTransaction transaction)
+        private bool CreateCustomTemplate(int nFormID, string x_SelectedReport, SqlConnection connection, SqlTransaction transaction)
         {
             SortedList QueryParams = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -261,51 +261,51 @@ namespace SmartxAPI.Controllers
             try
             {
 
-                    object ObjTaxType = dLayer.ExecuteScalar("SELECT Acc_TaxType.X_RepPathCaption FROM Acc_TaxType LEFT OUTER JOIN Acc_FnYear ON Acc_TaxType.N_TypeID = Acc_FnYear.N_TaxType where Acc_FnYear.N_CompanyID=@nCompanyId", QueryParams, connection, transaction);
-                    if (ObjTaxType == null)
-                        ObjTaxType = "";
-                    if (ObjTaxType.ToString() == "")
-                        ObjTaxType = "none";
-                    string TaxType = ObjTaxType.ToString();
+                object ObjTaxType = dLayer.ExecuteScalar("SELECT Acc_TaxType.X_RepPathCaption FROM Acc_TaxType LEFT OUTER JOIN Acc_FnYear ON Acc_TaxType.N_TypeID = Acc_FnYear.N_TaxType where Acc_FnYear.N_CompanyID=@nCompanyId", QueryParams, connection, transaction);
+                if (ObjTaxType == null)
+                    ObjTaxType = "";
+                if (ObjTaxType.ToString() == "")
+                    ObjTaxType = "none";
+                string TaxType = ObjTaxType.ToString();
 
-                    object ObjPath = dLayer.ExecuteScalar("SELECT X_RptFolder FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
-                    if (ObjPath != null)
+                object ObjPath = dLayer.ExecuteScalar("SELECT X_RptFolder FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                if (ObjPath != null)
+                {
+                    if (ObjPath.ToString() != "")
+                        RPTLocation = reportLocation + "printing/" + ObjPath + "/" + TaxType + "/";
+                    else
+                        RPTLocation = reportLocation + "printing/";
+                }
+                // object Templatecritiria = dLayer.ExecuteScalar("SELECT X_PkeyField FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                // critiria = "{" + Templatecritiria + "}=" + nPkeyID;
+
+                object Othercritiria = dLayer.ExecuteScalar("SELECT X_Criteria FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                if (Othercritiria != null)
+                {
+                    if (Othercritiria.ToString() != "")
+                        critiria = critiria + "and " + Othercritiria.ToString();
+
+                }
+                // TableName = Templatecritiria.ToString().Substring(0, Templatecritiria.ToString().IndexOf(".")).Trim();
+                object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                ReportName = ObjReportName.ToString();
+                ReportName = ReportName.Remove(ReportName.Length - 4);
+
+                //Create and Copy
+
+                string fileToCopy = RPTLocation + x_SelectedReport;
+                x_SelectedReport = x_SelectedReport.Remove(x_SelectedReport.Length - 4);
+                x_SelectedReport = x_SelectedReport + "_" + myFunctions.GetClientID(User) + "_" + myFunctions.GetCompanyID(User) + "_" + myFunctions.GetCompanyName(User).Trim();
+                string destinationFile = RPTLocation + "/Custom/" + x_SelectedReport + ".rpt";
+                string destinationDirectory = RPTLocation + "/Custom/";
+                if (!System.IO.File.Exists(destinationFile))
+                {
+                    if (!Directory.Exists(destinationDirectory))
                     {
-                        if (ObjPath.ToString() != "")
-                            RPTLocation = reportLocation + "printing/" + ObjPath + "/" + TaxType + "/";
-                        else
-                            RPTLocation = reportLocation + "printing/";
+                        DirectoryInfo di = Directory.CreateDirectory(destinationDirectory);
                     }
-                    // object Templatecritiria = dLayer.ExecuteScalar("SELECT X_PkeyField FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
-                    // critiria = "{" + Templatecritiria + "}=" + nPkeyID;
-
-                    object Othercritiria = dLayer.ExecuteScalar("SELECT X_Criteria FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
-                    if (Othercritiria != null)
-                    {
-                        if (Othercritiria.ToString() != "")
-                            critiria = critiria + "and " + Othercritiria.ToString();
-
-                    }
-                    // TableName = Templatecritiria.ToString().Substring(0, Templatecritiria.ToString().IndexOf(".")).Trim();
-                    object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
-                    ReportName = ObjReportName.ToString();
-                    ReportName = ReportName.Remove(ReportName.Length - 4);
-
-                    //Create and Copy
-
-                    string fileToCopy = RPTLocation + x_SelectedReport;
-                    x_SelectedReport = x_SelectedReport.Remove(x_SelectedReport.Length - 4);
-                    x_SelectedReport = x_SelectedReport + "_" + myFunctions.GetClientID(User) + "_" + myFunctions.GetCompanyID(User) + "_" + myFunctions.GetCompanyName(User).Trim();
-                    string destinationFile = RPTLocation + "/Custom/" + x_SelectedReport + ".rpt";
-                    string destinationDirectory = RPTLocation + "/Custom/";
-                    if (!System.IO.File.Exists(destinationFile))
-                    {
-                        if (!Directory.Exists(destinationDirectory))
-                        {
-                            DirectoryInfo di = Directory.CreateDirectory(destinationDirectory);
-                        }
-                        System.IO.File.Copy(fileToCopy, destinationFile);
-                    }
+                    System.IO.File.Copy(fileToCopy, destinationFile);
+                }
                 return true;
             }
             catch (Exception e)
