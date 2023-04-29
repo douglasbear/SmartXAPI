@@ -312,6 +312,7 @@ namespace SmartxAPI.Controllers
                    string  DupCriteria = "x_CustomerName='" + x_CustomerName.Replace("'", "''") + "' and N_CompanyID=" + nCompanyID;
                    string  X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
                         nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
+                        dLayer.ExecuteNonQuery("Update Inv_Customer_Contacts Set N_CustomerID =" + nCustomerID + " Where N_ContactID =" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_ContactID"].ToString()) + " and N_CompanyID=" + nCompanyID, Params, connection, transaction);
                          
                      }
                  
@@ -357,7 +358,7 @@ namespace SmartxAPI.Controllers
                      
                                 int ncrmCustomerID = dLayer.SaveData("CRM_Customer", "N_CustomerId", CustomerMaster, connection, transaction);
                                 dLayer.ExecuteNonQuery("Update Inv_Customer Set n_CrmCompanyID =" + ncrmCustomerID + " Where N_CustomerID =" + nCustomerID + " and N_CompanyID=" + nCompanyID + " and N_FnyearID= " + nFnYearId, Params, connection, transaction);
-                                
+      
                                 if (ncrmCustomerID <= 0)
                                 {
                                     transaction.Rollback();
