@@ -54,7 +54,7 @@ namespace SmartxAPI.Controllers
 
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and (X_VendorName like '%" + xSearchkey + "%' or X_ReferenceNo like '%" + xSearchkey + "%'  or D_ScheduleDate like '%" + xSearchkey + "%')";
+                        Searchkey = " and (X_VendorName like '%" + xSearchkey + "%' or X_ReferenceNo like '%" + xSearchkey + "%'  or cast(D_ScheduleDate as dateTime)  like '%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by D_ScheduleDate asc";
@@ -320,7 +320,7 @@ namespace SmartxAPI.Controllers
                         int purchaseID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_PurchaseID"].ToString());
                         if (purchaseID > 0)
                         {
-                            dLayer.ExecuteNonQuery("Update Inv_Purchase SET D_ScheduleDate='" + DetailTable.Rows[j]["D_ScheduleDate"].ToString() + "',N_ScheduledAmtF=" + myFunctions.getVAL(DetailTable.Rows[j]["N_ScheduledAmtF"].ToString()) + " WHERE N_PurchaseID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_PurchaseID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", Params, connection, transaction);
+                            dLayer.ExecuteNonQuery("Update Inv_Purchase SET D_ScheduleDate='" + DetailTable.Rows[j]["D_ScheduleDate"].ToString() + "',N_ScheduledAmtF=" + myFunctions.getVAL(DetailTable.Rows[j]["N_ScheduledAmtF"].ToString()) + " , N_ScheduledAmt=" + myFunctions.getVAL(DetailTable.Rows[j]["N_ScheduledAmt"].ToString())+" WHERE N_PurchaseID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_PurchaseID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", Params, connection, transaction);
                         
                         }
                      
