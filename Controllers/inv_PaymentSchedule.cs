@@ -225,7 +225,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText=" ";
             // if(Schedule)
             // {
-                sqlCommandText = "select * from vw_InvPayables_Schedule where N_CompanyID=@p1  and X_Type='PURCHASE' and N_BalanceAmount>0 and D_Date<='" + dDate + "'";
+                sqlCommandText = "select * from vw_InvPayables_Schedule where N_CompanyID=@p1  and X_Type='PURCHASE' and N_BalanceAmount>0 and D_Date<='" + dDate + "' order by d_Date desc";
            // }
             // else{
             //     sqlCommandText = "select * from vw_InvPayables_Schedule where N_CompanyID=@p1  and X_Type='PURCHASE' and N_BalanceAmount>0 and D_ScheduleDate is null "; 
