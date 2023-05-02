@@ -172,7 +172,7 @@ namespace SmartxAPI.Controllers
 
 
                     secParams.Add("@nCompanyID", nCompanyID);
-                    secParams.Add("@xUserCategory", x_UserCategoryName);
+                    secParams.Add("@xUserCategory", nUserCategoryID);
                     secParams.Add("@nMenuID", N_MenuID);
                     secParams.Add("@nLanguageID", nLanguageID);
                     secParams.Add("@nIsCategoryID", 1);

@@ -131,19 +131,23 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("parentTaskList")]
-        public ActionResult ParentTaskList()
+        public ActionResult ParentTaskList( int nProjectID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            string sqlCommandText="";
 
-
-
-            string sqlCommandText = "select  * from [vw_TaskCurrentStatus] where N_CompanyID=@p1";
-
+            if(nProjectID >0){
+                 sqlCommandText = "select  * from [vw_TaskCurrentStatus] where N_CompanyID=@p1 and N_ProjectID=@p2";
+            }
+            else{
+               sqlCommandText = "select  * from [vw_TaskCurrentStatus] where N_CompanyID=@p1";
+            }
             Params.Add("@p1", nCompanyId);
             Params.Add("@nUserID", nUserID);
+            Params.Add("@p2", nProjectID);
             // Params.Add("@nFnYearId", nFnYearId);
             SortedList OutPut = new SortedList();
 
@@ -826,7 +830,7 @@ namespace SmartxAPI.Controllers
 
                         // dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 5  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed= 1  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection, transaction);
-
+                           
                     }
                     else if (nStatus == "9" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_SubmitterID"].ToString()))
                     {
@@ -860,6 +864,9 @@ namespace SmartxAPI.Controllers
                     {
 
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=1 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                        if (myFunctions.getVAL(MasterTable.Rows[0]["n_StageID"].ToString()) > 0)
+                            dLayer.ExecuteNonQuery("Update inv_customerprojects SET N_StageID=" + MasterTable.Rows[0]["n_StageID"].ToString()  + " where N_ProjectID=" + MasterTable.Rows[0]["n_ProjectID"].ToString()  + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+
                     }
                     if (masterStatus == 8)
                     {
