@@ -298,6 +298,7 @@ namespace SmartxAPI.Controllers
                          xButtonAction="Update"; 
 
                     }
+                     VendorCode = MasterTable.Rows[0]["x_VendorCode"].ToString();
 
                     if (MasterTable.Columns.Contains("b_DirPosting"))
                     {
@@ -417,16 +418,27 @@ namespace SmartxAPI.Controllers
             {
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
-                
+                SortedList ParamList = new SortedList();
+                DataTable TransData = new DataTable();
                 nCompanyID = myFunctions.GetCompanyID(User);
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nFnYearID", nFnYearID);
                 QueryParams.Add("@nFormID", 52);
                 QueryParams.Add("@nVendorID", nVendorID);
-                  string xButtonAction="Delete";
-                     String VendorCode="";
+                  ParamList.Add("@nTransID", nVendorID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
 
-                object vendorCount,vendortxnCount=0;
+
+                     string Sql = "select N_VendorID,X_VendorCode from Inv_Vendor where N_VendorID=@nTransID and N_CompanyID=@nCompanyID ";
+                  string xButtonAction="Delete";
+                  string X_VendorCode="";
+                  object vendorCount="";
+                  object vendortxnCount="";
+
+                   
+
+       
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -447,18 +459,41 @@ namespace SmartxAPI.Controllers
                     }
                     
 
+
+                        vendorCount = dLayer.ExecuteScalar("select count(N_PartyID) from Inv_PayReceipt  Where N_CompanyID=" + nCompanyID + " and  N_PartyID=" + nVendorID,  QueryParams, connection);
+                        if( myFunctions.getIntVAL(vendorCount.ToString())>0)
+                    {
+                        return Ok(_api.Error(User, "Unable to delete vendor! transaction started"));
+                    }
+                    vendortxnCount = dLayer.ExecuteScalar("select count(N_PartyID) from Inv_BalanceAdjustmentMaster  Where N_CompanyID=" + nCompanyID + " and  N_PartyID=" + nVendorID,  QueryParams, connection);
+                        if( myFunctions.getIntVAL(vendortxnCount.ToString())>0)
+                    {
+                        return Ok(_api.Error(User, "Unable to delete vendor! It has been used."));
+                    }
+
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Inv_Vendor", "N_VendorID", nVendorID, "N_CompanyID="+nCompanyID, connection, transaction);
-             //  Activity Log
+                      TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+                    
+                      if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+
+
+                     //  Activity Log
                 string ipAddress = "";
                 if (  Request.Headers.ContainsKey("X-Forwarded-For"))
                     ipAddress = Request.Headers["X-Forwarded-For"];
                 else
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nVendorID,VendorCode,52,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nVendorID,TransRow["X_VendorCode"].ToString(),52,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
 
                    
+
+                    Results = dLayer.DeleteData("Inv_Vendor", "N_VendorID", nVendorID, "N_CompanyID="+nCompanyID, connection, transaction);
+            
                    
                    
                     myAttachments.DeleteAttachment(dLayer, 1, 0, nVendorID, nFnYearID, this.FormID, User, transaction, connection);

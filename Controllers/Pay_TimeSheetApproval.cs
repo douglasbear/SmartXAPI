@@ -283,7 +283,8 @@ namespace SmartxAPI.Controllers
                     object obj = dLayer.ExecuteScalar("Select isnull(Count(X_BatchCode),0) from Pay_TimeSheetMaster where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_EmpID=" + nEmpID + " and N_BatchID=" + payRunID + " and ISNULL(N_TotalWorkingDays,0)>0", Params, connection);
                     if (obj != null)
                     {
-                        if (myFunctions.getIntVAL(obj.ToString()) > 0)
+                        
+                        if (myFunctions.getIntVAL(obj.ToString()) > 0 )
                         {
                             double additionTime = 0, deductionTime = 0, CompsateDed = 0, OfficeHours = 0, AbsentCount = 0;
                             double N_additionTime = 0, N_deductionTime = 0, N_CompsateDed = 0, N_OfficeHours = 0, N_ExtraHours = 0;
@@ -679,11 +680,16 @@ namespace SmartxAPI.Controllers
                                 } while (Date <= dtpTodate);
 
                                 PayAttendence.AcceptChanges();
-
+                                PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "X_Days", typeof(string),null);
+                                PayAttendence.AcceptChanges();
                                 foreach (DataRow row in PayAttendence.Rows)
                                 {
                                     DateTime Date5 = Convert.ToDateTime(row["D_date"].ToString());
                                     //Default Paycodes
+
+                                  row["X_Days"] = Date5.ToString("dddd");
+                                  //myFunctions.AddNewColumnToDataTable(PayAttendence, "X_Days", typeof(string),Date5.ToString("dddd"));
+                                //   PayAttendence.AcceptChanges();
                                     foreach (DataRow Var1 in PayOffDays.Rows)
                                     {
                                         if (nCategoryID == myFunctions.getIntVAL(Var1["N_CategoryID"].ToString()) && ((int)Date5.DayOfWeek) + 1 == myFunctions.getIntVAL(Var1["N_DayID"].ToString()) || myFunctions.getDateVAL(Date5) == myFunctions.getDateVAL(Convert.ToDateTime(Var1["D_Date"].ToString())))
@@ -859,7 +865,7 @@ namespace SmartxAPI.Controllers
 
                                     if (myFunctions.getDateVAL(Convert.ToDateTime(row["D_Date"].ToString())) == myFunctions.getDateVAL(Date5))
                                     {
-                                        if (row["Attandance"].ToString() != "A" && row["Attandance"].ToString() != "" )
+                                        if (row["Attandance"].ToString() != "A" )
                                         {
                                             N_WorkdHrs += HoursToMinutes(myFunctions.getVAL(row["N_Tothours"].ToString()));
                                             N_WorkHours += HoursToMinutes(myFunctions.getVAL(row["N_Workhours"].ToString()));

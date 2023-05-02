@@ -200,6 +200,7 @@ namespace SmartxAPI.Data
                                 {
                                     loginRes.Warning = userNotifications(myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString()),AppID,cnn2);
                                     object AllowMultipleCompany=true;
+                                    object userTypeID = dLayer.ExecuteScalar("select isnull(N_TypeID,0) from Sec_User where N_UserID=@nUserID", Params, connection);
                                     object numberOfCompanies = dLayer.ExecuteScalar("select count(1)   from Acc_Company where N_ClientID="+myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString())+"", Params, connection);
                                     object companyLimit = dLayer.ExecuteScalar("select isnull(N_Value,0) from GenSettings where N_ClientID="+myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString())+" and X_Description='COMPANY LIMIT'", Params, cnn2);
                                     if(companyLimit==null){companyLimit="0";}
@@ -207,6 +208,18 @@ namespace SmartxAPI.Data
                                      {
                                         AllowMultipleCompany=false;
 
+                                     }
+                                     if(userTypeID==null)
+                                     {userTypeID=0;}
+                                     if(myFunctions.getIntVAL(userTypeID.ToString())==1 || myFunctions.getIntVAL(userTypeID.ToString())==2)
+                                     {
+                                          globalInfo.Rows[0]["isAdminUser"]=1;
+                                          globalInfo.AcceptChanges();
+                                     }
+                                      if(myFunctions.getIntVAL(userTypeID.ToString())==0 || myFunctions.getIntVAL(userTypeID.ToString())==3)
+                                     {
+                                          globalInfo.Rows[0]["isAdminUser"]=0;
+                                          globalInfo.AcceptChanges();
                                      }
 
                                     globalInfo = myFunctions.AddNewColumnToDataTable(globalInfo, "B_AllowMultipleCom", typeof(bool), AllowMultipleCompany == null ? 0 : AllowMultipleCompany);

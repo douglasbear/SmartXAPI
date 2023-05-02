@@ -378,9 +378,9 @@ namespace SmartxAPI.Controllers
                         object nUserType;
                         if (nGlobalUserID > 0)
                         {
-                            xPwd = dLayer.ExecuteScalar("SELECT X_Password FROM Users where x_EmailID=@xEmailID and N_ClientID=@nClientID and N_UserID=@nGlobalUserID", userParams, olivoCon, olivoTxn);
+                            xPwd = dLayer.ExecuteScalar("SELECT X_Password FROM Users where  N_ClientID=@nClientID and N_UserID=@nGlobalUserID", userParams, olivoCon, olivoTxn);
                             globalUser.Rows[0]["n_ActiveAppID"] = apps.Rows[0]["n_AppID"].ToString();
-                            nUserType = dLayer.ExecuteScalar("SELECT N_UserType FROM Users where x_EmailID=@xEmailID and N_ClientID=@nClientID and N_UserID=@nGlobalUserID", userParams, olivoCon, olivoTxn);
+                            nUserType = dLayer.ExecuteScalar("SELECT isnull(N_UserType,0) FROM Users where  N_ClientID=@nClientID and N_UserID=@nGlobalUserID", userParams, olivoCon, olivoTxn);
                             globalUser.Rows[0]["N_UserType"] = myFunctions.getIntVAL(nUserType.ToString());
                         }
                         else
@@ -604,7 +604,7 @@ namespace SmartxAPI.Controllers
                     {
                         DateTime validDateTime = DateTime.Now;
 
-                        object nPswdDuraHours = dLayer.ExecuteScalar("select isnull(N_PswdDuraHours,0) ASN_PswdDuraHours  from Users where  N_ClientID=" + clientID + " and X_EmailID=@xUserID", userParams, olivoCon, olivoTxn);
+                        object nPswdDuraHours = dLayer.ExecuteScalar("select isnull(N_PswdDuraHours,0) AS N_PswdDuraHours  from Users where  N_ClientID=" + clientID + " and X_EmailID=@xUserID", userParams, olivoCon, olivoTxn);
                         if (myFunctions.getIntVAL(nPswdDuraHours.ToString()) > 0)
                         {
                             int daysToAdd = myFunctions.getIntVAL(nPswdDuraHours.ToString());
@@ -645,6 +645,10 @@ namespace SmartxAPI.Controllers
                 {
                     olivoCon.Open();
                     SortedList userParams = new SortedList();
+                    
+                    if(senderMail==null){
+                        senderMail="";
+                    }
                     userParams.Add("@xEmail", emailID);
 
                     object clientID = dLayer.ExecuteScalar("select N_ClientID from Users where X_EmailID=@xEmail", userParams, olivoCon);

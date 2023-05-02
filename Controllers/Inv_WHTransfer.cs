@@ -393,7 +393,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
 
-                        SortedList StockParam = new SortedList();
+                         SortedList StockParam = new SortedList();
                         StockParam.Add("N_CompanyID", nCompanyID);
                         StockParam.Add("N_TransferID", nTransferId);
                         StockParam.Add("@N_WarehouseIdFrom", nLocationIDfrom);

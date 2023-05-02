@@ -144,8 +144,11 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nCompanyID", nCompanyID);
                     DataTable ElementsTable = new DataTable();
                     DataTable ActualTable = new DataTable();
+                    DataTable WaiveTable = new DataTable();
                     string ElementSql = "";
                     string ActualSql = "";
+                    string waiveSql="";
+                    int saveDraft= 0;
 
                     ElementSql = " Select N_EmpID as N_EmpId,* from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date >= '" + dtpSalaryFromdate + "' and D_Date<=' " + dtpSalaryToDate + "' and N_EmpID=" + nEmpID + " order by D_Date";
                     ElementsTable = dLayer.ExecuteDataTable(ElementSql, Params, connection);
@@ -210,7 +213,25 @@ namespace SmartxAPI.Controllers
                         if ((var["D_ActOut2"].ToString() != "" || var["D_ActOut2"].ToString() != null) && (var["D_Shift2_Out"].ToString() == "" || var["D_Shift2_Out"].ToString() == null))
                             var["D_Shift2_Out"] = "00:00:00";
 
+                    waiveSql="Select * from Pay_AnytimeRequest where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID;
+                    WaiveTable = dLayer.ExecuteDataTable(waiveSql, Params, connection);
+                    WaiveTable.AcceptChanges();
+                     if (WaiveTable.Rows.Count != 0){
+                        foreach (DataRow row in WaiveTable.Rows){
+                            row["B_IsSaveDraft"]=saveDraft;
+                            if (saveDraft==0 &&(row["D_Date"]==var["d_Date"]))
+                            {
+                                var["D_In"] = row["D_Shift1_In"].ToString();
+                                var["D_Out"] = row["D_Shift1_Out"].ToString();
+                                var["d_Shift2_In"]=row["D_Shift2_In"].ToString();
+                                var["d_Shift2_Out"]=row["D_Shift2_Out"].ToString();
+                            }
+                        }
+                     }
                     }
+
+                    
+
 
                     ElementsTable = _api.Format(ElementsTable);
                     dt.Tables.Add(ElementsTable);

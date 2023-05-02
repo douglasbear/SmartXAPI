@@ -117,12 +117,25 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int InsuranceID)
         {
             int Results = 0;
+             SortedList Params = new SortedList();
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Results = dLayer.DeleteData("Pay_Medical_Insurance", "n_MedicalInsID", InsuranceID, "", connection);
+                     int nCompanyID=myFunctions.GetCompanyID(User);
+                      Params.Add("nCompanyID", nCompanyID);
+                      Params.Add("InsuranceID", InsuranceID);
+                      object Objcount = dLayer.ExecuteScalar("Select count(1) From pay_employee where N_InsuranceID=@InsuranceID and N_CompanyID=@nCompanyID", Params, connection);
+                    
+                        if (myFunctions.getIntVAL(Objcount.ToString())>0)
+                        {
+                           return Ok(_api.Error(User,"Unable to delete,Already in use"));
+                        }
+                        else{
+                        Results = dLayer.DeleteData("Pay_Medical_Insurance", "n_MedicalInsID", InsuranceID, "", connection);
+                        }
+
                     if (Results > 0)
                     {
                         return Ok( _api.Success("Medical Insurances deleted"));

@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using System.Net.Mail;
 using System.Net.Http;
-
+using System.Threading;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -157,7 +157,7 @@ namespace SmartxAPI.Controllers
                     Master.Add("toDate", toDate);
                     Master.Add("days", days);
                     //DateTime.ParseExact(fromDate.ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture);
-            
+
                     DateTime.ParseExact(fromDate.ToString(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
                     DateTime.ParseExact(toDate.ToString(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
                     Details = dLayer.ExecuteDataTablePro("SP_Pay_TimeSheet", QueryParams, connection);
@@ -316,8 +316,6 @@ namespace SmartxAPI.Controllers
 
                     DateTime dateTime_Indian = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, India_Standard_Time);
                     DateTime date = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, Timezone.ToString());
-                    date=date.AddDays(-1);
-                    date=date.AddHours(-1);
 
                     masterRow["transactionTime"] = date.ToString();
                     masterRow["serverRecordTime"] = date.ToString();
@@ -373,6 +371,10 @@ namespace SmartxAPI.Controllers
                                 var clientFile = new HttpClient(handler);
                                 var MSG = client.GetAsync(URLAPI);
                                 MSG.Wait();
+                                Thread.Sleep(6000);
+                                URLAPI = "https://api.textmebot.com/send.php?recipient=+918547686435&apikey=" + WhatsappAPI + "&text=" + body;
+                                var MSG1 = client.GetAsync(URLAPI);
+                                MSG1.Wait();
 
                             }
                         }
@@ -490,6 +492,7 @@ namespace SmartxAPI.Controllers
                 int n_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
                 int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                 string x_LocationCode = MasterRow["x_LocationCode"].ToString();
+                bool b_Enableall = myFunctions.getBoolVAL(MasterRow["b_Enableall"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -498,11 +501,12 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList EmpParams = new SortedList();
                     EmpParams.Add("@nCompanyID", nCompanyID);
+                    SortedList Params = new SortedList();
 
 
                     if (x_LocationCode == "@Auto")
                     {
-                        SortedList Params = new SortedList();
+
                         Params.Add("@nCompanyID", nCompanyID);
                         x_LocationCode = dLayer.ExecuteScalar("Select max(isnull(x_LocationCode,0))+1 as x_LocationCode from Pay_workLocation where N_CompanyID=@nCompanyID", Params, connection, transaction).ToString();
                         if (x_LocationCode == null || x_LocationCode == "") { x_LocationCode = "1"; }
@@ -519,6 +523,9 @@ namespace SmartxAPI.Controllers
                     MasterTable.Columns.Remove("N_EmpID");
 
                     n_LocationID = dLayer.SaveData("Pay_workLocation", "n_LocationID", MasterTable, connection, transaction);
+                    if (b_Enableall)
+                        dLayer.ExecuteNonQuery("update Pay_employee set x_worklocationid=" + n_LocationID + " where N_CompanyID=" + nCompanyID, Params, connection, transaction);
+
                     if (n_LocationID <= 0)
                     {
                         transaction.Rollback();

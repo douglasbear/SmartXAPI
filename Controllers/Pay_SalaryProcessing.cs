@@ -1192,6 +1192,7 @@ namespace SmartxAPI.Controllers
                 int year = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PayRunID"].ToString().Substring(0, 4));
                 int month = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PayRunID"].ToString().Substring(4, 2));
                 double N_TotalSalary = 0;
+                string xButtonAction="";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -1231,6 +1232,7 @@ namespace SmartxAPI.Controllers
                         {
                             NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(count(1),0) + " + loop + " As Count FRom Pay_PaymentMaster Where N_CompanyID=@nCompanyID  And N_PayRunID =@nPayRunID", Params, connection, transaction).ToString());
                             x_Batch = nPayRunID + "" + NewNo.ToString("0#");
+                              xButtonAction="Insert"; 
                             if (myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(count(1),0) FRom Pay_PaymentMaster Where N_CompanyID=@nCompanyID And X_Batch = '" + x_Batch + "'", Params, connection, transaction).ToString()) == 0)
                             {
                                 OK = false;
@@ -1244,7 +1246,12 @@ namespace SmartxAPI.Controllers
 
                         }
                         MasterTable.Rows[0]["x_Batch"] = x_Batch;
+                    }else {
+                         xButtonAction="Update"; 
                     }
+                     x_Batch = MasterTable.Rows[0]["x_Batch"].ToString();
+                       
+
 
                     if(MasterTable.Columns.Contains("N_FormID"))
                     MasterTable.Rows[0]["N_FormID"] = 190;
@@ -1345,6 +1352,17 @@ namespace SmartxAPI.Controllers
 
                         }
 
+                        //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearId,nPayRunID,x_Batch,190,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       
+
+
+
 
                         if (N_TransDetailsID > 0 && IsSaveDraft==0)
                         {
@@ -1385,7 +1403,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nTransID, int nFnYearID, string xBatch)
+        public ActionResult DeleteData(int nTransID, int nFnYearID, string xBatch,int nCompanyID,int nPayRunID)
         {
             int Results = 0;
             try
@@ -1399,9 +1417,23 @@ namespace SmartxAPI.Controllers
                     dltParams.Add("@nTransID", nTransID);
                     dltParams.Add("@nFnYearID", nFnYearID);
                     dltParams.Add("@xBatch", xBatch);
+                    SortedList ParamList = new SortedList();
+                    DataTable TransData = new DataTable();
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                    ParamList.Add("@nTransID", nTransID);
+                    string xButtonAction="Delete";
+                    string x_Batch="";
+                     string Sql = "select n_PayRunID,x_Batch from Pay_PaymentMaster where n_TransID=@nTransID and N_CompanyID=@nCompanyID";
 
                     int count = myFunctions.getIntVAL(dLayer.ExecuteNonQuery("Select count(1) from Acc_VoucherMaster Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " And N_FnyearID =@nFnYearID and X_TransType = 'ESI' and B_IsAccPosted = 1 and X_ReferenceNo=@xBatch", dltParams, connection, transaction).ToString());
-
+                      TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+                     
+                      if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
 
                     if (count > 0)
                     {
@@ -1409,6 +1441,16 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User,"Unable to delete ,Transactions Exist"));
 
                     }
+
+                              //  Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nPayRunID,TransRow["x_Batch"].ToString(),190,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+             
+
 
                     dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set N_RefundAmount =Null,D_RefundDate =Null,N_PayRunID =Null,N_TransDetailsID =Null,B_IsLoanClose =Null  Where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_PayrunID = " + nTransID, connection, transaction);
                     dLayer.ExecuteNonQuery("SP_Pay_SalryProcessingVoucher_Del " + myFunctions.GetCompanyID(User) + ",@nFnYearID,'ESI',@xBatch", dltParams, connection, transaction);

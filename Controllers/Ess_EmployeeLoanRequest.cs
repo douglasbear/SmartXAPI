@@ -250,7 +250,7 @@ namespace SmartxAPI.Controllers
                 var dLoanIssueDate = MasterRow["d_LoanIssueDate"].ToString();
                 //double nAmount = MasterRow["n_Amount"].ToString();
                 double n_LoanAmount = myFunctions.getVAL(MasterRow["n_LoanAmount"].ToString());
-
+                 string xButtonAction="";
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nFnYearID", nFnYearID);
                 QueryParams.Add("@nEmpID", nEmpID);
@@ -319,11 +319,14 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xLoanID = dLayer.GetAutoNumber("Pay_LoanIssue", "n_LoanID", Params, connection, transaction);
+                        xButtonAction="Insert"; 
                         if (xLoanID == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Loan ID")); }
                         MasterTable.Rows[0]["n_LoanID"] = xLoanID;
                     }
                     else
                     {
+                            xButtonAction="Update"; 
+                           xLoanID = MasterTable.Rows[0]["n_LoanID"].ToString();
                         dLayer.DeleteData("Pay_LoanIssueDetails", "n_LoanTransID", nLoanTransID, "", connection, transaction);
                         dLayer.DeleteData("Pay_LoanIssue", "n_LoanTransID", nLoanTransID, "", connection, transaction);
                     }
@@ -371,6 +374,7 @@ namespace SmartxAPI.Controllers
                             dt.Rows.Add(row);
                             Start = Start.AddMonths(1);
                         }
+                 
 
                         int N_LoanTransDeatilsID = dLayer.SaveData("Pay_LoanIssueDetails", "N_LoanTransDetailsID", dt, connection, transaction);
                         if (N_LoanTransDeatilsID <= 0)
@@ -382,7 +386,14 @@ namespace SmartxAPI.Controllers
                         double n_LoaninstAmount= myFunctions.getIntVAL(Math.Floor(nInstAmount).ToString()) + n_LoanAmount-loandecimalAmt;
 
                         dLayer.ExecuteNonQuery("update Pay_LoanIssueDetails set n_InstAmount="+n_LoaninstAmount+" where N_CompanyID=" + nCompanyID + " and N_LoanTransDetailsID = (select MAX (N_LoanTransDetailsID) from Pay_LoanIssueDetails where N_CompanyID="+nCompanyID+" and N_LoanTransId ="+nLoanTransID+" )", Params, connection, transaction);
-                     
+                        //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nLoanTransID,xLoanID,212,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       
 
                         transaction.Commit();
                         //myFunctions.SendApprovalMail(N_NextApproverID, FormID, nLoanTransID, this.xTransType, xLoanID, dLayer, connection, transaction, User);
@@ -415,6 +426,8 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_EmpID,0) as N_EmpID,N_loanID from Pay_LoanIssue where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_LoanTransID=@nTransID";
+                    string xButtonAction="Delete";
+                    string n_LoanID="";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
@@ -438,6 +451,17 @@ namespace SmartxAPI.Controllers
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
                     //myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString())
+                                                   //  Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nLoanTransID,TransRow["n_LoanID"].ToString(),212,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+             
+
+
+                  
                     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, this.xTransType, nLoanTransID, TransRow["N_loanID"].ToString(), ProcStatus, "Pay_LoanIssue", X_Criteria, objEmpName.ToString(), User, dLayer, connection, transaction);
                     if (status != "Error")
                     {

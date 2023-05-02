@@ -41,7 +41,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nRequestID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RequestID"].ToString());
-
+                string xButtonAction="";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -56,13 +56,30 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         RequestCode = dLayer.GetAutoNumber("Pay_TrainingRequest", "X_RequestCode", Params, connection, transaction);
+                        xButtonAction="Insert"; 
                         if (RequestCode == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Training Request")); }
                         MasterTable.Rows[0]["X_RequestCode"] = RequestCode;
+                    }else {
+                         xButtonAction="Update"; 
                     }
+                     RequestCode = MasterTable.Rows[0]["X_RequestCode"].ToString();
+                       
+
                     
                      // MasterTable.Columns.Remove("n_UserID");
 
                     nRequestID = dLayer.SaveData("Pay_TrainingRequest", "N_RequestID", MasterTable, connection, transaction);
+             //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearId,nRequestID,RequestCode,1085,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       
+
+
+                   
                     if (nRequestID <= 0)
                     {
                         transaction.Rollback();
@@ -205,7 +222,7 @@ namespace SmartxAPI.Controllers
 
 
          [HttpDelete("delete")]
-        public ActionResult DeleteData(int nRequestID)
+        public ActionResult DeleteData(int nRequestID,int nFnYearID,int nCompanyID)
         {
 
              int Results = 0;
@@ -216,6 +233,30 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList ParamList = new SortedList();
+                    DataTable TransData = new DataTable();
+                    ParamList.Add("@nTransID", nRequestID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                    string xButtonAction="Delete";
+                    string X_RequestCode="";
+                    string Sql = "select N_RequestID,X_RequestCode from Pay_TrainingRequest where N_RequestID=@nTransID and N_CompanyID=@nCompanyID ";
+                   TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+                    
+                      if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+                 //  Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nRequestID,TransRow["X_RequestCode"].ToString(),1085,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+             
+
                     Results = dLayer.DeleteData("Pay_TrainingRequest", "N_RequestID", nRequestID, "", connection, transaction);
                     transaction.Commit();
                 }

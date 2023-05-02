@@ -350,7 +350,6 @@ namespace SmartxAPI.Controllers
 
                     //object paswd=myFunctions.EncryptString(GeneralTable.Rows[0]["x_AdminPwd"].ToString())
 
-
                     int N_CompanyId = dLayer.SaveData("Acc_Company", "N_CompanyID", MasterTable, connection, transaction);
                     if (N_CompanyId <= 0)
                     {
@@ -407,7 +406,7 @@ namespace SmartxAPI.Controllers
                          using (SqlConnection cnn4 = new SqlConnection(masterDBConnectionString))
                         {
                                     cnn4.Open();
-                            appID = myFunctions.getIntVAL(dLayer.ExecuteScalar( "SELECT N_AppID FROM ClientApps where N_ClientID='" +n_ClientID + "'", cnn4).ToString());
+                            appID = myFunctions.getIntVAL(dLayer.ExecuteScalar( "SELECT Top(1) N_AppID FROM ClientApps where N_ClientID='" +n_ClientID + "'", cnn4).ToString());
                         }
 
                             SortedList proParams2 = new SortedList(){
@@ -416,7 +415,7 @@ namespace SmartxAPI.Controllers
                                         {"D_Start",GeneralTable.Rows[0]["d_FromDate"].ToString()},
                                         {"D_End",GeneralTable.Rows[0]["d_ToDate"].ToString()}};
                             N_FnYearId = dLayer.ExecuteScalarPro("SP_FinancialYear_Create", proParams2, connection, transaction);
-                           dLayer.ExecuteNonQuery("insert into Sec_UserApps select "+N_CompanyId+",max(N_APPMappingID)+1,"+appID+","+userID+","+n_GBUserID+", NULL from Sec_UserApps",connection, transaction);
+                           dLayer.ExecuteNonQuery("insert into Sec_UserApps select "+N_CompanyId+",isnull(max(N_APPMappingID),0)+1,"+appID+","+userID+","+n_GBUserID+", NULL from Sec_UserApps",connection, transaction);
                             SortedList proParams3 = new SortedList(){
                                         {"N_CompanyID",N_CompanyId},
                                         {"N_FnYearID",N_FnYearId}};
@@ -491,7 +490,7 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error(User, ex));
                         }
                     }
-                      transaction.Commit();
+                    transaction.Commit();
 
                         return Ok(api.Success("Company successfully saved"));
                     }

@@ -1248,6 +1248,7 @@ namespace SmartxAPI.Controllers
                 int nPositionID = myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_PositionID"].ToString());
                 int nUserID = myFunctions.GetUserID(User);
                 string X_BtnAction = "";
+                string xButtonAction="";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -1323,12 +1324,15 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xEmpCode = dLayer.GetAutoNumber("pay_Employee", "x_EmpCode", Params, connection, transaction);
+                         xButtonAction="Insert"; 
                         if (xEmpCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Employee Code")); }
                         dtMasterTable.Rows[0]["x_EmpCode"] = xEmpCode;
                         X_BtnAction = "INSERT";
                     }
                     else if (nEmpID != 0)
                     {
+                        xButtonAction="Update"; 
+                        xEmpCode = dtMasterTable.Rows[0]["x_EmpCode"].ToString();
                         //dLayer.DeleteData("pay_Employee", "n_EmpID", nEmpID, "", connection, transaction);
                         X_BtnAction = "UPDATE";
 
@@ -1412,6 +1416,8 @@ namespace SmartxAPI.Controllers
                             ipAddress = Request.Headers["X-Forwarded-For"];
                         else
                             ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                          myFunctions.LogScreenActivitys(nFnYearID,nEmpID,xEmpCode,188,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       
                         SortedList LogParams = new SortedList();
                         LogParams.Add("N_CompanyID", nCompanyID);
                         LogParams.Add("N_FnYearID", nFnYearID);
@@ -1728,6 +1734,7 @@ namespace SmartxAPI.Controllers
                                                     dt.Columns.Add("N_LoginFlag");
                                                     dt.Columns.Add("X_UserCategoryList");
                                                     dt.Columns.Add("X_Email");
+                                                    dt.Columns.Add("N_TypeID");
 
                                                     DataRow row = dt.NewRow();
                                                     row["N_CompanyID"] = nCompanyID;
@@ -1742,6 +1749,7 @@ namespace SmartxAPI.Controllers
                                                     row["N_LoginFlag"] = 2;
                                                     row["X_UserCategoryList"] = objUserCat.ToString();
                                                     row["X_Email"] = xEmail;
+                                                    row["N_TypeID"] = 3;
                                                     dt.Rows.Add(row);
 
                                                     int UserID = dLayer.SaveData("Sec_User", "N_UserID", dt, connection, transaction);
@@ -1972,6 +1980,29 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable Employee = dLayer.ExecuteDataTable(EmployeeSql, Params, connection, transaction);
+                     SortedList ParamList = new SortedList();
+                    DataTable TransData = new DataTable();
+                    ParamList.Add("@nTransID", nEmpID);
+                    ParamList.Add("@nFnyearID", nFnyearID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                    string xButtonAction="Delete";
+                    string X_EmpCode="";
+                    string Sql = "select N_EmpID,X_EmpCode from pay_Employee where N_EmpID=@nTransID and N_CompanyID=@nCompanyID ";
+                   TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+                    
+                      if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+                               //  Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnyearID.ToString()),nEmpID,TransRow["X_EmpCode"].ToString(),188,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+             
 
                     object EmployeeLedger = dLayer.ExecuteScalar("Select 1 from vw_Pay_EmployeeLedger Where  N_CompanyID= @nCompanyID and (LedgerID=" + Employee.Rows[0]["n_ledgerID"] + " OR LedgerID=" + Employee.Rows[0]["n_loanledgerid"] + ")", Params, connection, transaction);
                     // if (EmployeeLedger != null)
@@ -1979,6 +2010,12 @@ namespace SmartxAPI.Controllers
 
                     // else
                     // {
+                    object loanCount = dLayer.ExecuteScalar("Select N_EmpID From pay_loanissue Where N_CompanyID=@nCompanyID and N_Empid=@nEmpID and N_FnyearID=@nFnYearID", Params, connection, transaction);
+                    if (loanCount != null)
+                    {
+                        return Ok(_api.Error(User, "unable to delete the employee"));
+                    }
+
                     object obj = dLayer.ExecuteScalar("Select N_EmpID From vw_PayPendingLoans_List Where N_CompanyID=@nCompanyID and N_Empid=@nEmpID and N_FnyearID=@nFnYearID", Params, connection, transaction);
                     if (obj != null)
                     {

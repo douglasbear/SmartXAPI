@@ -34,7 +34,7 @@ namespace SmartxAPI.Controllers
         private string masterDBConnectionString;
         private string AppURL;
         private readonly IDataAccessLayer dLayer;
-
+        private readonly string hqDBConnectionString;
 
 
         public ClientController(ICommenServiceRepo repository, IOptions<AppSettings> appSettings, IMyFunctions myFun, IApiFunctions api, IDataAccessLayer dl, IConfiguration conf)
@@ -46,6 +46,7 @@ namespace SmartxAPI.Controllers
             _appSettings = appSettings.Value;
             masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
             connectionString = conf.GetConnectionString("SmartxConnection");
+            hqDBConnectionString = conf.GetConnectionString("HqConnection");
             AppURL = conf.GetConnectionString("AppURL");
             cofig = conf;
         }
@@ -146,22 +147,15 @@ namespace SmartxAPI.Controllers
                     paramList.Add("@clientID", n_ClientID);
 
 
-                    dLayer.DeleteData("genSettings", "n_ClientID", n_ClientID, "", connection, transaction);
-                    int settingsID = dLayer.SaveData("genSettings", "N_SettingsID", DetailTable, connection, transaction);
-                    if (settingsID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Something went wrong"));
-                    }
-                    else{
-                    DetailsTable = dLayer.ExecuteDataTable("select top 1 (select N_Value from genSettings where N_ClientID="+n_ClientID+" and X_Description='COMPANY LIMIT')  as N_Companies,(select N_Value  from genSettings where N_ClientID="+n_ClientID+" and X_Description='BRANCH LIMIT')as N_Branches,"+
-                   "(select N_Value  from genSettings where N_ClientID="+n_ClientID+" and X_Description='EMPLOYEE LIMIT')as N_Employees,"+"(select N_Value from genSettings where N_ClientID="+n_ClientID+" and X_Description='USER LIMIT')as N_Users  from  genSettings where N_ClientID="+n_ClientID+"",paramList,connection, transaction);
+
+                   DetailsTable = dLayer.ExecuteDataTable("select top 1 (select N_Value from genSettings where N_ClientID="+n_ClientID+" and X_Description='COMPANY LIMIT')  as N_Companies,(select N_Value  from genSettings where N_ClientID="+n_ClientID+" and X_Description='BRANCH LIMIT')as N_Branches,"+
+                   "(select N_Value  from genSettings where N_ClientID="+n_ClientID+" and X_Description='EMPLOYEE LIMIT')as N_Employees,"+"(select N_Value from genSettings where N_ClientID="+n_ClientID+" and X_Description='USER LIMIT') as N_Users  from  genSettings where N_ClientID="+n_ClientID+"",paramList,connection, transaction);
                     //DetailsTable = dLayer.ExecuteDataTable(,connection, transaction);
                       DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_ClientHistoryID", typeof(int), 0);
                       DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_ClientID", typeof(int), n_ClientID);
                       DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_UpdatedUserID", typeof(int),myFunctions.GetUserID(User));
                       DetailsTable.AcceptChanges(); 
-                     dLayer.DeleteData("ClientHistory", "n_ClientID", n_ClientID,"",connection, transaction);
+                     //dLayer.DeleteData("ClientHistory", "n_ClientID", n_ClientID,"",connection, transaction);
                     int nClientHistoryID = dLayer.SaveData("ClientHistory", "N_ClientHistoryID", DetailsTable, connection, transaction);
                     if (nClientHistoryID <= 0)
                     {
@@ -169,11 +163,19 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Something went wrong"));
                     }
-                     
+                    
+                    //dLayer.DeleteData("genSettings", "n_ClientID", n_ClientID, "", connection, transaction);
+                    int settingsID = dLayer.SaveData("genSettings", "N_SettingsID", DetailTable, connection, transaction);
+                    
+                    if (settingsID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Something went wrong"));
                     }
+                    
                    
                     
-                       transaction.Commit();
+                    transaction.Commit();
                     return Ok(_api.Success(""));
                  
                 }
@@ -229,10 +231,23 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     Params.Add("@nClientID", nClientID);
                     string  clientSettingsSql="";
-                    string clinetdetailsSql=" SELECT  ClientMaster.*, CountryMaster.X_CountryName FROM  ClientMaster LEFT OUTER JOIN CountryMaster ON ClientMaster.N_CountryID = CountryMaster.N_CountryID where N_ClientID=@nClientID ";
+                    string clinetdetailsSql=" SELECT  ClientMaster.*, CountryMaster.X_CountryName FROM  ClientMaster LEFT OUTER JOIN CountryMaster ON ClientMaster.N_CountryID = CountryMaster.N_CountryID  where N_ClientID=@nClientID ";
                     DataTable dtClientDetails = dLayer.ExecuteDataTable(clinetdetailsSql,Params, connection);
                     dtClientDetails = _api.Format(dtClientDetails, "ClientDetails");
+
+                    dtClientDetails= myFunctions.AddNewColumnToDataTable(dtClientDetails, "x_SuperAdminUserID", typeof(string), "");
+                    dtClientDetails= myFunctions.AddNewColumnToDataTable(dtClientDetails, "x_ProjectName", typeof(string), "");
+                    dtClientDetails.AcceptChanges(); 
+                     
+                         object xSuperAdminUserID=dLayer.ExecuteScalar("select X_UserID from users where n_ClientID="+nClientID+" and N_LoginType=1", Params, connection);
+                           
+                            if(xSuperAdminUserID!=null )
+                                {
+                                  dtClientDetails.Rows[0]["x_SuperAdminUserID"]=xSuperAdminUserID;
+                                   
+                                }
                     // string clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID";
+                    
                     object xAppType = dtClientDetails.Rows[0]["x_AppType"];
                     switch (xAppType)
                     {
@@ -240,13 +255,13 @@ namespace SmartxAPI.Controllers
                         clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID and X_Description not in ('STUDENT LIMIT','EMPLOYEE LIMIT')";
                         break;
                     case "obs"://loan issue
-                       clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID and X_Description not in('STUDENT LIMIT','BRANCH LIMIT','USER LIMIT','EMPLOYEE LIMIT') ";
+                       clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID and X_Description not in('STUDENT LIMIT','BRANCH LIMIT','EMPLOYEE LIMIT','COMPANY LIMIT') ";
                         break;
                     case "hrp"://Salary Payment
-                       clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID  and X_Description not in('STUDENT LIMIT','BRANCH LIMIT','USER LIMIT') ";
+                       clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID  and X_Description not in('STUDENT LIMIT','BRANCH LIMIT') ";
                         break;
                     case "ss"://Salary Payment 
-                       clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID and X_Description not in('BRANCH LIMIT','USER LIMIT','EMPLOYEE LIMIT')";
+                       clientSettingsSql=" SELECT  * from GenSettings where N_ClientID=@nClientID and X_Description not in('BRANCH LIMIT','EMPLOYEE LIMIT')";
                         break;
 
                     default:
@@ -270,6 +285,7 @@ namespace SmartxAPI.Controllers
                                 Object NFreeLocations=dLayer.ExecuteScalar("select SUM(isnull(N_FreeLocations,0)) as N_FreeLocations  from AppMaster where N_AppID in ( select N_AppID from ClientApps where n_ClientID="+nClientID+" )", Params, connection);
                                 Object NFreeStudents=dLayer.ExecuteScalar(" select SUM(isnull(N_FreeStudents,0)) as N_FreeStudents  from AppMaster where N_AppID in ( select N_AppID from ClientApps where n_ClientID="+nClientID+" )", Params, connection);
                                 Object NFreeBranches=dLayer.ExecuteScalar(" select SUM(isnull(N_FreeBranches,0)) as N_FreeBranches  from AppMaster where N_AppID in ( select N_AppID from ClientApps where n_ClientID="+nClientID+" )", Params, connection);
+                                //Object NFreeBranches=dLayer.ExecuteScalar(" select 0 as N_FreeCompanies from AppMaster where N_AppID in ( select N_AppID from ClientApps where n_ClientID="+nClientID+" )", Params, connection);
                                 if(dtSettings.Rows[i]["x_Description"].ToString()=="USER LIMIT")
                                 {
                                     if(nFreeUsers!=null)
@@ -293,7 +309,7 @@ namespace SmartxAPI.Controllers
                                     if(NFreeBranches!=null)
                                     {
                                   dtSettings.Rows[i]["N_Free"]=NFreeBranches;
-                                  dtSettings.Rows[i]["N_Additional"]= myFunctions.getIntVAL(dtSettings.Rows[i]["N_Value"].ToString())-  myFunctions.getIntVAL(NFreeBranches.ToString());
+                                  dtSettings.Rows[i]["N_Additional"]= myFunctions.getIntVAL(dtSettings.Rows[i]["N_Value"].ToString())- myFunctions.getIntVAL(NFreeBranches.ToString());
                                 
                                     }
                                   
@@ -303,7 +319,7 @@ namespace SmartxAPI.Controllers
                                     if(NFreeStudents!=null)
                                     {
                                   dtSettings.Rows[i]["N_Free"]=NFreeStudents;
-                                  dtSettings.Rows[i]["N_Additional"]= myFunctions.getIntVAL(dtSettings.Rows[i]["N_Value"].ToString())-  myFunctions.getIntVAL(NFreeStudents.ToString());
+                                  dtSettings.Rows[i]["N_Additional"]= myFunctions.getIntVAL(dtSettings.Rows[i]["N_Value"].ToString())- myFunctions.getIntVAL(NFreeStudents.ToString());
                                 
                                     }
                                   
@@ -313,11 +329,20 @@ namespace SmartxAPI.Controllers
                                     if(NFreeLocations!=null)
                                     {
                                   dtSettings.Rows[i]["N_Free"]=NFreeLocations;
-                                  dtSettings.Rows[i]["N_Additional"]= myFunctions.getIntVAL(dtSettings.Rows[i]["N_Value"].ToString())-  myFunctions.getIntVAL(NFreeLocations.ToString());
+                                  dtSettings.Rows[i]["N_Additional"]= myFunctions.getIntVAL(dtSettings.Rows[i]["N_Value"].ToString())- myFunctions.getIntVAL(NFreeLocations.ToString());
                                 
                                     }
                                   
                                 }
+                                if(dtSettings.Rows[i]["x_Description"].ToString()=="COMPANY LIMIT")
+                                {
+                                  
+                                  dtSettings.Rows[i]["N_Free"]=0;
+                                  dtSettings.Rows[i]["N_Additional"]= myFunctions.getIntVAL(dtSettings.Rows[i]["N_Value"].ToString()) - 0;
+                        
+                                }
+                                  
+                            
                              
                             }
 
@@ -341,6 +366,7 @@ namespace SmartxAPI.Controllers
                         dtAppHistoryDetails.AcceptChanges(); 
                         dtClientHistoryDetails = myFunctions.AddNewColumnToDataTable(dtClientHistoryDetails, "X_Userame", typeof(string), "");
                         dtClientHistoryDetails.AcceptChanges(); 
+                       
                         for(int i=0;i<dtAppHistoryDetails.Rows.Count;i++)
                             {
 
@@ -367,9 +393,26 @@ namespace SmartxAPI.Controllers
                              
                             }
 
+                           
 
                        }
-
+                        
+                         if(hqDBConnectionString !=null)
+                {
+                    using (SqlConnection hqcon = new SqlConnection(hqDBConnectionString))
+                {
+                    hqcon.Open();
+                    SortedList Paramshq = new SortedList();
+                    Paramshq.Add("@nClientID", nClientID);
+                   
+                               object xProjectName=dLayer.ExecuteScalar("select X_ProjectName from Inv_customerProjects where N_ProjectID="+myFunctions.getIntVAL(dtClientDetails.Rows[0]["N_ProjectID"].ToString()),Paramshq,hqcon);
+                                if(xProjectName!=null )
+                                {
+                                  dtClientDetails.Rows[0]["X_ProjectName"]=xProjectName;
+                                   
+                                }
+                    }
+                }
                        dtAppHistoryDetails = _api.Format(dtAppHistoryDetails, "appHistoryDetails");
                        dtClientHistoryDetails = _api.Format(dtClientHistoryDetails, "clientHistoryDetails");
 
@@ -400,7 +443,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     Params.Add("@nClientID", nClientID);
                     Params.Add("@nAppID", nAppID);
-                    string AppDetailsSql=" SELECT     ClientApps.N_ClientID, ClientApps.N_AppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, ClientApps.N_UserLimit, ClientApps.B_Inactive, ClientApps.X_Sector, ClientApps.N_RefID, ClientApps.D_ExpiryDate, ClientApps.B_Licensed, ClientApps.D_LastExpiryReminder, ClientApps.B_EnableAttachment, AppMaster.X_AppName,AppMaster.b_EnableAttachment as enableAttachment,ClientApps.N_SubscriptionAmount,ClientApps.n_DiscountAmount FROM "+
+                    string AppDetailsSql=" SELECT     ClientApps.N_ClientID, ClientApps.N_AppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, ClientApps.N_UserLimit, ClientApps.B_Inactive, ClientApps.X_Sector, ClientApps.N_RefID, ClientApps.D_ExpiryDate, ClientApps.B_Licensed, ClientApps.D_LastExpiryReminder, ClientApps.B_EnableAttachment, AppMaster.X_AppName,AppMaster.b_EnableAttachment as enableAttachment,ClientApps.N_SubscriptionAmount,ClientApps.n_DiscountAmount,ClientApps.D_StartDate FROM "+
                     " ClientApps LEFT OUTER JOIN  AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID where N_ClientID=@nClientID and ClientApps.N_AppID=@nAppID";
                     DataTable AppDetails = dLayer.ExecuteDataTable(AppDetailsSql,Params, connection);
                     AppDetails = _api.Format(AppDetails, "AppDetails");
@@ -424,7 +467,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     Params.Add("@nClientID", nClientID);
                    // string AppListSql=" SELECT  * from  ClientApps where N_ClientID=@nClientID";
-                    string AppListSql="SELECT     ClientApps.N_ClientID, ClientApps.N_AppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, ClientApps.N_UserLimit, ClientApps.B_Inactive, ClientApps.X_Sector, ClientApps.N_RefID, ClientApps.D_ExpiryDate, ClientApps.B_Licensed, ClientApps.D_LastExpiryReminder, ClientApps.B_EnableAttachment, AppMaster.X_AppName FROM "+
+                    string AppListSql="SELECT     ClientApps.N_ClientID, ClientApps.N_AppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, ClientApps.N_UserLimit, ClientApps.B_Inactive, ClientApps.X_Sector, ClientApps.N_RefID, ClientApps.D_ExpiryDate, ClientApps.B_Licensed, ClientApps.D_LastExpiryReminder, ClientApps.B_EnableAttachment,ClientApps.N_SubscriptionAmount, AppMaster.X_AppName,AppMaster.N_FreeUsers,AppMaster.N_FreeEmployees,ClientApps.D_StartDate FROM "+
                     " ClientApps LEFT OUTER JOIN  AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID where N_ClientID=@nClientID";
                     DataTable AppList = dLayer.ExecuteDataTable(AppListSql,Params, connection);
                     return Ok(_api.Success(AppList));
@@ -518,9 +561,10 @@ namespace SmartxAPI.Controllers
                         MasterTable.Columns.Remove("x_DbUri");   
                     if (myFunctions.ContainColumn("x_Sector", MasterTable))
                         MasterTable.Columns.Remove("x_Sector");
-                   
+                    if (myFunctions.ContainColumn("d_StartDate", MasterTable))
+                        MasterTable.Columns.Remove("d_StartDate");
                     MasterTable.AcceptChanges();   
-                    dLayer.DeleteData("AppHistory", "n_AppID", n_AppID, "N_ClientID="+n_ClientID+"",connection, transaction);
+                    //dLayer.DeleteData("AppHistory", "n_AppID", n_AppID, "N_ClientID="+n_ClientID+"",connection, transaction);
                     int appHistoryID = dLayer.SaveData("AppHistory", "N_AppHistoryID", MasterTable, connection, transaction);
                     if (appHistoryID <= 0)
                     {

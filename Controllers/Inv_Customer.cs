@@ -290,7 +290,10 @@ namespace SmartxAPI.Controllers
                                     }
                                     
 
+                    }else {
+                          xButtonAction="Update"; 
                     }
+                         CustomerCode = MasterTable.Rows[0]["X_CustomerCode"].ToString();
                        
 
                     if (!MasterTable.Columns.Contains("b_DirPosting"))
@@ -309,7 +312,8 @@ namespace SmartxAPI.Controllers
                    string  DupCriteria = "x_CustomerName='" + x_CustomerName.Replace("'", "''") + "' and N_CompanyID=" + nCompanyID;
                    string  X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
                         nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
-                           xButtonAction="Update"; 
+                        dLayer.ExecuteNonQuery("Update Inv_Customer_Contacts Set N_CustomerID =" + nCustomerID + " Where N_ContactID =" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_ContactID"].ToString()) + " and N_CompanyID=" + nCompanyID, Params, connection, transaction);
+                         
                      }
                  
                                    
@@ -354,7 +358,7 @@ namespace SmartxAPI.Controllers
                      
                                 int ncrmCustomerID = dLayer.SaveData("CRM_Customer", "N_CustomerId", CustomerMaster, connection, transaction);
                                 dLayer.ExecuteNonQuery("Update Inv_Customer Set n_CrmCompanyID =" + ncrmCustomerID + " Where N_CustomerID =" + nCustomerID + " and N_CompanyID=" + nCompanyID + " and N_FnyearID= " + nFnYearId, Params, connection, transaction);
-                                
+      
                                 if (ncrmCustomerID <= 0)
                                 {
                                     transaction.Rollback();
@@ -678,15 +682,22 @@ namespace SmartxAPI.Controllers
             {
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
+                 SortedList ParamList = new SortedList();
+                 DataTable TransData = new DataTable();
                  DataTable dt = new DataTable();
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nFnYearID", nFnYearID);
                 QueryParams.Add("@nFormID", 51);
                 QueryParams.Add("@nCustomerID", nCustomerID);
                  QueryParams.Add("@nCrmCustomerID", nCrmCustomerID);
+                   ParamList.Add("@nTransID", nCustomerID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+
                   string sqlCommandCount = "";
+                    string Sql = "select N_CustomerID,X_CustomerCode from Inv_Customer where N_CustomerID=@nTransID and N_CompanyID=@nCompanyID ";
                     string xButtonAction="Delete";
-                     String x_CustomerCode="";
+                     string X_CustomerCode="";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -711,7 +722,6 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Error(User, "Unable to delete Customer! transaction started"));
                     }
                    customertxnCount = dLayer.ExecuteScalar("select count(N_PartyID) from Inv_BalanceAdjustmentMaster  Where N_CompanyID=" + nCompanyID + " and  N_PartyID=" + nCustomerID,  QueryParams, connection);
-
                         if( myFunctions.getIntVAL(customertxnCount.ToString())>0)
                     {
                         return Ok(api.Error(User, "Unable to delete Customer! It has been used."));
@@ -730,21 +740,31 @@ namespace SmartxAPI.Controllers
                     crmcustomer = dLayer.ExecuteScalar("select count(N_CrmCompanyID) from Inv_SalesQuotation  Where N_CompanyID=" + nCompanyID + " and  N_CrmCompanyID=" + nCrmCustomerID,  QueryParams, connection);
 
                     SqlTransaction transaction = connection.BeginTransaction();
+
+                      TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+                    
+                      if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+                       //  Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nCustomerID,TransRow["X_CustomerCode"].ToString(),51,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
+
+
                     if( myFunctions.getIntVAL(crmcustomer.ToString())<=0)
                    {
                      dLayer.DeleteData("CRM_Customer", "N_CustomerID", nCrmCustomerID, "", connection, transaction);
                    }
 
                    
-                     //  Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nCustomerID,x_CustomerCode,51,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-
-
+                  
                     Results = dLayer.DeleteData("Inv_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
                   
                     myAttachments.DeleteAttachment(dLayer, 1, 0, nCustomerID, nFnYearID, 51, User, transaction, connection);
@@ -986,7 +1006,7 @@ namespace SmartxAPI.Controllers
                     //object paidAmount =dLayer.ExecuteScalar("select sum(Cast(REPLACE(Amount,',','') as Numeric(10,2)) ) as PaidAmount from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and (X_type='SR') ", Params, connection);
                     object returnamt = dLayer.ExecuteScalar("select sum(Cast(REPLACE(N_TotalPaidAmount,',','') as Numeric(10,2)) ) as TotalReturnAmount from vw_InvDebitNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", Params, connection);
                     double  currentBalance=  myFunctions.getVAL(dLayer.ExecuteScalar("SELECT  Sum(n_Amount)  as N_BalanceAmount from  vw_InvCustomerStatement Where N_AccType=2 and N_AccID=" + nCustomerID + " and N_CompanyID=" + nCompanyID,Params,connection).ToString());
-                    object invoiceDate=dLayer.ExecuteScalar("select Min(D_SalesDate) from Vw_SalesInvoice_DateSearch  where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID and N_PaymentMethodID<>1 and N_SalesID NOt in (Select N_SalesID from Vw_InvReceivables where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+" and N_CustomerID="+nCustomerID+" and N_BalanceAmount=0 )", Params, connection);
+                  object invoiceDate=dLayer.ExecuteScalar("select Min(D_SalesDate) from Vw_SalesInvoice_DateSearch  where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID and N_PaymentMethodID<>1 and N_SalesID NOt in (Select N_SalesID from Vw_InvReceivables where N_CompanyID="+nCompanyID+"  and  N_CustomerID="+nCustomerID+" and N_BalanceAmount=0 )", Params, connection);
                   
                   
                     {
