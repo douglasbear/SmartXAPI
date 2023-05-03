@@ -359,7 +359,7 @@ namespace SmartxAPI.Controllers
                     Res.Add("StatusCode", 1);
                     Res.Add("Type", "User");
                     Res.Add("Message", "Login Success");
-                    sendLicenseReminder(nClientID,myFunctions.getIntVAL(output.Rows[0]["N_ActiveAppID"].ToString()));
+                    sendLicenseReminder(nClientID);
                     return Res;
                 }
 

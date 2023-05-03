@@ -111,8 +111,13 @@ namespace SmartxAPI.Controllers
                             case "product transfer":
                                 xTableName = "Mig_ProductTransfer";
                                 break;
-                            case "fixedassets list":
-                                xTableName = "_Mig_AssetList";
+                           case "fixedassets list":
+                                xTableName = "Mig_AssetList";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
                                 break;
                             case "salary history":
                                 xTableName = "Mig_EmployeeSalaryHistory";

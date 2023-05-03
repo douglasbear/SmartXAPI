@@ -836,6 +836,48 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
         }
-    }
 
+        [HttpGet("bulkAssetList")]
+        public ActionResult ListBulkAssetName(bool isRentalItem,bool isSales)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string RentalItem="";
+            string salesItem="";
+            Params.Add("@nCompanyID",nCompanyID);
+
+            if(isRentalItem==true){
+                RentalItem=RentalItem+ " and N_ItemID NOT IN (select isnull(N_AssItemID,0) from inv_itemmaster where N_CompanyId=@nCompanyID)";
+            }
+
+            if(isSales){
+                salesItem=salesItem+ " and N_status<>2 and N_status<>5";
+            }        
+
+            string sqlCommandText = "Select N_AssItemName AS X_ItemName, COUNT(*) AS N_AvlQty from Ass_AssetMaster Where N_CompanyID=@nCompanyID"+RentalItem+salesItem+" GROUP BY N_AssItemName";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+    }
 }
