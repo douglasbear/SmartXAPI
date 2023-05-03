@@ -418,7 +418,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     Params.Add("@N_ItemID", N_ItemID);
 
-                    SQLCmd = "Select * from vw_Ass_AssetItemDisp Where N_Status<>2 and N_CompanyID=@nCompanyID and N_ItemID=@N_ItemID";                    
+                    SQLCmd = "Select * from vw_Ass_AssetItemDisp Where N_Status<>2 and N_CompanyID=@nCompanyID and N_ItemID in ("+N_ItemID+")";                    
 
                     MasterTable = dLayer.ExecuteDataTable(SQLCmd, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }

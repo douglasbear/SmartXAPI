@@ -164,7 +164,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Something went wrong"));
                     }
                     
-                    //dLayer.DeleteData("genSettings", "n_ClientID", n_ClientID, "", connection, transaction);
+                    dLayer.DeleteData("genSettings", "n_ClientID", n_ClientID, "", connection, transaction);
                     int settingsID = dLayer.SaveData("genSettings", "N_SettingsID", DetailTable, connection, transaction);
                     
                     if (settingsID <= 0)
