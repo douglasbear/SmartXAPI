@@ -235,6 +235,22 @@ namespace SmartxAPI.Controllers
                                     dtRow["N_CompanyID"] = nCompanyID;
                                 }
                                 break;
+                            case "sales qoutation":
+                                xTableName = "Mig_Quotation";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;
+                        case "sales order":
+                                xTableName = "Mig_SalesOrder";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;
                             default: return Ok("Invalid File");
                         }
 
