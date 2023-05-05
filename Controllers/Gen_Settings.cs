@@ -266,7 +266,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("saveSettings")]
-        public ActionResult SaveSettingsData(int nFormID, string xDescription, int nValue, string xValue)
+        public ActionResult SaveSettingsData(int nFormID, string xDescription, int nValue, string xValue, string xUerCategory)
         {
             if (xValue == null)
                 xValue = "";
@@ -284,6 +284,7 @@ namespace SmartxAPI.Controllers
                     ParamSettings_Ins.Add("X_Description", xDescription);
                     ParamSettings_Ins.Add("N_Value", nValue);
                     ParamSettings_Ins.Add("X_Value", xValue);
+                    ParamSettings_Ins.Add("X_UerCategory", xUerCategory);
 
                     try
                     {
