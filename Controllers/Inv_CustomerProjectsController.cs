@@ -234,6 +234,8 @@ namespace SmartxAPI.Controllers
                                         TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "x_TaskCode", typeof(string), "");
                                         TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "n_ProjectID", typeof(int), nProjectID);
                                         TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "B_Closed", typeof(int), 0);
+                                        // if(!TaskMaster.columns.Contains("D_TaskDate"))
+                                        //     TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "D_TaskDate", typeof(int), 0);
                                      
                                         TaskMaster.Rows[0]["B_Closed"] = 0;
                                         foreach (DataRow var in TaskMaster.Rows)
@@ -257,7 +259,7 @@ namespace SmartxAPI.Controllers
                                                 Minuts = myFunctions.getVAL(var["N_StartDateBefore"].ToString()) * Minuts;
 
                                             if(Minuts==0)
-                                                var["D_TaskDate"] = null;
+                                                var["D_TaskDate"] = DateTime.Now;
                                             else
                                                 var["D_TaskDate"] = DateTime.Now.AddMinutes(Minuts);
 
