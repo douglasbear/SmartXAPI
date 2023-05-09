@@ -394,7 +394,7 @@ namespace SmartxAPI.Controllers
                     DetailParams.Add("n_LocationID", MasterRow["N_LocationID"]);
                     string Location = Convert.ToString(dLayer.ExecuteScalar("select X_LocationName from Inv_Location where N_CompanyID=@nCompanyID and N_LocationID=@n_LocationID", DetailParams, connection));
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_LocationName", typeof(string), Location);
-                    object InSales = null, InDeliveryNote = null, CancelStatus = null, isProforma = false;
+                    object InSales = null, InDeliveryNote = null, CancelStatus = null, isProforma = false ; object DispatchNo = null;
                     if (myFunctions.getIntVAL(N_SalesOrderTypeID.ToString()) != 175)
                     {
                         if (Convert.ToBoolean(MasterRow["N_Processed"]))
@@ -403,8 +403,8 @@ namespace SmartxAPI.Controllers
                             isProforma = dLayer.ExecuteScalar("select isnull(B_IsProforma,0) from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
                             InDeliveryNote = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_DeliveryNote where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
                             CancelStatus = dLayer.ExecuteScalar("select 1 from Inv_SalesOrder where B_CancelOrder=1 and N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
-
-                        }
+                            DispatchNo = dLayer.ExecuteScalar("select x_dispatchNo from inv_materialDispatch where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
+                        } 
                         
                        
                             object dispatchDone=null;
@@ -459,6 +459,7 @@ namespace SmartxAPI.Controllers
 
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "ChkCancelOrderEnabled", typeof(bool), true);
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "isProformaDone", typeof(bool), isProforma);
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_DispatchNo", typeof(string), DispatchNo);
 
 
                     if (InSales != null)
