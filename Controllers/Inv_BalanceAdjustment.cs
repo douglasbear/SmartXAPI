@@ -264,7 +264,7 @@ namespace SmartxAPI.Controllers
                     int N_PartyType = myFunctions.getIntVAL(MasterRow["n_PartyType"].ToString());
                     int N_FormID = myFunctions.getIntVAL(MasterRow["N_FormID"].ToString());
                     string X_Trasnaction = "";
-                    // string xButtonAction="";
+                    //string xButtonAction="";
              
                     int N_PartyID = myFunctions.getIntVAL(MasterRow["n_PartyID"].ToString());
                     int N_IsImport = 0;

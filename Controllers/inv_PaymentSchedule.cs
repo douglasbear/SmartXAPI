@@ -54,20 +54,18 @@ namespace SmartxAPI.Controllers
 
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([X_ScheduleCode] like '%" + xSearchkey + "%' or N_ScheduleID like '%" + xSearchkey + "%')";
+                        Searchkey = " and (X_VendorName like '%" + xSearchkey + "%' or X_ReferenceNo like '%" + xSearchkey + "%'  or FORMAT(D_ScheduleDate, 'dd-MMM-yyyy') like '%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
-                        xSortBy = " order by N_ScheduleID desc";
+                        xSortBy = " order by D_ScheduleDate asc";
                     else
                     {
                         switch (xSortBy.Split(" ")[0])
                         {
-                            case "X_ScheduleCode":
-                                xSortBy = "X_ScheduleCode " + xSortBy.Split(" ")[1];
+                            case "X_ReferenceNo":
+                                xSortBy = "X_ReferenceNo " + xSortBy.Split(" ")[1];
                                 break;
-                            case "N_ScheduleID":
-                                xSortBy = "N_ScheduleID " + xSortBy.Split(" ")[1];
-                                break;
+                           
                             default: break;
                         }
                         xSortBy = " order by " + xSortBy;
@@ -75,9 +73,9 @@ namespace SmartxAPI.Controllers
 
                     int Count = (nPage - 1) * nSizeperpage;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") [X_ScheduleCode] AS X_ScheduleCode,* from vw_InvVendorPaymentSchedule where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPayables_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Type='PURCHASE' and  D_ScheduleDate is not null " + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") [X_ScheduleCode] AS X_ScheduleCode,* from vw_InvVendorPaymentSchedule where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_ScheduleID not in (select top(" + Count + ") N_ScheduleID from vw_InvVendorPaymentSchedule where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPayables_Schedule_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2  and  X_Type='PURCHASE' and  D_ScheduleDate is not null " + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvVendorPaymentSchedule where N_CompanyID=@p1 and N_FnYearID=@p2  X_Type='PURCHASE' and N_BalanceAmount>0 and  D_ScheduleDate is not null" + xSortBy + " ) " + xSortBy;
 
                     // sqlCommandText = "select * from Inv_MRNDetails where N_CompanyID=@p1";
                     Params.Add("@p1", nCompanyId);
@@ -86,7 +84,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_InvVendorPaymentSchedule where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count from vw_InvPayables_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type='PURCHASE' and  D_ScheduleDate is not null" + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     if (Summary.Rows.Count > 0)
@@ -227,10 +225,10 @@ namespace SmartxAPI.Controllers
             string sqlCommandText=" ";
             // if(Schedule)
             // {
-                sqlCommandText = "select * from vw_InvPayables where N_CompanyID=@p1  and X_Type='PURCHASE' and N_BalanceAmount>0 and D_Date<='" + dDate + "' and n_VendorID="+N_VendorID;
+                sqlCommandText = "select * from vw_InvPayables_Schedule where N_CompanyID=@p1  and X_Type='PURCHASE' and N_BalanceAmount>0 and D_Date<='" + dDate + "' order by d_Date desc";
            // }
             // else{
-            //     sqlCommandText = "select * from vw_InvPayables where N_CompanyID=@p1  and X_Type='PURCHASE' and N_BalanceAmount>0 and D_ScheduleDate is null "; 
+            //     sqlCommandText = "select * from vw_InvPayables_Schedule where N_CompanyID=@p1  and X_Type='PURCHASE' and N_BalanceAmount>0 and D_ScheduleDate is null "; 
             // }
             Params.Add("@p1", nCompanyID);
            
@@ -322,7 +320,7 @@ namespace SmartxAPI.Controllers
                         int purchaseID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_PurchaseID"].ToString());
                         if (purchaseID > 0)
                         {
-                            dLayer.ExecuteNonQuery("Update Inv_Purchase SET D_ScheduleDate=" + myFunctions.getVAL(DetailTable.Rows[j]["D_ScheduleDate"].ToString()) + ",N_ScheduledAmtF=" + myFunctions.getVAL(DetailTable.Rows[j]["N_ScheduledAmtF"].ToString()) + " WHERE N_PurchaseID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_PurchaseID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", Params, connection, transaction);
+                            dLayer.ExecuteNonQuery("Update Inv_Purchase SET D_ScheduleDate='" + DetailTable.Rows[j]["D_ScheduleDate"].ToString() + "',N_ScheduledAmtF=" + myFunctions.getVAL(DetailTable.Rows[j]["N_ScheduledAmtF"].ToString()) + " , N_ScheduledAmt=" + myFunctions.getVAL(DetailTable.Rows[j]["N_ScheduledAmt"].ToString())+" WHERE N_PurchaseID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_PurchaseID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", Params, connection, transaction);
                         
                         }
                      

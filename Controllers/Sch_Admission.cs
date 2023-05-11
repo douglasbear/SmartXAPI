@@ -57,6 +57,9 @@ namespace SmartxAPI.Controllers
                     case "X_AdmissionNo":
                         xSortBy = "X_AdmissionNo " + xSortBy.Split(" ")[1];
                         break;
+                           case "x_Name":
+                        xSortBy = "x_Name " + xSortBy.Split(" ")[1];
+                        break;
                     default: break;
                 }
                 xSortBy = " order by " + xSortBy;
