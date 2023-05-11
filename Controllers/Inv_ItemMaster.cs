@@ -1755,7 +1755,7 @@ namespace SmartxAPI.Controllers
             {
                 if (partNoEnable)
                 {
-                    qry = " and (Description like @query or [vw_InvItem_Search_Products].[Part No] like @query) ";
+                    qry = " and (Description like @query or [vw_InvItem_Search_Products].[Part No] like @query or [vw_InvItem_Search_Products].[itemCode] like @query) ";
                     Params.Add("@query", "%" + query + "%");
                 }
                 else
@@ -1778,7 +1778,7 @@ namespace SmartxAPI.Controllers
                 Condition = Condition + " and [vw_InvItem_Search_Products].N_ItemID<> " + nNotGridItemID;
 
             if (nLocationID != 0)
-                Condition = Condition + "  and [vw_InvItem_Search_Products].N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=@p1 and N_WarehouseID=" + nLocationID + " )  ";
+                Condition = Condition + " and [vw_InvItem_Search_Products].n_WareHouseID =" + nLocationID;
             if (isStockItem)
                 Condition = Condition + " and N_ClassID =2";
             if (isServiceItem)

@@ -199,9 +199,13 @@ namespace SmartxAPI.Controllers
 
 
 
-                    if (xSortBy != null && xSortBy.Trim() != "")
+                   if (xSortBy != null && xSortBy.Trim() != "")
                     {
-                        SortBy = " order by " + xSortBy;
+                        if (xSortBy.ToString().Contains("Date") || xSortBy.ToString().Contains("date"))
+                        {
+                            xSortBy = "Convert(varchar,CAST("+xSortBy.Split(" ")[0]+" AS datetime), 112) " + xSortBy.Split(" ")[1];
+                        }
+                        xSortBy = " order by " + xSortBy;
                     }
 
                     string CriteriaSql = "select isnull(X_DataSource,'') as X_DataSource,isnull(X_DefaultCriteria,'') as X_DefaultCriteria,isnull(X_BranchCriteria,'') as X_BranchCriteria,isnull(X_LocationCriteria,'') as X_LocationCriteria,isnull(X_DefaultSortField,'') as X_DefaultSortField,isnull(X_PKey,'') as X_PKey,isnull(X_PatternCriteria,'') as X_PatternCriteria,X_TotalField,isnull(X_DataSource2,'') as X_DataSource2 from Gen_TableView where (N_TableViewID = @tbvVal) AND (N_MenuID=@mnuVal)";
@@ -216,9 +220,12 @@ namespace SmartxAPI.Controllers
 
                     SumField = dRow["X_TotalField"].ToString();
 
-                    if ((SortBy == null || SortBy.Trim() == "") && dRow["X_DefaultSortField"].ToString() != "")
+                    if (xSortBy == null)
                     {
-                        SortBy = " order by " + dRow["X_DefaultSortField"].ToString();
+                        if ((SortBy == null || SortBy.Trim() == "") && dRow["X_DefaultSortField"].ToString() != "")
+                        {
+                            SortBy = " order by " + dRow["X_DefaultSortField"].ToString();
+                        }
                     }
 
                     if (dRow["X_DefaultCriteria"].ToString() != "")
@@ -330,11 +337,14 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Error(User, "Data Source2 Not Found"));
                     }
-
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + SortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + SortBy + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + " and " + PKey + " not in " + "(select top(" + Count + ") " + PKey + " from " + DataSource2 + Criterea + SortBy + " ) " + SortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + " and " + PKey + " not in " + "(select top(" + Count + ") " + PKey + " from " + DataSource2 + Criterea + SortBy + xSortBy + " ) " + SortBy + xSortBy;
+                    // if (Count == 0)
+                    //     sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + SortBy;
+                    // else
+                    //     sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + " and " + PKey + " not in " + "(select top(" + Count + ") " + PKey + " from " + DataSource2 + Criterea + SortBy + " ) " + SortBy;
 
                     if (export)
                     {
