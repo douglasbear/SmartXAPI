@@ -414,7 +414,7 @@ namespace SmartxAPI.Controllers
                     }
                     else if (nServiceSheetID != null)
                     {
-                        X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_POrderID=" + N_POrderID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                        X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_ServiceSheetID=" + nServiceSheetID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                     }
                     //multiple GRN From Invoice
 
