@@ -67,14 +67,14 @@ namespace SmartxAPI.Controllers
                     if(value==1){
                         fileName = "SalaryPosting_"+xVoucherNo+"_" + RandomString();
                         
-                        sqlTotalText="select CONVERT(VARCHAR,SUM(CAST(Debit AS DECIMAL(10, 4))),1) as N_TotDebit,CONVERT(VARCHAR,SUM(CAST(Credit AS DECIMAL(10, 4))),1) AS N_TotCredit,'"+fileName+"' as fileName from vw_ScreenWisePosting_Salary Where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_ReferenceNo=@xVoucherNo";
+                        sqlTotalText="select CONVERT(VARCHAR,SUM(CAST(Debit AS DECIMAL(16, 4))),1) as N_TotDebit,CONVERT(VARCHAR,SUM(CAST(Credit AS DECIMAL(16, 4))),1) AS N_TotCredit,'"+fileName+"' as fileName from vw_ScreenWisePosting_Salary Where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_ReferenceNo=@xVoucherNo";
                         string strFillQuery = "select * from vw_ScreenWisePosting_Salary where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_Code='" + xScreen + "' and X_ReferenceNo='" + xVoucherNo + "'";
                         
                         myFunctions.ExportToExcel(User,strFillQuery, fileName ,dLayer,connection);
                         fileName = fileName+".csv";
                         }
                     else
-                        sqlTotalText="select CONVERT(VARCHAR,SUM(CAST(Debit AS DECIMAL(10, 4))),1) as N_TotDebit,CONVERT(VARCHAR,SUM(CAST(Credit AS DECIMAL(10, 4))),1) AS N_TotCredit from vw_ScreenWisePosting Where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_VoucherNo=@xVoucherNo and N_FnYearID=@nFnYearID";
+                        sqlTotalText="select CONVERT(VARCHAR,SUM(CAST(Debit AS DECIMAL(16, 4))),1) as N_TotDebit,CONVERT(VARCHAR,SUM(CAST(Credit AS DECIMAL(16, 4))),1) AS N_TotCredit from vw_ScreenWisePosting Where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_VoucherNo=@xVoucherNo and N_FnYearID=@nFnYearID";
                         
                     dtTotal=dLayer.ExecuteDataTable(sqlTotalText,Params,connection); 
                     dtTotal = _api.Format(dtTotal, "total");
