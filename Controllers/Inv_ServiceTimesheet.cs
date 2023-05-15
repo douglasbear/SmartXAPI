@@ -311,21 +311,20 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-
-                    Object RSCount=dLayer.ExecuteScalar("select count(*) from Inv_Sales where N_ServiceSheetID="+nServiceSheetID+" and N_CompanyID="+ myFunctions.GetCompanyID(User), Params, connection);
+                    Object RSCount = "";
+                    if (nFormID==1145)
+                        RSCount=dLayer.ExecuteScalar("select count(*) from Inv_Sales where N_ServiceSheetID="+nServiceSheetID+" and N_CompanyID="+ myFunctions.GetCompanyID(User), Params, connection);
+                    else
+                        RSCount=dLayer.ExecuteScalar("select count(*) from Inv_Purchase where N_ServiceSheetID="+nServiceSheetID+" and N_CompanyID="+ myFunctions.GetCompanyID(User), Params, connection);
+                    
                     int nRSCount = myFunctions.getIntVAL(RSCount.ToString());
                     if (nRSCount > 0)
                     {
-                       
                         if (MasterTable.Rows.Count > 0)
                         {
                             MasterTable.Columns.Add("b_RSProcessed");
                             MasterTable.Rows[0]["b_RSProcessed"]=true;
-                            
-                          
                         }
-
-
                     }    
                     DetailTable = _api.Format(DetailTable, "Details");
 

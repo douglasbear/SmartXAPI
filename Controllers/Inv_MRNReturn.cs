@@ -276,11 +276,16 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    Object nMRNID=dLayer.ExecuteScalar("select N_MRNID from Inv_MRNReturn where N_MRNReturnID="+nMRNReturnID+" and N_CompanyID="+nCompanyID, QueryParams, connection);
                     Results = dLayer.DeleteData("Inv_MRNReturn", "N_MRNReturnID", nMRNReturnID, "", connection);
 
                     if (Results > 0)
                     {
                         dLayer.DeleteData("Inv_MRNReturnDetails", "N_MRNReturnID", nMRNReturnID, "", connection);
+                        if (myFunctions.getIntVAL(nMRNID.ToString()) > 0)
+                        {
+                            dLayer.ExecuteNonQuery("Update Inv_MRN Set N_Processed=0 Where N_MRNID=" + myFunctions.getIntVAL(nMRNID.ToString()) + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID, connection);
+                        }
                         return Ok(_api.Success("MRN Return deleted"));
                     }
                     else
