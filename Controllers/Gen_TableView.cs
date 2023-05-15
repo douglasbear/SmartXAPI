@@ -204,7 +204,7 @@ namespace SmartxAPI.Controllers
 
 
 
-                    if (xSortBy != null && xSortBy.Trim() != "")
+                   if (xSortBy != null && xSortBy.Trim() != "")
                     {
                         if (xSortBy.ToString().Contains("Date") || xSortBy.ToString().Contains("date"))
                         {
@@ -213,6 +213,11 @@ namespace SmartxAPI.Controllers
                         else if (xSortBy.ToString().Contains("Month") || xSortBy.ToString().Contains("month"))
                         {
                             xSortBy = "Convert(varchar, CAST('01-' + "+xSortBy.Split(" ")[0]+" AS datetime), 112) " + xSortBy.Split(" ")[1];
+                        }
+                         else if (xSortBy.ToString().Contains("Code") || xSortBy.ToString().Contains("code"))
+                        {
+                            xSortBy = "Convert(int,"+xSortBy.Split(" ")[0]+")" + xSortBy.Split(" ")[1];
+
                         }
                         xSortBy = " order by " + xSortBy;
                     }
