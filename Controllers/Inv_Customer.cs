@@ -1005,7 +1005,7 @@ namespace SmartxAPI.Controllers
                     //object paidAmount =dLayer.ExecuteScalar("select sum(Cast(REPLACE(Amount,',','') as Numeric(10,2)) ) as PaidAmount from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and (X_type='SR') ", Params, connection);
                     object returnamt = dLayer.ExecuteScalar("select sum(Cast(REPLACE(N_TotalPaidAmount,',','') as Numeric(10,2)) ) as TotalReturnAmount from vw_InvDebitNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", Params, connection);
                     double  currentBalance=  myFunctions.getVAL(dLayer.ExecuteScalar("SELECT  Sum(n_Amount)  as N_BalanceAmount from  vw_InvCustomerStatement Where N_AccType=2 and N_AccID=" + nCustomerID + " and N_CompanyID=" + nCompanyID,Params,connection).ToString());
-                  object invoiceDate=dLayer.ExecuteScalar("select Min(D_SalesDate) from Vw_SalesInvoice_DateSearch  where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID and N_PaymentMethodID<>1 and N_SalesID NOt in (Select N_SalesID from Vw_InvReceivables where N_CompanyID="+nCompanyID+"  and  N_CustomerID="+nCustomerID+" and N_BalanceAmount=0 )", Params, connection);
+                  object invoiceDate=dLayer.ExecuteScalar("select Min(D_SalesDate) from Vw_SalesInvoice_DateSearch  where N_CompanyID=@nCompanyID  and N_CustomerID=@nCustomerID and N_PaymentMethodID<>1 and N_SalesID NOt in (Select N_SalesID from Vw_InvReceivables where N_CompanyID="+nCompanyID+"  and  N_CustomerID="+nCustomerID+" and N_BalanceAmount=0 )", Params, connection);
                   
                   
                     {
