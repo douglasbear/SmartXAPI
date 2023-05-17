@@ -130,7 +130,7 @@ namespace SmartxAPI.Controllers
                             case "employee salary":
                                 xTableName = "Mig_EmployeeSalary";
                                 break;
-                            case "leave history":
+                            case "employee leave history":
                                 xTableName = "Mig_EmployeeLeaveHistory";
                                 break;
                          case "student balances":
