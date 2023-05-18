@@ -1287,20 +1287,20 @@ namespace SmartxAPI.Controllers
                     }
                     else if (CompanyData != "")
                     {
-                        bool Consolidated = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_Isdefault,0) as B_Isdefault from acc_company where N_CompanyID=" + nCompanyID, Params, connection).ToString()); ;
+                        // bool Consolidated = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_Isdefault,0) as B_Isdefault from acc_company where N_CompanyID=" + nCompanyID, Params, connection).ToString()); ;
 
-                        if (MenuID == 859 && Consolidated == false)
-                        {
-                            string FnYear = dLayer.ExecuteScalar("select X_FnYearDescr from Acc_FnYear where N_CompanyID=" + nCompanyID + " and N_FnyearID=" + FnYearID, Params, connection).ToString();
-                            int ClientID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ClientID from Acc_Company where N_CompanyID=" + nCompanyID, Params, connection).ToString());
-                            DataTable dt = dLayer.ExecuteDataTable("select * from vw_ConsolidatedCompany where n_clientID=" + ClientID + " and X_FnYearDescr='" + FnYear + "' order by N_CompanyID desc", Params, connection);
-                            foreach (DataRow dr in dt.Rows)
-                            {
-                                Criteria = Criteria + " and " + CompanyData + "=" + dr["n_CompanyID"];
-                            }
-                        }
-                        else
-                        {
+                        // if (MenuID == 859 && Consolidated == false)
+                        // {
+                        //     string FnYear = dLayer.ExecuteScalar("select X_FnYearDescr from Acc_FnYear where N_CompanyID=" + nCompanyID + " and N_FnyearID=" + FnYearID, Params, connection).ToString();
+                        //     int ClientID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ClientID from Acc_Company where N_CompanyID=" + nCompanyID, Params, connection).ToString());
+                        //     DataTable dt = dLayer.ExecuteDataTable("select * from vw_ConsolidatedCompany where n_clientID=" + ClientID + " and X_FnYearDescr='" + FnYear + "' order by N_CompanyID desc", Params, connection);
+                        //     foreach (DataRow dr in dt.Rows)
+                        //     {
+                        //         Criteria = Criteria + " and " + CompanyData + "=" + dr["n_CompanyID"];
+                        //     }
+                        // }
+                        // else
+                        // {
                             Criteria = Criteria + " and " + CompanyData + "=" + nCompanyID;
                             if (YearData != "")
                                 Criteria = Criteria + " and " + YearData + "=" + FnYearID;
@@ -1314,7 +1314,7 @@ namespace SmartxAPI.Controllers
                                 // else if (xProCode == "11")
                                 //     Criteria = Criteria + " and " + BranchData + "=" + BranchID;
                             }
-                        }
+                        // }
                     }
                     if (UserData != "")
                     {
