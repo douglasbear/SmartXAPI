@@ -193,6 +193,7 @@ namespace SmartxAPI.Controllers
             string sqlTopSell = "", sqlInvValue = "";
             string criteriaValue=" ";
             string criteria1="";
+            string sqlTopSellToday="";
             if (bAllBranchData)
             {
                 criteria = "N_CompanyID ="+ nCompanyID ;
@@ -225,6 +226,12 @@ namespace SmartxAPI.Controllers
                             + "WHERE "+criteriaValue + " "
                             + "GROUP BY vw_InvStock_Status.N_CompanyID, Inv_ItemCategory.X_CategoryCode, Inv_ItemCategory.X_Category";
 
+            sqlTopSellToday="SELECT Inv_Sales.N_CompanyId, Inv_SalesDetails.N_ItemID, SUM(Inv_SalesDetails.N_Qty) AS TotalQty,Inv_ItemMaster.X_ItemName,SUM(Inv_SalesDetails.n_sprice*Inv_SalesDetails.N_Qty) AS N_Amount,Inv_ItemCategory.X_Category "
+                            + "FROM Inv_ItemMaster LEFT OUTER JOIN Inv_ItemCategory ON Inv_ItemMaster.N_CompanyID = Inv_ItemCategory.N_CompanyID AND Inv_ItemMaster.N_CategoryID = Inv_ItemCategory.N_CategoryID RIGHT OUTER JOIN "
+                            + " Inv_SalesDetails ON Inv_ItemMaster.N_CompanyID = Inv_SalesDetails.N_CompanyID AND Inv_ItemMaster.N_ItemID = Inv_SalesDetails.N_ItemID RIGHT OUTER JOIN "
+                            + " Inv_Sales ON Inv_SalesDetails.N_SalesID = Inv_Sales.N_SalesId AND Inv_SalesDetails.N_SalesID = Inv_Sales.N_SalesId AND Inv_SalesDetails.N_CompanyID = Inv_Sales.N_CompanyId "
+                            + " where  Inv_Sales.N_CompanyID ="+ nCompanyID+" and Cast(Inv_Sales.D_SalesDate as DATE) >=cast(GETDATE() as DATE)  group by Inv_Sales.N_CompanyId ,Inv_SalesDetails.N_ItemID,Inv_ItemMaster.X_ItemName,Inv_ItemCategory.X_Category order by TotalQty desc";             
+
             SortedList Data = new SortedList();
             DataTable AllItem = new DataTable();
             DataTable NoStock = new DataTable();
@@ -232,6 +239,7 @@ namespace SmartxAPI.Controllers
             DataTable ReOrder = new DataTable();
             DataTable TopSell = new DataTable();
             DataTable InvValue = new DataTable();
+            DataTable topsellToday = new DataTable();
 
             try
             {
@@ -245,6 +253,7 @@ namespace SmartxAPI.Controllers
                     ReOrder = dLayer.ExecuteDataTable(sqlReOrder, Params, connection);
                     TopSell = dLayer.ExecuteDataTable(sqlTopSell, Params, connection);
                     InvValue = dLayer.ExecuteDataTable(sqlInvValue, Params, connection);
+                    topsellToday = dLayer.ExecuteDataTable(sqlTopSellToday, Params, connection);
                 }
 
                 AllItem.AcceptChanges();
@@ -253,6 +262,7 @@ namespace SmartxAPI.Controllers
                 ReOrder.AcceptChanges();
                 TopSell.AcceptChanges();
                 InvValue.AcceptChanges();
+                topsellToday.AcceptChanges();
 
                 if (AllItem.Rows.Count > 0) Data.Add("allItemCount", AllItem);
                 if (NoStock.Rows.Count > 0) Data.Add("noStocCount", NoStock);
@@ -261,6 +271,7 @@ namespace SmartxAPI.Controllers
 
                 if (TopSell.Rows.Count > 0) Data.Add("topSellItems", TopSell);
                 if (InvValue.Rows.Count > 0) Data.Add("categoryWiseInvValue", InvValue);
+                if (topsellToday.Rows.Count > 0) Data.Add("topsellToday", topsellToday);
 
                 return Ok(_api.Success(Data));
 

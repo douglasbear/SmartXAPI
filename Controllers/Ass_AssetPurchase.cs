@@ -770,6 +770,11 @@ namespace SmartxAPI.Controllers
                      DataRow TransRow=TransData.Rows[0];
                       object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Ass_PurchaseMaster where N_AssetInventoryID =" + N_AssetInventoryID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
                 
+                        object catCount = dLayer.ExecuteScalar("select count(*) from Ass_PurchaseDetails where N_AssetInventoryID=" + N_AssetInventoryID + " and N_AssetInventoryDetailsID in (SELECT Ass_AssetMaster.N_AssetInventoryDetailsID FROM   Ass_SalesDetails INNER JOIN   Ass_AssetMaster ON Ass_SalesDetails.N_ItemID = Ass_AssetMaster.N_ItemID AND Ass_SalesDetails.N_CompanyID = Ass_AssetMaster.N_CompanyID where Ass_AssetMaster.N_CompanyID=" + nCompanyID+")", connection, transaction);
+                        catCount = catCount == null ? 0 : catCount;
+                        if (myFunctions.getIntVAL(catCount.ToString()) > 0){
+                            return Ok(_api.Error(User, "Already In Use !!"));
+                        }
 
                      //Activity Log
                 // string ipAddress = "";
@@ -836,6 +841,48 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
         }
-    }
 
+        [HttpGet("bulkAssetList")]
+        public ActionResult ListBulkAssetName(bool isRentalItem,bool isSales)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string RentalItem="";
+            string salesItem="";
+            Params.Add("@nCompanyID",nCompanyID);
+
+            if(isRentalItem==true){
+                RentalItem=RentalItem+ " and N_ItemID NOT IN (select isnull(N_AssItemID,0) from inv_itemmaster where N_CompanyId=@nCompanyID)";
+            }
+
+            if(isSales){
+                salesItem=salesItem+ " and N_status<>2 and N_status<>5";
+            }        
+
+            string sqlCommandText = "Select N_AssItemName AS X_ItemName, COUNT(*) AS N_AvlQty from Ass_AssetMaster Where N_CompanyID=@nCompanyID"+RentalItem+salesItem+" GROUP BY N_AssItemName";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+    }
 }

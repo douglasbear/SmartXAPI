@@ -66,6 +66,9 @@ namespace SmartxAPI.Controllers
            string sqlMonthlySales="";
            string DraftedDelivery="";
            string DraftedInvoice="";
+           string RevenueToday="";
+           string recvdRvnTdy="";
+           string BranchWiseToday="";
         //    string draftCount="";
             // string sqlReceivedRevenue = "SELECT SUM(Inv_PayReceiptDetails.N_AmountF-Inv_PayReceiptDetails.N_DiscountAmtF)as N_ReceivedAmount FROM Inv_PayReceiptDetails INNER JOIN Inv_PayReceipt ON Inv_PayReceiptDetails.N_PayReceiptId = Inv_PayReceipt.N_PayReceiptId AND Inv_PayReceiptDetails.N_CompanyID = Inv_PayReceipt.N_CompanyID where Inv_PayReceipt.X_Type in ('SR','SA') and MONTH(Cast(Inv_PayReceiptDetails.D_Entrydate as DateTime)) ="+MonthWiseDate+"and YEAR(Inv_PayReceiptDetails.D_Entrydate)= YEAR(CURRENT_TIMESTAMP) and Inv_PayReceiptDetails.N_CompanyID = " + nCompanyID  + " and Inv_PayReceipt.N_FnyearID="+nFnYearID + crieteria1;
             // string sqlOpenQuotation = "SELECT count(1) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesQuotationNo_Search WHERE MONTH(D_QuotationDate) ="+MonthWiseDate+"AND YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)";
@@ -85,7 +88,9 @@ namespace SmartxAPI.Controllers
             DataTable MonthlySales = new DataTable();
             DataTable MnothlyDelivery= new DataTable();
             DataTable MnothlydraftedInvoice = new DataTable();
-           
+            DataTable todayRevenue = new DataTable();
+            DataTable ReceivedRvnTdy = new DataTable();
+            DataTable branchwiseTdy = new DataTable();
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -123,6 +128,9 @@ namespace SmartxAPI.Controllers
                       object draftCount=dLayer.ExecuteScalar( "select count(1) as N_Count from inv_deliverynote where b_IsSaveDraft=1 and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID+"",Params,connection);
                       DraftedInvoice="SELECT sum(Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesInvoiceNo_Search_New_Cloud  WHERE B_IsSaveDraft=1 and isnull(b_Isproforma,0)=0  and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID;
                       object draftinvoicecount=dLayer.ExecuteScalar("Select count(1) as N_Count from Inv_Sales where b_IsSaveDraft=1 and isnull(b_Isproforma,0)=0 and N_CompanyID = " + nCompanyID  + " and N_FnyearID="+nFnYearID+"",Params,connection);
+                      recvdRvnTdy="select sum(N_ReceivedAmount) as N_ReceivedAmount,N_CompanyId from (select SUM(N_BillAmt)+ SUM(N_TaxAmt) AS N_ReceivedAmount,Inv_Sales.N_CompanyId from Inv_Sales WHERE N_PaymentMethodId=1 AND Cast(Inv_Sales.D_Salesdate AS DATE)>=cast(GETDATE() as DATE) AND N_CompanyId="+nCompanyID+" AND N_FnYearId="+nFnYearID+ crieteria +" group by Inv_Sales.N_CompanyID union SELECT SUM(Inv_PayReceiptDetails.N_AmountF-Inv_PayReceiptDetails.N_DiscountAmtF)as N_ReceivedAmount,Inv_PayReceiptDetails.N_CompanyID  FROM Inv_PayReceiptDetails INNER JOIN Inv_PayReceipt ON Inv_PayReceiptDetails.N_PayReceiptId = Inv_PayReceipt.N_PayReceiptId AND Inv_PayReceiptDetails.N_CompanyID = Inv_PayReceipt.N_CompanyID where Inv_PayReceipt.X_Type in ('SR','SA') and Cast(Inv_PayReceiptDetails.D_Entrydate as DATE)>=cast(GETDATE() as DATE) and Inv_PayReceiptDetails.N_CompanyID = " + nCompanyID  + " and Inv_PayReceipt.N_FnyearID="+nFnYearID + revCriteria+" group by Inv_PayReceiptDetails.N_CompanyID) as temp where N_CompanyID="+nCompanyID+" group by N_CompanyID";
+                      RevenueToday="select SUM(N_BillAmt+N_TaxAmt) as N_ReceivedAmount,count(1) as N_Count from inv_sales where n_CompanyId= " + nCompanyID  + " and Cast(Inv_Sales.D_SalesDate as DATE)>=cast(GETDATE() as DATE)";
+                      BranchWiseToday="select sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount,X_BranchName from vw_BranchWiseSales where Cast(D_SalesDate as DATE) >=cast(GETDATE() as DATE) and N_CompanyID = " + nCompanyID  + " Group BY X_BranchName,N_CompanyID";
 
                      bool B_customer = myFunctions.CheckPermission(nCompanyID, 1302, "Administrator", "X_UserCategory", dLayer, connection);
                      CurrentOrder = dLayer.ExecuteDataTable(sqlCurrentOrder, Params, connection);
@@ -136,6 +144,9 @@ namespace SmartxAPI.Controllers
                     MonthlySales = dLayer.ExecuteDataTable(sqlMonthlySales, Params, connection);
                     MnothlyDelivery = dLayer.ExecuteDataTable(DraftedDelivery, Params, connection);
                     MnothlydraftedInvoice = dLayer.ExecuteDataTable(DraftedInvoice, Params, connection);
+                    todayRevenue=dLayer.ExecuteDataTable(RevenueToday, Params, connection);
+                    ReceivedRvnTdy=dLayer.ExecuteDataTable(recvdRvnTdy, Params, connection);
+                    branchwiseTdy=dLayer.ExecuteDataTable(BranchWiseToday, Params, connection);
                      if(B_customer) 
                      { 
                      Data.Add("permision",true);
@@ -157,6 +168,8 @@ namespace SmartxAPI.Controllers
                 MonthlySales.AcceptChanges();
                 MnothlyDelivery.AcceptChanges();
                 MnothlydraftedInvoice.AcceptChanges();
+                todayRevenue.AcceptChanges();
+                ReceivedRevenue.AcceptChanges();
                 if (CurrentOrder.Rows.Count > 0) Data.Add("orderData", CurrentOrder);
                 if (CurrentInvoice.Rows.Count > 0) Data.Add("invoiceData", CurrentInvoice);
                 if (CurrentQuotation.Rows.Count > 0) Data.Add("quotationData", CurrentQuotation);
@@ -168,6 +181,9 @@ namespace SmartxAPI.Controllers
                 if (MonthlySales.Rows.Count > 0) Data.Add("monthlySales", MonthlySales);
                 if (MnothlyDelivery.Rows.Count > 0) Data.Add("MnothlyDelivery", MnothlyDelivery);
                 if (MnothlydraftedInvoice.Rows.Count > 0) Data.Add("MnothlydraftedInvoice", MnothlydraftedInvoice);
+                if (todayRevenue.Rows.Count > 0) Data.Add("todayRevenue", todayRevenue);
+                if (ReceivedRvnTdy.Rows.Count > 0) Data.Add("ReceivedRvnTdy", ReceivedRvnTdy);
+                if (branchwiseTdy.Rows.Count > 0) Data.Add("branchwiseTdy", branchwiseTdy);
                 return Ok(api.Success(Data));
 
             }
@@ -418,14 +434,14 @@ namespace SmartxAPI.Controllers
 
 
                    if (Count == 0)
-                        sqlCommandText = "select top(10) N_BillAmt=Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)),* from vw_InvSalesInvoiceNo_Search_Cloud where  YEAR(D_SalesDate) = "+YearWiseDate+" and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(10) N_BillAmt=Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)),* from vw_InvSalesInvoiceNo_Search_Cloud where  YEAR(D_SalesDate) = "+YearWiseDate+"  and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " " + xSortBy;
                    else
-                        sqlCommandText = "select top(10) N_BillAmt=Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)),* from vw_InvSalesInvoiceNo_Search_Cloud where YEAR(D_SalesDate) = "+YearWiseDate+"  and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search_Cloud where  N_FnyearID="+nFnYearID + crieteria + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(10) N_BillAmt=Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)),* from vw_InvSalesInvoiceNo_Search_Cloud where YEAR(D_SalesDate) = "+YearWiseDate+"  and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search_Cloud where N_FnyearID="+nFnYearID + crieteria + xSortBy + " ) " + xSortBy;
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = api.Format(dt);
-                    sqlCommandCount = "Select count(1) from vw_InvSalesInvoiceNo_Search_Cloud Where  YEAR(D_SalesDate) = "+YearWiseDate+"  and N_FnyearID="+nFnYearID + crieteria;
+                    sqlCommandCount = "Select count(1) from vw_InvSalesInvoiceNo_Search_Cloud Where  YEAR(D_SalesDate) = "+YearWiseDate+"  and  N_FnyearID="+nFnYearID + crieteria;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

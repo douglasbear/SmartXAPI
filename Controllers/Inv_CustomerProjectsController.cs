@@ -82,16 +82,16 @@ namespace SmartxAPI.Controllers
            if (bAllBranchData == true)
             {
                 if (nCustomerID > 0)
-                   Criteria =  " and ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 and   (N_CustomerID =@p3 or  N_CustomerID=0 )";
+                   Criteria =  " and ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 and   (N_CustomerID =@p3 or  N_CustomerID=0 ) and N_StatusID=1 ";
                 else
-                    Criteria=  " and ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 ";
+                    Criteria=  " and ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 and N_StatusID=1 ";
             }
             else
             {
                 if (nCustomerID > 0)
-                    Criteria = " and  ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0  and  (N_CustomerID =@p3 or  N_CustomerID=0 ) and  N_BranchID=@p4";
+                    Criteria = " and  ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0  and  (N_CustomerID =@p3 or  N_CustomerID=0 ) and  N_BranchID=@p4 and N_StatusID=1";
                 else
-                    Criteria = " and  N_BranchID=@p4 and ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 ";
+                    Criteria = " and  N_BranchID=@p4 and ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 and N_StatusID=1 ";
 
             }
 
@@ -234,6 +234,8 @@ namespace SmartxAPI.Controllers
                                         TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "x_TaskCode", typeof(string), "");
                                         TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "n_ProjectID", typeof(int), nProjectID);
                                         TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "B_Closed", typeof(int), 0);
+                                        // if(!TaskMaster.columns.Contains("D_TaskDate"))
+                                        //     TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "D_TaskDate", typeof(int), 0);
                                      
                                         TaskMaster.Rows[0]["B_Closed"] = 0;
                                         foreach (DataRow var in TaskMaster.Rows)
@@ -257,7 +259,7 @@ namespace SmartxAPI.Controllers
                                                 Minuts = myFunctions.getVAL(var["N_StartDateBefore"].ToString()) * Minuts;
 
                                             if(Minuts==0)
-                                                var["D_TaskDate"] = null;
+                                                var["D_TaskDate"] = DateTime.Now;
                                             else
                                                 var["D_TaskDate"] = DateTime.Now.AddMinutes(Minuts);
 
@@ -565,11 +567,12 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("dashboardlist")]
-        public ActionResult ProjectList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult ProjectList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nEmpID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            Params.Add("@nEmpID", nEmpID);
             string UserPattern = myFunctions.GetUserPattern(User);
             string Pattern="";
             // if (UserPattern != "")
@@ -589,11 +592,11 @@ namespace SmartxAPI.Controllers
             else
                 xSortBy = " order by " + xSortBy;
 
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,N_StatusID,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID,X_Stage,CONVERT(VARCHAR(10), D_EndDate,111) as D_EndDate,N_LastActionID,X_ClosingRemarks from vw_InvProjectDashBoard where N_CompanyID=@p1 "+ Pattern  + Searchkey + " " + xSortBy;
+                if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,N_StatusID,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID,X_Stage,CONVERT(VARCHAR(10), D_EndDate,111) as D_EndDate,N_LastActionID,X_ClosingRemarks,x_TaskSummery,CONVERT(VARCHAR(10), D_DueDate,111) as D_DueDate from vw_InvProjectDashBoard where N_CompanyID=@p1 "+ Pattern  + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,N_StatusID,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID,X_Stage,CONVERT(VARCHAR(10), D_EndDate,111) as D_EndDate,N_LastActionID,X_ClosingRemarks from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Pattern + Searchkey + " and N_ProjectID not in (select top(" + Count + ") N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Pattern + Searchkey + xSortBy + " ) " + xSortBy;
-            Params.Add("@p1", nCompanyId);
+                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,N_StatusID,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID,X_Stage,CONVERT(VARCHAR(10), D_EndDate,111) as D_EndDate,N_LastActionID,X_ClosingRemarks,x_TaskSummery,CONVERT(VARCHAR(10), D_DueDate,111) as D_DueDate from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Pattern + Searchkey + " and N_ProjectID not in (select top(" + Count + ") N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Pattern + Searchkey + xSortBy + " ) " + xSortBy;
+               Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
 

@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("code")]
-        public ActionResult GetCode(string docNo, int nFnYearID, int formID, string xDescription)
+        public ActionResult GetCode(string docNo, int nFnYearID, int formID, string xDescription,int nBranchID)
         {
             try
             {
@@ -60,6 +60,7 @@ namespace SmartxAPI.Controllers
                     {
                         masterTable = "Inv_Sales";
                         column = "X_ReceiptNo";
+                        Params.Add("N_BranchID", nBranchID);
                     }
                     if (formID == 53)
                     {
@@ -70,6 +71,7 @@ namespace SmartxAPI.Controllers
                     {
                         masterTable = "Inv_Purchase";
                         column = "X_InvoiceNo";
+                           Params.Add("N_BranchID", nBranchID);
                     }
                      if (formID == 155)
                     {
