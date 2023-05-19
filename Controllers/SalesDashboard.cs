@@ -418,14 +418,14 @@ namespace SmartxAPI.Controllers
 
 
                    if (Count == 0)
-                        sqlCommandText = "select top(10) N_BillAmt=Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)),* from vw_InvSalesInvoiceNo_Search_Cloud where  YEAR(D_SalesDate) = "+YearWiseDate+"   and N_CompanyId = " + nCompanyID + " and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(10) N_BillAmt=Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)),* from vw_InvSalesInvoiceNo_Search_Cloud where  YEAR(D_SalesDate) = "+YearWiseDate+" and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " " + xSortBy;
                    else
-                        sqlCommandText = "select top(10) N_BillAmt=Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)),* from vw_InvSalesInvoiceNo_Search_Cloud where YEAR(D_SalesDate) = "+YearWiseDate+"   and N_CompanyId = " + nCompanyID + " and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search_Cloud where N_CompanyId=@p1 and N_FnyearID="+nFnYearID + crieteria + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(10) N_BillAmt=Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)),* from vw_InvSalesInvoiceNo_Search_Cloud where YEAR(D_SalesDate) = "+YearWiseDate+"  and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search_Cloud where  N_FnyearID="+nFnYearID + crieteria + xSortBy + " ) " + xSortBy;
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = api.Format(dt);
-                    sqlCommandCount = "Select count(1) from vw_InvSalesInvoiceNo_Search_Cloud Where  YEAR(D_SalesDate) = "+YearWiseDate+"  and N_CompanyId = " + nCompanyID + " and N_FnyearID="+nFnYearID + crieteria;
+                    sqlCommandCount = "Select count(1) from vw_InvSalesInvoiceNo_Search_Cloud Where  YEAR(D_SalesDate) = "+YearWiseDate+"  and N_FnyearID="+nFnYearID + crieteria;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
