@@ -770,6 +770,11 @@ namespace SmartxAPI.Controllers
                      DataRow TransRow=TransData.Rows[0];
                       object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Ass_PurchaseMaster where N_AssetInventoryID =" + N_AssetInventoryID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
                 
+                        object catCount = dLayer.ExecuteScalar("select count(*) from Ass_PurchaseDetails where N_AssetInventoryID=" + N_AssetInventoryID + " and N_AssetInventoryDetailsID in (SELECT Ass_AssetMaster.N_AssetInventoryDetailsID FROM   Ass_SalesDetails INNER JOIN   Ass_AssetMaster ON Ass_SalesDetails.N_ItemID = Ass_AssetMaster.N_ItemID AND Ass_SalesDetails.N_CompanyID = Ass_AssetMaster.N_CompanyID where Ass_AssetMaster.N_CompanyID=" + nCompanyID+")", connection, transaction);
+                        catCount = catCount == null ? 0 : catCount;
+                        if (myFunctions.getIntVAL(catCount.ToString()) > 0){
+                            return Ok(_api.Error(User, "Already In Use !!"));
+                        }
 
                      //Activity Log
                 // string ipAddress = "";

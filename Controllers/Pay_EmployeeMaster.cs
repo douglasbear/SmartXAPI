@@ -1753,6 +1753,27 @@ namespace SmartxAPI.Controllers
                                                     dt.Rows.Add(row);
 
                                                     int UserID = dLayer.SaveData("Sec_User", "N_UserID", dt, connection, transaction);
+
+                                                  object SUAUserID = dLayer.ExecuteScalar("SELECT N_UserID FROM Users where x_EmailID='" + xEmail.ToString() + "' and N_ClientID=" + nClientID, olivoCon, olivoTxn);
+                                                  DataTable dtUA = new DataTable();
+                                                    dtUA.Clear();
+                                                    dtUA.Columns.Add("N_CompanyID");
+                                                    dtUA.Columns.Add("N_UserID");
+                                                    dtUA.Columns.Add("N_AppMappingID");
+                                                    dtUA.Columns.Add("N_AppID");
+                                                     dtUA.Columns.Add("X_LandingPage");
+                                                     dtUA.Columns.Add("N_GlobalUserID");
+                                                    DataRow rowUA = dtUA.NewRow();
+                                                    rowUA["N_CompanyID"] = nCompanyID;
+                                                    rowUA["N_UserID"] = UserID;
+                                                    rowUA["N_AppMappingID"] = 0;
+                                                    rowUA["N_AppID"] =2;
+                                                    rowUA["X_LandingPage"] = null;
+                                                     rowUA["N_GlobalUserID"] = SUAUserID;
+                                                    dtUA.Rows.Add(rowUA);
+                                                    int UAUserID = dLayer.SaveData("sec_userapps", "N_AppMappingID", dtUA, connection, transaction);
+
+                                                    
                                                 }
                                             }
                                         }
