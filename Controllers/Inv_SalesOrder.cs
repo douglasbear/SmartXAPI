@@ -1073,6 +1073,7 @@ namespace SmartxAPI.Controllers
                                     return Ok(_api.Error(User, "Unable To Update Txn Status"));
                                 }
                             }
+                            dLayer.ExecuteScalar("delete from Inv_Prescription where N_SalesOrderID=" + nSalesOrderID.ToString() + "  and  N_CompanyID=" + nCompanyID, connection, transaction);
                             transaction.Commit();
                             return Ok(_api.Success("Sales Order deleted"));
 
