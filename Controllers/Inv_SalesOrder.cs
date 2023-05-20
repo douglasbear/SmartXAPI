@@ -241,6 +241,7 @@ namespace SmartxAPI.Controllers
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
             DataTable DataTable = new DataTable();
+            DataTable Prescription = new DataTable();
 
             string Mastersql = "";
             string DetailSql = "";
@@ -562,11 +563,17 @@ namespace SmartxAPI.Controllers
                     DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
                     RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
 
+
+                     //EYE OPTICS
+                    string prescriptionSql = "select * from Inv_Prescription where N_CustomerID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString())+" and N_SalesOrderID="+N_SOrderID+" and N_CompanyID=@nCompanyID";
+                    Prescription = dLayer.ExecuteDataTable(prescriptionSql, Params, connection);
+
                     dt.Tables.Add(Attachments);
                     dt.Tables.Add(MasterTable);
                     dt.Tables.Add(DetailTable);
                     dt.Tables.Add(Terms);
                     dt.Tables.Add(RentalSchedule);
+                    dt.Tables.Add(Prescription);
                 }
                 return Ok(_api.Success(dt));
             }
@@ -591,6 +598,7 @@ namespace SmartxAPI.Controllers
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
                     DataTable Attachment = ds.Tables["attachments"];
+                    DataTable Prescription = ds.Tables["prescription"];
                     DataTable Terms = ds.Tables["terms"];
                     DataTable rentalItem = ds.Tables["segmentTable"];
                     DataRow MasterRow = MasterTable.Rows[0];
@@ -691,6 +699,8 @@ namespace SmartxAPI.Controllers
                         {
                             dLayer.ExecuteScalar("SP_Delete_Trans_With_Accounts " + N_CompanyID + ",'Sales Order'," + n_SalesOrderId.ToString(), connection, transaction);
                             dLayer.ExecuteScalar("delete from Inv_DeliveryDispatch where N_SOrderID=" + n_SalesOrderId.ToString() + " and N_CompanyID=" + N_CompanyID, connection, transaction);
+                            
+                            
                             xButtonAction="Update"; 
                         }
                         catch (Exception ex)
@@ -780,6 +790,20 @@ namespace SmartxAPI.Controllers
                     
                         }
                         dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
+
+                    }
+                    //FOR EYE OPTICS 
+                    if (n_SOId > 0)
+                        {
+                            
+                            dLayer.ExecuteScalar("delete from Inv_Prescription where N_SalesOrderID=" + n_SOId.ToString() + " and N_CompanyID=" + N_CompanyID, connection, transaction);
+                    
+                        }
+                    if(Prescription.Rows.Count >0)
+                    {
+                        Prescription.Rows[0]["N_SalesOrderID"]=n_SalesOrderId;
+                        Prescription.AcceptChanges();
+                        dLayer.SaveData("Inv_Prescription", "N_PrescriptionID", Prescription, connection, transaction); 
 
                     }
                 

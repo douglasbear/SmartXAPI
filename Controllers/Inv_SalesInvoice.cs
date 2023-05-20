@@ -633,8 +633,17 @@ namespace SmartxAPI.Controllers
                         DetailSql = "select * from vw_SalesOrderDetailsToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID";
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
+
+                        //Eye Optics
+                        string sqlPrescription1="select * from Inv_Presscription where N_SalesOrderID==@nOrderID";
+                        DataTable Prescription=dLayer.ExecuteDataTable(sqlPrescription1, QueryParamsList, Con);
+                        Prescription = _api.Format(Prescription, "Prescription");
+
+
+
                         dsSalesInvoice.Tables.Add(MasterTable);
                         dsSalesInvoice.Tables.Add(DetailTable);
+                        dsSalesInvoice.Tables.Add(Prescription);
                         return Ok(_api.Success(dsSalesInvoice));
 
                     }
@@ -1043,10 +1052,19 @@ namespace SmartxAPI.Controllers
                     if (Invoice2Enableobj != null)
                         Invoice2Enable = true;
                     masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "Invoice2Enable", typeof(bool), Invoice2Enable);
+
+
+                   //Eye Optics
+                    string sqlPrescription="select * from Inv_Presscription where N_SalesOrderID==@nOrderID";
+                    DataTable prescription=dLayer.ExecuteDataTable(sqlPrescription, Con);
+                    prescription = _api.Format(prescription, "Prescription");
+
+
                     dsSalesInvoice.Tables.Add(masterTable);
                     dsSalesInvoice.Tables.Add(detailTable);
                     dsSalesInvoice.Tables.Add(saleamountdetails);
                     dsSalesInvoice.Tables.Add(Attachments);
+                    dsSalesInvoice.Tables.Add(prescription);
 
                     return Ok(_api.Success(dsSalesInvoice));
 
