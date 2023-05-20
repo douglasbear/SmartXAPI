@@ -1073,6 +1073,7 @@ namespace SmartxAPI.Controllers
                                     return Ok(_api.Error(User, "Unable To Update Txn Status"));
                                 }
                             }
+                            dLayer.ExecuteScalar("delete from Inv_Prescription where N_SalesOrderID=" + nSalesOrderID.ToString() + "  and  N_CompanyID=" + nCompanyID, connection, transaction);
                             transaction.Commit();
                             return Ok(_api.Success("Sales Order deleted"));
 
@@ -1576,7 +1577,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText ="select * from Inv_Prescription where N_CompanyID=@p1 and N_CustomerID=@p2";
+            string sqlCommandText ="select top 1 from Inv_Prescription where N_CompanyID=@p1 and N_CustomerID=@p2 order by N_PrescriptionID desc";
 
             Params.Add("@p1",nCompanyID);
             Params.Add("@p2", nCustomerID);
