@@ -1569,6 +1569,35 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+        
+        [HttpGet("prescriptionDetails")]
+        public ActionResult GetPrescriptionDetails(int nCompanyID,int nCustomerID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            string sqlCommandText ="select * from Inv_Prescription where N_CompanyID=@p1 and N_CustomerID=@p2";
+
+            Params.Add("@p1",nCompanyID);
+            Params.Add("@p2", nCustomerID);
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                return Ok(_api.Success(dt));
+              
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
+
 
     }
 }
