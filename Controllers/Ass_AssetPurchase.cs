@@ -299,7 +299,8 @@ namespace SmartxAPI.Controllers
             DataTable DetailTableNew = new DataTable();
             DataTable AssMasterTableNew = new DataTable();
             DataTable TransactionTableNew = new DataTable();
-
+           DataTable DetailTableNew1 = new DataTable();
+          
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
             TransactionTable = ds.Tables["transactions"];
@@ -323,6 +324,7 @@ namespace SmartxAPI.Controllers
                      int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                      String xButtonAction="";
+                     int nAssetType =0;
                     if (FormID == 1293) xTransType = "AR";
                     else xTransType = "AP";
 
@@ -376,6 +378,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         }
                     }
+                    TransactionTable = myFunctions.AddNewColumnToDataTable(TransactionTable, "n_Qty", typeof(int), 0);
 
                     N_AssetInventoryID = dLayer.SaveData("Ass_PurchaseMaster", "N_AssetInventoryID", MasterTable, connection, transaction);
                     if (N_AssetInventoryID <= 0)
@@ -403,6 +406,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     AssMasterTable = myFunctions.AddNewColumnToDataTable(AssMasterTable, "n_AssItemName", typeof(string), "");
+                    AssMasterTable = myFunctions.AddNewColumnToDataTable(AssMasterTable, "n_Qty", typeof(int), 0);
                     for (int j = 0; j < AssMasterTable.Rows.Count; j++)
                     {
                         AssMasterTable.Rows[j]["n_AssItemName"] = AssMasterTable.Rows[j]["x_AssItemName"];
@@ -418,6 +422,7 @@ namespace SmartxAPI.Controllers
                     {
                         if (FormID == 1293)
                         {
+                            
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
                             {
                                 N_AssetInventoryDetailsID = dLayer.SaveDataWithIndex("Ass_PurchaseDetails", "N_AssetInventoryDetailsID", "", "", j, DetailTable, connection, transaction);
@@ -453,51 +458,90 @@ namespace SmartxAPI.Controllers
                             DetailTableNew = DetailTable.Clone();
                             AssMasterTableNew = AssMasterTable.Clone();
                             TransactionTableNew = TransactionTable.Clone();
+                             DetailTableNew1 = DetailTable.Clone();
 
                             DetailTableNew.Rows.Clear();
                             AssMasterTableNew.Rows.Clear();
                             TransactionTableNew.Rows.Clear();
+                            // DetailTableNew1.Rows.Clear();
 
                             int nCount = DetailTable.Rows.Count;
                             for (int j = 0; j < nCount; j++)
                             {
                                 int Qty = myFunctions.getIntVAL(DetailTable.Rows[j]["N_PurchaseQty"].ToString());
+                                 nAssetType = myFunctions.getIntVAL(DetailTable.Rows[j]["n_AssetType"].ToString());
+                                
 
-                                if (Qty > 1)
+                                if(nAssetType == 1)
                                 {
-                                    for (int l = 0; l < Qty; l++)
+                                    if (Qty > 1)
+                                    {
+                                        for (int l = 0; l < Qty; l++)
+                                        {
+                                            var newRow = DetailTableNew.NewRow();
+                                            var newRow2 = AssMasterTableNew.NewRow();
+                                            var newRow3 = TransactionTableNew.NewRow();
+                                            var newRow4 = DetailTableNew1.NewRow();
+
+                                            newRow.ItemArray = DetailTable.Rows[j].ItemArray;
+                                            newRow2.ItemArray = AssMasterTable.Rows[j].ItemArray;
+                                            newRow3.ItemArray = TransactionTable.Rows[j].ItemArray;
+                                            newRow4.ItemArray = DetailTable.Rows[j].ItemArray;
+
+                                            DetailTableNew.Rows.Add(newRow);
+                                            AssMasterTableNew.Rows.Add(newRow2);
+                                            TransactionTableNew.Rows.Add(newRow3);
+                                            DetailTableNew1.Rows.Add(newRow4);
+                                        }
+                                    }  
+                                    else
                                     {
                                         var newRow = DetailTableNew.NewRow();
                                         var newRow2 = AssMasterTableNew.NewRow();
                                         var newRow3 = TransactionTableNew.NewRow();
+                                        var newRow4 = DetailTableNew1.NewRow();
 
                                         newRow.ItemArray = DetailTable.Rows[j].ItemArray;
                                         newRow2.ItemArray = AssMasterTable.Rows[j].ItemArray;
                                         newRow3.ItemArray = TransactionTable.Rows[j].ItemArray;
+                                        newRow4.ItemArray = DetailTable.Rows[j].ItemArray;
 
                                         DetailTableNew.Rows.Add(newRow);
                                         AssMasterTableNew.Rows.Add(newRow2);
                                         TransactionTableNew.Rows.Add(newRow3);
+                                        DetailTableNew1.Rows.Add(newRow4);
                                     }
-                                }
+                                    
+                                }                            
                                 else
                                 {
                                     var newRow = DetailTableNew.NewRow();
                                     var newRow2 = AssMasterTableNew.NewRow();
                                     var newRow3 = TransactionTableNew.NewRow();
+                                    var newRow4 = DetailTableNew1.NewRow();
 
                                     newRow.ItemArray = DetailTable.Rows[j].ItemArray;
                                     newRow2.ItemArray = AssMasterTable.Rows[j].ItemArray;
                                     newRow3.ItemArray = TransactionTable.Rows[j].ItemArray;
+                                    newRow4.ItemArray = DetailTable.Rows[j].ItemArray;
 
                                     DetailTableNew.Rows.Add(newRow);
                                     AssMasterTableNew.Rows.Add(newRow2);
                                     TransactionTableNew.Rows.Add(newRow3);
+                                    DetailTableNew1.Rows.Add(newRow4);
                                 }
+                                
                             }
+                           
+                          
+                            DetailTableNew.Columns.Remove("n_AssetType");
+
                             for (int j = 0; j < DetailTableNew.Rows.Count; j++)
                             {
-                                DetailTableNew.Rows[j]["N_PurchaseQty"] = 1;
+                             nAssetType = myFunctions.getIntVAL(DetailTableNew1.Rows[j]["n_AssetType"].ToString());
+
+                                if(nAssetType==1)
+                                    DetailTableNew.Rows[j]["N_PurchaseQty"] = 1;
                                 //}
                                 N_AssetInventoryDetailsID = dLayer.SaveDataWithIndex("Ass_PurchaseDetails", "N_AssetInventoryDetailsID", "", "", j, DetailTableNew, connection, transaction);
                                 if (N_AssetInventoryDetailsID <= 0)
@@ -556,6 +600,12 @@ namespace SmartxAPI.Controllers
                                 }
                                 AssMasterTableNew.Rows[j]["X_ItemCode"] = X_ItemCode;
                                 AssMasterTableNew.Rows[j]["N_ItemCodeId"] = N_ItemCodeId;
+                                  if(nAssetType==1){
+                                    AssMasterTableNew.Rows[j]["N_Qty"] = 1;
+                                  } 
+                                  else{
+                                    AssMasterTableNew.Rows[j]["N_Qty"] = DetailTableNew.Rows[j]["N_PurchaseQty"];
+                                  }
                                 //}
                                 N_MasterID = dLayer.SaveDataWithIndex("Ass_AssetMaster", "N_ItemID", "", "", j, AssMasterTableNew, connection, transaction);
                                 if (N_MasterID <= 0)
@@ -573,7 +623,13 @@ namespace SmartxAPI.Controllers
                                 //TransactionTableNew.Rows[j]["N_ItemId"]=AssMasterTableNew.Rows[k]["N_ItemID"];
                                 TransactionTableNew.Rows[j]["N_ItemId"] = N_MasterID;
                                 TransactionTableNew.Rows[j]["X_Type"] = "Acquisition";
-                                //}
+                                 if(nAssetType==1){
+                                    TransactionTableNew.Rows[j]["N_Qty"] = 1;
+                                 }
+                                 else{
+                                    TransactionTableNew.Rows[j]["N_Qty"] = DetailTableNew.Rows[j]["N_PurchaseQty"];
+                                 }
+                                    
                                 N_ActionID = dLayer.SaveDataWithIndex("Ass_Transactions", "N_ActionID", "", "", j, TransactionTableNew, connection, transaction);
                                 if (N_ActionID <= 0)
                                 {
