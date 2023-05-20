@@ -799,7 +799,7 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteScalar("delete from Inv_Prescription where N_SalesOrderID=" + n_SOId.ToString() + " and N_CompanyID=" + N_CompanyID, connection, transaction);
                     
                         }
-                    if(Prescription.Rows.Count >0)
+                    if(Prescription.Rows.Count >0 )
                     {
                         Prescription.Rows[0]["N_SalesOrderID"]=n_SalesOrderId;
                         Prescription.AcceptChanges();
