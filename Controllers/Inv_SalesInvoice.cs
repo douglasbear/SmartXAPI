@@ -1054,10 +1054,10 @@ namespace SmartxAPI.Controllers
                     masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "Invoice2Enable", typeof(bool), Invoice2Enable);
 
 
-                   //Eye Optics
-                    // string sqlPrescription="select * from Inv_Prescription where N_SalesOrderID=@nOrderID";
-                    // DataTable prescription=dLayer.ExecuteDataTable(sqlPrescription, Con);
-                    // prescription = _api.Format(prescription, "Prescription");
+                   Eye Optics
+                    string sqlPrescription="select * from Inv_Prescription where N_SalesOrderID=@nOrderID";
+                    DataTable prescription=dLayer.ExecuteDataTable(sqlPrescription, Con);
+                    prescription = _api.Format(prescription, "Prescription");
 
 
                     dsSalesInvoice.Tables.Add(masterTable);
