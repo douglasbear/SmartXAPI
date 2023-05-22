@@ -567,6 +567,7 @@ namespace SmartxAPI.Controllers
                      //EYE OPTICS
                     string prescriptionSql = "select * from Inv_Prescription where N_CustomerID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString())+" and N_SalesOrderID="+N_SOrderID+" and N_CompanyID=@nCompanyID";
                     Prescription = dLayer.ExecuteDataTable(prescriptionSql, Params, connection);
+                      Prescription = _api.Format(Prescription, "Prescription");
 
                     dt.Tables.Add(Attachments);
                     dt.Tables.Add(MasterTable);
