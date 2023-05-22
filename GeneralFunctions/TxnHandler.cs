@@ -1339,9 +1339,15 @@ namespace SmartxAPI.GeneralFunctions
                     //EYE OPTICS
                         if (N_SID > 0)
                         {
+                            int nPrescriptionID=myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_PrescriptionID from Inv_Prescription where N_SalesID=" + N_SID.ToString() + " and N_CompanyID=" + N_CompanyID+"",connection, transaction).ToString());
                             
                             dLayer.ExecuteScalar("delete from Inv_Prescription where N_SalesID=" + N_SID.ToString() + " and N_CompanyID=" + N_CompanyID, connection, transaction);
-                    
+                       if(Prescription.Rows.Count>0)
+                            {
+                                if(nPrescriptionID>0)
+                                    Prescription.Rows[0]["N_PrescriptionID"]=nPrescriptionID;
+                            }
+                            Prescription.AcceptChanges();
                         }
                     if(Prescription.Rows.Count>0)
                     {
