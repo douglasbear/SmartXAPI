@@ -1577,7 +1577,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText ="select top 1 from Inv_Prescription where N_CompanyID=@p1 and N_CustomerID=@p2 order by N_PrescriptionID desc";
+            string sqlCommandText ="select top 1 * from Inv_Prescription where N_CompanyID=@p1 and N_CustomerID=@p2 order by N_PrescriptionID desc";
 
             Params.Add("@p1",nCompanyID);
             Params.Add("@p2", nCustomerID);
