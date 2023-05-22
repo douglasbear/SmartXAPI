@@ -1055,7 +1055,7 @@ namespace SmartxAPI.Controllers
 
 
                     //Eye Optics
-                    string sqlPrescription="select * from Inv_Prescription where N_SalesOrderID=@nOrderID";
+                    string sqlPrescription="select * from Inv_Prescription where N_SalesID="+masterTable.Rows[0]["n_SalesId"].ToString()+"";
                     DataTable prescription=dLayer.ExecuteDataTable(sqlPrescription, Con);
                     prescription = _api.Format(prescription, "Prescription");
 
@@ -1064,7 +1064,7 @@ namespace SmartxAPI.Controllers
                     dsSalesInvoice.Tables.Add(detailTable);
                     dsSalesInvoice.Tables.Add(saleamountdetails);
                     dsSalesInvoice.Tables.Add(Attachments);
-                   // dsSalesInvoice.Tables.Add(prescription);
+                    dsSalesInvoice.Tables.Add(prescription);
 
                     return Ok(_api.Success(dsSalesInvoice));
 
