@@ -1351,6 +1351,11 @@ namespace SmartxAPI.GeneralFunctions
                         }
                     if(Prescription.Rows.Count>0)
                     {
+                        if( myFunctions.getIntVAL(Prescription.Rows[0]["N_SalesOrderID"].ToString())>0)
+                        {
+                            int nPrescriptionID1=myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_PrescriptionID from Inv_Prescription where N_SalesOrderID=" +myFunctions.getIntVAL(Prescription.Rows[0]["N_SalesOrderID"].ToString()) + " and N_CompanyID=" + N_CompanyID+"",connection, transaction).ToString());
+                              Prescription.Rows[0]["N_PrescriptionID"]=nPrescriptionID1;
+                        }
                         Prescription.Rows[0]["N_SalesID"]=N_SalesID;
                         Prescription.AcceptChanges();
                         dLayer.SaveData("Inv_Prescription", "N_PrescriptionID", Prescription, connection, transaction); 
