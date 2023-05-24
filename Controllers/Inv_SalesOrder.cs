@@ -496,6 +496,7 @@ namespace SmartxAPI.Controllers
                     DetailTable = _api.Format(DetailTable, "Details");
 
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_CustomerName", typeof(string), "");
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_PhoneNo1", typeof(string), "");
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "customer_PONo", typeof(string), "");
                     DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "X_UpdatedSPrice", typeof(string), "");
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "b_taskFlag", typeof(bool), true);
@@ -518,6 +519,7 @@ namespace SmartxAPI.Controllers
                     if (DetailTable.Rows.Count != 0)
                     {
                         MasterTable.Rows[0]["x_CustomerName"]= DetailTable.Rows[0]["x_CustomerName"];
+                        MasterTable.Rows[0]["x_PhoneNo1"]= DetailTable.Rows[0]["x_PhoneNo1"];
                         MasterTable.Rows[0]["x_CustomerName_Ar"]=DetailTable.Rows[0]["x_CustomerName_Ar"];
                         MasterTable.Rows[0]["customer_PONo"] = DetailTable.Rows[0]["customer_PONo"];
                     }
