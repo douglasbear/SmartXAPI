@@ -375,6 +375,7 @@ namespace SmartxAPI.Controllers
 
                                 foreach (DataRow Avar in TimeSheetDetails.Rows)
                                 {
+                                     //Avar["X_RemarkStatus"] = Avar["x_Remarks"];
                                     DateTime Date5 = Convert.ToDateTime(Avar["D_Date"].ToString());
 
                                     Avar["N_TotHours"] = Avar["N_TotalWorkHour"];
