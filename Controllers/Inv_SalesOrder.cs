@@ -798,7 +798,9 @@ namespace SmartxAPI.Controllers
                     //FOR EYE OPTICS 
                     if (n_SOId > 0)
                         {
-                            int nPrescriptionID=myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_PrescriptionID from Inv_Prescription where N_SalesOrderID=" + n_SOId.ToString() + " and N_CompanyID=" + N_CompanyID+"",connection, transaction).ToString());
+                            object presID=dLayer.ExecuteScalar("select isnull(N_PrescriptionID,0) from Inv_Prescription where N_SalesOrderID=" + n_SOId.ToString() + " and N_CompanyID=" + N_CompanyID+"",connection, transaction);
+                            if(presID==null){presID=0;}
+                            int nPrescriptionID=myFunctions.getIntVAL(presID.ToString());
                             dLayer.ExecuteScalar("delete from Inv_Prescription where N_SalesOrderID=" + n_SOId.ToString() + " and N_CompanyID=" + N_CompanyID, connection, transaction);
                             if(Prescription.Rows.Count>0)
                             {
