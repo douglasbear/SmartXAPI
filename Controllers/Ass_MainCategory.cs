@@ -41,7 +41,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
-            string sqlCommandText = "Select * from vw_InvMainAssetCategory_Disp";
+            string sqlCommandText = "Select * from vw_InvMainAssetCategory_Disp where N_companyID=@nCompanyID";
 
             try
             {

@@ -752,9 +752,11 @@ namespace SmartxAPI.GeneralFunctions
             DataTable DetailTable;
             DataTable dtsaleamountdetails; ;
             DataTable AdvanceTable; ;
+            DataTable Prescription; 
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
             AdvanceTable = ds.Tables["advanceTable"];
+            Prescription = ds.Tables["prescription"];
 
             DataTable Approvals;
             Approvals = ds.Tables["approval"];
@@ -773,6 +775,7 @@ namespace SmartxAPI.GeneralFunctions
             DataRow MasterRow = MasterTable.Rows[0];
 
             int N_SalesID = myFunctions.getIntVAL(MasterRow["n_SalesID"].ToString());
+            int N_SID = myFunctions.getIntVAL(MasterRow["n_SalesID"].ToString());
             int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
             int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
             int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
@@ -1333,6 +1336,44 @@ namespace SmartxAPI.GeneralFunctions
 
 
                     }
+                    //EYE OPTICS
+                        if (N_SID > 0)
+                        {
+                              object presID=dLayer.ExecuteScalar("select isnull(N_PrescriptionID,0) from Inv_Prescription where N_SalesOrderID=" + N_SID.ToString() + " and N_CompanyID=" + N_CompanyID+"",connection, transaction);
+                            if(presID==null){presID=0;}
+                            int nPrescriptionID=myFunctions.getIntVAL(presID.ToString());
+
+                            //int nPrescriptionID=myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_PrescriptionID from Inv_Prescription where N_SalesID=" + N_SID.ToString() + " and N_CompanyID=" + N_CompanyID+"",connection, transaction).ToString());
+                            
+                            dLayer.ExecuteScalar("delete from Inv_Prescription where N_SalesID=" + N_SID.ToString() + " and N_CompanyID=" + N_CompanyID, connection, transaction);
+                       if(Prescription.Rows.Count>0)
+                            {
+                                if(nPrescriptionID>0)
+                                    Prescription.Rows[0]["N_PrescriptionID"]=nPrescriptionID;
+                            }
+                            Prescription.AcceptChanges();
+                        }
+                    if(Prescription.Rows.Count>0)
+                    {
+                        if( myFunctions.getIntVAL(Prescription.Rows[0]["N_SalesOrderID"].ToString())>0)
+                        {
+                            object presID=dLayer.ExecuteScalar("select N_PrescriptionID from Inv_Prescription where N_SalesOrderID=" +myFunctions.getIntVAL(Prescription.Rows[0]["N_SalesOrderID"].ToString()) + " and N_CompanyID=" + N_CompanyID+"",connection, transaction);
+                            if(presID==null){presID=0;}
+                            //int nPrescriptionID1=myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_PrescriptionID from Inv_Prescription where N_SalesOrderID=" +myFunctions.getIntVAL(Prescription.Rows[0]["N_SalesOrderID"].ToString()) + " and N_CompanyID=" + N_CompanyID+"",connection, transaction).ToString());
+                              Prescription.Rows[0]["N_PrescriptionID"]=myFunctions.getIntVAL(presID.ToString());
+                        }
+                        Prescription.Rows[0]["N_SalesID"]=N_SalesID;
+                        Prescription.AcceptChanges();
+                        dLayer.SaveData("Inv_Prescription", "N_PrescriptionID", Prescription, connection, transaction); 
+                    }
+
+
+
+
+
+
+
+
                     SortedList StockPostingParams = new SortedList();
                     StockPostingParams.Add("N_CompanyID", N_CompanyID);
                     StockPostingParams.Add("N_SalesID", N_SalesID);

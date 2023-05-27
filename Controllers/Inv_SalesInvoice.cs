@@ -633,8 +633,17 @@ namespace SmartxAPI.Controllers
                         DetailSql = "select * from vw_SalesOrderDetailsToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID";
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
+
+                        //Eye Optics
+                        string sqlPrescription1="select * from Inv_Prescription where N_SalesOrderID=@nOrderID";
+                        DataTable Prescription=dLayer.ExecuteDataTable(sqlPrescription1, QueryParamsList, Con);
+                        Prescription = _api.Format(Prescription, "Prescription");
+
+
+
                         dsSalesInvoice.Tables.Add(MasterTable);
                         dsSalesInvoice.Tables.Add(DetailTable);
+                        dsSalesInvoice.Tables.Add(Prescription);
                         return Ok(_api.Success(dsSalesInvoice));
 
                     }
@@ -1043,10 +1052,19 @@ namespace SmartxAPI.Controllers
                     if (Invoice2Enableobj != null)
                         Invoice2Enable = true;
                     masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "Invoice2Enable", typeof(bool), Invoice2Enable);
+
+
+                    //Eye Optics
+                    string sqlPrescription="select * from Inv_Prescription where N_CustomerID="+myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString())+" and N_SalesID="+masterTable.Rows[0]["n_SalesId"].ToString()+"";
+                    DataTable prescription=dLayer.ExecuteDataTable(sqlPrescription, Con);
+                    prescription = _api.Format(prescription, "Prescription");
+
+
                     dsSalesInvoice.Tables.Add(masterTable);
                     dsSalesInvoice.Tables.Add(detailTable);
                     dsSalesInvoice.Tables.Add(saleamountdetails);
                     dsSalesInvoice.Tables.Add(Attachments);
+                    dsSalesInvoice.Tables.Add(prescription);
 
                     return Ok(_api.Success(dsSalesInvoice));
 
@@ -2140,7 +2158,8 @@ namespace SmartxAPI.Controllers
                                     //     {                                                
                                     dLayer.ExecuteNonQuery("delete from Inv_SaleAmountDetails where n_SalesID=@nSalesID and n_BranchID=@nBranchID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                                     dLayer.ExecuteNonQuery("delete from Inv_LoyaltyPointOut where n_SalesID=@nSalesID and n_PartyID=@nPartyID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-                                    // }                        
+                                    // }  
+                                    dLayer.ExecuteNonQuery("delete from Inv_Prescription where n_SalesID=@nSalesID and  n_CompanyID=@nCompanyID", QueryParams, connection, transaction);                      
                                     dLayer.ExecuteNonQuery("delete from Inv_ServiceContract where n_SalesID=@nSalesID and n_FnYearID=@nFnYearID and n_BranchID=@nBranchID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                                     if (dLayer.ExecuteNonQuery("delete from Inv_StockMaster where n_SalesID=@nSalesID and x_Type='Negative' and n_InventoryID = 0 and n_CompanyID=@nCompanyID", QueryParams, connection, transaction) <= 0)
                                     {

@@ -203,8 +203,16 @@ namespace SmartxAPI.Controllers
                         if (CategoryCode == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Category Code")); }
                         MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
                     }
-                   
-                    MasterTable.Columns.Remove("x_DeprCalculation");
+                   if (MasterTable.Columns.Contains("x_DeprCalculation"))
+                    {
+                        MasterTable.Columns.Remove("x_DeprCalculation");
+                      
+                    }
+                    if (MasterTable.Columns.Contains("x_TypeName"))
+                    {
+                        MasterTable.Columns.Remove("x_TypeName");
+                      
+                    }
 
                     string  DupCriteria = "X_CategoryCode='" + values + "' and N_CompanyID=" + nCompanyID;
                     string  X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;

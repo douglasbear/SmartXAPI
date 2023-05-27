@@ -375,6 +375,7 @@ namespace SmartxAPI.Controllers
 
                                 foreach (DataRow Avar in TimeSheetDetails.Rows)
                                 {
+                                     //Avar["X_RemarkStatus"] = Avar["x_Remarks"];
                                     DateTime Date5 = Convert.ToDateTime(Avar["D_Date"].ToString());
 
                                     Avar["N_TotHours"] = Avar["N_TotalWorkHour"];
@@ -865,7 +866,7 @@ namespace SmartxAPI.Controllers
 
                                     if (myFunctions.getDateVAL(Convert.ToDateTime(row["D_Date"].ToString())) == myFunctions.getDateVAL(Date5))
                                     {
-                                        if (row["Attandance"].ToString() != "A" )
+                                      if (row["Attandance"].ToString() != "A" )
                                         {
                                             N_WorkdHrs += HoursToMinutes(myFunctions.getVAL(row["N_Tothours"].ToString()));
                                             N_WorkHours += HoursToMinutes(myFunctions.getVAL(row["N_Workhours"].ToString()));
