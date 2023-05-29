@@ -1246,6 +1246,7 @@ namespace SmartxAPI.Controllers
                 string xPhone1 = dtMasterTable.Rows[0]["x_Phone1"].ToString();
                 string xEmailID = dtMasterTable.Rows[0]["x_EmailID"].ToString();
                 int nPositionID = myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_PositionID"].ToString());
+                int nEmpTypeID = myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_EmpTypeID"].ToString());
                 int nUserID = myFunctions.GetUserID(User);
                 string X_BtnAction = "";
                 string xButtonAction="";
@@ -1320,9 +1321,13 @@ namespace SmartxAPI.Controllers
                     // Auto Gen
                     if (xEmpCode == "@Auto")
                     {
+
+                        object X_Type = dLayer.ExecuteScalar("select X_Description from Pay_EmploymentType where  N_CompanyID = " + nCompanyID + " and n_EmploymentID=" + nEmpTypeID, connection, transaction);
+
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
+                        Params.Add("X_Type", X_Type);
                         xEmpCode = dLayer.GetAutoNumber("pay_Employee", "x_EmpCode", Params, connection, transaction);
                          xButtonAction="Insert"; 
                         if (xEmpCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Employee Code")); }

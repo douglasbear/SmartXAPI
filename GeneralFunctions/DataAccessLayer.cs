@@ -686,7 +686,9 @@ namespace SmartxAPI.GeneralFunctions
                 {"N_CompanyID", Params["N_CompanyID"]},
                 {"N_YearID", Params["N_YearID"]},
                 {"N_FormID", Params["N_FormID"]},
-                {"N_BranchID", BranchId}
+                {"N_BranchID", BranchId},
+                 {"X_Type", Params["X_Type"]},
+
                 };
             SortedList validParam = new SortedList(){
                 {"@CompanyID", Params["N_CompanyID"]},
