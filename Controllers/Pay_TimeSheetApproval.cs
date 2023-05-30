@@ -691,23 +691,25 @@ namespace SmartxAPI.Controllers
                                   row["X_Days"] = Date5.ToString("dddd");
                                   //myFunctions.AddNewColumnToDataTable(PayAttendence, "X_Days", typeof(string),Date5.ToString("dddd"));
                                 //   PayAttendence.AcceptChanges();
+                                 foreach (DataRow Var2 in PayWorkingHours.Rows)
+                                    {
+                                        if (((int)Date5.DayOfWeek) + 1 == myFunctions.getIntVAL(Var2["N_WHID"].ToString()))
+                                        {
+                                            row["N_Workhours"] = Var2["N_Workhours"];
+                                        }
+                                    }
+                                    PayAttendence.AcceptChanges();
                                     foreach (DataRow Var1 in PayOffDays.Rows)
                                     {
                                         if (nCategoryID == myFunctions.getIntVAL(Var1["N_CategoryID"].ToString()) && ((int)Date5.DayOfWeek) + 1 == myFunctions.getIntVAL(Var1["N_DayID"].ToString()) || myFunctions.getDateVAL(Date5) == myFunctions.getDateVAL(Convert.ToDateTime(Var1["D_Date"].ToString())))
                                         {
                                             row["X_Remarks"] = Var1["X_Remarks"];
                                             row["N_Vacation"] = 2;
+                                            row["N_Workhours"] = 0;
                                         }
                                     }
                                     PayAttendence.AcceptChanges();
-                                    // foreach (DataRow Var2 in PayWorkingHours.Rows)
-                                    // {
-                                    //     if (((int)Date5.DayOfWeek) + 1 == myFunctions.getIntVAL(Var2["N_WHID"].ToString()))
-                                    //     {
-                                    //         row["N_Workhours"] = Var2["N_Workhours"];
-                                    //     }
-                                    // }
-                                    PayAttendence.AcceptChanges();
+                                   
 
 
                                     if (bCategoryWiseAddition)
