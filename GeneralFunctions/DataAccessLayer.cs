@@ -681,12 +681,15 @@ namespace SmartxAPI.GeneralFunctions
         {
             string AutoNumber = "";
             string BranchId = "0";
+            string xType = "";
             if (Params.Contains("N_BranchID")) { BranchId = Params["N_BranchID"].ToString(); }
+            if (Params.Contains("X_Type")) { xType = Params["X_Type"].ToString();}
             SortedList paramList = new SortedList(){
                 {"N_CompanyID", Params["N_CompanyID"]},
                 {"N_YearID", Params["N_YearID"]},
                 {"N_FormID", Params["N_FormID"]},
-                {"N_BranchID", BranchId}
+                {"N_BranchID", BranchId},
+                 {"X_Type", xType},
                 };
             SortedList validParam = new SortedList(){
                 {"@CompanyID", Params["N_CompanyID"]},
