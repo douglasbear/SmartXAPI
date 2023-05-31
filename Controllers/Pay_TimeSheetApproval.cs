@@ -633,6 +633,15 @@ namespace SmartxAPI.Controllers
                                 secParams.Add("@dtpTodate", dtpTodate);
                                 secParams.Add("@N_EmpID", nEmpID);
 
+                                DateTime D_HireDate = Convert.ToDateTime(dLayer.ExecuteScalar("select D_HireDate from Pay_Employee where N_CompanyID="+nCompanyID+" and N_EmpID="+nEmpID+" and N_FnYearID="+nFnYearID, secParams, connection).ToString());
+                                DateTime D_ResignDate = Convert.ToDateTime(dLayer.ExecuteScalar("select isnull(D_StatusDate,"+dtpTodate+") from Pay_Employee where N_CompanyID="+nCompanyID+" and N_EmpID="+nEmpID+" and N_FnYearID="+nFnYearID, secParams, connection).ToString());
+
+                                if(D_HireDate>dtpFromdate)
+                                    secParams["@dtpFromdate"]=D_HireDate;
+
+                                if(D_ResignDate<dtpTodate)
+                                    secParams["@dtpTodate"]=D_ResignDate;
+
                                 string payAttendanceSql = "SP_Pay_TimeSheet @nCompanyID,@nFnYearID,@dtpFromdate,@dtpTodate,@N_EmpID";
                                 PayAttendence = dLayer.ExecuteDataTable(payAttendanceSql, secParams, connection);
 
@@ -675,6 +684,9 @@ namespace SmartxAPI.Controllers
                                         rowPA["D_date"] = Date;
                                         rowPA["N_EmpId"] = nEmpID;
 
+                                        if(D_HireDate<=Date && D_ResignDate>=Date)
+                                            rowPA["N_Workhours"] = nEmpID;
+
                                         PayAttendence.Rows.Add(rowPA);
                                     }
                                     Date = Date.AddDays(1);
@@ -691,25 +703,23 @@ namespace SmartxAPI.Controllers
                                   row["X_Days"] = Date5.ToString("dddd");
                                   //myFunctions.AddNewColumnToDataTable(PayAttendence, "X_Days", typeof(string),Date5.ToString("dddd"));
                                 //   PayAttendence.AcceptChanges();
-                                 foreach (DataRow Var2 in PayWorkingHours.Rows)
-                                    {
-                                        if (((int)Date5.DayOfWeek) + 1 == myFunctions.getIntVAL(Var2["N_WHID"].ToString()))
-                                        {
-                                            row["N_Workhours"] = Var2["N_Workhours"];
-                                        }
-                                    }
-                                    PayAttendence.AcceptChanges();
                                     foreach (DataRow Var1 in PayOffDays.Rows)
                                     {
                                         if (nCategoryID == myFunctions.getIntVAL(Var1["N_CategoryID"].ToString()) && ((int)Date5.DayOfWeek) + 1 == myFunctions.getIntVAL(Var1["N_DayID"].ToString()) || myFunctions.getDateVAL(Date5) == myFunctions.getDateVAL(Convert.ToDateTime(Var1["D_Date"].ToString())))
                                         {
                                             row["X_Remarks"] = Var1["X_Remarks"];
                                             row["N_Vacation"] = 2;
-                                            row["N_Workhours"] = 0;
                                         }
                                     }
                                     PayAttendence.AcceptChanges();
-                                   
+                                    // foreach (DataRow Var2 in PayWorkingHours.Rows)
+                                    // {
+                                    //     if (((int)Date5.DayOfWeek) + 1 == myFunctions.getIntVAL(Var2["N_WHID"].ToString()))
+                                    //     {
+                                    //         row["N_Workhours"] = Var2["N_Workhours"];
+                                    //     }
+                                    // }
+                                    PayAttendence.AcceptChanges();
 
 
                                     if (bCategoryWiseAddition)
