@@ -2153,13 +2153,26 @@ namespace SmartxAPI.Controllers
                                 }
                                 else
                                 {
+
+                                    object OSOID = dLayer.ExecuteScalar("Select N_SalesOrderID from Inv_Prescription where n_SalesID=@nSalesID and  n_CompanyID=@nCompanyID",QueryParams, connection, transaction);
+                                    if (OSOID == null) OSOID = 0;
+
+                                    if(myFunctions.getIntVAL(OSOID.ToString()) > 0)
+                                     {  
+                                         dLayer.ExecuteNonQuery("update Inv_Prescription set n_SalesID=null where n_SalesID=@nSalesID and  n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+    
+                                     }
+                                    else
+                                     {
+                                     dLayer.ExecuteNonQuery("delete from Inv_Prescription where n_SalesID=@nSalesID and  n_CompanyID=@nCompanyID", QueryParams, connection, transaction);                      
+                            
+                                     }
                                     dLayer.ExecuteNonQuery("delete from Inv_DeliveryDispatch where n_InvoiceID=@nSalesID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                                     //   if (N_AmtSplit == 1)
                                     //     {                                                
                                     dLayer.ExecuteNonQuery("delete from Inv_SaleAmountDetails where n_SalesID=@nSalesID and n_BranchID=@nBranchID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                                     dLayer.ExecuteNonQuery("delete from Inv_LoyaltyPointOut where n_SalesID=@nSalesID and n_PartyID=@nPartyID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                                     // }  
-                                    dLayer.ExecuteNonQuery("delete from Inv_Prescription where n_SalesID=@nSalesID and  n_CompanyID=@nCompanyID", QueryParams, connection, transaction);                      
                                     dLayer.ExecuteNonQuery("delete from Inv_ServiceContract where n_SalesID=@nSalesID and n_FnYearID=@nFnYearID and n_BranchID=@nBranchID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                                     if (dLayer.ExecuteNonQuery("delete from Inv_StockMaster where n_SalesID=@nSalesID and x_Type='Negative' and n_InventoryID = 0 and n_CompanyID=@nCompanyID", QueryParams, connection, transaction) <= 0)
                                     {
