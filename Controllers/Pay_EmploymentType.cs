@@ -56,6 +56,13 @@ namespace SmartxAPI.Controllers
                         DataTable dt = new DataTable();
                         string xDescription = MasterTable.Rows[0]["x_Description"].ToString();
                         string xPrefix = MasterTable.Rows[0]["x_Prefix"].ToString();
+                         string Invoice = "select * from Inv_InvoiceCounter where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "  and N_FormID=" + 188 + " and X_Type='" + xDescription + "' ";
+                        DataTable InvoiceTale = new DataTable();
+                        InvoiceTale = dLayer.ExecuteDataTable(Invoice, Params, connection,transaction);
+                        if (InvoiceTale.Rows.Count != 0)
+                        {
+                            dLayer.ExecuteNonQuery("DELETE FROM Inv_InvoiceCounter WHERE N_CompanyID =" + nCompanyID + " and  N_FnYearID=" + nFnYearID + " and N_FormID=" + 188 + " and X_Type='" + xDescription + "' ", Params, connection, transaction);
+                        }
                         SortedList proParams2 = new SortedList(){
                                         {"@N_CompanyID",nCompanyID},
                                         {"@N_FormID",188},
