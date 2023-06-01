@@ -689,15 +689,24 @@ namespace SmartxAPI.Controllers
 
                                         float N_AddWH=0,N_ShiftWH=0,N_WH=0;
 
+                                        object additionWh;
+                                        object shiftwh;
+                                        object wh;
+
                                         if(D_HireDate<=Date )
                                         {
-                                            N_AddWH = myFunctions.getFloatVAL(dLayer.ExecuteScalar("select ISNULL(N_Workhours,0) from Pay_AdditionalWorkingDays where N_CompanyID="+nCompanyID+" and D_WorkingDate='"+Date+"' and N_CatagoryID="+nCategoryID, secParams, connection).ToString());
+                                            additionWh=dLayer.ExecuteScalar("select ISNULL(N_Workhours,0) from Pay_AdditionalWorkingDays where N_CompanyID="+nCompanyID+" and D_WorkingDate='"+Date+"' and N_CatagoryID="+nCategoryID, secParams, connection);
+                                            if(additionWh==null){N_AddWH=0;}else{N_AddWH=myFunctions.getFloatVAL(additionWh.ToString());}
                                             if(N_AddWH==0)
                                             {
-                                                N_ShiftWH = myFunctions.getFloatVAL(dLayer.ExecuteScalar("select N_Workhours from Pay_WorkingHours where N_CompanyID="+nCompanyID+" and N_WHID="+((int)Date.DayOfWeek) + 1+" and N_CatagoryID =(select N_GroupID from Pay_EmpShiftDetails where N_CompanyID="+nCompanyID+" and N_EmpID="+nEmpID+" and D_Date='"+Date+"')", secParams, connection).ToString());
+                                                shiftwh=dLayer.ExecuteScalar("select ISNULL(N_Workhours,0) from Pay_AdditionalWorkingDays where N_CompanyID="+nCompanyID+" and D_WorkingDate='"+Date+"' and N_CatagoryID="+nCategoryID, secParams, connection);
+                                                if(shiftwh==null){N_ShiftWH=0;}else{N_ShiftWH=myFunctions.getFloatVAL(shiftwh.ToString());}
+                                                
                                                 if(N_ShiftWH==0)
                                                 {
-                                                    N_WH = myFunctions.getFloatVAL(dLayer.ExecuteScalar("select N_Workhours from Pay_WorkingHours where N_CompanyID="+nCompanyID+" and N_WHID="+((int)Date.DayOfWeek) + 1+" and N_CatagoryID ="+nCategoryID, secParams, connection).ToString());
+                                                    wh=dLayer.ExecuteScalar("select N_Workhours from Pay_WorkingHours where N_CompanyID="+nCompanyID+" and N_WHID="+((int)Date.DayOfWeek) + 1+" and N_CatagoryID ="+nCategoryID, secParams, connection);
+                                                   if(wh==null){N_WH=0;}else{N_WH=myFunctions.getFloatVAL(wh.ToString());}
+                                                    
                                                     if(N_WH!=0)
                                                         rowPA["N_ActWorkHours"] = N_WH;
                                                 }
