@@ -812,9 +812,12 @@ namespace SmartxAPI.Controllers
                         }
                     if(Prescription.Rows.Count >0 )
                     { 
+                        if (Prescription.Columns.Contains("N_SalesOrderID"))
+                        {
                         Prescription.Rows[0]["N_SalesOrderID"]=n_SalesOrderId;
                         Prescription.AcceptChanges();
                         dLayer.SaveData("Inv_Prescription", "N_PrescriptionID", Prescription, connection, transaction); 
+                        }
 
                     }
                 

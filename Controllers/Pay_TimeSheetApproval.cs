@@ -636,6 +636,15 @@ namespace SmartxAPI.Controllers
                                 secParams.Add("@dtpTodate", dtpTodate);
                                 secParams.Add("@N_EmpID", nEmpID);
 
+                                DateTime D_HireDate = Convert.ToDateTime(dLayer.ExecuteScalar("select D_HireDate from Pay_Employee where N_CompanyID="+nCompanyID+" and N_EmpID="+nEmpID+" and N_FnYearID="+nFnYearID, secParams, connection).ToString());
+                                DateTime D_ResignDate = Convert.ToDateTime(dLayer.ExecuteScalar("select isnull(D_StatusDate,'"+dtpTodate+"') from Pay_Employee where N_CompanyID="+nCompanyID+" and N_EmpID="+nEmpID+" and N_FnYearID="+nFnYearID, secParams, connection).ToString());
+
+                                if(D_HireDate>dtpFromdate)
+                                    secParams["@dtpFromdate"]=D_HireDate;
+
+                                if(D_ResignDate<dtpTodate)
+                                    secParams["@dtpTodate"]=D_ResignDate;
+
                                 string payAttendanceSql = "SP_Pay_TimeSheet @nCompanyID,@nFnYearID,@dtpFromdate,@dtpTodate,@N_EmpID";
                                 PayAttendence = dLayer.ExecuteDataTable(payAttendanceSql, secParams, connection);
 
@@ -665,7 +674,7 @@ namespace SmartxAPI.Controllers
                                 PayOffDays = dLayer.ExecuteDataTable(Sql3, secParams, connection);
 
                                 //-----------------------------------------------------------------------------------------------------
-                                string Sql4 = "Select * from vw_pay_WorkingHours Where N_CompanyID =" + nCompanyID;
+                                string Sql4 = "Select * from vw_pay_WorkingHours Where N_CompanyID =" + nCompanyID +" and N_CatagoryID="+nCategoryID;
                                 PayWorkingHours = dLayer.ExecuteDataTable(Sql4, secParams, connection);
                                 //-------------------------------------------------------------------------------------------------------
                                 DateTime Date = dtpFromdate;
@@ -677,6 +686,27 @@ namespace SmartxAPI.Controllers
                                         DataRow rowPA = PayAttendence.NewRow();
                                         rowPA["D_date"] = Date;
                                         rowPA["N_EmpId"] = nEmpID;
+
+                                        float N_AddWH=0,N_ShiftWH=0,N_WH=0;
+
+                                        if(D_HireDate<=Date )
+                                        {
+                                            N_AddWH = myFunctions.getFloatVAL(dLayer.ExecuteScalar("select ISNULL(N_Workhours,0) from Pay_AdditionalWorkingDays where N_CompanyID="+nCompanyID+" and D_WorkingDate='"+Date+"' and N_CatagoryID="+nCategoryID, secParams, connection).ToString());
+                                            if(N_AddWH==0)
+                                            {
+                                                N_ShiftWH = myFunctions.getFloatVAL(dLayer.ExecuteScalar("select N_Workhours from Pay_WorkingHours where N_CompanyID="+nCompanyID+" and N_WHID="+((int)Date.DayOfWeek) + 1+" and N_CatagoryID =(select N_GroupID from Pay_EmpShiftDetails where N_CompanyID="+nCompanyID+" and N_EmpID="+nEmpID+" and D_Date='"+Date+"')", secParams, connection).ToString());
+                                                if(N_ShiftWH==0)
+                                                {
+                                                    N_WH = myFunctions.getFloatVAL(dLayer.ExecuteScalar("select N_Workhours from Pay_WorkingHours where N_CompanyID="+nCompanyID+" and N_WHID="+((int)Date.DayOfWeek) + 1+" and N_CatagoryID ="+nCategoryID, secParams, connection).ToString());
+                                                    if(N_WH!=0)
+                                                        rowPA["N_ActWorkHours"] = N_WH;
+                                                }
+                                                else
+                                                    rowPA["N_ActWorkHours"] = N_ShiftWH;
+                                            }
+                                            else
+                                                rowPA["N_ActWorkHours"] = N_AddWH;
+                                        }
 
                                         PayAttendence.Rows.Add(rowPA);
                                     }
@@ -694,13 +724,13 @@ namespace SmartxAPI.Controllers
                                   row["X_Days"] = Date5.ToString("dddd");
                                   //myFunctions.AddNewColumnToDataTable(PayAttendence, "X_Days", typeof(string),Date5.ToString("dddd"));
                                 //   PayAttendence.AcceptChanges();
-                                //  foreach (DataRow Var2 in PayWorkingHours.Rows)
+                                // foreach (DataRow Var2 in PayWorkingHours.Rows)
+                                // {
+                                //     if (((int)Date5.DayOfWeek) + 1 == myFunctions.getIntVAL(Var2["N_WHID"].ToString()))
                                 //     {
-                                //         if (((int)Date5.DayOfWeek) + 1 == myFunctions.getIntVAL(Var2["N_WHID"].ToString()))
-                                //         {
-                                //             row["N_Workhours"] = Var2["N_Workhours"];
-                                //         }
+                                //         row["N_Workhours"] = Var2["N_Workhours"];
                                 //     }
+                                // }
                                     PayAttendence.AcceptChanges();
                                     foreach (DataRow Var1 in PayOffDays.Rows)
                                     {
@@ -708,11 +738,17 @@ namespace SmartxAPI.Controllers
                                         {
                                             row["X_Remarks"] = Var1["X_Remarks"];
                                             row["N_Vacation"] = 2;
-                                            row["N_Workhours"] = 0;
                                         }
                                     }
                                     PayAttendence.AcceptChanges();
-                                   
+                                    // foreach (DataRow Var2 in PayWorkingHours.Rows)
+                                    // {
+                                    //     if (((int)Date5.DayOfWeek) + 1 == myFunctions.getIntVAL(Var2["N_WHID"].ToString()))
+                                    //     {
+                                    //         row["N_Workhours"] = Var2["N_Workhours"];
+                                    //     }
+                                    // }
+                                    PayAttendence.AcceptChanges();
 
 
                                     if (bCategoryWiseAddition)
