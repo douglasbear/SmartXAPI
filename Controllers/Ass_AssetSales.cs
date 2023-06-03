@@ -307,13 +307,21 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User,"Error"));
                     }
-                   
+                   float N_SQty=0;
                     for (int j = 0 ;j < DetailTable.Rows.Count;j++)
                     {
+                        N_SQty=myFunctions.getFloatVAL(DetailTable.Rows[j]["N_Qty"].ToString());
+
                         if (TypeID == 288)
-                            dLayer.ExecuteNonQuery("update Ass_AssetMaster set N_Status=5 where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"], connection, transaction);                                  
+                        {
+                            dLayer.ExecuteNonQuery("update Ass_AssetMaster set N_Status=5 where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"]+" and N_CompanyID="+nCompanyID+" and (N_Qty-"+N_SQty+"=0)", connection, transaction);                                  
+                            dLayer.ExecuteNonQuery("update Ass_AssetMaster set N_Qty=N_Qty-"+N_SQty+" where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"]+" and N_CompanyID="+nCompanyID, connection, transaction);                                  
+                        }
                         else
-                            dLayer.ExecuteNonQuery("update Ass_AssetMaster set N_Status=2 where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"], connection, transaction);                                  
+                        {
+                            dLayer.ExecuteNonQuery("update Ass_AssetMaster set N_Status=2 where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"]+" and N_CompanyID="+nCompanyID+" and (N_Qty-"+N_SQty+"=0)", connection, transaction);                                  
+                            dLayer.ExecuteNonQuery("update Ass_AssetMaster set N_Qty=N_Qty-"+N_SQty+" where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"]+" and N_CompanyID="+nCompanyID, connection, transaction);                                  
+                        }
                     }
 
                                       //Activity Log
@@ -337,7 +345,7 @@ namespace SmartxAPI.Controllers
                     catch (Exception ex)
                     {
                         transaction.Rollback();
-                         
+                         return Ok(_api.Error(User,ex));
                     }
 
                     SortedList Result = new SortedList();

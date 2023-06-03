@@ -201,7 +201,7 @@ namespace SmartxAPI.Controllers
 
 
 
-                    if (xSortBy != null && xSortBy.Trim() != "")
+                   if (xSortBy != null && xSortBy.Trim() != "")
                     {
                         if (xSortBy.ToString().Contains("Date") || xSortBy.ToString().Contains("date"))
                         {
@@ -338,11 +338,14 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Error(User, "Data Source2 Not Found"));
                     }
-
                     if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + SortBy + xSortBy;
                     else
                         sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + " and " + PKey + " not in " + "(select top(" + Count + ") " + PKey + " from " + DataSource2 + Criterea + SortBy + xSortBy + " ) " + SortBy + xSortBy;
+                    // if (Count == 0)
+                    //     sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + SortBy;
+                    // else
+                    //     sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + " and " + PKey + " not in " + "(select top(" + Count + ") " + PKey + " from " + DataSource2 + Criterea + SortBy + " ) " + SortBy;
 
                     if (export)
                     {

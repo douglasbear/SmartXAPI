@@ -815,5 +815,68 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+
+
+ [HttpGet("subscriptionList")]
+        public ActionResult clientSubscriptionList(int nUserID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string sqlCommandText ="";
+             
+                    // object x_UserCategory = dLayer.ExecuteScalar("Select X_UserCategory from Sec_UserCategory Where N_UserCategoryID in  (" + userCategoryID + ")", Params, connection);
+                    // if (x_UserCategory != null)
+                    // {
+                    //     x_UserCategoryName = x_UserCategory.ToString();
+                    // }
+
+            using (SqlConnection con = new SqlConnection(connectionString))
+                    {
+                        con.Open();
+                        //DataTable  userAppID = dLayer.ExecuteScalar("select N_AppID from sec_userApps where N_GlobalUserID =" + nUserID + "", Params, con).ToString();
+                        //userAppID=userAppID+","+userAppID;
+                        // dt = dLayer.ExecuteDataTable(sqlCmd, Params, con);
+                         string sqlCmd="select N_AppID from sec_userApps where N_GlobalUserID =" + nUserID + "";
+                         DataTable userAppID = dLayer.ExecuteDataTable(sqlCmd, Params, con);
+                         if (userAppID.Rows.Count != 0)
+                         {
+                            string x_userAppID="";
+                             for(int i=0;i<userAppID.Rows.Count;i++)
+                            {
+                                if(x_userAppID=="")
+                                    x_userAppID=userAppID.Rows[i]["n_AppID"].ToString();                               
+                                else
+                               x_userAppID=x_userAppID+","+ userAppID.Rows[i]["n_AppID"];
+                            }
+
+                         sqlCommandText = "Select * from AppMaster where N_AppID in (" +x_userAppID+ ")";
+                         }
+                         Params.Add("@nUserID", nUserID);
+                    
+           
+            try
+            {
+                using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                {
+                    olivoCon.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, olivoCon);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+        }
+
     }
 }

@@ -531,7 +531,13 @@ namespace SmartxAPI.Controllers
                     paramList.Add("@clientID", n_ClientID);
                     if(n_RefID==0)
                     {
-                    dLayer.ExecuteNonQuery("Update GenSettings Set N_Value =  (SELECT N_FreeUsers FROM AppMaster  where N_AppID="+n_AppID+")+(SELECT  N_Value FROM GenSettings where N_ClientID="+n_ClientID+" and X_Description='USER LIMIT')  where  N_ClientID="+n_ClientID+" and X_Description='USER LIMIT'" , connection, transaction);
+                  
+                    object freeUserCount = dLayer.ExecuteScalar("SELECT isnull(N_FreeUsers,0)  FROM AppMaster  where N_AppID="+n_AppID+"",paramList, connection,transaction);
+                    int freeUservalue=myFunctions.getIntVAL(freeUserCount.ToString());
+                    object settingsUserCount = dLayer.ExecuteScalar("SELECT  isnull(N_Value,0) FROM GenSettings where N_ClientID="+n_ClientID+" and X_Description='USER LIMIT'",paramList, connection,transaction);
+                    int settingsUservalue=myFunctions.getIntVAL(settingsUserCount.ToString());      
+                    int sumValue= freeUservalue + settingsUservalue;    
+                    dLayer.ExecuteNonQuery("Update GenSettings Set N_Value =  "+sumValue+" where  N_ClientID="+n_ClientID+" and X_Description='USER LIMIT'" , connection, transaction);
                     }
 
                     dLayer.DeleteData("ClientApps", "n_AppID", n_AppID, "n_ClientID="+n_ClientID+"",connection, transaction);
@@ -612,6 +618,13 @@ namespace SmartxAPI.Controllers
                     transaction = connection.BeginTransaction();
                      Results=dLayer.ExecuteNonQuery("delete from ClientApps where  n_AppID=" + nAppID + " and n_ClientID=" + nClientID, connection, transaction);
                      dLayer.ExecuteNonQuery("delete from AppHistory where  n_AppID=" + nAppID + " and n_ClientID=" + nClientID, connection, transaction);
+                    object freeUserCount = dLayer.ExecuteScalar("SELECT isnull(N_FreeUsers,0)  FROM AppMaster  where N_AppID="+nAppID+"",Params, connection,transaction);
+                    int freeUservalue=myFunctions.getIntVAL(freeUserCount.ToString());
+                    object settingsUserCount = dLayer.ExecuteScalar("SELECT  isnull(N_Value,0) FROM GenSettings where N_ClientID="+nClientID+" and X_Description='USER LIMIT'",Params, connection,transaction);
+                    int settingsUservalue=myFunctions.getIntVAL(settingsUserCount.ToString());      
+                    int sumValue= settingsUservalue - freeUservalue ;    
+                    dLayer.ExecuteNonQuery("Update GenSettings Set N_Value =  "+sumValue+" where  N_ClientID="+nClientID+" and X_Description='USER LIMIT'" , connection, transaction);
+                    
                    using (SqlConnection olivoCon = new SqlConnection(connectionString))
                     {
                         olivoCon.Open();

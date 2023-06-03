@@ -1246,6 +1246,7 @@ namespace SmartxAPI.Controllers
                 string xPhone1 = dtMasterTable.Rows[0]["x_Phone1"].ToString();
                 string xEmailID = dtMasterTable.Rows[0]["x_EmailID"].ToString();
                 int nPositionID = myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_PositionID"].ToString());
+                int nEmpTypeID = myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_EmpTypeID"].ToString());
                 int nUserID = myFunctions.GetUserID(User);
                 string X_BtnAction = "";
                 string xButtonAction="";
@@ -1320,9 +1321,13 @@ namespace SmartxAPI.Controllers
                     // Auto Gen
                     if (xEmpCode == "@Auto")
                     {
+
+                        object X_Type = dLayer.ExecuteScalar("select X_Description from Pay_EmploymentType where  N_CompanyID = " + nCompanyID + " and n_EmploymentID=" + nEmpTypeID, connection, transaction);
+
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
+                        Params.Add("X_Type", X_Type);
                         xEmpCode = dLayer.GetAutoNumber("pay_Employee", "x_EmpCode", Params, connection, transaction);
                          xButtonAction="Insert"; 
                         if (xEmpCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Employee Code")); }
@@ -1753,6 +1758,27 @@ namespace SmartxAPI.Controllers
                                                     dt.Rows.Add(row);
 
                                                     int UserID = dLayer.SaveData("Sec_User", "N_UserID", dt, connection, transaction);
+
+                                                  object SUAUserID = dLayer.ExecuteScalar("SELECT N_UserID FROM Users where x_EmailID='" + xEmail.ToString() + "' and N_ClientID=" + nClientID, olivoCon, olivoTxn);
+                                                  DataTable dtUA = new DataTable();
+                                                    dtUA.Clear();
+                                                    dtUA.Columns.Add("N_CompanyID");
+                                                    dtUA.Columns.Add("N_UserID");
+                                                    dtUA.Columns.Add("N_AppMappingID");
+                                                    dtUA.Columns.Add("N_AppID");
+                                                     dtUA.Columns.Add("X_LandingPage");
+                                                     dtUA.Columns.Add("N_GlobalUserID");
+                                                    DataRow rowUA = dtUA.NewRow();
+                                                    rowUA["N_CompanyID"] = nCompanyID;
+                                                    rowUA["N_UserID"] = UserID;
+                                                    rowUA["N_AppMappingID"] = 0;
+                                                    rowUA["N_AppID"] =2;
+                                                    rowUA["X_LandingPage"] = null;
+                                                     rowUA["N_GlobalUserID"] = SUAUserID;
+                                                    dtUA.Rows.Add(rowUA);
+                                                    int UAUserID = dLayer.SaveData("sec_userapps", "N_AppMappingID", dtUA, connection, transaction);
+
+                                                    
                                                 }
                                             }
                                         }
