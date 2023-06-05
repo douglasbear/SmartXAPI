@@ -283,6 +283,7 @@ namespace SmartxAPI.Controllers
                                             var["n_ActivityID"] = 0;
                                             var["N_Order"] = Order;
                                             var["X_Contact"] = Contact;
+                                            var["N_FnYearId"] = nFnYearId;
                                             if (Order == 1)
                                             {
                                                 var["b_closed"] = 1;
