@@ -2031,7 +2031,7 @@ namespace SmartxAPI.Controllers
 
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nInvoiceID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID, int nQuotationID, string comments)
+        public ActionResult DeleteData(int nInvoiceID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID, int nQuotationID, string comments,int nFormID)
         {
             if (comments == null)
             {
@@ -2258,6 +2258,11 @@ namespace SmartxAPI.Controllers
                             };
 
                             transaction.Commit();
+                            if(nFormID ==1741) 
+                            {
+                               return Ok(_api.Success("Optical Invoice " + status + " Successfully")); 
+                            }
+                            else
                             return Ok(_api.Success("Sales Invoice " + status + " Successfully"));
                         }
                         else
