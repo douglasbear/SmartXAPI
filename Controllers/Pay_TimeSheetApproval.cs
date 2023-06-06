@@ -706,7 +706,10 @@ namespace SmartxAPI.Controllers
                                         object shiftwh;
                                         object wh;
 
-                                        if(D_HireDate<=Date )
+                                        int N_HolidayCount=0;
+                                        object HoliCount= dLayer.ExecuteScalar("Select COUNT(1) from vw_pay_OffDays Where N_CompanyID =" + nCompanyID + " and (N_FNyearID= " + nFnYearID + " or N_FNyearID=0) and D_Date='"+Date+"'", secParams, connection);
+                                        if(HoliCount != null) N_HolidayCount=myFunctions.getIntVAL(HoliCount.ToString());
+                                        if(D_HireDate<=Date && N_HolidayCount==0)
                                         {
                                             additionWh=dLayer.ExecuteScalar("select ISNULL(N_Workhours,0) from Pay_AdditionalWorkingDays where N_CompanyID="+nCompanyID+" and D_WorkingDate='"+Date+"' and N_CatagoryID="+nCategoryID, secParams, connection);
                                             if(additionWh==null){N_AddWH=0;}else{N_AddWH=myFunctions.getFloatVAL(additionWh.ToString());}
@@ -717,7 +720,7 @@ namespace SmartxAPI.Controllers
                                                 
                                                 if(N_ShiftWH==0)
                                                 {
-                                                    wh=dLayer.ExecuteScalar("select N_Workhours from Pay_WorkingHours where N_CompanyID="+nCompanyID+" and N_WHID="+((int)Date.DayOfWeek) + 1+" and N_CatagoryID ="+nCategoryID, secParams, connection);
+                                                    wh=dLayer.ExecuteScalar("select N_Workhours from Pay_WorkingHours where N_CompanyID="+nCompanyID+" and N_WHID="+((int)Date.DayOfWeek+ 1)+" and N_CatagoryID ="+nCategoryID, secParams, connection);
                                                    if(wh==null){N_WH=0;}else{N_WH=myFunctions.getFloatVAL(wh.ToString());}
                                                     
                                                     if(N_WH!=0)
