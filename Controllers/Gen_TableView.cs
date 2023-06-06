@@ -164,7 +164,7 @@ namespace SmartxAPI.Controllers
                         {
                             if (myFunctions.getBoolVAL(cRow["B_Search"].ToString()))
                             {
-                                //if(cRow["X_FieldName"].ToString()) contain _ cut before _ // if underscore on  middle then replace into space ''
+                                //if(cRow["X_FieldName"].ToString()) contain _ cut before _ // if underscore on  middle then replace into space '' 
                                 if (cRow["X_FieldName"].ToString().Contains("Date") || cRow["X_FieldName"].ToString().ToString().Contains("date"))
                                 {
                                     Searchkey = Searchkey + " or REPLACE(CONVERT(varchar(11), [" + cRow["X_FieldName"].ToString() + "], 106), ' ', '-') like '%" + xSearchkey + "%'";
