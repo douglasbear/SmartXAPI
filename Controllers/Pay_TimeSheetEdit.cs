@@ -152,6 +152,7 @@ namespace SmartxAPI.Controllers
 
                     ElementSql = " Select N_EmpID as N_EmpId,* from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date >= '" + dtpSalaryFromdate + "' and D_Date<=' " + dtpSalaryToDate + "' and N_EmpID=" + nEmpID + " order by D_Date";
                     ElementsTable = dLayer.ExecuteDataTable(ElementSql, Params, connection);
+                    ElementsTable = myFunctions.AddNewColumnToDataTable(ElementsTable, "X_Day", typeof(string),null);
                     // if (ElementsTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     ElementsTable.AcceptChanges();
 
@@ -175,6 +176,9 @@ namespace SmartxAPI.Controllers
 
                     foreach (DataRow var in ElementsTable.Rows)
                     {
+                         DateTime Date5 = Convert.ToDateTime(var["D_date"].ToString());
+                         var["X_Day"] = Date5.ToString("dddd");
+
                         ActualSql = "Select * from Pay_EmpShiftDetails  Where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + var["D_Date"].ToString() + "' and N_ShiftID=(select Max(N_ShiftID) from Pay_EmpShiftDetails Where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + var["D_Date"].ToString() + "')";
                         ActualTable = dLayer.ExecuteDataTable(ActualSql, Params, connection);
                         ActualTable.AcceptChanges();
@@ -228,6 +232,9 @@ namespace SmartxAPI.Controllers
                             }
                         }
                      }
+
+                     ElementsTable.AcceptChanges();
+                             
                     }
 
                     

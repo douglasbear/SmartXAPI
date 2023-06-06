@@ -57,6 +57,9 @@ namespace SmartxAPI.Controllers
                     case "X_AdmissionNo":
                         xSortBy = "X_AdmissionNo " + xSortBy.Split(" ")[1];
                         break;
+                           case "x_Name":
+                        xSortBy = "x_Name " + xSortBy.Split(" ")[1];
+                        break;
                     default: break;
                 }
                 xSortBy = " order by " + xSortBy;
@@ -231,7 +234,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     var values = MasterTable.Rows[0]["X_AdmissionNo"].ToString();
-                    if(values!= null && values != "@Auto")
+                    if(values!= null && values != "@Auto" && nAdmissionID == 0)
                     {
                            object AdCode = dLayer.ExecuteScalar("select count(1) from Sch_Admission  where N_CompanyID="+ nCompanyID +"  and X_AdmissionNo='"+values+"' and N_AcYearID= "+nAcYearID +" and N_AdmissionID<>" + nAdmissionID, Params, connection, transaction);
                          
@@ -240,6 +243,7 @@ namespace SmartxAPI.Controllers
                              transaction.Rollback();
                              return Ok(api.Error(User,"Unable to generate Admission No!...... Admission No already exist")); 
                            }
+                       dLayer.ExecuteNonQuery("update inv_invoicecounter set N_lastUsedNo=" + values + " where n_formid=" + this.N_FormID + "and n_companyid=" + nCompanyID + " and N_FnyearID=" + nFnYearId, Params, connection, transaction);
                     }
                     if (values == "@Auto")
                     {

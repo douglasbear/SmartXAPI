@@ -158,8 +158,8 @@ namespace SmartxAPI.Controllers
                     Master.Add("days", days);
                     //DateTime.ParseExact(fromDate.ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture);
 
-                    DateTime.ParseExact(fromDate.ToString(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
-                    DateTime.ParseExact(toDate.ToString(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+                    // DateTime.ParseExact(fromDate.ToString(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+                    // DateTime.ParseExact(toDate.ToString(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
                     Details = dLayer.ExecuteDataTablePro("SP_Pay_TimeSheet", QueryParams, connection);
 
 
