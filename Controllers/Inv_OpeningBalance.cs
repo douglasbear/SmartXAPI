@@ -392,7 +392,7 @@ namespace SmartxAPI.Controllers
                         ProcParam.Add("X_EntryFrom", "cob");
                         try
                         {
-                            dLayer.ExecuteNonQueryPro("SP_Acc_BeginingBalancePosting_Ins", ProcParam, connection, transaction);
+                            dLayer.ExecuteNonQueryPro("SP_Acc_BeginingBalancePosting_Ins_COB", ProcParam, connection, transaction);
                         }
                         catch (Exception ex)
                         {
