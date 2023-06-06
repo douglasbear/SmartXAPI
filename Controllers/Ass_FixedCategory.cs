@@ -203,9 +203,22 @@ namespace SmartxAPI.Controllers
                         if (CategoryCode == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Category Code")); }
                         MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
                     }
-                    MasterTable.Columns.Remove("x_DeprCalculation");
+                   if (MasterTable.Columns.Contains("x_DeprCalculation"))
+                    {
+                        MasterTable.Columns.Remove("x_DeprCalculation");
+                      
+                    }
+                    if (MasterTable.Columns.Contains("x_TypeName"))
+                    {
+                        MasterTable.Columns.Remove("x_TypeName");
+                      
+                    }
 
-                    nCategoryID = dLayer.SaveData("Ass_AssetCategory", "N_CategoryID", MasterTable, connection, transaction);
+                    string  DupCriteria = "X_CategoryCode='" + values + "' and N_CompanyID=" + nCompanyID;
+                    string  X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
+                    nCategoryID = dLayer.SaveData("Ass_AssetCategory", "N_CategoryID",DupCriteria,X_Criteria,MasterTable, connection, transaction);
+                    
+                    
                     if (nCategoryID <= 0)
                     {
                         transaction.Rollback();
@@ -237,6 +250,16 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                     if ( nCategoryID > 0)
+                    {
+                        object catCount = dLayer.ExecuteScalar("select count(1) From Ass_PurchaseDetails where n_CategoryID =" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User), connection, transaction);
+                        catCount = catCount == null ? 0 : catCount;
+                        if (myFunctions.getIntVAL(catCount.ToString()) > 0){
+                            return Ok(api.Error(User, "Already In Use !!"));
+                        }
+                    }
+
+
                     Results = dLayer.DeleteData("Ass_AssetCategory", "N_CategoryID", nCategoryID, "", connection, transaction);
                     transaction.Commit();
                 }

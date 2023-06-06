@@ -108,6 +108,17 @@ namespace SmartxAPI.Controllers
                             case "employees":
                                 xTableName = "Mig_Employee";
                                 break;
+                            case "product transfer":
+                                xTableName = "Mig_ProductTransfer";
+                                break;
+                           case "fixedassets list":
+                                xTableName = "Mig_AssetList";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;
                             case "salary history":
                                 xTableName = "Mig_EmployeeSalaryHistory";
                                 Mastertable.Columns.Add("N_CompanyID");
@@ -119,7 +130,7 @@ namespace SmartxAPI.Controllers
                             case "employee salary":
                                 xTableName = "Mig_EmployeeSalary";
                                 break;
-                            case "leave history":
+                            case "employee leave history":
                                 xTableName = "Mig_EmployeeLeaveHistory";
                                 break;
                          case "student balances":
@@ -140,9 +151,9 @@ namespace SmartxAPI.Controllers
                             case "vendor balances":
                                 xTableName = "Mig_VendorOpening";
                                 break;
-                            case "product transfer":
-                                xTableName = "Mig_ProductTransfer";
-                                break;
+                            case "leave history":
+                                xTableName = "Mig_LeaveHistory";
+                                break;    
                             case "product list":
                             case "products":
                             case "customer materials":
@@ -165,14 +176,6 @@ namespace SmartxAPI.Controllers
                                 break;
                             case "category":
                                 xTableName = "Mig_POSCategory";
-                                Mastertable.Columns.Add("N_CompanyID");
-                                foreach (DataRow dtRow in Mastertable.Rows)
-                                {
-                                    dtRow["N_CompanyID"] = nCompanyID;
-                                }
-                                break;
-                            case "fixedassets list":
-                                xTableName = "Mig_AssetList";
                                 Mastertable.Columns.Add("N_CompanyID");
                                 foreach (DataRow dtRow in Mastertable.Rows)
                                 {
@@ -235,16 +238,8 @@ namespace SmartxAPI.Controllers
                                     dtRow["N_CompanyID"] = nCompanyID;
                                 }
                                 break;
-                            case "sales qoutation":
-                                xTableName = "Mig_Quotation";
-                                Mastertable.Columns.Add("N_CompanyID");
-                                foreach (DataRow dtRow in Mastertable.Rows)
-                                {
-                                    dtRow["N_CompanyID"] = nCompanyID;
-                                }
-                                break;
-                        case "sales order":
-                                xTableName = "Mig_SalesOrder";
+                            case "loan issue":
+                                xTableName = "Mig_LoanIssue";
                                 Mastertable.Columns.Add("N_CompanyID");
                                 foreach (DataRow dtRow in Mastertable.Rows)
                                 {

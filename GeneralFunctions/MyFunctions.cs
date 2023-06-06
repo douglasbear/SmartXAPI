@@ -1312,7 +1312,7 @@ namespace SmartxAPI.GeneralFunctions
                 return "";
         }
 
-        public bool SendMail(string ToMail, string Body, string Subjectval, IDataAccessLayer dLayer, int FormID, int ReferID, int CompanyID)
+        public bool SendMail(string ToMail, string Body, string Subjectval, IDataAccessLayer dLayer, int FormID, int ReferID, int CompanyID,bool isExpiryMail)
         {
 
             try
@@ -1384,9 +1384,13 @@ namespace SmartxAPI.GeneralFunctions
 
                             }
                         }
-                        // string CC = GetCCMail(256, companyid, connection, transaction, dLayer);
-                        // if (CC != "")
-                        //     message.CC.Add(CC);
+                        if(isExpiryMail)
+                        {
+                        string CC ="najma@olivotech.com";
+                        if (CC != "")
+                            message.CC.Add(CC);
+                        }
+                      
 
                         // string Bcc = GetBCCMail(256, companyid, connection, transaction, dLayer);
                         // if (Bcc != "")
@@ -3071,7 +3075,7 @@ namespace SmartxAPI.GeneralFunctions
         public bool ContainColumn(string columnName, DataTable table);
         public DataTable GetSettingsTable();
         public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User, string xSubject, string xBody);
-        public bool SendMail(string ToMail, string Body, string Subjectval, IDataAccessLayer dLayer, int FormID, int ReferID, int CompanyID);
+        public bool SendMail(string ToMail, string Body, string Subjectval, IDataAccessLayer dLayer, int FormID, int ReferID, int CompanyID,bool isExpiryMail);
         public bool CheckClosedYear(int N_CompanyID, int nFnYearID, IDataAccessLayer dLayer, SqlConnection connection);
         public bool CheckActiveYearTransaction(int nCompanyID, int nFnYearID, DateTime dTransDate, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public bool CheckPRProcessed(int nPurchaseID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);

@@ -344,7 +344,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyId);
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", nFormID);
-                        // Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
+                        Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
 
                         while (true)
                         {

@@ -242,7 +242,7 @@ namespace SmartxAPI.Controllers
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 int N_NextApproverID = 0;
                 string xButtonAction="";
-
+                string xTransType = MasterRow["x_RequestTypeDesc"].ToString();
 
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -254,6 +254,11 @@ namespace SmartxAPI.Controllers
                     EmpParams.Add("@nCompanyID", nCompanyID);
                     EmpParams.Add("@nEmpID", nEmpID);
                     EmpParams.Add("@nFnYearID", nFnYearID);
+
+                    if (MasterTable.Columns.Contains("x_RequestTypeDesc"))
+                    MasterTable.Columns.Remove("x_RequestTypeDesc");
+
+
                     object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);
                     object objEmpCode = dLayer.ExecuteScalar("Select X_EmpCode From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);
 
@@ -262,7 +267,7 @@ namespace SmartxAPI.Controllers
                         int N_PkeyID = nRequestID;
                         string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpAnyRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, xTransType, N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
                         myAttachments.SaveAttachment(dLayer, Attachment, xReqCode, nRequestID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
                         transaction.Commit();
                         //myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Employee Request", xReqCode, dLayer, connection, transaction, User);
@@ -309,7 +314,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", nRequestID, xReqCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, xTransType, nRequestID, xReqCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
 
                         // DataTable Files = ds.Tables["files"];
                         // if (Files.Rows.Count > 0)

@@ -176,10 +176,8 @@ namespace SmartxAPI.Controllers
 
                     foreach (DataRow var in ElementsTable.Rows)
                     {
-                      
-                          
-                           DateTime Date5 = Convert.ToDateTime(var["D_date"].ToString());
-                           var["X_Day"] = Date5.ToString("dddd");
+                         DateTime Date5 = Convert.ToDateTime(var["D_date"].ToString());
+                         var["X_Day"] = Date5.ToString("dddd");
 
                         ActualSql = "Select * from Pay_EmpShiftDetails  Where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + var["D_Date"].ToString() + "' and N_ShiftID=(select Max(N_ShiftID) from Pay_EmpShiftDetails Where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + var["D_Date"].ToString() + "')";
                         ActualTable = dLayer.ExecuteDataTable(ActualSql, Params, connection);

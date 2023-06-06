@@ -51,7 +51,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial, int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID, bool b_Asn, int nPriceListID, bool isSalesItems, bool isRentalItem, bool rentalItems, bool purchaseRentalItems,bool showStockInlist,int nitemType,bool isAssetItem,bool ShowCostinList)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial, int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID, bool b_Asn, int nPriceListID, bool isSalesItems, bool isRentalItem, bool rentalItems, bool purchaseRentalItems,bool showStockInlist,int nitemType,bool isAssetItem,bool ShowCostinList,int nItemID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -74,6 +74,7 @@ namespace SmartxAPI.Controllers
              string otherItem="";
               string sqlComandText ="";
               string ShowCost="";
+              string itemwiseqry="";
 
              if(showStockInlist)
              {
@@ -169,9 +170,13 @@ namespace SmartxAPI.Controllers
                 ShowCost=" dbo.SP_Cost_Loc(vw_InvItem_Search_cloud.N_ItemID,vw_InvItem_Search_cloud.N_CompanyID,vw_InvItem_Search_cloud.X_ItemUnit," + nLocationID + ")  As N_LPrice,";
             }
          
+           if(nItemID>0)
+           {
+            itemwiseqry=" and vw_InvItem_Search_cloud.n_ItemID ="+nItemID+"";
+           }
          
                  sqlComandText = "  vw_InvItem_Search_cloud.*,"+showStock+ShowCost+" dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID,vw_InvItem_Search_cloud.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_SellingPrice2 FROM vw_InvItem_Search_cloud LEFT OUTER JOIN " +
-             " Inv_ItemUnit ON vw_InvItem_Search_cloud.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search_cloud.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search_cloud.N_CompanyID=@p1 and vw_InvItem_Search_cloud.B_Inactive=@p2 and vw_InvItem_Search_cloud.[Item Code]<> @p3  and vw_InvItem_Search_cloud.N_ItemID=Inv_ItemUnit.N_ItemID and  vw_InvItem_Search_cloud.N_ClassID!=6 " + ownAssent + RentalItem + RentalPOItem + qry + Category + Condition + itemTypeCondition + warehouseSql + priceListCondition+otherItem;
+             " Inv_ItemUnit ON vw_InvItem_Search_cloud.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search_cloud.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search_cloud.N_CompanyID=@p1 and vw_InvItem_Search_cloud.B_Inactive=@p2 and vw_InvItem_Search_cloud.[Item Code]<> @p3  and vw_InvItem_Search_cloud.N_ItemID=Inv_ItemUnit.N_ItemID and  vw_InvItem_Search_cloud.N_ClassID!=6 " + ownAssent + RentalItem + RentalPOItem + qry + Category + Condition + itemTypeCondition + warehouseSql + priceListCondition+otherItem + itemwiseqry;
             // string sqlComandText = " * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
 
      
@@ -1739,6 +1744,208 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+         //GET api/Projects/list
+        [HttpGet("shortListProduct")]
+        public ActionResult GetAllItemsProduct(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial, int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID, bool b_Asn, int nPriceListID, bool isSalesItems, bool isRentalItem, bool rentalItems, bool purchaseRentalItems,bool showStockInlist,int nitemType,bool isAssetItem,bool ShowCostinList,int nItemID)
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            string qry = "";
+            string Category = "";
+            string Condition = "";
+            string xCriteria = "";
+            string warehouseSql = "";
+            string itemTypeCondition = "";
+            string priceListCondition = "";
+            string ownAssent = "";
+            string RentalItem = "";
+            string RentalPOItem = "";
+            string xOrder = "";
+            string xOrderNew = "";
+            //nItemUsedFor -> 1-Purchase, 2-Sales, 3-Both, 4-Raw Material
+             string showStock="";
+             string otherItem="";
+              string sqlComandText ="";
+              string ShowCost="";
+
+             if(showStockInlist)
+             {
+              // showStock= ",dbo.SP_GenGetStock([vw_InvItem_Search_Products].N_ItemID," + nLocationID + ",'', 'location') As N_AvlStock";
+             }
+
+            // if (b_whGrn == true && n_CustomerID > 0)
+            // {
+            //     warehouseSql = "and [vw_InvItem_Search_Products].N_ItemID in (select N_ItemID from  Vw_wh_AsnDetails_disp where N_CompanyID=@p1 and N_CustomerID=" + n_CustomerID + ")";
+            // }
+            // if (b_PickList == true && n_CustomerID > 0)
+            // {
+            //     warehouseSql = "and [vw_InvItem_Search_Products].N_ItemID in (select N_ItemID from  vw_Wh_GRNDetails where N_CompanyID=@p1 and N_CustomerID=" + n_CustomerID + ")";
+            // }
+            // if (b_Asn == true && n_CustomerID > 0)
+            // {
+            //     warehouseSql = "and [vw_InvItem_Search_Products].N_CustomerID =" + n_CustomerID + "";
+            // }
+
+            if (query != "" && query != null)
+            {
+                if (partNoEnable)
+                {
+                    qry = " and (Description like @query or [vw_InvItem_Search_Products].[Part No] like @query or [vw_InvItem_Search_Products].[itemCode] like @query) ";
+                    Params.Add("@query", "%" + query + "%");
+                }
+                else
+                {
+                    qry = " and (Description like @query or [itemCode] like @query or [vw_InvItem_Search_Products].X_Barcode like @query or [vw_InvItem_Search_Products].[Part No] like @query) ";
+                    Params.Add("@query", "%" + query + "%");
+                }
+            }
+            if (nCategoryID > 0)
+                Category = " and [vw_InvItem_Search_Products].N_CategoryID =" + nCategoryID;
+
+            if (xClass == null) xClass = "";
+            if (xClass != "")
+                Condition = Condition + " and [vw_InvItem_Search_Products].[Item Class] in (" + xClass + ")";
+
+            if (nNotItemID != 0)
+                Condition = Condition + " and [vw_InvItem_Search_Products].N_ItemID<> " + nNotItemID;
+
+            if (nNotGridItemID != 0)
+                Condition = Condition + " and [vw_InvItem_Search_Products].N_ItemID<> " + nNotGridItemID;
+
+            if (nLocationID != 0)
+                Condition = Condition + " and [vw_InvItem_Search_Products].n_WareHouseID =" + nLocationID;
+            if (isStockItem)
+                Condition = Condition + " and N_ClassID =2";
+            if (isServiceItem)
+                Condition = Condition + " and N_ClassID =4";
+            if (isCustomerMaterial)
+                itemTypeCondition = itemTypeCondition + " and N_ItemTypeID=5 ";
+            if (isSalesItems)
+                itemTypeCondition = itemTypeCondition + " and N_ItemTypeID<>5 ";
+            if (isRentalItem)
+                ownAssent = ownAssent + " and N_ItemTypeID=7 ";
+            if (rentalItems)
+                RentalItem = RentalItem + " and (N_ItemTypeID=7 or N_ItemTypeID=8 or N_ItemTypeID=9)";
+            if (purchaseRentalItems)
+                RentalPOItem = RentalPOItem + " and (N_ItemTypeID=9)";
+
+            if (nItemUsedFor != 0)
+            {
+                if (nItemUsedFor == 1)
+                    Condition = Condition + " and [vw_InvItem_Search_Products].B_CanBePurchased =1";
+                else if (nItemUsedFor == 2)
+                    Condition = Condition + " and [vw_InvItem_Search_Products].B_CanbeSold =1";
+                else if (nItemUsedFor == 3)
+                    Condition = Condition + " and [vw_InvItem_Search_Products].B_CanBePurchased =1 and [vw_InvItem_Search_Products].B_CanbeSold =1";
+                else if (nItemUsedFor == 4)
+                    Condition = Condition + " and [vw_InvItem_Search_Products].B_CanbeRawMaterial =1";
+            }
+
+            if (nPriceListID > 0)
+            {
+
+                priceListCondition = " and [vw_InvItem_Search_Products].N_ItemID in (Select N_ItemID from Inv_DiscountDetails where N_CompanyID=@p1 and n_DiscID=" + nPriceListID + " )";
+            }
+            if(isAssetItem==true){
+                if(nitemType==1){
+                otherItem = otherItem + " and N_ItemTypeID=1";
+            }
+            else if(nitemType==6){
+                otherItem = otherItem + " and N_ItemTypeID=6";
+            }
+            }
+            else{
+                otherItem = otherItem + " and N_ItemTypeID<>1";
+            }
+
+  
+            //    ShowCost=" , dbo.SP_Cost_Loc([vw_InvItem_Search_Products].N_ItemID,[vw_InvItem_Search_Products].N_CompanyID,[vw_InvItem_Search_Products].X_ItemUnit," + nLocationID + ")  As N_LPrice";
+            
+         
+         
+                 sqlComandText = " [vw_InvItem_Search_Products].N_CompanyID,vw_InvItem_Search_Products.n_AvlStock,[vw_InvItem_Search_Products].[Part No],vw_InvItem_Search_Products.N_LPrice,[vw_InvItem_Search_Products].N_ClassID, [vw_InvItem_Search_Products].N_ItemID, [vw_InvItem_Search_Products].[Description], [vw_InvItem_Search_Products].X_ItemCode,[vw_InvItem_Search_Products].[Item Code] as itemCode,[vw_InvItem_Search_Products].[Item Code], [vw_InvItem_Search_Products].x_PartNo"+showStock+ShowCost+" from [vw_InvItem_Search_Products] where [vw_InvItem_Search_Products].N_CompanyID=@p1 and [vw_InvItem_Search_Products].B_Inactive=@p2 and [vw_InvItem_Search_Products].[Item Code]<> @p3   and  [vw_InvItem_Search_Products].N_ClassID!=6 " + ownAssent + RentalItem + RentalPOItem + qry + Category + Condition + itemTypeCondition + warehouseSql + priceListCondition+otherItem;
+            // string sqlComandText = " * from [vw_InvItem_Search_Products] where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
+
+     
+
+
+
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", 0);
+            Params.Add("@p3", "001");
+            Params.Add("@p4", 1);
+            Params.Add("@PSize", PageSize);
+            Params.Add("@Offset", Page);
+
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    bool b_Order = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "ProductListOrder", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
+                    if (b_Order)
+                    {
+                        xOrder = "ORDER BY [vw_InvItem_Search_Products].[Item Code]";
+                        xOrderNew = "ORDER BY [Item Code] ";
+                    }
+                    else
+                    {
+                        xOrder = "ORDER BY [vw_InvItem_Search_Products].Description asc";
+                        xOrderNew = "ORDER BY Description asc";
+                    }
+
+                    string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(" + xOrder + ") RowNo,";
+                    string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) " + xOrderNew + " ";
+                    string sql = pageQry + sqlComandText + pageQryEnd;
+                    dt = dLayer.ExecuteDataTable(sql, Params, connection);
+
+
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "SubItems", typeof(DataTable), null);
+
+                    // foreach (DataRow item in dt.Rows)
+                    // {
+                    //     if (myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 1)//|| myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 3
+                    //     {
+
+                    //         string subItemSql = "SELECT     vw_InvItem_Search_cloud.*, dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID, vw_InvItem_Search_cloud.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, Inv_ItemUnit.X_ItemUnit AS Expr1, Inv_ItemDetails.N_MainItemID,Inv_ItemDetails.B_HideInInv as B_GroupHideInInv, Inv_ItemDetails.N_Qty, Inv_ItemDetails.N_Qty as N_SubItemQty FROM  Inv_ItemUnit RIGHT OUTER JOIN Inv_ItemDetails RIGHT OUTER JOIN vw_InvItem_Search_cloud ON Inv_ItemDetails.N_CompanyID = vw_InvItem_Search_cloud.N_CompanyID AND Inv_ItemDetails.N_ItemID = vw_InvItem_Search_cloud.N_ItemID ON Inv_ItemUnit.N_CompanyID = vw_InvItem_Search_cloud.N_CompanyID AND Inv_ItemUnit.N_ItemID = vw_InvItem_Search_cloud.N_ItemID AND Inv_ItemUnit.N_ItemUnitID = vw_InvItem_Search_cloud.N_SalesUnitID WHERE(vw_InvItem_Search_cloud.N_CompanyID = " + nCompanyID + ") AND(vw_InvItem_Search_cloud.B_InActive = 0) and Inv_ItemDetails.N_MainItemID =" + myFunctions.getIntVAL(item["N_ItemID"].ToString()) + "";
+                    //         DataTable subTbl = dLayer.ExecuteDataTable(subItemSql, connection);
+                    //         if(subTbl.Columns.Contains("B_HideInInv")){subTbl.Columns.Remove("B_HideInInv");}
+                    //         subTbl.AcceptChanges();
+                    //         item["SubItems"] = subTbl;
+                    //     }
+                    // }
+                    dt.AcceptChanges();
+                }
+                // dt = _api.Format(dt);
+
+                // SortedList Result = new SortedList();
+                // Result.Add("details", dt);
+                // Result.Add("qry", query);
+                // return Ok(_api.Success(Result));
+
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+
+        }
+
+
 
         [HttpGet("productPurchaseHistory")]
         public ActionResult GetProductPurchaseHistoryList(int nItemID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, bool bIncludePriceQuote, int nVendorID, bool nShowVendor)
@@ -1915,6 +2122,7 @@ namespace SmartxAPI.Controllers
 
 
     }
+       
 
 
 }

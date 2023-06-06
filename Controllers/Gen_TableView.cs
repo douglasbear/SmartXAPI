@@ -210,15 +210,6 @@ namespace SmartxAPI.Controllers
                         {
                             xSortBy = "Convert(varchar,CAST("+xSortBy.Split(" ")[0]+" AS datetime), 112) " + xSortBy.Split(" ")[1];
                         }
-                        else if (xSortBy.ToString().Contains("Month") || xSortBy.ToString().Contains("month"))
-                        {
-                            xSortBy = "Convert(varchar, CAST('01-' + "+xSortBy.Split(" ")[0]+" AS datetime), 112) " + xSortBy.Split(" ")[1];
-                        }
-                         else if (xSortBy.ToString().Contains("Code") || xSortBy.ToString().Contains("code"))
-                        {
-                            xSortBy = "Convert(int,"+xSortBy.Split(" ")[0]+")" + xSortBy.Split(" ")[1];
-
-                        }
                         xSortBy = " order by " + xSortBy;
                     }
 
@@ -351,11 +342,14 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Error(User, "Data Source2 Not Found"));
                     }
-
                     if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + SortBy + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + " and " + PKey + " not in " + "(select top(" + Count + ") " + PKey + " from " + DataSource2 + Criterea + SortBy + " ) " + SortBy + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + " and " + PKey + " not in " + "(select top(" + Count + ") " + PKey + " from " + DataSource2 + Criterea + SortBy + xSortBy + " ) " + SortBy + xSortBy;
+                    // if (Count == 0)
+                    //     sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + SortBy;
+                    // else
+                    //     sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + " and " + PKey + " not in " + "(select top(" + Count + ") " + PKey + " from " + DataSource2 + Criterea + SortBy + " ) " + SortBy;
 
                     if (export)
                     {
@@ -385,6 +379,10 @@ namespace SmartxAPI.Controllers
 
                         if (nFormID == 1650)
                         {
+                            if (Count != 0)
+                              {
+                               sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + " where " + PKey + " not in " + "(select top(" + Count + ") " + PKey + " from " + DataSource2 + Criterea + SortBy + " ) " + SortBy;
+                              }
                             using (SqlConnection cliConn = new SqlConnection(cliConnectionString))
                             {
                                 cliConn.Open();
@@ -396,15 +394,16 @@ namespace SmartxAPI.Controllers
                             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                         }
 
-                        sqlCommandCount = "select count(*) as N_Count,0 as TotalAmount  from " + DataSource + Criterea;
+                        sqlCommandCount = "select count(1) as N_Count,0 as TotalAmount  from " + DataSource + Criterea;
 
                         if (SumField.Trim() != "")
                         {
-                            sqlCommandCount = "select count(*) as N_Count ,sum(Cast(REPLACE(" + SumField + ",',','') as Numeric(16," + nDecimalPlace + ")) ) as TotalAmount  from " + DataSource + Criterea;
+                            sqlCommandCount = "select count(1) as N_Count ,sum(Cast(REPLACE(" + SumField + ",',','') as Numeric(16," + nDecimalPlace + ")) ) as TotalAmount  from " + DataSource + Criterea;
                         }
                         DataTable Summary = new DataTable();
                         if (nFormID == 1650)
                         {
+                             
                             using (SqlConnection cliConn = new SqlConnection(cliConnectionString))
                             {
                                 cliConn.Open();
