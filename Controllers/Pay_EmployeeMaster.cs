@@ -783,7 +783,8 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            N_SaveDraft = myFunctions.getIntVAL(bSaveDraft.ToString());
+                           // N_SaveDraft = myFunctions.getIntVAL(bSaveDraft.ToString());
+                            N_SaveDraft = Convert.ToInt32(bSaveDraft);
                         }
                         if (ContactsTable.Rows.Count > 0)
                         {
