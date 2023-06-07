@@ -812,9 +812,12 @@ namespace SmartxAPI.Controllers
                         }
                     if(Prescription.Rows.Count >0 )
                     { 
+                        if (Prescription.Columns.Contains("N_SalesOrderID"))
+                        {
                         Prescription.Rows[0]["N_SalesOrderID"]=n_SalesOrderId;
                         Prescription.AcceptChanges();
                         dLayer.SaveData("Inv_Prescription", "N_PrescriptionID", Prescription, connection, transaction); 
+                        }
 
                     }
                 
@@ -966,6 +969,10 @@ namespace SmartxAPI.Controllers
                  {
                  return Ok(_api.Success(Result,"Job Order Saved Successfully"));
                   }
+                else if(N_FormID == 1740) 
+                 {
+                return Ok(_api.Success(Result,"Optical Order Saved Successfully")); 
+                  }
                 else if(N_FormID == 1546) 
                  {
                  return Ok(_api.Success(Result,"Service Order Saved Successfully"));
@@ -985,7 +992,7 @@ namespace SmartxAPI.Controllers
         }
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nSalesOrderID, int nBranchID, int nFnYearID)
+        public ActionResult DeleteData(int nSalesOrderID, int nBranchID, int nFnYearID, int nFormID)
         {
             int Results = 0;
             try
@@ -1086,9 +1093,20 @@ namespace SmartxAPI.Controllers
                             }
                             dLayer.ExecuteScalar("delete from Inv_Prescription where N_SalesOrderID=" + nSalesOrderID.ToString() + "  and  N_CompanyID=" + nCompanyID, connection, transaction);
                             transaction.Commit();
+                            if(nFormID==1740)
+                            {
+                               return Ok(_api.Success("Optical Order deleted")); 
+                            }
+                            else
                             return Ok(_api.Success("Sales Order deleted"));
 
                         }
+
+                    }
+                     else if(nFormID==1740)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Optical invoice processed! Unable to delete Optical Order"));
 
                     }
                     else
