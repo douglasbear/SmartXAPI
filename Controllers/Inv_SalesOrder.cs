@@ -496,6 +496,7 @@ namespace SmartxAPI.Controllers
                     DetailTable = _api.Format(DetailTable, "Details");
 
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_CustomerName", typeof(string), "");
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_PhoneNo1", typeof(string), "");
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "customer_PONo", typeof(string), "");
                     DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "X_UpdatedSPrice", typeof(string), "");
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "b_taskFlag", typeof(bool), true);
@@ -518,6 +519,7 @@ namespace SmartxAPI.Controllers
                     if (DetailTable.Rows.Count != 0)
                     {
                         MasterTable.Rows[0]["x_CustomerName"]= DetailTable.Rows[0]["x_CustomerName"];
+                        MasterTable.Rows[0]["x_PhoneNo1"]= DetailTable.Rows[0]["x_PhoneNo1"];
                         MasterTable.Rows[0]["x_CustomerName_Ar"]=DetailTable.Rows[0]["x_CustomerName_Ar"];
                         MasterTable.Rows[0]["customer_PONo"] = DetailTable.Rows[0]["customer_PONo"];
                     }
@@ -567,6 +569,7 @@ namespace SmartxAPI.Controllers
                      //EYE OPTICS
                     string prescriptionSql = "select * from Inv_Prescription where N_CustomerID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString())+" and N_SalesOrderID="+N_SOrderID+" and N_CompanyID=@nCompanyID";
                     Prescription = dLayer.ExecuteDataTable(prescriptionSql, Params, connection);
+                      Prescription = _api.Format(Prescription, "Prescription");
 
                     dt.Tables.Add(Attachments);
                     dt.Tables.Add(MasterTable);
@@ -795,15 +798,26 @@ namespace SmartxAPI.Controllers
                     //FOR EYE OPTICS 
                     if (n_SOId > 0)
                         {
-                            
+                            object presID=dLayer.ExecuteScalar("select isnull(N_PrescriptionID,0) from Inv_Prescription where N_SalesOrderID=" + n_SOId.ToString() + " and N_CompanyID=" + N_CompanyID+"",connection, transaction);
+                            if(presID==null){presID=0;}
+                            int nPrescriptionID=myFunctions.getIntVAL(presID.ToString());
                             dLayer.ExecuteScalar("delete from Inv_Prescription where N_SalesOrderID=" + n_SOId.ToString() + " and N_CompanyID=" + N_CompanyID, connection, transaction);
+                            if(Prescription.Rows.Count>0)
+                            {
+                                if(nPrescriptionID>0)
+                                    Prescription.Rows[0]["N_PrescriptionID"]=nPrescriptionID;
+                            }
+                            Prescription.AcceptChanges();
                     
                         }
                     if(Prescription.Rows.Count >0 )
-                    {
+                    { 
+                        if (Prescription.Columns.Contains("N_SalesOrderID"))
+                        {
                         Prescription.Rows[0]["N_SalesOrderID"]=n_SalesOrderId;
                         Prescription.AcceptChanges();
                         dLayer.SaveData("Inv_Prescription", "N_PrescriptionID", Prescription, connection, transaction); 
+                        }
 
                     }
                 
@@ -955,6 +969,10 @@ namespace SmartxAPI.Controllers
                  {
                  return Ok(_api.Success(Result,"Job Order Saved Successfully"));
                   }
+                else if(N_FormID == 1740) 
+                 {
+                return Ok(_api.Success(Result,"Optical Order Saved Successfully")); 
+                  }
                 else if(N_FormID == 1546) 
                  {
                  return Ok(_api.Success(Result,"Service Order Saved Successfully"));
@@ -974,7 +992,7 @@ namespace SmartxAPI.Controllers
         }
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nSalesOrderID, int nBranchID, int nFnYearID)
+        public ActionResult DeleteData(int nSalesOrderID, int nBranchID, int nFnYearID, int nFormID)
         {
             int Results = 0;
             try
@@ -1061,7 +1079,7 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-
+                            dLayer.ExecuteScalar("delete from Inv_Prescription where N_SalesOrderID=" + nSalesOrderID.ToString() + " and N_CompanyID=" + nCompanyID, connection, transaction);
                             dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + nSalesOrderID.ToString() + "  and N_FormID=1571 and N_CompanyID=" + nCompanyID, connection, transaction);
 
                             myAttachments.DeleteAttachment(dLayer, 1, nSalesOrderID, N_CustomerId, nFnYearID, this.FormID, User, transaction, connection);
@@ -1075,9 +1093,20 @@ namespace SmartxAPI.Controllers
                             }
                             dLayer.ExecuteScalar("delete from Inv_Prescription where N_SalesOrderID=" + nSalesOrderID.ToString() + "  and  N_CompanyID=" + nCompanyID, connection, transaction);
                             transaction.Commit();
+                            if(nFormID==1740)
+                            {
+                               return Ok(_api.Success("Optical Order deleted")); 
+                            }
+                            else
                             return Ok(_api.Success("Sales Order deleted"));
 
                         }
+
+                    }
+                     else if(nFormID==1740)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Optical invoice processed! Unable to delete Optical Order"));
 
                     }
                     else
@@ -1577,7 +1606,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText ="select top 1 from Inv_Prescription where N_CompanyID=@p1 and N_CustomerID=@p2 order by N_PrescriptionID desc";
+            string sqlCommandText ="select top 1 * from Inv_Prescription where N_CompanyID=@p1 and N_CustomerID=@p2 order by N_PrescriptionID desc";
 
             Params.Add("@p1",nCompanyID);
             Params.Add("@p2", nCustomerID);

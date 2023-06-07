@@ -1054,17 +1054,17 @@ namespace SmartxAPI.Controllers
                     masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "Invoice2Enable", typeof(bool), Invoice2Enable);
 
 
-                   //Eye Optics
-                    // string sqlPrescription="select * from Inv_Prescription where N_SalesOrderID=@nOrderID";
-                    // DataTable prescription=dLayer.ExecuteDataTable(sqlPrescription, Con);
-                    // prescription = _api.Format(prescription, "Prescription");
+                    //Eye Optics
+                    string sqlPrescription="select * from Inv_Prescription where N_CustomerID="+myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString())+" and N_SalesID="+masterTable.Rows[0]["n_SalesId"].ToString()+"";
+                    DataTable prescription=dLayer.ExecuteDataTable(sqlPrescription, Con);
+                    prescription = _api.Format(prescription, "Prescription");
 
 
                     dsSalesInvoice.Tables.Add(masterTable);
                     dsSalesInvoice.Tables.Add(detailTable);
                     dsSalesInvoice.Tables.Add(saleamountdetails);
                     dsSalesInvoice.Tables.Add(Attachments);
-                   // dsSalesInvoice.Tables.Add(prescription);
+                    dsSalesInvoice.Tables.Add(prescription);
 
                     return Ok(_api.Success(dsSalesInvoice));
 
@@ -2031,7 +2031,7 @@ namespace SmartxAPI.Controllers
 
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nInvoiceID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID, int nQuotationID, string comments)
+        public ActionResult DeleteData(int nInvoiceID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID, int nQuotationID, string comments,int nFormID)
         {
             if (comments == null)
             {
@@ -2153,12 +2153,26 @@ namespace SmartxAPI.Controllers
                                 }
                                 else
                                 {
+
+                                    object OSOID = dLayer.ExecuteScalar("Select N_SalesOrderID from Inv_Prescription where n_SalesID=@nSalesID and  n_CompanyID=@nCompanyID",QueryParams, connection, transaction);
+                                    if (OSOID == null) OSOID = 0;
+
+                                    if(myFunctions.getIntVAL(OSOID.ToString()) > 0)
+                                     {  
+                                         dLayer.ExecuteNonQuery("update Inv_Prescription set n_SalesID=null where n_SalesID=@nSalesID and  n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+    
+                                     }
+                                    else
+                                     {
+                                     dLayer.ExecuteNonQuery("delete from Inv_Prescription where n_SalesID=@nSalesID and  n_CompanyID=@nCompanyID", QueryParams, connection, transaction);                      
+                            
+                                     }
                                     dLayer.ExecuteNonQuery("delete from Inv_DeliveryDispatch where n_InvoiceID=@nSalesID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                                     //   if (N_AmtSplit == 1)
                                     //     {                                                
                                     dLayer.ExecuteNonQuery("delete from Inv_SaleAmountDetails where n_SalesID=@nSalesID and n_BranchID=@nBranchID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                                     dLayer.ExecuteNonQuery("delete from Inv_LoyaltyPointOut where n_SalesID=@nSalesID and n_PartyID=@nPartyID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-                                    // }                        
+                                    // }  
                                     dLayer.ExecuteNonQuery("delete from Inv_ServiceContract where n_SalesID=@nSalesID and n_FnYearID=@nFnYearID and n_BranchID=@nBranchID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                                     if (dLayer.ExecuteNonQuery("delete from Inv_StockMaster where n_SalesID=@nSalesID and x_Type='Negative' and n_InventoryID = 0 and n_CompanyID=@nCompanyID", QueryParams, connection, transaction) <= 0)
                                     {
@@ -2244,6 +2258,11 @@ namespace SmartxAPI.Controllers
                             };
 
                             transaction.Commit();
+                            if(nFormID ==1741) 
+                            {
+                               return Ok(_api.Success("Optical Invoice " + status + " Successfully")); 
+                            }
+                            else
                             return Ok(_api.Success("Sales Invoice " + status + " Successfully"));
                         }
                         else

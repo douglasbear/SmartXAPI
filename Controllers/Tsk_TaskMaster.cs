@@ -249,12 +249,14 @@ namespace SmartxAPI.Controllers
                     DateTime entryDateHold = new DateTime();
                     DateTime entryDateStart = new DateTime();
                     DateTime entryDateComplete = new DateTime();
+                    int timeflag=0;
                     foreach (DataRow row in TimeTable.Rows)
                     {
 
-
+                
                         if (row["N_Status"].ToString() == "7" && row["N_CreaterID"].ToString() == loginUserID.ToString())
-                        {
+                        { 
+                            timeflag=1;
                             entryDateStart = Convert.ToDateTime(row["d_EntryDate"].ToString());
 
                         }
@@ -302,6 +304,11 @@ namespace SmartxAPI.Controllers
                             seconds = seconds + (entryDateComplete - entryDateStart).TotalSeconds;
                         }
 
+                    }
+
+                    if (timeflag==0){
+                        Individualseconds=0;
+                        seconds=0;
                     }
 
                     //    TimeSpan t = TimeSpan.FromSeconds(seconds);
