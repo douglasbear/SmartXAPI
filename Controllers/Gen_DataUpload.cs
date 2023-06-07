@@ -104,21 +104,6 @@ namespace SmartxAPI.Controllers
                             case "products stock":
                                 xTableName = "Mig_Stock";
                                 break;
-                            case "employee list":
-                            case "employees":
-                                xTableName = "Mig_Employee";
-                                break;
-                            case "product transfer":
-                                xTableName = "Mig_ProductTransfer";
-                                break;
-                           case "fixedassets list":
-                                xTableName = "Mig_AssetList";
-                                Mastertable.Columns.Add("N_CompanyID");
-                                foreach (DataRow dtRow in Mastertable.Rows)
-                                {
-                                    dtRow["N_CompanyID"] = nCompanyID;
-                                }
-                                break;
                             case "salary history":
                                 xTableName = "Mig_EmployeeSalaryHistory";
                                 Mastertable.Columns.Add("N_CompanyID");
@@ -133,9 +118,19 @@ namespace SmartxAPI.Controllers
                             case "employee leave history":
                                 xTableName = "Mig_EmployeeLeaveHistory";
                                 break;
-                         case "student balances":
-                         case  "customer balances":
+                            case "student balances":
+                            case  "customer balances":
                                 xTableName = "Mig_CustomerOpening";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;
+                            case "employee list":
+                            case "employees":
+                            case "users":  
+                                xTableName = "Mig_Employee";
                                 Mastertable.Columns.Add("N_CompanyID");
                                 foreach (DataRow dtRow in Mastertable.Rows)
                                 {
@@ -151,9 +146,12 @@ namespace SmartxAPI.Controllers
                             case "vendor balances":
                                 xTableName = "Mig_VendorOpening";
                                 break;
+                            case "product transfer":
+                                xTableName = "Mig_ProductTransfer";
+                                break;
                             case "leave history":
                                 xTableName = "Mig_LeaveHistory";
-                                break;    
+                                break;
                             case "product list":
                             case "products":
                             case "customer materials":
@@ -166,7 +164,8 @@ namespace SmartxAPI.Controllers
                                 break;
                             case "payment voucher":
                             case "receipt voucher":   
-                            case "journel voucher":
+                            case "journal voucher":
+                            case "JV":
                                 xTableName = "Mig_Vouchers";
                                 Mastertable.Columns.Add("N_CompanyID");
                                 foreach (DataRow dtRow in Mastertable.Rows)
@@ -176,6 +175,14 @@ namespace SmartxAPI.Controllers
                                 break;
                             case "category":
                                 xTableName = "Mig_POSCategory";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;
+                            case "fixedassets list":
+                                xTableName = "Mig_AssetList";
                                 Mastertable.Columns.Add("N_CompanyID");
                                 foreach (DataRow dtRow in Mastertable.Rows)
                                 {
@@ -238,7 +245,23 @@ namespace SmartxAPI.Controllers
                                     dtRow["N_CompanyID"] = nCompanyID;
                                 }
                                 break;
-                            case "loan issue":
+                            case "sales quotation":
+                                xTableName = "Mig_Quotation";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;
+                        case "sales order":
+                                xTableName = "Mig_SalesOrder";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;
+                        case "loan issue":
                                 xTableName = "Mig_LoanIssue";
                                 Mastertable.Columns.Add("N_CompanyID");
                                 foreach (DataRow dtRow in Mastertable.Rows)
@@ -373,14 +396,15 @@ namespace SmartxAPI.Controllers
                                 SalesInvParam.Add("N_LocationID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_LocationID"].ToString()));
                                 dLayer.ExecuteNonQueryPro("SP_SalesInvoiceImport", SalesInvParam, connection, transaction);
                             }
-                            else
-                            {
+                         else
+                             {
                                dLayer.ExecuteNonQueryPro("SP_SetupData_cloud", Params, connection, transaction);
-                            }
+                             }
 
                             if (nMasterID <= 0)
                             {
                                 transaction.Rollback();
+          
                                 return Ok(_api.Error(User, dt.TableName + " Uploaded Error"));
                             }
                             Mastertable.Clear();
