@@ -2,6 +2,7 @@
   "runtimeOptions": {
     "additionalProbingPaths": [
 <<<<<<< HEAD
+<<<<<<< HEAD
       "C:\\Users\\olivouser2\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\olivouser2\\.nuget\\packages"
 =======
@@ -19,6 +20,10 @@
       "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
 >>>>>>> 1099d21fd13460278b0100782f44486c12f87c3a
 >>>>>>> 491fa3d519eac5b5309f234bfb383fa03e05dfcd
+=======
+      "C:\\Users\\zaras\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\zaras\\.nuget\\packages"
+>>>>>>> 3aec7fdaa14f68c12edd98498415f23aaa5a71f2
     ]
   }
 }
