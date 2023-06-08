@@ -126,6 +126,9 @@ namespace SmartxAPI.Controllers
                     string X_PrjTimesheetCode = "";
                     var values = MasterTable.Rows[0]["X_PrjTimesheetCode"].ToString();
 
+                      transaction.Rollback();
+                      return Ok(_api.Warning("Maintenance in progress. Please save later. Apologies for the inconvenience."));
+
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
