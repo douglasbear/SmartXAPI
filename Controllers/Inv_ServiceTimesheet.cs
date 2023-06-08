@@ -476,6 +476,45 @@ namespace SmartxAPI.Controllers
 
         }
 
+        [HttpGet("multiJobOrder")]
+        public ActionResult GetMultiJobOrderList(int nFnYearID, int nFormID, int nCustomerID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            Params.Add("@N_CompanyID", myFunctions.GetCompanyID(User));
+            Params.Add("@N_FnyearID", nFnYearID);
+            Params.Add("@N_FormID", nFormID);
+            Params.Add("@N_CustomerID", nCustomerID);
+
+
+            string sqlCommandText = "";
+            sqlCommandText = "select * from vw_Inv_ServiceTimesheet where N_CompanyID=@N_CompanyID and N_FnYearID=@N_FnyearID and N_FormID=@N_FormID and N_CustomerID=@N_CustomerID and N_ServiceSheetID not in (select isNull(N_ServiceSheetID, 0) from Inv_Sales where N_FnYearID=@N_FnyearID) order by x_ServiceSheetCode desc";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+
+        }
+
     }
 }
     
