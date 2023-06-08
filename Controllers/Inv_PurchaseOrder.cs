@@ -230,9 +230,11 @@ namespace SmartxAPI.Controllers
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
             DataTable DataTable = new DataTable();
+            DataTable RentalSchedule = new DataTable();
             if (xPRSNo == null) xPRSNo = "";
             if (xPOrderId == null) xPOrderId = "";
             string Mastersql = "";
+            string RentalScheduleSql = "";
 
          
 
@@ -300,6 +302,10 @@ namespace SmartxAPI.Controllers
                     {
 
                      DetailSql = "select * from vw_RentalOrderDetailsToRPO where N_CompanyID=@p1  and N_SalesOrderId=@p8 and N_ItemTypeID in (9)";
+
+                    RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID="+ nCompanyId +" and N_TransID="+ nSalesOrderId +" and N_FormID=1571";
+                    RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
+                    RentalSchedule = api.Format(RentalSchedule, "RentalSchedule");
 
                     }
                     else
@@ -449,9 +455,16 @@ namespace SmartxAPI.Controllers
                     Attachments = api.Format(Attachments, "attachments");
                     }
 
-                    string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID="+ nCompanyId +" and N_TransID="+ N_POrderID +" and N_FormID=1586";
-                    DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
-                    RentalSchedule = api.Format(RentalSchedule, "RentalSchedule");
+                    if(nSalesOrderId>0)
+                    {
+                        RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID="+ nCompanyId +" and N_TransID="+ nSalesOrderId +" and N_FormID=1571";
+                        RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
+                        RentalSchedule = api.Format(RentalSchedule, "RentalSchedule");
+                    } else {
+                        RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID="+ nCompanyId +" and N_TransID="+ N_POrderID +" and N_FormID=1586";
+                        RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
+                        RentalSchedule = api.Format(RentalSchedule, "RentalSchedule");
+                    };
 
                     dt.Tables.Add(Attachments);
                     dt.Tables.Add(DetailTable);
@@ -710,17 +723,18 @@ namespace SmartxAPI.Controllers
                     //     DetailTable.Rows[j]["n_POrderID"] = N_POrderID;
                     //     DetailTable.Rows[j]["N_ItemUnitID"] = UnitID;
                     // }
-                    // DetailTable.Columns.Remove("X_ItemUnit");
+                    DetailTable.Columns.Remove("X_ItemUnit");
                     // int N_PurchaseOrderDetailId = dLayer.SaveData("Inv_PurchaseOrderDetails", "n_POrderDetailsID", DetailTable, connection, transaction);
 
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        int UnitID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit where N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_ItemID"].ToString()) + " and N_CompanyID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_CompanyID"].ToString()) + " and X_ItemUnit='" + DetailTable.Rows[j]["X_ItemUnit"].ToString() + "'", connection, transaction).ToString());
+                        // int UnitID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit where N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_ItemID"].ToString()) + " and N_CompanyID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_CompanyID"].ToString()) + " and X_ItemUnit='" + DetailTable.Rows[j]["X_ItemUnit"].ToString() + "'", connection, transaction).ToString());
                         
                         DetailTable.Rows[j]["N_POrderID"] = N_POrderID;
-                        DetailTable.Rows[j]["N_ItemUnitID"] = UnitID;
-                        DataRow row = DetailTable.Rows[j];
-                        row.Table.Columns.Remove("X_ItemUnit");
+                        // DetailTable.Rows[j]["N_ItemUnitID"] = UnitID;
+                        // DataRow row = DetailTable.Rows[j];
+                        // row.Table.Columns.Remove("X_ItemUnit");
+
 
                         int N_PurchaseOrderDetailId = dLayer.SaveDataWithIndex("Inv_PurchaseOrderDetails", "n_POrderDetailsID", "", "", j, DetailTable, connection, transaction);
 
