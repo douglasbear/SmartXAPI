@@ -464,7 +464,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("getAvailable")]
+       [HttpGet("getAvailable")]
         public ActionResult GetAvailableDays(int nVacTypeID, DateTime dDateFrom, int nEmpID, int nVacationGroupID, int bIsAdjusted,DateTime dDateTo)
         {
           
@@ -472,7 +472,6 @@ namespace SmartxAPI.Controllers
             SortedList output = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             SortedList QueryParams = new SortedList();
-
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nEmpID", nEmpID);
             QueryParams.Add("@nVacationGroupID", nVacationGroupID);
@@ -484,13 +483,11 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                   
+
                       object Holidays =dLayer.ExecuteScalar("select COUNT(*) from pay_YearlyOffDays where N_CompanyID = " + nCompanyID + "  and ( D_Date = '" + dDateFrom + "'  or D_Date = '" + dDateTo+ "'  or (D_Date >'" +dDateFrom + "' and D_Date <'" +dDateTo + "' ))", QueryParams, connection);
                      if(Holidays==null){publicHolidays=0;}else{  publicHolidays=myFunctions.getIntVAL(Holidays.ToString());}
-                    
+
                     dt = dLayer.ExecuteDataTable("Select dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID,2) As AvlDays,dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID," + (bIsAdjusted == 1 ? "3" : "1") + ") As Accrude", QueryParams, connection);
-
-
                 }
                 if (dt.Rows.Count > 0)
                 {
@@ -505,7 +502,6 @@ namespace SmartxAPI.Controllers
                     output.Add("accrude", 0);
                     output.Add("avlDays", 0);
                 }
-
                 return Ok(api.Success(output));
             }
             catch (Exception e)
