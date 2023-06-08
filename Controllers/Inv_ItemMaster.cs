@@ -673,7 +673,7 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable = new DataTable();
-                DataTable MasterTableNew, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2, LocationList, CategoryList, VariantList, ItemUnits, itemWarranty, storeAllocation;
+                DataTable MasterTableNew, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2, LocationList, CategoryList, VariantList, ItemUnits, itemWarranty, storeAllocation, RentalUnits;
                 DataTable SubItemTable = new DataTable();
                 DataTable ScrapItemTable = new DataTable();
                 DataTable BOMEmpTable = new DataTable();
@@ -698,6 +698,7 @@ namespace SmartxAPI.Controllers
                 BOMAssetTable = ds.Tables["bomAsset"];
                 itemWarranty = ds.Tables["itemWarranty"];
                 storeAllocation = ds.Tables["store"];
+                RentalUnits = ds.Tables["rentalUnits"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CompanyId"].ToString());
                 int nFnYearID = 0;
                 int N_ItemID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString());
@@ -971,6 +972,33 @@ namespace SmartxAPI.Controllers
                                 dLayer.SaveDataWithIndex("Inv_ItemUnit", "N_ItemUnitID", "", "", l, ItemUnits, connection, transaction);
 
                             }
+                        }
+
+                        //Rental Unit Update
+
+                        int RentalUnitID = 0;
+                        if (k == 0) {
+                            for (int r = 0; r < RentalUnits.Rows.Count; r++) {
+                                RentalUnits.Rows[r]["n_ItemID"] = N_ItemID;
+                                RentalUnitID = dLayer.SaveDataWithIndex("Inv_RentalUnit", "N_RentalUnitID", "", "", r, RentalUnits, connection, transaction);
+                            };
+                        }
+                        else
+                        {
+                            for (int r = 0; r < RentalUnits.Rows.Count; r++) {
+                                int _unitID = 0;
+                                object unitID = dLayer.ExecuteScalar("select N_RentalUnitID from Inv_RentalUnit  where N_ItemID = " + N_ItemID + " and X_RentalUnit = '" + RentalUnits.Rows[0]["x_RentalUnit"].ToString() + "' and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                                if (unitID != null)
+                                    _unitID = myFunctions.getIntVAL(unitID.ToString());
+                                foreach (DataRow var in RentalUnits.Rows) var["n_RentalUnitID"] = _unitID;
+                                    RentalUnitID = dLayer.SaveDataWithIndex("Inv_RentalUnit", "N_RentalUnitID",  "", "", r, RentalUnits, connection, transaction);
+                            };
+                        }
+
+                        for (int l = 0; l < RentalUnits.Rows.Count; l++)
+                        {
+                            if (myFunctions.getBoolVAL(RentalUnits.Rows[l]["b_IsDefault"].ToString()))
+                                dLayer.ExecuteNonQuery("update Inv_ItemMaster set N_RentalUnitID=" + RentalUnitID + " where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
                         }
 
                         dLayer.DeleteData("Inv_ItemMasterWHLink", "N_ItemID", N_ItemID, "", connection, transaction);

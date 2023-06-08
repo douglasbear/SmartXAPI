@@ -149,6 +149,8 @@ namespace SmartxAPI.Controllers
             string expFieldList1 = "";
             string expFieldList = "";
 
+            string dataType = "";
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -219,7 +221,6 @@ namespace SmartxAPI.Controllers
                     DataRow dRow = CriteriaList.Rows[0];
 
                     SumField = dRow["X_TotalField"].ToString();
-
                     if (xSortBy == null)
                     {
                         if ((SortBy == null || SortBy.Trim() == "") && dRow["X_DefaultSortField"].ToString() != "")
