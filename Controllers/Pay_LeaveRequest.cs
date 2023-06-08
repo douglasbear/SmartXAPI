@@ -465,8 +465,9 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("getAvailable")]
-        public ActionResult GetAvailableDays(int nVacTypeID, DateTime dDateFrom, int nEmpID, int nVacationGroupID, int bIsAdjusted)
+        public ActionResult GetAvailableDays(int nVacTypeID, DateTime dDateFrom, int nEmpID, int nVacationGroupID, int bIsAdjusted,DateTime dDateTo)
         {
+          
             DataTable dt = new DataTable();
             SortedList output = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -477,12 +478,16 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@nVacationGroupID", nVacationGroupID);
             QueryParams.Add("@today", dDateFrom);
             QueryParams.Add("@nVacTypeID", nVacTypeID);
-
+         int publicHolidays=0;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                   
+                      object Holidays =dLayer.ExecuteScalar("select COUNT(*) from pay_YearlyOffDays where N_CompanyID = " + nCompanyID + "  and ( D_Date = '" + dDateFrom + "'  or D_Date = '" + dDateTo+ "'  or (D_Date >'" +dDateFrom + "' and D_Date <'" +dDateTo + "' ))", QueryParams, connection);
+                     if(Holidays==null){publicHolidays=0;}else{  publicHolidays=myFunctions.getIntVAL(Holidays.ToString());}
+                    
                     dt = dLayer.ExecuteDataTable("Select dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID,2) As AvlDays,dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID," + (bIsAdjusted == 1 ? "3" : "1") + ") As Accrude", QueryParams, connection);
 
 
@@ -492,6 +497,7 @@ namespace SmartxAPI.Controllers
                     output.Add("accrude", myFunctions.getDecimalVAL(dt.Rows[0]["Accrude"].ToString()));
                     output.Add("avlDays", myFunctions.getDecimalVAL(dt.Rows[0]["AvlDays"].ToString()));
                     output.Add("nEmpID", nEmpID);
+                    output.Add("publicHolidays", publicHolidays);
                     output.Add("nVacTypeID", nVacTypeID);
                 }
                 else
