@@ -302,7 +302,7 @@ namespace SmartxAPI.Controllers
 
                     if (N_LedgerID > 0)
                     {
-                        object LedgerCount = dLayer.ExecuteScalar("select COUNT(convert(nvarchar(100),X_LedgerCode)) From Acc_MastLedger where N_GroupID =" + N_GroupID + " and N_CompanyID =" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and N_LedgerID<>" + N_LedgerID + " and X_LedgerCode="+X_LedgerCode, connection, transaction);
+                        object LedgerCount = dLayer.ExecuteScalar("select COUNT(X_LedgerCode) From Acc_MastLedger where N_GroupID =" + N_GroupID + " and N_CompanyID =" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and N_LedgerID<>" + N_LedgerID + " and X_LedgerCode='"+X_LedgerCode+"'", connection, transaction);
                         LedgerCount = LedgerCount == null ? 0 : LedgerCount;
                         if (myFunctions.getIntVAL(LedgerCount.ToString()) > 0)
                             return Ok(api.Error(User, "Account Code Already In Use !!"));
