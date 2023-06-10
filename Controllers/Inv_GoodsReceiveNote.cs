@@ -156,6 +156,7 @@ namespace SmartxAPI.Controllers
             DataTable dtGoodReceive = new DataTable();
             DataTable dtGoodReceiveDetails = new DataTable();
             DataTable dtFreightCharges = new DataTable();
+            DataTable RentalSchedule = new DataTable();
             int N_GRNID = 0;
             int N_POrderID = 0;
 
@@ -168,6 +169,7 @@ namespace SmartxAPI.Controllers
             string X_DetailsSql = "";
             string X_FreightSql = "";
             string crieteria = "";
+            string RentalScheduleSql = "";
 
          
             if(nFormID>0)
@@ -212,6 +214,10 @@ namespace SmartxAPI.Controllers
                     {
                         X_DetailsSql = "Select *,dbo.SP_Cost(vw_POMrn_PendingDetail.N_ItemID,vw_POMrn_PendingDetail.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_POMrn_PendingDetail.N_ItemID,vw_POMrn_PendingDetail.N_CompanyID) As N_UnitSPrice from vw_POMrn_PendingDetail Where N_CompanyID=" + nCompanyId + " and N_POrderID=" + N_POrderID + " order by N_POrderDetailsID";
 
+                        RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID="+ nCompanyId +" and N_TransID="+ N_POrderID +" and N_FormID=@nFormID";
+                        RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
+                        RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
+
                     }
 
                     SqlTransaction transaction = connection.BeginTransaction();
@@ -245,12 +251,18 @@ namespace SmartxAPI.Controllers
                     {
                         DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_VendorID"].ToString()), myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_MRNID"].ToString()), myFunctions.getIntVAL(dtGoodReceive.Rows[0]["n_FormID"].ToString()), myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_FnYearID"].ToString()), User, connection);
                         Attachments = _api.Format(Attachments, "attachments");
-                          dt.Tables.Add(Attachments);
+                        dt.Tables.Add(Attachments);
+
+                        RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID="+ nCompanyId +" and N_TransID="+ N_GRNID +" and N_FormID=@nFormID";
+                        RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
+                        RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
                        
                     }
+
                     dt.Tables.Add(dtGoodReceive);
                      dt.Tables.Add(dtGoodReceiveDetails);
                      dt.Tables.Add(dtFreightCharges);
+                     dt.Tables.Add(RentalSchedule);
                   
                 }
                 return Ok(_api.Success(dt));
@@ -303,6 +315,7 @@ namespace SmartxAPI.Controllers
             DetailTable = ds.Tables["details"];
             GRNFreight = ds.Tables["freightCharges"];
             DataTable Attachment = ds.Tables["attachments"];
+            DataTable rentalItem = ds.Tables["segmentTable"];
             SortedList Params = new SortedList();
             // Auto Gen
             string GRNNo = "";
@@ -448,11 +461,52 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User,"Unable to save Goods Receive Note!!"));
                     }
+                    // for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    // {
+                    //     DetailTable.Rows[j]["N_MRNID"] = N_GRNID;
+                    // }
+                    // int N_MRNDetailsID = dLayer.SaveData("Inv_MRNDetails", "N_MRNDetailsID", DetailTable, connection, transaction);
+
+                    int N_MRNDetailsID = 0;
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["N_MRNID"] = N_GRNID;
+
+                        N_MRNDetailsID = dLayer.SaveDataWithIndex("Inv_MRNDetails", "N_MRNDetailsID", "", "", j, DetailTable, connection, transaction);
+
+                        if (N_MRNDetailsID > 0)
+                        {
+                            for (int k = 0; k < rentalItem.Rows.Count; k++)
+                            {
+                                if (myFunctions.getIntVAL(rentalItem.Rows[k]["rowID"].ToString()) == j)
+                                {
+
+                                    rentalItem.Rows[k]["n_TransID"] = N_GRNID;
+                                    rentalItem.Rows[k]["n_TransDetailsID"] = N_MRNDetailsID;
+
+                                    rentalItem.AcceptChanges();
+                                }
+                                rentalItem.AcceptChanges();
+                            }
+                            rentalItem.AcceptChanges();
+                        }
+                        DetailTable.AcceptChanges();
                     }
-                    int N_MRNDetailsID = dLayer.SaveData("Inv_MRNDetails", "N_MRNDetailsID", DetailTable, connection, transaction);
+
+                    if (rentalItem.Columns.Contains("rowID"))
+                    rentalItem.Columns.Remove("rowID");
+                    rentalItem.AcceptChanges();
+
+                    if(rentalItem.Rows.Count > 0)
+                    {
+                        if (N_GRNID > 0)
+                        {
+                            int FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
+                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + N_GRNID.ToString() + " and N_FormID="+ FormID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                        }
+                        dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
+
+                    }
 
                     if (N_MRNDetailsID <= 0)
                     {
@@ -654,6 +708,8 @@ namespace SmartxAPI.Controllers
                         {
                             transaction.Rollback();
                             return Ok(_api.Error(User,"Unable to Delete Goods Receive Note"));
+                        } else {
+                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + nGRNID.ToString() + " and N_FormID=1593 and N_CompanyID=" + nCompanyID, connection, transaction);
                         }
 
                         SortedList StockOutParam = new SortedList();

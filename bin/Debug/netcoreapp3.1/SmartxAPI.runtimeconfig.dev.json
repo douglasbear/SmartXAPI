@@ -2,12 +2,37 @@
   "runtimeOptions": {
     "additionalProbingPaths": [
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+      "C:\\Users\\olivouser2\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\olivouser2\\.nuget\\packages"
+=======
+<<<<<<< HEAD
+>>>>>>> c5cb224117542ba132c58466d5306a2aaa1cb41f
+<<<<<<< HEAD
       "C:\\Users\\Administrator\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Administrator\\.nuget\\packages"
 =======
+<<<<<<< HEAD
       "C:\\Users\\olivouser2\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\olivouser2\\.nuget\\packages"
 >>>>>>> 31b0d078ff065ff3286faf73e54f79d716ad6f73
+=======
+      "C:\\Users\\SANJAY\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\SANJAY\\.nuget\\packages"
+>>>>>>> b3268a88e613efa1219c93b1690f502fe8f4f529
+=======
+      "C:\\Users\\user\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\user\\.nuget\\packages",
+      "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+>>>>>>> 1099d21fd13460278b0100782f44486c12f87c3a
+>>>>>>> 491fa3d519eac5b5309f234bfb383fa03e05dfcd
+=======
+      "C:\\Users\\zaras\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\zaras\\.nuget\\packages"
+>>>>>>> 3aec7fdaa14f68c12edd98498415f23aaa5a71f2
+>>>>>>> c5cb224117542ba132c58466d5306a2aaa1cb41f
     ]
   }
 }
