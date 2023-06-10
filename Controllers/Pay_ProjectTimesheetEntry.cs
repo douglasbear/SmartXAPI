@@ -47,11 +47,8 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and (X_PrjTimesheetCode like '%" + xSearchkey + "%'or cast(D_Date as VarChar) like '%" + xSearchkey + "%' or  X_ProjectName like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or N_Hours like '%" + xSearchkey + "%' or X_Description like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_PrjTimeSheetID desc";
-            else
-
-                xSortBy = " order by " + xSortBy;
-
+                xSortBy = " order by  Cast([D_Date] as DateTime ) desc";
+       
 
 
             if (Count == 0)
