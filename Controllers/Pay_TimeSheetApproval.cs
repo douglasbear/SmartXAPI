@@ -190,7 +190,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("employeeDetails")]
-        public ActionResult GetEmpDetails(int nFnYearID, int nEmpID, int nCategoryID, string payRunID, DateTime dtpFromdate, DateTime dtpTodate, DateTime systemDate)
+        public ActionResult GetEmpDetails(int nFnYearID, int nEmpID, int nCategoryID, string payRunID, DateTime dtpFromdate, DateTime dtpTodate, DateTime systemDate,bool isTimesheet)
         {
             try
             {
@@ -227,12 +227,25 @@ namespace SmartxAPI.Controllers
                     int N_DefaultAbsentID = 0;
                     string X_DefaultAbsentCode = "";
                     int N_TimeSheetID = 0;
+                    int N_BatchID = 0;
 
                     SortedList Master = new SortedList();
 
                     Double N_Diffrence = 0, N_NonDedApp = 0, txtAdjustment = 0, N_WorkdHrs = 0, N_WorkHours = 0,N_TotalDays=0;
 
                     object N_Result;
+                    object nCatID;
+                    object nBatchID;
+                    if(isTimesheet==true && nCategoryID == 0){
+                    nCatID = dLayer.ExecuteScalar("Select n_CatagoryId from Pay_Employee Where  N_CompanyID= " + nCompanyID + " and N_EmpID=" + nEmpID + " and N_FnYearID=" + nFnYearID + "", Params, connection);
+                    if (nCatID != null){
+                        nCategoryID=myFunctions.getIntVAL(nCatID.ToString());;
+                    }
+                    //  nBatchID = dLayer.ExecuteScalar("Select n_BatchID from Pay_TimeSheetMaster Where  N_CompanyID= " + nCompanyID + " and N_EmpID=" + nEmpID + " and N_FnYearID=" + nFnYearID + "", Params, connection);
+                    //   if (nCatID != null){
+                    //     payRunID = nBatchID.ToString();
+                    // }
+                    }
 
                     N_Result = dLayer.ExecuteScalar("Select N_Value from Gen_Settings Where X_Description ='Default Addition' and N_CompanyID= " + nCompanyID + " and X_Group='HR'", Params, connection);
                     if (N_Result != null)
@@ -282,7 +295,7 @@ namespace SmartxAPI.Controllers
                     bool B_DoubleEntry = Convert.ToBoolean(dLayer.ExecuteScalar("Select N_Value from Gen_Settings Where X_Description ='DoubleShiftEntry' and N_CompanyID= " + nCompanyID + " and X_Group='HR'", Params, connection));
 
                     string ElementSql = "";
-                    int N_BatchID = 0;
+                    
                     object obj = dLayer.ExecuteScalar("Select isnull(Count(X_BatchCode),0) from Pay_TimeSheetMaster where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_EmpID=" + nEmpID + " and N_BatchID=" + payRunID + " and ISNULL(N_TotalWorkingDays,0)>0", Params, connection);
                     if (obj != null)
                     {
