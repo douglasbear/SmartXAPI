@@ -482,6 +482,7 @@ namespace SmartxAPI.Controllers
             DataTable BOMAssetTable = new DataTable();
             DataTable ItemWarrantyTable = new DataTable();
             DataTable Attachments = new DataTable();
+            DataTable RentalUnits = new DataTable();
             int N_ItemID = nItemID;
             int companyid = myFunctions.GetCompanyID(User);
 
@@ -584,6 +585,10 @@ namespace SmartxAPI.Controllers
                     dtItemUnits = dLayer.ExecuteDataTable(itemUnits, QueryParams, connection);
                     dtItemUnits = _api.Format(dtItemUnits, "itemUnits");
 
+                    string rentalUnits = "SELECT * from Inv_RentalUnit where N_ItemID=@nItemID and N_CompanyID=@nCompanyID order by N_RentalUnitID";
+                    RentalUnits = dLayer.ExecuteDataTable(rentalUnits, QueryParams, connection);
+                    RentalUnits = _api.Format(RentalUnits, "rentalUnits");
+
 
                     //Image Retriving
                     string _sqlImageQuery = "SELECT * from Inv_DisplayImages where N_ItemID=" + dt.Rows[0]["N_ItemID"].ToString() + " and N_CompanyID=" + companyid;
@@ -656,6 +661,7 @@ namespace SmartxAPI.Controllers
                 dataSet.Tables.Add(BOMAssetTable);
                 dataSet.Tables.Add(ItemWarrantyTable);
                 dataSet.Tables.Add(Attachments);
+                dataSet.Tables.Add(RentalUnits);
 
                 return Ok(_api.Success(dataSet));
 
@@ -781,6 +787,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Inv_BOMEmployee", "N_MainItem", myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()), "N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Inv_BOMAsset", "N_MainItemID", myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()), "N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Inv_ItemWarranty", "N_MainItemID", myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()), "N_CompanyID=" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Inv_RentalUnit", "N_ItemID", myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()), "N_CompanyID=" + nCompanyID, connection, transaction);
 
                     }
                     //Adding variant product in master table
