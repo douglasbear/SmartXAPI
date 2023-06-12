@@ -256,6 +256,8 @@ namespace SmartxAPI.Controllers
                 bool b_AutoGenerate = false;
                 int flag = 0;
                 String xButtonAction="";
+                bool showConfirmationVendor=false;
+                int vendorFlag=0;
                 //gLAccount AutoGen
                 if (MasterTable.Columns.Contains("b_AutoGenerate"))
                 {
@@ -268,6 +270,10 @@ namespace SmartxAPI.Controllers
                 {
                     flag = myFunctions.getIntVAL(MasterTable.Rows[0]["flag"].ToString());
                     MasterTable.Columns.Remove("flag");
+                }
+                  if(MasterTable.Columns.Contains("vendorFlag")){
+                    vendorFlag=myFunctions.getIntVAL(MasterTable.Rows[0]["vendorFlag"].ToString());
+                    MasterTable.Columns.Remove("vendorFlag");
                 }
 
                 bool showConformationLedger = false;
@@ -294,6 +300,22 @@ namespace SmartxAPI.Controllers
                        
                         if (VendorCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to save")); }
                         MasterTable.Rows[0]["x_VendorCode"] = VendorCode;
+
+                        SortedList vendorNewParams = new SortedList();
+                       vendorNewParams.Add("@x_VendorName", x_VendorName);
+
+                     object VendorCount = dLayer.ExecuteScalar("select count(N_VendorID) from Inv_Vendor  Where X_VendorName =@x_VendorName and N_CompanyID=" + nCompanyID, vendorNewParams, connection,transaction);
+                        if( myFunctions.getIntVAL(VendorCount.ToString())>0)
+                                    {
+                                           if (vendorFlag == 2)
+                                    {
+                                         showConfirmationVendor =true;
+                                        transaction.Rollback();
+                                        return Ok(_api.Success(2));
+                                    }
+                                    }
+
+
                     }else {
                          xButtonAction="Update"; 
 
