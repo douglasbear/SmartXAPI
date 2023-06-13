@@ -994,7 +994,7 @@ namespace SmartxAPI.Controllers
                         {
                             for (int r = 0; r < RentalUnits.Rows.Count; r++) {
                                 int _unitID = 0;
-                                object unitID = dLayer.ExecuteScalar("select N_RentalUnitID from Inv_RentalUnit  where N_ItemID = " + N_ItemID + " and X_RentalUnit = '" + RentalUnits.Rows[0]["x_RentalUnit"].ToString() + "' and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                                object unitID = dLayer.ExecuteScalar("select N_RentalUnitID from Inv_RentalUnit  where N_ItemID = " + N_ItemID + " and B_IsDefault = 1 and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                                 if (unitID != null)
                                     _unitID = myFunctions.getIntVAL(unitID.ToString());
                                 foreach (DataRow var in RentalUnits.Rows) var["n_RentalUnitID"] = _unitID;
@@ -1002,11 +1002,10 @@ namespace SmartxAPI.Controllers
                             };
                         }
 
-                        for (int l = 0; l < RentalUnits.Rows.Count; l++)
-                        {
-                            if (myFunctions.getBoolVAL(RentalUnits.Rows[l]["b_IsDefault"].ToString()))
-                                dLayer.ExecuteNonQuery("update Inv_ItemMaster set N_RentalUnitID=" + RentalUnitID + " where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
-                        }
+                        object nRentalUnitID = dLayer.ExecuteScalar("select N_RentalUnitID from Inv_RentalUnit  where N_ItemID = " + N_ItemID + " and X_RentalUnit = '" + RentalUnits.Rows[0]["x_RentalUnit"].ToString() + "' and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                        if (myFunctions.getIntVAL(nRentalUnitID.ToString()) != 0)
+                        dLayer.ExecuteNonQuery("update Inv_ItemMaster set N_RentalUnitID=" + myFunctions.getIntVAL(nRentalUnitID.ToString()) + " where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
+
 
                         dLayer.DeleteData("Inv_ItemMasterWHLink", "N_ItemID", N_ItemID, "", connection, transaction);
                         if (LocationList.Rows.Count > 0)

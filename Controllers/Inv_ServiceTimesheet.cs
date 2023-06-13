@@ -216,11 +216,14 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                    int nServiceSheetDetailsID = dLayer.SaveData("Inv_ServiceTimesheetDetails", "N_ServiceSheetDetailsID", DetailTable, connection, transaction);
-                    if (nServiceSheetDetailsID <= 0)
+                    if (DetailTable.Rows.Count > 0)
                     {
-                        transaction.Rollback();
-                        return Ok("Unable to save Service Timesheet!");
+                        int nServiceSheetDetailsID = dLayer.SaveData("Inv_ServiceTimesheetDetails", "N_ServiceSheetDetailsID", DetailTable, connection, transaction);
+                        if (nServiceSheetDetailsID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok("Unable to save Service Timesheet!");
+                        }
                     }
                    
                     transaction.Commit();
