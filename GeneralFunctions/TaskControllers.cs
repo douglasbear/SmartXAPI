@@ -30,7 +30,7 @@ namespace SmartxAPI.GeneralFunctions
             logPath = conf.GetConnectionString("LogPath");
                         dLayer = dl;
         }
-          public bool SaveGeneralTask(int nCompanyID,string taskSummary, string taskDescription, int assigneeID,int creatorID, int submitterid,int closeduserid, DateTime dueDate,DateTime startDate,DateTime entryDate,int status,int  salesOrderDetailsID,  SqlConnection connection, SqlTransaction transaction)
+          public bool SaveGeneralTask(int nCompanyID,string taskSummary, string taskDescription, int assigneeID,int creatorID, int submitterid,int closeduserid, DateTime dueDate,DateTime startDate,DateTime entryDate,int status,int salesOrderDetailsID,int nProjectID,int nPriorityID,int nCategoryID, SqlConnection connection, SqlTransaction transaction)
         {
 
            try
@@ -43,8 +43,12 @@ namespace SmartxAPI.GeneralFunctions
               string entry="";
               string X_TaskCode="";
               string DocNo="";
-               due=myFunctions.getDateVAL(dueDate);
-               start= myFunctions.getDateVAL(startDate);
+              DateTime dueDates = new DateTime();
+              DateTime Ddate = new DateTime();
+               dueDates= Convert.ToDateTime(dueDate.ToString());
+               Ddate= Convert.ToDateTime(startDate.ToString());
+               due = dueDates.ToString();
+               start= Ddate.ToString();
                entry= myFunctions.getDateVAL(entryDate);
 
 
@@ -61,9 +65,9 @@ namespace SmartxAPI.GeneralFunctions
                         X_TaskCode = DocNo;
                    
               DataTable TaskMaster = dLayer.ExecuteDataTable(
-                        " select "+nCompanyID+" as N_CompanyID,0 as N_TaskID,"+X_TaskCode+" as X_TaskCode,'"+taskSummary+"' as X_TaskSummery,'"+taskDescription+"' as X_TaskDescription,"
+                        " select "+nCompanyID+" as N_CompanyID,0 as N_TaskID,"+X_TaskCode+" as X_TaskCode,'"+taskSummary+"' as X_TaskSummery,'"+taskDescription+"' as X_TaskDescription,"+nProjectID+ "as N_ProjectID ,"
                         + "'"+start+"' as D_TaskDate,'"+due+"' as D_DueDate,"+creatorID+" as N_CreatorID,0 as B_Closed,"+status+" as N_StatusID,"+assigneeID+" as N_AssigneeID,"+submitterid+" as N_SubmitterID,"
-                        + ""+closeduserid+" as N_ClosedUserID, '"+entry+"' as D_EntryDate,"+assigneeID+" as N_CurrentAssigneeID ,"+salesOrderDetailsID+" as N_ServiceDetailsID,0 as N_CompletedPercentage" ,Params, connection, transaction);
+                        + ""+closeduserid+" as N_ClosedUserID, '"+entry+"' as D_EntryDate,"+assigneeID+" as N_CurrentAssigneeID ,"+salesOrderDetailsID+" as N_ServiceDetailsID,0 as N_CompletedPercentage,"+nPriorityID+" as N_PriorityID,"+nCategoryID+" as N_CategoryID" ,Params, connection, transaction);
 
               DataTable TaskDetails =dLayer.ExecuteDataTable(
                         " select "+nCompanyID+" as N_CompanyID,0 as N_TaskID,0 as N_TaskStatusID ,"+status+" as  N_Status,'"+entry+"' as D_EntryDate,"
@@ -122,6 +126,6 @@ namespace SmartxAPI.GeneralFunctions
     {
         /* Deprecated Method Don't Use */
         [Obsolete("IApiFunctions.Response is deprecated \n please use IApiFunctions.Success/ Error/ Warning/ Notice instead. \n\n Deprecate note added by Ratheesh KS-\n\n")]
-        public bool SaveGeneralTask(int nCompanyID,string taskSummary, string taskDescription, int assigneeID,int creatorID, int submitterid,int closeduserid, DateTime dueDate,DateTime startDate,DateTime entryDate,int status,int salesOrderDetailsID,   SqlConnection connection, SqlTransaction transaction);
+        public bool SaveGeneralTask(int nCompanyID,string taskSummary, string taskDescription, int assigneeID,int creatorID, int submitterid,int closeduserid, DateTime dueDate,DateTime startDate,DateTime entryDate,int status,int salesOrderDetailsID,int nProjectID,int nPriorityID,int nCategoryID, SqlConnection connection, SqlTransaction transaction);
     }
 }

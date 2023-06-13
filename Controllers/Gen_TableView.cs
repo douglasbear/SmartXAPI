@@ -149,6 +149,8 @@ namespace SmartxAPI.Controllers
             string expFieldList1 = "";
             string expFieldList = "";
 
+            string dataType = "";
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -165,7 +167,12 @@ namespace SmartxAPI.Controllers
                             if (myFunctions.getBoolVAL(cRow["B_Search"].ToString()))
                             {
                                 //if(cRow["X_FieldName"].ToString()) contain _ cut before _ // if underscore on  middle then replace into space '' 
-                                Searchkey = Searchkey + " or [" + cRow["X_FieldName"].ToString() + "] like '%" + xSearchkey + "%'";
+                                if (cRow["X_FieldName"].ToString().Contains("Date") || cRow["X_FieldName"].ToString().ToString().Contains("date"))
+                                {
+                                    Searchkey = Searchkey + " or REPLACE(CONVERT(varchar(11), [" + cRow["X_FieldName"].ToString() + "], 106), ' ', '-') like '%" + xSearchkey + "%'";
+                                }
+                                else
+                                    Searchkey = Searchkey + " or [" + cRow["X_FieldName"].ToString() + "] like '%" + xSearchkey + "%'";
                             }
                         }
                         if(cRow["X_FieldName"].ToString().Contains("_"))
@@ -219,7 +226,6 @@ namespace SmartxAPI.Controllers
                     DataRow dRow = CriteriaList.Rows[0];
 
                     SumField = dRow["X_TotalField"].ToString();
-
                     if (xSortBy == null)
                     {
                         if ((SortBy == null || SortBy.Trim() == "") && dRow["X_DefaultSortField"].ToString() != "")

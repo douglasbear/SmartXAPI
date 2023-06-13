@@ -783,7 +783,8 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            N_SaveDraft = myFunctions.getIntVAL(bSaveDraft.ToString());
+                           // N_SaveDraft = myFunctions.getIntVAL(bSaveDraft.ToString());
+                            N_SaveDraft = Convert.ToInt32(bSaveDraft);
                         }
                         if (ContactsTable.Rows.Count > 0)
                         {
@@ -2036,6 +2037,12 @@ namespace SmartxAPI.Controllers
 
                     // else
                     // {
+                    object loanCount = dLayer.ExecuteScalar("Select N_EmpID From pay_loanissue Where N_CompanyID=@nCompanyID and N_Empid=@nEmpID and N_FnyearID=@nFnYearID", Params, connection, transaction);
+                    if (loanCount != null)
+                    {
+                        return Ok(_api.Error(User, "unable to delete the employee"));
+                    }
+
                     object obj = dLayer.ExecuteScalar("Select N_EmpID From vw_PayPendingLoans_List Where N_CompanyID=@nCompanyID and N_Empid=@nEmpID and N_FnyearID=@nFnYearID", Params, connection, transaction);
                     if (obj != null)
                     {

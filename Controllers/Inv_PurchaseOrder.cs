@@ -230,9 +230,11 @@ namespace SmartxAPI.Controllers
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
             DataTable DataTable = new DataTable();
+            DataTable RentalSchedule = new DataTable();
             if (xPRSNo == null) xPRSNo = "";
             if (xPOrderId == null) xPOrderId = "";
             string Mastersql = "";
+            string RentalScheduleSql = "";
 
          
 
@@ -300,6 +302,10 @@ namespace SmartxAPI.Controllers
                     {
 
                      DetailSql = "select * from vw_RentalOrderDetailsToRPO where N_CompanyID=@p1  and N_SalesOrderId=@p8 and N_ItemTypeID in (9)";
+
+                    RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID="+ nCompanyId +" and N_TransID="+ nSalesOrderId +" and N_FormID=1571";
+                    RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
+                    RentalSchedule = api.Format(RentalSchedule, "RentalSchedule");
 
                     }
                     else
@@ -436,7 +442,18 @@ namespace SmartxAPI.Controllers
                         }
 
 
-                    }     
+                    }  
+
+                    Object VTSCount=dLayer.ExecuteScalar("select count(*) from Inv_ServiceTimesheet where N_POID="+N_POrderID+" and N_CompanyID="+nCompanyId, Params, connection);
+                    int nVTSCount = myFunctions.getIntVAL(VTSCount.ToString());
+                    if (nVTSCount > 0)
+                    {
+                        if (MasterTable.Rows.Count > 0)
+                        {
+                            MasterTable.Columns.Add("b_VTSProcessed");
+                            MasterTable.Rows[0]["b_VTSProcessed"]=true;
+                        }
+                    }      
                     // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "GRNNotProcessed", typeof(bool),GRNNotProcessed);
                     // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "InvoiceNotProcessed", typeof(bool),InvoiceNotProcessed);
 
@@ -449,8 +466,20 @@ namespace SmartxAPI.Controllers
                     Attachments = api.Format(Attachments, "attachments");
                     }
 
+                    if(nSalesOrderId>0)
+                    {
+                        RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID="+ nCompanyId +" and N_TransID="+ nSalesOrderId +" and N_FormID=1571";
+                        RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
+                        RentalSchedule = api.Format(RentalSchedule, "RentalSchedule");
+                    } else {
+                        RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID="+ nCompanyId +" and N_TransID="+ N_POrderID +" and N_FormID=1586";
+                        RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
+                        RentalSchedule = api.Format(RentalSchedule, "RentalSchedule");
+                    };
+
                     dt.Tables.Add(Attachments);
                     dt.Tables.Add(DetailTable);
+                    dt.Tables.Add(RentalSchedule);
                 }
                 return Ok(api.Success(dt));
             }
@@ -473,6 +502,7 @@ namespace SmartxAPI.Controllers
                 DetailTable = ds.Tables["details"];
                 DataTable Attachment = ds.Tables["attachments"];
                 DetailsToImport = ds.Tables["detailsImport"];
+                DataTable rentalItem = ds.Tables["segmentTable"];
                 bool B_isImport = false;
                 SortedList Params = new SortedList();
                 String xButtonAction="";
@@ -698,24 +728,69 @@ namespace SmartxAPI.Controllers
                         ProParam.Add("X_Type", "purchase order");
                         DetailTable = dLayer.ExecuteDataTablePro("SP_ScreenDataImport", ProParam, connection,transaction);
                     }
+                    // for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    // {
+                    //     int UnitID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit where N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_ItemID"].ToString()) + " and N_CompanyID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_CompanyID"].ToString()) + " and X_ItemUnit='" + DetailTable.Rows[j]["X_ItemUnit"].ToString() + "'", connection, transaction).ToString());
+                    //     DetailTable.Rows[j]["n_POrderID"] = N_POrderID;
+                    //     DetailTable.Rows[j]["N_ItemUnitID"] = UnitID;
+                    // }
+                    DetailTable.Columns.Remove("X_ItemUnit");
+                    // int N_PurchaseOrderDetailId = dLayer.SaveData("Inv_PurchaseOrderDetails", "n_POrderDetailsID", DetailTable, connection, transaction);
+
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        int UnitID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit where N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_ItemID"].ToString()) + " and N_CompanyID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_CompanyID"].ToString()) + " and X_ItemUnit='" + DetailTable.Rows[j]["X_ItemUnit"].ToString() + "'", connection, transaction).ToString());
-                        DetailTable.Rows[j]["n_POrderID"] = N_POrderID;
-                        DetailTable.Rows[j]["N_ItemUnitID"] = UnitID;
-                    }
-                    DetailTable.Columns.Remove("X_ItemUnit");
-                    int N_PurchaseOrderDetailId = dLayer.SaveData("Inv_PurchaseOrderDetails", "n_POrderDetailsID", DetailTable, connection, transaction);
+                        // int UnitID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit where N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_ItemID"].ToString()) + " and N_CompanyID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_CompanyID"].ToString()) + " and X_ItemUnit='" + DetailTable.Rows[j]["X_ItemUnit"].ToString() + "'", connection, transaction).ToString());
+                        
+                        DetailTable.Rows[j]["N_POrderID"] = N_POrderID;
+                        // DetailTable.Rows[j]["N_ItemUnitID"] = UnitID;
+                        // DataRow row = DetailTable.Rows[j];
+                        // row.Table.Columns.Remove("X_ItemUnit");
 
-                                if (N_POrderID > 0)
+
+                        int N_PurchaseOrderDetailId = dLayer.SaveDataWithIndex("Inv_PurchaseOrderDetails", "n_POrderDetailsID", "", "", j, DetailTable, connection, transaction);
+
+                        if (N_PurchaseOrderDetailId > 0)
+                        {
+                            for (int k = 0; k < rentalItem.Rows.Count; k++)
+                            {
+                                if (myFunctions.getIntVAL(rentalItem.Rows[k]["rowID"].ToString()) == j)
                                 {
-                                    if(!myFunctions.UpdateTxnStatus(nCompanyId,N_POrderID,82,false,dLayer,connection,transaction))
-                                    {
-                                        transaction.Rollback();
-                                        return Ok(api.Error(User, "Unable To Update Txn Status"));
-                                    }
-                                }
 
+                                    rentalItem.Rows[k]["n_TransID"] = N_POrderID;
+                                    rentalItem.Rows[k]["n_TransDetailsID"] = N_PurchaseOrderDetailId;
+
+                                    rentalItem.AcceptChanges();
+                                }
+                                rentalItem.AcceptChanges();
+                            }
+                            rentalItem.AcceptChanges();
+                        }
+                        DetailTable.AcceptChanges();
+                    }
+
+                    if (rentalItem.Columns.Contains("rowID"))
+                    rentalItem.Columns.Remove("rowID");
+                    rentalItem.AcceptChanges();
+
+                    if(rentalItem.Rows.Count > 0)
+                    {
+                        if (N_POrderID > 0)
+                        {
+                            int FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
+                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + N_POrderID.ToString() + " and N_FormID="+ FormID + " and N_CompanyID=" + nCompanyId, connection, transaction);
+                        }
+                        dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
+
+                    }
+
+                    if (N_POrderID > 0)
+                    {
+                        if(!myFunctions.UpdateTxnStatus(nCompanyId,N_POrderID,82,false,dLayer,connection,transaction))
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, "Unable To Update Txn Status"));
+                        }
+                    }
                  
                     SortedList VendorParams = new SortedList();
                     VendorParams.Add("@nVendorID", N_VendorID);
@@ -840,6 +915,7 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
+                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + nPOrderID.ToString() + " and N_FormID=1586 and N_CompanyID=" + nCompanyID, connection, transaction);
                             myAttachments.DeleteAttachment(dLayer, 1, nPOrderID, VendorID, nFnYearID, this.FormID, User, transaction, connection);
 
                             transaction.Commit();
@@ -923,7 +999,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p3", dDateFrom);
                     Params.Add("@p4", dDateTo);
     
-                    sqlCommandText = "select * from vw_PurchaseOrderReceive	where N_CompanyID=@p1 and ((D_ReceiveDate<=@p3) or (D_ReceiveDate>=@p3 AND D_ReceiveDate<=@p4) AND ISNULL(D_ReceiveReturnDate,@p4)>=@p4) and N_POrderID NOT IN (select N_POID from Inv_ServiceTimesheet where N_FormID=@p2 and N_CompanyID=@p1 and D_DateFrom=@p3 and D_DateTo=@p4)";
+                    sqlCommandText = "select * from vw_PurchaseOrderReceive	where N_CompanyID=@p1 and ((D_ReceiveDate<=@p3) or (D_ReceiveDate>=@p3 AND D_ReceiveDate<=@p4)) AND ISNULL(D_ReceiveReturnDate,@p3)>=@p3 and N_POrderID NOT IN (select N_POID from Inv_ServiceTimesheet where N_FormID=@p2 and N_CompanyID=@p1 and D_DateFrom=@p3 and D_DateTo=@p4)";
 
                     SortedList OutPut = new SortedList();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);

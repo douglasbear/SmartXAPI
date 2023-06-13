@@ -69,7 +69,20 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        detailsSql = "SELECT      ROW_NUMBER() over(ORDER BY  N_Type , B_Paid DESC, D_SalesDate) as SlNo,* from vw_Sch_AdmissionFee Where N_RefID="+nAdmissionID+" and N_CompanyID = " +nCompanyID + " and N_FnYearId="+nFnYearID+" and B_IsRemoved=0 ORDER By D_SalesDate ";
+                        detailsSql = "SELECT      ROW_NUMBER() over(ORDER BY  Sch_FeeCategory.N_Type , Sch_SalesDetails.B_Paid DESC, Sch_Sales.D_SalesDate) as SlNo,Sch_Sales.N_CompanyId, Sch_Sales.N_FnYearId, Sch_Sales.N_SalesId, Sch_Sales.N_CustomerID, Sch_SalesDetails.N_ItemID, Sch_SalesDetails.N_Amount, ISNULL(Sch_SalesDetails.B_Issued, 1) AS B_Issued, "+
+                        " Sch_SalesDetails.B_Paid, Sch_SalesDetails.N_FrequencyID, Sch_Sales.D_SalesDate, Sch_Sales.D_EntryDate, Sch_Sales.N_ClassTypeID, Sch_Sales.N_ClassID,"+  
+                         " CASE WHEN B_BeginningBalance = 1 THEN 'Opening Balance - ' + Sch_Sales.X_InvoiceNo ELSE Sch_Sales.X_InvoiceNo END AS X_InvoiceNo, Sch_Sales.N_SalesAmt,ISNULL(Sch_SalesDetails.N_Discount, 0) AS Discount, Sch_Sales.N_UserID, Sch_SalesDetails.N_SalesDetailsID, Sch_Sales.B_IsRemoved, REPLACE(CONVERT(varchar(11), Sch_SalesDetails.D_DateFrom, 106), ' ', '-') AS DFrom,"+
+                        " REPLACE(CONVERT(varchar(11), Sch_SalesDetails.D_DateTill, 106), ' ', '-') AS DTo, Sch_FeeCategory.N_Type, Sch_FeeCategory.X_FeeCategoryCode, Sch_Sales.N_RefSalesID, CASE WHEN (Sch_Sales.N_RefFormID = 744) THEN Sch_BusRegistration.N_AdmissionID ELSE Sch_Sales.N_RefId END AS N_RefId, vw_InvReceivables.N_BalanceAmount AS N_BalanceAmount, "+   
+                      " vw_InvReceivables.NetAmount AS NetAmount,CASE WHEN (ISNULL(Inv_SalesReturnDetails.N_DebitNoteId,0)>0) THEN 'Refunded' WHEN (ISNULL(vw_InvReceivables.N_BalanceAmount,0)=0 AND ISNULL(Inv_SalesDetails.N_SchSalesID, 0) > 0) THEN 'Paid' WHEN (ISNULL(Inv_SalesDetails.N_SchSalesID, 0) > 0 AND (isnull(vw_InvReceivables.N_BalanceAmount, 0)) < (isnull(vw_InvReceivables.NetAmount, 0))) THEN 'Partially Paid' ELSE 'Not Paid' END AS Status , "+                        
+                      " Inv_SalesDetails.N_SchSalesDetailsID,Sch_Sales.N_RefId AS N_ReferenceID, Sch_Sales.N_RefFormID, Sch_FeeCategory.N_FeeCategoryID,Sch_Sales.N_SalesAmt - ISNULL(Sch_SalesDetails.N_Discount, 0) AS Fee FROM  Inv_Sales INNER JOIN Inv_SalesDetails ON Inv_Sales.N_CompanyId = Inv_SalesDetails.N_CompanyID AND Inv_Sales.N_SalesId = Inv_SalesDetails.N_SalesID AND ISNULL(Inv_Sales.B_IsSaveDraft, 0)=0 LEFT OUTER JOIN "+
+                      " Inv_SalesReturnDetails ON Inv_SalesDetails.N_SalesDetailsID = Inv_SalesReturnDetails.N_SalesDetailsId AND Inv_SalesDetails.N_CompanyID = Inv_SalesReturnDetails.N_CompanyID LEFT OUTER JOIN "+ 
+                      "vw_InvReceivables ON Inv_Sales.N_CompanyId = vw_InvReceivables.N_CompanyId AND Inv_Sales.N_SalesId = vw_InvReceivables.N_SalesId AND (vw_InvReceivables.X_Type = 'SALES') RIGHT OUTER JOIN  Sch_Sales INNER JOIN "+
+                    "  Sch_SalesDetails ON Sch_Sales.N_CompanyId = Sch_SalesDetails.N_CompanyID AND Sch_Sales.N_SalesId = Sch_SalesDetails.N_SalesID INNER JOIN  Sch_Class ON Sch_Sales.N_ClassID = Sch_Class.N_ClassID AND Sch_Sales.N_CompanyId = Sch_Class.N_CompanyID INNER JOIN "+
+                     " Sch_FeeType ON Sch_SalesDetails.N_CompanyID = Sch_FeeType.N_CompanyID AND Sch_SalesDetails.N_ItemID = Sch_FeeType.N_FeeTypeID INNER JOIN "+
+                     " Sch_FeeCategory ON Sch_FeeType.N_FeeCategoryID = Sch_FeeCategory.N_FeeCategoryID AND Sch_FeeType.N_CompanyID = Sch_FeeCategory.N_CompanyID ON  Inv_SalesDetails.N_CompanyID = Sch_SalesDetails.N_CompanyID AND Inv_SalesDetails.N_SchSalesID = Sch_SalesDetails.N_SalesID AND "+ 
+                     " Inv_SalesDetails.N_SchSalesDetailsID = Sch_SalesDetails.N_SalesDetailsID  LEFT OUTER JOIN Sch_BusRegistration ON Sch_BusRegistration.N_CompanyID = Sch_Sales.N_CompanyId AND Sch_BusRegistration.N_FnYearID = Sch_Sales.N_FnYearId AND Sch_BusRegistration.N_RegistrationID = Sch_Sales.N_RefId AND "+
+                      "Sch_Sales.N_RefFormID = 744 Where Sch_Sales.N_RefID="+nAdmissionID+" and Sch_Sales.N_CompanyID = " +nCompanyID + " and Sch_Sales.N_FnYearId="+nFnYearID+" and B_IsRemoved=0 ORDER By D_SalesDate";
+
                         Detail = dLayer.ExecuteDataTable(detailsSql, QueryParams, connection);
                         Detail = _api.Format(Detail, "details");
                         if (Detail.Rows.Count == 0)
@@ -122,8 +135,8 @@ namespace SmartxAPI.Controllers
                     }
                     if (row["Status"].ToString() == "Not Paid")
                     {
-                        dLayer.ExecuteNonQuery("Update Sch_Sales set D_SalesDate = '" + row["d_DateFrom"] + "', N_SalesAmt = " + myFunctions.getVAL( row["Fee"].ToString())  + " where N_CompanyID = " +nCompanyID + " and N_FnYearId= " + N_AcYearID + " and N_SalesId=" + myFunctions.getIntVAL(row["N_SalesId"].ToString()) + "", Params,connection,transaction);
-                        dLayer.ExecuteNonQuery("Update Sch_SalesDetails set D_DateFrom = '" + row["d_DateFrom"] + "',D_DateTill = '" +row["d_DateTill"] + "',N_Amount = '" +  myFunctions.getVAL(row["Fee"].ToString()) + "' where N_SalesId=" +   myFunctions.getIntVAL(row["N_SalesId"].ToString()) + "  and N_ItemID=" +  myFunctions.getIntVAL(row["N_ItemID"].ToString()) + "",  Params,connection,transaction);
+                        dLayer.ExecuteNonQuery("Update Sch_Sales set D_SalesDate = '" + row["d_DateFrom"] + "', N_SalesAmt = " + myFunctions.getVAL( row["n_NetAmount"].ToString())  + " where N_CompanyID = " +nCompanyID + " and N_FnYearId= " + N_AcYearID + " and N_SalesId=" + myFunctions.getIntVAL(row["N_SalesId"].ToString()) + "", Params,connection,transaction);
+                        dLayer.ExecuteNonQuery("Update Sch_SalesDetails set D_DateFrom = '" + row["d_DateFrom"] + "',D_DateTill = '" +row["d_DateTill"] + "',N_Amount = '" +  myFunctions.getVAL(row["n_NetAmount"].ToString()) + "',N_Discount='" + myFunctions.getVAL(row["N_Discount"].ToString()) +"' where N_SalesId=" +   myFunctions.getIntVAL(row["N_SalesId"].ToString()) + "  and N_ItemID=" +  myFunctions.getIntVAL(row["N_ItemID"].ToString()) + "",  Params,connection,transaction);
                     }
                   
                     if (row["b_Paid"].ToString() == "False" && row["Status"].ToString() == "Not Paid")//unchecked

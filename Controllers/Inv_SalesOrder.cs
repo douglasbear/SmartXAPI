@@ -395,7 +395,7 @@ namespace SmartxAPI.Controllers
                     DetailParams.Add("n_LocationID", MasterRow["N_LocationID"]);
                     string Location = Convert.ToString(dLayer.ExecuteScalar("select X_LocationName from Inv_Location where N_CompanyID=@nCompanyID and N_LocationID=@n_LocationID", DetailParams, connection));
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_LocationName", typeof(string), Location);
-                    object InSales = null, InDeliveryNote = null, CancelStatus = null, isProforma = false;
+                    object InSales = null, InDeliveryNote = null, CancelStatus = null, isProforma = false ; object DispatchNo = null;
                     if (myFunctions.getIntVAL(N_SalesOrderTypeID.ToString()) != 175)
                     {
                         if (Convert.ToBoolean(MasterRow["N_Processed"]))
@@ -404,8 +404,17 @@ namespace SmartxAPI.Controllers
                             isProforma = dLayer.ExecuteScalar("select isnull(B_IsProforma,0) from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
                             InDeliveryNote = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_DeliveryNote where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
                             CancelStatus = dLayer.ExecuteScalar("select 1 from Inv_SalesOrder where B_CancelOrder=1 and N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
-
+                            DispatchNo = dLayer.ExecuteScalar("select x_dispatchNo from inv_materialDispatch where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
+                        } 
+                        
+                       
+                            object dispatchDone=null;
+                           dispatchDone=dLayer.ExecuteScalar("select x_DispatchNo from Inv_MaterialDispatch where N_CompanyID=@nCompanyID and N_SalesOrderID=@nSOrderID", DetailParams, connection);
+                           if (dispatchDone != null){
+                           MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "DispatchDone", typeof(int), dispatchDone != null ? 1 : 0);
                         }
+                       
+                       
                     }
                     if (InDeliveryNote != null)
                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), InDeliveryNote != null ? "Delivery Note Processed" : "");
@@ -451,6 +460,7 @@ namespace SmartxAPI.Controllers
 
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "ChkCancelOrderEnabled", typeof(bool), true);
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "isProformaDone", typeof(bool), isProforma);
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_DispatchNo", typeof(string), DispatchNo);
 
 
                     if (InSales != null)
@@ -812,9 +822,12 @@ namespace SmartxAPI.Controllers
                         }
                     if(Prescription.Rows.Count >0 )
                     { 
+                        if (Prescription.Columns.Contains("N_SalesOrderID"))
+                        {
                         Prescription.Rows[0]["N_SalesOrderID"]=n_SalesOrderId;
                         Prescription.AcceptChanges();
                         dLayer.SaveData("Inv_Prescription", "N_PrescriptionID", Prescription, connection, transaction); 
+                        }
 
                     }
                 
@@ -849,6 +862,11 @@ namespace SmartxAPI.Controllers
                             bool Status = false;
                             string taskCountsql = "";
                             object taskCount;
+                            string startDateSql="";
+                            string priority="";
+                            string category="";
+                            int priorityID=0;
+                            int nCategoryID=0;
 
 
 
@@ -865,10 +883,11 @@ namespace SmartxAPI.Controllers
                                 assigneeSql = "select N_AssignedTo from Inv_ServiceInfo where N_CompanyID=" + N_CompanyID + " and N_ServiceInfoID =" + myFunctions.getIntVAL(var["N_ServiceID"].ToString()) + "";
                                 creatorstring = "select N_UserID from Inv_ServiceInfo where N_CompanyID=" + N_CompanyID + " and N_ServiceInfoID =" + myFunctions.getIntVAL(var["N_ServiceID"].ToString()) + "";
                                 X_TaskDescriptionSql = "select X_ServiceDescription from Inv_ServiceInfo where N_CompanyID=" + N_CompanyID + " and N_ServiceInfoID =" + myFunctions.getIntVAL(var["N_ServiceID"].ToString()) + "";
-                                X_TaskSummarySql = "select X_ItemName from Inv_ItemMaster where N_ItemID=" + myFunctions.getIntVAL(var["N_ItemID"].ToString()) + " and N_CompanyID=" + N_CompanyID + " ";
+                                X_TaskSummarySql = "select X_ServiceItem from Inv_ServiceInfo where N_CompanyID=" + N_CompanyID + " and N_ServiceInfoID =" + myFunctions.getIntVAL(var["N_ServiceID"].ToString()) + "";
                                 dueDateSql = "select D_DeliveryDate from Inv_ServiceInfo where N_CompanyID=" + N_CompanyID + " and N_ServiceInfoID =" + myFunctions.getIntVAL(var["N_ServiceID"].ToString()) + "";
-
-
+                                startDateSql="select D_StartDate from Inv_ServiceInfo where N_CompanyID=" + N_CompanyID + " and N_ServiceInfoID =" + myFunctions.getIntVAL(var["N_ServiceID"].ToString()) + "";
+                                priority = "select N_PriorityID from Inv_ServiceInfo where N_CompanyID=" + N_CompanyID + " and N_ServiceInfoID =" + myFunctions.getIntVAL(var["N_ServiceID"].ToString()) + "";
+                                category = "select N_CategoryID from Inv_ServiceInfo where N_CompanyID=" + N_CompanyID + " and N_ServiceInfoID =" + myFunctions.getIntVAL(var["N_ServiceID"].ToString()) + "";
                                 N_AssigneeID = myFunctions.getIntVAL(dLayer.ExecuteScalar(assigneeSql, Params, connection, transaction).ToString());
                                 if (N_AssigneeID <= 0)
                                 {
@@ -881,11 +900,14 @@ namespace SmartxAPI.Controllers
                                 X_TaskDescription = (dLayer.ExecuteScalar(X_TaskDescriptionSql, Params, connection, transaction).ToString());
                                 X_TaskSummary = (dLayer.ExecuteScalar(X_TaskSummarySql, Params, connection, transaction).ToString());
                                 D_DueDate = Convert.ToDateTime(dLayer.ExecuteScalar(dueDateSql, Params, connection, transaction).ToString());
-                                D_StartDate = Convert.ToDateTime(MasterTable.Rows[0]["D_EntryDate"].ToString());
+                                D_StartDate = Convert.ToDateTime(dLayer.ExecuteScalar(startDateSql, Params, connection, transaction).ToString());
                                 D_EntryDate = Convert.ToDateTime(MasterTable.Rows[0]["D_EntryDate"].ToString());
                                 salesOrderDetailsID = myFunctions.getIntVAL(var["N_SalesOrderDetailsID"].ToString());
+                                int N_ProjectID= myFunctions.getIntVAL(MasterTable.Rows[0]["N_ProjectID"].ToString());
+                                priorityID = myFunctions.getIntVAL(dLayer.ExecuteScalar(priority, Params, connection, transaction).ToString());
+                                nCategoryID = myFunctions.getIntVAL(dLayer.ExecuteScalar(category, Params, connection, transaction).ToString());
                                 N_Status = 2;
-                                Status = taskController.SaveGeneralTask(N_CompanyID, X_TaskSummary, X_TaskDescription, N_AssigneeID, N_CreatorID, N_SubmitterID, N_ClosedUserID, D_DueDate, D_StartDate, D_EntryDate, N_Status, salesOrderDetailsID, connection, transaction);
+                                Status = taskController.SaveGeneralTask(N_CompanyID, X_TaskSummary, X_TaskDescription, N_AssigneeID, N_CreatorID, N_SubmitterID, N_ClosedUserID, D_DueDate, D_StartDate, D_EntryDate, N_Status, salesOrderDetailsID, N_ProjectID,priorityID,nCategoryID, connection, transaction);
                                 if (Status == false)
                                 {
                                     transaction.Rollback();
@@ -966,6 +988,10 @@ namespace SmartxAPI.Controllers
                  {
                  return Ok(_api.Success(Result,"Job Order Saved Successfully"));
                   }
+                else if(N_FormID == 1740) 
+                 {
+                return Ok(_api.Success(Result,"Optical Order Saved Successfully")); 
+                  }
                 else if(N_FormID == 1546) 
                  {
                  return Ok(_api.Success(Result,"Service Order Saved Successfully"));
@@ -985,7 +1011,7 @@ namespace SmartxAPI.Controllers
         }
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nSalesOrderID, int nBranchID, int nFnYearID)
+        public ActionResult DeleteData(int nSalesOrderID, int nBranchID, int nFnYearID, int nFormID)
         {
             int Results = 0;
             try
@@ -1086,9 +1112,20 @@ namespace SmartxAPI.Controllers
                             }
                             dLayer.ExecuteScalar("delete from Inv_Prescription where N_SalesOrderID=" + nSalesOrderID.ToString() + "  and  N_CompanyID=" + nCompanyID, connection, transaction);
                             transaction.Commit();
+                            if(nFormID==1740)
+                            {
+                               return Ok(_api.Success("Optical Order deleted")); 
+                            }
+                            else
                             return Ok(_api.Success("Sales Order deleted"));
 
                         }
+
+                    }
+                     else if(nFormID==1740)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Optical invoice processed! Unable to delete Optical Order"));
 
                     }
                     else
@@ -1565,7 +1602,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p4", dDateTo);
 
                     if (nFormID==1145)
-                        sqlCommandText = "select * from vw_SalesorderDelivery where N_CompanyID=@p1 and ((D_DeliveryDate<=@p3) or (D_DeliveryDate>=@p3 AND D_DeliveryDate<=@p4) AND ISNULL(D_DeliveryReturnDate,@p4)>=@p4) and N_SalesOrderId NOT IN (select N_SOID from Inv_ServiceTimesheet where N_FormID=@p2 and N_CompanyID=@p1 and D_DateFrom=@p3 and D_DateTo=@p4)";
+                        sqlCommandText = "select * from vw_SalesorderDelivery where N_CompanyID=@p1 and ((D_DeliveryDate<=@p3) or (D_DeliveryDate>=@p3 AND D_DeliveryDate<=@p4)) AND ISNULL(D_DeliveryReturnDate,@p3)>=@p3 and N_SalesOrderId NOT IN (select N_SOID from Inv_ServiceTimesheet where N_FormID=@p2 and N_CompanyID=@p1 and D_DateFrom=@p3 and D_DateTo=@p4)";
                     else
                         sqlCommandText = "select * from vw_SO_PO_List where N_CompanyID=@p1";
 

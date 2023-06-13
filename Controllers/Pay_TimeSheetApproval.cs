@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("employeeList")]
-        public ActionResult GetEmpList(int nFnYearID, bool b_AllBranchData, int nBranchID, int nAdditionPayID, int nDeductionPayID, int nDefaultAbsentID, int payRunID)
+        public ActionResult GetEmpList(int nFnYearID, bool b_AllBranchData, int nBranchID, int nAdditionPayID, int nDeductionPayID, int nDefaultAbsentID, int payRunID, int batchcode)
         {
             try
             {
@@ -125,7 +125,9 @@ namespace SmartxAPI.Controllers
                     DataTable defaultPaycode = new DataTable();
                       string empSql = "";
                     string criteria="";
-                    criteria= " and N_EMPID not in (select N_EmpID from Pay_TimeSheetMaster where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_BatchID=" + payRunID + " and ISNULL(N_TotalWorkingDays,0)>0)";
+                    if(payRunID!=0){
+                    criteria= " and N_EMPID not in (select N_EmpID from Pay_TimeSheetMaster where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_BatchID=" + batchcode + " and ISNULL(N_TotalWorkingDays,0)>0)";
+                    }
                     if (b_AllBranchData == true)
                         empSql = "select N_CompanyID,N_EmpID,N_BranchID,N_Status,N_FnYearID,N_CatagoryId,X_DefEmpCode,X_Position,X_Department,N_DepartmentID,N_PositionID,Name as X_EmpName,[Employee Code] as X_EmpCode from vw_PayEmployee_Disp where isnull(B_ExcludeInAttendance,0)=0 and  N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and (N_Status = 0 OR N_Status = 1) "+criteria+" group by N_CompanyID,N_EmpID,N_BranchID,N_Status,N_FnYearID,N_CatagoryId,X_DefEmpCode,X_Position,X_Department,N_DepartmentID,N_PositionID,Name,[Employee Code]  order by X_EmpCode";
                     else
@@ -188,7 +190,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("employeeDetails")]
-        public ActionResult GetEmpDetails(int nFnYearID, int nEmpID, int nCategoryID, string payRunID, DateTime dtpFromdate, DateTime dtpTodate, DateTime systemDate)
+        public ActionResult GetEmpDetails(int nFnYearID, int nEmpID, int nCategoryID, string payRunID, DateTime dtpFromdate, DateTime dtpTodate, DateTime systemDate,bool isTimesheet)
         {
             try
             {
@@ -225,12 +227,25 @@ namespace SmartxAPI.Controllers
                     int N_DefaultAbsentID = 0;
                     string X_DefaultAbsentCode = "";
                     int N_TimeSheetID = 0;
+                    int N_BatchID = 0;
 
                     SortedList Master = new SortedList();
 
                     Double N_Diffrence = 0, N_NonDedApp = 0, txtAdjustment = 0, N_WorkdHrs = 0, N_WorkHours = 0,N_TotalDays=0;
 
                     object N_Result;
+                    object nCatID;
+                    object nBatchID;
+                    if(isTimesheet==true && nCategoryID == 0){
+                    nCatID = dLayer.ExecuteScalar("Select n_CatagoryId from Pay_Employee Where  N_CompanyID= " + nCompanyID + " and N_EmpID=" + nEmpID + " and N_FnYearID=" + nFnYearID + "", Params, connection);
+                    if (nCatID != null){
+                        nCategoryID=myFunctions.getIntVAL(nCatID.ToString());;
+                    }
+                    //  nBatchID = dLayer.ExecuteScalar("Select n_BatchID from Pay_TimeSheetMaster Where  N_CompanyID= " + nCompanyID + " and N_EmpID=" + nEmpID + " and N_FnYearID=" + nFnYearID + "", Params, connection);
+                    //   if (nCatID != null){
+                    //     payRunID = nBatchID.ToString();
+                    // }
+                    }
 
                     N_Result = dLayer.ExecuteScalar("Select N_Value from Gen_Settings Where X_Description ='Default Addition' and N_CompanyID= " + nCompanyID + " and X_Group='HR'", Params, connection);
                     if (N_Result != null)
@@ -280,7 +295,7 @@ namespace SmartxAPI.Controllers
                     bool B_DoubleEntry = Convert.ToBoolean(dLayer.ExecuteScalar("Select N_Value from Gen_Settings Where X_Description ='DoubleShiftEntry' and N_CompanyID= " + nCompanyID + " and X_Group='HR'", Params, connection));
 
                     string ElementSql = "";
-                    int N_BatchID = 0;
+                    
                     object obj = dLayer.ExecuteScalar("Select isnull(Count(X_BatchCode),0) from Pay_TimeSheetMaster where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_EmpID=" + nEmpID + " and N_BatchID=" + payRunID + " and ISNULL(N_TotalWorkingDays,0)>0", Params, connection);
                     if (obj != null)
                     {
@@ -690,15 +705,25 @@ namespace SmartxAPI.Controllers
                                         object HoliCount= dLayer.ExecuteScalar("Select COUNT(1) from vw_pay_OffDays Where N_CompanyID =" + nCompanyID + " and (N_FNyearID= " + nFnYearID + " or N_FNyearID=0) and D_Date='"+Date+"'", secParams, connection);
                                         if(HoliCount != null) N_HolidayCount=myFunctions.getIntVAL(HoliCount.ToString());
 
-                                        if(D_HireDate<=Date && N_HolidayCount==0)
+                                        object additionWh;
+                                        object shiftwh;
+                                        object wh;
+                                                                               
+                                        if(HoliCount != null) N_HolidayCount=myFunctions.getIntVAL(HoliCount.ToString());
+                                        if(D_HireDate<=Date && D_ResignDate>=Date && N_HolidayCount==0)
                                         {
-                                            N_AddWH = myFunctions.getFloatVAL(dLayer.ExecuteScalar("select ISNULL(N_Workhours,0) from Pay_AdditionalWorkingDays where N_CompanyID="+nCompanyID+" and D_WorkingDate='"+Date+"' and N_CatagoryID="+nCategoryID, secParams, connection).ToString());
+                                            additionWh=dLayer.ExecuteScalar("select ISNULL(N_Workhours,0) from Pay_AdditionalWorkingDays where N_CompanyID="+nCompanyID+" and D_WorkingDate='"+Date+"' and N_CatagoryID="+nCategoryID, secParams, connection);
+                                            if(additionWh==null){N_AddWH=0;}else{N_AddWH=myFunctions.getFloatVAL(additionWh.ToString());}
                                             if(N_AddWH==0)
                                             {
-                                                N_ShiftWH = myFunctions.getFloatVAL(dLayer.ExecuteScalar("select N_Workhours from Pay_WorkingHours where N_CompanyID="+nCompanyID+" and N_WHID="+((int)Date.DayOfWeek) + 1+" and N_CatagoryID =(select N_GroupID from Pay_EmpShiftDetails where N_CompanyID="+nCompanyID+" and N_EmpID="+nEmpID+" and D_Date='"+Date+"')", secParams, connection).ToString());
+                                                shiftwh=dLayer.ExecuteScalar("select ISNULL(N_Workhours,0) from Pay_AdditionalWorkingDays where N_CompanyID="+nCompanyID+" and D_WorkingDate='"+Date+"' and N_CatagoryID="+nCategoryID, secParams, connection);
+                                                if(shiftwh==null){N_ShiftWH=0;}else{N_ShiftWH=myFunctions.getFloatVAL(shiftwh.ToString());}
+                                                
                                                 if(N_ShiftWH==0)
                                                 {
-                                                    N_WH = myFunctions.getFloatVAL(dLayer.ExecuteScalar("select N_Workhours from Pay_WorkingHours where N_CompanyID="+nCompanyID+" and N_WHID="+((int)Date.DayOfWeek) + 1+" and N_CatagoryID ="+nCategoryID, secParams, connection).ToString());
+                                                    wh=dLayer.ExecuteScalar("select N_Workhours from Pay_WorkingHours where N_CompanyID="+nCompanyID+" and N_WHID="+((int)Date.DayOfWeek+ 1)+" and N_CatagoryID ="+nCategoryID, secParams, connection);
+                                                   if(wh==null){N_WH=0;}else{N_WH=myFunctions.getFloatVAL(wh.ToString());}
+                                                    
                                                     if(N_WH!=0)
                                                         rowPA["N_ActWorkHours"] = N_WH;
                                                 }

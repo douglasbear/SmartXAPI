@@ -344,7 +344,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesInvoiceDetails(int nCompanyId, bool bAllBranchData, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID, string xDeliveryNoteID, int nServiceSheetID, string xServiceSheetID, string xSchSalesID, bool isServiceOrder, int nFormID)
+        public ActionResult GetSalesInvoiceDetails(int nCompanyId, bool bAllBranchData, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID, string xDeliveryNoteID,int nServiceSheetID, string xServiceSheetID,string xSchSalesID,bool isServiceOrder, int nFormID, bool enableDayWise, string multipleJobOrder)
         {
             if (xInvoiceNo != null)
                 xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
@@ -583,7 +583,30 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Success(dsSalesInvoice));
 
                     }
-                    else if (isServiceOrder && nSalesOrderID > 0)
+                    else if (multipleJobOrder != null && multipleJobOrder != "")
+                    {
+                        string Mastersql = "select * from vw_ServiceTimesheetToSales where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_SalesOrderId in (" + multipleJobOrder + ")";
+                        DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
+                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+
+                        MasterTable = _api.Format(MasterTable, "Master");
+
+                        if (isProfoma == 1)
+                        {
+                            MasterTable.Rows[0]["B_IsSaveDraft"] = 1;
+                            MasterTable.Rows[0]["B_IsProforma"] = 1;
+                        }
+
+                        string DetailSql = "";
+                        DetailSql = "select * from vw_ServiceTimesheetDetailsToSales where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_SalesOrderId in (" + multipleJobOrder + ")";
+                        DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+                        DetailTable = _api.Format(DetailTable, "Details");
+
+                        dsSalesInvoice.Tables.Add(MasterTable);
+                        dsSalesInvoice.Tables.Add(DetailTable);
+                        return Ok(_api.Success(dsSalesInvoice));
+                    }
+                    else if(isServiceOrder && nSalesOrderID > 0)
                     {
                         QueryParamsList.Add("@nOrderID", nSalesOrderID);
                         string Mastersql = "select *,0 as B_IsProforma from vw_SalesOrderMasterToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID";
@@ -602,7 +625,7 @@ namespace SmartxAPI.Controllers
                         }
 
                         string DetailSql = "";
-                        DetailSql = "select *,0 as N_MaterialID,0 as N_DisplayQty,0 as N_TaskID  from vw_SalesOrderDetailsToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID union select * from vw_ServiceDetailsItems where N_CompanyId=@nCompanyID and N_ServiceID in (select N_ServiceID from Inv_SalesOrderDetails where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID )";
+                        DetailSql = "select *,0 as N_MaterialID,0 as N_DisplayQty,0 as N_TaskID  from vw_SalesOrderDetailsToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID union select * from vw_ServiceDetailsItems_Sales where N_CompanyId=@nCompanyID and N_ServiceID in (select N_ServiceID from Inv_SalesOrderDetails where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID )";
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
                         dsSalesInvoice.Tables.Add(MasterTable);
@@ -769,7 +792,11 @@ namespace SmartxAPI.Controllers
                         }
 
                         string DetailSql = "";
-                        DetailSql = "select * from vw_ServiceTimesheetDetailsToSales where N_CompanyId=@nCompanyID and N_ServiceSheetID in ( " + xServiceSheetID + " )";
+                        if (enableDayWise)
+                            DetailSql = "select * from vw_ServiceTimesheetDetailsToSalesDaywise where N_CompanyId=@nCompanyID and N_ServiceSheetID in ( "+xServiceSheetID+" )";
+                        else
+                            DetailSql = "select * from vw_ServiceTimesheetDetailsToSales where N_CompanyId=@nCompanyID and N_ServiceSheetID in ( "+xServiceSheetID+" )";
+
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
                         dsSalesInvoice.Tables.Add(MasterTable);
@@ -1030,10 +1057,10 @@ namespace SmartxAPI.Controllers
                         if (CustomerID != null)
                         {
                             // if (myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString()) == myFunctions.getIntVAL(CustomerID.ToString()))
-                            saleamountdetails = dLayer.ExecuteDataTable("Select distinct * from vw_SalesAmount_Customer_Cloud where N_SalesID=" + masterTable.Rows[0]["n_SalesId"].ToString() + "  and N_CompanyID=" + nCompanyId + "  and N_FnYearID=" + nFnYearId + "  "
+                            saleamountdetails = dLayer.ExecuteDataTable("Select distinct * from vw_SalesAmount_Customer_Cloud where N_SalesID=" + masterTable.Rows[0]["n_SalesId"].ToString() + "  and N_CompanyID=" + nCompanyId + "  and n_BranchID ="+nBranchId+" and N_FnYearID=" + nFnYearId + "  "
                                                                     + " Union  select [Customer Code] as X_CustomerCode,[Customer Name] as X_CustomerName,0 as N_SalesID,N_CustomerID,0 as N_Amount,0 as N_AmountF,0 as N_CommissionAmtt,0 as N_CommissionAmtF,0 as N_CommissionPer, N_CompanyID,N_BranchID,N_FnYearID,'' as X_CardNo,0 as TaxID, null as N_PointsOUT,0 as N_AppliedAmt,null as N_AvailPoints,0 as N_SalesAmountID,N_CashTypeID,N_CashTypeID as N_CashTypeID2, "
-                                                                    + "N_EnablePopup   from vw_PaymentType_Disp where  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and  ISNULL(B_Inactive,0)=0 and N_EnablePopup=1 and  N_CustomerID not in (Select N_CustomerID from  "
-                                                                    + " vw_SalesAmount_Customer_Cloud where N_SalesID=" + masterTable.Rows[0]["n_SalesId"].ToString() + "  and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + ")", Con); // else
+                                                                    + "N_EnablePopup   from vw_PaymentType_Disp where  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and n_BranchID ="+nBranchId+" and ISNULL(B_Inactive,0)=0 and N_EnablePopup=1 and  N_CustomerID not in (Select N_CustomerID from  "
+                                                                    + " vw_SalesAmount_Customer_Cloud where N_SalesID=" + masterTable.Rows[0]["n_SalesId"].ToString() + "  and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and n_BranchID ="+nBranchId+" )", Con); // else
                             //     saleamountdetails = dLayer.ExecuteDataTable("Select distinct * from vw_SalesAmount_Customer where N_SalesID=0 and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, Con);
                         }
                         // else
@@ -2031,7 +2058,7 @@ namespace SmartxAPI.Controllers
 
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nInvoiceID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID, int nQuotationID, string comments)
+        public ActionResult DeleteData(int nInvoiceID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID, int nQuotationID, string comments,int nFormID)
         {
             if (comments == null)
             {
@@ -2153,13 +2180,26 @@ namespace SmartxAPI.Controllers
                                 }
                                 else
                                 {
+
+                                    object OSOID = dLayer.ExecuteScalar("Select N_SalesOrderID from Inv_Prescription where n_SalesID=@nSalesID and  n_CompanyID=@nCompanyID",QueryParams, connection, transaction);
+                                    if (OSOID == null) OSOID = 0;
+
+                                    if(myFunctions.getIntVAL(OSOID.ToString()) > 0)
+                                     {  
+                                         dLayer.ExecuteNonQuery("update Inv_Prescription set n_SalesID=null where n_SalesID=@nSalesID and  n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+    
+                                     }
+                                    else
+                                     {
+                                     dLayer.ExecuteNonQuery("delete from Inv_Prescription where n_SalesID=@nSalesID and  n_CompanyID=@nCompanyID", QueryParams, connection, transaction);                      
+                            
+                                     }
                                     dLayer.ExecuteNonQuery("delete from Inv_DeliveryDispatch where n_InvoiceID=@nSalesID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                                     //   if (N_AmtSplit == 1)
                                     //     {                                                
                                     dLayer.ExecuteNonQuery("delete from Inv_SaleAmountDetails where n_SalesID=@nSalesID and n_BranchID=@nBranchID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                                     dLayer.ExecuteNonQuery("delete from Inv_LoyaltyPointOut where n_SalesID=@nSalesID and n_PartyID=@nPartyID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                                     // }  
-                                    dLayer.ExecuteNonQuery("delete from Inv_Prescription where n_SalesID=@nSalesID and  n_CompanyID=@nCompanyID", QueryParams, connection, transaction);                      
                                     dLayer.ExecuteNonQuery("delete from Inv_ServiceContract where n_SalesID=@nSalesID and n_FnYearID=@nFnYearID and n_BranchID=@nBranchID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                                     if (dLayer.ExecuteNonQuery("delete from Inv_StockMaster where n_SalesID=@nSalesID and x_Type='Negative' and n_InventoryID = 0 and n_CompanyID=@nCompanyID", QueryParams, connection, transaction) <= 0)
                                     {
@@ -2245,12 +2285,22 @@ namespace SmartxAPI.Controllers
                             };
 
                             transaction.Commit();
+                            if(nFormID ==1741) 
+                            {
+                               return Ok(_api.Success("Optical Invoice " + status + " Successfully")); 
+                            }
+                            else
                             return Ok(_api.Success("Sales Invoice " + status + " Successfully"));
                         }
                         else
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User, "Unable to delete Sales Invoice"));
+                            if (nFormID == 1665)
+                            {
+                                return Ok(_api.Error(User, "Unable to delete Fee Collection"));
+                            } else {
+                                return Ok(_api.Error(User, "Unable to delete Sales Invoice"));
+                            };
                         }
                     }
                     else
@@ -2588,10 +2638,11 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
             Params.Add("@nCustomerID", nCustomerID);
+           
 
 
             string sqlCommandText = "";
-            if (bAllbranchData)
+           if (bAllbranchData)
                 sqlCommandText = " SELECT        Inv_DeliveryNote.N_CustomerId, Inv_DeliveryNote.N_CompanyId, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, Inv_CustomerProjects.X_ProjectName, Inv_DeliveryNote.N_SalesOrderID, "
                                 + "Inv_DeliveryNote.N_DeliveryNoteId, Inv_DeliveryNote.N_BranchId, Inv_DeliveryNote.X_CustPONo, Inv_DeliveryNote.X_ReceiptNo AS X_DeliveryNoteNo "
                                 + " FROM            Inv_DeliveryNote INNER JOIN  "
@@ -2645,8 +2696,8 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(_api.Error(User, e));
             }
-
-        }
+            }
+        
 
 
 
@@ -2726,6 +2777,5 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-
-    }
+}
 }

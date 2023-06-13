@@ -977,7 +977,7 @@ namespace SmartxAPI.GeneralFunctions
                     if (N_IsProforma == 1)
                         Params.Add("N_FormID", 1346);
                     else
-                        Params.Add("N_FormID", 64);
+                        Params.Add("N_FormID", N_FormID);
 
                     while (true)
                     {
@@ -1022,7 +1022,7 @@ namespace SmartxAPI.GeneralFunctions
                     if (N_IsProforma == 1)
                         Params.Add("N_FormID", 1346);
                     else
-                        Params.Add("N_FormID", 64);
+                        Params.Add("N_FormID", N_FormID);
                     Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
                     while (true)
                     {
@@ -1354,7 +1354,8 @@ namespace SmartxAPI.GeneralFunctions
                             Prescription.AcceptChanges();
                         }
                     if(Prescription.Rows.Count>0)
-                    {
+                    { if (Prescription.Columns.Contains("N_SalesOrderID"))
+                        {
                         if( myFunctions.getIntVAL(Prescription.Rows[0]["N_SalesOrderID"].ToString())>0)
                         {
                             object presID=dLayer.ExecuteScalar("select N_PrescriptionID from Inv_Prescription where N_SalesOrderID=" +myFunctions.getIntVAL(Prescription.Rows[0]["N_SalesOrderID"].ToString()) + " and N_CompanyID=" + N_CompanyID+"",connection, transaction);
@@ -1365,6 +1366,7 @@ namespace SmartxAPI.GeneralFunctions
                         Prescription.Rows[0]["N_SalesID"]=N_SalesID;
                         Prescription.AcceptChanges();
                         dLayer.SaveData("Inv_Prescription", "N_PrescriptionID", Prescription, connection, transaction); 
+                        }
                     }
 
 
@@ -1593,10 +1595,14 @@ namespace SmartxAPI.GeneralFunctions
 
             Result.Add("b_IsCompleted", 1);
 
-                if (N_FormID == 64)
+            if (N_FormID == 64)
                 Result.Add("x_Msg", "Sales invoice saved");
             else if(N_FormID == 1601) 
                 Result.Add("x_Msg", "Rental Sales Saved Successfully");
+            else if(N_FormID == 1665) 
+                Result.Add("x_Msg", "Fee Collection Saved Successfully");
+            else if(N_FormID == 1741) 
+                Result.Add("x_Msg", "Optical Sales Saved Successfully");
             else
                 Result.Add("x_Msg", "Sales invoice saved");
 

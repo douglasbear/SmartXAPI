@@ -103,10 +103,10 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    if(nFormID==1145)
+                    // if(nFormID==1145)
                         sqlCommandCount = "select count(1) as N_Count  from vw_Inv_ServiceTimesheet where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_FormID=@nFormID " + Searchkey + "";
-                    else
-                        sqlCommandCount = "select count(1) as N_Count  from vw_Inv_VendorServiceSheetMaster where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_FormID=@nFormID " + Searchkey + "";
+                    // else
+                    //     sqlCommandCount = "select count(1) as N_Count  from vw_Inv_VendorServiceSheetMaster where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_FormID=@nFormID " + Searchkey + "";
 
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
@@ -216,11 +216,14 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                    int nServiceSheetDetailsID = dLayer.SaveData("Inv_ServiceTimesheetDetails", "N_ServiceSheetDetailsID", DetailTable, connection, transaction);
-                    if (nServiceSheetDetailsID <= 0)
+                    if (DetailTable.Rows.Count > 0)
                     {
-                        transaction.Rollback();
-                        return Ok("Unable to save Service Timesheet!");
+                        int nServiceSheetDetailsID = dLayer.SaveData("Inv_ServiceTimesheetDetails", "N_ServiceSheetDetailsID", DetailTable, connection, transaction);
+                        if (nServiceSheetDetailsID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok("Unable to save Service Timesheet!");
+                        }
                     }
                    
                     transaction.Commit();
@@ -311,21 +314,20 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-
-                    Object RSCount=dLayer.ExecuteScalar("select count(*) from Inv_Sales where N_ServiceSheetID="+nServiceSheetID+" and N_CompanyID="+ myFunctions.GetCompanyID(User), Params, connection);
+                    Object RSCount = "";
+                    if (nFormID==1145)
+                        RSCount=dLayer.ExecuteScalar("select count(*) from Inv_Sales where N_ServiceSheetID="+nServiceSheetID+" and N_CompanyID="+ myFunctions.GetCompanyID(User), Params, connection);
+                    else
+                        RSCount=dLayer.ExecuteScalar("select count(*) from Inv_Purchase where N_ServiceSheetID="+nServiceSheetID+" and N_CompanyID="+ myFunctions.GetCompanyID(User), Params, connection);
+                    
                     int nRSCount = myFunctions.getIntVAL(RSCount.ToString());
                     if (nRSCount > 0)
                     {
-                       
                         if (MasterTable.Rows.Count > 0)
                         {
                             MasterTable.Columns.Add("b_RSProcessed");
                             MasterTable.Rows[0]["b_RSProcessed"]=true;
-                            
-                          
                         }
-
-
                     }    
                     DetailTable = _api.Format(DetailTable, "Details");
 
@@ -413,12 +415,12 @@ namespace SmartxAPI.Controllers
                     Params.Add("@N_FormID", nFormID);
                     
                     if (nFormID == 1145)
-                        Itemsql = "select * from vw_SOItemsForTimesheet where N_CompanyID=@N_CompanyId and N_SalesOrderId=@N_TransID and ((D_DeliveryDate<=@D_DateFrom) or (D_DeliveryDate>=@D_DateFrom AND D_DeliveryDate<=@D_DateTo) AND ISNULL(D_ReturnDate,@D_DateTo)<=@D_DateTo)";
+                        Itemsql = "select * from vw_SOItemsForTimesheet where N_CompanyID=@N_CompanyId and N_SalesOrderId=@N_TransID and ((D_DeliveryDate<=@D_DateFrom) or (D_DeliveryDate>=@D_DateFrom AND D_DeliveryDate<=@D_DateTo)) AND ISNULL(D_ReturnDate,@D_DateFrom)>=@D_DateFrom";
                     else {
                         if (xType == "SO")
-                            Itemsql = "select * from vw_POItemsForTimesheet where N_CompanyID=@N_CompanyId and N_SOId=@N_TransID and ((D_MRNDate<=@D_DateFrom) or (D_MRNDate>=@D_DateFrom AND D_MRNDate<=@D_DateTo) AND ISNULL(D_ReturnDate,@D_DateTo)<=@D_DateTo)";
+                            Itemsql = "select * from vw_POItemsForTimesheet where N_CompanyID=@N_CompanyId and N_SOId=@N_TransID and ((D_MRNDate<=@D_DateFrom) or (D_MRNDate>=@D_DateFrom AND D_MRNDate<=@D_DateTo)) AND ISNULL(D_ReturnDate,@D_DateFrom)>=@D_DateFrom";
                         else
-                            Itemsql = "select * from vw_POItemsForTimesheet where N_CompanyID=@N_CompanyId and N_POrderID=@N_TransID and ((D_MRNDate<=@D_DateFrom) or (D_MRNDate>=@D_DateFrom AND D_MRNDate<=@D_DateTo) AND ISNULL(D_ReturnDate,@D_DateTo)<=@D_DateTo)";
+                            Itemsql = "select * from vw_POItemsForTimesheet where N_CompanyID=@N_CompanyId and N_POrderID=@N_TransID and ((D_MRNDate<=@D_DateFrom) or (D_MRNDate>=@D_DateFrom AND D_MRNDate<=@D_DateTo)) AND ISNULL(D_ReturnDate,@D_DateFrom)>=@D_DateFrom";
                     }
 
                     ItemTable = dLayer.ExecuteDataTable(Itemsql, Params, connection);
@@ -436,6 +438,84 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(_api.Error(User,e));
             }
+        }
+
+        [HttpGet("multirentalPO")]
+        public ActionResult GetMultiRentalPOList(int nFnYearID, int nFormID, int nVendorID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            Params.Add("@N_CompanyID", myFunctions.GetCompanyID(User));
+            Params.Add("@N_FnyearID", nFnYearID);
+            Params.Add("@N_FormID", nFormID);
+            Params.Add("@N_VendorID", nVendorID);
+
+
+            string sqlCommandText = "";
+            sqlCommandText = "select * from vw_Inv_ServiceTimesheet where N_CompanyID=@N_CompanyID and N_FnYearID=@N_FnyearID and N_FormID=@N_FormID and N_VendorID=@N_VendorID and N_ServiceSheetID not in (select isNull(N_ServiceSheetID, 0) from Inv_Purchase where N_FnYearID=@N_FnyearID) order by x_ServiceSheetCode desc";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+
+        }
+
+        [HttpGet("multiJobOrder")]
+        public ActionResult GetMultiJobOrderList(int nFnYearID, int nFormID, int nCustomerID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            Params.Add("@N_CompanyID", myFunctions.GetCompanyID(User));
+            Params.Add("@N_FnyearID", nFnYearID);
+            Params.Add("@N_FormID", nFormID);
+            Params.Add("@N_CustomerID", nCustomerID);
+
+
+            string sqlCommandText = "";
+            sqlCommandText = "select * from vw_Inv_ServiceTimesheet where N_CompanyID=@N_CompanyID and N_FnYearID=@N_FnyearID and N_FormID=@N_FormID and N_CustomerID=@N_CustomerID and N_ServiceSheetID not in (select isNull(N_ServiceSheetID, 0) from Inv_Sales where N_FnYearID=@N_FnyearID) order by x_ServiceSheetCode desc";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+
         }
 
     }

@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
 
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_ReturnNo like'%" + xSearchkey + "%'or X_CustomerName like'%" + xSearchkey + "%' or X_ReceiptNo like'%" + xSearchkey + "%' or D_ReturnDate like'%" + xSearchkey + "%')";
+                Searchkey = "and (X_ReturnNo like'%" + xSearchkey + "%'or X_CustomerName like'%" + xSearchkey + "%' or X_ReceiptNo like'%" + xSearchkey + "%' or REPLACE(CONVERT(varchar(11), D_ReturnDate, 106), ' ', '-') like'%" + xSearchkey + "%')";
 
 
             if (xSortBy == null || xSortBy.Trim() == "")
@@ -310,6 +310,31 @@ namespace SmartxAPI.Controllers
                         MasterTable = _api.Format(MasterTable, "Master");
                         DetailSql = "select * from vw_DeliveryNoteDispDetailstoReturn where N_CompanyId=@nCompanyID and N_DeliveryNoteID=@nDeliveryNoteId";
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+
+                        string DNRetDetailsSql = "select * from vw_Inv_DeliveryNoteReturnDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID=@nDeliveryNoteId";
+                        DataTable DNRetDetails = dLayer.ExecuteDataTable(DNRetDetailsSql, Params, connection);
+
+                        foreach (DataRow Avar in DNRetDetails.Rows)
+                        {
+                            foreach (DataRow Kvar in DetailTable.Rows)
+                            {
+                                if (myFunctions.getIntVAL(Avar["N_DeliveryNoteDetailsID"].ToString()) == myFunctions.getIntVAL(Kvar["N_DeliveryNoteDetailsID"].ToString()))
+                                {
+                                    if (myFunctions.getVAL(Avar["N_RetQty"].ToString()) == myFunctions.getVAL(Kvar["N_QtyDisplay"].ToString()))
+                                    {
+                                        Kvar.Delete();
+                                        continue;
+                                    }
+                                    else
+                                    {
+                                        Kvar["N_QtyDisplay"] = myFunctions.getVAL(Kvar["N_QtyDisplay"].ToString()) - myFunctions.getVAL(Avar["N_RetQty"].ToString());
+                                    }
+                                }
+                            }
+                        }
+
+                        DetailTable.AcceptChanges();
+
                         DetailTable = _api.Format(DetailTable, "Details");
                         string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nDeliveryNoteId " + crieteria;
                         DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
