@@ -522,7 +522,7 @@ namespace SmartxAPI.Controllers
                         string xURL = "";
                         if (row["x_TxnType"].ToString().ToLower() == "rfq")
                         {
-                            if (myFunctions.CreatePortalUser(companyid, myFunctions.getIntVAL(row["N_BranchID"].ToString()), row["X_PartyName"].ToString(), row["X_Email"].ToString(), row["X_PartyType"].ToString(), row["X_PartyCode"].ToString(), myFunctions.getIntVAL(row["N_PartyID"].ToString()), true, dLayer, connection, transaction))
+                            if (myFunctions.CreatePortalUser(companyid, myFunctions.getIntVAL(row["N_BranchID"].ToString()), row["X_PartyName"].ToString(), row["X_Email"].ToString(), row["X_PartyType"].ToString(), row["X_PartyCode"].ToString(), myFunctions.getIntVAL(row["N_PartyID"].ToString()), true,User,dLayer, connection, transaction))
                             {
                                 //xSubject = "RFQ Inward";
 
