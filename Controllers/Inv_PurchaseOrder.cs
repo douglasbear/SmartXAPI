@@ -442,7 +442,21 @@ namespace SmartxAPI.Controllers
                         }
 
 
-                    }     
+                    } 
+
+                    Object CTSCount=dLayer.ExecuteScalar("select count(*) from Inv_ServiceTimesheet where N_POID="+N_POrderID+" and N_CompanyID="+nCompanyId, Params, connection);
+                    int nCTSCount = myFunctions.getIntVAL(CTSCount.ToString());
+                    if (nCTSCount > 0)
+                    {
+                       
+                        if (MasterTable.Rows.Count > 0)
+                        {
+                            MasterTable.Columns.Add("b_CTSProcessed");
+                            MasterTable.Rows[0]["b_CTSProcessed"]=true;
+                        }
+
+
+                    }        
                     // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "GRNNotProcessed", typeof(bool),GRNNotProcessed);
                     // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "InvoiceNotProcessed", typeof(bool),InvoiceNotProcessed);
 
@@ -457,11 +471,11 @@ namespace SmartxAPI.Controllers
 
                     if(nSalesOrderId>0)
                     {
-                        RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID="+ nCompanyId +" and N_TransID="+ nSalesOrderId +" and N_FormID=1571";
+                        RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID="+ nCompanyId +" and N_TransID="+ nSalesOrderId +" and N_FormID=1571 and N_ItemTypeID=9";
                         RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
                         RentalSchedule = api.Format(RentalSchedule, "RentalSchedule");
                     } else {
-                        RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID="+ nCompanyId +" and N_TransID="+ N_POrderID +" and N_FormID=1586";
+                        RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID="+ nCompanyId +" and N_TransID="+ N_POrderID +" and N_FormID=1586 and N_ItemTypeID=9";
                         RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
                         RentalSchedule = api.Format(RentalSchedule, "RentalSchedule");
                     };
