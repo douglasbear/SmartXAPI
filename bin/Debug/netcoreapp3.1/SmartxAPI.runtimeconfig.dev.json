@@ -2,6 +2,7 @@
   "runtimeOptions": {
     "additionalProbingPaths": [
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -33,6 +34,10 @@
       "C:\\Users\\zaras\\.nuget\\packages"
 >>>>>>> 3aec7fdaa14f68c12edd98498415f23aaa5a71f2
 >>>>>>> c5cb224117542ba132c58466d5306a2aaa1cb41f
+=======
+      "C:\\Users\\zaras\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\zaras\\.nuget\\packages"
+>>>>>>> 56a4058a4569e43911a2bbd3d4a50b453f60d775
     ]
   }
 }

@@ -468,11 +468,11 @@ namespace SmartxAPI.Controllers
 
                     if(nSalesOrderId>0)
                     {
-                        RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID="+ nCompanyId +" and N_TransID="+ nSalesOrderId +" and N_FormID=1571";
+                        RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID="+ nCompanyId +" and N_TransID="+ nSalesOrderId +" and N_FormID=1571 and N_ItemTypeID=9";
                         RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
                         RentalSchedule = api.Format(RentalSchedule, "RentalSchedule");
                     } else {
-                        RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID="+ nCompanyId +" and N_TransID="+ N_POrderID +" and N_FormID=1586";
+                        RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID="+ nCompanyId +" and N_TransID="+ N_POrderID +" and N_FormID=1586 and N_ItemTypeID=9";
                         RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
                         RentalSchedule = api.Format(RentalSchedule, "RentalSchedule");
                     };

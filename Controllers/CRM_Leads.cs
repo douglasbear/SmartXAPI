@@ -212,7 +212,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nLeadID", n_LeadID);
                     if (CreateCustomer == true)
                     {
-                        CustomerSql = "select 0 as 'N_CustomerID',0 as 'X_CustomerCode',X_Company as X_Customer,X_Phone2 as X_Phone,X_Fax,X_Website,X_State,X_Street,X_City,N_CountryID,N_CompanyId,N_FnYearId,N_EmployeesCount as X_Employee,N_AnnRevenue,N_UserID From CRM_Leads where N_LeadID=@nLeadID";
+                        CustomerSql = "select 0 as 'N_CustomerID',0 as 'X_CustomerCode',X_Company as X_Customer,X_Phone2 as X_Phone,X_Fax,X_Website,X_State,X_Street,X_City,N_CountryID,N_CompanyId,N_FnYearId,N_EmployeesCount as X_Employee,N_AnnRevenue,N_UserID,N_CreatedUser as N_CreatedUser From CRM_Leads where N_LeadID=@nLeadID";
                         CustomerTbl = dLayer.ExecuteDataTable(CustomerSql, Params, connection, transaction);
                         if (CustomerTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error(User,"Unable to Create Customer ")); }
                         if (CustomerTbl.Rows[0]["X_Customer"].ToString() != "")
@@ -234,12 +234,16 @@ namespace SmartxAPI.Controllers
 
                     }
                     else
-                    {
-                        nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerID"].ToString());
+                    {   
+                        if(MasterTable.Columns.Contains("n_CustomerID"))
+                        {
+                           nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerID"].ToString());
+                        }
+                        
                     }
                     if (CreateContact == true)
                     {
-                        ContactSql = "select N_CompanyID,N_FnYearId,0 as 'N_ContactID',0 as 'X_ContactCode',X_ContactName as 'X_Contact',X_Title,X_Email,N_UserID,X_Phone1 as 'X_Phone' From CRM_Leads where N_LeadID=@nLeadID";
+                        ContactSql = "select N_CompanyID,N_FnYearId,0 as 'N_ContactID',0 as 'X_ContactCode',X_ContactName as 'X_Contact',X_Title,X_Email,N_UserID,X_Phone1 as 'X_Phone',N_CreatedUser as N_CreatedUser From CRM_Leads where N_LeadID=@nLeadID";
                         ContactTbl = dLayer.ExecuteDataTable(ContactSql, Params, connection, transaction);
                         if (ContactTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error(User,"Unable to Create Contact")); }
 
@@ -256,11 +260,15 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        nContactId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ContactID"].ToString());
+                          if(MasterTable.Columns.Contains("n_CustomerID"))
+                          {
+                            nContactId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerID"].ToString());
+                          }
+                        
                     }
                     if (CreateProject == true)
                     {
-                        ProjectSql = "select N_CompanyID,N_FnYearId,0 as 'N_ProjectID',0 as 'X_ProjectCode',X_ProjectName,X_ProjectLocation as 'X_Location',X_ProjectDescription as 'X_Description',N_UserID From CRM_Leads where N_LeadID=@nLeadID";
+                        ProjectSql = "select N_CompanyID,N_FnYearId,0 as 'N_ProjectID',0 as 'X_ProjectCode',X_ProjectName,X_ProjectLocation as 'X_Location',X_ProjectDescription as 'X_Description',N_UserID,N_CreatedUser as N_CreatedUser From CRM_Leads where N_LeadID=@nLeadID";
                         ProjectTbl = dLayer.ExecuteDataTable(ProjectSql, Params, connection, transaction);
                         if (ProjectTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error(User,"Unable to Create Project")); }
                         if (ProjectTbl.Rows[0]["X_ProjectName"].ToString() != "")
@@ -280,12 +288,15 @@ namespace SmartxAPI.Controllers
                         
                     }
                     else
-                    {
-                        nProjectID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ProjectID"].ToString());
+                    { 
+                        if(MasterTable.Columns.Contains("n_ProjectID")){
+                             nProjectID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ProjectID"].ToString());
+                        }
+                       
                     }
 
                     // Auto Gen
-                    string OprSql = "select N_CompanyID,N_FnYearId,0 as 'N_OpportunityID',0 as 'X_OpportunityCode',X_Lead as 'X_Opportunity',N_Probability,X_Email,X_Phone1 as 'X_Mobile',N_SalesmanID,N_AnnRevenue as 'N_ExpRevenue',N_LeadSource as 'N_LeadSourceID',N_Subsource as 'N_SubsourceID',X_Referredby as 'X_RefferedBy',X_ProjectDescription as 'X_Description',0 as 'N_CustomerID',0 as 'N_ContactID',0 as 'N_ProjectID',N_UserID,N_LeadID,N_BranchID,N_LocationID From CRM_Leads where N_LeadID=@nLeadID";
+                    string OprSql = "select N_CompanyID,N_FnYearId,0 as 'N_OpportunityID',0 as 'X_OpportunityCode',X_Lead as 'X_Opportunity',N_Probability,X_Email,X_Phone1 as 'X_Mobile',N_AccOwnerID as N_SalesmanID,N_AnnRevenue as 'N_ExpRevenue',N_LeadSource as 'N_LeadSourceID',N_Subsource as 'N_SubsourceID',X_Referredby as 'X_RefferedBy',X_ProjectDescription as 'X_Description',0 as 'N_CustomerID',0 as 'N_ContactID',0 as 'N_ProjectID',N_UserID,N_LeadID,N_BranchID,N_LocationID From CRM_Leads where N_LeadID=@nLeadID";
                     OprTbl = dLayer.ExecuteDataTable(OprSql, Params, connection, transaction);
                     if (OprTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error(User,"Unable to Create Opportunity")); }
                     string OpportunityCode = "";
