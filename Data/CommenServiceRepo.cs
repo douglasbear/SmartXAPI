@@ -233,6 +233,8 @@ namespace SmartxAPI.Data
                                     }
                                 }
 
+
+                                if(reqtype!="vendor" && reqtype!="customer"){
                                 int daysToExpire = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_ExpiryDate)),0) as expiry from ClientApps where N_ClientID=" + clientID+" and N_AppID="+AppID+"", cnn2).ToString());
                                 if (daysToExpire <= 0)
                                 {
@@ -269,6 +271,7 @@ namespace SmartxAPI.Data
                                   throw new Exception("Your Subscription Expired"); 
 
                                 }  
+                                }
                                 // if (AppID != 6 && AppID != 8 && AppID != 15 && AppID != 16 && AppID != 13 && AppID != 14 && AppID != 18)
                                 if (AppID != 6 && AppID != 15 && AppID != 16 && AppID != 8 && AppID != 13 && AppID != 14 && AppID != 18 && AppID != 20 && AppID != 21 && AppID != 22)
                                 {
