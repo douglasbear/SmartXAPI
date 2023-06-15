@@ -147,18 +147,19 @@ namespace SmartxAPI.Controllers
                         PayPayMaster = dLayer.ExecuteDataTable("Select N_PaymentId,N_PayID from Pay_PayMaster where N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearID, connection);
                     }
 
-                    dt = myFunctions.AddNewColumnToDataTable(dt,"isHidden",typeof(bool),false);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "isHidden", typeof(bool), false);
 
                     for (int i = dt.Rows.Count - 1; i >= 0; i--)
                     {
                         if (myFunctions.getVAL(dt.Rows[i]["N_PayRate"].ToString()) == 0)
-                           { dt.Rows[i].Delete();
-                           continue;
-                           }
+                        {
+                            dt.Rows[i].Delete();
+                            continue;
+                        }
                         if (B_ShowBenefitsInGrid)
                         {
                             // if (ValidateBenefits(myFunctions.getIntVAL(dt.Rows[i]["N_PayID"].ToString()), myFunctions.getIntVAL(dt.Rows[i]["N_Type"].ToString()), PayPayMaster))
-                           if (myFunctions.getIntVAL(dt.Rows[i]["b_ISBenefit"].ToString())==1)
+                            if (myFunctions.getIntVAL(dt.Rows[i]["b_ISBenefit"].ToString()) == 1)
                             {
                                 dt.Rows[i]["isHidden"] = true;
                             }
@@ -196,15 +197,15 @@ namespace SmartxAPI.Controllers
                     mst.AcceptChanges();
                     mst = _api.Format(mst);
 
-                       foreach (DataRow Kvar in mst.Rows)
-                            {
-                                if (myFunctions.getBoolVAL(Kvar["B_ExcludeInSalary"].ToString()) == true && Kvar["details"] == null)
-                                {
-                                    Kvar.Delete();
-                                    continue;
-                                }
-                            }
-                            mst.AcceptChanges();
+                    foreach (DataRow Kvar in mst.Rows)
+                    {
+                        if (myFunctions.getBoolVAL(Kvar["B_ExcludeInSalary"].ToString()) == true && Kvar["details"] == null)
+                        {
+                            Kvar.Delete();
+                            continue;
+                        }
+                    }
+                    mst.AcceptChanges();
 
 
                     if (mst.Rows.Count == 0)
@@ -222,7 +223,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -241,7 +242,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("Dashboardlist")]
-        public ActionResult SalaryProcessingDashboardList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,bool bAllBranchData,int nBranchID)
+        public ActionResult SalaryProcessingDashboardList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, bool bAllBranchData, int nBranchID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -257,24 +258,24 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and (N_TransID like '%" + xSearchkey + "%' or Batch like '%" + xSearchkey + "%' or  [Payrun ID] like '%" + xSearchkey + "%' or x_BankName like '%" + xSearchkey + "%' or x_AddDedBatch like '%" + xSearchkey + "%' or cast(d_TransDate as Varchar) like '%" + xSearchkey + "%') ";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-            xSortBy = " order by [Payrun ID] desc,cast(Batch as Numeric) desc";
-                // xSortBy = " order by batch desc,D_TransDate desc";
+                xSortBy = " order by [Payrun ID] desc,cast(Batch as Numeric) desc";
+            // xSortBy = " order by batch desc,D_TransDate desc";
             else
                 xSortBy = " order by " + xSortBy;
 
             if (bAllBranchData == true)
-                        {
-                            Searchkey = Searchkey + " ";
-                        }
-                        else
-                        {
-                            Searchkey = Searchkey + " and N_BranchID=" + nBranchID + " ";
-                        }    
+            {
+                Searchkey = Searchkey + " ";
+            }
+            else
+            {
+                Searchkey = Searchkey + " and N_BranchID=" + nBranchID + " ";
+            }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ")  n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate,x_BankName,x_AddDedBatch from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey+xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ")  n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate,x_BankName,x_AddDedBatch from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate,x_BankName,x_AddDedBatch from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_TransID not in (select top(" + Count + ") N_TransID from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2  " + Searchkey+ xSortBy +") "+ xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate,x_BankName,x_AddDedBatch from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_TransID not in (select top(" + Count + ") N_TransID from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2  " + Searchkey + xSortBy + ") " + xSortBy;
 
 
             SortedList OutPut = new SortedList();
@@ -305,7 +306,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(User,e));
+                return BadRequest(_api.Error(User, e));
             }
         }
         public int GenerateCSVFiles(int nBankID, int nCompanyID, string x_batchID, int nFnYearID, string N_salaryAmt, DateTime dtPayrun, DateTime dtpSalFrom, DateTime dtpSalTo)
@@ -322,7 +323,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    
+
                     DataSet dsBank = new DataSet();
                     if (dsBank.Tables.Contains("BankCSV"))
                         dsBank.Tables.Remove("BankCSV");
@@ -351,6 +352,9 @@ namespace SmartxAPI.Controllers
                                     break;
                                 case "ARNB":
                                     ARNBBank(x_batchID, myFunctions.getIntVAL(dr["N_BankID"].ToString()));
+                                    break;
+                                case "BMCT":
+                                    BMCTBank(x_batchID, myFunctions.getIntVAL(dr["N_BankID"].ToString()), dtPayrun);
                                     break;
 
                                 default:
@@ -382,17 +386,17 @@ namespace SmartxAPI.Controllers
                 Params.Add("@p2", BankID);
 
                 string FileCreateTime = DateTime.Now.ToString("yyyyMMdd") + DateTime.Now.ToString("HHmm");
-                string X_WpsFileName = this.TempFilesPath +myFunctions.GetCompanyID(User)+"-"+ x_batchID + ".csv";
-                string CSVData = "Select X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText,D_TransDate,x_CompanyBank,X_Currency,x_CompanyBankAccountNo from [vw_pay_ProcessedDetails_CSV] where X_Batch='" + x_batchID + "' and N_EmpTypeID<>183 and TransBankID="+ BankID;
+                string X_WpsFileName = this.TempFilesPath + myFunctions.GetCompanyID(User) + "-" + x_batchID + ".csv";
+                string CSVData = "Select X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText,D_TransDate,x_CompanyBank,X_Currency,x_CompanyBankAccountNo from [vw_pay_ProcessedDetails_CSV] where X_Batch='" + x_batchID + "' and N_EmpTypeID<>183 and TransBankID=" + BankID;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     dtTransaction = dLayer.ExecuteDataTable(CSVData, Params, connection);
                     int index = 0;
-                    double TotAmount=0;
-                     foreach (DataRow drow in dtTransaction.Rows)
+                    double TotAmount = 0;
+                    foreach (DataRow drow in dtTransaction.Rows)
                     {
-                        TotAmount=TotAmount+ myFunctions.getVAL(drow["totalsalary"].ToString());
+                        TotAmount = TotAmount + myFunctions.getVAL(drow["totalsalary"].ToString());
                     }
                     foreach (DataRow drow in dtTransaction.Rows)
                     {
@@ -456,8 +460,8 @@ namespace SmartxAPI.Controllers
                 Params.Add("@p2", BankID);
 
                 string FileCreateTime = DateTime.Now.ToString("yyyyMMdd") + DateTime.Now.ToString("HHmm");
-                string X_WpsFileName = this.TempFilesPath +myFunctions.GetCompanyID(User)+"-"+ x_batchID + ".csv";
-                string CSVData = "Select X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText from [vw_pay_ProcessedDetails_CSV] where X_Batch='" + x_batchID + "' and N_EmpTypeID<>183 and TransBankID="+ BankID;
+                string X_WpsFileName = this.TempFilesPath + myFunctions.GetCompanyID(User) + "-" + x_batchID + ".csv";
+                string CSVData = "Select X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText from [vw_pay_ProcessedDetails_CSV] where X_Batch='" + x_batchID + "' and N_EmpTypeID<>183 and TransBankID=" + BankID;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -512,7 +516,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-       public int AlRajhiBankTahweel(string x_batchID, int BankID)
+        public int AlRajhiBankTahweel(string x_batchID, int BankID)
         {
 
             try
@@ -527,7 +531,7 @@ namespace SmartxAPI.Controllers
 
 
                 string FileCreateTime = DateTime.Now.ToString("yyyyMMdd") + DateTime.Now.ToString("HHmm");
-                string X_WpsFileName = this.TempFilesPath +myFunctions.GetCompanyID(User)+"-"+ x_batchID + ".csv";
+                string X_WpsFileName = this.TempFilesPath + myFunctions.GetCompanyID(User) + "-" + x_batchID + ".csv";
 
                 string CSVData = "Select X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText from [vw_pay_ProcessedDetails_CSV] where X_Batch='" + x_batchID + "' and N_EmpTypeID<>183 and TransBankID=" + BankID;
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -598,7 +602,7 @@ namespace SmartxAPI.Controllers
                 FileCreateTime = DateTime.Now.ToString("HHmm");
                 SalaryProcessCode = dtPayrun.ToString("yyyyMM");
                 //X_WpsFileName = X_WpsPath + FileCreateDate + "-" + FileCreateTime + ".txt";
-                string X_WpsFileName = this.TempFilesPath +myFunctions.GetCompanyID(User)+"-"+ x_batchID + ".csv";
+                string X_WpsFileName = this.TempFilesPath + myFunctions.GetCompanyID(User) + "-" + x_batchID + ".csv";
                 StringBuilder sb = new StringBuilder();
                 SortedList Params = new SortedList();
                 Params.Add("@p1", nCompanyID);
@@ -679,7 +683,7 @@ namespace SmartxAPI.Controllers
             try
             {
 
-                string X_WpsFileName = this.TempFilesPath +myFunctions.GetCompanyID(User)+"-"+ x_batchID + ".csv";
+                string X_WpsFileName = this.TempFilesPath + myFunctions.GetCompanyID(User) + "-" + x_batchID + ".csv";
 
                 StringBuilder sb = new StringBuilder();
                 DataTable CSVData = new DataTable();
@@ -747,6 +751,94 @@ namespace SmartxAPI.Controllers
                 }
             }
         }
+        public int BMCTBank(string x_batchID, int BankID, DateTime dtPayrun)
+        {
+
+            try
+            {
+
+                string X_WpsFileName = this.TempFilesPath + myFunctions.GetCompanyID(User) + "-" + x_batchID + ".csv";
+
+                StringBuilder sb = new StringBuilder();
+                DataTable CSVData = new DataTable();
+                SortedList Params = new SortedList();
+                int nCompanyID = myFunctions.GetCompanyID(User);
+                Params.Add("@p1", nCompanyID);
+                Params.Add("@p2", BankID);
+                string CSVDatasql = "Select X_BankCodeRef,X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText,X_Transbankname,X_TransbankAccnumber,N_SalMonth,N_SalYear from [vw_pay_ProcessedDetails_CSV] where X_Batch=" + x_batchID + " and N_EmpTypeID<>183 and TransBankID=" + BankID;
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    CSVData = dLayer.ExecuteDataTable(CSVDatasql, Params, connection);
+
+                    int index = 0;
+                    foreach (DataRow drow in CSVData.Rows)
+                    {
+
+
+                        if (!System.IO.File.Exists(X_WpsFileName))
+                        {
+                            System.IO.File.Create(X_WpsFileName).Close();
+                        }
+                        else
+                        {
+                            System.IO.File.WriteAllText(X_WpsFileName, String.Empty);
+                        }
+                        string delimiter = ",";
+
+                        string[][] mainheader = new string[][]
+                        {new string[]{"Employer CR-NO","Payer CR-NO","Payer Bank Short Name","Payer Account  Number","Salary Year","Salary Month","Total Salaries","Number Of Records","Payment Type"}
+
+                        };
+                        string[][] mainoutput = new string[][]
+                        {
+                        new string[]{"","","BMCT","",drow["X_TransbankAccnumber"].ToString(),drow["N_SalYear"].ToString(),drow["N_SalMonth"].ToString(),"", "","Salary"}
+                        };
+
+                        string[][] header = new string[][]
+                        {new string[]{"Employee ID Type","Employee ID","Reference Number","Employee Name","Employee BIC Code","Employee Account","Salary Frequency","Number Of Working days","Net Salary","Basic Salary","Housing Allowance","Other Earnings","Deductions","Notes / Comments"}
+                        };
+
+                        string[][] output = new string[][]
+                        {
+                        new string[]{"",drow["X_EmpCode"].ToString(),drow["X_BankCodeRef"].ToString(),""+ drow["X_EmpName"].ToString(),"",drow["X_BankAccountNo"].ToString(),"M","",drow["totalsalary"].ToString(),drow["N_BasicSalary"].ToString(),drow["N_HA"].ToString(), drow["N_OtherEarnings"].ToString(),drow["N_OtherDeductions"].ToString(),""}
+                        };
+
+
+                        int length = output.GetLength(0);
+
+
+                        if (index == 0)
+                        {
+                            sb.AppendLine(string.Join(delimiter, mainheader[0]));
+                            sb.AppendLine(string.Join(delimiter, mainoutput[0]));
+                            sb.AppendLine(string.Join(delimiter, header[0]));
+                        }
+                        
+                        for (index = 0; index < length; index++)
+                            sb.AppendLine(string.Join(delimiter, output[index]));
+
+                    }
+                }
+
+                System.IO.File.AppendAllText(X_WpsFileName, sb.ToString());
+
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                if (ex is DirectoryNotFoundException)
+                {
+
+                    return 0;
+                }
+                else
+                {
+
+                    return 0;
+                }
+            }
+        }
         public int SaudiBritishBank(string x_batchID, int BankID, DateTime dtPayrun, DateTime dtpSalFrom, DateTime dtpSalTo)
         {
             string CsvPayrunID = "";
@@ -757,7 +849,7 @@ namespace SmartxAPI.Controllers
             DataTable CompanyBank = new DataTable();
             try
             {
-                string X_WpsFileName = this.TempFilesPath +myFunctions.GetCompanyID(User)+"-"+ x_batchID.Trim() + ".csv";
+                string X_WpsFileName = this.TempFilesPath + myFunctions.GetCompanyID(User) + "-" + x_batchID.Trim() + ".csv";
 
                 DateTime FromDate = dtpSalFrom;
                 DateTime ToDate = dtpSalTo;
@@ -865,8 +957,8 @@ namespace SmartxAPI.Controllers
                 Params.Add("@p2", BankID);
 
                 string FileCreateTime = DateTime.Now.ToString("yyyyMMdd") + DateTime.Now.ToString("HHmm");
-                string X_WpsFileName = this.TempFilesPath +myFunctions.GetCompanyID(User)+"-"+ x_batchID + ".csv";
-                string CSVData = "Select X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText,X_IBAN,x_CompanyBank,X_Currency,x_CompanyBankAccountNo from [vw_pay_ProcessedDetails_CSV] where X_Batch='" + x_batchID + "' and N_EmpTypeID<>183 and TransBankID="+ BankID;
+                string X_WpsFileName = this.TempFilesPath + myFunctions.GetCompanyID(User) + "-" + x_batchID + ".csv";
+                string CSVData = "Select X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText,X_IBAN,x_CompanyBank,X_Currency,x_CompanyBankAccountNo from [vw_pay_ProcessedDetails_CSV] where X_Batch='" + x_batchID + "' and N_EmpTypeID<>183 and TransBankID=" + BankID;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -919,7 +1011,7 @@ namespace SmartxAPI.Controllers
                     return 0;
                 }
             }
-        
+
 
             // string CsvPayrunID = "";
             // string X_CompBankCode = "", X_RefNo = "", X_Currency = "", X_BankAccountNo = "";
@@ -1024,30 +1116,30 @@ namespace SmartxAPI.Controllers
 
             try
             {
-                
-
-                string X_WpsFileName = this.TempFilesPath +myFunctions.GetCompanyID(User)+"-"+x_Batch+".csv";
 
 
-                var path =X_WpsFileName;
-  
-                var memory = new MemoryStream();  
-               using (var stream = new FileStream(path, System.IO.FileMode.Open))  
-               {  
-                 await stream.CopyToAsync(memory);  
-                }  
-                memory.Position = 0;  
+                string X_WpsFileName = this.TempFilesPath + myFunctions.GetCompanyID(User) + "-" + x_Batch + ".csv";
+
+
+                var path = X_WpsFileName;
+
+                var memory = new MemoryStream();
+                using (var stream = new FileStream(path, System.IO.FileMode.Open))
+                {
+                    await stream.CopyToAsync(memory);
+                }
+                memory.Position = 0;
                 return File(memory, _api.GetContentType(path), Path.GetFileName(path));
             }
 
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
         [HttpGet("sendEmail")]
-        public ActionResult SendEmail(int nTransID, int nCompanyID, DateTime dProcessDate, int nFnYearID,int nType)
+        public ActionResult SendEmail(int nTransID, int nCompanyID, DateTime dProcessDate, int nFnYearID, int nType)
         {
             DataTable dt = new DataTable();
             DataTable Paycodes = new DataTable();
@@ -1076,16 +1168,16 @@ namespace SmartxAPI.Controllers
                     foreach (DataRow MasterVar in dt.Rows)
                     {
                         string Toemail = MasterVar["X_EmailID"].ToString().Trim();
-                        string Subject ="";
+                        string Subject = "";
                         if (Toemail != "")
                         {
                             string Toemailnames = MasterVar["X_EmpName"].ToString();
-                            string Body = Boody(Toemailnames, myFunctions.getIntVAL(MasterVar["N_EmpId"].ToString()), nTransID, dProcessDate, Paycodes,nType);
-                            if(nType==1)
+                            string Body = Boody(Toemailnames, myFunctions.getIntVAL(MasterVar["N_EmpId"].ToString()), nTransID, dProcessDate, Paycodes, nType);
+                            if (nType == 1)
                                 Subject = "PAYSLIP (For Your Review)";
                             else
                                 Subject = "Your salary payments for the month " + dProcessDate.ToString("MMM-yyyy");
-                            myFunctions.SendMail(Toemail, Body, Subject, dLayer,FormID,nTransID,nCompanyID);
+                            myFunctions.SendMail(Toemail, Body, Subject, dLayer, FormID, nTransID, nCompanyID);
                             message.Clear();
                         }
 
@@ -1097,11 +1189,11 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(User,e));
+                return BadRequest(_api.Error(User, e));
 
             }
         }
-        public string Boody(string Toemailnames, int ManagerID, int transID, DateTime DT, DataTable Datatable,int nType)
+        public string Boody(string Toemailnames, int ManagerID, int transID, DateTime DT, DataTable Datatable, int nType)
         {
             message = message.Append("<body style='font-family:Georgia; font-size:9pt;'>");
             double Total_addn = 0.0;
@@ -1135,7 +1227,7 @@ namespace SmartxAPI.Controllers
             SalaryDetails(ManagerID, 1, Datatable);
             message = message.Append("<tr><td> <colspan=3><hr></td>");
             message = message.Append("<tr><td><b>Net Amount</b></td><td><b>" + Total.ToString(myCompanyID.DecimalPlaceString) + "</b></td>");
-            if(nType==1)
+            if (nType == 1)
                 message = message.Append("<tr><td><i>Please reply to the department if any Concern rises in your review.</i></td>");
             message = message.Append("<tr><left>Sincerly,</left><br><left>" + myFunctions.GetUserName(User) + "</left></table>");
             return message.ToString();
@@ -1192,7 +1284,7 @@ namespace SmartxAPI.Controllers
                 int year = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PayRunID"].ToString().Substring(0, 4));
                 int month = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PayRunID"].ToString().Substring(4, 2));
                 double N_TotalSalary = 0;
-                string xButtonAction="";
+                string xButtonAction = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -1201,9 +1293,9 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@nPayRunID", nPayRunID);
 
-                      if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearId, DateTime.ParseExact(MasterTable.Rows[0]["d_TransDate"].ToString(), "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                    if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearId, DateTime.ParseExact(MasterTable.Rows[0]["d_TransDate"].ToString(), "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
                     {
-                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyID+" and convert(date ,'" + MasterTable.Rows[0]["d_TransDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=" + nCompanyID + " and convert(date ,'" + MasterTable.Rows[0]["d_TransDate"].ToString() + "') between D_Start and D_End", connection, transaction);
                         if (DiffFnYearID != null)
                         {
                             MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
@@ -1221,18 +1313,18 @@ namespace SmartxAPI.Controllers
                     int N_TransDetailsID = 0;
                     if (x_Batch.Trim() == "@Auto")
                     {
-                         if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearId, Convert.ToDateTime(MasterTable.Rows[0]["d_TransDate"].ToString()), dLayer, connection, transaction))
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Processing date must be in the active Financial Year."));
-                    }
+                        if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearId, Convert.ToDateTime(MasterTable.Rows[0]["d_TransDate"].ToString()), dLayer, connection, transaction))
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Processing date must be in the active Financial Year."));
+                        }
                         bool OK = true;
                         int NewNo = 0, loop = 1;
                         while (OK)
                         {
                             NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(count(1),0) + " + loop + " As Count FRom Pay_PaymentMaster Where N_CompanyID=@nCompanyID  And N_PayRunID =@nPayRunID", Params, connection, transaction).ToString());
                             x_Batch = nPayRunID + "" + NewNo.ToString("0#");
-                              xButtonAction="Insert"; 
+                            xButtonAction = "Insert";
                             if (myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(count(1),0) FRom Pay_PaymentMaster Where N_CompanyID=@nCompanyID And X_Batch = '" + x_Batch + "'", Params, connection, transaction).ToString()) == 0)
                             {
                                 OK = false;
@@ -1242,29 +1334,33 @@ namespace SmartxAPI.Controllers
                         if (x_Batch == "")
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,"Unable to generate batch"));
+                            return Ok(_api.Error(User, "Unable to generate batch"));
 
                         }
                         MasterTable.Rows[0]["x_Batch"] = x_Batch;
-                    }else {
-                         xButtonAction="Update"; 
                     }
-                     x_Batch = MasterTable.Rows[0]["x_Batch"].ToString();
-                       
-
-
-                    if(MasterTable.Columns.Contains("N_FormID"))
-                    MasterTable.Rows[0]["N_FormID"] = 190;
                     else
-                    {MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"N_FormID",typeof(int),190);
-                    MasterTable.AcceptChanges();}
+                    {
+                        xButtonAction = "Update";
+                    }
+                    x_Batch = MasterTable.Rows[0]["x_Batch"].ToString();
+
+
+
+                    if (MasterTable.Columns.Contains("N_FormID"))
+                        MasterTable.Rows[0]["N_FormID"] = 190;
+                    else
+                    {
+                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_FormID", typeof(int), 190);
+                        MasterTable.AcceptChanges();
+                    }
 
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " And N_FnyearID = " + nFnYearId + " and X_Batch='" + x_Batch + "'";
                     int N_TransID = dLayer.SaveData("Pay_PaymentMaster", "N_TransID", DupCriteria, "", MasterTable, connection, transaction);
                     if (N_TransID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User, "Unable to save"));
                     }
                     else
                     {
@@ -1333,38 +1429,38 @@ namespace SmartxAPI.Controllers
                                 if (N_TotalSalary + N_EOSAmt < 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error(User,"-ve Salary"));
+                                    return Ok(_api.Error(User, "-ve Salary"));
                                 }
                             }
                         }
-                        if(DetailsTable.Columns.Contains("n_PayTypeID"))
-                        DetailsTable.Columns.Remove("n_PayTypeID");
-                        if(DetailsTable.Columns.Contains("n_IsLoan"))
-                        DetailsTable.Columns.Remove("n_IsLoan");
-                        if(DetailsTable.Columns.Contains("n_LoanTransDetailsID"))
-                        DetailsTable.Columns.Remove("n_LoanTransDetailsID");
+                        if (DetailsTable.Columns.Contains("n_PayTypeID"))
+                            DetailsTable.Columns.Remove("n_PayTypeID");
+                        if (DetailsTable.Columns.Contains("n_IsLoan"))
+                            DetailsTable.Columns.Remove("n_IsLoan");
+                        if (DetailsTable.Columns.Contains("n_LoanTransDetailsID"))
+                            DetailsTable.Columns.Remove("n_LoanTransDetailsID");
                         DetailsTable.AcceptChanges();
                         N_TransDetailsID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", DetailsTable, connection, transaction);
                         if (myFunctions.getIntVAL(N_TransDetailsID.ToString()) <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,"Error"));
+                            return Ok(_api.Error(User, "Error"));
 
                         }
 
                         //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(nFnYearId,nPayRunID,x_Batch,190,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-                       
+                        string ipAddress = "";
+                        if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                            ipAddress = Request.Headers["X-Forwarded-For"];
+                        else
+                            ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                        myFunctions.LogScreenActivitys(nFnYearId, nPayRunID, x_Batch, 190, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
 
 
 
 
-                        if (N_TransDetailsID > 0 && IsSaveDraft==0)
+
+                        if (N_TransDetailsID > 0 && IsSaveDraft == 0)
                         {
                             dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set N_TransDetailsID =" + N_TransDetailsID + "  Where N_CompanyID =" + nCompanyID + " and N_TransDetailsID=-1 and D_RefundDate = '" + dCreatedDate.ToString() + "'", connection, transaction);
 
@@ -1397,13 +1493,13 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nTransID, int nFnYearID, string xBatch,int nCompanyID,int nPayRunID)
+        public ActionResult DeleteData(int nTransID, int nFnYearID, string xBatch, int nCompanyID, int nPayRunID)
         {
             int Results = 0;
             try
@@ -1422,14 +1518,14 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", nCompanyID);
                     ParamList.Add("@nTransID", nTransID);
-                    string xButtonAction="Delete";
-                    string x_Batch="";
-                     string Sql = "select n_PayRunID,x_Batch from Pay_PaymentMaster where n_TransID=@nTransID and N_CompanyID=@nCompanyID";
+                    string xButtonAction = "Delete";
+                    string x_Batch = "";
+                    string Sql = "select n_PayRunID,x_Batch from Pay_PaymentMaster where n_TransID=@nTransID and N_CompanyID=@nCompanyID";
 
                     int count = myFunctions.getIntVAL(dLayer.ExecuteNonQuery("Select count(1) from Acc_VoucherMaster Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " And N_FnyearID =@nFnYearID and X_TransType = 'ESI' and B_IsAccPosted = 1 and X_ReferenceNo=@xBatch", dltParams, connection, transaction).ToString());
-                      TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
-                     
-                      if (TransData.Rows.Count == 0)
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection, transaction);
+
+                    if (TransData.Rows.Count == 0)
                     {
                         return Ok(_api.Error(User, "Transaction not Found"));
                     }
@@ -1438,18 +1534,18 @@ namespace SmartxAPI.Controllers
                     if (count > 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to delete ,Transactions Exist"));
+                        return Ok(_api.Error(User, "Unable to delete ,Transactions Exist"));
 
                     }
 
-                              //  Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nPayRunID,TransRow["x_Batch"].ToString(),190,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-             
+                    //  Activity Log
+                    string ipAddress = "";
+                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    myFunctions.LogScreenActivitys(myFunctions.getIntVAL(nFnYearID.ToString()), nPayRunID, TransRow["x_Batch"].ToString(), 190, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
+
 
 
                     dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set N_RefundAmount =Null,D_RefundDate =Null,N_PayRunID =Null,N_TransDetailsID =Null,B_IsLoanClose =Null  Where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_PayrunID = " + nTransID, connection, transaction);
@@ -1459,14 +1555,14 @@ namespace SmartxAPI.Controllers
                     if (Results <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to delete batch"));
+                        return Ok(_api.Error(User, "Unable to delete batch"));
                     }
                     Results = dLayer.DeleteData("Pay_PaymentMaster", "N_TransID", nTransID, "N_CompanyID=" + myFunctions.GetCompanyID(User), connection, transaction);
 
                     if (Results <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to delete batch"));
+                        return Ok(_api.Error(User, "Unable to delete batch"));
                     }
 
                     transaction.Commit();
@@ -1475,7 +1571,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
 
         }
