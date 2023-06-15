@@ -3,6 +3,7 @@
     "additionalProbingPaths": [
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -38,6 +39,14 @@
       "C:\\Users\\zaras\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\zaras\\.nuget\\packages"
 >>>>>>> 56a4058a4569e43911a2bbd3d4a50b453f60d775
+=======
+      "C:\\Users\\zaras\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\zaras\\.nuget\\packages"
+=======
+      "C:\\Users\\SANJAY\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\SANJAY\\.nuget\\packages"
+>>>>>>> 98a4580905440e7a0b4d4b7ace321a929d9975c8
+>>>>>>> 89696262e4ae4df5be222a7fd9de0d1ec5f16a78
     ]
   }
 }
