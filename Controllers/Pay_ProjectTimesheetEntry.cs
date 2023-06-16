@@ -47,11 +47,8 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and (X_PrjTimesheetCode like '%" + xSearchkey + "%'or cast(D_Date as VarChar) like '%" + xSearchkey + "%' or  X_ProjectName like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or N_Hours like '%" + xSearchkey + "%' or X_Description like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_PrjTimeSheetID desc";
-            else
-
-                xSortBy = " order by " + xSortBy;
-
+                xSortBy = " order by  Cast([D_Date] as DateTime ) desc";
+       
 
 
             if (Count == 0)
@@ -126,8 +123,7 @@ namespace SmartxAPI.Controllers
                     string X_PrjTimesheetCode = "";
                     var values = MasterTable.Rows[0]["X_PrjTimesheetCode"].ToString();
 
-                      transaction.Rollback();
-                      return Ok(_api.Warning("Maintenance in progress. Please save later. Apologies for the inconvenience."));
+                    
 
                     if (values == "@Auto")
                     {
