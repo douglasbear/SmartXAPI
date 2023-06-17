@@ -103,10 +103,10 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SortedList OutPut = new SortedList();
 
-                    if(nFormID==1145)
+                    // if(nFormID==1145)
                         sqlCommandCount = "select count(1) as N_Count  from vw_Inv_ServiceTimesheet where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_FormID=@nFormID " + Searchkey + "";
-                    else
-                        sqlCommandCount = "select count(1) as N_Count  from vw_Inv_VendorServiceSheetMaster where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_FormID=@nFormID " + Searchkey + "";
+                    // else
+                    //     sqlCommandCount = "select count(1) as N_Count  from vw_Inv_VendorServiceSheetMaster where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_FormID=@nFormID " + Searchkey + "";
 
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
@@ -216,11 +216,14 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                    int nServiceSheetDetailsID = dLayer.SaveData("Inv_ServiceTimesheetDetails", "N_ServiceSheetDetailsID", DetailTable, connection, transaction);
-                    if (nServiceSheetDetailsID <= 0)
+                    if (DetailTable.Rows.Count > 0)
                     {
-                        transaction.Rollback();
-                        return Ok("Unable to save Service Timesheet!");
+                        int nServiceSheetDetailsID = dLayer.SaveData("Inv_ServiceTimesheetDetails", "N_ServiceSheetDetailsID", DetailTable, connection, transaction);
+                        if (nServiceSheetDetailsID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok("Unable to save Service Timesheet!");
+                        }
                     }
                    
                     transaction.Commit();

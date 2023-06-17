@@ -253,7 +253,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listdetails")]
-        public ActionResult GetPurchaseInvoiceDetails(int nCompanyId, int nFnYearId, string nPurchaseNO, bool showAllBranch, int nBranchId, string xPOrderNo, string xGrnNo, string multipleGrnNo, int nServiceSheetID,bool invoiceTax)
+        public ActionResult GetPurchaseInvoiceDetails(int nCompanyId, int nFnYearId, string nPurchaseNO, bool showAllBranch, int nBranchId, string xPOrderNo, string xGrnNo, string multipleGrnNo, int nServiceSheetID,bool invoiceTax, bool enableDayWise)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
@@ -414,7 +414,10 @@ namespace SmartxAPI.Controllers
                     }
                     else if (nServiceSheetID != null)
                     {
-                        X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_POrderID=" + N_POrderID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                        if (enableDayWise)
+                            X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetailsDaywise where N_CompanyID=@CompanyID and N_POrderID=" + N_POrderID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                        else
+                            X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_POrderID=" + N_POrderID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                     }
                     //multiple GRN From Invoice
 

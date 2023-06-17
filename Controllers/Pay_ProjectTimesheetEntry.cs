@@ -122,7 +122,9 @@ namespace SmartxAPI.Controllers
                     int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
                     string X_PrjTimesheetCode = "";
                     var values = MasterTable.Rows[0]["X_PrjTimesheetCode"].ToString();
-                  
+
+                    
+
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);

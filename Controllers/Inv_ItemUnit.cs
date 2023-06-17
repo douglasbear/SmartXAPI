@@ -33,14 +33,20 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetItemUnitList()
+        public ActionResult GetItemUnitList(string type)
         {
             int nCompanyId= myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            string sqlCommandText = "";
 
-            string sqlCommandText = "select Code,[Unit Code],Description,N_Decimal from vw_InvItemUnit_Disp where N_CompanyID=@p1 and N_ItemID is null order by ItemCode,[Unit Code]";
-            Params.Add("@p1", nCompanyId);
+            if (type == "Rental") {
+                sqlCommandText = "select * from Inv_RentalUnit where N_CompanyID=@p1 and isNull(N_ItemID, 0)=0 order by N_RentalUnitID";
+                Params.Add("@p1", nCompanyId);
+            } else {
+                sqlCommandText = "select Code,[Unit Code],Description,N_Decimal from vw_InvItemUnit_Disp where N_CompanyID=@p1 and N_ItemID is null order by ItemCode,[Unit Code]";
+                Params.Add("@p1", nCompanyId);
+            };
 
             try
             {
@@ -66,14 +72,21 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("listdetails")]
-        public ActionResult GetItemUnitListDetails(int? nCompanyId,int? n_ItemUnitID)
+        public ActionResult GetItemUnitListDetails(int? nCompanyId,int? n_ItemUnitID, string type)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            string sqlCommandText = "";
 
-            string sqlCommandText = "select * from Inv_ItemUnit where N_CompanyID=@p1 and N_ItemUnitID=@p2 ";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", n_ItemUnitID);
+            if (type == "Rental") {
+                sqlCommandText="select * from Inv_RentalUnit where N_CompanyID=@p1 and N_RentalUnitID=@p2 ";
+                Params.Add("@p1",nCompanyId);
+                Params.Add("@p2",n_ItemUnitID);
+            } else {
+                sqlCommandText = "select * from Inv_ItemUnit where N_CompanyID=@p1 and N_ItemUnitID=@p2 ";
+                Params.Add("@p1", nCompanyId);
+                Params.Add("@p2", n_ItemUnitID);
+            };
 
             try
             {
@@ -102,7 +115,7 @@ namespace SmartxAPI.Controllers
      
 
    [HttpGet("dashboardList")]
-        public ActionResult GetProductUnitList(int nPage,bool adjustment,int nSizeperpage, string xSearchkey, string xSortBy,int nItemUnitID,int nCompanyId)
+        public ActionResult GetProductUnitList(int nPage,bool adjustment,int nSizeperpage, string xSearchkey, string xSortBy,int nItemUnitID,int nCompanyId, string type)
         {
             try
             {
@@ -120,27 +133,37 @@ namespace SmartxAPI.Controllers
                     string Searchkey = "";
                     Params.Add("@p1", nCompanyId);
 
-
-                   if (xSearchkey != null && xSearchkey.Trim() != "")
-                    Searchkey = "and (N_ItemUnitID like '%" + xSearchkey + "%' OR X_Description like '%" + xSearchkey + "%')";
-
-                    
+                    if (type == "Rental") {
+                        if (xSearchkey != null && xSearchkey.Trim() != "")
+                            Searchkey = "and (N_RentalUnitID like '%" + xSearchkey + "%' OR X_RentalUnit like '%" + xSearchkey + "%')";
                    
-                   if (xSortBy == null || xSortBy.Trim() == "")
-                        xSortBy = " order by N_ItemUnitID desc";
-                      
+                        if (xSortBy == null || xSortBy.Trim() == "")
+                            xSortBy = " order by N_RentalUnitID desc";
 
+                        if (Count == 0)
+                            sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_RentalUnit where N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0"+ criteria + cndn + Searchkey + " " + xSortBy;
+                        else
+                            sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_RentalUnit where N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0 and N_RentalUnitID not in (select top(" + Count + ") N_RentalUnitID from Inv_RentalUnit where N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0 )"+ criteria + cndn + Searchkey + " " + xSortBy ;
+                    } else {
+                        if (xSearchkey != null && xSearchkey.Trim() != "")
+                            Searchkey = "and (N_ItemUnitID like '%" + xSearchkey + "%' OR X_Description like '%" + xSearchkey + "%')";
+                   
+                        if (xSortBy == null || xSortBy.Trim() == "")
+                            xSortBy = " order by N_ItemUnitID desc";
 
-                   if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_ItemUnit where ISNULL(B_BaseUnit,0)=1 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0"+ criteria + cndn + Searchkey + " " + xSortBy;
-                    else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_ItemUnit where ISNULL(B_BaseUnit,0)=1 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0 and N_ItemUnitID not in (select top(" + Count + ") N_ItemUnitID from Inv_ItemUnit where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0 )"+ criteria + cndn + Searchkey + " " + xSortBy ;
-
+                        if (Count == 0)
+                            sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_ItemUnit where ISNULL(B_BaseUnit,0)=1 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0"+ criteria + cndn + Searchkey + " " + xSortBy;
+                        else
+                            sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_ItemUnit where ISNULL(B_BaseUnit,0)=1 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0 and N_ItemUnitID not in (select top(" + Count + ") N_ItemUnitID from Inv_ItemUnit where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0 )"+ criteria + cndn + Searchkey + " " + xSortBy ;
+                    };
 
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText , Params, connection);
-                   sqlCommandCount = "select count(1) as N_Count  from Inv_ItemUnit where ISNULL(B_BaseUnit,0)=1 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0";
+                    if (type == "Rental")
+                        sqlCommandCount = "select count(1) as N_Count  from Inv_RentalUnit where N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0";
+                    else
+                        sqlCommandCount = "select count(1) as N_Count  from Inv_ItemUnit where ISNULL(B_BaseUnit,0)=1 and N_CompanyID=@p1 and ISNULL(N_ItemID,0)=0";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -177,9 +200,20 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    string X_ItemUnit= MasterTable.Rows[0]["X_ItemUnit"].ToString();
-                    string DupCriteria = "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_ItemUnit='" + X_ItemUnit + "' and B_BaseUnit=1";
-                    int N_ItemUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID",DupCriteria,"", MasterTable, connection, transaction);
+                    string DupCriteria = "";
+                    int N_ItemUnitID = 0;
+
+                    if (MasterTable.Columns.Contains("type")) {
+                        string x_RentalUnit= MasterTable.Rows[0]["x_RentalUnit"].ToString();
+                        DupCriteria = "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_RentalUnit='" + x_RentalUnit + "'";
+                        MasterTable.Columns.Remove("type");
+                        N_ItemUnitID = dLayer.SaveData("Inv_RentalUnit", "N_RentalUnitID",DupCriteria,"", MasterTable, connection, transaction);
+                    } else {
+                        string X_ItemUnit= MasterTable.Rows[0]["X_ItemUnit"].ToString();
+                        DupCriteria = "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_ItemUnit='" + X_ItemUnit + "' and B_BaseUnit=1";
+                        N_ItemUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID",DupCriteria,"", MasterTable, connection, transaction);
+                    };
+
                     if (N_ItemUnitID <= 0)
                     {
                         transaction.Rollback();
@@ -191,10 +225,7 @@ namespace SmartxAPI.Controllers
                     }
                     return Ok( api.Success("Unit Created"));
                 }
-                
-
             }
-
             catch (Exception ex)
             {
                 return Ok(api.Error(User,ex));
