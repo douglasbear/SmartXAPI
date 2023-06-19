@@ -22,6 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly string masterDBConnectionString;
 
         private readonly int N_FormID =155 ;
 
@@ -32,6 +33,7 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
         }
 
         [HttpGet("list")]
@@ -210,7 +212,8 @@ namespace SmartxAPI.Controllers
                 int nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString());
                 int nUserID = myFunctions.GetUserID(User);
                  var X_AdmissionNo = MasterTable.Rows[0]["X_AdmissionNo"].ToString();
-                int nAdmID=nAdmissionID;              
+                int nAdmID=nAdmissionID; 
+                string xEmail = MasterTable.Rows[0]["x_Email"].ToString();             
 
                 if (MasterTable.Columns.Contains("N_BranchID"))
                     MasterTable.Columns.Remove("N_BranchID");
@@ -420,6 +423,132 @@ namespace SmartxAPI.Controllers
                             }
                         }
                     }
+
+
+                      if (xEmail != "")
+                        {
+                            using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                            {
+                                olivoCon.Open();
+                                SqlTransaction olivoTxn = olivoCon.BeginTransaction();
+                                string Pwd = myFunctions.EncryptString(xEmail);
+                                int nClientID = myFunctions.GetClientID(User);
+                                    object glogalUserID = dLayer.ExecuteScalar("SELECT N_UserID FROM Users where x_EmailID='" + xEmail.ToString() + "' and N_ClientID=" + nClientID, olivoCon, olivoTxn);
+                                if (glogalUserID == null)
+                                {
+                                    DataTable dtGobal = new DataTable();
+                                    dtGobal.Clear();
+                                    dtGobal.Columns.Add("X_EmailID");
+                                    dtGobal.Columns.Add("N_UserID");
+                                    dtGobal.Columns.Add("X_UserName");
+                                    dtGobal.Columns.Add("N_ClientID");
+                                    dtGobal.Columns.Add("N_ActiveAppID");
+                                    dtGobal.Columns.Add("X_Password");
+                                    dtGobal.Columns.Add("B_Inactive");
+                                    dtGobal.Columns.Add("X_UserID");
+                                    dtGobal.Columns.Add("B_EmailVerified");
+                                    dtGobal.Columns.Add("N_UserType");
+
+                                    DataRow rowGb = dtGobal.NewRow();
+                                    rowGb["X_EmailID"] = xEmail;
+                                    rowGb["X_UserName"] = xEmail;
+                                    rowGb["N_ClientID"] = nClientID;
+                                    rowGb["N_ActiveAppID"] = 20;
+                                    rowGb["X_Password"] = Pwd;
+                                    rowGb["B_Inactive"] = 0;
+                                    rowGb["X_UserID"] = xEmail;
+                                    rowGb["B_EmailVerified"] = 1;
+                                    rowGb["N_UserType"] = 2;
+                                    dtGobal.Rows.Add(rowGb);
+
+                                    int GlobalUserID = dLayer.SaveData("Users", "N_UserID", dtGobal, olivoCon, olivoTxn);
+                                    if (GlobalUserID > 0)
+                                    {
+                                        olivoTxn.Commit();
+                                    }
+                                }
+                            
+                                object objUserID = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_studentID=" + nAdmissionID + " and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
+                                 if (objUserID == null)
+                                {
+                                    object objUserCat = dLayer.ExecuteScalar("Select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + "  and N_AppID=20", connection, transaction);
+                                     if (objUserCat != null)
+                                    {
+                                        object objUserCheck = dLayer.ExecuteScalar("Select X_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and X_UserID='" + xEmail.ToString() + "' and N_studentID=" + nAdmissionID + " and N_UserCategoryID=" + myFunctions.getIntVAL(objUserCat.ToString()), connection, transaction);
+                                         if (objUserCheck == null)
+                                        {
+                                             object objUserCheckng = dLayer.ExecuteScalar("Select X_UserID from Sec_User where N_CompanyID=" + nCompanyID + " and N_studentID=" + nAdmissionID, connection, transaction);
+                                            if (objUserCheckng == null)
+                                            {
+                                                 object objUser = dLayer.ExecuteScalar("Select X_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
+                                                 if (objUser != null)
+                                                {
+                                                    dLayer.ExecuteNonQuery("update  Sec_User set N_studentID=" + nAdmissionID + ",B_Active= 1,N_UserCategoryID=" + myFunctions.getIntVAL(objUserCat.ToString()) + ",X_UserCategoryList=" + objUserCat.ToString() + " where X_UserID='" + xEmail.ToString() + "' and N_CompanyID= " + nCompanyID, Params, connection, transaction);
+                                                }
+                                                else
+                                                {
+                                                    DataTable dt = new DataTable();
+                                                    dt.Clear();
+                                                    dt.Columns.Add("N_CompanyID");
+                                                    dt.Columns.Add("N_UserID");
+                                                    dt.Columns.Add("X_UserID");
+                                                    dt.Columns.Add("X_Password");
+                                                    dt.Columns.Add("N_UserCategoryID");
+                                                    dt.Columns.Add("B_Active");
+                                                    dt.Columns.Add("N_BranchID");
+                                                    dt.Columns.Add("N_LocationID");
+                                                    dt.Columns.Add("X_UserName");
+                                                    dt.Columns.Add("N_studentID");
+                                                    dt.Columns.Add("N_LoginFlag");
+                                                    dt.Columns.Add("X_UserCategoryList");
+                                                    dt.Columns.Add("X_Email");
+                                                    dt.Columns.Add("N_TypeID");
+
+                                                    DataRow row = dt.NewRow();
+                                                    row["N_CompanyID"] = nCompanyID;
+                                                    row["X_UserID"] = xEmail;
+                                                    row["X_Password"] = Pwd;
+                                                    row["N_UserCategoryID"] = myFunctions.getIntVAL(objUserCat.ToString());
+                                                    row["B_Active"] = 1;
+                                                    row["N_BranchID"] = nBranchID;
+                                                    row["N_LocationID"] = nLocationID;
+                                                    row["X_UserName"] = xEmail;
+                                                    row["N_studentID"] = nAdmissionID;
+                                                    row["N_LoginFlag"] = 2;
+                                                    row["X_UserCategoryList"] = objUserCat.ToString();
+                                                    row["X_Email"] = xEmail;
+                                                    row["N_TypeID"] = 3;
+                                                    dt.Rows.Add(row);
+
+                                                    int UserID = dLayer.SaveData("Sec_User", "N_UserID", dt, connection, transaction);
+
+                                                  object SUAUserID = dLayer.ExecuteScalar("SELECT N_UserID FROM Users where x_EmailID='" + xEmail.ToString() + "' and N_ClientID=" + nClientID, olivoCon, olivoTxn);
+                                                  DataTable dtUA = new DataTable();
+                                                    dtUA.Clear();
+                                                    dtUA.Columns.Add("N_CompanyID");
+                                                    dtUA.Columns.Add("N_UserID");
+                                                    dtUA.Columns.Add("N_AppMappingID");
+                                                    dtUA.Columns.Add("N_AppID");
+                                                     dtUA.Columns.Add("X_LandingPage");
+                                                     dtUA.Columns.Add("N_GlobalUserID");
+                                                    DataRow rowUA = dtUA.NewRow();
+                                                    rowUA["N_CompanyID"] = nCompanyID;
+                                                    rowUA["N_UserID"] = UserID;
+                                                    rowUA["N_AppMappingID"] = 0;
+                                                    rowUA["N_AppID"] =20;
+                                                    rowUA["X_LandingPage"] = null;
+                                                     rowUA["N_GlobalUserID"] = SUAUserID;
+                                                    dtUA.Rows.Add(rowUA);
+                                                    int UAUserID = dLayer.SaveData("sec_userapps", "N_AppMappingID", dtUA, connection, transaction);
+
+                            
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        }
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
