@@ -5,6 +5,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -52,6 +53,10 @@
       "C:\\Users\\Administrator\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Administrator\\.nuget\\packages"
 >>>>>>> 755fce64c3afaba0bc7c6eee53d5d8af89ece783
+=======
+      "C:\\Users\\zaras\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\zaras\\.nuget\\packages"
+>>>>>>> befade06e5824038920eec8ec4593190259354b7
     ]
   }
 }
