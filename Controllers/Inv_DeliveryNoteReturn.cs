@@ -269,6 +269,11 @@ namespace SmartxAPI.Controllers
                     Result.Add("x_ReturnNo", xReturnNo);
                     Result.Add("n_DeliveryNoteRtnDtlsID", nDeliveryNoteRtnDtlsID);
 
+                    if (nFormID == 1762)
+                    {
+                        return Ok(_api.Success(Result, "Book Return Saved"));
+                    }
+
                     return Ok(_api.Success(Result, "Delivery Note Return Saved"));
                 }
             }

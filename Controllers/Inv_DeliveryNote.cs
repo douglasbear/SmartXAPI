@@ -894,19 +894,19 @@ namespace SmartxAPI.Controllers
                         Result.Add("InvoiceNo", InvoiceNo);
                         transaction.Commit();
                         if (N_FormID == 1572)
-                            {
+                        {
                            return Ok(_api.Success(Result, "Rental Delivery Saved"));
-                            }
-                          else if(N_FormID == 1426) 
-                            {
-                        return Ok(_api.Success(Result,"Wh deliveryNote Saved Successfully"));
-                             }
-                  
+                        }
+                        else if(N_FormID == 1426) 
+                        {
+                            return Ok(_api.Success(Result,"Wh deliveryNote Saved Successfully"));
+                        }
+                        else if(N_FormID == 1758) 
+                        {
+                            return Ok(_api.Success(Result,"Book Delivery Saved Successfully"));
+                        }
                         return Ok(_api.Success(Result, "Delivery Note saved"));
                     }
-
-
-
                 }
             }
             catch (Exception ex)
@@ -1006,7 +1006,7 @@ namespace SmartxAPI.Controllers
                      ParamList.Add("@nTransID", nDeliveryNoteID);
                      ParamList.Add("@nCompanyID", nCompanyID);
                     ParamList.Add("@nFnYearID", nFnYearID);
-                    string Sql = "select N_DeliveryNoteId,X_ReceiptNo from Inv_DeliveryNote where N_DeliveryNoteId=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+                    string Sql = "select N_DeliveryNoteId,X_ReceiptNo,N_FormID from Inv_DeliveryNote where N_DeliveryNoteId=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
                     string xButtonAction="Delete";
                     String X_ReceiptNo="";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
@@ -1107,6 +1107,10 @@ namespace SmartxAPI.Controllers
                     }
 
                     transaction.Commit();
+                    if (myFunctions.getIntVAL(TransRow["N_FormID"].ToString()) == 1758)
+                    {
+                        return Ok(_api.Success("Book Delivery deleted"));
+                    }
                     return Ok(_api.Success("Delivery note deleted"));
                 }
             }
