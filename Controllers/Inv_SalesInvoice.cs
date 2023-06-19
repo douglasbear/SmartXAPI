@@ -1218,7 +1218,7 @@ namespace SmartxAPI.Controllers
 
 
                 //PAYMENT NO DISPLAY IN TOP LABEL ON MOUSE HOVER
-                DataTable Receipts = dLayer.ExecuteDataTable("SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId =" + nSalesID + " and dbo.Inv_PayReceiptDetails.N_CompanyID =" + nCompanyID, connection);
+                DataTable Receipts = dLayer.ExecuteDataTable("SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId =" + nSalesID + " and dbo.Inv_PayReceiptDetails.N_CompanyID =" + nCompanyID +" and dbo.Inv_PayReceiptDetails.X_TransType='SALES'", connection);
                 string InvoiceNos = "";
                 foreach (DataRow var in Receipts.Rows)
                 {
