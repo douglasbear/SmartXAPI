@@ -401,6 +401,11 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
             string sqlJob = "";
+             try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+              connection.Open();
              if (nOpportunityID > 0)
             {
                 sqlCommandText = "select TOP 1 0 as N_ProjectID,'@Auto' as X_ProjectCode,vw_CRMOpportunity.N_CompanyId,vw_CRMOpportunity.N_FnYearID,vw_CRMOpportunity.N_OpportunityID, ISNULL(Inv_Customer.N_CustomerID,0) AS N_CustomerID, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, " +
@@ -412,17 +417,14 @@ namespace SmartxAPI.Controllers
                Params.Add("@xProjectCode", xProjectCode);
           sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
           sqlJob = "select * from Vw_JobDetails  where N_CompanyID=@nCompanyID and X_ProjectCode=@xProjectCode";
+             jobMaster = dLayer.ExecuteDataTable(sqlJob, Params, connection);
                 }
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@YearID", nFnYearId);
             Params.Add("@nOpportunityID", nOpportunityID);
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
+           
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    jobMaster = dLayer.ExecuteDataTable(sqlJob, Params, connection);
+                    
                    
                     if (dt.Rows.Count == 0)
                     {
