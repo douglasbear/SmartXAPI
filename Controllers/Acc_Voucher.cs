@@ -285,7 +285,16 @@ namespace SmartxAPI.Controllers
                     ipAddress = Request.Headers["X-Forwarded-For"];
                 else
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                 
 
+
+                 if(CostCenterTable.Rows.Count>0)
+                 {
+                    if(CostCenterTable.Columns.Contains("N_FormID"))
+                    {
+                        CostCenterTable.Columns.Remove("N_FormID");
+                    }
+                 }
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();

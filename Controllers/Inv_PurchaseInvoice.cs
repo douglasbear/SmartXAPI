@@ -352,7 +352,12 @@ namespace SmartxAPI.Controllers
                      if (IsDirectMRN && !invoiceTax)
                      {
                     object taxID = dLayer.ExecuteScalar("Select N_Value from Gen_Settings where N_CompanyId=" + nCompanyId+" and X_Description='DefaultTaxCategory' and X_Group='Inventory'", Params, connection);
-                         if(taxID!=null)
+                        
+                         if(taxID==null)
+                         {
+                            taxID=0;
+                         }
+                         if(taxID!=null && myFunctions.getIntVAL(taxID.ToString())!=0)
                          {
                              object category = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_CompanyId=" + nCompanyId+" and X_PkeyCode=" + taxID+" ", Params, connection);
                              object taxCatID = dLayer.ExecuteScalar("Select N_PkeyID from Acc_TaxCategory where N_CompanyId=" + nCompanyId+" and X_PkeyCode=" + taxID+" ", Params, connection);
