@@ -672,7 +672,11 @@ namespace SmartxAPI.Controllers
                         object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
 
                     }
-
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        dLayer.ExecuteNonQuery("Update Inv_Purchase SET D_ScheduleDate=NULL,N_ScheduledAmtF=NULL WHERE N_PurchaseID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_InventoryID"].ToString()) + " and N_CompanyID=" + nCompanyId + "", Params, connection, transaction);
+                       
+                    }
                   //Activity Log
                 string ipAddress = "";
                 if (  Request.Headers.ContainsKey("X-Forwarded-For"))
@@ -719,12 +723,17 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     DataTable TransData = new DataTable();
+                    DataTable VendorData = new DataTable();
                     SortedList ParamList = new SortedList(); 
                     ParamList.Add("@nTransID", nPayReceiptId);
                     ParamList.Add("@nFnYearID", nFnyearID);
                     ParamList.Add("@nCompanyID", nCompanyID);
                     string xButtonAction = "Delete";
                     string PayReceiptNo = "";
+
+                     string invoiceSql = "select * from Inv_PayReceiptDetails where  N_CompanyId=@nCompanyID and N_PayReceiptId="+nPayReceiptId; 
+                     VendorData = dLayer.ExecuteDataTable(invoiceSql, ParamList, connection);
+                                   
 
 
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,X_VoucherNo,N_PayReceiptId from Inv_PayReceipt where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_PayReceiptId=@nTransID";
@@ -734,7 +743,7 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Error(User, "Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
-
+                  
                     DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.N_FormID, nPayReceiptId, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnyearID, 0, 0, User, dLayer, connection));
                     Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
                     SqlTransaction transaction = connection.BeginTransaction();
@@ -802,9 +811,25 @@ namespace SmartxAPI.Controllers
                                 if (result > 0)
                                 {
                                     myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnyearID,67, User, transaction, connection);
+                                    
+                                      if (VendorData.Rows.Count >0)
+                                     for (int j = 0; j < VendorData.Rows.Count; j++)
+                                       {
+
+                                        int nInventoryID = myFunctions.getIntVAL(VendorData.Rows[j]["N_InventoryID"].ToString());
+                                        if (nInventoryID > 0 && VendorData.Rows[j]["D_ScheduleDate"].ToString()!="")  
+                                        {
+                                            dLayer.ExecuteNonQuery("Update Inv_Purchase SET D_ScheduleDate='" + VendorData.Rows[j]["D_ScheduleDate"].ToString() + "',N_ScheduledAmtF=" + myFunctions.getVAL(VendorData.Rows[j]["N_ScheduledAmtF"].ToString()) + " WHERE N_PurchaseID=" + myFunctions.getIntVAL(VendorData.Rows[j]["N_InventoryID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", ParamList, connection, transaction);
+                                        
+                                        }
+                                    
+
+                                    }   
                                     transaction.Commit();
                                     return Ok(api.Success("Vendor Payment Deleted"));
-                                }         
+                                }
+                   
+                             
                             }
                         }
                         transaction.Commit();

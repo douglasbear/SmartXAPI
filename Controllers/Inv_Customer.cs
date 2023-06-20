@@ -358,7 +358,7 @@ namespace SmartxAPI.Controllers
                      
                                 int ncrmCustomerID = dLayer.SaveData("CRM_Customer", "N_CustomerId", CustomerMaster, connection, transaction);
                                 dLayer.ExecuteNonQuery("Update Inv_Customer Set n_CrmCompanyID =" + ncrmCustomerID + " Where N_CustomerID =" + nCustomerID + " and N_CompanyID=" + nCompanyID + " and N_FnyearID= " + nFnYearId, Params, connection, transaction);
-                                
+      
                                 if (ncrmCustomerID <= 0)
                                 {
                                     transaction.Rollback();
@@ -466,7 +466,7 @@ namespace SmartxAPI.Controllers
                             }
                             else
                             {
-                                int nUserCat = dLayer.ExecuteNonQuery("insert into Sec_UserCategory SELECT " + nCompanyID + ", MAX(N_UserCategoryID)+1, (select X_UserCategory from Sec_UserCategory where N_CompanyID=-1 and N_AppID=10), MAX(N_UserCategoryID)+1, 12, 10 FROM Sec_UserCategory ", Params, connection, transaction);
+                                int nUserCat = dLayer.ExecuteNonQuery("insert into Sec_UserCategory SELECT " + nCompanyID + ", MAX(N_UserCategoryID)+1, (select X_UserCategory from Sec_UserCategory where N_CompanyID=-1 and N_AppID=10), MAX(N_UserCategoryID)+1, 12, 10, 3, NULL FROM Sec_UserCategory ", Params, connection, transaction);
                                 if (nUserCat <= 0)
                                 {
                                     transaction.Rollback();

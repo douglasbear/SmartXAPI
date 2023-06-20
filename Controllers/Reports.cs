@@ -510,8 +510,10 @@ namespace SmartxAPI.Controllers
                         if (nFormID == 1407)
                         {
                             SqlCommand cmd = new SqlCommand("select i_signature from Wh_GRN where N_GRNID=" + nPkeyID, connection, transaction);
-                            if ((cmd.ExecuteScalar().ToString()) != "")
-                            {
+                           try
+                           {
+                           if ((cmd.ExecuteScalar().ToString()) != "" && cmd.ExecuteScalar().ToString() != "0x" )
+                                {
                                 byte[] content = (byte[])cmd.ExecuteScalar();
                                 MemoryStream stream = new MemoryStream(content);
                                 Image Sign = Image.FromStream(stream);
@@ -528,10 +530,14 @@ namespace SmartxAPI.Controllers
                                     b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + "-wch.png");
                                 }
                             }
-
+                            }
+                            catch
+                            {}
+                           try
+                           {
                             SqlCommand cmd2 = new SqlCommand("select i_signature2 from Wh_GRN where N_GRNID=" + nPkeyID, connection, transaction);
-                            if ((cmd2.ExecuteScalar().ToString()) != "")
-                            {
+                            if ((cmd2.ExecuteScalar().ToString()) != "" && cmd2.ExecuteScalar().ToString() != "0x" )
+                                {
                                 byte[] content = (byte[])cmd2.ExecuteScalar();
                                 MemoryStream stream = new MemoryStream(content);
                                 Image Sign = Image.FromStream(stream);
@@ -548,12 +554,16 @@ namespace SmartxAPI.Controllers
                                     b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + "-wrec.png");
                                 }
                             }
+                            }
+                            catch
+                            {}
                         }
                         if (nFormID == 1426)
                         {
+                            try{
                             SqlCommand cmd = new SqlCommand("select i_signature from Inv_Deliverynote where N_DeliveryNoteID=" + nPkeyID, connection, transaction);
-                            if ((cmd.ExecuteScalar().ToString()) != "")
-                            {
+                            if ((cmd.ExecuteScalar().ToString()) != "" && cmd.ExecuteScalar().ToString() != "0x" )
+                                {
                                 byte[] content = (byte[])cmd.ExecuteScalar();
                                 MemoryStream stream = new MemoryStream(content);
                                 Image Sign = Image.FromStream(stream);
@@ -570,10 +580,14 @@ namespace SmartxAPI.Controllers
                                     b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + "-ch.png");
                                 }
                             }
-
+                            }
+                            catch
+                            {}
+                             try
+                             {
                             SqlCommand cmd1 = new SqlCommand("select i_signature2 from Inv_Deliverynote where N_DeliveryNoteID=" + nPkeyID, connection, transaction);
-                            if ((cmd1.ExecuteScalar().ToString()) != "")
-                            {
+                            if ((cmd1.ExecuteScalar().ToString()) != "" && cmd1.ExecuteScalar().ToString() != "0x" )
+                                {
                                 byte[] content = (byte[])cmd1.ExecuteScalar();
                                 MemoryStream stream = new MemoryStream(content);
                                 Image Sign = Image.FromStream(stream);
@@ -589,7 +603,10 @@ namespace SmartxAPI.Controllers
                                     }
                                     b.Save("C://OLIVOSERVER2020/Images/" + nPkeyID + "-rc.png");
                                 }
-                            }
+                                }
+                             }
+                             catch
+                            {}
                         }
                         // if (nFormID == 1426)
                         // {

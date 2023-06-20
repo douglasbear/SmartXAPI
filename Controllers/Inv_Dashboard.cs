@@ -252,7 +252,7 @@ namespace SmartxAPI.Controllers
                     MinQty = dLayer.ExecuteDataTable(sqlMinQty, Params, connection);
                     ReOrder = dLayer.ExecuteDataTable(sqlReOrder, Params, connection);
                     TopSell = dLayer.ExecuteDataTable(sqlTopSell, Params, connection);
-                    InvValue = dLayer.ExecuteDataTable(sqlInvValue, Params, connection);
+                    // InvValue = dLayer.ExecuteDataTable(sqlInvValue, Params, connection);
                     topsellToday = dLayer.ExecuteDataTable(sqlTopSellToday, Params, connection);
                 }
 
@@ -261,7 +261,7 @@ namespace SmartxAPI.Controllers
                 MinQty.AcceptChanges();
                 ReOrder.AcceptChanges();
                 TopSell.AcceptChanges();
-                InvValue.AcceptChanges();
+                // InvValue.AcceptChanges();
                 topsellToday.AcceptChanges();
 
                 if (AllItem.Rows.Count > 0) Data.Add("allItemCount", AllItem);
@@ -270,7 +270,7 @@ namespace SmartxAPI.Controllers
                 if (ReOrder.Rows.Count > 0) Data.Add("reOrderCount", ReOrder);
 
                 if (TopSell.Rows.Count > 0) Data.Add("topSellItems", TopSell);
-                if (InvValue.Rows.Count > 0) Data.Add("categoryWiseInvValue", InvValue);
+                // if (InvValue.Rows.Count > 0) Data.Add("categoryWiseInvValue", InvValue);
                 if (topsellToday.Rows.Count > 0) Data.Add("topsellToday", topsellToday);
 
                 return Ok(_api.Success(Data));

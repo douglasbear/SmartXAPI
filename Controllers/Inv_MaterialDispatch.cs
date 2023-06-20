@@ -102,7 +102,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetMaterialDispatchDetails(int nFnYearId, string xDispatchNo, int nLocationID, int nBranchId, bool B_AllBranchData, string x_PrsNo)
+        public ActionResult GetMaterialDispatchDetails(int nFnYearId, string xDispatchNo, int nLocationID, int nBranchId, bool B_AllBranchData, string x_PrsNo, string x_OrderNo,int nSalesOrderID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             bool B_ProjectExists = true;
@@ -120,6 +120,7 @@ namespace SmartxAPI.Controllers
                     QueryParamsList.Add("@nBranchId", nBranchId);
                     QueryParamsList.Add("@xDispatchNo", xDispatchNo);
                     QueryParamsList.Add("@nLocationID", nLocationID);
+                    QueryParamsList.Add("@nSalesOrderID", nSalesOrderID);
 
                     string Mastersql = "";
 
@@ -127,9 +128,14 @@ namespace SmartxAPI.Controllers
                         Mastersql = "Select * From vw_MaterialDispatchDisp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_DispatchNo=@xDispatchNo";
                     else
                         Mastersql = "Select * From vw_MaterialDispatchDisp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_DispatchNo=@xDispatchNo and N_BranchId=@nBranchId";
-                    if (x_PrsNo != "" && x_PrsNo != null)
+                    // if (x_PrsNo != "" && x_PrsNo != null)
+                    // {
+                    //     Mastersql = "Select * From vw_Inv_PrsToDispatch Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_PrsNo=" + x_PrsNo + " ";
+
+                    // }
+                       if (x_OrderNo != "" && x_OrderNo != null)
                     {
-                        Mastersql = "Select * From vw_Inv_PrsToDispatch Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_PrsNo=" + x_PrsNo + " ";
+                        Mastersql = "Select * From vw_SalesOrderMasterToDispatch Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_OrderNo=" + x_OrderNo + " ";
 
                     }
                     DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
@@ -151,10 +157,17 @@ namespace SmartxAPI.Controllers
                         DetailSql = "Select *,dbo.SP_BatchStock(vw_MaterialDispatchDetailDisp.N_ItemID,@nLocationID,'') as N_stock  from vw_MaterialDispatchDetailDisp  where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_DispatchId=@N_DispatchID order by n_DispatchDetailsID";
 
 
-                    if (x_PrsNo != "" && x_PrsNo != null)
+                    // if (x_PrsNo != "" && x_PrsNo != null)
+                    // {
+                    //     DetailSql="select * from vw_InvPRSDetailsToDispatch where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_RSID="+N_PRSId+"";
+                    // }
+
+                          if (x_OrderNo != "" && x_OrderNo != null)
                     {
-                        DetailSql="select * from vw_InvPRSDetailsToDispatch where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_RSID="+N_PRSId+"";
+                        DetailSql = "select * from vw_ServiceDetails_Dispatch where N_CompanyId=@nCompanyID and n_SalesOrderID=@nSalesOrderID";
+
                     }
+
                     DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
 
                     DetailTable = _api.Format(DetailTable, "Details");

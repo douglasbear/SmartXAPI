@@ -442,21 +442,18 @@ namespace SmartxAPI.Controllers
                         }
 
 
-                    } 
+                    }  
 
-                    Object CTSCount=dLayer.ExecuteScalar("select count(*) from Inv_ServiceTimesheet where N_POID="+N_POrderID+" and N_CompanyID="+nCompanyId, Params, connection);
-                    int nCTSCount = myFunctions.getIntVAL(CTSCount.ToString());
-                    if (nCTSCount > 0)
+                    Object VTSCount=dLayer.ExecuteScalar("select count(*) from Inv_ServiceTimesheet where N_POID="+N_POrderID+" and N_CompanyID="+nCompanyId, Params, connection);
+                    int nVTSCount = myFunctions.getIntVAL(VTSCount.ToString());
+                    if (nVTSCount > 0)
                     {
-                       
                         if (MasterTable.Rows.Count > 0)
                         {
-                            MasterTable.Columns.Add("b_CTSProcessed");
-                            MasterTable.Rows[0]["b_CTSProcessed"]=true;
+                            MasterTable.Columns.Add("b_VTSProcessed");
+                            MasterTable.Rows[0]["b_VTSProcessed"]=true;
                         }
-
-
-                    }        
+                    }      
                     // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "GRNNotProcessed", typeof(bool),GRNNotProcessed);
                     // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "InvoiceNotProcessed", typeof(bool),InvoiceNotProcessed);
 
@@ -1002,7 +999,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p3", dDateFrom);
                     Params.Add("@p4", dDateTo);
     
-                    sqlCommandText = "select * from vw_PurchaseOrderReceive	where N_CompanyID=@p1 and ((D_ReceiveDate<=@p3) or (D_ReceiveDate>=@p3 AND D_ReceiveDate<=@p4) AND ISNULL(D_ReceiveReturnDate,@p4)>=@p4) and N_POrderID NOT IN (select N_POID from Inv_ServiceTimesheet where N_FormID=@p2 and N_CompanyID=@p1 and D_DateFrom=@p3 and D_DateTo=@p4)";
+                    sqlCommandText = "select * from vw_PurchaseOrderReceive	where N_CompanyID=@p1 and ((D_ReceiveDate<=@p3) or (D_ReceiveDate>=@p3 AND D_ReceiveDate<=@p4)) AND ISNULL(D_ReceiveReturnDate,@p3)>=@p3 and N_POrderID NOT IN (select N_POID from Inv_ServiceTimesheet where N_FormID=@p2 and N_CompanyID=@p1 and D_DateFrom=@p3 and D_DateTo=@p4)";
 
                     SortedList OutPut = new SortedList();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);

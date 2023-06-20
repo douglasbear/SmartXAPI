@@ -48,7 +48,7 @@ namespace SmartxAPI.Controllers
 
             //int nCompanyId=myFunctions.GetCompanyID(User);ParentMenuID,N_MenuID,X_Text,X_Module FROM vw_UserMenus_
            // string sqlCommandText = "select N_CompanyID,N_LanguageID,N_ParentMenuID,N_MenuID,X_Text,X_Module FROM vw_UserMenus_List WHERE N_LanguageID = " + LanguageID + " and N_ParentMenuID = 0 and (N_UserCategoryID in (" + UserCategoryIDList + ") or N_UserCategoryID=" + UserCategoryID + ") and N_CompanyID=" + CompanyID + "and N_MenuID not in (85,1,83) group by N_CompanyID,N_LanguageID,N_ParentMenuID,N_MenuID,X_Text,X_Module";
-            string sqlCommandText = "select Top 10  N_CompanyID,N_LanguageID,N_ParentMenuID,N_MenuID,X_Text,X_Module FROM vw_UserMenus_List WHERE N_CompanyID=@p1 and N_LanguageID=@p2 and N_ParentMenuID = 0 and N_MenuID not in (85,1,83) group by N_CompanyID,N_LanguageID,N_ParentMenuID,N_MenuID,X_Text,X_Module";
+            string sqlCommandText = "select  N_CompanyID,N_LanguageID,N_ParentMenuID,N_MenuID,X_Text,X_Module FROM vw_UserMenus_List WHERE N_CompanyID=@p1 and N_LanguageID=@p2 and N_ParentMenuID = 0 and N_MenuID not in (85,1,83) group by N_CompanyID,N_LanguageID,N_ParentMenuID,N_MenuID,X_Text,X_Module";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nLanguageId);
             // Params.Add("@p2", nLanguageID);

@@ -53,11 +53,11 @@ namespace SmartxAPI.Controllers
             {
                 switch (xSortBy.Split(" ")[0])
                 {
-                    case "PRSNo":
-                        xSortBy = "[PRS No] " + xSortBy.Split(" ")[1];
+                    case "x_PRSNo":
+                         xSortBy = "[PRS No] " + xSortBy.Split(" ")[1];
                         break;
-                    case "N_PRSID":
-                        xSortBy = "N_PRSID " + xSortBy.Split(" ")[1];
+                    case "d_PRSDate":
+                        xSortBy = "d_PRSDate " + xSortBy.Split(" ")[1];
                         break;
                     default: break;
                 }
@@ -622,22 +622,23 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("department")]
-        public ActionResult GetDepartment(string xLevelPattern)
+        public ActionResult GetDepartment(string xLevelPattern,int nFnYearID)
 
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
+             Params.Add("@nFnYearID", nFnYearID);
 
 
             string sqlCommandText = "";
 
 
             if (xLevelPattern != "")
-                sqlCommandText = "Select *  from vw_PayDepartment_Disp Where N_CompanyID= " + nCompanyID + " and  X_LevelPattern like '" + xLevelPattern + "%' and isnull(B_Inactive,0)<>1";
+                sqlCommandText = "Select *  from vw_PayDepartment_Disp Where N_CompanyID= " + nCompanyID + "and  N_FnYearID= " + nFnYearID + " and  X_LevelPattern like '" + xLevelPattern + "%' and isnull(B_Inactive,0)<>1";
             else
-                sqlCommandText = "Select *  from vw_PayDepartment_Disp Where N_CompanyID= " + nCompanyID + " and isnull(B_Inactive,0)<>1";
+                sqlCommandText = "Select *  from vw_PayDepartment_Disp Where N_CompanyID= " + nCompanyID + "and  N_FnYearID= " + nFnYearID + " and isnull(B_Inactive,0)<>1";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

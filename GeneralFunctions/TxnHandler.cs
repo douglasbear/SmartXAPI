@@ -977,7 +977,7 @@ namespace SmartxAPI.GeneralFunctions
                     if (N_IsProforma == 1)
                         Params.Add("N_FormID", 1346);
                     else
-                        Params.Add("N_FormID", 64);
+                        Params.Add("N_FormID", N_FormID);
 
                     while (true)
                     {
@@ -1022,7 +1022,7 @@ namespace SmartxAPI.GeneralFunctions
                     if (N_IsProforma == 1)
                         Params.Add("N_FormID", 1346);
                     else
-                        Params.Add("N_FormID", 64);
+                        Params.Add("N_FormID", N_FormID);
                     Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
                     while (true)
                     {
@@ -1595,10 +1595,12 @@ namespace SmartxAPI.GeneralFunctions
 
             Result.Add("b_IsCompleted", 1);
 
-                if (N_FormID == 64)
+            if (N_FormID == 64)
                 Result.Add("x_Msg", "Sales invoice saved");
             else if(N_FormID == 1601) 
                 Result.Add("x_Msg", "Rental Sales Saved Successfully");
+            else if(N_FormID == 1665) 
+                Result.Add("x_Msg", "Fee Collection Saved Successfully");
             else if(N_FormID == 1741) 
                 Result.Add("x_Msg", "Optical Sales Saved Successfully");
             else

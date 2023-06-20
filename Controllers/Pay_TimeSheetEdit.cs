@@ -232,6 +232,9 @@ namespace SmartxAPI.Controllers
                             }
                         }
                      }
+
+                     ElementsTable.AcceptChanges();
+                             
                     }
 
                     

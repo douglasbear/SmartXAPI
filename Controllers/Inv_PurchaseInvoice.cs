@@ -253,7 +253,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listdetails")]
-        public ActionResult GetPurchaseInvoiceDetails(int nCompanyId, int nFnYearId, string nPurchaseNO, bool showAllBranch, int nBranchId, string xPOrderNo, string xGrnNo, string multipleGrnNo, int nServiceSheetID,bool invoiceTax, bool enableDayWise)
+        public ActionResult GetPurchaseInvoiceDetails(int nCompanyId, int nFnYearId, string nPurchaseNO, bool showAllBranch, int nBranchId, string xPOrderNo, string xGrnNo, string multipleGrnNo, int nServiceSheetID,bool invoiceTax, string multipleRentalPO,bool enableDayWise)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
@@ -341,6 +341,10 @@ namespace SmartxAPI.Controllers
                         X_MasterSql = "select * from vw_Inv_MRNAsInvoiceMaster where N_CompanyID=@CompanyID and N_MRNID in (" + multipleGrnNo + ") and B_IsSaveDraft<>1 " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
 
                     }
+                    if (multipleRentalPO != null && multipleRentalPO != "")
+                    {
+                        X_MasterSql = "select * from vw_InvVendorSTAsInvoiceMaster where N_CompanyID=@CompanyID and N_POrderID in (" + multipleRentalPO + ") and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                    }
                    
 
                     dtPurchaseInvoice = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
@@ -348,7 +352,12 @@ namespace SmartxAPI.Controllers
                      if (IsDirectMRN && !invoiceTax)
                      {
                     object taxID = dLayer.ExecuteScalar("Select N_Value from Gen_Settings where N_CompanyId=" + nCompanyId+" and X_Description='DefaultTaxCategory' and X_Group='Inventory'", Params, connection);
-                         if(taxID!=null)
+                        
+                         if(taxID==null)
+                         {
+                            taxID=0;
+                         }
+                         if(taxID!=null && myFunctions.getIntVAL(taxID.ToString())!=0)
                          {
                              object category = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_CompanyId=" + nCompanyId+" and X_PkeyCode=" + taxID+" ", Params, connection);
                              object taxCatID = dLayer.ExecuteScalar("Select N_PkeyID from Acc_TaxCategory where N_CompanyId=" + nCompanyId+" and X_PkeyCode=" + taxID+" ", Params, connection);
@@ -414,6 +423,11 @@ namespace SmartxAPI.Controllers
                     }
                     else if (nServiceSheetID != null)
                     {
+                        X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_ServiceSheetID=" + nServiceSheetID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                    }
+                    if (multipleRentalPO != null && multipleRentalPO != "")
+                    {
+                        X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_POrderID in (" + multipleRentalPO + ")" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                         if (enableDayWise)
                             X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetailsDaywise where N_CompanyID=@CompanyID and N_POrderID=" + N_POrderID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                         else
@@ -428,6 +442,15 @@ namespace SmartxAPI.Controllers
              
                     
                     dtPurchaseInvoiceDetails = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
+
+                    string x_PONo =  dtPurchaseInvoiceDetails.Rows[0]["X_POrderNo"].ToString();
+                    for (int j = 1; j < dtPurchaseInvoiceDetails.Rows.Count; j++)
+                    {
+                        if (dtPurchaseInvoiceDetails.Rows[j]["X_POrderNo"].ToString() != dtPurchaseInvoiceDetails.Rows[j-1]["X_POrderNo"].ToString())
+                        x_PONo = x_PONo + "," + dtPurchaseInvoiceDetails.Rows[j]["X_POrderNo"].ToString();
+                    };
+                     myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "X_PONo", typeof(string), x_PONo);
+                     dtPurchaseInvoice.AcceptChanges();
 
                     if (multipleGrnNo != null && multipleGrnNo != ""){
                       foreach (DataRow Row in dtPurchaseInvoiceDetails.Rows)

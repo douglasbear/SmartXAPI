@@ -56,7 +56,7 @@ namespace SmartxAPI.Controllers
                         masterTable = "Pay_Employee";
                         column = "x_EmpCode";
                     }
-                    if (formID == 64 || formID == 1346)
+                    if (formID == 64 || formID == 1346 || formID == 1665)
                     {
                         masterTable = "Inv_Sales";
                         column = "X_ReceiptNo";

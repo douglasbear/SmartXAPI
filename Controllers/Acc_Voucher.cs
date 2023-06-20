@@ -301,26 +301,26 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
 
-                     if (!myFunctions.CheckActiveYearTransaction(myFunctions.getIntVAL(nCompanyId.ToString()),myFunctions.getIntVAL(nFnYearId.ToString()), DateTime.ParseExact(MasterTable.Rows[0]["D_VoucherDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
-                        {
-                            object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyId+" and convert(date ,'" + MasterTable.Rows[0]["D_VoucherDate"].ToString() + "') between D_Start and D_End", connection, transaction);
-                            if (DiffFnYearID != null)
-                            {
-                                MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
-                                 foreach (DataRow var in CostCenterTable.Rows)
-                                 {
-                                    var["n_FnYearID"]=DiffFnYearID.ToString();
-                                 }
-                                CostCenterTable.AcceptChanges();
-                                nFnYearId = DiffFnYearID.ToString();
+                    //  if (!myFunctions.CheckActiveYearTransaction(myFunctions.getIntVAL(nCompanyId.ToString()),myFunctions.getIntVAL(nFnYearId.ToString()), DateTime.ParseExact(MasterTable.Rows[0]["D_VoucherDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                    //     {
+                    //         object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyId+" and convert(date ,'" + MasterTable.Rows[0]["D_VoucherDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                    //         if (DiffFnYearID != null)
+                    //         {
+                    //             MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                    //              foreach (DataRow var in CostCenterTable.Rows)
+                    //              {
+                    //                 var["n_FnYearID"]=DiffFnYearID.ToString();
+                    //              }
+                    //             CostCenterTable.AcceptChanges();
+                    //             nFnYearId = DiffFnYearID.ToString();
                                   
-                            }
-                            else
-                            {
-                                transaction.Rollback();
-                                return Ok(api.Error(User, "Transaction date must be in the active Financial Year."));
-                            }
-                        }
+                    //         }
+                    //         else
+                    //         {
+                    //             transaction.Rollback();
+                    //             return Ok(api.Error(User, "Transaction date must be in the active Financial Year."));
+                    //         }
+                    //     }
 
 
                     if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_VoucherID > 0)

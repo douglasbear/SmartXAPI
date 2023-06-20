@@ -54,7 +54,7 @@ namespace SmartxAPI.Controllers
             string sqlAssignmentTotal = "SELECT count(1) as N_Count FROM Vw_AssignmentByTeacher WHERE N_CompanyID = " + nCompanyID + " and N_AcYearID="+nAcYearID+" and n_TeacherID="+nTeacherID+"" ;
             string sqlExam = "SELECT count(1) as N_Count FROM Vw_ExamByTeacher WHERE N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  +" and n_TeacherID="+nTeacherID+""; 
             string sqlPubResults = "SELECT count(1) as N_Count FROM vw_Sch_Assignment WHERE N_FormID=1547 and isnull(b_PublishMark,0)=1 and  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  + crieteria ;
-            string sqlSheduledExam = "SELECT count(1) as N_Count FROM Vw_ExamByTeacher WHERE  N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  +" and n_TeacherID="+nTeacherID+" and  D_ExamDate>='" + dDate + "'"; 
+            string sqlSheduledExam = "SELECT count(1) as N_Count FROM Vw_ExamByTeacher WHERE MONTH(D_ExamDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_ExamDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID + " and  N_AcYearID="+nAcYearID  +" and n_TeacherID="+nTeacherID; 
              string sqlTimeTableData = "SELECT * FROM vw_TimetableDetails WHERE N_CompanyID = " + nCompanyID + " and  N_FnYearID="+nAcYearID+"  and  x_WeekName='"+dayOfWk+"' and n_TeacherID="+nTeacherID+"" ;
            
             SortedList Data = new SortedList();
