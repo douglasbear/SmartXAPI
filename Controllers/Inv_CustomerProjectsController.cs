@@ -414,14 +414,15 @@ namespace SmartxAPI.Controllers
                 "where vw_CRMOpportunity.N_OpportunityID=@nOpportunityID and vw_CRMOpportunity.N_CompanyId=@nCompanyID and vw_CRMOpportunity.N_FnYearID=@YearID";
             }
            else{
-               Params.Add("@xProjectCode", xProjectCode);
+                Params.Add("@xProjectCode", xProjectCode);
+                Params.Add("@nCompanyID", nCompanyID);
+                Params.Add("@YearID", nFnYearId);
+                Params.Add("@nOpportunityID", nOpportunityID);
           sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
           sqlJob = "select * from Vw_JobDetails  where N_CompanyID=@nCompanyID and X_ProjectCode=@xProjectCode";
              jobMaster = dLayer.ExecuteDataTable(sqlJob, Params, connection);
                 }
-            Params.Add("@nCompanyID", nCompanyID);
-            Params.Add("@YearID", nFnYearId);
-            Params.Add("@nOpportunityID", nOpportunityID);
+           
            
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     

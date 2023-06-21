@@ -1011,8 +1011,9 @@ namespace SmartxAPI.Controllers
                         object nRentalUnitID = dLayer.ExecuteScalar("select N_RentalUnitID from Inv_RentalUnit  where N_ItemID = " + N_ItemID + " and X_RentalUnit = '" + RentalUnits.Rows[0]["x_RentalUnit"].ToString() + "' and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                         if (myFunctions.getIntVAL(nRentalUnitID.ToString()) != 0)
                         dLayer.ExecuteNonQuery("update Inv_ItemMaster set N_RentalUnitID=" + myFunctions.getIntVAL(nRentalUnitID.ToString()) + " where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
-                        dLayer.DeleteData("Inv_ItemMasterWHLink", "N_ItemID", N_ItemID, "", connection, transaction);
+                      
                       }
+                        dLayer.DeleteData("Inv_ItemMasterWHLink", "N_ItemID", N_ItemID, "", connection, transaction);
                    
                         if (LocationList.Rows.Count > 0)
                         {

@@ -299,6 +299,10 @@ namespace SmartxAPI.Controllers
                          xButtonAction="Insert"; 
                        
                         if (VendorCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to save")); }
+
+                        if(MasterRow["x_VendorPrefix"].ToString()!="")
+                            VendorCode=MasterRow["x_VendorPrefix"].ToString()+"-"+VendorCode;
+
                         MasterTable.Rows[0]["x_VendorCode"] = VendorCode;
 
                         SortedList vendorNewParams = new SortedList();
@@ -320,6 +324,10 @@ namespace SmartxAPI.Controllers
                          xButtonAction="Update"; 
 
                     }
+
+                    if (MasterTable.Columns.Contains("x_VendorPrefix"))
+                        MasterTable.Columns.Remove("x_VendorPrefix");
+                        
                      VendorCode = MasterTable.Rows[0]["x_VendorCode"].ToString();
 
                     if (MasterTable.Columns.Contains("b_DirPosting"))
