@@ -145,6 +145,7 @@ namespace SmartxAPI.Controllers
                     DataTable ElementsTable = new DataTable();
                     DataTable ActualTable = new DataTable();
                     DataTable WaiveTable = new DataTable();
+                    DataTable PayOffDays = new DataTable();
                     string ElementSql = "";
                     string ActualSql = "";
                     string waiveSql="";
@@ -153,8 +154,14 @@ namespace SmartxAPI.Controllers
                     ElementSql = " Select N_EmpID as N_EmpId,* from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date >= '" + dtpSalaryFromdate + "' and D_Date<=' " + dtpSalaryToDate + "' and N_EmpID=" + nEmpID + " order by D_Date";
                     ElementsTable = dLayer.ExecuteDataTable(ElementSql, Params, connection);
                     ElementsTable = myFunctions.AddNewColumnToDataTable(ElementsTable, "X_Day", typeof(string),null);
+                   // ElementsTable = myFunctions.AddNewColumnToDataTable(ElementsTable, "X_Remarks", typeof(string),null);
                     // if (ElementsTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     ElementsTable.AcceptChanges();
+
+
+                    
+                                string Sql8 = "Select * from vw_pay_OffDays Where N_CompanyID =" + nCompanyID + " and (N_FnyearID= " + nFnYearID + " or N_FnyearID=0)  ";
+                                PayOffDays = dLayer.ExecuteDataTable(Sql8, Params, connection);
 
                     DateTime Date = dtpSalaryFromdate;
                     do
@@ -178,6 +185,7 @@ namespace SmartxAPI.Controllers
                     {
                          DateTime Date5 = Convert.ToDateTime(var["D_date"].ToString());
                          var["X_Day"] = Date5.ToString("dddd");
+                             
 
                         ActualSql = "Select * from Pay_EmpShiftDetails  Where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + var["D_Date"].ToString() + "' and N_ShiftID=(select Max(N_ShiftID) from Pay_EmpShiftDetails Where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + var["D_Date"].ToString() + "')";
                         ActualTable = dLayer.ExecuteDataTable(ActualSql, Params, connection);
@@ -217,6 +225,17 @@ namespace SmartxAPI.Controllers
                         if ((var["D_ActOut2"].ToString() != "" || var["D_ActOut2"].ToString() != null) && (var["D_Shift2_Out"].ToString() == "" || var["D_Shift2_Out"].ToString() == null))
                             var["D_Shift2_Out"] = "00:00:00";
 
+
+
+                               foreach (DataRow Var1 in PayOffDays.Rows)
+                                    {
+                                        if (nCatID == myFunctions.getIntVAL(Var1["N_CategoryID"].ToString()) && ((int)Date5.DayOfWeek) + 1 == myFunctions.getIntVAL(Var1["N_DayID"].ToString()) || myFunctions.getDateVAL(Date5) == myFunctions.getDateVAL(Convert.ToDateTime(Var1["D_Date"].ToString())))
+                                        {
+                                            var["X_Remarks"] = Var1["X_Remarks"];
+                                            
+                                        }
+                                    }
+                                    
                     waiveSql="Select * from Pay_AnytimeRequest where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID;
                     WaiveTable = dLayer.ExecuteDataTable(waiveSql, Params, connection);
                     WaiveTable.AcceptChanges();
