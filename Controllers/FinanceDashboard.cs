@@ -196,7 +196,7 @@ namespace SmartxAPI.Controllers
                         sqlCommandText = "select top(" + nSizeperpage + ") N_FnYearID,N_LedgerID,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_UserID=@p3 " + Searchkey + "and N_LedgerID not in (select top(" + Count + ") N_LedgerID from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2  " + Searchkey+ " ) group by N_FnYearID,N_LedgerID,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance " +xSortBy;
                     SortedList OutPut = new SortedList();
 
-                    dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText , Params, connection);
                     string sqlCommandCount = "select count(1) as N_Count  from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
