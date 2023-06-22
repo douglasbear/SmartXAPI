@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult FixedAssetList(int nFnYearId,int nPage,int nSizeperpage,string xSortBy)
+        public ActionResult FixedAssetList(int nFnYearId,int nPage,int nSizeperpage,string xSortBy,int nFormID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -43,18 +43,27 @@ namespace SmartxAPI.Controllers
             string sqlCommandCount = "";
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearId);
              
               if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_CategoryID desc";
             else
                 xSortBy = " order by " + xSortBy;
 
+             if(nFormID==1766){
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 "+ xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1766"+ xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and N_CategoryID not in (select top("+ Count +") N_CategoryID fromvw_InvAssetCategory_Disp  where N_CompanyID=@p1 )" + xSortBy;
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and N_FormID=1766 and N_CategoryID not in (select top("+ Count +") N_CategoryID fromvw_InvAssetCategory_Disp  where N_CompanyID=@p1 )" + xSortBy;
+             }   
+
+             else{
+             if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and ISNULL(N_FormID,0)=0"+ xSortBy;
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and nd ISNULL(N_FormID,0)=0 and N_CategoryID not in (select top("+ Count +") N_CategoryID fromvw_InvAssetCategory_Disp  where N_CompanyID=@p1 )" + xSortBy;
+             }
 
             SortedList OutPut = new SortedList();
 
@@ -132,17 +141,25 @@ namespace SmartxAPI.Controllers
 
 
  [HttpGet("details")]
-        public ActionResult FixedAssetListDetails(int nCategoryID, int nFnYearID, int? nLangID)
+        public ActionResult FixedAssetListDetails(int nCategoryID, int nFnYearID, int? nLangID, int nFormID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             int N_Flag = 0;
+            string sqlCommandText ="";
             if (nLangID == 2)
             {
                 N_Flag = 1;
             }
-            string sqlCommandText = "SP_Inv_AssetItemcategory_Disp  " + myFunctions.GetCompanyID(User) + "," + nFnYearID + "," + N_Flag + "";
+            if(nFormID==1766){
+             sqlCommandText = "select * from Vw_SchBookCategory where N_CompanyID= " + myFunctions.GetCompanyID(User) +"";
+             
+            }
+            else{
+            sqlCommandText = "SP_Inv_AssetItemcategory_Disp  " + myFunctions.GetCompanyID(User) + "," + nFnYearID + "," + N_Flag + "";
+            }
+  
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearID);
             Params.Add("@p3", nCategoryID);

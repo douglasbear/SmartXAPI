@@ -127,6 +127,7 @@ namespace SmartxAPI.Controllers
             DataTable BusDetails = new DataTable();
             DataTable FeeDetails = new DataTable();
             DataTable FeeAmtDetails = new DataTable();
+            DataTable CourseDetails = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
@@ -185,6 +186,14 @@ namespace SmartxAPI.Controllers
                     FeeAmtDetails = dLayer.ExecuteDataTable(FeeAmtDetailSql, Params, connection);
                     FeeAmtDetails = api.Format(FeeAmtDetails, "FeeAmtDetails");
                     dt.Tables.Add(FeeAmtDetails);
+
+                    Params.Add("@nStudentID", nStudentID);
+
+                    string CourseDetailSql = "select * from  Vw_SchCourseDetails where N_CompanyID=@p1 and N_AcYearID=@p4 and N_StudentID=@p3";
+                    CourseDetails = dLayer.ExecuteDataTable(CourseDetailSql, Params, connection);
+                    CourseDetails = api.Format(CourseDetails, "CourseDetails");
+                    dt.Tables.Add(CourseDetails);
+
                 }
                 return Ok(api.Success(dt));                                       
             }
@@ -202,7 +211,9 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 DataTable dtCustomer;
+                DataTable CourseTable;
                 MasterTable = ds.Tables["master"];
+                CourseTable = ds.Tables["courseDetails"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nAcYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AcYearID"].ToString());
@@ -423,7 +434,16 @@ namespace SmartxAPI.Controllers
                             }
                         }
                     }
-
+                    if(CourseTable.Rows.Count>0)
+                    {
+                    for (int i = 0; i < CourseTable.Rows.Count; i++)
+                    {
+                    CourseTable.Rows[i]["N_StudentID"] = nAdmissionID;
+                    }
+                    dLayer.SaveData("Sch_CourseDetails", "N_CourseDetailsID", CourseTable, connection, transaction);
+                    transaction.Commit();
+                    }
+                    
 
                       if (xEmail != "")
                         {

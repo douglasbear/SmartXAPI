@@ -214,6 +214,42 @@ namespace SmartxAPI.Controllers
 
 
         }
+
+        [HttpGet("multilist") ]
+        public ActionResult multiCourselist(int nCompanyID,int nAdmissionID)
+        {    
+            SortedList param = new SortedList();           
+            DataTable dt=new DataTable();
+            
+            string sqlCommandText="";
+
+            if(nAdmissionID>0)
+                sqlCommandText="select * from Vw_SchCourseDetails where N_CompanyID=@p1 and N_StudentID=@p2";
+            else    
+                sqlCommandText="select * from Vw_SchCourseDetails where N_CompanyID=@p1";
+
+            param.Add("@p1", nCompanyID);  
+            param.Add("@p2", nAdmissionID);                
+                
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                }
+              
+                    return Ok(api.Success(dt));
+               
+                
+            }
+            catch(Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }   
+        }   
+      
     }
 }
 

@@ -4,6 +4,12 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+=======
+      "C:\\Users\\Administrator\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\Administrator\\.nuget\\packages"
+=======
+>>>>>>> 7c71d8b2506f7d9548d8ac404e6e425de5f9a1ec
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
@@ -49,6 +55,7 @@
       "C:\\Users\\SANJAY\\.nuget\\packages"
 >>>>>>> 98a4580905440e7a0b4d4b7ace321a929d9975c8
 >>>>>>> 89696262e4ae4df5be222a7fd9de0d1ec5f16a78
+<<<<<<< HEAD
 =======
       "C:\\Users\\Administrator\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Administrator\\.nuget\\packages"
@@ -57,6 +64,9 @@
       "C:\\Users\\zaras\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\zaras\\.nuget\\packages"
 >>>>>>> befade06e5824038920eec8ec4593190259354b7
+=======
+>>>>>>> e4c266868be39bb0ee80d7bb700e4c958cced31a
+>>>>>>> 7c71d8b2506f7d9548d8ac404e6e425de5f9a1ec
     ]
   }
 }

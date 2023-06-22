@@ -64,11 +64,9 @@ namespace SmartxAPI.Controllers
                     }
                      MasterTable.Columns.Remove("n_FnYearId");
                      MasterTable.Columns.Remove("x_Class");
-                     MasterTable.Columns.Remove("n_ClassID");
                      MasterTable.Columns.Remove("x_CustomerName");
                      MasterTable.Columns.Remove("n_StudentCode");
                      MasterTable.Columns.Remove("x_AdmissionNo");
-                     MasterTable.Columns.Remove("n_ClassDivisionID");
 
                     if (nLibraryRegID > 0) 
                     {  
