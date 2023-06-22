@@ -765,11 +765,14 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.GetCompanyID(User);
                 Params.Add("@p1", nCompanyID);
                 Params.Add("@p2", BankID);
-                string CSVDatasql = "Select X_BankCodeRef,X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText,X_Transbankname,X_TransbankAccnumber,N_SalMonth,N_SalYear from [vw_pay_ProcessedDetails_CSV] where X_Batch=" + x_batchID + " and N_EmpTypeID<>183 and TransBankID=" + BankID;
+                string CSVDatasql = "Select ROW_NUMBER() OVER (ORDER BY X_EmpCode) as N_Row,X_CRNumber,X_IqamaNo,X_BankCodeRef,X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText,X_Transbankname,X_TransbankAccnumber,N_SalMonth,N_SalYear from [vw_pay_ProcessedDetails_CSV] where X_Batch=" + x_batchID + " and N_EmpTypeID<>183 and TransBankID=" + BankID;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     CSVData = dLayer.ExecuteDataTable(CSVDatasql, Params, connection);
+                    object TotalCount = dLayer.ExecuteScalar("Select count(*) from [vw_pay_ProcessedDetails_CSV] where X_Batch=" + x_batchID + " and N_EmpTypeID<>183 and TransBankID=" + BankID, Params, connection);
+                    object Netsalary = dLayer.ExecuteScalar("Select sum(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary from [vw_pay_ProcessedDetails_CSV] where X_Batch=" + x_batchID + " and N_EmpTypeID<>183 and TransBankID=" + BankID, Params, connection);
+
 
                     int index = 0;
                     foreach (DataRow drow in CSVData.Rows)
@@ -792,19 +795,17 @@ namespace SmartxAPI.Controllers
                         };
                         string[][] mainoutput = new string[][]
                         {
-                        new string[]{"","","BMCT","",drow["X_TransbankAccnumber"].ToString(),drow["N_SalYear"].ToString(),drow["N_SalMonth"].ToString(),"", "","Salary"}
+                        new string[]{drow["X_CRNumber"].ToString(),drow["X_CRNumber"].ToString(),"BMCT",drow["X_TransbankAccnumber"].ToString(),drow["N_SalYear"].ToString(),drow["N_SalMonth"].ToString(),Netsalary.ToString(),TotalCount.ToString(),"Salary"}
                         };
 
                         string[][] header = new string[][]
-                        {new string[]{"Employee ID Type","Employee ID","Reference Number","Employee Name","Employee BIC Code","Employee Account","Salary Frequency","Number Of Working days","Net Salary","Basic Salary","Housing Allowance","Other Earnings","Deductions","Notes / Comments"}
+                        {new string[]{"Employee ID Type","Employee ID","Reference Number","Employee Name","Employee BIC Code","Employee Account","Salary Frequency","Number Of Working days","Net Salary","Basic Salary","Extra Hours","Extra Income","Deductions","Social Security Deductions","Notes / Comments"}
                         };
 
                         string[][] output = new string[][]
                         {
-                        new string[]{"",drow["X_EmpCode"].ToString(),drow["X_BankCodeRef"].ToString(),""+ drow["X_EmpName"].ToString(),"",drow["X_BankAccountNo"].ToString(),"M","",drow["totalsalary"].ToString(),drow["N_BasicSalary"].ToString(),drow["N_HA"].ToString(), drow["N_OtherEarnings"].ToString(),drow["N_OtherDeductions"].ToString(),""}
+                        new string[]{"C",drow["X_IqamaNo"].ToString(),drow["N_Row"].ToString(), drow["X_EmpName"].ToString(),drow["X_BankCodeRef"].ToString(),drow["X_BankAccountNo"].ToString(),"M","30",drow["totalsalary"].ToString(),drow["N_BasicSalary"].ToString(),"0",(double.Parse(drow["N_HA"].ToString())+double.Parse(drow["N_OtherEarnings"].ToString())).ToString(),drow["N_OtherDeductions"].ToString(),"0",drow["X_PayrunText"].ToString()+" Salary"}
                         };
-
-
                         int length = output.GetLength(0);
 
 
@@ -814,7 +815,7 @@ namespace SmartxAPI.Controllers
                             sb.AppendLine(string.Join(delimiter, mainoutput[0]));
                             sb.AppendLine(string.Join(delimiter, header[0]));
                         }
-                        
+
                         for (index = 0; index < length; index++)
                             sb.AppendLine(string.Join(delimiter, output[index]));
 
