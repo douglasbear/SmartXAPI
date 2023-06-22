@@ -478,6 +478,7 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@today", dDateFrom);
             QueryParams.Add("@nVacTypeID", nVacTypeID);
          int publicHolidays=0;
+         int holidays=0;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -486,7 +487,9 @@ namespace SmartxAPI.Controllers
 
                       object Holidays =dLayer.ExecuteScalar("select COUNT(*) from pay_YearlyOffDays where N_CompanyID = " + nCompanyID + "  and ( D_Date = '" + dDateFrom + "'  or D_Date = '" + dDateTo+ "'  or (D_Date >'" +dDateFrom + "' and D_Date <'" +dDateTo + "' ))", QueryParams, connection);
                      if(Holidays==null){publicHolidays=0;}else{  publicHolidays=myFunctions.getIntVAL(Holidays.ToString());}
-
+                     
+                     object normalHolidays = dLayer.ExecuteScalar("select dbo.Fn_GetHolidayCount(" + nCompanyID+ ",'" + dDateFrom + "','" +dDateTo+ "'," + nEmpID + ")",  QueryParams, connection);
+                      if(normalHolidays==null){holidays=0;}else{  holidays=myFunctions.getIntVAL(normalHolidays.ToString());}
                     dt = dLayer.ExecuteDataTable("Select dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID,2) As AvlDays,dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID," + (bIsAdjusted == 1 ? "3" : "1") + ") As Accrude", QueryParams, connection);
                 }
                 if (dt.Rows.Count > 0)
@@ -495,6 +498,7 @@ namespace SmartxAPI.Controllers
                     output.Add("avlDays", myFunctions.getDecimalVAL(dt.Rows[0]["AvlDays"].ToString()));
                     output.Add("nEmpID", nEmpID);
                     output.Add("publicHolidays", publicHolidays);
+                    output.Add("holidays", holidays);
                     output.Add("nVacTypeID", nVacTypeID);
                 }
                 else

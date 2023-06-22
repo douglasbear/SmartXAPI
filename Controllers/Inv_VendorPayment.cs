@@ -439,6 +439,11 @@ namespace SmartxAPI.Controllers
                     int N_SaveDraft = myFunctions.getIntVAL(Master["b_IsSaveDraft"].ToString());
                     int nUserID = myFunctions.GetUserID(User);
                     int N_NextApproverID=0;
+                    if(!MasterTable.Columns.Contains("N_ProjectID"))
+                             myFunctions.AddNewColumnToDataTable(MasterTable, "N_ProjectID", typeof(int),0);
+                    {
+
+                    }
                    
                      if (!myFunctions.CheckActiveYearTransaction(nCompanyId, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_Date"].ToString()), dLayer, connection, transaction))
                     {
