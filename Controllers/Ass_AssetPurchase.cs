@@ -127,14 +127,22 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("categorylist")]
-        public ActionResult ListCategory(int nFnYearID)
+        public ActionResult ListCategory(int nFnYearID,int nFormID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandText="";
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
-            string sqlCommandText = "Select * from vw_InvAssetCategory_Disp Where N_CompanyID=@nCompanyID and N_FnyearID=@nFnYearID";
+            Params.Add("@nFormID", nFormID);
+            if(nFormID==1766){
+             sqlCommandText = "Select * from vw_InvAssetCategory_Disp Where N_CompanyID=@nCompanyID and N_FnyearID=@nFnYearID and N_FormID=@nFormID";
+
+            }else{
+               sqlCommandText = "Select * from vw_InvAssetCategory_Disp Where N_CompanyID=@nCompanyID and N_FnyearID=@nFnYearID and ISNULL(N_FormID,0)=0";
+            }
+            
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -892,7 +900,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         }
 
-                        if (FormID == 129)
+                        if (FormID == 129 || FormID ==1755)
                         {
                             dLayer.ExecuteNonQuery("DELETE FROM Ass_AssetMaster WHERE Ass_AssetMaster.N_CompanyID = @nCompanyID AND Ass_AssetMaster.N_AssetInventoryDetailsID IN (SELECT N_AssetInventoryDetailsID FROM Ass_PurchaseDetails WHERE Ass_PurchaseDetails.N_AssetInventoryID =@N_AssetInventoryID AND Ass_PurchaseDetails.N_CompanyID = @nCompanyID)", Params, connection, transaction);
                             dLayer.ExecuteNonQuery("DELETE FROM Ass_Transactions WHERE Ass_Transactions.N_CompanyID = @nCompanyID AND Ass_Transactions.N_AssetInventoryDetailsID IN (SELECT N_AssetInventoryDetailsID FROM Ass_PurchaseDetails WHERE Ass_PurchaseDetails.N_AssetInventoryID =@N_AssetInventoryID AND Ass_PurchaseDetails.N_CompanyID = @nCompanyID)", Params, connection, transaction);

@@ -64,11 +64,9 @@ namespace SmartxAPI.Controllers
                     }
                      MasterTable.Columns.Remove("n_FnYearId");
                      MasterTable.Columns.Remove("x_Class");
-                     MasterTable.Columns.Remove("n_ClassID");
                      MasterTable.Columns.Remove("x_CustomerName");
                      MasterTable.Columns.Remove("n_StudentCode");
                      MasterTable.Columns.Remove("x_AdmissionNo");
-                     MasterTable.Columns.Remove("n_ClassDivisionID");
 
                     if (nLibraryRegID > 0) 
                     {  
@@ -93,5 +91,39 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,ex));
             }
         }
+
+   [HttpGet("details")]
+        public ActionResult LibraryDetails(string x_LibraryCode)
+        {
+           
+            DataTable dt=new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            string sqlCommandText = "select * from VW_LibraryRegistration where N_CompanyID=@p1 and X_LibraryCode=@p2";
+            Params.Add("@p1", nCompanyId);  
+            Params.Add("@p2", x_LibraryCode);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+
+                   if(dt.Rows.Count==0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                } else {
+                    return Ok(api.Success(dt));
+                }
+                }
+                            
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+
+
     }
 }
