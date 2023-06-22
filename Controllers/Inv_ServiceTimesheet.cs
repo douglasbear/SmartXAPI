@@ -458,7 +458,7 @@ namespace SmartxAPI.Controllers
 
 
             string sqlCommandText = "";
-            sqlCommandText = "select * from vw_Inv_ServiceTimesheet where N_CompanyID=@N_CompanyID and N_FnYearID=@N_FnyearID and N_FormID=@N_FormID and N_VendorID=@N_VendorID and N_ServiceSheetID not in (select isNull(N_ServiceSheetID, 0) from Inv_Purchase where N_FnYearID=@N_FnyearID) order by x_ServiceSheetCode desc";
+            sqlCommandText = "select * from vw_Inv_ServiceTimesheet where N_CompanyID=@N_CompanyID and N_FormID=@N_FormID and N_VendorID=@N_VendorID and N_ServiceSheetID not in (select isNull(N_ServiceSheetID, 0) from Inv_Purchase where N_CompanyID=@N_CompanyID) order by x_ServiceSheetCode desc";
 
             try
             {
@@ -497,7 +497,7 @@ namespace SmartxAPI.Controllers
 
 
             string sqlCommandText = "";
-            sqlCommandText = "select * from vw_Inv_ServiceTimesheet where N_CompanyID=@N_CompanyID and N_FnYearID=@N_FnyearID and N_FormID=@N_FormID and N_CustomerID=@N_CustomerID and N_ServiceSheetID not in (select isNull(N_ServiceSheetID, 0) from Inv_Sales where N_FnYearID=@N_FnyearID) order by x_ServiceSheetCode desc";
+            sqlCommandText = "select * from vw_Inv_ServiceTimesheet where N_CompanyID=@N_CompanyID and N_FormID=@N_FormID and N_CustomerID=@N_CustomerID and N_ServiceSheetID not in (select isNull(N_ServiceSheetID, 0) from Inv_Sales where N_CompanyID=@N_CompanyID) order by x_ServiceSheetCode desc";
 
             try
             {
