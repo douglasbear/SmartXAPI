@@ -390,7 +390,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("orderitemdetails")]
-        public ActionResult GetOrderItemDetails(int nFnYearID, int nFormID, int nBranchID, int nLocationID, DateTime dDateFrom, DateTime dDateTo, int nSOID, string xType)
+        public ActionResult GetOrderItemDetails(int nFnYearID, int nFormID, int nBranchID, int nLocationID, DateTime dDateFrom, DateTime dDateTo, int nSOID, string xType, bool enableDayWise)
         {
             try
             {
@@ -420,7 +420,12 @@ namespace SmartxAPI.Controllers
                         if (xType == "SO")
                             Itemsql = "select * from vw_POItemsForTimesheet where N_CompanyID=@N_CompanyId and N_SOId=@N_TransID and ((D_MRNDate<=@D_DateFrom) or (D_MRNDate>=@D_DateFrom AND D_MRNDate<=@D_DateTo)) AND ISNULL(D_ReturnDate,@D_DateFrom)>=@D_DateFrom";
                         else
-                            Itemsql = "select * from vw_POItemsForTimesheet where N_CompanyID=@N_CompanyId and N_POrderID=@N_TransID and ((D_MRNDate<=@D_DateFrom) or (D_MRNDate>=@D_DateFrom AND D_MRNDate<=@D_DateTo)) AND ISNULL(D_ReturnDate,@D_DateFrom)>=@D_DateFrom";
+                        {
+                            if (enableDayWise)
+                                Itemsql = "select * from vw_POItemsForTimesheetDayWise where N_CompanyID=@N_CompanyId and N_POrderID=@N_TransID and ((D_MRNDate<=@D_DateFrom) or (D_MRNDate>=@D_DateFrom AND D_MRNDate<=@D_DateTo)) AND ISNULL(D_ReturnDate,@D_DateFrom)>=@D_DateFrom";
+                            else
+                                Itemsql = "select * from vw_POItemsForTimesheet where N_CompanyID=@N_CompanyId and N_POrderID=@N_TransID and ((D_MRNDate<=@D_DateFrom) or (D_MRNDate>=@D_DateFrom AND D_MRNDate<=@D_DateTo)) AND ISNULL(D_ReturnDate,@D_DateFrom)>=@D_DateFrom";
+                        }
                     }
 
                     ItemTable = dLayer.ExecuteDataTable(Itemsql, Params, connection);

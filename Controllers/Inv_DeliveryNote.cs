@@ -855,10 +855,23 @@ namespace SmartxAPI.Controllers
                                 N_SalesOrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
                                 if (N_SalesOrderID > 0 && N_SalesOrderID != tempSOID)
                                 {
-                                    if (!myFunctions.UpdateTxnStatus(N_CompanyID, N_SalesOrderID, 81, false, dLayer, connection, transaction))
+                                    object SOFormID = dLayer.ExecuteScalar("select N_FormID from Inv_SalesOrder where N_CompanyID=@nCompanyID and N_SalesOrderId="+ N_SalesOrderID, QueryParams, connection, transaction);
+
+                                    if(myFunctions.getIntVAL(SOFormID.ToString())!=0)
                                     {
-                                        transaction.Rollback();
-                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                        if (!myFunctions.UpdateTxnStatus(N_CompanyID, N_SalesOrderID, myFunctions.getIntVAL(SOFormID.ToString()), false, dLayer, connection, transaction))
+                                        {
+                                            transaction.Rollback();
+                                            return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (!myFunctions.UpdateTxnStatus(N_CompanyID, N_SalesOrderID, 81, false, dLayer, connection, transaction))
+                                        {
+                                            transaction.Rollback();
+                                            return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                        }
                                     }
                                 }
                                 tempSOID = N_SalesOrderID;
@@ -1073,10 +1086,23 @@ namespace SmartxAPI.Controllers
                         N_SalesOrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
                         if (N_SalesOrderID > 0 && N_SalesOrderID != tempSOID)
                         {
-                            if (!myFunctions.UpdateTxnStatus(nCompanyID, N_SalesOrderID, 81, true, dLayer, connection, transaction))
+                            object SOFormID = dLayer.ExecuteScalar("select N_FormID from Inv_SalesOrder where N_CompanyID=@nCompanyID and N_SalesOrderId="+ N_SalesOrderID, QueryParams, connection, transaction);
+
+                            if(myFunctions.getIntVAL(SOFormID.ToString())!=0)
                             {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                if (!myFunctions.UpdateTxnStatus(nCompanyID, N_SalesOrderID, myFunctions.getIntVAL(SOFormID.ToString()), false, dLayer, connection, transaction))
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                }
+                            }
+                            else
+                            {
+                                if (!myFunctions.UpdateTxnStatus(nCompanyID, N_SalesOrderID, 81, false, dLayer, connection, transaction))
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                }
                             }
                         }
                         tempSOID = N_SalesOrderID;
