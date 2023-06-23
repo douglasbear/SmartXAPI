@@ -135,7 +135,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User,"Unable to generate State Code")); }
                         MasterTable.Rows[0]["x_StateCode"] = StateCode;
                     }
-                     MasterTable.Columns.Remove("n_CompanyID");
+                    //  MasterTable.Columns.Remove("n_CompanyID");
                     MasterTable.Columns.Remove("n_FnYearID");
 
                     nStateID = dLayer.SaveData("Acc_State", "N_StateID", MasterTable, connection, transaction);
