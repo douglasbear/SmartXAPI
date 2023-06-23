@@ -1090,7 +1090,7 @@ namespace SmartxAPI.Controllers
 
                             if(myFunctions.getIntVAL(SOFormID.ToString())!=0)
                             {
-                                if (!myFunctions.UpdateTxnStatus(nCompanyID, N_SalesOrderID, myFunctions.getIntVAL(SOFormID.ToString()), false, dLayer, connection, transaction))
+                                if (!myFunctions.UpdateTxnStatus(nCompanyID, N_SalesOrderID, myFunctions.getIntVAL(SOFormID.ToString()), true, dLayer, connection, transaction))
                                 {
                                     transaction.Rollback();
                                     return Ok(_api.Error(User, "Unable To Update Txn Status"));
