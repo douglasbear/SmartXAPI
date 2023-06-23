@@ -1073,14 +1073,13 @@ namespace SmartxAPI.Controllers
                         N_SalesOrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
                         if (N_SalesOrderID > 0 && N_SalesOrderID != tempSOID)
                         {
-                            if (!myFunctions.UpdateTxnStatus(nCompanyID, N_SalesOrderID, 81, false, dLayer, connection, transaction))
-                            {
-                                if (!myFunctions.UpdateTxnStatus(nCompanyID, N_SalesOrderID, myFunctions.getIntVAL(SOFormID.ToString()), true, dLayer, connection, transaction))
+                           
+                                if (!myFunctions.UpdateTxnStatus(nCompanyID, N_SalesOrderID, 81, true, dLayer, connection, transaction))
                                 {
                                     transaction.Rollback();
                                     return Ok(_api.Error(User, "Unable To Update Txn Status"));
                                 }
-                            }
+                            
                             else
                             {
                                 if (!myFunctions.UpdateTxnStatus(nCompanyID, N_SalesOrderID, 81, false, dLayer, connection, transaction))
