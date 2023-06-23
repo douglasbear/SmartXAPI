@@ -375,6 +375,12 @@ namespace SmartxAPI.Controllers
                     int N_OthTaxCategoryID = myFunctions.getIntVAL(MasterRow["N_OthTaxCategoryID"].ToString());
                     int N_SOrderID = myFunctions.getIntVAL(MasterRow["n_SalesOrderId"].ToString());
 
+                    object POrderID =dLayer.ExecuteScalar("select N_POrderID from Inv_PurchaseOrder where N_CompanyID=@nCompanyID and N_SOId="+N_SOrderID, Params, connection);
+                    if (POrderID != null)
+                    {
+                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "POrderID", typeof(int), myFunctions.getIntVAL(POrderID.ToString()));
+                    }
+
                     DetailParams.Add("@nSOrderID", N_SOrderID);
                     DetailParams.Add("@nCompanyID", nCompanyID);
                     object N_SalesOrderTypeID = dLayer.ExecuteScalar("Select N_OrderTypeID from Inv_SalesOrder where N_SalesOrderId=@nSOrderID and N_CompanyID=@nCompanyID", DetailParams, connection);
