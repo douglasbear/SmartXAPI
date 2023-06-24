@@ -2753,9 +2753,9 @@ namespace SmartxAPI.Controllers
             string crieteria = "";
 
             if (nCustomerId > 0)
-                crieteria = " where N_FormID=1145 and N_CustomerID=@nCustomerId and N_CompanyID=@nCompanyId and N_ServiceSheetID not in (select ISNULL(N_ServiceSheetID, 0) from Inv_Sales where N_CompanyID=@nCompanyId)";
+                crieteria = " where N_FormID=1145 and N_CustomerID=@nCustomerId and N_CompanyID=@nCompanyId and N_ServiceSheetID not in (select ISNULL(N_ServiceSheetID, 0) from Inv_SalesDetails where N_CompanyID=@nCompanyId)";
             else
-                crieteria = " where N_FormID=1145 and N_CompanyID=@nCompanyId and N_ServiceSheetID not in (select ISNULL(N_ServiceSheetID, 0) from Inv_Sales where N_CompanyID=@nCompanyId)";
+                crieteria = " where N_FormID=1145 and N_CompanyID=@nCompanyId and N_ServiceSheetID not in (select ISNULL(N_ServiceSheetID, 0) from Inv_SalesDetails where N_CompanyID=@nCompanyId)";
 
             Params.Add("@nCompanyId", nCompanyId);
             Params.Add("@nCustomerId", nCustomerId);
