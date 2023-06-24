@@ -1535,7 +1535,7 @@ namespace SmartxAPI.GeneralFunctions
                 string ReqDate = dLayer.ExecuteScalar("select CONVERT(VARCHAR(20),D_ActionDate,20) AS X_RequestedUser from Log_ApprovalProcess where N_ProcStatusID=1 and N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID", NewParam, connection, transaction).ToString();
                 string Status = dLayer.ExecuteScalar("select X_StatusName from Gen_ActionStatus where N_CompanyId=@nCompanyID and N_StatusId=" + N_ProcStatusID + " and N_GroupID=" + N_GroupID, NewParam, connection, transaction).ToString();
                 string Route = dLayer.ExecuteScalar("select X_RouteName from Sec_Menus where N_MenuID=@nFormID", NewParam, connection, transaction).ToString();
-                string AppUser = dLayer.ExecuteScalar("select X_UserName from Sec_User where N_CompanyID=@nCompanyID and N_UserID=@nApprovalUserID", NewParam, connection, transaction).ToString();
+                string AppUser = dLayer.ExecuteScalar("select X_UserName from Sec_User where N_CompanyID=@nCompanyID and N_UserID="+N_ApprovalUserID, NewParam, connection, transaction).ToString();
 
                 Count = dLayer.ExecuteScalar("select COUNT(N_HierarchyID) from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and (N_Status=0 or N_Status=-1)", NewParam, connection, transaction);
                 if (Count != null)

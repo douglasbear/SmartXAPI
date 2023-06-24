@@ -340,7 +340,7 @@ namespace SmartxAPI.Controllers
                             PostingParams.Add("N_InternalID", N_VoucherID);
                             PostingParams.Add("N_UserID", nUserId);
                             PostingParams.Add("X_SystemName", "ERP Cloud");
-                            // object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
+                            object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
                         }
 
                         //myFunctions.SendApprovalMail(N_NextApproverID, nFormID, N_PkeyID, xTransType, xVoucherNo, dLayer, connection, transaction, User);
