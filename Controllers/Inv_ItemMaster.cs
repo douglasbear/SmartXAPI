@@ -16,14 +16,10 @@ using System.Net;
 using System.Web;
 using System.Drawing.Imaging;
 using ZXing;
+using ZXing.Common;
 using System.Drawing;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
-using System.Collections.Generic;
-using Twilio;
-using Twilio.Rest.Api.V2010.Account;
-using Twilio.Types;
-
 
 namespace SmartxAPI.Controllers
 {
@@ -76,10 +72,10 @@ namespace SmartxAPI.Controllers
               string ShowCost="";
               string itemwiseqry="";
 
-             if(showStockInlist)
-             {
-                showStock= "dbo.SP_GenGetStock(vw_InvItem_Search_cloud.N_ItemID," + nLocationID + ",'', 'location') As N_AvlStock,";
-             }
+            if (showStockInlist)
+            {
+                showStock = "dbo.SP_GenGetStock(vw_InvItem_Search_cloud.N_ItemID," + nLocationID + ",'', 'location') As N_AvlStock,";
+            }
 
             if (b_whGrn == true && n_CustomerID > 0)
             {
@@ -154,20 +150,25 @@ namespace SmartxAPI.Controllers
 
                 priceListCondition = " and vw_InvItem_Search_cloud.N_ItemID in (Select N_ItemID from Inv_DiscountDetails where N_CompanyID=@p1 and n_DiscID=" + nPriceListID + " )";
             }
-            if(isAssetItem==true){
-                if(nitemType==1){
-                otherItem = otherItem + " and N_ItemTypeID=1";
+            if (isAssetItem == true)
+            {
+                if (nitemType == 1)
+                {
+                    otherItem = otherItem + " and N_ItemTypeID=1";
+                }
+                else if (nitemType == 6)
+                {
+                    otherItem = otherItem + " and N_ItemTypeID=6";
+                }
             }
-            else if(nitemType==6){
-                otherItem = otherItem + " and N_ItemTypeID=6";
-            }
-            }
-            else{
+            else
+            {
                 otherItem = otherItem + " and N_ItemTypeID<>1";
             }
 
-            if(ShowCostinList==true){
-                ShowCost=" dbo.SP_Cost_Loc(vw_InvItem_Search_cloud.N_ItemID,vw_InvItem_Search_cloud.N_CompanyID,vw_InvItem_Search_cloud.X_ItemUnit," + nLocationID + ")  As N_LPrice,";
+            if (ShowCostinList == true)
+            {
+                ShowCost = " dbo.SP_Cost_Loc(vw_InvItem_Search_cloud.N_ItemID,vw_InvItem_Search_cloud.N_CompanyID,vw_InvItem_Search_cloud.X_ItemUnit," + nLocationID + ")  As N_LPrice,";
             }
          
            if(nItemID>0)
@@ -179,7 +180,7 @@ namespace SmartxAPI.Controllers
              " Inv_ItemUnit ON vw_InvItem_Search_cloud.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search_cloud.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search_cloud.N_CompanyID=@p1 and vw_InvItem_Search_cloud.B_Inactive=@p2 and vw_InvItem_Search_cloud.[Item Code]<> @p3  and vw_InvItem_Search_cloud.N_ItemID=Inv_ItemUnit.N_ItemID and  vw_InvItem_Search_cloud.N_ClassID!=6 " + ownAssent + RentalItem + RentalPOItem + qry + Category + Condition + itemTypeCondition + warehouseSql + priceListCondition+otherItem + itemwiseqry;
             // string sqlComandText = " * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
 
-     
+
 
 
 
@@ -224,7 +225,7 @@ namespace SmartxAPI.Controllers
 
                             string subItemSql = "SELECT     vw_InvItem_Search_cloud.*, dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID, vw_InvItem_Search_cloud.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, Inv_ItemUnit.X_ItemUnit AS Expr1, Inv_ItemDetails.N_MainItemID,Inv_ItemDetails.B_HideInInv as B_GroupHideInInv, Inv_ItemDetails.N_Qty, Inv_ItemDetails.N_Qty as N_SubItemQty FROM  Inv_ItemUnit RIGHT OUTER JOIN Inv_ItemDetails RIGHT OUTER JOIN vw_InvItem_Search_cloud ON Inv_ItemDetails.N_CompanyID = vw_InvItem_Search_cloud.N_CompanyID AND Inv_ItemDetails.N_ItemID = vw_InvItem_Search_cloud.N_ItemID ON Inv_ItemUnit.N_CompanyID = vw_InvItem_Search_cloud.N_CompanyID AND Inv_ItemUnit.N_ItemID = vw_InvItem_Search_cloud.N_ItemID AND Inv_ItemUnit.N_ItemUnitID = vw_InvItem_Search_cloud.N_SalesUnitID WHERE(vw_InvItem_Search_cloud.N_CompanyID = " + nCompanyID + ") AND(vw_InvItem_Search_cloud.B_InActive = 0) and Inv_ItemDetails.N_MainItemID =" + myFunctions.getIntVAL(item["N_ItemID"].ToString()) + "";
                             DataTable subTbl = dLayer.ExecuteDataTable(subItemSql, connection);
-                            if(subTbl.Columns.Contains("B_HideInInv")){subTbl.Columns.Remove("B_HideInInv");}
+                            if (subTbl.Columns.Contains("B_HideInInv")) { subTbl.Columns.Remove("B_HideInInv"); }
                             subTbl.AcceptChanges();
                             item["SubItems"] = subTbl;
                         }
@@ -387,46 +388,217 @@ namespace SmartxAPI.Controllers
             products = ds.Tables["details"];
 
             string path = this.TempFilesPath + "//barcode.pdf";
-            Document doc = new Document(PageSize.A4);
-            var output = new FileStream(path, FileMode.Create);
-            var writer = PdfWriter.GetInstance(doc, output);
-            doc.Open();
+
+            string leftText = myFunctions.GetCompanyName(User);
+            string barcodeImagePath = "C://Olivoserver2020/Barcode/100001.png"; // Replace with the actual barcode image file path
+            string productName = "Sleek steel VC eye glass";
+            string price = "QAR 19.99";
+
+            GeneratePDFWithContent1(products);
+
+            //GeneratePDFWithContent(products);
+            // Document doc = new Document(PageSize.A4);
+            // var output = new FileStream(path, FileMode.Create);
+            // var writer = PdfWriter.GetInstance(doc, output);
+            // doc.Open();
+            // for (int k = 0; k < products.Rows.Count; k++)
+            // {
+            //     string xItemName = products.Rows[k]["x_ItemName"].ToString();
+            //     string xBarcode = products.Rows[k]["x_ItemCode"].ToString();
+            //     string nPrice = products.Rows[k]["n_Cost"].ToString();
+
+            //     if (CreateBarcode(xBarcode))
+            //     {
+            //         //string bimageloc = "C://Olivoserver2020/Barcode/";
+
+            //         //Font
+            //         // BaseFont bf = BaseFont.CreateFont(BaseFont.TIMES_ROMAN, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+            //         // iTextSharp.text.Font font = new iTextSharp.text.Font(bf, 15, iTextSharp.text.Font.NORMAL);
+            //         // Paragraph p1 = new Paragraph(new Chunk(xItemName, font));
+            //         // p1.IndentationRight = 100;
+            //         // p1.IndentationLeft = 100;
+            //         // doc.Add(p1);
+
+            //         // bimageloc = bimageloc + xBarcode + ".png";
+            //         // var logo = iTextSharp.text.Image.GetInstance(bimageloc);
+            //         // logo.ScaleAbsoluteHeight(100);
+            //         // logo.ScaleAbsoluteWidth(280);
+            //         // doc.Add(logo);
+
+            //         // Paragraph p2 = new Paragraph(new Chunk(xBarcode, font));
+            //         // p2.IndentationRight = 100;
+            //         // p2.IndentationLeft = 100;
+            //         // doc.Add(p2);
+            //         // doc.NewPage();
+
+            //     }
+            // }
+            // doc.Close();
+            return Ok(_api.Success(new SortedList() { { "FileName", "barcode.pdf" } }));
+
+        }
+        public void GeneratePDFWithContent1(DataTable products)
+        {
+            string path = this.TempFilesPath + "//barcode.pdf";
+            // Define the page width and height in points (1 inch = 72 points)
+            float pageWidth = Utilities.MillimetersToPoints(115);    // 6.5 cm to points
+            float pageHeight = Utilities.MillimetersToPoints(30);   // 1.5 cm to points
+            string bimageloc = "C://Olivoserver2020/Barcode/";
+
+            // Create a new PDF document with the custom page size
+            iTextSharp.text.Document document = new iTextSharp.text.Document(new iTextSharp.text.Rectangle(pageWidth, pageHeight));
+            PdfWriter writer = PdfWriter.GetInstance(document, new FileStream(path, FileMode.Create));
+
+            // Open the PDF document
+            document.Open();
+
+            // Calculate the width and height of the page
+            float actualPageWidth = document.PageSize.Width;
+            float actualPageHeight = document.PageSize.Height;
+
+            // Define the top margin and spacing
+            float topMargin = 20; // Margin from the top of the page, adjusted to add blank space
+            float spacing = 5;    // Spacing between elements
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                string X_CurrencyName = dLayer.ExecuteScalar("select x_currency from Acc_Company where N_CompanyID=" + myFunctions.GetCompanyID(User), connection).ToString();
+
+                for (int k = 0; k < products.Rows.Count; k++)
+                {
+
+                    string xItemName = products.Rows[k]["x_ItemName"].ToString();
+                    string xBarcode = products.Rows[k]["x_ItemCode"].ToString();
+                    string nPrice =products.Rows[k]["n_Cost"].ToString();
+                    if (decimal.TryParse(nPrice, out decimal value))
+                    {
+                        nPrice = value.ToString("0.00");
+                    }
+                    nPrice=X_CurrencyName + " " + nPrice;
+
+                    string xCompanyname = myFunctions.GetCompanyName(User);
+                    if (CreateBarcode(xBarcode))
+                    {
+
+                        // Define the left text position
+                        float leftTextX = 10;  // X-coordinate for left text
+                        float leftTextY = actualPageHeight - topMargin;  // Y-coordinate for left text
+
+                        // Write the left text to the PDF
+                        PdfContentByte contentByte = writer.DirectContent;
+                        contentByte.BeginText();
+                        contentByte.SetFontAndSize(BaseFont.CreateFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED), 12);
+                        contentByte.ShowTextAligned(Element.ALIGN_LEFT, xCompanyname, leftTextX, leftTextY, 0);
+                        contentByte.EndText();
+
+                        // Define the barcode position
+                        float barcodeX = 10;  // X-coordinate for barcode
+                        float barcodeY = actualPageHeight - topMargin - spacing - 30;  // Y-coordinate for barcode
+
+                        // Load the barcode image from the file path
+                        Bitmap barcodeImage = new Bitmap(bimageloc + xBarcode + ".png");
+
+                        // Convert the barcode image to iTextSharp Image
+                        iTextSharp.text.Image itextImage = iTextSharp.text.Image.GetInstance(barcodeImage, System.Drawing.Imaging.ImageFormat.Png);
+                        itextImage.Alignment = Element.ALIGN_LEFT;
+                        itextImage.ScaleAbsolute(100, 30);  // Increase the size of the barcode
+
+                        // Add the barcode to the PDF document
+                        itextImage.SetAbsolutePosition(barcodeX, barcodeY);
+                        document.Add(itextImage);
+
+                        // Define the right text position
+                        float rightTextX = actualPageWidth - 135;  // X-coordinate for right text
+                        float rightTextY = actualPageHeight - topMargin;  // Y-coordinate for right text
+
+                        // Write the product name and price to the PDF
+                        contentByte.BeginText();
+                        contentByte.ShowTextAligned(Element.ALIGN_LEFT, xItemName, rightTextX, rightTextY, 0);
+                        contentByte.ShowTextAligned(Element.ALIGN_LEFT, nPrice, rightTextX, rightTextY - spacing - 15, 0);
+                        contentByte.EndText();
+
+                        document.NewPage();
+                    }
+                }
+            }
+
+            // Close the PDF document
+            document.Close();
+        }
+
+        public void GeneratePDFWithContent(DataTable products)
+        {
+            string filePath = this.TempFilesPath + "//barcode.pdf";
+            // Create a new PDF document
+            Document document = new Document(PageSize.A4);
+            PdfWriter writer = PdfWriter.GetInstance(document, new FileStream(filePath, FileMode.Create));
+
+            // Open the PDF document
+            document.Open();
             for (int k = 0; k < products.Rows.Count; k++)
             {
+                string bimageloc = "C://Olivoserver2020/Barcode/";
                 string xItemName = products.Rows[k]["x_ItemName"].ToString();
                 string xBarcode = products.Rows[k]["x_ItemCode"].ToString();
                 string nPrice = products.Rows[k]["n_Cost"].ToString();
 
                 if (CreateBarcode(xBarcode))
                 {
-                    string bimageloc = "C://Olivoserver2020/Barcode/";
+                    // Create a new instance of PdfContentByte to write content
+                    PdfContentByte contentByte = writer.DirectContent;
 
-                    //Font
-                    BaseFont bf = BaseFont.CreateFont(BaseFont.TIMES_ROMAN, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
-                    iTextSharp.text.Font font = new iTextSharp.text.Font(bf, 15, iTextSharp.text.Font.NORMAL);
-                    Paragraph p1 = new Paragraph(new Chunk(xItemName, font));
-                    p1.IndentationRight = 100;
-                    p1.IndentationLeft = 100;
-                    doc.Add(p1);
+                    // Set the font and font size for the text
+                    BaseFont baseFont = BaseFont.CreateFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+                    contentByte.SetFontAndSize(baseFont, 12);
 
-                    bimageloc = bimageloc + xBarcode + ".png";
-                    var logo = iTextSharp.text.Image.GetInstance(bimageloc);
-                    logo.ScaleAbsoluteHeight(100);
-                    logo.ScaleAbsoluteWidth(280);
-                    doc.Add(logo);
+                    // Calculate the width and height of the page
+                    float pageWidth = document.PageSize.Width;
+                    float pageHeight = document.PageSize.Height;
 
-                    Paragraph p2 = new Paragraph(new Chunk(xBarcode, font));
-                    p2.IndentationRight = 100;
-                    p2.IndentationLeft = 100;
-                    doc.Add(p2);
-                    doc.NewPage();
+                    // Define the left text position
+                    float leftTextX = 50;  // X-coordinate for left text
+                    float leftTextY = pageHeight - 50;  // Y-coordinate for left text
 
+                    // Write the left text to the PDF
+                    contentByte.BeginText();
+                    contentByte.ShowTextAligned(Element.ALIGN_LEFT, myFunctions.GetCompanyName(User), leftTextX, leftTextY, 0);
+                    contentByte.EndText();
+
+                    // bimageloc = bimageloc + xBarcode + ".png";
+                    // var logo = iTextSharp.text.Image.GetInstance(bimageloc);
+                    // logo.ScaleAbsoluteHeight(100);
+                    // logo.ScaleAbsoluteWidth(280);
+                    // document.Add(logo);
+                    Bitmap barcodeImage = new Bitmap(bimageloc + xBarcode + ".png");
+                    iTextSharp.text.Image itextImage = iTextSharp.text.Image.GetInstance(barcodeImage, System.Drawing.Imaging.ImageFormat.Bmp);
+                    itextImage.Alignment = Element.ALIGN_LEFT;
+                    itextImage.ScaleToFit(150, 150);
+
+                    // Define the barcode position
+                    float barcodeX = 50;  // X-coordinate for barcode
+                    float barcodeY = pageHeight - 100;  // Y-coordinate for barcode
+
+                    // Add the barcode to the PDF document
+                    itextImage.SetAbsolutePosition(barcodeX, barcodeY);
+                    document.Add(itextImage);
+
+
+                    // Define the right text position
+                    float rightTextX = pageWidth - 200;  // X-coordinate for right text
+                    float rightTextY = pageHeight - 50;  // Y-coordinate for right text
+
+                    // Write the product name and price to the PDF
+                    contentByte.BeginText();
+                    contentByte.ShowTextAligned(Element.ALIGN_RIGHT, xItemName, rightTextX, rightTextY, 0);
+                    contentByte.ShowTextAligned(Element.ALIGN_RIGHT, nPrice, rightTextX, rightTextY - 20, 0);
+                    contentByte.EndText();
                 }
             }
-            doc.Close();
-            return Ok(_api.Success(new SortedList() { { "FileName", "barcode.pdf" } }));
 
+            // Close the PDF document
+            document.Close();
         }
+
 
 
         public void createpdf(string bimage, string productname, string price, string xBarcode)
@@ -711,11 +883,11 @@ namespace SmartxAPI.Controllers
                 string XItemName = MasterTableNew.Rows[0]["X_ItemName"].ToString();
                 object n_MinQty = "";
                 object n_ReOrderQty = "";
-                string xButtonAction="";
+                string xButtonAction = "";
 
-                 if (MasterTableNew.Columns.Contains("n_FnYearID"))
+                if (MasterTableNew.Columns.Contains("n_FnYearID"))
                 {
-                     nFnYearID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["n_FnYearID"].ToString());
+                    nFnYearID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["n_FnYearID"].ToString());
 
                 }
 
@@ -744,11 +916,11 @@ namespace SmartxAPI.Controllers
                     ItemCode = MasterTableNew.Rows[0]["X_ItemCode"].ToString();
                     ItemType = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CLassID"].ToString());
 
-                     if(MasterTableNew.Columns.Contains("n_FnYearID"))
-                     {
-                     MasterTableNew.Columns.Remove("n_FnYearID");
-                     }
-                         
+                    if (MasterTableNew.Columns.Contains("n_FnYearID"))
+                    {
+                        MasterTableNew.Columns.Remove("n_FnYearID");
+                    }
+
                     if (ItemCode != "@Auto")
                     {
                         object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_ItemMaster Where X_ItemCode ='" + ItemCode + "' and N_CompanyID= " + nCompanyID + " and N_ItemID<>" + N_ItemID, connection, transaction);
@@ -770,12 +942,13 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 53);
 
                         ItemCode = dLayer.GetAutoNumber("Inv_ItemMaster", "X_ItemCode", Params, connection, transaction);
-                        xButtonAction="Insert";
+                        xButtonAction = "Insert";
                         if (ItemCode == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate product Code")); }
                         MasterTableNew.Rows[0]["X_ItemCode"] = ItemCode;
                     }
-                    else {
-                         xButtonAction="Update"; 
+                    else
+                    {
+                        xButtonAction = "Update";
 
                     }
                     ItemCode = MasterTableNew.Rows[0]["X_ItemCode"].ToString();
@@ -1146,15 +1319,15 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                              
-                               //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(nFnYearID,N_ItemID,ItemCode,53,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-                       
+
+                    //Activity Log
+                    string ipAddress = "";
+                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    myFunctions.LogScreenActivitys(nFnYearID, N_ItemID, ItemCode, 53, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
+
 
 
 
@@ -1371,32 +1544,32 @@ namespace SmartxAPI.Controllers
                     DataTable TransData = new DataTable();
                     QueryParams.Add("@nCompanyID", nCompanyID);
                     QueryParams.Add("@nItemID", nItemID);
-                     ParamList.Add("@nTransID", nItemID);
+                    ParamList.Add("@nTransID", nItemID);
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", nCompanyID);
 
 
-                     string Sql = "select N_ItemID,X_ItemCode from Inv_ItemMaster where N_ItemID=@nTransID and N_CompanyID=@nCompanyID ";
-                    string xButtonAction="Delete";
-                    string X_ItemCode="";
-                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
-                    
-              
-                
-                      if (TransData.Rows.Count == 0)
+                    string Sql = "select N_ItemID,X_ItemCode from Inv_ItemMaster where N_ItemID=@nTransID and N_CompanyID=@nCompanyID ";
+                    string xButtonAction = "Delete";
+                    string X_ItemCode = "";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection, transaction);
+
+
+
+                    if (TransData.Rows.Count == 0)
                     {
                         return Ok(_api.Error(User, "Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
 
                     //Activity Log
-                        string ipAddress = "";
-                   if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                   else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(nFnYearID,nItemID,TransRow["X_ItemCode"].ToString(),53,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-                  
+                    string ipAddress = "";
+                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    myFunctions.LogScreenActivitys(nFnYearID, nItemID, TransRow["X_ItemCode"].ToString(), 53, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
+
 
 
                     int classID = 0;
@@ -1551,7 +1724,7 @@ namespace SmartxAPI.Controllers
         // }
 
         [HttpGet("costAndStock")]
-        public ActionResult GetCostAndStock(int nItemID, int nLocationID, string xBatch, DateTime dDate,int nCustomerID)
+        public ActionResult GetCostAndStock(int nItemID, int nLocationID, string xBatch, DateTime dDate, int nCustomerID)
         {
             DataTable dt = new DataTable();
             string sqlCommandText = "";
@@ -1573,15 +1746,15 @@ namespace SmartxAPI.Controllers
                         else
                             sqlCommandText = "Select vw_InvItem_Search.N_ItemID,dbo.SP_GenGetStockByDate(vw_InvItem_Search.N_ItemID," + nLocationID + ",'" + xBatch + "', 'location','" + myFunctions.getDateVAL(dDate) + "')As N_AvlStock ,dbo.SP_LastPCost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID," + nLocationID + ") As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where N_ItemID=" + nItemID + " and N_CompanyID=" + nCompanyID + " and ISNULL(N_ItemTypeID,0)=0";
                     }
-                  
+
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, connection);
-                      dt = myFunctions.AddNewColumnToDataTable(dt, "N_LastSoldPrice", typeof(double), 0);
-                    object lastSoldPrice=dLayer.ExecuteScalar("select top 1 N_Sprice from vw_Inv_CustomerTransactionByItem where N_CompanyID="+nCompanyID+" and  N_ItemID="+nItemID+" and N_CustomerID="+nCustomerID+" and X_Type='SALES' order by D_SalesDate,N_SalesId desc",connection);
-                    if(lastSoldPrice!=null)
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "N_LastSoldPrice", typeof(double), 0);
+                    object lastSoldPrice = dLayer.ExecuteScalar("select top 1 N_Sprice from vw_Inv_CustomerTransactionByItem where N_CompanyID=" + nCompanyID + " and  N_ItemID=" + nItemID + " and N_CustomerID=" + nCustomerID + " and X_Type='SALES' order by D_SalesDate,N_SalesId desc", connection);
+                    if (lastSoldPrice != null)
                     {
-                        dt.Rows[0]["N_LastSoldPrice"]=myFunctions.getVAL(lastSoldPrice.ToString());
+                        dt.Rows[0]["N_LastSoldPrice"] = myFunctions.getVAL(lastSoldPrice.ToString());
                     }
 
                 }
@@ -1643,7 +1816,7 @@ namespace SmartxAPI.Controllers
         // }
 
         [HttpGet("productHistory")]
-        public ActionResult GetProductHistoryList(int nItemID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nCustomerID, bool nShowCustomer, string xType,bool isQuotation,int nFnYearID)
+        public ActionResult GetProductHistoryList(int nItemID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nCustomerID, bool nShowCustomer, string xType, bool isQuotation, int nFnYearID)
         {
             try
             {
@@ -1674,53 +1847,53 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                if (isQuotation==true) 
-                {
-                        if (nShowCustomer==false)
+                    if (isQuotation == true)
+                    {
+                        if (nShowCustomer == false)
                         {
-                           object customer=dLayer.ExecuteScalar("select N_CustomerID from  Inv_Customer  Where N_CrmCompanyID=" + nCustomerID + " and N_CompanyID=" + nCompanyID + "and N_FnyearID="+nFnYearID, connection);
-                           if (customer!=null) 
-                           {
-                              Params.Add("@nCustomerID", myFunctions.getIntVAL(customer.ToString()));
-                         
-                             sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and  N_ItemID=@p2 and N_CustomerID=@nCustomerID and X_Type=@p4 " + Searchkey + " " + xSortBy;
-                           }
+                            object customer = dLayer.ExecuteScalar("select N_CustomerID from  Inv_Customer  Where N_CrmCompanyID=" + nCustomerID + " and N_CompanyID=" + nCompanyID + "and N_FnyearID=" + nFnYearID, connection);
+                            if (customer != null)
+                            {
+                                Params.Add("@nCustomerID", myFunctions.getIntVAL(customer.ToString()));
+
+                                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and  N_ItemID=@p2 and N_CustomerID=@nCustomerID and X_Type=@p4 " + Searchkey + " " + xSortBy;
+                            }
                         }
-                           else if(nShowCustomer==true)
-                           {
-                            sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and  N_ItemID=@p2  and X_Type=@p4 " + Searchkey + " " + xSortBy; 
-                           }
-                      
-                }
-                else
-                {
-                       if (nCustomerID > 0)
-                      {
-                        if (Count == 0)
-                            sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and  N_ItemID=@p2 and N_CustomerID=@p3 and X_Type=@p4 " + Searchkey + " " + xSortBy;
-                        else
-                            sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 and X_Type@p4 " + Searchkey + " and N_SalesDetailsID not in (select top(" + Count + ") N_SalesDetailsID from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3  " + xSearchkey + " ) " + xSortBy;
-                      }
-                      else
-                      {
-                        if (nShowCustomer == true)
+                        else if (nShowCustomer == true)
+                        {
+                            sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and  N_ItemID=@p2  and X_Type=@p4 " + Searchkey + " " + xSortBy;
+                        }
+
+                    }
+                    else
+                    {
+                        if (nCustomerID > 0)
                         {
                             if (Count == 0)
-                                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and  N_ItemID=@p2 and X_Type=@p4 " + Searchkey + " " + xSortBy;
+                                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and  N_ItemID=@p2 and N_CustomerID=@p3 and X_Type=@p4 " + Searchkey + " " + xSortBy;
                             else
-                                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and X_Type=@p4 " + Searchkey + " and N_SalesDetailsID not in (select top(" + Count + ") N_SalesDetailsID from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 " + xSearchkey + " ) " + xSortBy;
+                                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 and X_Type@p4 " + Searchkey + " and N_SalesDetailsID not in (select top(" + Count + ") N_SalesDetailsID from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3  " + xSearchkey + " ) " + xSortBy;
+                        }
+                        else
+                        {
+                            if (nShowCustomer == true)
+                            {
+                                if (Count == 0)
+                                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and  N_ItemID=@p2 and X_Type=@p4 " + Searchkey + " " + xSortBy;
+                                else
+                                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and X_Type=@p4 " + Searchkey + " and N_SalesDetailsID not in (select top(" + Count + ") N_SalesDetailsID from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 " + xSearchkey + " ) " + xSortBy;
+
+                            }
 
                         }
+                    }
 
-                      }
-                 }
-                     
-                   
+
                     // if (Count == 0)
                     //     sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and N_ItemID=@p2 and N_CustomerID=@p3 " + Searchkey + " " + xSortBy;
                     // else
                     //     sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 " + Searchkey + " and N_SalesDetailsID not in (select top(" + Count + ") N_SalesDetailsID from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 " + xSearchkey + xSortBy + " ) " + xSortBy;
-                   
+
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
@@ -1745,6 +1918,7 @@ namespace SmartxAPI.Controllers
          //GET api/Projects/list
         [HttpGet("shortListProduct")]
         public ActionResult GetAllItemsProduct(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial, int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID, bool b_Asn, int nPriceListID, bool isSalesItems, bool isRentalItem, bool rentalItems, bool purchaseRentalItems,bool showStockInlist,int nitemType,bool isAssetItem,bool ShowCostinList,int nItemID)
+        
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -2083,15 +2257,15 @@ namespace SmartxAPI.Controllers
         }
 
 
-        
-             [HttpGet("ProductTypeList")]
+
+        [HttpGet("ProductTypeList")]
         public ActionResult ProductType()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-           
+
             string sqlCommandText = "select * from vw_InvPRSProductType where n_Type=1";
-           
+
 
             try
             {
@@ -2111,7 +2285,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 

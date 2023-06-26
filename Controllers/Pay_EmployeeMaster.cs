@@ -1291,7 +1291,7 @@ namespace SmartxAPI.Controllers
 
                     if (xPhone1 != "")
                     {
-                        object NPhnCount = dLayer.ExecuteScalar("Select count(1) from pay_Employee Where X_Phone1 ='" + xPhone1 + "' and N_EmpID <> '" + nEmpID + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                        object NPhnCount = dLayer.ExecuteScalar("Select count(1) from pay_Employee Where X_Phone1 ='" + xPhone1 + "' and N_EmpID <> '" + nEmpID + "' and N_Status not in (2,3) and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
                         if (NPhnCount == null)
                         {
                             NPhnCount = 0;
@@ -1504,6 +1504,10 @@ namespace SmartxAPI.Controllers
                                 foreach (DataRow dRow in dtpay_PaySetup.Rows)
                                 {
                                     dRow["N_EmpID"] = nEmpID;
+                                    if (dRow["n_Value"] == DBNull.Value || double.IsNaN(Convert.ToDouble(dRow["n_Value"])))
+                                    {
+                                      dRow["N_Value"] = 0;
+                                    }
                                 }
                                 dtpay_PaySetup.AcceptChanges();
                                 pay_PaySetupRes = dLayer.SaveData("Pay_PaySetup", "N_PaySetupID", dtpay_PaySetup, connection, transaction);
@@ -1513,6 +1517,10 @@ namespace SmartxAPI.Controllers
                                     foreach (DataRow dRow in dtpay_EmployeePayHistory.Rows)
                                     {
                                         dRow["N_EmpID"] = nEmpID;
+                                        if (dRow["N_Amount"] == DBNull.Value || double.IsNaN(Convert.ToDouble(dRow["N_Amount"])))
+                                         {
+                                          dRow["N_Amount"] = 0;
+                                          }
                                     }
                                     dtpay_EmployeePayHistory.AcceptChanges();
                                     if (dtpay_EmployeePayHistory.Rows.Count > 0)
