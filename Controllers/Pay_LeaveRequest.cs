@@ -612,7 +612,6 @@ namespace SmartxAPI.Controllers
                 DetailTable = ds.Tables["details"];
                 DataTable Approvals;
                 Approvals = ds.Tables["approval"];
-                DataRow ApprovalRow = Approvals.Rows[0];
                 DataTable Attachment = ds.Tables["attachments"];
 
                 DataTable Benifits = ds.Tables["benifits"];
@@ -662,7 +661,10 @@ namespace SmartxAPI.Controllers
                     object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);
                     object objEmpCode = dLayer.ExecuteScalar("Select X_EmpCode From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);
 
-                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()))
+                     
+                     if(Approvals.Rows.Count > 0){
+                     DataRow ApprovalRow = Approvals.Rows[0];
+                     if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()))
                     {
                         int N_PkeyID = n_VacationGroupID;
                         string X_Criteria = "N_VacationGroupID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID;
@@ -673,6 +675,7 @@ namespace SmartxAPI.Controllers
                         transaction.Commit();
                         //myFunctions.SendApprovalMail(N_NextApproverID, FormID, n_VacationGroupID, "LEAVE REQUEST", x_VacationGroupCode, dLayer, connection, transaction, User);
                         return Ok(api.Success("Leave Request Approved " + "-" + x_VacationGroupCode));
+                    }
                     }
 
                     if (x_VacationGroupCode == "@Auto")
@@ -723,13 +726,17 @@ namespace SmartxAPI.Controllers
                     if (MasterTable.Columns.Contains("N_Procstatus"))
                         MasterTable.Columns.Remove("N_Procstatus");
                     MasterTable.AcceptChanges();
-
+                     if(Approvals.Rows.Count > 0)
+                     {
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+                     }
                     n_VacationGroupID = dLayer.SaveData("Pay_VacationMaster", "n_VacationGroupID", MasterTable, connection, transaction);
                     if (n_VacationGroupID > 0)
-                    {
+                    { 
+                        if(Approvals.Rows.Count > 0){
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "LEAVE REQUEST", n_VacationGroupID, x_VacationGroupCode, 1, objEmpName.ToString(), nEmpID, "",0, User, dLayer, connection, transaction);
 
+                        }
                         SortedList draftParam = new SortedList();
                         draftParam.Add("@nCompanyID", nCompanyID);
                         draftParam.Add("@nVacationGroupID", n_VacationGroupID);
