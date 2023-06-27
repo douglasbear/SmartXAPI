@@ -231,7 +231,6 @@ namespace SmartxAPI.Controllers
                 DataTable Approvals;
                 MasterTable = ds.Tables["master"];
                 Approvals = ds.Tables["approval"];
-                DataRow ApprovalRow = Approvals.Rows[0];
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
                 // Auto Gen
@@ -271,7 +270,9 @@ namespace SmartxAPI.Controllers
                     EmpParams.Add("@nFnYearID", nFnYearID);
 
                     object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);
-
+                    
+                    if(Approvals.Rows.Count > 0){
+                        DataRow ApprovalRow = Approvals.Rows[0];
                     if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()))
                     {
                         int N_PkeyID = nLoanTransID;
@@ -281,6 +282,7 @@ namespace SmartxAPI.Controllers
                         transaction.Commit();
                         //myFunctions.SendApprovalMail(N_NextApproverID, FormID, nLoanTransID, this.xTransType, xLoanID, dLayer, connection, transaction, User);
                         return Ok(api.Success("Loan Request Approved " + "-" + xLoanID));
+                    }
                     }
 
 
@@ -335,8 +337,10 @@ namespace SmartxAPI.Controllers
                     int nInstNos = myFunctions.getIntVAL(MasterTable.Rows[0]["n_Installments"].ToString());
                     MasterTable.Columns.Remove("n_InstallmentAmount");
                     MasterTable.AcceptChanges();
-
+                    
+                    if(Approvals.Rows.Count > 0){
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+                    }
                     nLoanTransID = dLayer.SaveData("Pay_LoanIssue", "n_LoanTransID", MasterTable, connection, transaction);
                     if (nLoanTransID <= 0)
                     {
@@ -346,9 +350,9 @@ namespace SmartxAPI.Controllers
                     else
                     {
 
-
+                        if(Approvals.Rows.Count > 0){
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, this.xTransType, nLoanTransID, xLoanID, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
-
+                        }
                         DataTable dt = new DataTable();
                         dt.Clear();
                         dt.Columns.Add("N_LoanTransDetailsID");
