@@ -1528,6 +1528,7 @@ namespace SmartxAPI.GeneralFunctions
                 NewParam.Add("@nCompanyID", N_CompanyID);
                 NewParam.Add("@nFormID", N_FormID);
                 NewParam.Add("@nTransID", N_TransID);
+                NewParam.Add("@nApprovalUserID", N_ApprovalUserID);
 
                 int EntrUsrID = this.getIntVAL(dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=108", NewParam, connection, transaction).ToString());
                 NewParam.Add("@EntrUsrID", EntrUsrID);
