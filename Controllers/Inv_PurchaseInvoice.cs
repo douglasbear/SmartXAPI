@@ -345,7 +345,7 @@ namespace SmartxAPI.Controllers
                     {
                         string[] X_POrderID = multipleRentalPO.Split(",");
                         int N_POID = myFunctions.getIntVAL(X_POrderID[0].ToString());
-                        X_MasterSql = "select * from vw_InvVendorSTAsInvoiceMaster where N_CompanyID=@CompanyID and N_POrderID in (" + N_POID + ") and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                        X_MasterSql = "select * from vw_InvVendorSTAsInvoiceMaster where N_CompanyID=@CompanyID and N_POrderID in (" + N_POID + ")" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                     }
                    
 

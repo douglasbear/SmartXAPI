@@ -585,7 +585,7 @@ namespace SmartxAPI.Controllers
                     }
                     else if (multipleJobOrder != null && multipleJobOrder != "")
                     {
-                        string Mastersql = "select * from vw_ServiceTimesheetToSales where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_SalesOrderId in (" + multipleJobOrder + ")";
+                        string Mastersql = "select * from vw_ServiceTimesheetToSales where N_CompanyId=@nCompanyID and N_SalesOrderId in (" + multipleJobOrder + ")";
                         DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
 
@@ -598,7 +598,7 @@ namespace SmartxAPI.Controllers
                         }
 
                         string DetailSql = "";
-                        DetailSql = "select * from vw_ServiceTimesheetDetailsToSales where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_SalesOrderId in (" + multipleJobOrder + ")";
+                        DetailSql = "select * from vw_ServiceTimesheetDetailsToSales where N_CompanyId=@nCompanyID and N_SalesOrderId in (" + multipleJobOrder + ")";
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
 
