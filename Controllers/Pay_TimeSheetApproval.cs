@@ -1417,22 +1417,32 @@ namespace SmartxAPI.Controllers
                 QueryParams.Add("@X_PayrunText", X_PayrunText);
                 QueryParams.Add("@nBatchID", nBatchID);
                 QueryParams.Add("@nFnYearID", nFnYearID);
+                object employee;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                  connection.Open();
                  SqlTransaction transaction = connection.BeginTransaction();
+                 object employeeCount= dLayer.ExecuteScalar( "select n_EmpID from Pay_TimesheetMaster where n_TimeSheetApproveID="+nTimeSheetApproveID+" and n_CompanyID="+nCompanyID,QueryParams, connection,transaction);    
+                 if(employeeCount==null)
+                 {
+                     transaction.Rollback();
+                     return Ok(_api.Success(_api.Success( "Approval Timesheet of the employee Already Deleted")));
+                 }
+              
+                employee=dLayer.ExecuteScalar("select  X_EmpName from Pay_Employee where n_EmpID ="+n_EmpID+" and N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID+"", QueryParams, connection,transaction);               
                  object Count = dLayer.ExecuteScalar("select count(1) from vw_PayProcessingDetails where n_EmpID ="+n_EmpID+" and X_PayrunText=@X_PayrunText", QueryParams, connection,transaction);               
                  if (myFunctions.getIntVAL(Count.ToString()) >0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Employee Salary Parocessed"));
                     }
+
                     {
                         dLayer.DeleteData("Pay_MonthlyAddOrDedDetails ", "N_RefID", nTimeSheetApproveID,"N_CompanyID="+nCompanyID+ " and B_TimeSheetEntry=1 and N_FormID=216 and N_EmpID="+n_EmpID+"", connection,transaction);
                         dLayer.DeleteData("Pay_TimeSheet", "N_batchID", nBatchID,"N_CompanyID="+nCompanyID+ " and N_timeSheetApproveID="+nTimeSheetApproveID+" and N_FnYearID="+nFnYearID+ " and N_EmpID="+n_EmpID+"", connection,transaction);
                         dLayer.DeleteData("Pay_TimeSheetMaster", "N_batchID", nBatchID,"N_CompanyID="+nCompanyID+ " and N_TimeSheetApproveID="+nTimeSheetApproveID+" and N_FnYearID="+nFnYearID+ " and N_EmpID="+n_EmpID+"", connection,transaction);
                         transaction.Commit();
-                        return Ok(_api.Success("deleted"));
+                        return Ok(_api.Success("Approval Timesheet of the employee "+employee+" Deleted"));
                     }
                 }
             }
