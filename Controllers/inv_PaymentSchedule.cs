@@ -75,7 +75,7 @@ namespace SmartxAPI.Controllers
                     if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPayables_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Type='PURCHASE' and  D_ScheduleDate is not null " + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPayables_Schedule_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2  and  X_Type='PURCHASE' and  D_ScheduleDate is not null " + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvVendorPaymentSchedule where N_CompanyID=@p1 and N_FnYearID=@p2  X_Type='PURCHASE' and N_BalanceAmount>0 and  D_ScheduleDate is not null" + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPayables_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2  and  X_Type='PURCHASE' and  D_ScheduleDate is not null " + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPayables_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Type='PURCHASE' and N_BalanceAmount>0 and  D_ScheduleDate is not null" + xSortBy + " ) " + xSortBy;
 
                     // sqlCommandText = "select * from Inv_MRNDetails where N_CompanyID=@p1";
                     Params.Add("@p1", nCompanyId);
