@@ -183,7 +183,7 @@ namespace SmartxAPI.Controllers
             }
             if (poNo != null)
             {
-                X_MasterSql = "Select Inv_PurchaseOrder.*,Inv_Location.X_LocationName,Acc_CurrencyMaster.N_Decimal,Inv_Vendor.* from Inv_PurchaseOrder Inner Join Inv_Vendor On Inv_PurchaseOrder.N_VendorID=Inv_Vendor.N_VendorID and Inv_PurchaseOrder.N_CompanyID=Inv_Vendor.N_CompanyID and Inv_PurchaseOrder.N_FnYearID=Inv_Vendor.N_FnYearID LEFT OUTER JOIN Inv_Location ON Inv_Location.N_LocationID=Inv_PurchaseOrder.N_LocationID LEFT OUTER JOIN   Acc_CurrencyMaster ON Inv_PurchaseOrder.N_CompanyID = Acc_CurrencyMaster.N_CompanyID AND Inv_PurchaseOrder.N_CurrencyID = Acc_CurrencyMaster.N_CurrencyID Where Inv_PurchaseOrder.N_CompanyID=" + nCompanyId + " and X_POrderNo='" + poNo + "' "+crieteria+" and Inv_PurchaseOrder.B_IsSaveDraft<>1";
+                X_MasterSql = "Select Inv_PurchaseOrder.*,Inv_Location.X_LocationName,Acc_CurrencyMaster.N_Decimal,Inv_Vendor.* from Inv_PurchaseOrder Inner Join Inv_Vendor On Inv_PurchaseOrder.N_VendorID=Inv_Vendor.N_VendorID and Inv_PurchaseOrder.N_CompanyID=Inv_Vendor.N_CompanyID and Inv_PurchaseOrder.N_FnYearID=Inv_Vendor.N_FnYearID LEFT OUTER JOIN Inv_Location ON Inv_Location.N_LocationID=Inv_PurchaseOrder.N_LocationID LEFT OUTER JOIN   Acc_CurrencyMaster ON Inv_PurchaseOrder.N_CompanyID = Acc_CurrencyMaster.N_CompanyID AND Inv_PurchaseOrder.N_CurrencyID = Acc_CurrencyMaster.N_CurrencyID Where Inv_PurchaseOrder.N_CompanyID=" + nCompanyId + " and X_POrderNo='" + poNo + "' "+crieteria+" and isNull(Inv_PurchaseOrder.B_IsSaveDraft, 0)<>1";
             }
             try
             {
@@ -617,7 +617,7 @@ namespace SmartxAPI.Controllers
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                string sqlCommand = "Select Isnull(Count(Inv_PurchaseDetails.N_RsID),0) FROM Inv_Purchase INNER JOIN Inv_PurchaseDetails ON Inv_Purchase.N_PurchaseID = Inv_PurchaseDetails.N_PurchaseID Where  Inv_Purchase.N_CompanyID=@p1 and Inv_PurchaseDetails.N_RsID=@p2 and B_IsSaveDraft = 0";
+                string sqlCommand = "Select Isnull(Count(Inv_PurchaseDetails.N_RsID),0) FROM Inv_Purchase INNER JOIN Inv_PurchaseDetails ON Inv_Purchase.N_PurchaseID = Inv_PurchaseDetails.N_PurchaseID Where  Inv_Purchase.N_CompanyID=@p1 and Inv_PurchaseDetails.N_RsID=@p2 and isNull(B_IsSaveDraft, 0) = 0";
                 Params.Add("@p1", nCompanyID);
                 Params.Add("@p2", nGRNID);
                 Processed = dLayer.ExecuteScalar(sqlCommand, Params, connection);
@@ -672,7 +672,7 @@ namespace SmartxAPI.Controllers
                     if (myFunctions.getIntVAL(objReturnProcessed.ToString()) != 0)
                         return Ok(_api.Error(User, "Return processed! Unable to delete"));
 
-                    object objPurchaseProcessed = dLayer.ExecuteScalar("Select Isnull(N_PurchaseID,0) from Inv_Purchase where N_CompanyID=" + nCompanyID + " and N_RsID=" + nGRNID + " and B_IsSaveDraft = 0", connection, transaction);
+                    object objPurchaseProcessed = dLayer.ExecuteScalar("Select Isnull(N_PurchaseID,0) from Inv_Purchase where N_CompanyID=" + nCompanyID + " and N_RsID=" + nGRNID + " and isNull(B_IsSaveDraft, 0) = 0", connection, transaction);
                     if (objPurchaseProcessed == null)
                         objPurchaseProcessed = 0;
 
@@ -790,7 +790,7 @@ namespace SmartxAPI.Controllers
             if (dtGoodReceive.Columns.Contains("N_MRNID")) 
             {
             int nGRNID = myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_MRNID"].ToString());
-            object objPurchaseProcessed = dLayer.ExecuteScalar("Select Isnull(N_PurchaseID,0) from Inv_Purchase where N_CompanyID=" + nCompanyID + " and N_RsID=" + nGRNID + " and B_IsSaveDraft = 0", connection);
+            object objPurchaseProcessed = dLayer.ExecuteScalar("Select Isnull(N_PurchaseID,0) from Inv_Purchase where N_CompanyID=" + nCompanyID + " and N_RsID=" + nGRNID + " and isNull(B_IsSaveDraft, 0) = 0", connection);
             if (objPurchaseProcessed == null)
                 objPurchaseProcessed = 0;
 

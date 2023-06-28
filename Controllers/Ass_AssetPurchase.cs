@@ -555,7 +555,11 @@ namespace SmartxAPI.Controllers
                              nAssetType = myFunctions.getIntVAL(DetailTableNew1.Rows[j]["n_AssetType"].ToString());
 
                                 if(nAssetType==1)
+                                {
+                                    DetailTableNew.Rows[j]["N_TaxAmt1"] = myFunctions.getVAL(DetailTableNew.Rows[j]["N_TaxAmt1"].ToString()) /myFunctions.getIntVAL(DetailTableNew.Rows[j]["N_PurchaseQty"].ToString());
                                     DetailTableNew.Rows[j]["N_PurchaseQty"] = 1;
+                                    
+                                }
                                 //}
                                 N_AssetInventoryDetailsID = dLayer.SaveDataWithIndex("Ass_PurchaseDetails", "N_AssetInventoryDetailsID", "", "", j, DetailTableNew, connection, transaction);
                                 if (N_AssetInventoryDetailsID <= 0)
