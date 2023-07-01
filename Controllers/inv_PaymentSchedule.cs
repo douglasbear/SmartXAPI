@@ -75,7 +75,7 @@ namespace SmartxAPI.Controllers
                     if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPayables_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Type='PURCHASE' and  D_ScheduleDate is not null " + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPayables_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2  and  X_Type='PURCHASE' and  D_ScheduleDate is not null " + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvVendorPaymentSchedule where N_CompanyID=@p1 and N_FnYearID=@p2  X_Type='PURCHASE' and N_BalanceAmount>0 and  D_ScheduleDate is not null" + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPayables_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2  and  X_Type='PURCHASE' and  D_ScheduleDate is not null " + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPayables_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Type='PURCHASE' and N_BalanceAmount>0 and  D_ScheduleDate is not null" + xSortBy + " ) " + xSortBy;
 
                     // sqlCommandText = "select * from Inv_MRNDetails where N_CompanyID=@p1";
                     Params.Add("@p1", nCompanyId);
@@ -320,7 +320,7 @@ namespace SmartxAPI.Controllers
                         int purchaseID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_PurchaseID"].ToString());
                         if (purchaseID > 0)
                         {
-                            dLayer.ExecuteNonQuery("Update Inv_Purchase SET D_ScheduleDate=" + myFunctions.getVAL(DetailTable.Rows[j]["D_ScheduleDate"].ToString()) + ",N_ScheduledAmtF=" + myFunctions.getVAL(DetailTable.Rows[j]["N_ScheduledAmtF"].ToString()) + " WHERE N_PurchaseID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_PurchaseID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", Params, connection, transaction);
+                            dLayer.ExecuteNonQuery("Update Inv_Purchase SET D_ScheduleDate='" + myFunctions.getDateVAL(Convert.ToDateTime(DetailTable.Rows[j]["D_ScheduleDate"].ToString())) + "',N_ScheduledAmtF=" + myFunctions.getVAL(DetailTable.Rows[j]["N_ScheduledAmtF"].ToString()) + ",N_ScheduledAmt=" + myFunctions.getVAL(DetailTable.Rows[j]["N_ScheduledAmt"].ToString()) + "  WHERE N_PurchaseID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_PurchaseID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", Params, connection, transaction);
                         
                         }
                      

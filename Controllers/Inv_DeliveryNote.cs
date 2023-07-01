@@ -211,12 +211,12 @@ namespace SmartxAPI.Controllers
                     }
                     if (nSalesOrderID > 0 || (xSalesOrderID != "" && xSalesOrderID != null))
                     {
-                         string Mastersql ="";
-                         DataTable MasterTable = new DataTable();
-                         DataTable DetailTable = new DataTable();
-                         DataTable RentalScheduleData = new DataTable();
-                         string DetailSql = "";
-                         string RentalSql ="";
+                        string Mastersql ="";
+                        DataTable MasterTable = new DataTable();
+                        DataTable DetailTable = new DataTable();
+                        DataTable RentalScheduleData = new DataTable();
+                        string DetailSql = "";
+                        string RentalSql ="";
                         if (nSalesOrderID > 0)
                         {
                         QueryParamsList.Add("@nSalesorderID", nSalesOrderID);
@@ -227,9 +227,9 @@ namespace SmartxAPI.Controllers
                         DetailSql = "select * from vw_SalesOrdertoDeliveryNoteDetails where N_CompanyId=@nCompanyID and N_SalesOrderId=@nSalesorderID";
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
 
-                         RentalSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nSalesorderID and N_FormID=1571";
-                         RentalScheduleData = dLayer.ExecuteDataTable(RentalSql, QueryParamsList, Con);
-                         RentalScheduleData = _api.Format(RentalScheduleData, "RentalSchedule");
+                        RentalSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nSalesorderID and N_FormID=1571";
+                        RentalScheduleData = dLayer.ExecuteDataTable(RentalSql, QueryParamsList, Con);
+                        RentalScheduleData = _api.Format(RentalScheduleData, "RentalSchedule");
                        
 
                             SortedList DelParams = new SortedList();
@@ -268,8 +268,33 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                             DetailTable.AcceptChanges();
+                            RentalScheduleData = myFunctions.AddNewColumnToDataTable(RentalScheduleData, "N_Flag", typeof(int), 0);
 
+                            foreach (DataRow Avar in DetailTable.Rows)
+                            {
+                                foreach (DataRow Rentvar in RentalScheduleData.Rows)
+                                {
+                                    if (myFunctions.getIntVAL(Avar["N_SalesOrderDetailsID"].ToString()) == myFunctions.getIntVAL(Rentvar["N_TransDetailsID"].ToString()) && myFunctions.getIntVAL(Avar["N_ItemID"].ToString()) == myFunctions.getIntVAL(Rentvar["N_ItemID"].ToString()))
+                                    {
+                                        Rentvar["N_Flag"] = 1;
+                                    }
+                                }
+                            }
+                            RentalScheduleData.AcceptChanges();
 
+                            foreach (DataRow Rentvar in RentalScheduleData.Rows)
+                            {
+                                if (myFunctions.getVAL(Rentvar["N_Flag"].ToString()) != 1)
+                                {
+                                    Rentvar.Delete();
+                                    continue;
+                                }
+                            }
+
+                            if (myFunctions.ContainColumn("N_Flag", RentalScheduleData))
+                            RentalScheduleData.Columns.Remove("N_Flag");
+
+                            RentalScheduleData.AcceptChanges();
                         }
                         else
                         {
