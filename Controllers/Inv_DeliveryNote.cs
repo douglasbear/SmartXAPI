@@ -211,12 +211,12 @@ namespace SmartxAPI.Controllers
                     }
                     if (nSalesOrderID > 0 || (xSalesOrderID != "" && xSalesOrderID != null))
                     {
-                         string Mastersql ="";
-                         DataTable MasterTable = new DataTable();
-                         DataTable DetailTable = new DataTable();
-                         DataTable RentalScheduleData = new DataTable();
-                         string DetailSql = "";
-                         string RentalSql ="";
+                        string Mastersql ="";
+                        DataTable MasterTable = new DataTable();
+                        DataTable DetailTable = new DataTable();
+                        DataTable RentalScheduleData = new DataTable();
+                        string DetailSql = "";
+                        string RentalSql ="";
                         if (nSalesOrderID > 0)
                         {
                         QueryParamsList.Add("@nSalesorderID", nSalesOrderID);
@@ -227,9 +227,9 @@ namespace SmartxAPI.Controllers
                         DetailSql = "select * from vw_SalesOrdertoDeliveryNoteDetails where N_CompanyId=@nCompanyID and N_SalesOrderId=@nSalesorderID";
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
 
-                         RentalSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nSalesorderID and N_FormID=1571";
-                         RentalScheduleData = dLayer.ExecuteDataTable(RentalSql, QueryParamsList, Con);
-                         RentalScheduleData = _api.Format(RentalScheduleData, "RentalSchedule");
+                        RentalSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nSalesorderID and N_FormID=1571";
+                        RentalScheduleData = dLayer.ExecuteDataTable(RentalSql, QueryParamsList, Con);
+                        RentalScheduleData = _api.Format(RentalScheduleData, "RentalSchedule");
                        
 
                             SortedList DelParams = new SortedList();
@@ -268,8 +268,33 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                             DetailTable.AcceptChanges();
+                            RentalScheduleData = myFunctions.AddNewColumnToDataTable(RentalScheduleData, "N_Flag", typeof(int), 0);
 
+                            foreach (DataRow Avar in DetailTable.Rows)
+                            {
+                                foreach (DataRow Rentvar in RentalScheduleData.Rows)
+                                {
+                                    if (myFunctions.getIntVAL(Avar["N_SalesOrderDetailsID"].ToString()) == myFunctions.getIntVAL(Rentvar["N_TransDetailsID"].ToString()) && myFunctions.getIntVAL(Avar["N_ItemID"].ToString()) == myFunctions.getIntVAL(Rentvar["N_ItemID"].ToString()))
+                                    {
+                                        Rentvar["N_Flag"] = 1;
+                                    }
+                                }
+                            }
+                            RentalScheduleData.AcceptChanges();
 
+                            foreach (DataRow Rentvar in RentalScheduleData.Rows)
+                            {
+                                if (myFunctions.getVAL(Rentvar["N_Flag"].ToString()) != 1)
+                                {
+                                    Rentvar.Delete();
+                                    continue;
+                                }
+                            }
+
+                            if (myFunctions.ContainColumn("N_Flag", RentalScheduleData))
+                            RentalScheduleData.Columns.Remove("N_Flag");
+
+                            RentalScheduleData.AcceptChanges();
                         }
                         else
                         {
@@ -894,19 +919,19 @@ namespace SmartxAPI.Controllers
                         Result.Add("InvoiceNo", InvoiceNo);
                         transaction.Commit();
                         if (N_FormID == 1572)
-                            {
+                        {
                            return Ok(_api.Success(Result, "Rental Delivery Saved"));
-                            }
-                          else if(N_FormID == 1426) 
-                            {
-                        return Ok(_api.Success(Result,"Wh deliveryNote Saved Successfully"));
-                             }
-                  
+                        }
+                        else if(N_FormID == 1426) 
+                        {
+                            return Ok(_api.Success(Result,"Wh deliveryNote Saved Successfully"));
+                        }
+                        else if(N_FormID == 1758) 
+                        {
+                            return Ok(_api.Success(Result,"Book Delivery Saved Successfully"));
+                        }
                         return Ok(_api.Success(Result, "Delivery Note saved"));
                     }
-
-
-
                 }
             }
             catch (Exception ex)
@@ -1006,7 +1031,7 @@ namespace SmartxAPI.Controllers
                      ParamList.Add("@nTransID", nDeliveryNoteID);
                      ParamList.Add("@nCompanyID", nCompanyID);
                     ParamList.Add("@nFnYearID", nFnYearID);
-                    string Sql = "select N_DeliveryNoteId,X_ReceiptNo from Inv_DeliveryNote where N_DeliveryNoteId=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+                    string Sql = "select N_DeliveryNoteId,X_ReceiptNo,N_FormID from Inv_DeliveryNote where N_DeliveryNoteId=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
                     string xButtonAction="Delete";
                     String X_ReceiptNo="";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
@@ -1073,10 +1098,20 @@ namespace SmartxAPI.Controllers
                         N_SalesOrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
                         if (N_SalesOrderID > 0 && N_SalesOrderID != tempSOID)
                         {
-                            if (!myFunctions.UpdateTxnStatus(nCompanyID, N_SalesOrderID, 81, true, dLayer, connection, transaction))
+                           
+                                if (!myFunctions.UpdateTxnStatus(nCompanyID, N_SalesOrderID, 81, true, dLayer, connection, transaction))
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                }
+                            
+                            else
                             {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                if (!myFunctions.UpdateTxnStatus(nCompanyID, N_SalesOrderID, 81, false, dLayer, connection, transaction))
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                }
                             }
                         }
                         tempSOID = N_SalesOrderID;
@@ -1107,6 +1142,10 @@ namespace SmartxAPI.Controllers
                     }
 
                     transaction.Commit();
+                    if (myFunctions.getIntVAL(TransRow["N_FormID"].ToString()) == 1758)
+                    {
+                        return Ok(_api.Success("Book Delivery deleted"));
+                    }
                     return Ok(_api.Success("Delivery note deleted"));
                 }
             }

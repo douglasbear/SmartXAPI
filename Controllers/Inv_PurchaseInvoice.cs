@@ -313,7 +313,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@POrderNo", xPOrderNo);
                     X_MasterSql = "select * from vw_Inv_PurchaseOrderAsInvoiceMaster where N_CompanyID=@CompanyID and X_POrderNo=@POrderNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                 }
-                else if (nServiceSheetID != null)
+                else if (nServiceSheetID > 0)
                 {
                     Params.Add("@nServiceSheetID", nServiceSheetID);
                     X_MasterSql = "select * from vw_InvVendorSTAsInvoiceMaster where N_CompanyID=@CompanyID and N_ServiceSheetID=@nServiceSheetID and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
@@ -343,7 +343,9 @@ namespace SmartxAPI.Controllers
                     }
                     if (multipleRentalPO != null && multipleRentalPO != "")
                     {
-                        X_MasterSql = "select * from vw_InvVendorSTAsInvoiceMaster where N_CompanyID=@CompanyID and N_POrderID in (" + multipleRentalPO + ") and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                        string[] X_POrderID = multipleRentalPO.Split(",");
+                        int N_POID = myFunctions.getIntVAL(X_POrderID[0].ToString());
+                        X_MasterSql = "select * from vw_InvVendorSTAsInvoiceMaster where N_CompanyID=@CompanyID and N_POrderID in (" + N_POID + ")" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                     }
                    
 
@@ -352,7 +354,12 @@ namespace SmartxAPI.Controllers
                      if (IsDirectMRN && !invoiceTax)
                      {
                     object taxID = dLayer.ExecuteScalar("Select N_Value from Gen_Settings where N_CompanyId=" + nCompanyId+" and X_Description='DefaultTaxCategory' and X_Group='Inventory'", Params, connection);
-                         if(taxID!=null)
+                        
+                         if(taxID==null)
+                         {
+                            taxID=0;
+                         }
+                         if(taxID!=null && myFunctions.getIntVAL(taxID.ToString())!=0)
                          {
                              object category = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_CompanyId=" + nCompanyId+" and X_PkeyCode=" + taxID+" ", Params, connection);
                              object taxCatID = dLayer.ExecuteScalar("Select N_PkeyID from Acc_TaxCategory where N_CompanyId=" + nCompanyId+" and X_PkeyCode=" + taxID+" ", Params, connection);
@@ -416,18 +423,20 @@ namespace SmartxAPI.Controllers
                         }
 
                     }
-                    else if (nServiceSheetID != null)
+                    else if (nServiceSheetID > 0)
                     {
-                        X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_ServiceSheetID=" + nServiceSheetID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                        // X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_ServiceSheetID=" + nServiceSheetID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+
+                        if (enableDayWise)
+                            X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetailsDaywise where N_CompanyID=@CompanyID and N_ServiceSheetID=" + nServiceSheetID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                        else
+                            X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_ServiceSheetID=" + nServiceSheetID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                     }
                     if (multipleRentalPO != null && multipleRentalPO != "")
                     {
                         X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_POrderID in (" + multipleRentalPO + ")" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
-                        if (enableDayWise)
-                            X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetailsDaywise where N_CompanyID=@CompanyID and N_POrderID=" + N_POrderID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
-                        else
-                            X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_POrderID=" + N_POrderID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                     }
+
                     //multiple GRN From Invoice
 
                     object Tax1ID="";

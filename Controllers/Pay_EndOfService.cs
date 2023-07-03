@@ -291,6 +291,7 @@ namespace SmartxAPI.Controllers
                         if (ServiceEndCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Service End Code")); }
                         MasterTable.Rows[0]["X_ServiceEndCode"] = ServiceEndCode;
                     }
+             
                       ServiceEndCode = MasterTable.Rows[0]["X_ServiceEndCode"].ToString();
                        
 
@@ -326,7 +327,7 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("Pay_PaymentDetails", "N_TransID", nServiceEndID, "N_CompanyID=" + nCompanyID + " and N_FormID=" + this.N_FormID, connection, transaction);
                         dLayer.DeleteData("Pay_PaymentDetails", "N_TransID", nSalTransID, "N_CompanyID=" + nCompanyID, connection, transaction);
-                        dLayer.DeleteData("Pay_PaymentMaster", "N_TransID", nSalTransID, "N_CompanyID=" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Pay_PaymentMaster", "N_RefID", nServiceEndID, "N_CompanyID=" + nCompanyID, connection, transaction);
                         xButtonAction="Update"; 
                     }
 

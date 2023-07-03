@@ -1291,7 +1291,7 @@ namespace SmartxAPI.Controllers
 
                     if (xPhone1 != "")
                     {
-                        object NPhnCount = dLayer.ExecuteScalar("Select count(1) from pay_Employee Where X_Phone1 ='" + xPhone1 + "' and N_EmpID <> '" + nEmpID + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                        object NPhnCount = dLayer.ExecuteScalar("Select count(1) from pay_Employee Where X_Phone1 ='" + xPhone1 + "' and N_EmpID <> '" + nEmpID + "' and N_Status not in (2,3) and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
                         if (NPhnCount == null)
                         {
                             NPhnCount = 0;
@@ -1504,6 +1504,10 @@ namespace SmartxAPI.Controllers
                                 foreach (DataRow dRow in dtpay_PaySetup.Rows)
                                 {
                                     dRow["N_EmpID"] = nEmpID;
+                                    if (dRow["n_Value"] == DBNull.Value || double.IsNaN(Convert.ToDouble(dRow["n_Value"])))
+                                    {
+                                      dRow["N_Value"] = 0;
+                                    }
                                 }
                                 dtpay_PaySetup.AcceptChanges();
                                 pay_PaySetupRes = dLayer.SaveData("Pay_PaySetup", "N_PaySetupID", dtpay_PaySetup, connection, transaction);
@@ -1513,6 +1517,10 @@ namespace SmartxAPI.Controllers
                                     foreach (DataRow dRow in dtpay_EmployeePayHistory.Rows)
                                     {
                                         dRow["N_EmpID"] = nEmpID;
+                                        if (dRow["N_Amount"] == DBNull.Value || double.IsNaN(Convert.ToDouble(dRow["N_Amount"])))
+                                         {
+                                          dRow["N_Amount"] = 0;
+                                          }
                                     }
                                     dtpay_EmployeePayHistory.AcceptChanges();
                                     if (dtpay_EmployeePayHistory.Rows.Count > 0)
@@ -2089,6 +2097,70 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
         }
+
+
+  [HttpGet("empShortlist")]
+        public ActionResult GetEmployeeList(int nFnYearID, bool bAllBranchData, int nBranchID,string qry,string nEmpID,int loginEmpID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@bAllBranchData", bAllBranchData);
+            Params.Add("@nBranchID", nBranchID);
+            string sqlCommandText = "";
+             string criteria = "";
+              int nEmployeeId = 0;
+               if(loginEmpID>0)
+                    {
+                         Params.Add("@nEmpID", loginEmpID);
+                         criteria = " and N_EmpID =@nEmpID ";
+               
+               
+                    }
+            if (nEmpID != "" && nEmpID != null)
+            {
+                criteria = " and N_EmpID =@nEmpID ";
+                nEmployeeId = myFunctions.getIntVAL(nEmpID.ToString());
+                 Params.Add("@nEmpID", nEmpID);
+            }
+           
+             string qryCriteria = "";
+            if (qry != "" && qry != null)
+            {
+                qryCriteria = " and ([Employee Code] like @qry or Name like @qry ) ";
+                Params.Add("@qry", "%" + qry + "%");
+            }
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    if (bAllBranchData == true)
+                        sqlCommandText = "Select TOP 20 N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode,Name as X_EmpName,X_Position,X_Department,X_BranchName from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID "+qryCriteria+criteria+" group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName";
+                    else
+                        sqlCommandText = "Select TOP 20 N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode ,Name as X_EmpName,X_Position,X_Department,X_BranchName from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID)"+qryCriteria+criteria+" group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName";
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+
+
 
 
     }

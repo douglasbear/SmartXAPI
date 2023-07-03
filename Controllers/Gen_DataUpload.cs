@@ -160,6 +160,9 @@ namespace SmartxAPI.Controllers
                             case "leave history":
                                 xTableName = "Mig_LeaveHistory";
                                 break;
+                            case "chartofaccounts opening":
+                                xTableName = "Mig_AccountsOpening";
+                                break;
                             case "product list":
                             case "products":
                             case "customer materials":

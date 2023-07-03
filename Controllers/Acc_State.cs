@@ -31,19 +31,20 @@ namespace SmartxAPI.Controllers
         [HttpGet("list")]
         public ActionResult GetStateList(int nCountryID)
         {
-            int nCompanyID = myFunctions.GetCompanyID(User);
+            // int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable(); 
             SortedList Params = new SortedList();
             string sqlCommandText ;
           if (nCountryID>0)
           {
-            sqlCommandText = "select * from Acc_State where N_CompanyID=@p1 and N_CountryID=@p2 order by N_StateID";  
+            sqlCommandText = "select * from Acc_State where N_CountryID=@p1 order by N_StateID";  
           }
           else {
-            sqlCommandText = "select * from Acc_State where N_CompanyID=@p1 order by N_StateID";
+            sqlCommandText = "select * from Acc_State";
+           
           }
-            Params.Add("@p1", nCompanyID);
-            Params.Add("@p2", nCountryID);
+            // Params.Add("@p1", nCompanyID);
+            Params.Add("@p1", nCountryID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -71,9 +72,11 @@ namespace SmartxAPI.Controllers
         {   
             DataTable dt=new DataTable();
             SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
             
-            string sqlCommandText="select * from vw_Acc_State where N_StateID=@p1 ";
+            string sqlCommandText="select * from vw_Acc_State where N_StateID=@p1 and N_CompanyID=@p2";
             Params.Add("@p1",nStateID);
+            Params.Add("@p2",nCompanyID);
             
             try
             {
@@ -103,7 +106,7 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 MasterTable = ds.Tables["master"];
-                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 int nStateID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_StateID"].ToString());
 
@@ -117,16 +120,22 @@ namespace SmartxAPI.Controllers
                     var values = MasterTable.Rows[0]["x_StateCode"].ToString();
                     if (values == "@Auto")
                     {
-                        Params.Add("N_CompanyID", nCompanyID);
+                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.N_FormID);
-                      
-                        StateCode = dLayer.GetAutoNumber("Acc_State", "X_StateCode", Params, connection, transaction);
+                        Params.Add("X_Type", this.N_FormID);
+                       while (true)
+                            {
+                              StateCode = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate_New", Params, connection, transaction).ToString();
+                                object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_State Where X_StateCode ='" + StateCode + "' and N_CountryID= " + myFunctions.getIntVAL(MasterTable.Rows[0]["N_CountryID"].ToString()), Params, connection, transaction);
+                                if (N_Result == null)
+                                    break;
+                            }
                         if (StateCode == "") { transaction.Rollback();
                         return Ok(_api.Error(User,"Unable to generate State Code")); }
                         MasterTable.Rows[0]["x_StateCode"] = StateCode;
                     }
-                    MasterTable.Columns.Remove("n_CompanyID");
+                    //  MasterTable.Columns.Remove("n_CompanyID");
                     MasterTable.Columns.Remove("n_FnYearID");
 
                     nStateID = dLayer.SaveData("Acc_State", "N_StateID", MasterTable, connection, transaction);

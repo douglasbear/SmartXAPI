@@ -390,7 +390,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("orderitemdetails")]
-        public ActionResult GetOrderItemDetails(int nFnYearID, int nFormID, int nBranchID, int nLocationID, DateTime dDateFrom, DateTime dDateTo, int nSOID, string xType)
+        public ActionResult GetOrderItemDetails(int nFnYearID, int nFormID, int nBranchID, int nLocationID, DateTime dDateFrom, DateTime dDateTo, int nSOID, string xType, bool enableDayWise)
         {
             try
             {
@@ -420,7 +420,12 @@ namespace SmartxAPI.Controllers
                         if (xType == "SO")
                             Itemsql = "select * from vw_POItemsForTimesheet where N_CompanyID=@N_CompanyId and N_SOId=@N_TransID and ((D_MRNDate<=@D_DateFrom) or (D_MRNDate>=@D_DateFrom AND D_MRNDate<=@D_DateTo)) AND ISNULL(D_ReturnDate,@D_DateFrom)>=@D_DateFrom";
                         else
-                            Itemsql = "select * from vw_POItemsForTimesheet where N_CompanyID=@N_CompanyId and N_POrderID=@N_TransID and ((D_MRNDate<=@D_DateFrom) or (D_MRNDate>=@D_DateFrom AND D_MRNDate<=@D_DateTo)) AND ISNULL(D_ReturnDate,@D_DateFrom)>=@D_DateFrom";
+                        {
+                            if (enableDayWise)
+                                Itemsql = "select * from vw_POItemsForTimesheetDayWise where N_CompanyID=@N_CompanyId and N_POrderID=@N_TransID and ((D_MRNDate<=@D_DateFrom) or (D_MRNDate>=@D_DateFrom AND D_MRNDate<=@D_DateTo)) AND ISNULL(D_ReturnDate,@D_DateFrom)>=@D_DateFrom";
+                            else
+                                Itemsql = "select * from vw_POItemsForTimesheet where N_CompanyID=@N_CompanyId and N_POrderID=@N_TransID and ((D_MRNDate<=@D_DateFrom) or (D_MRNDate>=@D_DateFrom AND D_MRNDate<=@D_DateTo)) AND ISNULL(D_ReturnDate,@D_DateFrom)>=@D_DateFrom";
+                        }
                     }
 
                     ItemTable = dLayer.ExecuteDataTable(Itemsql, Params, connection);
@@ -453,7 +458,7 @@ namespace SmartxAPI.Controllers
 
 
             string sqlCommandText = "";
-            sqlCommandText = "select * from vw_Inv_ServiceTimesheet where N_CompanyID=@N_CompanyID and N_FnYearID=@N_FnyearID and N_FormID=@N_FormID and N_VendorID=@N_VendorID and N_ServiceSheetID not in (select isNull(N_ServiceSheetID, 0) from Inv_Purchase where N_FnYearID=@N_FnyearID) order by x_ServiceSheetCode desc";
+            sqlCommandText = "select * from vw_Inv_ServiceTimesheet where N_CompanyID=@N_CompanyID and N_FormID=@N_FormID and N_VendorID=@N_VendorID and N_ServiceSheetID not in (select isNull(N_ServiceSheetID, 0) from Inv_PurchaseDetails where N_CompanyID=@N_CompanyID) order by x_ServiceSheetCode desc";
 
             try
             {
@@ -492,7 +497,7 @@ namespace SmartxAPI.Controllers
 
 
             string sqlCommandText = "";
-            sqlCommandText = "select * from vw_Inv_ServiceTimesheet where N_CompanyID=@N_CompanyID and N_FnYearID=@N_FnyearID and N_FormID=@N_FormID and N_CustomerID=@N_CustomerID and N_ServiceSheetID not in (select isNull(N_ServiceSheetID, 0) from Inv_Sales where N_FnYearID=@N_FnyearID) order by x_ServiceSheetCode desc";
+            sqlCommandText = "select * from vw_Inv_ServiceTimesheet where N_CompanyID=@N_CompanyID and N_FormID=@N_FormID and N_CustomerID=@N_CustomerID and N_ServiceSheetID not in (select isNull(N_ServiceSheetID, 0) from Inv_SalesDetails where N_CompanyID=@N_CompanyID) order by x_ServiceSheetCode desc";
 
             try
             {

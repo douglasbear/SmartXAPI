@@ -1528,6 +1528,7 @@ namespace SmartxAPI.GeneralFunctions
                 NewParam.Add("@nCompanyID", N_CompanyID);
                 NewParam.Add("@nFormID", N_FormID);
                 NewParam.Add("@nTransID", N_TransID);
+                NewParam.Add("@nApprovalUserID", N_ApprovalUserID);
 
                 int EntrUsrID = this.getIntVAL(dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=108", NewParam, connection, transaction).ToString());
                 NewParam.Add("@EntrUsrID", EntrUsrID);
@@ -2435,7 +2436,7 @@ namespace SmartxAPI.GeneralFunctions
         // 14 - Vendor Portal User
 
 
-        public bool CreatePortalUser(int nCompanyID, int nBranchID, string xPartyName, string emailID, string type, string partyCode, int partyID, bool active, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
+        public bool CreatePortalUser(int nCompanyID, int nBranchID, string xPartyName, string emailID, string type, string partyCode, int partyID, bool active,ClaimsPrincipal User,IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             int UserID = 0, UserCatID = 0;
             string Pwd = this.EncryptString(emailID);
@@ -2523,6 +2524,47 @@ namespace SmartxAPI.GeneralFunctions
                     dt.Rows.Add(row);
 
                     int nUserID = dLayer.SaveData("Sec_User", "N_UserID", dt, connection, transaction);
+
+                         using (SqlConnection olivCnn = new SqlConnection(masterDBConnectionString))
+                         {
+                                    olivCnn.Open();
+                                    SqlTransaction olivoTxn = olivCnn.BeginTransaction();
+                                    int nClientID = this.GetClientID(User);
+                                    DataTable dtGobal = new DataTable();
+                                    dtGobal.Clear();
+                                    dtGobal.Columns.Add("X_EmailID");
+                                    dtGobal.Columns.Add("N_UserID");
+                                    dtGobal.Columns.Add("X_UserName");
+                                    dtGobal.Columns.Add("N_ClientID");
+                                    dtGobal.Columns.Add("N_ActiveAppID");
+                                    dtGobal.Columns.Add("X_Password");
+                                    dtGobal.Columns.Add("B_Inactive");
+                                    dtGobal.Columns.Add("X_UserID");
+                                    dtGobal.Columns.Add("N_UserType");
+                                    dtGobal.Columns.Add("N_LoginType");
+                                     dtGobal.Columns.Add("N_LanguageID");
+
+                                    DataRow rowGb = dtGobal.NewRow();
+                                    rowGb["X_EmailID"] = emailID;
+                                    rowGb["X_UserName"] = xPartyName;
+                                    rowGb["N_ClientID"] = nClientID;
+                                    rowGb["N_ActiveAppID"] = 1;
+                                    rowGb["X_Password"] = Pwd;
+                                    rowGb["B_Inactive"] = 0;
+                                    rowGb["X_UserID"] = emailID;
+                                    rowGb["N_UserType"] = 0;
+                                    rowGb["N_LoginType"] = 0;
+                                    rowGb["N_LanguageID"] = 1;
+                                    dtGobal.Rows.Add(rowGb);
+
+                                    int GlobalUserID = dLayer.SaveData("Users", "N_UserID", dtGobal, olivCnn, olivoTxn);
+                                      if (GlobalUserID > 0)
+                                    {
+                                        olivoTxn.Commit();
+                                    }
+                                  
+                                }
+
                 }
                 else
                 {
@@ -3092,7 +3134,7 @@ namespace SmartxAPI.GeneralFunctions
         public bool Depreciation(IDataAccessLayer dLayer, int N_CompanyID, int N_FnYearID, int N_UserID, int N_ItemID, DateTime D_EndDate, String X_DeprNo, SqlConnection connection, SqlTransaction transaction);
         public string EncryptStringForUrl(String input, System.Text.Encoding encoding);
         public string DecryptStringFromUrl(String hexInput, System.Text.Encoding encoding);
-        public bool CreatePortalUser(int nCompanyID, int nBranchID, string xPartyName, string emailID, string type, string partyCode, int partyID, bool active, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
+        public bool CreatePortalUser(int nCompanyID, int nBranchID, string xPartyName, string emailID, string type, string partyCode, int partyID, bool active,ClaimsPrincipal User,IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public bool SendMailWithAttachments(int nFormID, int nFnYearID, int nPkeyID, int nPartyID, string partyName, string Subject, string docNumber, string mail, string xBody, IDataAccessLayer dLayer, ClaimsPrincipal User);
         public bool UpdateTxnStatus(int nCompanyID, int nTransID, int nFormID, bool forceUpdate, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public bool LogScreenActivitys(int nFnYearID, int nTransID, string xTransCode, int nFormID, string xAction, string ipAddress,string X_Description, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);

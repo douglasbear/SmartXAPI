@@ -585,7 +585,7 @@ namespace SmartxAPI.Controllers
                     }
                     else if (multipleJobOrder != null && multipleJobOrder != "")
                     {
-                        string Mastersql = "select * from vw_ServiceTimesheetToSales where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_SalesOrderId in (" + multipleJobOrder + ")";
+                        string Mastersql = "select * from vw_ServiceTimesheetToSales where N_CompanyId=@nCompanyID and N_SalesOrderId in (" + multipleJobOrder + ")";
                         DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
 
@@ -598,7 +598,7 @@ namespace SmartxAPI.Controllers
                         }
 
                         string DetailSql = "";
-                        DetailSql = "select * from vw_ServiceTimesheetDetailsToSales where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_SalesOrderId in (" + multipleJobOrder + ")";
+                        DetailSql = "select * from vw_ServiceTimesheetDetailsToSales where N_CompanyId=@nCompanyID and N_SalesOrderId in (" + multipleJobOrder + ")";
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
 
@@ -1218,7 +1218,7 @@ namespace SmartxAPI.Controllers
 
 
                 //PAYMENT NO DISPLAY IN TOP LABEL ON MOUSE HOVER
-                DataTable Receipts = dLayer.ExecuteDataTable("SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId =" + nSalesID + " and dbo.Inv_PayReceiptDetails.N_CompanyID =" + nCompanyID, connection);
+                DataTable Receipts = dLayer.ExecuteDataTable("SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId =" + nSalesID + " and dbo.Inv_PayReceiptDetails.N_CompanyID =" + nCompanyID +" and dbo.Inv_PayReceiptDetails.X_TransType='SALES'", connection);
                 string InvoiceNos = "";
                 foreach (DataRow var in Receipts.Rows)
                 {
@@ -2753,9 +2753,9 @@ namespace SmartxAPI.Controllers
             string crieteria = "";
 
             if (nCustomerId > 0)
-                crieteria = " where N_FormID=1145 and N_CustomerID=@nCustomerId and N_CompanyID=@nCompanyId and N_ServiceSheetID not in (select ISNULL(N_ServiceSheetID, 0) from Inv_Sales where N_CompanyID=@nCompanyId)";
+                crieteria = " where N_FormID=1145 and N_CustomerID=@nCustomerId and N_CompanyID=@nCompanyId and N_ServiceSheetID not in (select ISNULL(N_ServiceSheetID, 0) from Inv_SalesDetails where N_CompanyID=@nCompanyId)";
             else
-                crieteria = " where N_FormID=1145 and N_CompanyID=@nCompanyId and N_ServiceSheetID not in (select ISNULL(N_ServiceSheetID, 0) from Inv_Sales where N_CompanyID=@nCompanyId)";
+                crieteria = " where N_FormID=1145 and N_CompanyID=@nCompanyId and N_ServiceSheetID not in (select ISNULL(N_ServiceSheetID, 0) from Inv_SalesDetails where N_CompanyID=@nCompanyId)";
 
             Params.Add("@nCompanyId", nCompanyId);
             Params.Add("@nCustomerId", nCustomerId);
