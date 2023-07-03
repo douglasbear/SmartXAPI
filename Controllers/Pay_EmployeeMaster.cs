@@ -2138,9 +2138,9 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     if (bAllBranchData == true)
-                        sqlCommandText = "Select TOP 20 N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode,Name as X_EmpName,X_Position,X_Department,X_BranchName from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID "+qryCriteria+criteria+" group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName";
+                        sqlCommandText = "Select TOP 20 N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode,Name as X_EmpName,X_Position,X_Department,X_BranchName from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and and (N_Status = 0 OR N_Status = 1) "+qryCriteria+criteria+" group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName";
                     else
-                        sqlCommandText = "Select TOP 20 N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode ,Name as X_EmpName,X_Position,X_Department,X_BranchName from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID)"+qryCriteria+criteria+" group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName";
+                        sqlCommandText = "Select TOP 20 N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode ,Name as X_EmpName,X_Position,X_Department,X_BranchName from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID) and (N_Status = 0 OR N_Status = 1) "+qryCriteria+criteria+" group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName";
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = _api.Format(dt);
