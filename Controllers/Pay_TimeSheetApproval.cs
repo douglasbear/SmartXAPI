@@ -382,6 +382,7 @@ namespace SmartxAPI.Controllers
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "Deduction", typeof(double), null);
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "CompMinutes", typeof(double), null);
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "N_TotHours", typeof(double), null);
+                                TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "X_RemarkStatus", typeof(string), null);
 
                                 string Sql8 = "Select * from vw_pay_OffDays Where N_CompanyID =" + nCompanyID + " and (N_FnyearID= " + nFnYearID + " or N_FnyearID=0)  ";
                                 PayOffDays = dLayer.ExecuteDataTable(Sql8, secParams, connection);
@@ -391,7 +392,7 @@ namespace SmartxAPI.Controllers
 
                                 foreach (DataRow Avar in TimeSheetDetails.Rows)
                                 {
-                                     //Avar["X_RemarkStatus"] = Avar["x_Remarks"];
+                                    Avar["X_RemarkStatus"] = Avar["x_Remarks"];
                                     DateTime Date5 = Convert.ToDateTime(Avar["D_Date"].ToString());
 
                                     Avar["N_TotHours"] = Avar["N_TotalWorkHour"];
