@@ -946,6 +946,8 @@ namespace SmartxAPI.Controllers
                                     N_deductionTime = myFunctions.getVAL(row["Deduction"].ToString());
                                     N_CompsateDed = myFunctions.getVAL(row["CompMinutes"].ToString());
                                     N_ActualWorkHours = myFunctions.getVAL(row["N_ActWorkHours"].ToString());
+                              
+                                    
                                     if (N_additionTime > 0)
                                         additionTime += HoursToMinutes(N_additionTime);
                                     if (N_deductionTime > 0)
