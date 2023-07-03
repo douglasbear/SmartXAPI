@@ -351,7 +351,7 @@ namespace SmartxAPI.Controllers
                         object TaxAmount = "";
                         object VatNumber = dLayer.ExecuteScalar("select x_taxregistrationNo from acc_company where N_CompanyID=@nCompanyId", QueryParams, connection, transaction);
                         object SalesDate = "";
-                        if (nFormID == 64 || nFormID == 894 || nFormID == 372)
+                        if (nFormID == 64 || nFormID == 894 || nFormID == 372 || nFormID == 1601)
                         {
                             Total = dLayer.ExecuteScalar("select n_BillAmt+N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
                             TaxAmount = dLayer.ExecuteScalar("select N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
