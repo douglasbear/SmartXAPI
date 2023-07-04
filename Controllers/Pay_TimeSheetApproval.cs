@@ -706,7 +706,10 @@ namespace SmartxAPI.Controllers
                                         object additionWh;
                                         object shiftwh;
                                         object wh;
-
+                                    if(  myFunctions.getVAL(rowPA["N_ActWorkHours"].ToString())==3.3 )
+                                        {
+                                            int b=0;
+                                        }
                                         int N_HolidayCount=0;
                                         object HoliCount= dLayer.ExecuteScalar("Select COUNT(1) from vw_pay_OffDays Where N_CompanyID =" + nCompanyID + " and (N_FNyearID= " + nFnYearID + " or N_FNyearID=0) and D_Date='"+Date+"'", secParams, connection);
                                         if(HoliCount != null) N_HolidayCount=myFunctions.getIntVAL(HoliCount.ToString());
@@ -732,6 +735,10 @@ namespace SmartxAPI.Controllers
                                             }
                                             else
                                                 rowPA["N_ActWorkHours"] = N_AddWH;
+                                        }
+                                        if(  myFunctions.getVAL(rowPA["N_ActWorkHours"].ToString())==3.3 )
+                                        {
+                                            int a=0;
                                         }
 
                                         PayAttendence.Rows.Add(rowPA);
