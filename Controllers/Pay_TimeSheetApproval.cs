@@ -734,6 +734,10 @@ namespace SmartxAPI.Controllers
                                             else
                                                 rowPA["N_ActWorkHours"] = N_AddWH;
                                         }
+                                        if(  myFunctions.getVAL(rowPA["N_ActWorkHours"].ToString())==3.3 )
+                                        {
+                                            int a=0;
+                                        }
 
                                         PayAttendence.Rows.Add(rowPA);
                                     }
