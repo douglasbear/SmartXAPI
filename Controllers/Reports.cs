@@ -344,7 +344,7 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    if (nFormID == 64 || nFormID == 894 || nFormID == 372 || nFormID == 55 || nFormID == 504)
+                    if (nFormID == 64 || nFormID == 894 || nFormID == 372 || nFormID == 55 || nFormID == 504 || nFormID == 1601)
                     {
                         //QR Code Generate For Invoice
                         object Total = "";
