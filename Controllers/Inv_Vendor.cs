@@ -327,6 +327,7 @@ namespace SmartxAPI.Controllers
 
                     if (MasterTable.Columns.Contains("x_VendorPrefix"))
                         MasterTable.Columns.Remove("x_VendorPrefix");
+
                         
                      VendorCode = MasterTable.Rows[0]["x_VendorCode"].ToString();
 
