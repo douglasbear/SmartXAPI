@@ -574,7 +574,7 @@ namespace SmartxAPI.GeneralFunctions
             }
             else
             {
-                if (getIntVAL(nActiveID.ToString()) == 2)
+                if (nActiveID != null && getIntVAL(nActiveID.ToString()) == 2) //temp
                 {
                     Response["btnSaveText"] = "Save";
                     Response["btnDeleteText"] = "Delete";
