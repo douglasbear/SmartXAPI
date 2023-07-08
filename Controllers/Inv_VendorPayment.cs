@@ -460,6 +460,21 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
+                    if(MasterTable.Columns.Contains("x_ChequeNo"))
+                    {
+                       object count = dLayer.ExecuteScalar("Select count(*) from Inv_PayReceipt Where  N_CompanyID= " + nCompanyId + " and  N_PayReceiptID <> "+myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayReceiptID"].ToString())+" and  N_DefLedgerID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_DefLedgerID"].ToString())+" and X_ChequeNo='"+myFunctions.getVAL(MasterTable.Rows[0]["X_ChequeNo"].ToString())+"'", connection, transaction);
+                         if(count==null)
+                         {
+                            count=0;
+                         }
+                         int N_Count = myFunctions.getIntVAL(count.ToString());
+                    if (N_Count > 0)
+                    {
+                             transaction.Rollback();
+                             return Ok(api.Error(User, "Invalid cheque number. Please double-check and enter a valid cheque number"));
+                    }
+                    }
+
                     if (MasterTable.Columns.Contains("x_Desc"))
                     {
                         xDesc = Master["x_Desc"].ToString();
