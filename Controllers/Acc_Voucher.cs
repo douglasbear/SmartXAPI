@@ -321,7 +321,20 @@ namespace SmartxAPI.Controllers
                                 return Ok(api.Error(User, "Transaction date must be in the active Financial Year."));
                             }
                         }
-
+                    if (xTransType.ToLower() == "pv") 
+                    {
+                       object count = dLayer.ExecuteScalar("Select count(*) from Acc_VoucherMaster Where  N_CompanyID= " + nCompanyId + " and X_TransType ='" + xTransType + "' and  N_VoucherID <> "+myFunctions.getIntVAL(masterRow["n_VoucherID"].ToString())+" and  N_DefLedgerID="+myFunctions.getIntVAL(masterRow["N_DefLedgerID"].ToString())+" and X_ChequeNo='"+myFunctions.getVAL(masterRow["X_ChequeNo"].ToString())+"'", connection, transaction);
+                         if(count==null)
+                         {
+                            count=0;
+                         }
+                         int N_Count = myFunctions.getIntVAL(count.ToString());
+                    if (N_Count > 0)
+                    {
+                             transaction.Rollback();
+                             return Ok(api.Error(User, "Invalid cheque number. Please double-check and enter a valid cheque number"));
+                    }
+                    }
 
                     if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_VoucherID > 0)
                     {
