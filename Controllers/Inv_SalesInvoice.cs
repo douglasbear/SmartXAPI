@@ -508,7 +508,7 @@ namespace SmartxAPI.Controllers
                             {
                                 object category = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_CompanyId=" + nCompanyId + " and X_PkeyCode=" + taxID + " ", QueryParamsList, Con);
                                 object taxCatID = dLayer.ExecuteScalar("Select N_PkeyID from Acc_TaxCategory where N_CompanyId=" + nCompanyId + " and X_PkeyCode=" + taxID + " ", QueryParamsList, Con);
-                                object percentage = dLayer.ExecuteScalar("Select Cast(REPLACE(N_Amount,',','') as Numeric(10,0)) from Acc_TaxCategory where N_PkeyID=" + taxID + " ", QueryParamsList, Con);
+                                object percentage = dLayer.ExecuteScalar("Select Cast(REPLACE(N_Amount,',','') as Numeric(10,0)) from Acc_TaxCategory where N_CompanyId=" + nCompanyId + " and X_PkeyCode=" + taxID + " ", QueryParamsList, Con);
 
                                 MasterTable.Rows[0]["X_DisplayName"] = category.ToString();
                                 MasterTable.Rows[0]["n_TaxCategoryID"] = myFunctions.getIntVAL(taxCatID.ToString());
