@@ -459,6 +459,47 @@ namespace SmartxAPI.Controllers
 
 
         }
+         [HttpPost("update")]
+        public ActionResult ChangeData([FromBody] DataSet ds)
+        {
+            try
+            {
+                 using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                     SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    MasterTable = ds.Tables["master"];
+                    SortedList Params = new SortedList();
+                    object vendor;
+
+                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                     int nPurchaseID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PurchaseID"].ToString());
+                     int nFnYearID=myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                     int nVendorID=myFunctions.getIntVAL(MasterTable.Rows[0]["n_VendorID"].ToString());
+                   
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@nPurchaseID", nPurchaseID);
+                    Params.Add("@nFnYearID", nFnYearID);
+                       Params.Add("@nVendorID", nVendorID);
+                    vendor=dLayer.ExecuteScalar("select  X_VendorName from Inv_Vendor where N_VendorID =" + nVendorID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " ", connection,transaction);               
+
+                    dLayer.ExecuteNonQuery("update Inv_Purchase set  D_ScheduleDate=null,n_ScheduledAmtF=null,n_ScheduledAmt=null  where  N_CompanyID=@nCompanyID and N_PurchaseID=@nPurchaseID" , Params, connection,transaction);
+                    
+                    transaction.Commit();
+                    return Ok(_api.Success(vendor+  "   Deleted Sucessfully"));
+                }
+            }
+           catch (Exception ex)
+            {
+                return Ok(_api.Error(User,ex));
+            }
+        }
+
+
 
     }
+    
+    
 }
+
