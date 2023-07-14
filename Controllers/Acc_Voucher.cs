@@ -334,32 +334,31 @@ namespace SmartxAPI.Controllers
                              transaction.Rollback();
                              return Ok(api.Error(User, "Invalid cheque number. Please double-check and enter a valid cheque number"));
                     }
+
+
+                     object countPayment = dLayer.ExecuteScalar("Select count(*) from Inv_PayReceipt Where  N_CompanyID= " + nCompanyId + "  and  N_DefLedgerID="+myFunctions.getIntVAL(masterRow["N_DefLedgerID"].ToString())+" and X_ChequeNo='"+myFunctions.getVAL(masterRow["X_ChequeNo"].ToString())+"'", connection, transaction);
+                         if(countPayment==null)
+                         {
+                            countPayment=0;
+                         }
+                         int N_countPayment = myFunctions.getIntVAL(countPayment.ToString());
+                         if (N_countPayment > 0)
+                         {
+                             object paymentNo= dLayer.ExecuteScalar("Select TOP 1 X_VoucherNo from Inv_PayReceipt Where  N_CompanyID= " + nCompanyId + " and    N_DefLedgerID="+myFunctions.getIntVAL(masterRow["N_DefLedgerID"].ToString())+" and X_ChequeNo='"+myFunctions.getVAL(masterRow["X_ChequeNo"].ToString())+"'", connection, transaction);
+                             transaction.Rollback();
+                             return Ok(api.Error(User, "Chque Number already used for Payment "+paymentNo.ToString()+""));
+                         }
+
+
+
+
+
+
+
+
                     }
 
-                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_VoucherID > 0)
-                    {
-                        int N_PkeyID = N_VoucherID;
-                        string X_Criteria = "N_VoucherID=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId;
-                        myFunctions.UpdateApproverEntry(Approvals, "Acc_VoucherMaster", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, myFunctions.getIntVAL(nFnYearId.ToString()), xTransType, N_PkeyID, xVoucherNo, 1, "", 0, "",0, User, dLayer, connection, transaction);
-                        //myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_SalesID, objCustName.ToString().Trim(), objCustCode.ToString(), N_CustomerID, "Customer Document", User, connection, transaction);
-
-                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Acc_VoucherMaster where N_VoucherID=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, connection, transaction).ToString());
-                        if (N_SaveDraft == 0)
-                        {
-                            SortedList PostingParams = new SortedList();
-                            PostingParams.Add("N_CompanyID", nCompanyId);
-                            PostingParams.Add("X_InventoryMode", xTransType);
-                            PostingParams.Add("N_InternalID", N_VoucherID);
-                            PostingParams.Add("N_UserID", nUserId);
-                            PostingParams.Add("X_SystemName", "ERP Cloud");
-                            object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
-                        }
-
-                        //myFunctions.SendApprovalMail(N_NextApproverID, nFormID, N_PkeyID, xTransType, xVoucherNo, dLayer, connection, transaction, User);
-                        transaction.Commit();
-                        return Ok(api.Success("Voucher Approved " + "-" + xVoucherNo));
-                    }
+             
 
                     if (xVoucherNo == "@Auto")
                     {
@@ -402,6 +401,30 @@ namespace SmartxAPI.Controllers
                              if (dltRes <= 0){transaction.Rollback();return Ok(api.Error(User,"Unable to Update"));}
                              xButtonAction="Update"; 
                         }
+                    }
+                           if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_VoucherID > 0)
+                    {
+                        int N_PkeyID = N_VoucherID;
+                        string X_Criteria = "N_VoucherID=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId;
+                        myFunctions.UpdateApproverEntry(Approvals, "Acc_VoucherMaster", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, myFunctions.getIntVAL(nFnYearId.ToString()), xTransType, N_PkeyID, xVoucherNo, 1, "", 0, "",0, User, dLayer, connection, transaction);
+                        //myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_SalesID, objCustName.ToString().Trim(), objCustCode.ToString(), N_CustomerID, "Customer Document", User, connection, transaction);
+
+                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Acc_VoucherMaster where N_VoucherID=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, connection, transaction).ToString());
+                        if (N_SaveDraft == 0)
+                        {
+                            SortedList PostingParams = new SortedList();
+                            PostingParams.Add("N_CompanyID", nCompanyId);
+                            PostingParams.Add("X_InventoryMode", xTransType);
+                            PostingParams.Add("N_InternalID", N_VoucherID);
+                            PostingParams.Add("N_UserID", nUserId);
+                            PostingParams.Add("X_SystemName", "ERP Cloud");
+                            object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
+                        }
+
+                        //myFunctions.SendApprovalMail(N_NextApproverID, nFormID, N_PkeyID, xTransType, xVoucherNo, dLayer, connection, transaction, User);
+                        transaction.Commit();
+                        return Ok(api.Success("Voucher Approved " + "-" + xVoucherNo));
                     }
 
                     string DupCriteria = "N_CompanyID = " + nCompanyId + " and X_VoucherNo = '" + xVoucherNo + "' and N_FnYearID=" + nFnYearId + " and X_TransType = '" + xTransType + "'";

@@ -468,11 +468,29 @@ namespace SmartxAPI.Controllers
                             count=0;
                          }
                          int N_Count = myFunctions.getIntVAL(count.ToString());
-                    if (N_Count > 0)
-                    {
+                         if (N_Count > 0)
+                         {
+                             object paymentNo= dLayer.ExecuteScalar("Select TOP 1 X_VoucherNo from Inv_PayReceipt Where  N_CompanyID= " + nCompanyId + " and  N_PayReceiptID <> "+myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayReceiptID"].ToString())+" and  N_DefLedgerID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_DefLedgerID"].ToString())+" and X_ChequeNo='"+myFunctions.getVAL(MasterTable.Rows[0]["X_ChequeNo"].ToString())+"'", connection, transaction);
                              transaction.Rollback();
-                             return Ok(api.Error(User, "Invalid cheque number. Please double-check and enter a valid cheque number"));
-                    }
+                             return Ok(api.Error(User, "Chque Number already used for Payment "+paymentNo.ToString()+""));
+                         }
+                         object countVoucher =dLayer.ExecuteScalar("Select count(*) from Acc_VoucherMaster Where  N_CompanyID= " + nCompanyId + " and X_TransType ='PV' and  N_DefLedgerID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_DefLedgerID"].ToString())+" and X_ChequeNo='"+myFunctions.getVAL(MasterTable.Rows[0]["X_ChequeNo"].ToString())+"'", connection, transaction);
+                         if(countVoucher==null)
+                         {
+                            countVoucher=0;
+                         }
+                         int n_countVoucher = myFunctions.getIntVAL(countVoucher.ToString());
+                         if (n_countVoucher > 0)
+                         {
+                             object VoucherNo =dLayer.ExecuteScalar("Select TOP 1 X_VoucherNo from Acc_VoucherMaster Where  N_CompanyID= " + nCompanyId + " and X_TransType ='PV' and  N_DefLedgerID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_DefLedgerID"].ToString())+" and X_ChequeNo='"+myFunctions.getVAL(MasterTable.Rows[0]["X_ChequeNo"].ToString())+"'", connection, transaction);
+                             transaction.Rollback();
+                             return Ok(api.Error(User, "Chque Number already used for Payment Voucher "+VoucherNo.ToString()+""));
+                         }
+
+
+
+
+
                     }
 
                     if (MasterTable.Columns.Contains("x_Desc"))
