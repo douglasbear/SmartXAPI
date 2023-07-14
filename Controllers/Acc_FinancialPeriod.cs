@@ -151,7 +151,7 @@ namespace SmartxAPI.Controllers
            
                     }
                    
-                    int n_PeriodID = dLayer.SaveData("Acc_Period", "N_PeriodID", "", "", MasterTable, connection, transaction);
+                    int n_PeriodID = dLayer.SaveData("Acc_Period", "N_PeriodID", MasterTable, connection, transaction);
                     if (n_PeriodID <= 0)
                     {
                         transaction.Rollback();
@@ -174,7 +174,7 @@ namespace SmartxAPI.Controllers
         }
 
          [HttpGet("details")]
-        public ActionResult EmployeeEvaluation(string PeriodCode)
+        public ActionResult EmployeeEvaluation(string PeriodCode, int nFnYearID)
         {
             try
             {
@@ -190,7 +190,8 @@ namespace SmartxAPI.Controllers
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     Params.Add("@PeriodCode", PeriodCode);
-                    Mastersql = "select * from Acc_Period where N_CompanyID=@nCompanyID and X_PeriodCode=@PeriodCode ";
+                    Params.Add("@nFnYearID", nFnYearID);
+                    Mastersql = "select * from Acc_Period where N_CompanyID=@nCompanyID and X_PeriodCode=@PeriodCode and N_FnyearID=@nFnYearID";
                    
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -242,5 +243,53 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User,ex));
             }
         }
+             [HttpPost("monthlyPeriod")]
+          public ActionResult MonthlyPeriod([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    MasterTable = ds.Tables["master"];
+                    DataRow MasterRow = MasterTable.Rows[0];
+                    SortedList Params = new SortedList();
+
+                    int nPeriodID = myFunctions.getIntVAL(MasterRow["N_PeriodID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(MasterRow["N_FnYearID"].ToString());
+                    int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+
+                       SortedList PostingParam = new SortedList();
+                            PostingParam.Add("N_CompanyID", nCompanyID);
+                            PostingParam.Add("N_FnYearID", nFnYearID);
+                            PostingParam.Add("D_Start", MasterRow["d_start"].ToString());
+                            PostingParam.Add("D_End",MasterRow["d_End"].ToString());
+                            PostingParam.Add("X_Type",MasterRow["type"].ToString());
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_FinancialYear_Create_New", PostingParam, connection, transaction);
+                            }  
+                         catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User,ex));
+                        }
+                   
+
+                    transaction.Commit();
+                    return Ok(_api.Success("Financial Period Created")) ;
+                }
+            }
+            
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User,ex));
+            }
+        }
     }
 }
+
+
+  
