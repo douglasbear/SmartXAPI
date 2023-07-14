@@ -692,13 +692,27 @@ namespace SmartxAPI.GeneralFunctions
                                 }
                                 if (myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString())> 0 && tempPOrderID!=myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString()))
                                 {
-                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString()),82,false,dLayer,connection,transaction))
+                                    if (myFunctions.getIntVAL(masterRow["n_FormID"].ToString()) == 1605)
                                     {
-                                        // xturn Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString()),1586,false,dLayer,connection,transaction))
+                                        {
+                                            // xturn Ok(_api.Error(User, "Unable To Update Txn Status"));
 
-                                        Result.Add("b_IsCompleted", 0);
-                                        Result.Add("x_Msg", "Unable To Update Txn Status");
-                                        return Result;
+                                            Result.Add("b_IsCompleted", 0);
+                                            Result.Add("x_Msg", "Unable To Update Txn Status");
+                                            return Result;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString()),82,false,dLayer,connection,transaction))
+                                        {
+                                            // xturn Ok(_api.Error(User, "Unable To Update Txn Status"));
+
+                                            Result.Add("b_IsCompleted", 0);
+                                            Result.Add("x_Msg", "Unable To Update Txn Status");
+                                            return Result;
+                                        }
                                     }
                                 }
                                 tempPOrderID=myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString());
