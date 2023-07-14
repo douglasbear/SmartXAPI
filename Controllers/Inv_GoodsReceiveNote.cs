@@ -551,11 +551,28 @@ namespace SmartxAPI.Controllers
 
                         if (n_POrderID > 0)
                         {
-                            if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
-                                    {
-                                        transaction.Rollback();
-                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
-                                    }
+                            // if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
+                            //         {
+                            //             transaction.Rollback();
+                            //             return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                            //         }
+
+                            if (myFunctions.getIntVAL(masterRow["n_FormID"].ToString()) == 1593)
+                            {
+                                if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,1586,false,dLayer,connection,transaction))
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                }
+                            }
+                            else
+                            {
+                                if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                }
+                            }
                         }
                     }
 
@@ -724,10 +741,26 @@ namespace SmartxAPI.Controllers
                                 int n_POrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_POrderID"].ToString());
                                 if (n_POrderID > 0 && tempPOrderID!=n_POrderID)
                                 {
-                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,true,dLayer,connection,transaction))
+                                    // if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,true,dLayer,connection,transaction))
+                                    // {
+                                    //     transaction.Rollback();
+                                    //     return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                    // }
+                                    if (nFormID == 1593)
                                     {
-                                        transaction.Rollback();
-                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,1586,false,dLayer,connection,transaction))
+                                        {
+                                            transaction.Rollback();
+                                            return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
+                                        {
+                                            transaction.Rollback();
+                                            return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                        }
                                     }
                                 }
                                 tempPOrderID=n_POrderID;
