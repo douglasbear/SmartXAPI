@@ -663,8 +663,10 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             Params.Add("@nEmpCode", xEmpCode);
             Params.Add("@dEventDate", dEventDate);
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
             // string sqlCommandText="select * from Pay_TimesheetReport where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID and D_EventDate=@dEventDate order by D_In,D_Out";
-            string sqlCommandText = "select UserID as X_EmpCode ,cast(TransactionTime as date) as date,CAST(TransactionTime AS TIME) as time from Pay_TimesheetLog where cast(TransactionTime as date)=@dEventDate and UserID=@nEmpCode order by TransactionTime asc";
+            string sqlCommandText = "select UserID as X_EmpCode ,cast(TransactionTime as date) as date,CAST(TransactionTime AS TIME) as time from Pay_TimesheetLog where cast(TransactionTime as date)=@dEventDate and UserID=@nEmpCode and N_CompanyID=@nCompanyID order by TransactionTime asc";
             SortedList OutPut = new SortedList();
             try
             {

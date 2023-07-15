@@ -1404,7 +1404,7 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nTransID", nPurchaseID);
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", nCompanyID);
-                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_VendorID,0) as N_VendorID,X_InvoiceNo from Inv_Purchase where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_PurchaseID=@nTransID";
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_VendorID,0) as N_VendorID,X_InvoiceNo,N_FormID from Inv_Purchase where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_PurchaseID=@nTransID";
                    string xButtonAction="Delete";
                     string X_InvoiceNo="";
 
@@ -1507,10 +1507,27 @@ namespace SmartxAPI.Controllers
                                 int n_POrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_POrderID"].ToString());
                                 if (n_POrderID > 0 && tempPOrderID!=n_POrderID)
                                 {
-                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,true,dLayer,connection,transaction))
+                                    // if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,true,dLayer,connection,transaction))
+                                    // {
+                                    //     transaction.Rollback();
+                                    //     return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                    // }
+
+                                    if (myFunctions.getIntVAL(TransRow["n_FormID"].ToString()) == 1605)
                                     {
-                                        transaction.Rollback();
-                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,1586,false,dLayer,connection,transaction))
+                                        {
+                                            transaction.Rollback();
+                                            return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
+                                        {
+                                            transaction.Rollback();
+                                            return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                        }
                                     }
                                 }
                                 tempPOrderID=n_POrderID;

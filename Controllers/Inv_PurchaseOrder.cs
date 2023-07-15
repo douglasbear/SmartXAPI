@@ -785,10 +785,26 @@ namespace SmartxAPI.Controllers
 
                     if (N_POrderID > 0)
                     {
-                        if(!myFunctions.UpdateTxnStatus(nCompanyId,N_POrderID,82,false,dLayer,connection,transaction))
+                        // if(!myFunctions.UpdateTxnStatus(nCompanyId,N_POrderID,82,false,dLayer,connection,transaction))
+                        // {
+                        //     transaction.Rollback();
+                        //     return Ok(api.Error(User, "Unable To Update Txn Status"));
+                        // }
+                        if (myFunctions.getIntVAL(MasterTable.Rows[0]["n_FormID"].ToString()) == 1586)
                         {
-                            transaction.Rollback();
-                            return Ok(api.Error(User, "Unable To Update Txn Status"));
+                            if(!myFunctions.UpdateTxnStatus(nCompanyId,N_POrderID,1586,false,dLayer,connection,transaction))
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error(User, "Unable To Update Txn Status"));
+                            }
+                        }
+                        else
+                        {
+                            if(!myFunctions.UpdateTxnStatus(nCompanyId,N_POrderID,82,false,dLayer,connection,transaction))
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error(User, "Unable To Update Txn Status"));
+                            }
                         }
                     }
                  
