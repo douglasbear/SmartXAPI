@@ -287,9 +287,15 @@ namespace SmartxAPI.Controllers
 
                     string DetailSql = "";
 
-
+                    int nUserID = myFunctions.GetUserID(User);
                     bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Admin", "X_UserCategory", dLayer, connection);
-                    bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Admin", "X_UserCategory", dLayer, connection);
+                    //bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Admin", "X_UserCategory", dLayer, connection);
+                     bool PurchaseRequestVisible = false;
+                     if(nVendorID>0 && nQuotationID>0){
+                      PurchaseRequestVisible = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges where N_MenuID=1049 and N_UserCategoryID  in(select N_UserCategoryID from Sec_User where N_UserID="+myFunctions.GetUserID(User)+") and N_CompanyID=" + nCompanyId, Params, connection));
+                
+                     }
+                     
                     if (MaterailRequestVisible || PurchaseRequestVisible)
                     {
                         B_PRSVisible = true;
