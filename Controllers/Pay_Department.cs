@@ -265,9 +265,14 @@ namespace SmartxAPI.Controllers
                     int N_GroupID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_GroupID"].ToString());
                     int N_LevelID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LevelID"].ToString());
                     int N_LevelPattern = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LevelPattern"].ToString());
-                    string X_LevelPattern = MasterTable.Rows[0]["x_LevelPattern"].ToString();
+                     string X_LevelPattern ="";
+                    if(MasterTable.Columns.Contains("x_LevelPattern"))
+                         X_LevelPattern = MasterTable.Rows[0]["x_LevelPattern"].ToString();
                     // MasterTable.Rows[0]["n_ManagerID"]=myFunctions.getIntVAL(MasterTable.Rows[0]["n_Empid"].ToString());  // commented by rks
-
+                    if(!MasterTable.Columns.Contains("x_LevelPattern"))
+                    {
+                         myFunctions.AddNewColumnToDataTable(MasterTable, "x_LevelPattern", typeof(string), "");
+                    }
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nFnYearID", N_FnYearID);
                     QueryParams.Add("@nCostCentreID", N_CostCentreID);
