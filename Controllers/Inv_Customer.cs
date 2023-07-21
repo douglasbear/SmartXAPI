@@ -212,11 +212,7 @@ namespace SmartxAPI.Controllers
                     nLedgerID=myFunctions.getIntVAL(MasterTable.Rows[0]["N_LedgerID"].ToString());
 
                 }
-                 if(MasterTable.Columns.Contains("X_Address"))
-                {
-                    MasterTable.Rows[0]["X_Address"]=$"N{MasterTable.Rows[0]["X_Address"]}";
-
-                }
+                 
                 int nCrmCustomerID = 0;
                 int flag=0;
                 int customerFlag=0;
