@@ -236,7 +236,15 @@ namespace SmartxAPI.Controllers
 
                     if (dRow["X_DefaultCriteria"].ToString() != "")
                     {
-                        Criterea = " ( " + dRow["X_DefaultCriteria"].ToString() + " ) ";
+                        if (nFormID == 81)
+                            Criterea = "N_CompanyID=@cVal and N_FnYearID=@fVal and N_FormID in (81, 1459) and N_CompanyID=@cVal and N_FnYearID=@fVal";
+                        else if (nFormID == 1459 || nFormID == 1732)
+                            Criterea = "N_CompanyID=@cVal and N_FnYearID=@fVal and N_FormID in (1459) and N_CompanyID=@cVal and N_FnYearID=@fVal and N_UserID=@userVal";
+                        else
+                            Criterea = " ( " + dRow["X_DefaultCriteria"].ToString() + " ) ";
+
+                        if (nFormID == 1732)
+                            Criterea = "N_CompanyID=@cVal and N_FnYearID=@fVal and N_FormID in (64) and N_CompanyID=@cVal and N_FnYearID=@fVal and N_UserID=@userVal";
                     }
 
                     if (bAllBranchData == false && dRow["X_BranchCriteria"].ToString() != "")
