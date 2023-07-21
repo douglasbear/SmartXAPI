@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetDashboardList(int nFnYearID, int nPage, int nSizeperpage, string xSearchkey, string xSearchField, string xSortBy, int nBranchID, int nEmpID, int nUserID, int nDecimalPlace, bool bAllBranchData, int nFormID, int nTableViewID,int nLocationID, bool export, int nCountryID)
+        public ActionResult GetDashboardList(int nFnYearID, int nPage, int nSizeperpage, string xSearchkey, string xSearchField, string xSortBy, int nBranchID, int nEmpID, int nUserID, int nDecimalPlace, bool bAllBranchData, int nFormID, int nTableViewID,int nLocationID, bool export, int nCountryID, int customerID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             SortedList OutPut = new SortedList();
@@ -123,6 +123,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@userVal", nUserID);
             Params.Add("@lVal", nLocationID);
             Params.Add("@ctrVal", nCountryID);
+            Params.Add("@custVal", customerID);
 
             string UserPattern = myFunctions.GetUserPattern(User);
             if (UserPattern != "")
@@ -237,14 +238,14 @@ namespace SmartxAPI.Controllers
                     if (dRow["X_DefaultCriteria"].ToString() != "")
                     {
                         if (nFormID == 81)
-                            Criterea = "N_CompanyID=@cVal and N_FnYearID=@fVal and N_FormID in (81, 1459) and N_CompanyID=@cVal and N_FnYearID=@fVal";
-                        else if (nFormID == 1459 || nFormID == 1732)
-                            Criterea = "N_CompanyID=@cVal and N_FnYearID=@fVal and N_FormID in (1459) and N_CompanyID=@cVal and N_FnYearID=@fVal and N_UserID=@userVal";
+                            Criterea = "N_CompanyID=@cVal and N_FnYearID=@fVal and N_FormID in (81,1459) and N_CompanyID=@cVal and N_FnYearID=@fVal";
+                        else if (nFormID == 1459)
+                            Criterea = "N_CompanyID=@cVal and N_FnYearID=@fVal and N_FormID in (81,1459) and N_CompanyID=@cVal and N_FnYearID=@fVal and N_CustomerID=@custVal";
                         else
                             Criterea = " ( " + dRow["X_DefaultCriteria"].ToString() + " ) ";
 
                         if (nFormID == 1732)
-                            Criterea = "N_CompanyID=@cVal and N_FnYearID=@fVal and N_FormID in (64) and N_CompanyID=@cVal and N_FnYearID=@fVal and N_UserID=@userVal";
+                            Criterea = "N_CompanyID=@cVal and N_FnYearID=@fVal and N_FormID in (64) and N_CompanyID=@cVal and N_FnYearID=@fVal and N_CustomerID=@custVal";
                     }
 
                     if (bAllBranchData == false && dRow["X_BranchCriteria"].ToString() != "")
