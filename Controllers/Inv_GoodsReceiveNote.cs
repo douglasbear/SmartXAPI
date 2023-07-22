@@ -618,7 +618,11 @@ namespace SmartxAPI.Controllers
                 SortedList Result = new SortedList();
                 Result.Add("N_MRNID", N_GRNID);
                 Result.Add("X_MRNNo", GRNNo);
-                return Ok(_api.Success(Result, "Goods Receive Note Saved"));
+
+                if (n_FormID == 1593)
+                    return Ok(_api.Success(Result, "Rental MRN Saved"));
+                else
+                    return Ok(_api.Success(Result, "Goods Receive Note Saved"));
             }
             catch (Exception ex)
             {
