@@ -721,8 +721,43 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User,e));
             }
         }
+         [HttpGet("vendorBalance")]
+        public ActionResult GetCustomerDetail(int nVendorID )
+        {
+            DataTable dt = new DataTable();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommmand = "";
+            SortedList Params = new SortedList();
+            Params.Add("@nCompanyID", nCompanyID);
 
-      
+
+            SortedList OutPut = new SortedList();
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+
+                    connection.Open();
+                    Params.Add("@nVendorID", nVendorID);
+                      sqlCommmand = "select top 1 X_VendorName from Inv_Vendor where N_CompanyID=@nCompanyID and  N_VendorID="+nVendorID+"";
+                         dt = dLayer.ExecuteDataTable(sqlCommmand, Params, connection);
+                    double  currentBalance=  myFunctions.getVAL(dLayer.ExecuteScalar("SELECT  Sum(n_Amount)  as N_BalanceAmount from  vw_InvVendorStatement Where N_AccType=1 and N_AccID=" + nVendorID + " and N_CompanyID=" + nCompanyID,Params,connection).ToString());
+                    
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "currentBalance", typeof(double), currentBalance);
+                  
+                    dt.AcceptChanges();   
+                   }
+                    
+                    
+                    return Ok(_api.Success(dt));
+
+                }
+                    catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+            }
+        
 
 
     }
