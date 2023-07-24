@@ -612,7 +612,7 @@ namespace SmartxAPI.GeneralFunctions
                 object nCostCentreID=null;
                 object xPattern=null;
 
-                costcntrID=dLayer.ExecuteScalar(" select top(1) N_CostCentreID from Vw_PurchaseCostcenterDetails where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID + "",connection, transaction); 
+                costcntrID=dLayer.ExecuteScalar(" select top(1) N_CostCentreID from Vw_PurchaseCostcenterDetails where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID + "ORDER BY N_PurchaseDetailsID ASC",connection, transaction); 
                 if(costcntrID!=null)
                 {
                   xPattern=dLayer.ExecuteScalar(" SELECT SUBSTRING(X_LevelPattern, 1, 3) AS X_Pattern FROM Acc_CostCentreMaster where N_CostCentreID=" + costcntrID + " and N_CompanyID =" + nCompanyID+"",connection, transaction); 
@@ -1466,7 +1466,7 @@ namespace SmartxAPI.GeneralFunctions
                 object nCostCentreID=null;
                 object xPattern=null;
 
-                costcntrID=dLayer.ExecuteScalar(" select top(1) N_CostCentreID from Vw_SalesCostcenterDetails where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + "",connection, transaction); 
+                costcntrID=dLayer.ExecuteScalar(" select top(1) N_CostCentreID from Vw_SalesCostcenterDetails where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + "ORDER BY N_SalesDetailsID ASC",connection, transaction); 
                 if(costcntrID!=null)
                 {
                   xPattern=dLayer.ExecuteScalar(" SELECT SUBSTRING(X_LevelPattern, 1, 3) AS X_Pattern FROM Acc_CostCentreMaster where N_CostCentreID=" + costcntrID + " and N_CompanyID =" + N_CompanyID+"",connection, transaction); 
