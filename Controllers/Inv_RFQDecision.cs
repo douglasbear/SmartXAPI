@@ -20,12 +20,14 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+         private readonly IMyAttachments myAttachments;
         private readonly int FormID = 955;
 
-        public Inv_RFQDecision(IApiFunctions apiFun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Inv_RFQDecision(IApiFunctions apiFun, IDataAccessLayer dl, IMyFunctions myFun,IMyAttachments myAtt, IConfiguration conf)
         {
             api = apiFun;
             dLayer = dl;
+            myAttachments = myAtt;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID=955;
@@ -112,11 +114,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nRFQDecisionID,int nFnYearID)
+        public ActionResult DeleteData(int nRFQDecisionID,int nFnYearID,int nCustomerId)
         {
             int Results = 0;
              SortedList ParamList=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
+            //  DataTable TransData = new DataTable();
+            //  DataRow TransRow = TransData.Rows[0];
+            //  int N_RFQDecisionID = myFunctions.getIntVAL(TransRow["N_RFQDecisionID"].ToString());
              SortedList Params = new SortedList();
              ParamList.Add("@nFnYearID",nFnYearID);
               string xButtonAction="Delete";
@@ -143,9 +148,11 @@ namespace SmartxAPI.Controllers
 
                     if (Results > 0)
                     {
+
+                         myAttachments.DeleteAttachment(dLayer, 1, nRFQDecisionID, nCustomerId, nFnYearID, this.FormID, User, transaction, connection);
                         transaction.Commit();
                         return Ok(api.Success("RFQ Decision deleted"));
-                    }
+                    } 
                     else
                     {
                         transaction.Rollback();
@@ -168,6 +175,7 @@ namespace SmartxAPI.Controllers
 
             DataTable MasterTable;
             DataTable DetailTable;
+             DataTable CustomerInfo;
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
             SortedList Params = new SortedList();
@@ -175,15 +183,25 @@ namespace SmartxAPI.Controllers
             // Auto Gen
             try
             {
+
+               
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     string X_RFQDecisionCode = "";
+                    DataTable Attachment = ds.Tables["attachments"];
                     int N_RFQDecisionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RFQDecisionID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
+                     string x_RFQDecisionCode =MasterTable.Rows[0]["X_RFQDecisionCode"].ToString();
+                    int n_RFQDecisionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RFQDecisionID"].ToString());
                     int N_UserID = myFunctions.GetUserID(User);
+                    int N_CustomerId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerId"].ToString());
+                    CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID="+ N_CustomerId, Params, connection, transaction);
+
+                     if (MasterTable.Columns.Contains("n_CustomerId"))
+                      MasterTable.Columns.Remove("n_CustomerId");
 
                     var values = MasterTable.Rows[0]["X_RFQDecisionCode"].ToString();
                     if (values == "@Auto")
@@ -204,6 +222,22 @@ namespace SmartxAPI.Controllers
                     }
 
                     N_RFQDecisionID = dLayer.SaveData("Inv_RFQDecisionMaster", "N_RFQDecisionID", MasterTable, connection, transaction);
+
+
+
+                      if (CustomerInfo.Rows.Count > 0)
+                    {
+                        try
+                        {
+                            myAttachments.SaveAttachment(dLayer, Attachment,x_RFQDecisionCode, N_RFQDecisionID, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), CustomerInfo.Rows[0]["X_CustomerCode"].ToString(), N_CustomerId, "Customer Document", User, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, ex));
+                        }
+                    }
+
                    xButtonAction="Update"; 
                     if (N_RFQDecisionID <= 0)
                     {
@@ -214,6 +248,7 @@ namespace SmartxAPI.Controllers
                     {
                         DetailTable.Rows[j]["N_RFQDecisionID"] = N_RFQDecisionID;
                     }
+            
 
             // Activity Log
                 string ipAddress = "";
@@ -239,6 +274,7 @@ namespace SmartxAPI.Controllers
                     Result.Add("X_RFQDecisionCode", X_RFQDecisionCode);
                     return Ok(api.Success(Result, "Request Saved"));
                 }
+                
             }
             catch (Exception ex)
             {
@@ -255,6 +291,8 @@ namespace SmartxAPI.Controllers
             DataSet ds = new DataSet();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
+            
+            
 
             int companyid = myFunctions.GetCompanyID(User);
 
@@ -262,8 +300,11 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@xRFQDecisionCode", xRFQDecisionCode);
             QueryParams.Add("@nBranchID", nBranchID);
             QueryParams.Add("@nFnYearID", nFnYearID);
+            
             string Condition = "";
             string _sqlQuery = "";
+
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -282,6 +323,9 @@ namespace SmartxAPI.Controllers
 
                     Master = api.Format(Master, "master");
 
+                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_RFQDecisionID"].ToString()), this.FormID, myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                    Attachments = api.Format(Attachments, "attachments");
+                  
                     if (Master.Rows.Count == 0)
                     {
                         return Ok(api.Notice("No Results Found"));
@@ -301,9 +345,17 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Notice("No Results Found"));
                         }
                         ds.Tables.Add(Detail);
+                        ds.Tables.Add(Attachments);
+
+                            
 
                         return Ok(api.Success(ds));
                     }
+          
+                 
+                 
+
+  
 
 
                 }
