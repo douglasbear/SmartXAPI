@@ -46,7 +46,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearId);
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ( X_ReferenceNo like '%" + xSearchkey + "%' or  D_Date like '%" + xSearchkey + "%'  ) ";
+                Searchkey = "and ( X_ReferenceNo like '%" + xSearchkey + "%' or cast([d_Date] as VarChar)   like '%" + xSearchkey + "%'  or x_ItemName like '%" + xSearchkey + "%'  or x_LocationName like '%" + xSearchkey + "%'   or status like '%" + xSearchkey + "%' ) ";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_AssemblyID desc";

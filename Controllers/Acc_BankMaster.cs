@@ -83,6 +83,7 @@ namespace SmartxAPI.Controllers
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 string logo = myFunctions.ContainColumn("i_Logo", MasterTable) ? MasterTable.Rows[0]["i_Logo"].ToString() : "";    
                 string xBankCode = MasterTable.Rows[0]["x_BankCode"].ToString();
+                   string xBankCodeRef = MasterTable.Rows[0]["x_BankCodeRef"].ToString();
 
                  Byte[] logoBitmap = new Byte[logo.Length];
                  logoBitmap = Convert.FromBase64String(logo);
@@ -90,19 +91,45 @@ namespace SmartxAPI.Controllers
                         MasterTable.Columns.Remove("i_Logo");
                  MasterTable.AcceptChanges();
 
-                 if (xBankCode == "@Auto")
+                //  if (xBankCode == "@Auto")
+                //     {
+                //         Params.Add("N_CompanyID", nCompanyID);
+                //         Params.Add("N_YearID", nFnYearID);
+                //         Params.Add("N_FormID", this.FormID);
+                //          xBankCode = dLayer.GetAutoNumber("Acc_BankMaster", "x_BankCode", Params, connection, transaction);
+                //         if (xBankCode == "") { transaction.Rollback();return Ok(_api.Error(User,"Unable to generate Bank Code")); }
+                //         MasterTable.Rows[0]["x_BankCode"] = xBankCode;
+                //     }
+                //     else
+                //     {
+                //         dLayer.DeleteData("Acc_BankMaster", "N_BankID", nBankID, "", connection, transaction);
+                //     }
+                //     if(xBankCodeRef=="@Auto")
+                //     {
+                //           xBankCode = dLayer.GetAutoNumber("Acc_BankMaster", "x_BankCode", Params, connection, transaction);
+                //          MasterTable.Rows[0]["x_BankCode"] = xBankCodeRef;
+                //     }
+
+                if (xBankCode == "@Auto")
                     {
-                        Params.Add("N_CompanyID", nCompanyID);
-                        Params.Add("N_YearID", nFnYearID);
-                        Params.Add("N_FormID", this.FormID);
-                        xBankCode = dLayer.GetAutoNumber("Acc_BankMaster", "x_BankCode", Params, connection, transaction);
-                        if (xBankCode == "") { transaction.Rollback();return Ok(_api.Error(User,"Unable to generate Bank Code")); }
-                        MasterTable.Rows[0]["x_BankCode"] = xBankCode;
-                    }
-                    else
-                    {
-                        dLayer.DeleteData("Acc_BankMaster", "N_BankID", nBankID, "", connection, transaction);
-                    }
+                         Params.Add("N_CompanyID", nCompanyID);
+                         Params.Add("N_YearID", nFnYearID);
+                         Params.Add("N_FormID", this.FormID);
+                          xBankCode = dLayer.GetAutoNumber("Acc_BankMaster", "x_BankCode", Params, connection, transaction);
+                       if (xBankCode == "")
+                           {
+                            transaction.Rollback();
+                             return Ok(_api.Error(User, "Unable to generate Bank Code"));
+                            }
+                            MasterTable.Rows[0]["x_BankCode"] = xBankCode;
+                          }
+
+                        if (xBankCodeRef == "@Auto")
+            {
+              xBankCodeRef = xBankCode; // Use the auto-generated value for x_BankCodeRef
+            }
+
+             MasterTable.Rows[0]["x_BankCodeRef"] = xBankCodeRef;
                     
                     nBankID=dLayer.SaveData("Acc_BankMaster","N_BankID",MasterTable,connection,transaction);  
                       if (nBankID <= 0)
