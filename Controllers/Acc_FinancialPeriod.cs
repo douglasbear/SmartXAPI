@@ -123,7 +123,9 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
+                    DataTable DetailTable;
                     MasterTable = ds.Tables["master"];
+                    DetailTable = ds.Tables["details"];
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
 
@@ -157,7 +159,13 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok("Unable to save");
                     }
-                 
+
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                     DetailTable.Rows[j]["N_PeriodID"] = n_PeriodID;
+                     int N_InvoiceDetailId = dLayer.SaveDataWithIndex("Acc_PeriodUserCategory", "n_PeriodUserID", "", "", j, DetailTable, connection, transaction);
+                    }
+
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
@@ -184,6 +192,7 @@ namespace SmartxAPI.Controllers
                     DataSet dt = new DataSet();
                     SortedList Params = new SortedList();
                     DataTable MasterTable = new DataTable();
+                    DataTable DetailTable = new DataTable();
                     DataTable DataTable = new DataTable();
                     string Mastersql = "";
                     string DetailSql = "";
@@ -201,7 +210,12 @@ namespace SmartxAPI.Controllers
                     MasterTable = _api.Format(MasterTable, "Master");
                  
                     dt.Tables.Add(MasterTable);
-                    
+
+                 DetailSql = "SELECT Sec_UserCategory.X_UserCategory,Acc_PeriodUserCategory.n_UserCategoryID,Acc_PeriodUserCategory.n_PeriodID,Acc_PeriodUserCategory.N_PeriodUserID,Acc_PeriodUserCategory.N_CompanyID FROM Acc_PeriodUserCategory LEFT OUTER JOIN Sec_UserCategory ON Acc_PeriodUserCategory.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID AND Acc_PeriodUserCategory.N_CompanyID = Sec_UserCategory.N_CompanyID where Acc_PeriodUserCategory.N_CompanyID=@nCompanyID and Acc_PeriodUserCategory.n_PeriodID=@nPeriodID";
+                  DataTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                  DataTable = _api.Format(DataTable, "Details");
+                   dt.Tables.Add(DataTable);
+
                     return Ok(_api.Success(dt));
                 }
             }

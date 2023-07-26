@@ -180,7 +180,9 @@ namespace SmartxAPI.Controllers
 
                     object RefundAmount = dLayer.ExecuteScalar("select SUM(N_RefundAmount) from Pay_LoanIssueDetails inner join Pay_LoanIssue on Pay_LoanIssueDetails.N_LoanTransID=Pay_LoanIssue.N_LoanTransID and Pay_LoanIssueDetails.N_CompanyID=Pay_LoanIssue.N_CompanyID where Pay_LoanIssue.N_LoanID =" + nLoanID + " and Pay_LoanIssue.N_CompanyID=" + companyid + " and Pay_LoanIssue.N_FnYearID =" + nFnYearID + "", QueryParams, connection);
 
-                    string _sqlQuery = "SELECT Pay_LoanIssue.*,Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Position.X_Position, Pay_Employee.X_EmpNameLocale, Pay_PayMaster.X_Description AS x_LoanType FROM Pay_PayMaster RIGHT OUTER JOIN Pay_LoanIssue ON Pay_PayMaster.N_FnYearID = Pay_LoanIssue.N_FnYearID AND Pay_PayMaster.N_CompanyID = Pay_LoanIssue.N_CompanyID AND Pay_PayMaster.N_PayID = Pay_LoanIssue.N_PayID LEFT OUTER JOIN Pay_Position RIGHT OUTER JOIN Pay_Employee ON Pay_Position.N_PositionID = Pay_Employee.N_PositionID AND Pay_Position.N_CompanyID = Pay_Employee.N_CompanyID ON Pay_LoanIssue.N_EmpID = Pay_Employee.N_EmpID AND Pay_LoanIssue.N_CompanyID = Pay_Employee.N_CompanyID AND Pay_LoanIssue.N_FnYearID = Pay_Employee.N_FnYearID where Pay_LoanIssue.N_LoanID=@nLoanID and Pay_LoanIssue.N_CompanyID=@nCompanyID";
+                    string _sqlQuery = " SELECT  Pay_LoanIssue.N_CompanyID, Pay_LoanIssue.N_EmpID, Pay_LoanIssue.N_LoanTransID, Pay_LoanIssue.D_LoanIssueDate, Pay_LoanIssue.D_EntryDate, Pay_LoanIssue.X_Remarks,Pay_LoanIssue.D_LoanPeriodFrom, Pay_LoanIssue.D_LoanPeriodTo, Pay_LoanIssue.N_LoanAmount, Pay_LoanIssue.N_LoanID, Pay_LoanIssue.N_PayID, Pay_LoanIssue.N_Installments,Pay_LoanIssue.N_DefLedgerID, Pay_LoanIssue.X_Paymentmethod, Pay_LoanIssue.X_ChequeNo, Pay_LoanIssue.D_ChequeDate, Pay_LoanIssue.N_UserID, Pay_LoanIssue.X_BankName, Pay_LoanIssue.N_FnYearID, Pay_LoanIssue.N_LoanStatus, Pay_LoanIssue.B_OpeningBal, Pay_LoanIssue.N_BranchID, Pay_LoanIssue.N_WebLoanId, Pay_LoanIssue.N_ApprovalLevelId,Pay_LoanIssue.N_ProcStatus, Pay_LoanIssue.N_NextApprovalID, Pay_LoanIssue.B_IsSaveDraft, Pay_LoanIssue.X_Comments, Pay_LoanIssue.X_Guarantor1, Pay_LoanIssue.X_Guarantor2,Pay_LoanIssue.X_RefFrom, Pay_LoanIssue.N_RefID, Pay_LoanIssue.N_StatusID, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Position.X_Position,Pay_Employee.X_EmpNameLocale, Pay_PayMaster.X_Description AS x_LoanType, Sec_User.X_UserName,CASE WHEN Pay_LoanIssue.N_StatusID = 1 THEN CONCAT('Approved by ', Sec_User.X_UserName) end as X_ActionStatus FROM  Sec_User RIGHT OUTER JOIN "+
+                     "Pay_LoanIssue ON Sec_User.N_UserID = Pay_LoanIssue.N_UserID AND Sec_User.N_CompanyID = Pay_LoanIssue.N_CompanyID LEFT OUTER JOIN Pay_PayMaster ON Pay_LoanIssue.N_FnYearID = Pay_PayMaster.N_FnYearID AND Pay_LoanIssue.N_CompanyID = Pay_PayMaster.N_CompanyID AND Pay_LoanIssue.N_PayID = Pay_PayMaster.N_PayID LEFT OUTER JOIN Pay_Position RIGHT OUTER JOIN "+
+                      "Pay_Employee ON Pay_Position.N_PositionID = Pay_Employee.N_PositionID AND Pay_Position.N_CompanyID = Pay_Employee.N_CompanyID ON Pay_LoanIssue.N_EmpID = Pay_Employee.N_EmpID AND Pay_LoanIssue.N_CompanyID = Pay_Employee.N_CompanyID AND Pay_LoanIssue.N_FnYearID = Pay_Employee.N_FnYearID where Pay_LoanIssue.N_LoanID=@nLoanID and Pay_LoanIssue.N_CompanyID=@nCompanyID";
 
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
@@ -254,9 +256,13 @@ namespace SmartxAPI.Controllers
                 QueryParams.Add("@nFnYearID", nFnYearID);
                 QueryParams.Add("@nEmpID", nEmpID);
                 int N_NextApproverID = 0;
+                int nFormID = myFunctions.getIntVAL(MasterRow["n_FormID"].ToString());
                 //QueryParams.Add("@nLoanTransID", nLoanTransID);
                 if (MasterTable.Columns.Contains("n_Amount"))
                     MasterTable.Columns.Remove("n_Amount");
+
+                  if (MasterTable.Columns.Contains("n_FormID"))
+                    MasterTable.Columns.Remove("n_FormID");   
 
 
 
@@ -381,6 +387,10 @@ namespace SmartxAPI.Controllers
                  
 
                         int N_LoanTransDeatilsID = dLayer.SaveData("Pay_LoanIssueDetails", "N_LoanTransDetailsID", dt, connection, transaction);
+                        if(nFormID==1382)
+                        {
+                        dLayer.ExecuteNonQuery("update Pay_LoanIssue set N_StatusID=1 where N_CompanyID=" + nCompanyID + " and N_LoanTransID=" + nLoanTransID, Params, connection, transaction);
+                        }
                         if (N_LoanTransDeatilsID <= 0)
                         {
                             transaction.Rollback();
