@@ -1482,11 +1482,22 @@ namespace SmartxAPI.Controllers
                         }
                         catch (Exception ex)
                         {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, "Unable to Delete PurchaseInvoice"));
+                             if (ex.Message == "53")
+                                      {
+                                          transaction.Rollback();
+                                           return Ok(_api.Error(User, "Period Closed"));
+                                      }
+                                      else{
+                                         transaction.Rollback();
+                                         return Ok(_api.Error(User, "Unable to delete Purchase Invoice"));
+
+                                      }
+                                       
                         }
 
                             myAttachments.DeleteAttachment(dLayer, 1, nPurchaseID, VendorID, nFnYearID, N_FormID, User, transaction, connection);
+
+
 
                             SortedList StockOutParam = new SortedList();
                             StockOutParam.Add("N_CompanyID", nCompanyID);

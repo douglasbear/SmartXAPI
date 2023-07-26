@@ -572,6 +572,8 @@ namespace SmartxAPI.Controllers
                                 transaction.Rollback();
                                 if (ex.Message == "51")
                                     return Ok(api.Error(User, "Year Closed"));
+                                else if (ex.Message == "53")
+                                     return Ok(api.Error(User, "Period Closed"));
                                 else return Ok(api.Error(User, ex));
                             }
                             }
@@ -680,9 +682,27 @@ namespace SmartxAPI.Controllers
                             Params.Add("N_CompanyID", myFunctions.GetCompanyID(User));
                             Params.Add("X_TransType", xTransType);
                             Params.Add("N_VoucherID", nVoucherID);
+                             try
+                            {
                             Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", Params, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                if (ex.Message == "53")
+                                      {
+                                          transaction.Rollback();
+                                           return Ok(api.Error(User, "Period Closed"));
+                                      }
+                                      else{
+                                         transaction.Rollback();
+                                         return Ok(api.Error(User, "Unable to delete Voucher"));
 
-                               myAttachments.DeleteAttachment(dLayer, 1, 0, nVoucherID, nFnYearID, this.FormID, User, transaction, connection);
+                                      }
+
+
+                            }
+
+                            myAttachments.DeleteAttachment(dLayer, 1, 0, nVoucherID, nFnYearID, this.FormID, User, transaction, connection);
 
                             // if (Results > 0)
                             // {
@@ -711,7 +731,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User, ex));
+                return Ok(api.Error(User, ex.Message));
             }
 
 

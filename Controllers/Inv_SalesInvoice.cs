@@ -2075,6 +2075,7 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nTransID", nInvoiceID);
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", nCompanyID);
+                        SortedList result = new SortedList();
                     string xButtonAction = "Delete";
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_CustomerId,0) as N_CustomerId,X_ReceiptNo,N_SalesOrderID from Inv_Sales where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_SalesID=@nTransID";
                     string x_ReceiptNo = "";
@@ -2172,7 +2173,27 @@ namespace SmartxAPI.Controllers
                                         {"X_SystemName","WebRequest"},
                                         {"N_VoucherID",nInvoiceID}};
 
-                                Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                                try
+                                {
+                                   Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                                }
+                                  catch (Exception ex)
+                                {
+                                      if (ex.Message == "53")
+                                      {
+                                          transaction.Rollback();
+                                           return Ok(_api.Error(User, "Period Closed"));
+                                      }
+                                      else{
+                                         transaction.Rollback();
+                                         return Ok(_api.Error(User, "Unable to delete sales Invoice"));
+
+                                      }
+                                        
+                                      
+                                }
+
+                               
                                 if (Results <= 0)
                                 {
                                     transaction.Rollback();
