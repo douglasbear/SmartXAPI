@@ -12,7 +12,7 @@ namespace SmartxAPI.Controllers
 
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("productionOrder")]
+    [Route("r")]
     [ApiController]
     public class Inv_Process : ControllerBase
     {
