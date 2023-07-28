@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetDashboardList(int nFnYearID, int nPage, int nSizeperpage, string xSearchkey, string xSearchField, string xSortBy, int nBranchID, int nEmpID, int nUserID, int nDecimalPlace, bool bAllBranchData, int nFormID, int nTableViewID,int nLocationID, bool export, int nCountryID, int customerID)
+        public ActionResult GetDashboardList(int nFnYearID, int nPage, int nSizeperpage, string xSearchkey, string xSearchField, string xSortBy, int nBranchID, int nEmpID, int nUserID, int nDecimalPlace, bool bAllBranchData, int nFormID, int nTableViewID,int nLocationID, bool export, int nCountryID, int customerID, int deptID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             SortedList OutPut = new SortedList();
@@ -124,6 +124,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@lVal", nLocationID);
             Params.Add("@ctrVal", nCountryID);
             Params.Add("@custVal", customerID);
+            Params.Add("@deptVal", deptID);
 
             string UserPattern = myFunctions.GetUserPattern(User);
             if (UserPattern != "")
@@ -246,6 +247,9 @@ namespace SmartxAPI.Controllers
 
                         if (nFormID == 1732)
                             Criterea = "N_CompanyID=@cVal and N_FnYearID=@fVal and N_FormID in (64) and N_CompanyID=@cVal and N_FnYearID=@fVal and N_CustomerID=@custVal";
+
+                        if (nFormID == 1335 && deptID == 0)
+                            Criterea = "N_FnYearID=@fVal and N_BranchID=@bVal";
                     }
 
                     if (bAllBranchData == false && dRow["X_BranchCriteria"].ToString() != "")

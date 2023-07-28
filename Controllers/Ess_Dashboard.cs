@@ -464,8 +464,8 @@ namespace SmartxAPI.Controllers
                  if (bAllBranchData == false)
                 criteria=" and N_BranchID =@p4";
 
-                   string sqlCommandText = "select x_EmpName,x_position from vw_PayEmployee where MONTH(vw_PayEmployee.D_DOB) = MONTH(CURRENT_TIMESTAMP) and DAY(vw_PayEmployee.D_DOB) =@today and N_CompanyID=@p1 and B_Inactive=0 and N_EmpID!=@p3 and N_FnYearID=@p2"+criteria;
-                   string sqlCommandCount ="select count(1) as N_Count from vw_PayEmployee where MONTH(vw_PayEmployee.D_DOB) = MONTH(CURRENT_TIMESTAMP) and DAY(vw_PayEmployee.D_DOB) =@today and N_CompanyID=@p1 and B_Inactive=0 and N_EmpID=@p3 and N_FnYearID=@p2"+criteria;
+                   string sqlCommandText = "select x_EmpName,x_position from vw_PayEmployee where MONTH(vw_PayEmployee.D_DOB) = MONTH(CURRENT_TIMESTAMP) and DAY(vw_PayEmployee.D_DOB) =@today and N_CompanyID=@p1 and B_Inactive=0 and N_EmpID!=@p3 and N_FnYearID=@p2 and N_Status not in (2,3)"+criteria;
+                   string sqlCommandCount ="select count(1) as N_Count from vw_PayEmployee where MONTH(vw_PayEmployee.D_DOB) = MONTH(CURRENT_TIMESTAMP) and DAY(vw_PayEmployee.D_DOB) =@today and N_CompanyID=@p1 and B_Inactive=0 and N_EmpID=@p3 and N_FnYearID=@p2 and N_Status not in (2,3)"+criteria;
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                   object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
