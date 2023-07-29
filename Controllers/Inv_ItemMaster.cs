@@ -715,12 +715,15 @@ namespace SmartxAPI.Controllers
                     // else
                     //     CalcCost = myFunctions.getVAL(dLayer.ExecuteScalar("Select dbo.SP_Cost_Loc(" + N_ItemID + "," + myFunctions.GetCompanyID(User) + ",'" + dt.Rows[0]["X_StockUnit"].ToString() + "'," + nLocationID + ") As N_LPrice", connection).ToString());
 
-                    if (N_BranchID == 0) // 07/04/2022 Cost calculation made using procedure by Akshay under the instruction of Ratheesh sir
-                        CalcCost = myFunctions.getVAL(dLayer.ExecuteScalar("Select dbo.SP_CostAvg(" + N_ItemID + "," + myFunctions.GetCompanyID(User) + ",'" + dt.Rows[0]["X_StockUnit"].ToString() + "') As N_LPrice", connection).ToString());
-                    else
-                        CalcCost = myFunctions.getVAL(dLayer.ExecuteScalar("Select dbo.SP_CostAvg_Loc(" + N_ItemID + "," + myFunctions.GetCompanyID(User) + ",'" + dt.Rows[0]["X_StockUnit"].ToString() + "'," + nLocationID + ") As N_LPrice", connection).ToString());
+                    if (myFunctions.getIntVAL(dt.Rows[0]["n_ClassID"].ToString()) != 4)
+                    {
+                        if (N_BranchID == 0) // 07/04/2022 Cost calculation made using procedure by Akshay under the instruction of Ratheesh sir
+                            CalcCost = myFunctions.getVAL(dLayer.ExecuteScalar("Select dbo.SP_CostAvg(" + N_ItemID + "," + myFunctions.GetCompanyID(User) + ",'" + dt.Rows[0]["X_StockUnit"].ToString() + "') As N_LPrice", connection).ToString());
+                        else
+                            CalcCost = myFunctions.getVAL(dLayer.ExecuteScalar("Select dbo.SP_CostAvg_Loc(" + N_ItemID + "," + myFunctions.GetCompanyID(User) + ",'" + dt.Rows[0]["X_StockUnit"].ToString() + "'," + nLocationID + ") As N_LPrice", connection).ToString());
 
-                    dt.Rows[0]["n_ItemCost"] = CalcCost;
+                        dt.Rows[0]["n_ItemCost"] = CalcCost;
+                    }
                     dt.AcceptChanges();
                     object inStocks = dLayer.ExecuteScalar("Select N_ItemID From vw_InvStock_Status Where N_ItemID=@nItemID and (Type<>'O' and Type<>'PO' and Type<>'SO') and N_CompanyID=@nCompanyID", QueryParams, connection);
                     bool b_InStocks = true;
