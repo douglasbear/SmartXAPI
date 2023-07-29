@@ -212,6 +212,7 @@ namespace SmartxAPI.Controllers
                     nLedgerID=myFunctions.getIntVAL(MasterTable.Rows[0]["N_LedgerID"].ToString());
 
                 }
+                 
                 int nCrmCustomerID = 0;
                 int flag=0;
                 int customerFlag=0;
@@ -481,7 +482,7 @@ namespace SmartxAPI.Controllers
                                 {
                                     int Prevrows = dLayer.ExecuteNonQuery("Insert into Sec_UserPrevileges (N_InternalID,N_UserCategoryID,N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View)" +
                                                                                 "Select ROW_NUMBER() over(order by N_InternalID)+(select MAX(N_InternalID) from Sec_UserPrevileges)," + UserCatID + ",N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View " +
-                                                                                "from Sec_UserPrevileges inner join Sec_UserCategory on Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID where Sec_UserPrevileges.N_UserCategoryID = (-10) and N_CompanyID = -1", Params, connection, transaction);
+                                                                                "from Sec_UserPrevileges inner join Sec_UserCategory on Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID where Sec_UserPrevileges.N_UserCategoryID = (-13) and N_CompanyID = -1", Params, connection, transaction);
                                     // if (Prevrows <= 0)
                                     // {
                                     //     transaction.Rollback();

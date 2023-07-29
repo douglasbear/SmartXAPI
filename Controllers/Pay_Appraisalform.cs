@@ -28,7 +28,7 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 [HttpGet("list")]
-        public ActionResult GetAppraisalList(int? nCompanyId, int nFnYearID, int nType, int nPage, int nSizeperpage, string xSearchkey,string xUserCategory,string xSortBy,int nUserID)
+        public ActionResult GetAppraisalList(int? nCompanyId, int nFnYearID, int nType, int nPage, int nSizeperpage, string xSearchkey,string xUserCategory,string xSortBy,int nUserID,int nFormID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -51,12 +51,16 @@ namespace SmartxAPI.Controllers
 
                     string userCategoryID = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User Where N_CompanyID =" + nCompanyID + " and N_UserID=" + myFunctions.GetUserID(User) + "", Params, connection).ToString();
                     object UserCategory = dLayer.ExecuteScalar("Select count(1) from Sec_UserCategory Where N_UserCategoryID in  (" + userCategoryID + ") and X_UserCategory='Admin'", Params, connection);
-
-                    if (myFunctions.getIntVAL(UserCategory.ToString()) >0)
+                    
+                    if(nFormID==1772){
+                      criteria=" ";
+                    }
+                    else{
+                         if (myFunctions.getIntVAL(UserCategory.ToString()) >0)
                         criteria=" ";
                     else 
                         criteria=" and (N_EntryUserID=@nUserID or N_UserID=@nUserID or N_EvalUserID=@nUserID or N_EmpUserID=@nUserID)  ";
-                    
+                    }
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
                         Searchkey = "and (X_AppraisalCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%' or X_Position like '%" + xSearchkey + "%' or X_Department like '%" + xSearchkey + "%' or X_TemplateName like '%" + xSearchkey + "%')";

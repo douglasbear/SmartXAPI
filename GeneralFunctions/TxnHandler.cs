@@ -607,6 +607,25 @@ namespace SmartxAPI.GeneralFunctions
                         dLayer.ExecuteNonQueryPro("SP_FillFreightToPurchase", ProcParams, connection, transaction);
                     }
 
+                   
+                object costcntrID=null;
+                object nCostCentreID=null;
+                object xPattern=null;
+
+                costcntrID=dLayer.ExecuteScalar(" select top(1) N_CostCentreID from Vw_PurchaseCostcenterDetails where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID + "ORDER BY N_PurchaseDetailsID ASC",connection, transaction); 
+                if(costcntrID!=null)
+                {
+                  xPattern=dLayer.ExecuteScalar(" SELECT SUBSTRING(X_LevelPattern, 1, 3) AS X_Pattern FROM Acc_CostCentreMaster where N_CostCentreID=" + costcntrID + " and N_CompanyID =" + nCompanyID+"",connection, transaction); 
+                }
+                if(xPattern!=null){
+                 nCostCentreID=dLayer.ExecuteScalar(" select N_CostCentreID from Acc_CostCentreMaster where X_LevelPattern= '" + xPattern + "' and N_CompanyID=" + nCompanyID +"",connection, transaction); 
+                }
+
+                 if (nCostCentreID !=null){
+                    dLayer.ExecuteScalar("Update Inv_Purchase Set n_DivisionID =" + nCostCentreID + " Where  N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                 }
+
+
 
 
                     if (N_SaveDraft == 0)
@@ -692,13 +711,27 @@ namespace SmartxAPI.GeneralFunctions
                                 }
                                 if (myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString())> 0 && tempPOrderID!=myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString()))
                                 {
-                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString()),82,false,dLayer,connection,transaction))
+                                    if (myFunctions.getIntVAL(masterRow["n_FormID"].ToString()) == 1605)
                                     {
-                                        // xturn Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString()),1586,false,dLayer,connection,transaction))
+                                        {
+                                            // xturn Ok(_api.Error(User, "Unable To Update Txn Status"));
 
-                                        Result.Add("b_IsCompleted", 0);
-                                        Result.Add("x_Msg", "Unable To Update Txn Status");
-                                        return Result;
+                                            Result.Add("b_IsCompleted", 0);
+                                            Result.Add("x_Msg", "Unable To Update Txn Status");
+                                            return Result;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString()),82,false,dLayer,connection,transaction))
+                                        {
+                                            // xturn Ok(_api.Error(User, "Unable To Update Txn Status"));
+
+                                            Result.Add("b_IsCompleted", 0);
+                                            Result.Add("x_Msg", "Unable To Update Txn Status");
+                                            return Result;
+                                        }
                                     }
                                 }
                                 tempPOrderID=myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString());
@@ -1428,6 +1461,24 @@ namespace SmartxAPI.GeneralFunctions
                             return Result;
                         }
                     }
+                
+                object costcntrID=null;
+                object nCostCentreID=null;
+                object xPattern=null;
+
+                costcntrID=dLayer.ExecuteScalar(" select top(1) N_CostCentreID from Vw_SalesCostcenterDetails where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + "ORDER BY N_SalesDetailsID ASC",connection, transaction); 
+                if(costcntrID!=null)
+                {
+                  xPattern=dLayer.ExecuteScalar(" SELECT SUBSTRING(X_LevelPattern, 1, 3) AS X_Pattern FROM Acc_CostCentreMaster where N_CostCentreID=" + costcntrID + " and N_CompanyID =" + N_CompanyID+"",connection, transaction); 
+                }
+                if(xPattern!=null){
+                 nCostCentreID=dLayer.ExecuteScalar(" select N_CostCentreID from Acc_CostCentreMaster where X_LevelPattern= '" + xPattern + "' and N_CompanyID=" + N_CompanyID +"",connection, transaction); 
+                }
+
+                 if (nCostCentreID !=null){
+                    dLayer.ExecuteScalar("Update Inv_Sales Set n_DivisionID =" + nCostCentreID + " Where  N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID, connection, transaction);
+                 }
+
                 }
 
                 if (N_SaveDraft == 0)

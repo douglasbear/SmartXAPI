@@ -183,7 +183,7 @@ namespace SmartxAPI.Controllers
             }
             if (poNo != null)
             {
-                X_MasterSql = "Select Inv_PurchaseOrder.*,Inv_Location.X_LocationName,Acc_CurrencyMaster.N_Decimal,Inv_Vendor.* from Inv_PurchaseOrder Inner Join Inv_Vendor On Inv_PurchaseOrder.N_VendorID=Inv_Vendor.N_VendorID and Inv_PurchaseOrder.N_CompanyID=Inv_Vendor.N_CompanyID and Inv_PurchaseOrder.N_FnYearID=Inv_Vendor.N_FnYearID LEFT OUTER JOIN Inv_Location ON Inv_Location.N_LocationID=Inv_PurchaseOrder.N_LocationID LEFT OUTER JOIN   Acc_CurrencyMaster ON Inv_PurchaseOrder.N_CompanyID = Acc_CurrencyMaster.N_CompanyID AND Inv_PurchaseOrder.N_CurrencyID = Acc_CurrencyMaster.N_CurrencyID Where Inv_PurchaseOrder.N_CompanyID=" + nCompanyId + " and X_POrderNo='" + poNo + "' "+crieteria+" and isNull(Inv_PurchaseOrder.B_IsSaveDraft, 0)<>1";
+                X_MasterSql = "Select Inv_PurchaseOrder.*,Inv_Location.X_LocationName,Acc_CurrencyMaster.X_CurrencyName,Acc_CurrencyMaster.N_Decimal,Inv_Vendor.* from Inv_PurchaseOrder Inner Join Inv_Vendor On Inv_PurchaseOrder.N_VendorID=Inv_Vendor.N_VendorID and Inv_PurchaseOrder.N_CompanyID=Inv_Vendor.N_CompanyID and Inv_PurchaseOrder.N_FnYearID=Inv_Vendor.N_FnYearID LEFT OUTER JOIN Inv_Location ON Inv_Location.N_LocationID=Inv_PurchaseOrder.N_LocationID LEFT OUTER JOIN   Acc_CurrencyMaster ON Inv_PurchaseOrder.N_CompanyID = Acc_CurrencyMaster.N_CompanyID AND Inv_PurchaseOrder.N_CurrencyID = Acc_CurrencyMaster.N_CurrencyID Where Inv_PurchaseOrder.N_CompanyID=" + nCompanyId + " and X_POrderNo='" + poNo + "' "+crieteria+" and isNull(Inv_PurchaseOrder.B_IsSaveDraft, 0)<>1";
             }
             try
             {
@@ -551,11 +551,28 @@ namespace SmartxAPI.Controllers
 
                         if (n_POrderID > 0)
                         {
-                            if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
-                                    {
-                                        transaction.Rollback();
-                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
-                                    }
+                            // if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
+                            //         {
+                            //             transaction.Rollback();
+                            //             return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                            //         }
+
+                            if (myFunctions.getIntVAL(masterRow["n_FormID"].ToString()) == 1593)
+                            {
+                                if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,1586,false,dLayer,connection,transaction))
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                }
+                            }
+                            else
+                            {
+                                if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                }
+                            }
                         }
                     }
 
@@ -601,7 +618,11 @@ namespace SmartxAPI.Controllers
                 SortedList Result = new SortedList();
                 Result.Add("N_MRNID", N_GRNID);
                 Result.Add("X_MRNNo", GRNNo);
-                return Ok(_api.Success(Result, "Goods Receive Note Saved"));
+
+                if (n_FormID == 1593)
+                    return Ok(_api.Success(Result, "Rental MRN Saved"));
+                else
+                    return Ok(_api.Success(Result, "Goods Receive Note Saved"));
             }
             catch (Exception ex)
             {
@@ -724,10 +745,26 @@ namespace SmartxAPI.Controllers
                                 int n_POrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_POrderID"].ToString());
                                 if (n_POrderID > 0 && tempPOrderID!=n_POrderID)
                                 {
-                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,true,dLayer,connection,transaction))
+                                    // if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,true,dLayer,connection,transaction))
+                                    // {
+                                    //     transaction.Rollback();
+                                    //     return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                    // }
+                                    if (nFormID == 1593)
                                     {
-                                        transaction.Rollback();
-                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,1586,false,dLayer,connection,transaction))
+                                        {
+                                            transaction.Rollback();
+                                            return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
+                                        {
+                                            transaction.Rollback();
+                                            return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                        }
                                     }
                                 }
                                 tempPOrderID=n_POrderID;

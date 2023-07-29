@@ -163,8 +163,7 @@ namespace SmartxAPI.Controllers
 
             int nCompanyId = myFunctions.GetCompanyID(User);
 
-            SubItemssql = "Select *,dbo.SP_GenGetStock(vw_InvItemDetails.N_ItemID,@nLocationID,'','Location') As N_Stock,dbo.SP_Cost(vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID,'') As N_Cost,dbo.SP_SellingPrice(vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID) As N_SPrice From vw_InvItemDetails Where N_MainItemID =@nItemID and N_CompanyID=@nCompanyId and N_Type=1";
-
+            SubItemssql = "Select *,dbo.SP_GenGetStock(vw_InvItemDetails.N_ItemID,@nLocationID,'','Location') As N_Stock,dbo.Fn_LastCost(vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID,'') As N_Cost,dbo.SP_SellingPrice(vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID) As N_SPrice From vw_InvItemDetails Where N_MainItemID =@nItemID and N_CompanyID=@nCompanyId and N_Type=1";
             Params.Add("@nCompanyId", nCompanyId);
             Params.Add("@nFnYearId", nFnYearId);
             Params.Add("@nItemID", nItemID);
@@ -417,7 +416,6 @@ namespace SmartxAPI.Controllers
             string condition = "([Item Code] =@X_ItemCode OR X_Barcode =@X_ItemCode)";
 
             Itemsql = "Select *,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID,@nLocationID,'','Location') As N_Stock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit,@nLocationID) As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where "+condition+" and N_CompanyID=@nCompanyId";
-
             Params.Add("@nCompanyId", nCompanyId);
             Params.Add("@nLocationID", nLocationID);
             Params.Add("@X_ItemCode", X_ItemCode);

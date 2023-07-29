@@ -344,14 +344,14 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    if (nFormID == 64 || nFormID == 894 || nFormID == 372 || nFormID == 55 || nFormID == 504)
+                    if (nFormID == 64 || nFormID == 894 || nFormID == 372 || nFormID == 55 || nFormID == 504 || nFormID == 1601)
                     {
                         //QR Code Generate For Invoice
                         object Total = "";
                         object TaxAmount = "";
                         object VatNumber = dLayer.ExecuteScalar("select x_taxregistrationNo from acc_company where N_CompanyID=@nCompanyId", QueryParams, connection, transaction);
                         object SalesDate = "";
-                        if (nFormID == 64 || nFormID == 894 || nFormID == 372)
+                        if (nFormID == 64 || nFormID == 894 || nFormID == 372 || nFormID == 1601)
                         {
                             Total = dLayer.ExecuteScalar("select n_BillAmt+N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
                             TaxAmount = dLayer.ExecuteScalar("select N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
@@ -1347,28 +1347,28 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQuery("delete from Acc_LedgerBalForReporting", connection);
                         dLayer.ExecuteNonQuery("delete from Acc_AccountStatement", connection);
 
-                        // if (Consolidated)
-                        // {
-                        //     string FnYear = dLayer.ExecuteScalar("select X_FnYearDescr from Acc_FnYear where N_CompanyID=" + nCompanyID + " and N_FnyearID=" + FnYearID, Params, connection).ToString();
-                        //     int ClientID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ClientID from Acc_Company where N_CompanyID=" + nCompanyID, Params, connection).ToString());
-                        //     DataTable dt = dLayer.ExecuteDataTable("select * from vw_ConsolidatedCompany where n_clientID=" + ClientID + " and X_FnYearDescr='" + FnYear + "' order by N_CompanyID desc", Params, connection);
-                        //     foreach (DataRow dr in dt.Rows)
-                        //     {
-                        //         SortedList mParamsList = new SortedList()
-                        //     {
-                        //     {"N_CompanyID",dr["n_CompanyID"]},
-                        //     {"N_FnYearID",dr["n_FnyearID"]},
-                        //     {"N_PeriodID",0},
-                        //     {"X_Code",xProCode},
-                        //     {"X_Parameter", procParam },
-                        //     {"N_UserID",myFunctions.GetUserID(User)},
-                        //     {"N_BranchID",mainBranch ?0:BranchID},
-                        //     };
-                        //         dLayer.ExecuteDataTablePro("SP_OpeningBalanceGenerate", mParamsList, connection);
-                        //     }
-                        // }
-                        // else
-                        // {
+                        if (Consolidated)
+                        {
+                            string FnYear = dLayer.ExecuteScalar("select X_FnYearDescr from Acc_FnYear where N_CompanyID=" + nCompanyID + " and N_FnyearID=" + FnYearID, Params, connection).ToString();
+                            int ClientID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ClientID from Acc_Company where N_CompanyID=" + nCompanyID, Params, connection).ToString());
+                            DataTable dt = dLayer.ExecuteDataTable("select * from vw_ConsolidatedCompany where n_clientID=" + ClientID + " and X_FnYearDescr='" + FnYear + "' order by N_CompanyID desc", Params, connection);
+                            foreach (DataRow dr in dt.Rows)
+                            {
+                                SortedList mParamsList = new SortedList()
+                            {
+                            {"N_CompanyID",dr["n_CompanyID"]},
+                            {"N_FnYearID",dr["n_FnyearID"]},
+                            {"N_PeriodID",0},
+                            {"X_Code",xProCode},
+                            {"X_Parameter", procParam },
+                            {"N_UserID",myFunctions.GetUserID(User)},
+                            {"N_BranchID",mainBranch ?0:BranchID},
+                            };
+                                dLayer.ExecuteDataTablePro("SP_OpeningBalanceGenerate", mParamsList, connection);
+                            }
+                        }
+                        else
+                        {
                             SortedList mParamsList = new SortedList()
                             {
                             {"N_CompanyID",nCompanyID},
@@ -1384,7 +1384,7 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteDataTablePro("SP_OpeningBalanceGenerate", mParamsList, connection);
                             // if(xInstanceCode!="")
                             // Criteria = Criteria == "" ? xInstanceCode + "='"+random+"' " : Criteria + " and "+xInstanceCode+"='"+random+"' ";
-                        // }
+                         }
                     }
 
                     dbName = connection.Database;

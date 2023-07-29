@@ -287,9 +287,15 @@ namespace SmartxAPI.Controllers
 
                     string DetailSql = "";
 
-
+                    int nUserID = myFunctions.GetUserID(User);
                     bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Admin", "X_UserCategory", dLayer, connection);
-                    bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Admin", "X_UserCategory", dLayer, connection);
+                    //bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Admin", "X_UserCategory", dLayer, connection);
+                     bool PurchaseRequestVisible = false;
+                     if(nVendorID>0 && nQuotationID>0){
+                      PurchaseRequestVisible = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges where N_MenuID=1049 and N_UserCategoryID  in(select N_UserCategoryID from Sec_User where N_UserID="+myFunctions.GetUserID(User)+") and N_CompanyID=" + nCompanyId, Params, connection));
+                
+                     }
+                     
                     if (MaterailRequestVisible || PurchaseRequestVisible)
                     {
                         B_PRSVisible = true;
@@ -785,10 +791,26 @@ namespace SmartxAPI.Controllers
 
                     if (N_POrderID > 0)
                     {
-                        if(!myFunctions.UpdateTxnStatus(nCompanyId,N_POrderID,82,false,dLayer,connection,transaction))
+                        // if(!myFunctions.UpdateTxnStatus(nCompanyId,N_POrderID,82,false,dLayer,connection,transaction))
+                        // {
+                        //     transaction.Rollback();
+                        //     return Ok(api.Error(User, "Unable To Update Txn Status"));
+                        // }
+                        if (myFunctions.getIntVAL(MasterTable.Rows[0]["n_FormID"].ToString()) == 1586)
                         {
-                            transaction.Rollback();
-                            return Ok(api.Error(User, "Unable To Update Txn Status"));
+                            if(!myFunctions.UpdateTxnStatus(nCompanyId,N_POrderID,1586,false,dLayer,connection,transaction))
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error(User, "Unable To Update Txn Status"));
+                            }
+                        }
+                        else
+                        {
+                            if(!myFunctions.UpdateTxnStatus(nCompanyId,N_POrderID,82,false,dLayer,connection,transaction))
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error(User, "Unable To Update Txn Status"));
+                            }
                         }
                     }
                  
