@@ -50,7 +50,7 @@ namespace SmartxAPI.Controllers
             if(value==1)
                 sqlCommandText="select * from vw_ScreenWisePosting_Salary where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_ReferenceNo=@xVoucherNo";
             else
-                sqlCommandText="select * from vw_ScreenWisePosting where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_VoucherNo=@xVoucherNo and N_FnYearID=@nFnYearID";
+                sqlCommandText="select * from vw_ScreenWisePosting where  X_Code=@xScreen and X_VoucherNo=@xVoucherNo and N_FnYearID=@nFnYearID";
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nFnYearID",nFnYearID);
             Params.Add("@xScreen",xScreen);
@@ -74,7 +74,7 @@ namespace SmartxAPI.Controllers
                         fileName = fileName+".csv";
                         }
                     else
-                        sqlTotalText="select CONVERT(VARCHAR,SUM(CAST(Debit AS DECIMAL(16, 4))),1) as N_TotDebit,CONVERT(VARCHAR,SUM(CAST(Credit AS DECIMAL(16, 4))),1) AS N_TotCredit from vw_ScreenWisePosting Where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_VoucherNo=@xVoucherNo and N_FnYearID=@nFnYearID";
+                        sqlTotalText="select CONVERT(VARCHAR,SUM(CAST(Debit AS DECIMAL(16, 4))),1) as N_TotDebit,CONVERT(VARCHAR,SUM(CAST(Credit AS DECIMAL(16, 4))),1) AS N_TotCredit from vw_ScreenWisePosting Where X_Code=@xScreen and X_VoucherNo=@xVoucherNo and N_FnYearID=@nFnYearID";
                         
                     dtTotal=dLayer.ExecuteDataTable(sqlTotalText,Params,connection); 
                     dtTotal = _api.Format(dtTotal, "total");

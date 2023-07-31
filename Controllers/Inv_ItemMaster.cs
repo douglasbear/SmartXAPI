@@ -2050,6 +2050,7 @@ namespace SmartxAPI.Controllers
                 otherItem = otherItem + " and N_ItemTypeID<>1";
             }
 
+
   
             //    ShowCost=" , dbo.SP_Cost_Loc([vw_InvItem_Search_Products].N_ItemID,[vw_InvItem_Search_Products].N_CompanyID,[vw_InvItem_Search_Products].X_ItemUnit," + nLocationID + ")  As N_LPrice";
             
