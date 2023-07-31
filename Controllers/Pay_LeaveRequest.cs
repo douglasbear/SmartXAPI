@@ -633,6 +633,7 @@ namespace SmartxAPI.Controllers
                 int N_NextApproverID = 0;
                 string xEmail = MasterRow["x_Email"].ToString();
                 string xButtonAction="";
+                int nFormID = myFunctions.getIntVAL(DetailTable.Rows[0]["n_FormID"].ToString());
 
 
 
@@ -806,6 +807,10 @@ namespace SmartxAPI.Controllers
                         }
 
                         int DetailID = dLayer.SaveData("Pay_VacationDetails", "n_VacationID", DetailTable, connection, transaction);
+                        if(nFormID==1354)
+                        {
+                        dLayer.ExecuteNonQuery("update pay_vacationmaster set N_StatusID=1 where N_CompanyID=" + nCompanyID + " and n_VacationGroupID=" + n_VacationGroupID, Params, connection, transaction);
+                        }
                         if (DetailID <= 0)
                         {
                             transaction.Rollback();

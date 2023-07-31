@@ -1033,7 +1033,14 @@ namespace SmartxAPI.Controllers
                
                         transaction.Commit();
                         if (nFormID == 66)
+                        {
                             return Ok(api.Success("Sales Receipt " + status + " Successfully"));
+                        }
+                        else if(nFormID == 1740) 
+                            {
+                            return Ok(api.Success("Sales Receipt " + status + " Successfully"));
+                            }
+                
                         else
                             return Ok(api.Success("Fee Payment " + status + " Successfully"));
                     }

@@ -41,7 +41,7 @@ namespace SmartxAPI.Controllers
             // int abc=0;
             SortedList Params = new SortedList();
             //int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from Sec_UserCategory where N_CompanyID=@p1";
+            string sqlCommandText = "select * from Sec_UserCategory where N_CompanyID=@p1 and x_Usercategory IS NOT NULL";
             Params.Add("@p1", nCompanyId);
 
 

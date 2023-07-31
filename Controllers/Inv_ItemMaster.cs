@@ -1735,7 +1735,7 @@ namespace SmartxAPI.Controllers
         // }
 
         [HttpGet("costAndStock")]
-        public ActionResult GetCostAndStock(int nItemID, int nLocationID, string xBatch, DateTime dDate, int nCustomerID)
+        public ActionResult GetCostAndStock(int nItemID, int nLocationID, string xBatch, DateTime dDate, int nCustomerID,bool lastCost)
         {
             DataTable dt = new DataTable();
             string sqlCommandText = "";
@@ -1752,8 +1752,15 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         bool bStockByDate = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "ShowAvlStockByDate", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
-                        if (!bStockByDate)
+                        if (!bStockByDate && !lastCost)
+                        {
                             sqlCommandText = "Select vw_InvItem_Search.N_ItemID,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID," + nLocationID + ",'" + xBatch + "', 'location')As N_AvlStock ,dbo.SP_LastPCost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID," + nLocationID + ") As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice From vw_InvItem_Search Where N_ItemID=" + nItemID + " and N_CompanyID=" + nCompanyID;
+                        }
+                        else if(lastCost)
+                        {
+                            sqlCommandText = "Select vw_InvItem_Search.N_ItemID,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID," + nLocationID + ",'" + xBatch + "', 'location')As N_AvlStock ,dbo.Fn_LastCost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,'') As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice From vw_InvItem_Search Where N_ItemID=" + nItemID + " and N_CompanyID=" + nCompanyID;
+
+                        }
                         else
                             sqlCommandText = "Select vw_InvItem_Search.N_ItemID,dbo.SP_GenGetStockByDate(vw_InvItem_Search.N_ItemID," + nLocationID + ",'" + xBatch + "', 'location','" + myFunctions.getDateVAL(dDate) + "')As N_AvlStock ,dbo.SP_LastPCost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID," + nLocationID + ") As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where N_ItemID=" + nItemID + " and N_CompanyID=" + nCompanyID + " and ISNULL(N_ItemTypeID,0)=0";
                     }
