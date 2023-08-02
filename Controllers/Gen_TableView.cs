@@ -354,7 +354,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error(User, "Data Source2 Not Found"));
+                        DataSource2=dRow["X_DataSource"].ToString();
                     }
                     if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + SortBy + xSortBy;
