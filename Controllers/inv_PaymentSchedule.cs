@@ -73,9 +73,9 @@ namespace SmartxAPI.Controllers
 
                     int Count = (nPage - 1) * nSizeperpage;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPayables_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Type='PURCHASE' and  D_ScheduleDate is not null " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select N_VendorID,D_ScheduleDate,X_VendorName,SUM(N_ScheduledAmtF) AS N_ScheduledAmtF from vw_InvPayables_Schedule where N_CompanyID=@p1  and  X_Type='PURCHASE' and  D_ScheduleDate is not null GROUP BY N_VendorID,D_ScheduleDate,X_VendorName" + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPayables_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2  and  X_Type='PURCHASE' and  D_ScheduleDate is not null " + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPayables_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Type='PURCHASE' and N_BalanceAmount>0 and  D_ScheduleDate is not null" + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select N_VendorID,D_ScheduleDate,X_VendorName,SUM(N_ScheduledAmtF) AS N_ScheduledAmtF from vw_InvPayables_Schedule where N_CompanyID=@p1  and  X_Type='PURCHASE' and  D_ScheduleDate is not null GROUP BY N_VendorID,D_ScheduleDate,X_VendorName" + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPayables_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Type='PURCHASE' and N_BalanceAmount>0 and  D_ScheduleDate is not null" + xSortBy + " ) " + xSortBy;
 
                     // sqlCommandText = "select * from Inv_MRNDetails where N_CompanyID=@p1";
                     Params.Add("@p1", nCompanyId);
