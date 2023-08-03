@@ -1935,7 +1935,7 @@ namespace SmartxAPI.Controllers
         }
          //GET api/Projects/list
         [HttpGet("shortListProduct")]
-        public ActionResult GetAllItemsProduct(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial, int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID, bool b_Asn, int nPriceListID, bool isSalesItems, bool isRentalItem, bool rentalItems, bool purchaseRentalItems,bool showStockInlist,int nitemType,bool isAssetItem,bool ShowCostinList,int nItemID)
+        public ActionResult GetAllItemsProduct(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial, int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID, bool b_Asn, int nPriceListID, bool isSalesItems, bool isRentalItem, bool rentalItems, bool purchaseRentalItems,bool showStockInlist,int nitemType,bool isAssetItem,bool ShowCostinList,int nItemID,int nDivisionID)
         
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -1959,6 +1959,7 @@ namespace SmartxAPI.Controllers
              string otherItem="";
               string sqlComandText ="";
               string ShowCost="";
+              string divisionCategory="";
 
              if(showStockInlist)
              {
@@ -2051,6 +2052,7 @@ namespace SmartxAPI.Controllers
             }
 
 
+           
   
             //    ShowCost=" , dbo.SP_Cost_Loc([vw_InvItem_Search_Products].N_ItemID,[vw_InvItem_Search_Products].N_CompanyID,[vw_InvItem_Search_Products].X_ItemUnit," + nLocationID + ")  As N_LPrice";
             
@@ -2089,9 +2091,28 @@ namespace SmartxAPI.Controllers
                         xOrderNew = "ORDER BY Description asc";
                     }
 
+                     if(nDivisionID>0)
+                        {
+                        object divisionsql = "";
+                        object xLevelsql = "";
+                        object xLevelPattern = "";
+                        xLevelsql = dLayer.ExecuteScalar("select X_LevelPattern from Acc_CostCentreMaster where N_CompanyID=" + nCompanyID + " and N_CostCentreID=" + nDivisionID + " and N_GroupID=0", Params, connection);
+                       if (xLevelsql != null && xLevelsql.ToString() != "")
+                        {
+                         divisionsql = "select N_CostCentreID from Acc_CostCentreMaster where N_CompanyID=" + nCompanyID + " and  X_LevelPattern like '" + xLevelsql.ToString()  + "%'";
+                    
+                        }                       
+            
+                        if (divisionsql != null && divisionsql.ToString() != "")
+                        {
+                        divisionCategory=" and  [vw_InvItem_Search_Products].n_CostCenterID in (" + divisionsql.ToString() + ")";
+                        }
+                     }
+
+
                     string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(" + xOrder + ") RowNo,";
                     string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) " + xOrderNew + " ";
-                    string sql = pageQry + sqlComandText + pageQryEnd;
+                    string sql = pageQry + sqlComandText+divisionCategory + pageQryEnd;
                     dt = dLayer.ExecuteDataTable(sql, Params, connection);
 
 
@@ -2121,7 +2142,8 @@ namespace SmartxAPI.Controllers
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(_api.Warning("No Results Found"));
+                    return Ok(_api.Success(dt));
+                    //return Ok(_api.Warning("No Results Found"));
                 }
                 else
                 {
