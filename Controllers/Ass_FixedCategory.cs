@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult FixedAssetList(int nFnYearId,int nPage,int nSizeperpage,string xSortBy,int nFormID)
+        public ActionResult FixedAssetList(int nFnYearId,int nPage,int nSizeperpage,string xSortBy,int nFormID,string xSearchkey,bool showAll)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -45,6 +45,10 @@ namespace SmartxAPI.Controllers
             string sqlCommandText ="";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = " and (code like '%" + xSearchkey + "%' or category like '%" + xSearchkey + "%' or account like '%" + xSearchkey + "%')";
              
               if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_CategoryID desc";
@@ -53,16 +57,23 @@ namespace SmartxAPI.Controllers
 
              if(nFormID==1766){
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1766"+ xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1766"+ Searchkey + " "+xSortBy;
             else
                 sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and N_FormID=1766 and N_CategoryID not in (select top("+ Count +") N_CategoryID fromvw_InvAssetCategory_Disp  where N_CompanyID=@p1 )" + xSortBy;
              }   
 
+            else if (showAll==true){
+                 if(Count==0)
+                sqlCommandText = "select * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and ISNULL(N_FormID,0)=0"+ xSortBy;
+            else
+                sqlCommandText = "select * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and ISNULL(N_FormID,0)=0 and N_CategoryID not in (select top("+ Count +") N_CategoryID fromvw_InvAssetCategory_Disp  where N_CompanyID=@p1 )" + xSortBy; 
+             }
+
              else{
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and ISNULL(N_FormID,0)=0"+ xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and ISNULL(N_FormID,0)=0"+ Searchkey + " "+xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and nd ISNULL(N_FormID,0)=0 and N_CategoryID not in (select top("+ Count +") N_CategoryID fromvw_InvAssetCategory_Disp  where N_CompanyID=@p1 )" + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and ISNULL(N_FormID,0)=0 and N_CategoryID not in (select top("+ Count +") N_CategoryID fromvw_InvAssetCategory_Disp  where N_CompanyID=@p1 )" + Searchkey + " "+xSortBy;
              }
 
             SortedList OutPut = new SortedList();
