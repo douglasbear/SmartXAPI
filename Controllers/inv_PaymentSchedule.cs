@@ -84,16 +84,19 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_InvPayables_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type='PURCHASE' and  D_ScheduleDate is not null" + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_ScheduledAmtF,',','') as Numeric(16,2)) ) as TotalAmount from vw_InvPayables_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type='PURCHASE' and  D_ScheduleDate is not null" + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
+                    string TotalSum = "0";
                     if (Summary.Rows.Count > 0)
                     {
                         DataRow drow = Summary.Rows[0];
                         TotalCount = drow["N_Count"].ToString();
+                        TotalSum = drow["TotalAmount"].ToString();
                     }
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
+                    OutPut.Add("TotalSum", TotalSum);
 
                     if (dt.Rows.Count == 0)
                     {
