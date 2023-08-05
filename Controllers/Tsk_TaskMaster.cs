@@ -306,10 +306,10 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    if (timeflag==0){
-                        Individualseconds=0;
-                        seconds=0;
-                    }
+                    // if (timeflag==0){
+                    //     Individualseconds=0;
+                    //     seconds=0;
+                    // }
 
                     //    TimeSpan t = TimeSpan.FromSeconds(seconds);
                     //  string answer = string.Format("{0:D2}h:{1:D2}m",
