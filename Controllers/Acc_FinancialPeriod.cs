@@ -52,25 +52,13 @@ namespace SmartxAPI.Controllers
                     int nUserID = myFunctions.GetUserID(User);
 
 
-                    // if (xSearchkey != null && xSearchkey.Trim() != "")
-                    //     Searchkey = "and ([X_GRNNo] like '%" + xSearchkey + "%' or N_GRNID like '%" + xSearchkey + "%')";
+                     if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = " and ([Period Code] like'%" + xSearchkey + "%'or x_Description like'%" + xSearchkey + "%'or cast([Start Date ]  as VarChar) like'%" + xSearchkey + "%' or cast([End Date] as VarChar) like'%" + xSearchkey + "%')";
 
-                    // if (xSortBy == null || xSortBy.Trim() == "")
-                    //     xSortBy = " order by N_GRNID desc";
-                    // else
-                    // {
-                    //     switch (xSortBy.Split(" ")[0])
-                    //     {
-                    //         case "X_GRNNo":
-                    //             xSortBy = "X_GRNNo " + xSortBy.Split(" ")[1];
-                    //             break;
-                    //         case "N_GRNID":
-                    //             xSortBy = "N_GRNID " + xSortBy.Split(" ")[1];
-                    //             break;
-                    //         default: break;
-                    //     }
-                    //     xSortBy = " order by " + xSortBy;
-                    // }
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by [Period Code]  desc";
+                    else
+                xSortBy = " order by " + xSortBy;
 
                     int Count = (nPage - 1) * nSizeperpage;
                     if (Count == 0)

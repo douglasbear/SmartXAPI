@@ -571,6 +571,7 @@ namespace SmartxAPI.Controllers
                     }     
 
 
+                  
                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesOrderId"].ToString()), this.FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
                     Attachments = _api.Format(Attachments, "attachments");
 

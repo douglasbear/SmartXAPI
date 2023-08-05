@@ -84,16 +84,19 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_InvPayables_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type='PURCHASE' and  D_ScheduleDate is not null" + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_ScheduledAmtF,',','') as Numeric(16,2)) ) as TotalAmount from vw_InvPayables_Schedule where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type='PURCHASE' and  D_ScheduleDate is not null" + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
+                    string TotalSum = "0";
                     if (Summary.Rows.Count > 0)
                     {
                         DataRow drow = Summary.Rows[0];
                         TotalCount = drow["N_Count"].ToString();
+                        TotalSum = drow["TotalAmount"].ToString();
                     }
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
+                    OutPut.Add("TotalSum", TotalSum);
 
                     if (dt.Rows.Count == 0)
                     {
@@ -459,6 +462,47 @@ namespace SmartxAPI.Controllers
 
 
         }
+         [HttpPost("update")]
+        public ActionResult ChangeData([FromBody] DataSet ds)
+        {
+            try
+            {
+                 using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                     SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    MasterTable = ds.Tables["master"];
+                    SortedList Params = new SortedList();
+                    object vendor;
+
+                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                     int nPurchaseID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PurchaseID"].ToString());
+                     int nFnYearID=myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                     int nVendorID=myFunctions.getIntVAL(MasterTable.Rows[0]["n_VendorID"].ToString());
+                   
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@nPurchaseID", nPurchaseID);
+                    Params.Add("@nFnYearID", nFnYearID);
+                       Params.Add("@nVendorID", nVendorID);
+                    vendor=dLayer.ExecuteScalar("select  X_VendorName from Inv_Vendor where N_VendorID =" + nVendorID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " ", connection,transaction);               
+
+                    dLayer.ExecuteNonQuery("update Inv_Purchase set  D_ScheduleDate=null,n_ScheduledAmtF=null,n_ScheduledAmt=null  where  N_CompanyID=@nCompanyID and N_PurchaseID=@nPurchaseID" , Params, connection,transaction);
+                    
+                    transaction.Commit();
+                    return Ok(_api.Success(vendor+  "   Deleted Sucessfully"));
+                }
+            }
+           catch (Exception ex)
+            {
+                return Ok(_api.Error(User,ex));
+            }
+        }
+
+
 
     }
+    
+    
 }
+
