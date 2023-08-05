@@ -16,7 +16,7 @@ namespace SmartxAPI.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("salesDashboard")]
     [ApiController]
-    public class SalesDashboard : ControllerBase
+    public class  : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
