@@ -327,7 +327,7 @@ namespace SmartxAPI.Controllers
                         row["N_CostCentreID"] = dRow["n_Segment_2"];
                         row["N_Amount"] = dRow["N_Amount"];
                         row["N_LedgerID"] = dRow["N_LedgerID"];
-                        row["N_BranchID"] = dRow["N_BranchID"];
+                         row["N_BranchID"] =  myFunctions.getIntVAL(dRow["N_Segment_1"].ToString());
                         row["X_Narration"] = "";
                         row["X_Naration"] = dRow["X_Naration"];
                         row["D_Entrydate"] = dRow["D_Entrydate"];

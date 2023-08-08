@@ -65,7 +65,7 @@ namespace SmartxAPI.Controllers
                 criteria = criteria + " and N_VendorID in ( Select N_VendorID  from vw_RFQDecisionDetails where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and N_QuotationID=@N_QuotationID ) ";
             }
 
-            string sqlCommandText = "select TOP 20 * from vw_InvVendor where B_Inactive=@bInactive and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + criteria + " " + qryCriteria + " order by N_VendorID DESC";
+            string sqlCommandText = "select  * from vw_InvVendor where B_Inactive=@bInactive and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + criteria + " " + qryCriteria + " order by N_VendorID DESC";
             Params.Add("@bInactive", 0);
             Params.Add("@nCompanyID", nCompanyId);
             Params.Add("@nFnYearID", nFnYearId);
