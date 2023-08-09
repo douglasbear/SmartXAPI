@@ -334,6 +334,7 @@ namespace SmartxAPI.Controllers
 
 
                     SortedList PostingParam = new SortedList();
+                    SortedList Result = new SortedList();
                     PostingParam.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
                     PostingParam.Add("X_InventoryMode", "ASSET SALES");
                     PostingParam.Add("N_InternalID", N_AssetInventoryID);
@@ -345,10 +346,20 @@ namespace SmartxAPI.Controllers
                     catch (Exception ex)
                     {
                         transaction.Rollback();
-                         return Ok(_api.Error(User,ex));
+                        if (ex.Message.Contains("50"))
+                            return Ok(_api.Error(User, "DayClosed"));
+                        else if (ex.Message.Contains("51"))
+                            return Ok(_api.Error(User, "Year Closed"));
+                        else if (ex.Message.Contains("52"))
+                            return Ok(_api.Error(User, "Year Exists"));
+                        else if (ex.Message.Contains("53"))
+                            return Ok(_api.Error(User, "Period Closed"));
+                        else if (ex.Message.Contains("54"))
+                            return Ok(_api.Error(User, "Wrong Txn Date"));
+                        else if (ex.Message.Contains("55"))
+                            return Ok(_api.Error(User, "Transaction Started"));
                     }
 
-                    SortedList Result = new SortedList();
                     Result.Add("N_AssetInventoryID",N_AssetInventoryID);
                     Result.Add("X_InvoiceNo",ReturnNo);
                     transaction.Commit();
