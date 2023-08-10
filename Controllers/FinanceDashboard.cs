@@ -164,7 +164,7 @@ namespace SmartxAPI.Controllers
                     //      xSortBy = " order by " + xSortBy;
                     //       }
                          if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_LedgerID desc";
+                xSortBy = " Order By X_Level";
                    else
                    {
                 switch (xSortBy.Split(" ")[0])
@@ -191,12 +191,31 @@ namespace SmartxAPI.Controllers
                     tb = api.Format(tb,"Master");
                     
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_FnYearID,N_LedgerID,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_UserID=@p3 " + Searchkey + " group by N_FnYearID,N_LedgerID,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance " ;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_FnYearID,X_Level,N_LedgerID,N_Type,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_UserID=@p3 " + Searchkey + " group by N_FnYearID,N_LedgerID,X_Level,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance,N_Type   "+  xSortBy  ;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_FnYearID,N_LedgerID,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_UserID=@p3 " + Searchkey + "and N_LedgerID not in (select top(" + Count + ") N_LedgerID from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2  " + Searchkey+ " ) group by N_FnYearID,N_LedgerID,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance " +xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_FnYearID,X_Level,N_LedgerID,N_Type,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_UserID=@p3 " + Searchkey +   xSortBy +"and N_LedgerID not in (select top(" + Count + ") N_LedgerID from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2  " + Searchkey+ xSortBy +" ) group by N_FnYearID,N_LedgerID,X_Level,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance,N_Type " +xSortBy;
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText , Params, connection);
+                    dt= myFunctions.AddNewColumnToDataTable(dt, "X_GroupName", typeof(string), "");
+                    dt= myFunctions.AddNewColumnToDataTable(dt, "X_GroupCode", typeof(string), "");
+                    foreach (DataRow Avar in dt.Rows)
+                    {
+                        if(myFunctions.getIntVAL(Avar["N_Type"].ToString())==0)
+                        {
+                            Avar["X_GroupName"]=Avar["X_LedgerName"];
+                            Avar["X_LedgerName"]="";
+                             Avar["X_GroupCode"]=Avar["X_LedgerCode"];
+                            Avar["X_LedgerCode"]="";
+                        }
+                      
+                    }
+                    dt.AcceptChanges();
+
+
+
+
+
                     string sqlCommandCount = "select count(1) as N_Count  from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
