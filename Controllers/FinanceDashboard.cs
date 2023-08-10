@@ -178,7 +178,8 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
                      }
 
-                      dLayer.ExecuteNonQuery("delete from Acc_LedgerBalForReporting Where N_UserID=@p3 and N_CompanyID=@p1", Params, connection, transaction);
+                 dLayer.ExecuteNonQuery("delete from Acc_LedgerBalForReporting Where N_UserID=@p3 and N_CompanyID=@p1", Params, connection, transaction);
+
 
                        if (b_AllBranchData == true)
                             {
@@ -199,16 +200,15 @@ namespace SmartxAPI.Controllers
                         sqlCommandText = "select top(" + nSizeperpage + ") N_FnYearID,X_Level,N_LedgerID,N_Type,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_UserID=@p3 " + Searchkey +   xSortBy +"and N_LedgerID not in (select top(" + Count + ") N_LedgerID from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2  " + Searchkey+ xSortBy +" ) group by N_FnYearID,N_LedgerID,X_Level,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance,N_Type " +xSortBy;
                     SortedList OutPut = new SortedList();
 
-                    dt = dLayer.ExecuteDataTable(sqlCommandText , Params, connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText , Params, connection,transaction);
                     dt= myFunctions.AddNewColumnToDataTable(dt, "X_GroupName", typeof(string), "");
                     dt= myFunctions.AddNewColumnToDataTable(dt, "X_GroupCode", typeof(string), "");
                     foreach (DataRow Avar in dt.Rows)
                     {
                         if(myFunctions.getIntVAL(Avar["N_Type"].ToString())==0)
                         {
-                            Avar["X_GroupName"]=Avar["X_LedgerName"];
-                            Avar["X_LedgerName"]="";
-                             Avar["X_GroupCode"]=Avar["X_LedgerCode"];
+                     
+                            Avar["X_GroupCode"]=Avar["X_LedgerCode"];
                             Avar["X_LedgerCode"]="";
                         }
                       
@@ -220,7 +220,7 @@ namespace SmartxAPI.Controllers
 
 
                     string sqlCommandCount = "select count(1) as N_Count  from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
-                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection,transaction);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
