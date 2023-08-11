@@ -124,7 +124,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("trialBalancelist")]
-        public ActionResult TrialBalanceList(int nComapanyID, int nFnYearID, int nBranchID, int nPage, int nSizeperpage, bool b_AllBranchData, DateTime d_Start, DateTime d_end, string xSearchkey, string xSortBy)
+        public ActionResult TrialBalanceList(int nComapanyID, int nFnYearID, int nBranchID, int nPage, int nSizeperpage, bool bAllBranchData, DateTime d_Start, DateTime d_end, string xSearchkey, string xSortBy)
         {
             try
             {
@@ -141,30 +141,16 @@ namespace SmartxAPI.Controllers
                     string sqlCommandText = "";
                     string Searchkey = "";
                     string d_Date = d_Start.ToString("dd-MMM-yyyy") + "|" + d_end.ToString("dd-MMM-yyyy") + "|";
+                    string sqlCondition = "";
 
                     Params.Add("@p1", nCompanyID);
                     Params.Add("@p2", nFnYearID);
                     Params.Add("@p3", nUserID);
                     Params.Add("@p4", nBranchID);
                     Params.Add("@p5", d_Date);
-
-
                     if (xSearchkey != null && xSearchkey.Trim() != "")
                         Searchkey = "and ( X_LedgerName like '%" + xSearchkey + "%' or X_LedgerCode like '%" + xSearchkey + "%' or N_Opening like '%" + xSearchkey + "%' or N_Debit like '%" + xSearchkey + "%' or N_Credit like '%" + xSearchkey + "%' or N_Balance like '%" + xSearchkey + "%' ) ";
 
-                    // if (xSortBy == null || xSortBy.Trim() == "")
-                    //     xSortBy = " order by N_LedgerID desc";
-                    // else
-                    //  {
-                    //      switch (xSortBy.Split(" ")[0])
-                    //        {
-                    //     case "X_LedgerCode":
-                    //     xSortBy = "X_LedgerCode " + xSortBy.Split(" ")[1];
-                    //     break;
-                    //     default: break;
-                    //       }
-                    //      xSortBy = " order by " + xSortBy;
-                    //       }
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " Order By X_Level";
                     else
@@ -181,162 +167,42 @@ namespace SmartxAPI.Controllers
 
                     dLayer.ExecuteNonQuery("delete from Acc_LedgerBalForReporting Where  N_CompanyID=@p1", Params, connection, transaction);
 
-
-                    if (b_AllBranchData == true)
+                    if (bAllBranchData == true)
                     {
                         sqlCommandText = "SP_OpeningBalanceGenerate @p1,@p2,0,11,@p5,@p3,0";
-
+                        sqlCondition= " ";
                     }
                     else
                     {
                         sqlCommandText = "SP_OpeningBalanceGenerate @p1,@p2,0,11,@p5,@p3,@p4";
-
+                        sqlCondition= " and N_BranchID=@p4 ";
                     }
+
                     tb = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
                     tb = api.Format(tb, "Master");
 
-                    if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_FnYearID,X_Level,N_LedgerID,N_Type,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_UserID=@p3 " + Searchkey + " group by N_FnYearID,N_LedgerID,X_Level,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance,N_Type   " + xSortBy;
-                    else
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_FnYearID,X_Level,N_LedgerID,N_Type,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_UserID=@p3 " + Searchkey + xSortBy + "and N_LedgerID not in (select top(" + Count + ") N_LedgerID from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2  " + Searchkey + xSortBy + " ) group by N_FnYearID,N_LedgerID,X_Level,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Opening,N_Debit,N_Credit,N_Balance,N_Type " + xSortBy;
-                    SortedList OutPut = new SortedList();
 
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_FnYearID,X_Level,N_LedgerID,N_Type,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,SUM(N_Opening) AS N_Opening,SUM(N_Debit) AS N_Debit,SUM(N_Credit) AS N_Credit,SUM(N_Balance) AS N_Balance from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_UserID=@p3 " + sqlCondition + Searchkey + " group by N_FnYearID,N_LedgerID,X_Level,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Type   " + xSortBy + " ASC";
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_FnYearID,X_Level,N_LedgerID,N_Type,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,SUM(N_Opening) AS N_Opening,SUM(N_Debit) AS N_Debit,SUM(N_Credit) AS N_Credit,SUM(N_Balance) AS N_Balance from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_UserID=@p3 " + sqlCondition + Searchkey  + " and N_LedgerID not in (select top(" + Count + ") N_LedgerID from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_UserID=@p3  " + sqlCondition + Searchkey +" group by N_FnYearID,N_LedgerID,X_Level,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Type " + xSortBy + " ASC) group by N_FnYearID,N_LedgerID,X_Level,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Type " + xSortBy +" ASC";
+
+                    SortedList OutPut = new SortedList();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "X_GroupName", typeof(string), "");
                     dt = myFunctions.AddNewColumnToDataTable(dt, "X_GroupCode", typeof(string), "");
-
-                    // var ledgerSum = dataTable.AsEnumerable()
-                    //              .GroupBy(row => row.Field<int>("N_LedgerID"))
-                    //              .ToDictionary(group => group.Key, group => group.Sum(row => row.Field<decimal>("N_Debit")));
-
-
-                    var groupedData1 = dt.AsEnumerable()
-                                                     .GroupBy(row => row.Field<int>("N_LedgerID"))
-                                                     .Select(group => new
-                                                     {
-                                                         N_LedgerID = group.Key,
-                                                         TotalAmount = group.Sum(row => row.Field<decimal>("N_Debit"))
-                                                     });
-
-                    foreach (var entry in groupedData1)
-                    {
-                        var rowsToUpdate = dt.AsEnumerable()
-                                                    .Where(row => row.Field<int>("N_LedgerID") == entry.N_LedgerID);
-
-                        foreach (var row in rowsToUpdate)
-                        {
-                            row["N_Debit"] = entry.TotalAmount;
-                        }
-                    }
-                    dt.AcceptChanges();
-                    var groupedData2 = dt.AsEnumerable()
-                                                   .GroupBy(row => row.Field<int>("N_LedgerID"))
-                                                   .Select(group => new
-                                                   {
-                                                       N_LedgerID = group.Key,
-                                                       TotalAmount = group.Sum(row => row.Field<decimal>("N_Credit"))
-                                                   });
-
-                    foreach (var entry in groupedData2)
-                    {
-                        var rowsToUpdate = dt.AsEnumerable()
-                                                    .Where(row => row.Field<int>("N_LedgerID") == entry.N_LedgerID);
-
-                        foreach (var row in rowsToUpdate)
-                        {
-                            row["N_Credit"] = entry.TotalAmount;
-                        }
-                    }
-                    dt.AcceptChanges();
-
-
-                    var groupedData3 = dt.AsEnumerable()
-                                                   .GroupBy(row => row.Field<int>("N_LedgerID"))
-                                                   .Select(group => new
-                                                   {
-                                                       N_LedgerID = group.Key,
-                                                       TotalAmount = group.Sum(row => row.Field<decimal>("N_Balance"))
-                                                   });
-
-                    foreach (var entry in groupedData3)
-                    {
-                        var rowsToUpdate = dt.AsEnumerable()
-                                                    .Where(row => row.Field<int>("N_LedgerID") == entry.N_LedgerID);
-
-                        foreach (var row in rowsToUpdate)
-                        {
-                            row["N_Balance"] = entry.TotalAmount;
-                        }
-                    }
-                    dt.AcceptChanges();
-                    var groupedData4 = dt.AsEnumerable()
-                                            .GroupBy(row => row.Field<int>("N_LedgerID"))
-                                            .Select(group => new
-                                            {
-                                                N_LedgerID = group.Key,
-                                                TotalAmount = group.Sum(row => row.Field<decimal>("N_Opening"))
-                                            });
-
-                    foreach (var entry in groupedData4)
-                    {
-                        var rowsToUpdate = dt.AsEnumerable()
-                                                    .Where(row => row.Field<int>("N_LedgerID") == entry.N_LedgerID);
-
-                        foreach (var row in rowsToUpdate)
-                        {
-                            row["N_Opening"] = entry.TotalAmount;
-                        }
-                    }
-                    dt.AcceptChanges();
-
-                    DataTable deduplicatedDataTable = dt.Clone(); // Clone the structure
-
-                    // Create a HashSet to track unique N_LedgerID values
-                    HashSet<object> uniqueLedgerIDs = new HashSet<object>();
-
-                    // Iterate through the originalDataTable rows
-                    foreach (DataRow row in dt.Rows)
-                    {
-                        object ledgerID = row["N_LedgerID"];
-
-                        // Check if the ledgerID is unique
-                        if (!uniqueLedgerIDs.Contains(ledgerID))
-                        {
-                            // Add the row to deduplicatedDataTable
-                            deduplicatedDataTable.Rows.Add(row.ItemArray);
-                            uniqueLedgerIDs.Add(ledgerID);
-                        }
-                    }
-
-
-
-
-
-
-
-
-
-
-
-                    foreach (DataRow Avar in deduplicatedDataTable.Rows)
+                    foreach (DataRow Avar in dt.Rows)
                     {
                         if (myFunctions.getIntVAL(Avar["N_Type"].ToString()) == 0)
                         {
-
                             Avar["X_GroupCode"] = Avar["X_LedgerCode"];
                             Avar["X_LedgerCode"] = "";
                         }
-
                     }
                     dt.AcceptChanges();
-
-
-
-
-
-                    string sqlCommandCount = "select count(1) as N_Count  from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
+                    string sqlCommandCount = "SELECT COUNT(1) FROM (select 1 as N_Count  from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_UserID=@p3 " + sqlCondition + Searchkey +" group by N_FnYearID,N_LedgerID,X_Level,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Type) AS TB ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection, transaction);
-                    OutPut.Add("Details", api.Format(deduplicatedDataTable));
+                    OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     if (deduplicatedDataTable.Rows.Count == 0)
                     {

@@ -247,7 +247,7 @@ namespace SmartxAPI.Controllers
                         {
                             InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
                             object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_VoucherMaster Where X_VoucherNo ='" + InvoiceNo + "' and N_CompanyID= " + nCompanyID + " and X_TransType ='JV' and N_FnYearID=" + nFnYearID, connection, transaction);
-                            if (N_Result == null)
+                            if  (N_Result == null)
                                 break;
                         }
                         MasterTable.Rows[0]["x_VoucherNo"] = InvoiceNo.ToString();
