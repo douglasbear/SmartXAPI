@@ -65,7 +65,7 @@ namespace SmartxAPI.GeneralFunctions
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nFnYearID = myFunctions.getIntVAL(masterRow["n_FnYearId"].ToString());
             int n_POrderID = myFunctions.getIntVAL(masterRow["N_POrderID"].ToString());
-            int nDivisionID = myFunctions.getIntVAL(masterRow["n_DivisionID"].ToString());
+            int nDivisionID = 0;
 
             var vendorInvoice="";
             if(MasterTable.Columns.Contains("X_VendorInvoice"))
@@ -73,6 +73,12 @@ namespace SmartxAPI.GeneralFunctions
             int n_MRNID = 0;
             if (MasterTable.Columns.Contains("N_RsID"))
                 n_MRNID = myFunctions.getIntVAL(masterRow["N_RsID"].ToString());
+
+            if (MasterTable.Columns.Contains("n_DivisionID"))
+            {
+               nDivisionID=myFunctions.getIntVAL(masterRow["n_DivisionID"].ToString());
+
+            }
             int Dir_Purchase = 1;
             int b_FreightAmountDirect = myFunctions.getIntVAL(masterRow["b_FreightAmountDirect"].ToString());
             DetailsToImport = ds.Tables["detailsImport"];
@@ -846,7 +852,12 @@ namespace SmartxAPI.GeneralFunctions
             int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
             int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
             int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
-            int nDivisionID = myFunctions.getIntVAL(MasterRow["n_DivisionID"].ToString());
+            int nDivisionID = 0;
+            if (MasterTable.Columns.Contains("n_DivisionID"))
+            {
+               nDivisionID=myFunctions.getIntVAL(MasterRow["n_DivisionID"].ToString());
+
+            }
 
             int N_PaymentMethodID = myFunctions.getIntVAL(MasterRow["n_PaymentMethodID"].ToString());
 
@@ -1089,7 +1100,16 @@ namespace SmartxAPI.GeneralFunctions
                         Params.Add("N_FormID", 1346);
                     else
                         Params.Add("N_FormID", N_FormID);
-                    Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
+                        
+                    if(nDivisionID>0)
+                    {
+                         //Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
+                    }
+                    else
+                    {
+                        Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
+                    }
+                    
                     while (true)
                     {
                         InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();

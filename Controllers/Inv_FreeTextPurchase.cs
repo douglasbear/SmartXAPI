@@ -327,7 +327,7 @@ namespace SmartxAPI.Controllers
                         row["N_CostCentreID"] = dRow["n_Segment_2"];
                         row["N_Amount"] = dRow["N_Amount"];
                         row["N_LedgerID"] = dRow["N_LedgerID"];
-                        row["N_BranchID"] = dRow["N_BranchID"];
+                         row["N_BranchID"] =  myFunctions.getIntVAL(dRow["N_Segment_1"].ToString());
                         row["X_Narration"] = "";
                         row["X_Naration"] = dRow["X_Naration"];
                         row["D_Entrydate"] = dRow["D_Entrydate"];
@@ -482,7 +482,7 @@ namespace SmartxAPI.Controllers
                     // Acc_CostCentreTrans = dLayer.ExecuteDataTablePro("SP_Acc_Voucher_Disp_CLOUD", ProParams, connection);
 
                     string CostcenterSql = "SELECT X_EmpCode, X_EmpName, N_ProjectID as N_Segment_3,N_EmpID as N_Segment_4, X_ProjectCode,X_ProjectName,N_EmpID,N_ProjectID,N_CompanyID,N_FnYearID, " +
-                    " N_VoucherID, N_VoucherDetailsID, N_CostCentreID,X_CostCentreName as X_CostcentreName,N_CostCentreID as n_Segment_2,X_CostCentreCode,N_BranchID,X_BranchName,X_BranchCode , " +
+                    " N_VoucherID, N_VoucherDetailsID, N_CostCentreID,X_CostCentreName as X_CostcentreName,N_CostCentreID as n_Segment_2,X_CostCentreCode,N_BranchID as N_Segment_1,X_BranchName,X_BranchCode , " +
                     " N_Amount, N_LedgerID, N_CostCenterTransID, N_GridLineNo,X_Naration,0 AS N_AssetID, '' As X_AssetCode, " +
                     " GETDATE() AS D_RepaymentDate, '' AS X_AssetName,'' AS X_PayCode,0 AS N_PayID,0 AS N_Inst,CAST(0 AS BIT) AS B_IsCategory,D_Entrydate " +
                     " FROM   vw_InvFreeTextPurchaseCostCentreDetails where N_InventoryID = " + N_PurchaseID + " And N_InventoryType=1 And N_FnYearID=" + nFnYearId +
