@@ -548,13 +548,25 @@ namespace SmartxAPI.Controllers
                     int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
                     int N_CrmCompanyID = MasterTable.Columns.Contains("N_CrmCompanyID") ? myFunctions.getIntVAL(MasterRow["N_CrmCompanyID"].ToString()) : 0;
                     int N_ContactID = MasterTable.Columns.Contains("N_ContactID") ? myFunctions.getIntVAL(MasterRow["N_ContactID"].ToString()) : 0;
+                    int nParentQuotationID = MasterTable.Columns.Contains("n_ParentQuotationID") ? myFunctions.getIntVAL(MasterRow["n_ParentQuotationID"].ToString()) : 0;
                     int N_NextApproverID = 0;
-
+                    bool bRevised=false;
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nFnYearID", N_FnYearID);
                     QueryParams.Add("@nQuotationID", N_QuotationID);
                     QueryParams.Add("@nBranchID", N_BranchID);
                     QueryParams.Add("@nLocationID", N_LocationID);
+                    QueryParams.Add("@nParentQuotationID", nParentQuotationID);
+
+                    
+
+                      if (MasterTable.Columns.Contains("B_Revised"))
+                      {
+                    
+                       bRevised= myFunctions.getBoolVAL(MasterTable.Rows[0]["B_Revised"].ToString());
+
+
+                      }
                    
                     bool B_SalesEnquiry = myFunctions.CheckPermission(N_CompanyID, 724, "Administrator", "X_UserCategory", dLayer, connection, transaction);
 
@@ -732,6 +744,12 @@ namespace SmartxAPI.Controllers
                         //transaction.Commit();
                         //myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_QuotationID, "Sales Quotation", QuotationNo, dLayer, connection, transaction, User);
                     }
+                   if(bRevised)
+                   {
+                      dLayer.ExecuteNonQuery("Update Inv_SalesQuotation Set B_HideRevised=1 Where N_QuotationID=@nParentQuotationID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                   }
+
+
                     transaction.Commit();
 
                     SortedList Result = new SortedList();
