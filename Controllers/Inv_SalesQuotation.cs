@@ -541,6 +541,7 @@ namespace SmartxAPI.Controllers
 
 
                     int N_QuotationID = myFunctions.getIntVAL(MasterRow["n_QuotationID"].ToString());
+                    int NreQuotationID = myFunctions.getIntVAL(MasterRow["n_QuotationID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
@@ -744,7 +745,7 @@ namespace SmartxAPI.Controllers
                         //transaction.Commit();
                         //myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_QuotationID, "Sales Quotation", QuotationNo, dLayer, connection, transaction, User);
                     }
-                   if(bRevised)
+                   if(bRevised && NreQuotationID==0)
                    {
                       dLayer.ExecuteNonQuery("Update Inv_SalesQuotation Set B_HideRevised=1 Where N_QuotationID=@nParentQuotationID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                    }

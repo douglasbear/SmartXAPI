@@ -205,7 +205,116 @@ namespace SmartxAPI.Controllers
                     dt = myFunctions.AddNewColumnToDataTable(dt, "X_GroupName", typeof(string), "");
                     dt = myFunctions.AddNewColumnToDataTable(dt, "X_GroupCode", typeof(string), "");
 
-          
+                    // var ledgerSum = dataTable.AsEnumerable()
+                    //              .GroupBy(row => row.Field<int>("N_LedgerID"))
+                    //              .ToDictionary(group => group.Key, group => group.Sum(row => row.Field<decimal>("N_Debit")));
+
+
+                    var groupedData1 = dt.AsEnumerable()
+                                                     .GroupBy(row => row.Field<int>("N_LedgerID"))
+                                                     .Select(group => new
+                                                     {
+                                                         N_LedgerID = group.Key,
+                                                         TotalAmount = group.Sum(row => row.Field<decimal>("N_Debit"))
+                                                     });
+
+                    foreach (var entry in groupedData1)
+                    {
+                        var rowsToUpdate = dt.AsEnumerable()
+                                                    .Where(row => row.Field<int>("N_LedgerID") == entry.N_LedgerID);
+
+                        foreach (var row in rowsToUpdate)
+                        {
+                            row["N_Debit"] = entry.TotalAmount;
+                        }
+                    }
+                    dt.AcceptChanges();
+                    var groupedData2 = dt.AsEnumerable()
+                                                   .GroupBy(row => row.Field<int>("N_LedgerID"))
+                                                   .Select(group => new
+                                                   {
+                                                       N_LedgerID = group.Key,
+                                                       TotalAmount = group.Sum(row => row.Field<decimal>("N_Credit"))
+                                                   });
+
+                    foreach (var entry in groupedData2)
+                    {
+                        var rowsToUpdate = dt.AsEnumerable()
+                                                    .Where(row => row.Field<int>("N_LedgerID") == entry.N_LedgerID);
+
+                        foreach (var row in rowsToUpdate)
+                        {
+                            row["N_Credit"] = entry.TotalAmount;
+                        }
+                    }
+                    dt.AcceptChanges();
+
+
+                    var groupedData3 = dt.AsEnumerable()
+                                                   .GroupBy(row => row.Field<int>("N_LedgerID"))
+                                                   .Select(group => new
+                                                   {
+                                                       N_LedgerID = group.Key,
+                                                       TotalAmount = group.Sum(row => row.Field<decimal>("N_Balance"))
+                                                   });
+
+                    foreach (var entry in groupedData3)
+                    {
+                        var rowsToUpdate = dt.AsEnumerable()
+                                                    .Where(row => row.Field<int>("N_LedgerID") == entry.N_LedgerID);
+
+                        foreach (var row in rowsToUpdate)
+                        {
+                            row["N_Balance"] = entry.TotalAmount;
+                        }
+                    }
+                    dt.AcceptChanges();
+                    var groupedData4 = dt.AsEnumerable()
+                                            .GroupBy(row => row.Field<int>("N_LedgerID"))
+                                            .Select(group => new
+                                            {
+                                                N_LedgerID = group.Key,
+                                                TotalAmount = group.Sum(row => row.Field<decimal>("N_Opening"))
+                                            });
+
+                    foreach (var entry in groupedData4)
+                    {
+                        var rowsToUpdate = dt.AsEnumerable()
+                                                    .Where(row => row.Field<int>("N_LedgerID") == entry.N_LedgerID);
+
+                        foreach (var row in rowsToUpdate)
+                        {
+                            row["N_Opening"] = entry.TotalAmount;
+                        }
+                    }
+                    dt.AcceptChanges();
+
+                    DataTable deduplicatedDataTable = dt.Clone(); // Clone the structure
+
+                    // Create a HashSet to track unique N_LedgerID values
+                    HashSet<object> uniqueLedgerIDs = new HashSet<object>();
+
+                    // Iterate through the originalDataTable rows
+                    foreach (DataRow row in dt.Rows)
+                    {
+                        object ledgerID = row["N_LedgerID"];
+
+                        // Check if the ledgerID is unique
+                        if (!uniqueLedgerIDs.Contains(ledgerID))
+                        {
+                            // Add the row to deduplicatedDataTable
+                            deduplicatedDataTable.Rows.Add(row.ItemArray);
+                            uniqueLedgerIDs.Add(ledgerID);
+                        }
+                    }
+
+
+
+
+
+
+
+
 
 
 
