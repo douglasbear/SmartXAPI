@@ -1100,7 +1100,8 @@ namespace SmartxAPI.GeneralFunctions
                         Params.Add("N_FormID", 1346);
                     else
                         Params.Add("N_FormID", N_FormID);
-                    if(myFunctions.getIntVAL(MasterRow["N_DivisionID"].ToString())>0)
+                        
+                    if(nDivisionID>0)
                     {
                          //Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
                     }
