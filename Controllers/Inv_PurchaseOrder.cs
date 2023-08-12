@@ -814,7 +814,7 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                    if(N_POrderID > 0){
+                    if(N_POrderID > 0 && myFunctions.getIntVAL(MasterTable.Rows[0]["n_QuotationID"].ToString())>0){
                            dLayer.ExecuteScalar("Update Inv_RFQDecisionMaster Set N_PorderID = "+N_POrderID+" Where  N_QuotationID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["n_QuotationID"].ToString()) + " and N_CompanyID=" + nCompanyId, connection, transaction);
                         }
                     

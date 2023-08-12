@@ -285,6 +285,12 @@ namespace SmartxAPI.Controllers
                         if (myFunctions.getIntVAL(catCount.ToString()) > 0){
                             return Ok(api.Error(User, "Already In Use !!"));
                         }
+
+                        object categoryCount = dLayer.ExecuteScalar("select count(1) From Ass_AssetMaster where n_CategoryID =" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User), connection, transaction);
+                        categoryCount = categoryCount == null ? 0 : categoryCount;
+                        if (myFunctions.getIntVAL(categoryCount.ToString()) > 0){
+                            return Ok(api.Error(User, "Already In Use !!"));
+                        }
                     }
 
 

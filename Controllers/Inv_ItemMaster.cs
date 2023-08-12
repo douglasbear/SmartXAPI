@@ -715,12 +715,15 @@ namespace SmartxAPI.Controllers
                     // else
                     //     CalcCost = myFunctions.getVAL(dLayer.ExecuteScalar("Select dbo.SP_Cost_Loc(" + N_ItemID + "," + myFunctions.GetCompanyID(User) + ",'" + dt.Rows[0]["X_StockUnit"].ToString() + "'," + nLocationID + ") As N_LPrice", connection).ToString());
 
-                    if (N_BranchID == 0) // 07/04/2022 Cost calculation made using procedure by Akshay under the instruction of Ratheesh sir
-                        CalcCost = myFunctions.getVAL(dLayer.ExecuteScalar("Select dbo.SP_CostAvg(" + N_ItemID + "," + myFunctions.GetCompanyID(User) + ",'" + dt.Rows[0]["X_StockUnit"].ToString() + "') As N_LPrice", connection).ToString());
-                    else
-                        CalcCost = myFunctions.getVAL(dLayer.ExecuteScalar("Select dbo.SP_CostAvg_Loc(" + N_ItemID + "," + myFunctions.GetCompanyID(User) + ",'" + dt.Rows[0]["X_StockUnit"].ToString() + "'," + nLocationID + ") As N_LPrice", connection).ToString());
+                    if (myFunctions.getIntVAL(dt.Rows[0]["n_ClassID"].ToString()) != 4)
+                    {
+                        if (N_BranchID == 0) // 07/04/2022 Cost calculation made using procedure by Akshay under the instruction of Ratheesh sir
+                            CalcCost = myFunctions.getVAL(dLayer.ExecuteScalar("Select dbo.SP_CostAvg(" + N_ItemID + "," + myFunctions.GetCompanyID(User) + ",'" + dt.Rows[0]["X_StockUnit"].ToString() + "') As N_LPrice", connection).ToString());
+                        else
+                            CalcCost = myFunctions.getVAL(dLayer.ExecuteScalar("Select dbo.SP_CostAvg_Loc(" + N_ItemID + "," + myFunctions.GetCompanyID(User) + ",'" + dt.Rows[0]["X_StockUnit"].ToString() + "'," + nLocationID + ") As N_LPrice", connection).ToString());
 
-                    dt.Rows[0]["n_ItemCost"] = CalcCost;
+                        dt.Rows[0]["n_ItemCost"] = CalcCost;
+                    }
                     dt.AcceptChanges();
                     object inStocks = dLayer.ExecuteScalar("Select N_ItemID From vw_InvStock_Status Where N_ItemID=@nItemID and (Type<>'O' and Type<>'PO' and Type<>'SO') and N_CompanyID=@nCompanyID", QueryParams, connection);
                     bool b_InStocks = true;
@@ -1732,7 +1735,7 @@ namespace SmartxAPI.Controllers
         // }
 
         [HttpGet("costAndStock")]
-        public ActionResult GetCostAndStock(int nItemID, int nLocationID, string xBatch, DateTime dDate, int nCustomerID)
+        public ActionResult GetCostAndStock(int nItemID, int nLocationID, string xBatch, DateTime dDate, int nCustomerID,bool lastCost)
         {
             DataTable dt = new DataTable();
             string sqlCommandText = "";
@@ -1749,8 +1752,15 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         bool bStockByDate = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "ShowAvlStockByDate", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
-                        if (!bStockByDate)
+                        if (!bStockByDate && !lastCost)
+                        {
                             sqlCommandText = "Select vw_InvItem_Search.N_ItemID,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID," + nLocationID + ",'" + xBatch + "', 'location')As N_AvlStock ,dbo.SP_LastPCost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID," + nLocationID + ") As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice From vw_InvItem_Search Where N_ItemID=" + nItemID + " and N_CompanyID=" + nCompanyID;
+                        }
+                        else if(lastCost)
+                        {
+                            sqlCommandText = "Select vw_InvItem_Search.N_ItemID,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID," + nLocationID + ",'" + xBatch + "', 'location')As N_AvlStock ,dbo.Fn_LastCost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,'') As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice From vw_InvItem_Search Where N_ItemID=" + nItemID + " and N_CompanyID=" + nCompanyID;
+
+                        }
                         else
                             sqlCommandText = "Select vw_InvItem_Search.N_ItemID,dbo.SP_GenGetStockByDate(vw_InvItem_Search.N_ItemID," + nLocationID + ",'" + xBatch + "', 'location','" + myFunctions.getDateVAL(dDate) + "')As N_AvlStock ,dbo.SP_LastPCost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID," + nLocationID + ") As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where N_ItemID=" + nItemID + " and N_CompanyID=" + nCompanyID + " and ISNULL(N_ItemTypeID,0)=0";
                     }
@@ -1925,7 +1935,7 @@ namespace SmartxAPI.Controllers
         }
          //GET api/Projects/list
         [HttpGet("shortListProduct")]
-        public ActionResult GetAllItemsProduct(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial, int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID, bool b_Asn, int nPriceListID, bool isSalesItems, bool isRentalItem, bool rentalItems, bool purchaseRentalItems,bool showStockInlist,int nitemType,bool isAssetItem,bool ShowCostinList,int nItemID)
+        public ActionResult GetAllItemsProduct(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial, int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID, bool b_Asn, int nPriceListID, bool isSalesItems, bool isRentalItem, bool rentalItems, bool purchaseRentalItems,bool showStockInlist,int nitemType,bool isAssetItem,bool ShowCostinList,int nItemID,int nDivisionID)
         
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -1949,6 +1959,7 @@ namespace SmartxAPI.Controllers
              string otherItem="";
               string sqlComandText ="";
               string ShowCost="";
+              string divisionCategory="";
 
              if(showStockInlist)
              {
@@ -2040,6 +2051,8 @@ namespace SmartxAPI.Controllers
                 otherItem = otherItem + " and N_ItemTypeID<>1";
             }
 
+
+           
   
             //    ShowCost=" , dbo.SP_Cost_Loc([vw_InvItem_Search_Products].N_ItemID,[vw_InvItem_Search_Products].N_CompanyID,[vw_InvItem_Search_Products].X_ItemUnit," + nLocationID + ")  As N_LPrice";
             
@@ -2078,9 +2091,28 @@ namespace SmartxAPI.Controllers
                         xOrderNew = "ORDER BY Description asc";
                     }
 
+                     if(nDivisionID>0)
+                        {
+                        object divisionsql = "";
+                        object xLevelsql = "";
+                        object xLevelPattern = "";
+                        xLevelsql = dLayer.ExecuteScalar("select X_LevelPattern from Acc_CostCentreMaster where N_CompanyID=" + nCompanyID + " and N_CostCentreID=" + nDivisionID + " and N_GroupID=0", Params, connection);
+                       if (xLevelsql != null && xLevelsql.ToString() != "")
+                        {
+                         divisionsql = "select N_CostCentreID from Acc_CostCentreMaster where N_CompanyID=" + nCompanyID + " and  X_LevelPattern like '" + xLevelsql.ToString()  + "%'";
+                    
+                        }                       
+            
+                        if (divisionsql != null && divisionsql.ToString() != "")
+                        {
+                        divisionCategory=" and  [vw_InvItem_Search_Products].n_CostCenterID in (" + divisionsql.ToString() + ")";
+                        }
+                     }
+
+
                     string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(" + xOrder + ") RowNo,";
                     string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) " + xOrderNew + " ";
-                    string sql = pageQry + sqlComandText + pageQryEnd;
+                    string sql = pageQry + sqlComandText+divisionCategory + pageQryEnd;
                     dt = dLayer.ExecuteDataTable(sql, Params, connection);
 
 
@@ -2110,7 +2142,8 @@ namespace SmartxAPI.Controllers
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(_api.Warning("No Results Found"));
+                    return Ok(_api.Success(dt));
+                    //return Ok(_api.Warning("No Results Found"));
                 }
                 else
                 {

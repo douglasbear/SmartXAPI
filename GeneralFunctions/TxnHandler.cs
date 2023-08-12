@@ -65,12 +65,20 @@ namespace SmartxAPI.GeneralFunctions
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nFnYearID = myFunctions.getIntVAL(masterRow["n_FnYearId"].ToString());
             int n_POrderID = myFunctions.getIntVAL(masterRow["N_POrderID"].ToString());
+            int nDivisionID = 0;
+
             var vendorInvoice="";
             if(MasterTable.Columns.Contains("X_VendorInvoice"))
                     vendorInvoice = masterRow["X_VendorInvoice"].ToString();
             int n_MRNID = 0;
             if (MasterTable.Columns.Contains("N_RsID"))
                 n_MRNID = myFunctions.getIntVAL(masterRow["N_RsID"].ToString());
+
+            if (MasterTable.Columns.Contains("n_DivisionID"))
+            {
+               nDivisionID=myFunctions.getIntVAL(masterRow["n_DivisionID"].ToString());
+
+            }
             int Dir_Purchase = 1;
             int b_FreightAmountDirect = myFunctions.getIntVAL(masterRow["b_FreightAmountDirect"].ToString());
             DetailsToImport = ds.Tables["detailsImport"];
@@ -606,6 +614,36 @@ namespace SmartxAPI.GeneralFunctions
                         };
                         dLayer.ExecuteNonQueryPro("SP_FillFreightToPurchase", ProcParams, connection, transaction);
                     }
+                   if(nDivisionID>0)
+                    {
+                    if (DetailTable.Rows.Count > 0)
+                    {
+                     object xLevelsql = dLayer.ExecuteScalar("select X_LevelPattern from Acc_CostCentreMaster where N_CompanyID=" + nCompanyID + " and N_CostCentreID=" + nDivisionID + " and N_GroupID=0", Params, connection,transaction);
+                      
+                       if (xLevelsql != null && xLevelsql.ToString() != "")
+                        {
+                        for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        {
+
+                            //  detailTable.Rows[j]["N_SalesId"] = N_SalesID;
+                            object xLevelPattern = dLayer.ExecuteScalar("SELECT  Acc_CostCentreMaster.X_LevelPattern FROM         Acc_CostCentreMaster LEFT OUTER JOIN    Inv_ItemCategory ON Acc_CostCentreMaster.N_CostCentreID = Inv_ItemCategory.N_CostCenterID AND Acc_CostCentreMaster.N_CompanyID = Inv_ItemCategory.N_CompanyID RIGHT OUTER JOIN "+
+                            "Inv_ItemMaster ON Inv_ItemCategory.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemCategory.N_CategoryID = Inv_ItemMaster.N_CategoryID  where Inv_ItemMaster.N_ItemID="+ DetailTable.Rows[j]["N_ItemID"]+" and Inv_ItemMaster.N_CompanyID="+nCompanyID+"", Params, connection,transaction);
+                           // object xLevelPattern = dLayer.ExecuteScalar("select X_LevelPattern from Acc_CostCentreMaster where N_CompanyID=" + N_CompanyID + " and N_CostCentreID=" + nDivisionID + " and N_GroupID=0", Params, connection);
+                             if (xLevelsql.ToString() != xLevelPattern.ToString().Substring(0, 3))
+                             {
+                                 Result.Add("b_IsCompleted", 0);
+                                 Result.Add("x_Msg", "Unable To save!...Division Mismatch");
+                                 return Result;
+                             }
+                           
+                        }
+                        }
+                     
+
+
+
+                    }
+                    }
 
                    
                 object costcntrID=null;
@@ -814,6 +852,12 @@ namespace SmartxAPI.GeneralFunctions
             int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
             int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
             int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
+            int nDivisionID = 0;
+            if (MasterTable.Columns.Contains("n_DivisionID"))
+            {
+               nDivisionID=myFunctions.getIntVAL(MasterRow["n_DivisionID"].ToString());
+
+            }
 
             int N_PaymentMethodID = myFunctions.getIntVAL(MasterRow["n_PaymentMethodID"].ToString());
 
@@ -1056,7 +1100,16 @@ namespace SmartxAPI.GeneralFunctions
                         Params.Add("N_FormID", 1346);
                     else
                         Params.Add("N_FormID", N_FormID);
-                    Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
+                        
+                    if(nDivisionID>0)
+                    {
+                         //Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
+                    }
+                    else
+                    {
+                        Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
+                    }
+                    
                     while (true)
                     {
                         InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
@@ -1461,6 +1514,38 @@ namespace SmartxAPI.GeneralFunctions
                             return Result;
                         }
                     }
+                    if(nDivisionID>0)
+                    {
+                    if (DetailTable.Rows.Count > 0)
+                    {
+                     object xLevelsql = dLayer.ExecuteScalar("select X_LevelPattern from Acc_CostCentreMaster where N_CompanyID=" + N_CompanyID + " and N_CostCentreID=" + nDivisionID + " and N_GroupID=0", Params, connection,transaction);
+                      
+                       if (xLevelsql != null && xLevelsql.ToString() != "")
+                        {
+                        for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        {
+
+                            //  detailTable.Rows[j]["N_SalesId"] = N_SalesID;
+                            object xLevelPattern = dLayer.ExecuteScalar("SELECT  Acc_CostCentreMaster.X_LevelPattern FROM         Acc_CostCentreMaster LEFT OUTER JOIN    Inv_ItemCategory ON Acc_CostCentreMaster.N_CostCentreID = Inv_ItemCategory.N_CostCenterID AND Acc_CostCentreMaster.N_CompanyID = Inv_ItemCategory.N_CompanyID RIGHT OUTER JOIN "+
+                            "Inv_ItemMaster ON Inv_ItemCategory.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemCategory.N_CategoryID = Inv_ItemMaster.N_CategoryID  where Inv_ItemMaster.N_ItemID="+ DetailTable.Rows[j]["N_ItemID"]+" and Inv_ItemMaster.N_CompanyID="+N_CompanyID+" ", Params, connection,transaction);
+                           // object xLevelPattern = dLayer.ExecuteScalar("select X_LevelPattern from Acc_CostCentreMaster where N_CompanyID=" + N_CompanyID + " and N_CostCentreID=" + nDivisionID + " and N_GroupID=0", Params, connection);
+                             if (xLevelsql.ToString() != xLevelPattern.ToString().Substring(0, 3))
+                             {
+                                 Result.Add("b_IsCompleted", 0);
+                                 Result.Add("x_Msg", "Unable To save!...Division Mismatch");
+                                 return Result;
+                             }
+                           
+                        }
+                        }
+                     
+
+
+
+                    }
+                    }
+
+                   
                 
                 object costcntrID=null;
                 object nCostCentreID=null;

@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and (X_PayrunText like '%" + xSearchkey + "%' or X_BatchCode like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by X_PayrunText desc";
+                xSortBy = " order by X_BatchCode desc";
             else
             {
                 switch (xSortBy.Split(" ")[0])

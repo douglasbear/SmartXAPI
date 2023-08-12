@@ -73,11 +73,12 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("projectlist")]
-        public ActionResult GetAllProjectlist(int? nCompanyId,int? nFnYearID ,int nCustomerID,bool bAllBranchData,int nBranchID)
+        public ActionResult GetAllProjectlist(int? nCompanyId,int? nFnYearID ,int nCustomerID,bool bAllBranchData,int nBranchID, int nDivisionID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string Criteria = "";
+            string divCriteria = "";
             
            if (bAllBranchData == true)
             {
@@ -95,16 +96,22 @@ namespace SmartxAPI.Controllers
 
             }
 
+            if(nDivisionID>0){
+               divCriteria = " and  N_DivisionID=@p6";
+
+            }
+
             //  if (bAllBranchData == true)
             //        Criteria = "AND ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 ";
             //  else
             //         Criteria = "and  N_BranchID=" + N_BranchID + " AND ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 ";
 
-            string sqlCommandText = "select * from vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p5" + Criteria +" and X_ProjectCode is not null order by N_ProjectID desc";
+            string sqlCommandText = "select * from vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p5" + Criteria + divCriteria +" and X_ProjectCode is not null order by N_ProjectID desc";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", nCustomerID);
             Params.Add("@p4", nBranchID);
             Params.Add("@p5", nFnYearID);
+            Params.Add("@p6", nDivisionID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

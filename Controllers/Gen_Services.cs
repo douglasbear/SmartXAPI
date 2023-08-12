@@ -60,7 +60,8 @@ namespace SmartxAPI.Controllers
                     {
                         masterTable = "Inv_Sales";
                         column = "X_ReceiptNo";
-                        Params.Add("N_BranchID", nBranchID);
+                        if(nCompanyID!=74)
+                         Params.Add("N_BranchID", nBranchID);
                     }
                     if (formID == 53)
                     {

@@ -53,18 +53,24 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p3", nBranchID);
                     Params.Add("@p4", xTransType);
                     string Searchkey = "";
+                    // if (xSearchkey != null && xSearchkey.Trim() != "")
+                    //     Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or [Invoice Date] like '%" + xSearchkey + "%')";
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or [Invoice Date like] '%" + xSearchkey + "%')";
-                    if (xSortBy == null || xSortBy.Trim() == "")
-                        xSortBy = " order by N_PurchaseID desc";
-                    else
-                        xSortBy = " order by " + xSortBy;
+                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or invoiceDate like '%" + xSearchkey + "%')";
+
+
+                    // if (xSortBy == null || xSortBy.Trim() == "")
+                    //     xSortBy = " order by N_PurchaseID desc";
+                    // else
+                    //     xSortBy = " order by " + xSortBy;
+
+                    
                     if (bAllBranchData)
                         xCriteria = " N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyID=@p1";
                     else
                         xCriteria = " N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_BranchID=@p3 and N_CompanyID=@p1";
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate ,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays,X_VendorName_Ar from vw_InvFreeTextPurchaseReturn_Search where " + xCriteria + Searchkey;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate ,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays,X_VendorName_Ar from vw_InvFreeTextPurchaseReturn_Search where " + xCriteria +" "+ Searchkey;
                     else
                         sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays,X_VendorName_Ar from vw_InvFreeTextPurchaseReturn_Search where " + xCriteria + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvFreeTextPurchaseReturn_Search where " + xCriteria + Searchkey + " ) ";
 

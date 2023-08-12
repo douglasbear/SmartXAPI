@@ -302,7 +302,7 @@ namespace SmartxAPI.Controllers
                         row["N_CostCentreID"] = dRow["n_Segment_2"];
                         row["N_Amount"] = dRow["N_Amount"];
                         row["N_LedgerID"] = dRow["N_LedgerID"];
-                        row["N_BranchID"] = dRow["N_BranchID"];
+                        row["N_BranchID"] =  myFunctions.getIntVAL(dRow["N_Segment_1"].ToString());
                         row["X_Narration"] = "";
                         row["X_Naration"] = dRow["X_Naration"];
                         row["D_Entrydate"] = dRow["D_Entrydate"];
@@ -380,7 +380,7 @@ namespace SmartxAPI.Controllers
                     if (showAllBranch)
                         X_MasterSql = "select * from Vw_FreeTextSalesMaster Where  N_CompanyID=" + nCompanyId + " and X_TransType = '" + xTransType + "' and X_ReceiptNo='" + xInvoiceNO + "' and  N_FnYearID=" + nFnYearId;
                     else
-                        X_MasterSql = "select * from Vw_FreeTextSalesMaster Where  N_CompanyID=" + nCompanyId + " and X_TransType = '" + xTransType + "' and X_ReceiptNo='" + xInvoiceNO + "' and  N_FnYearID=" + nFnYearId + " and Inv_Sales.N_BranchId=" + nBranchId + "";
+                        X_MasterSql = "select * from Vw_FreeTextSalesMaster Where  N_CompanyID=" + nCompanyId + " and X_TransType = '" + xTransType + "' and X_ReceiptNo='" + xInvoiceNO + "' and  N_FnYearID=" + nFnYearId + " and N_BranchId=" + nBranchId + "";
                     Master = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
                     if (Master.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     N_SalesID = myFunctions.getIntVAL(Master.Rows[0]["N_SalesID"].ToString());
