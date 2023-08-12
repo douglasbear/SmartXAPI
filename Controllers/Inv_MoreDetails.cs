@@ -198,7 +198,17 @@ namespace SmartxAPI.Controllers
 
                     Master = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     Master = api.Format(Master, "Master");
-                   
+
+                      object salesorderID=0;
+                      salesorderID = dLayer.ExecuteScalar("Select ISNULL(N_SalesOrderID,0) from Inv_SalesOrderDetails where N_ServiceID=" + nServiceInfoID + " and N_CompanyID=" + nCompanyID, connection);
+                      if (salesorderID==null){
+                        salesorderID=0;
+                      }
+              
+                           myFunctions.AddNewColumnToDataTable(Master, "N_SalesOrderID", typeof(int), salesorderID);
+                           Master.AcceptChanges();
+                 
+
 
                     // if (Master.Rows.Count == 0)
                     // {
