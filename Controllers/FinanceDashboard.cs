@@ -123,6 +123,8 @@ namespace SmartxAPI.Controllers
             }
         }
 
+      
+
         [HttpGet("trialBalancelist")]
         public ActionResult TrialBalanceList(int nComapanyID, int nFnYearID, int nBranchID, int nPage, int nSizeperpage, bool bAllBranchData, DateTime d_Start, DateTime d_end, string xSearchkey, string xSortBy)
         {
@@ -142,7 +144,6 @@ namespace SmartxAPI.Controllers
                     string Searchkey = "";
                     string d_Date = d_Start.ToString("dd-MMM-yyyy") + "|" + d_end.ToString("dd-MMM-yyyy") + "|";
                     string sqlCondition = "";
-
                     Params.Add("@p1", nCompanyID);
                     Params.Add("@p2", nFnYearID);
                     Params.Add("@p3", nUserID);
@@ -150,7 +151,6 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p5", d_Date);
                     if (xSearchkey != null && xSearchkey.Trim() != "")
                         Searchkey = "and ( X_LedgerName like '%" + xSearchkey + "%' or X_LedgerCode like '%" + xSearchkey + "%' or N_Opening like '%" + xSearchkey + "%' or N_Debit like '%" + xSearchkey + "%' or N_Credit like '%" + xSearchkey + "%' or N_Balance like '%" + xSearchkey + "%' ) ";
-
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " Order By X_Level";
                     else
@@ -164,9 +164,7 @@ namespace SmartxAPI.Controllers
                         }
                         xSortBy = " order by " + xSortBy;
                     }
-
                     dLayer.ExecuteNonQuery("delete from Acc_LedgerBalForReporting Where  N_CompanyID=@p1", Params, connection, transaction);
-
                     if (bAllBranchData == true)
                     {
                         sqlCommandText = "SP_OpeningBalanceGenerate @p1,@p2,0,11,@p5,@p3,0";
@@ -177,16 +175,12 @@ namespace SmartxAPI.Controllers
                         sqlCommandText = "SP_OpeningBalanceGenerate @p1,@p2,0,11,@p5,@p3,@p4";
                         sqlCondition= " and N_BranchID=@p4 ";
                     }
-
                     tb = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
                     tb = api.Format(tb, "Master");
-
-
                     if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ") N_FnYearID,X_Level,N_LedgerID,N_Type,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,SUM(N_Opening) AS N_Opening,SUM(N_Debit) AS N_Debit,SUM(N_Credit) AS N_Credit,SUM(N_Balance) AS N_Balance from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_UserID=@p3 " + sqlCondition + Searchkey + " group by N_FnYearID,N_LedgerID,X_Level,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Type   " + xSortBy + " ASC";
                     else
                         sqlCommandText = "select top(" + nSizeperpage + ") N_FnYearID,X_Level,N_LedgerID,N_Type,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,SUM(N_Opening) AS N_Opening,SUM(N_Debit) AS N_Debit,SUM(N_Credit) AS N_Credit,SUM(N_Balance) AS N_Balance from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_UserID=@p3 " + sqlCondition + Searchkey  + " and N_LedgerID not in (select top(" + Count + ") N_LedgerID from vw_Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_UserID=@p3  " + sqlCondition + Searchkey +" group by N_FnYearID,N_LedgerID,X_Level,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Type " + xSortBy + " ASC) group by N_FnYearID,N_LedgerID,X_Level,N_CompanyID,N_UserID,X_LedgerCode,X_LedgerName,N_Type " + xSortBy +" ASC";
-
                     SortedList OutPut = new SortedList();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "X_GroupName", typeof(string), "");
@@ -204,7 +198,7 @@ namespace SmartxAPI.Controllers
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection, transaction);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
-                    if (deduplicatedDataTable.Rows.Count == 0)
+                    if (dt.Rows.Count == 0)
                     {
                         return Ok(api.Warning("No Results Found"));
                     }
