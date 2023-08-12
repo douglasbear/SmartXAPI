@@ -763,6 +763,90 @@ namespace SmartxAPI.Controllers
             }
         }
 
+
+        
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nQuotationID, bool flag,int nVendorID)
+        {
+            int Results = 0;
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                     ParamList.Add("@nQuotationID", nQuotationID);
+                     ParamList.Add("@nCompanyID", nCompanyID);
+                     ParamList.Add("@nVendorID", nVendorID);
+                    string xButtonAction="Delete";
+
+                    if(flag==true){
+                        object objInwardsDone = dLayer.ExecuteScalar("select COUNT(N_QuotationID) from Inv_RFQVendorListMaster where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID ", ParamList, connection,transaction);//and ISNULL(B_IsUpdated,0)=1
+                        if (myFunctions.getIntVAL(objInwardsDone.ToString()) != 0){
+                            return Ok(_api.Error(User, "Inwards processed! Unable to delete"));
+                        }
+                         
+                           if (nQuotationID > 0)
+                        {
+                            dLayer.DeleteData("Inv_RFQVendorList", "N_QuotationID", nQuotationID, "N_CompanyID = " + nCompanyID, connection, transaction);
+                            dLayer.DeleteData("Inv_VendorRequestDetails", "N_QuotationID", nQuotationID, "N_CompanyID = " + nCompanyID, connection, transaction);
+                            Results = dLayer.DeleteData("Inv_VendorRequest", "N_QuotationID", nQuotationID, "N_CompanyID = " + nCompanyID, connection, transaction);
+                            
+                             xButtonAction="Update"; 
+                        }
+                    
+              
+                    if (Results > 0)
+                    {
+                        transaction.Commit();
+                        return Ok(_api.Success("Quotation deleted"));
+                    } 
+                    else
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Warning("Unable to delete Quotation"));
+                    }
+                    }
+
+                    else{
+
+                        object Decision = dLayer.ExecuteScalar("select COUNT(*) from Inv_RFQDecisionMaster where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID", ParamList, connection,transaction);
+                        if (myFunctions.getIntVAL(Decision.ToString()) > 0){
+                            return Ok(_api.Error(User, "Decision processed! Unable to delete"));
+                        }
+                       
+                        dLayer.ExecuteNonQuery("update Inv_RFQVendorList set N_Price=0,X_Remarks=null where N_CompanyID=@nCompanyID and N_VendorID=@nVendorID and n_QuotationId=@nQuotationID ", ParamList, connection, transaction);
+
+                        Results = dLayer.DeleteData("Inv_RFQVendorListMaster", "N_QuotationID", nQuotationID, "N_CompanyID = " + nCompanyID, connection, transaction);
+                
+
+                    if (Results > 0)
+                    {
+                        transaction.Commit();
+                        return Ok(_api.Success("Price Update deleted"));
+                    } 
+                    
+                    else
+                        transaction.Rollback();
+                        return Ok(_api.Warning("Unable to delete Price Update"));
+                    
+                    }
+                   
+                   
+                }
+            }
+            
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User,ex));
+            }
+
+
+        }
+
         // [HttpGet("rfqDetails")]
         // public ActionResult GetRFQDetails(int nQuotationID,int nVendorID)
         // {

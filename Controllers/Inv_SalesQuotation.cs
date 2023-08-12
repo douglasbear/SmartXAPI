@@ -998,13 +998,17 @@ namespace SmartxAPI.Controllers
 
                     SqlTransaction transaction = connection.BeginTransaction();
 
-
+                    object nFormID=0;
                     object objSalesProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesID,0) from Inv_Sales where N_CompanyID=" + nCompanyID + " and N_QuotationID=" + N_QuotationID + " and B_IsSaveDraft = 0", connection, transaction);
                     object objOrderProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesOrderId,0) from Inv_SalesOrder where N_CompanyID=" + nCompanyID + " and N_QuotationID=" + N_QuotationID + "", connection, transaction);
+                   
                     if (objSalesProcessed == null)
                         objSalesProcessed = 0;
                     if (objOrderProcessed == null)
                         objOrderProcessed = 0;
+                        if (myFunctions.getIntVAL(objOrderProcessed.ToString()) > 0){
+                         nFormID = dLayer.ExecuteScalar("Select Isnull(N_FormID,0) from Inv_SalesOrder where N_CompanyID=" + nCompanyID + " and N_SalesOrderId=" + objOrderProcessed + "", connection, transaction);
+                    }
                     if (myFunctions.getIntVAL(objSalesProcessed.ToString()) == 0 && myFunctions.getIntVAL(objOrderProcessed.ToString()) == 0)
                     {
 
@@ -1060,13 +1064,20 @@ namespace SmartxAPI.Controllers
 
                
                     }
+                     
                     else
                     {
                         transaction.Rollback();
                         if (myFunctions.getIntVAL(objSalesProcessed.ToString()) > 0)
                             return Ok(_api.Error(User, "Sales invoice processed! Unable to delete"));
                         else if (myFunctions.getIntVAL(objOrderProcessed.ToString()) > 0)
-                            return Ok(_api.Error(User, "Sales order processed! Unable to delete"));
+                            if(myFunctions.getIntVAL(nFormID.ToString())==1546)
+                            return Ok(_api.Error(User, "Service order processed! Unable to delete"));
+                      
+                          else
+                         return Ok(_api.Error(User, "Sales order processed! Unable to delete"));
+                   
+                        
                         else
                             return Ok(_api.Error(User, "Unable to delete!"));
 
