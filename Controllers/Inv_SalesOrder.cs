@@ -1106,10 +1106,21 @@ namespace SmartxAPI.Controllers
 
                     string X_Criteria = "N_SalesOrderId=" + nSalesOrderID + " and N_CompanyID=" + myFunctions.GetCompanyID(User);
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    string transType="SALES ORDER";
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
                     int N_IsApprovalSystem = Approvals.Rows.Count > 0 ? myFunctions.getIntVAL(Approvals.Rows[0]["isApprovalSystem"].ToString()) : 0;
+                     if(nFormID==1757)
+                      transType="BOOK ORDER";
+                       if(nFormID==81)
+                      transType="SALES ORDER"; 
+                      if(nFormID==1740)
+                      transType="OPTICAL ORDER";
+                      if(nFormID==1571)
+                      transType="JOB ORDER";
 
-                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "BOOK ORDER", nSalesOrderID, TransRow["X_OrderNo"].ToString(), ProcStatus, "Inv_SalesOrder", X_Criteria, "", User, dLayer, connection, transaction);
+
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, transType, nSalesOrderID, TransRow["X_OrderNo"].ToString(), ProcStatus, "Inv_SalesOrder", X_Criteria, "", User, dLayer, connection, transaction);
+                        
                     if (status != "Error")
                     {
                         object objProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesID,0) from Inv_SalesDetails where N_CompanyID=" + nCompanyID + " and N_SalesOrderId=" + nSalesOrderID + "", connection, transaction);

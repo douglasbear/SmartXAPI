@@ -1100,7 +1100,16 @@ namespace SmartxAPI.GeneralFunctions
                         Params.Add("N_FormID", 1346);
                     else
                         Params.Add("N_FormID", N_FormID);
-                    Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
+                        
+                    if(nDivisionID>0)
+                    {
+                         //Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
+                    }
+                    else
+                    {
+                        Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
+                    }
+                    
                     while (true)
                     {
                         InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
