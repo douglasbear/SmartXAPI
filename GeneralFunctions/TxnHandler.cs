@@ -1027,6 +1027,8 @@ namespace SmartxAPI.GeneralFunctions
                 // return Ok(_api.Success("Sales Approved " + "-" + InvoiceNo));
                 Result.Add("b_IsCompleted", 1);
                 Result.Add("x_Msg", "Sales Approved " + "-" + InvoiceNo);
+                Result.Add("n_SalesID", N_SalesID);
+                Result.Add("x_SalesNo", InvoiceNo);
                 return Result;
             }
 
