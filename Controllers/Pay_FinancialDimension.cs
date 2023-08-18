@@ -13,9 +13,9 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("department")]
+    [Route("financialDimension")]
     [ApiController]
-    public class Pay_Department : ControllerBase
+    public class Pay_FinancialDimension : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
@@ -23,17 +23,17 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly int N_FormID;
 
-        public Pay_Department(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Pay_FinancialDimension(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            N_FormID = 202;//form id of cost center
+            N_FormID = 1789;//form id of cost center
         }
 
         [HttpGet("list")]
-        public ActionResult GetDepartmentList(int nFnYearID, string division, string allowTransaction,bool isDepartment)
+        public ActionResult GetDepartmentList(int nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -41,42 +41,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
             string sqlCommandText = "";
-            string viewName,tableName="";
-            string tablcode="";
-            if(isDepartment)
-            {
-            tableName = "Pay_Department";
-            tablcode = "X_DepartmentCode";
-            viewName="vw_PayDepartmentMaster_Disp";
-            }
-            else
-            {
-            tableName = "Acc_CostCentreMaster";
-            viewName="vw_AccCostCentreMaster_Disp";
-            tablcode = "X_CostCentreCode";
-            }
-            if (division == "" || division == null)
-            {
-
-                sqlCommandText = "Select *  from "+tableName+" Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "  Order By "+tablcode+"";
-            }
-            else
-            {
-
-                sqlCommandText = "Select *  from "+tableName+" Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + " and isnull(N_GroupID,0)=0   Order By "+tablcode+"";
-            }
-            if (allowTransaction != "" && allowTransaction != null)
-
-            {
-                sqlCommandText = "Select [Cost Centre Name] as X_CostCentreName,*  from "+viewName+" Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + " and B_AllowTransactionPosting=1  Order By X_CostCentreCode";
-            }
-
-            // if (nDivisionID > 0)
-            // {
-            //     Params.Add("@nDivisionID", nDivisionID);
-            //     sqlCommandText = "Select N_CompanyID,N_DepartmentID,N_DivisionID,Code,Description from vw_PayDepartment_Disp Where N_CompanyID=@nCompanyID and N_DivisionID=@nDivisionID order by Code";
-            // }
-
+                sqlCommandText = "Select *  from Inv_DivisionMaster Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "  Order By X_DivisionCode ";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -108,9 +73,9 @@ namespace SmartxAPI.Controllers
                 object ObjRowCount = null;
                 object ObjChildCount = null;
 
-                ObjRowCount = dLayer.ExecuteScalar("Select count(1) FROM Acc_CostCentreMaster Where N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection,transaction);
+                ObjRowCount = dLayer.ExecuteScalar("Select count(1) FROM Inv_DivisionMaster Where N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection,transaction);
                 if (higerlevelid > 0)
-                    ObjChildCount = dLayer.ExecuteScalar("Select count(1) FROM Acc_CostCentreMaster Where N_GroupID=" + higerlevelid + " and N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection,transaction);
+                    ObjChildCount = dLayer.ExecuteScalar("Select count(1) FROM Inv_DivisionMaster Where N_GroupID=" + higerlevelid + " and N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection,transaction);
                 else
                     ObjChildCount = 0;
                 if (ObjRowCount != null)
@@ -122,7 +87,7 @@ namespace SmartxAPI.Controllers
                         if (higerlevelid == 0)
                         {
                             N_LevelPattern = 0;
-                            object ObjLevelPattern = dLayer.ExecuteScalar("SELECT MAX(X_LevelPattern)+1 FROM Acc_CostCentreMaster Where N_LevelID=1 and N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection,transaction);
+                            object ObjLevelPattern = dLayer.ExecuteScalar("SELECT MAX(X_LevelPattern)+1 FROM Inv_DivisionMaster Where N_LevelID=1 and N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection,transaction);
                             if (ObjLevelPattern != null)
                                 X_LevelPattern = ObjLevelPattern.ToString();
                         }
@@ -134,21 +99,21 @@ namespace SmartxAPI.Controllers
                             {
                                 if (myFunctions.getIntVAL(ObjChildCount.ToString()) > 0)
                                 {
-                                    ObjChildN_LevelPattern = dLayer.ExecuteScalar("SELECT MAX(X_LevelPattern) FROM Acc_CostCentreMaster where N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID and N_GroupID="+higerlevelid+" ", QueryParams, connection,transaction);
+                                    ObjChildN_LevelPattern = dLayer.ExecuteScalar("SELECT MAX(X_LevelPattern) FROM Inv_DivisionMaster where N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID and N_GroupID="+higerlevelid+" ", QueryParams, connection,transaction);
                                     string lastThreePattern = ObjChildN_LevelPattern.ToString().Substring(ObjChildN_LevelPattern.ToString().Length - 3);
                                      lastThreePattern=(myFunctions.getIntVAL(lastThreePattern.ToString())+1).ToString();
                                     N_LevelPattern = myFunctions.getIntVAL(lastThreePattern.ToString());
                                 }
                                 else
                                 {
-                                    object objN_level = dLayer.ExecuteScalar("SELECT X_LevelPattern FROM Acc_CostCentreMaster Where N_CostCentreID=" + higerlevelid + " and N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection,transaction);
+                                    object objN_level = dLayer.ExecuteScalar("SELECT X_LevelPattern FROM Inv_DivisionMaster Where N_DivisionID=" + higerlevelid + " and N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection,transaction);
                                     if (myFunctions.getIntVAL(objN_level.ToString()) != 0)
                                     {
                                         string addingPattern="101";
                                          ObjChildN_LevelPattern = objN_level.ToString()+addingPattern;
                                     }
                                     else
-                                        ObjChildN_LevelPattern = dLayer.ExecuteScalar("SELECT X_LevelPattern FROM Acc_CostCentreMaster Where N_CostCentreID=" + higerlevelid + " and N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection,transaction);
+                                        ObjChildN_LevelPattern = dLayer.ExecuteScalar("SELECT X_LevelPattern FROM Inv_DivisionMaster Where N_DivisionID=" + higerlevelid + " and N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection,transaction);
                                     if (ObjChildN_LevelPattern != null)
                                     {
                                          string lastThreePattern2 = ObjChildN_LevelPattern.ToString().Substring(ObjChildN_LevelPattern.ToString().Length - 3);
@@ -158,7 +123,7 @@ namespace SmartxAPI.Controllers
                                 }
                             }
 
-                            ObjChildX_LevelPattern = dLayer.ExecuteScalar("SELECT X_LevelPattern FROM Acc_CostCentreMaster Where N_CostCentreID=" + higerlevelid + " and N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection,transaction);
+                            ObjChildX_LevelPattern = dLayer.ExecuteScalar("SELECT X_LevelPattern FROM Inv_DivisionMaster Where N_DivisionID=" + higerlevelid + " and N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection,transaction);
                             // if (ObjChildX_LevelPattern != null && myFunctions.getIntVAL(ObjChildCount.ToString()) > 0 )
                             // {
                             //     X_LevelPattern= N_LevelPattern.ToString();
@@ -186,7 +151,7 @@ namespace SmartxAPI.Controllers
        
 
         [HttpGet("chart")]
-        public ActionResult GetDepartmentChart(int nFnYearID,bool isDepartment)
+        public ActionResult GetDepartmentChart(int nFnYearID)
 
         {
             DataTable dt = new DataTable();
@@ -195,16 +160,8 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
             string sqlCommandText="";
-            if(isDepartment)
-            {
-            sqlCommandText = "Select *  from vw_PayDepartmentMaster Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "  Order By X_CostCentreCode";
-
-            }
-            else
-            {
-            sqlCommandText = "Select *  from vw_CostCentreMaster Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + " Order By X_CostCentreCode";
-
-            }
+          
+            sqlCommandText = "Select *  from vw_DivisionMaster Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + " Order By X_DivisionCode";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -273,7 +230,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
 
-            string sqlCommandText = "Select N_CostCentreID as N_DivisionID,X_CostCentreName as X_DivisionName,*  from Acc_CostCentreMaster Where N_CompanyID= " + nCompanyID + " and  N_GroupID=0 and N_FnYearID=" + nFnYearID + "";
+            string sqlCommandText = "Select *  from Inv_DivisionMaster Where N_CompanyID= " + nCompanyID + " and  N_GroupID=0 and N_FnYearID=" + nFnYearID + "";
 
 
             try
@@ -313,16 +270,15 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
                     SortedList QueryParams = new SortedList();
-                    string X_CostCentreCode = MasterTable.Rows[0]["x_CostCentreCode"].ToString();
-                    string X_CostcentreName = MasterTable.Rows[0]["x_CostcentreName"].ToString();
+                    string X_DivisionCode = MasterTable.Rows[0]["X_DivisionCode"].ToString();
+                    string X_DivisionName = MasterTable.Rows[0]["X_DivisionName"].ToString();
                     string N_CompanyID = MasterTable.Rows[0]["n_CompanyId"].ToString();
                     string N_FnYearID = MasterTable.Rows[0]["n_FnYearId"].ToString();
-                    int N_CostCentreID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CostCentreID"].ToString());
+                    int N_DivisionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_DivisionID"].ToString());
                     int N_GroupID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_GroupID"].ToString());
                     int N_LevelID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LevelID"].ToString());
                     int N_LevelPattern = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LevelPattern"].ToString());
                      string X_LevelPattern ="";
-                    bool isDepartment=false;
                     if(MasterTable.Columns.Contains("x_LevelPattern"))
                     X_LevelPattern = MasterTable.Rows[0]["x_LevelPattern"].ToString();
                     // MasterTable.Rows[0]["n_ManagerID"]=myFunctions.getIntVAL(MasterTable.Rows[0]["n_Empid"].ToString());  // commented by rks
@@ -330,40 +286,20 @@ namespace SmartxAPI.Controllers
                     {
                          myFunctions.AddNewColumnToDataTable(MasterTable, "x_LevelPattern", typeof(string), "");
                     }
-                     if (MasterTable.Columns.Contains("isDepartment"))
-                       {
-                         isDepartment = myFunctions.getBoolVAL(MasterTable.Rows[0]["isDepartment"].ToString());
-                         MasterTable.Columns.Remove("isDepartment");
-                       }
+
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nFnYearID", N_FnYearID);
-                    QueryParams.Add("@nCostCentreID", N_CostCentreID);
+                    QueryParams.Add("@nCostCentreID", N_DivisionID);
                     QueryParams.Add("@nGroupID", N_GroupID);
                     QueryParams.Add("@nLevelID", N_LevelID);
-
-                    string tableName="";
-                    string tablcode,tablid="";
-                     if(isDepartment)
-                        {
-                        tableName = "Pay_Department";
-                        tablid = "N_DepartmentID";
-                        tablcode = "X_DepartmentCode";
-                        
-                        }
-                        else
-                        {
-                        tableName = "Acc_CostCentreMaster";
-                        tablid = "N_CostCentreID";
-                        tablcode = "X_CostCentreCode";
-                        }
-
-                    if (N_CostCentreID == 0)
+                    
+                    if (N_DivisionID == 0)
                     {
                         if (N_GroupID == 0)
                             N_LevelID = 1;
                         else
                         {
-                            object ObjNextLevelID = dLayer.ExecuteScalar("select isnull(N_LevelID,0)+1 from "+tableName+" where "+tablid+"=" + N_GroupID + " and N_FnYearID=@nFnYearID and N_CompanyID= @nCompanyID ", QueryParams, connection, transaction);
+                            object ObjNextLevelID = dLayer.ExecuteScalar("select isnull(N_LevelID,0)+1 from Inv_DivisionMaster where N_DivisionID=" + N_GroupID + " and N_FnYearID=@nFnYearID and N_CompanyID= @nCompanyID ", QueryParams, connection, transaction);
                             if (ObjNextLevelID == null)
                                 N_LevelID = 0;
                             else
@@ -375,30 +311,30 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    if (X_CostCentreCode == "@Auto" && N_CostCentreID == 0)
+                    if (X_DivisionCode == "@Auto" && N_DivisionID == 0)
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_YearID", N_FnYearID);
                         Params.Add("N_FormID", this.N_FormID);
                         //Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
-                        X_CostCentreCode = dLayer.GetAutoNumber(""+tableName+"", ""+tablcode+"", Params, connection, transaction);
-                        if (X_CostCentreCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Department/Cost Centre Code")); }
-                        MasterTable.Rows[0]["x_CostCentreCode"] = X_CostCentreCode;
+                        X_DivisionCode = dLayer.GetAutoNumber("Inv_DivisionMaster", "X_DivisionCode", Params, connection, transaction);
+                        if (X_DivisionCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Department/Cost Centre Code")); }
+                        MasterTable.Rows[0]["X_DivisionCode"] = X_DivisionCode;
 
 
                     }
-                    else if (X_CostCentreCode == "@Auto" && N_CostCentreID > 0)
+                    else if (X_DivisionCode == "@Auto" && N_DivisionID > 0)
                     {
                        
-                        X_CostCentreCode = GetNextChildCode(N_CostCentreID, QueryParams, connection, transaction);
-                        MasterTable.Rows[0]["x_CostCentreCode"] = X_CostCentreCode;
-                        MasterTable.Rows[0]["N_CostCentreID"] = 0;
-                        dLayer.DeleteData(""+tableName+"", ""+tablid+"",N_CostCentreID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+                        X_DivisionCode = GetNextChildCode(N_DivisionID, QueryParams, connection, transaction);
+                        MasterTable.Rows[0]["X_DivisionCode"] = X_DivisionCode;
+                        MasterTable.Rows[0]["N_DivisionID"] = 0;
+                        dLayer.DeleteData("Inv_DivisionMaster", "N_DivisionID",N_DivisionID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
               
                     }
                     else
                     {
-                        dLayer.DeleteData(""+tableName+"", ""+tablid+"",N_CostCentreID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+                        dLayer.DeleteData("Inv_DivisionMaster", "N_DivisionID",N_DivisionID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
                     }
                     if (MasterTable.Columns.Contains("n_empid"))
                         MasterTable.Columns.Remove("n_empid");
@@ -411,44 +347,14 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                     if(isDepartment)
-                        {
-                        if(MasterTable.Columns.Contains("N_CostCentreID"))
-                        {   myFunctions.AddNewColumnToDataTable(MasterTable, "N_DepartmentID", typeof(int),N_CostCentreID);
-                           
-                        }
-                        if(MasterTable.Columns.Contains("X_CostcentreName"))
-                        {
-                         myFunctions.AddNewColumnToDataTable(MasterTable, "X_Department", typeof(string),X_CostcentreName);
-                         myFunctions.AddNewColumnToDataTable(MasterTable, "X_DepartmentLocale", typeof(string),X_CostcentreName);
-                         MasterTable.Columns.Remove("X_CostcentreName"); 
-                         
-                        }
-                         if(MasterTable.Columns.Contains("x_CostCentreCode"))
-                        {
-                            myFunctions.AddNewColumnToDataTable(MasterTable, "X_DepartmentCode", typeof(string),MasterTable.Rows[0]["x_CostCentreCode"].ToString());
-                            MasterTable.Columns.Remove("x_CostCentreCode"); 
-                        }
-                         MasterTable.AcceptChanges();
-                        
-                        
-                        }
-                        
-
-                     N_CostCentreID = dLayer.SaveData(""+tableName+"", ""+tablid+"", MasterTable, connection, transaction);
-                      if (N_CostCentreID <= 0)
+                     N_DivisionID = dLayer.SaveData("Inv_DivisionMaster", "N_DivisionID", MasterTable, connection, transaction);
+                      if (N_DivisionID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error(User,"Unable to save"));
                     }
                     else
                     {
-                        if(isDepartment)
-                        {
-                         dLayer.ExecuteNonQuery("update Pay_Department set N_CostCentreID="+N_CostCentreID+" where N_DepartmentID=" + N_CostCentreID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, Params, connection, transaction);
-
-                        }
-    
                         transaction.Commit();
                     }
 
@@ -464,7 +370,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nDepartmentID, int nFnYearID,bool isDepartment)
+        public ActionResult DeleteData(int nDepartmentID, int nFnYearID)
         {
             int Results = 0;
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -477,37 +383,22 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                   if(isDepartment) 
-                    {
-                    object ObjDepcount = dLayer.ExecuteScalar("Select count(1) From vw_Pay_Department_List where N_CostCentreID=@nCostCentreID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
-                    if (ObjDepcount != null)
-                    {
-                        if (myFunctions.getIntVAL(ObjDepcount.ToString()) <= 0)
-                        {
-                            Results = dLayer.DeleteData("pay_Department", "N_DepartmentID", nDepartmentID, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection);
-                        }
-                        else
-                        {
-                            return Ok(_api.Error(User,"Department Allready in use"));
-                        }
-                    }
-                    }
-                    else
-                    {
-                    object Objcount = dLayer.ExecuteScalar("Select count(1) From vw_Acc_CostCentreMaster_List where N_CostCentreID=@nCostCentreID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
+            
+                    object Objcount = dLayer.ExecuteScalar("Select count(1) From vw_Acc_Divisionmaster_List where N_DivisionID=@nCostCentreID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
+                   
+                    // need to change when segment_7 and N_Segment_6 is enabled
+                     
                     object count = dLayer.ExecuteScalar("Select count(1) From Acc_VoucherMaster_Details_Segments where N_Segment_2=@nCostCentreID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
                     if (Objcount != null)
                     {
                         if (myFunctions.getIntVAL(Objcount.ToString()) <= 0||myFunctions.getIntVAL(count.ToString()) <= 0)
                         {
-                            Results = dLayer.DeleteData("Acc_CostCentreMaster", "N_CostCentreID", nDepartmentID, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection);
+                            Results = dLayer.DeleteData("Inv_DivisionMaster", "N_DivisionID", nDepartmentID, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection);
                         }
                         else
                         {
                             return Ok(_api.Error(User,"Department/Costcenter Allready in use"));
                         }
-                    }
-
                     }
                     
                 }
@@ -537,7 +428,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection Con = new SqlConnection(connectionString))
                 {
                     Con.Open();
-                    string sqlCommandText = "select * from Acc_CostCentreMaster where N_CostCentreID=@p1";
+                    string sqlCommandText = "select * from Inv_DivisionMaster where N_DivisionID=@p1";
                     SortedList mParamList = new SortedList() { { "@p1", nDepartmentID } };
                     DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList, Con);
                     masterTable = _api.Format(masterTable, "master");
@@ -561,14 +452,14 @@ namespace SmartxAPI.Controllers
             int ParentID = nParentID;
             string DeptCode = "";
             DataTable dtDept = new DataTable();
-            dtDept = dLayer.ExecuteDataTable("select COUNT(convert(nvarchar(100),X_CostCentreCode)) From Acc_CostCentreMaster where N_GroupID =" + ParentID + " and N_CompanyID =@nCompanyID and N_FnYearID=@nFnYearID", ParamList, connection, transaction);
+            dtDept = dLayer.ExecuteDataTable("select COUNT(convert(nvarchar(100),X_DivisionCode)) From Inv_DivisionMaster where N_GroupID =" + ParentID + " and N_CompanyID =@nCompanyID and N_FnYearID=@nFnYearID", ParamList, connection, transaction);
             int count = myFunctions.getIntVAL(dtDept.Rows[0][0].ToString());
-            dtDept = dLayer.ExecuteDataTable("select X_CostCentreCode From Acc_CostCentreMaster where N_CostCentreID =" + ParentID + " and N_CompanyID =@nCompanyID and N_FnYearID=@nFnYearID", ParamList, connection, transaction);
+            dtDept = dLayer.ExecuteDataTable("select X_DivisionCode From Inv_DivisionMaster where N_DivisionID =" + ParentID + " and N_CompanyID =@nCompanyID and N_FnYearID=@nFnYearID", ParamList, connection, transaction);
             while (true)
             {
                 count += 1;
                 DeptCode = dtDept.Rows[0][0].ToString() + count.ToString("100");
-                object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_CostCentreMaster Where X_CostCentreCode ='" + DeptCode.Trim() + "' and N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", ParamList, connection, transaction);
+                object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_DivisionMaster Where X_DivisionCode ='" + DeptCode.Trim() + "' and N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", ParamList, connection, transaction);
                 if (N_Result == null)
                     break;
             }

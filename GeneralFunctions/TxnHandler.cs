@@ -256,6 +256,8 @@ namespace SmartxAPI.GeneralFunctions
                         // return Ok(_api.Success("Purchase Approved " + "-" + values));
                         Result.Add("b_IsCompleted", 1);
                         Result.Add("x_Msg", "Purchase Approved " + "-" + values);
+                        Result.Add("n_InvoiceID", N_PurchaseID);
+                        Result.Add("x_InvoiceNo", MasterTable.Rows[0]["x_InvoiceNo"].ToString());
                         return Result;
                     }
 

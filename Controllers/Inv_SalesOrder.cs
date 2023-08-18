@@ -646,6 +646,12 @@ namespace SmartxAPI.Controllers
                     int N_FormID = 0;
                     int N_NextApproverID = 0;
                     int N_SaveDraft = myFunctions.getIntVAL(MasterRow["b_IsSaveDraft"].ToString());
+                     int nDivisionID = 0;
+                    if (MasterTable.Columns.Contains("n_DivisionID"))
+                    {
+                       nDivisionID=myFunctions.getIntVAL(MasterRow["n_DivisionID"].ToString());
+                    }
+
                     CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID="+ N_CustomerId, QueryParams, connection, transaction);
                     if (MasterTable.Columns.Contains("N_FormID"))
                     {
@@ -794,6 +800,37 @@ namespace SmartxAPI.Controllers
                     {
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "BOOK ORDER", n_SalesOrderId, x_OrderNo, 1, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), 0, "",0, User, dLayer, connection, transaction);
                         N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_SalesOrder where N_SalesOrderId=" + n_SalesOrderId + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
+                    }
+
+
+
+                    if(nDivisionID>0)
+                    {
+                    if (DetailTable.Rows.Count > 0)
+                    {
+                     object xLevelsql = dLayer.ExecuteScalar("select X_LevelPattern from Acc_CostCentreMaster where N_CompanyID=" + N_CompanyID + " and N_CostCentreID=" + nDivisionID + " and N_GroupID=0", Params, connection,transaction);
+                      
+                       if (xLevelsql != null && xLevelsql.ToString() != "")
+                        {
+                        for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        {
+
+                            //  detailTable.Rows[j]["N_SalesId"] = N_SalesID;
+                            object xLevelPattern = dLayer.ExecuteScalar("SELECT  Acc_CostCentreMaster.X_LevelPattern FROM  Acc_CostCentreMaster LEFT OUTER JOIN    Inv_ItemCategory ON Acc_CostCentreMaster.N_CostCentreID = Inv_ItemCategory.N_CostCenterID AND Acc_CostCentreMaster.N_CompanyID = Inv_ItemCategory.N_CompanyID RIGHT OUTER JOIN "+
+                            "Inv_ItemMaster ON Inv_ItemCategory.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemCategory.N_CategoryID = Inv_ItemMaster.N_CategoryID  where Inv_ItemMaster.N_ItemID="+ DetailTable.Rows[j]["N_ItemID"]+" and Inv_ItemMaster.N_CompanyID="+N_CompanyID+" ", Params, connection,transaction);
+                           // object xLevelPattern = dLayer.ExecuteScalar("select X_LevelPattern from Acc_CostCentreMaster where N_CompanyID=" + N_CompanyID + " and N_CostCentreID=" + nDivisionID + " and N_GroupID=0", Params, connection);
+                             if (xLevelsql.ToString() != xLevelPattern.ToString().Substring(0, 3))
+                             {
+                                 Result.Add("b_IsCompleted", 0);
+                                // Result.Add("x_Msg", "Unable To save!...Division Mismatch");
+                                return Ok(_api.Error(User, "Unable To save!...Division Mismatch"));
+                                //  return Result;
+                             }
+                           
+                        }
+                        }
+                    
+                    }
                     }
 
                     if (N_QuotationID > 0)
@@ -1107,10 +1144,21 @@ namespace SmartxAPI.Controllers
 
                     string X_Criteria = "N_SalesOrderId=" + nSalesOrderID + " and N_CompanyID=" + myFunctions.GetCompanyID(User);
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    string transType="SALES ORDER";
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
                     int N_IsApprovalSystem = Approvals.Rows.Count > 0 ? myFunctions.getIntVAL(Approvals.Rows[0]["isApprovalSystem"].ToString()) : 0;
+                     if(nFormID==1757)
+                      transType="BOOK ORDER";
+                       if(nFormID==81)
+                      transType="SALES ORDER"; 
+                      if(nFormID==1740)
+                      transType="OPTICAL ORDER";
+                      if(nFormID==1571)
+                      transType="JOB ORDER";
 
-                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "BOOK ORDER", nSalesOrderID, TransRow["X_OrderNo"].ToString(), ProcStatus, "Inv_SalesOrder", X_Criteria, "", User, dLayer, connection, transaction);
+
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, transType, nSalesOrderID, TransRow["X_OrderNo"].ToString(), ProcStatus, "Inv_SalesOrder", X_Criteria, "", User, dLayer, connection, transaction);
+                        
                     if (status != "Error")
                     {
                         object objProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesID,0) from Inv_SalesDetails where N_CompanyID=" + nCompanyID + " and N_SalesOrderId=" + nSalesOrderID + "", connection, transaction);
