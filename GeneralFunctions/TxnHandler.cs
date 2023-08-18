@@ -648,22 +648,30 @@ namespace SmartxAPI.GeneralFunctions
                     }
 
                    
-                object costcntrID=null;
-                object nCostCentreID=null;
-                object xPattern=null;
+                // object costcntrID=null;
+                // object nCostCentreID=null;
+                // object xPattern=null;
 
-                costcntrID=dLayer.ExecuteScalar(" select top(1) N_CostCentreID from Vw_PurchaseCostcenterDetails where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID + "ORDER BY N_PurchaseDetailsID ASC",connection, transaction); 
-                if(costcntrID!=null)
-                {
-                  xPattern=dLayer.ExecuteScalar(" SELECT SUBSTRING(X_LevelPattern, 1, 3) AS X_Pattern FROM Acc_CostCentreMaster where N_CostCentreID=" + costcntrID + " and N_CompanyID =" + nCompanyID+"",connection, transaction); 
-                }
-                if(xPattern!=null){
-                 nCostCentreID=dLayer.ExecuteScalar(" select N_CostCentreID from Acc_CostCentreMaster where X_LevelPattern= '" + xPattern + "' and N_CompanyID=" + nCompanyID +"",connection, transaction); 
-                }
+                // costcntrID=dLayer.ExecuteScalar(" select top(1) N_CostCentreID from Vw_PurchaseCostcenterDetails where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID + "ORDER BY N_PurchaseDetailsID ASC",connection, transaction); 
+                // if(costcntrID!=null)
+                // {
+                //   xPattern=dLayer.ExecuteScalar(" SELECT SUBSTRING(X_LevelPattern, 1, 3) AS X_Pattern FROM Acc_CostCentreMaster where N_CostCentreID=" + costcntrID + " and N_CompanyID =" + nCompanyID+"",connection, transaction); 
+                // }
+                // if(xPattern!=null){
+                //  nCostCentreID=dLayer.ExecuteScalar(" select N_CostCentreID from Acc_CostCentreMaster where X_LevelPattern= '" + xPattern + "' and N_CompanyID=" + nCompanyID +"",connection, transaction); 
+                // }
 
-                 if (nCostCentreID !=null){
-                    dLayer.ExecuteScalar("Update Inv_Purchase Set n_DivisionID =" + nCostCentreID + " Where  N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
-                 }
+                //  if (nCostCentreID !=null){
+                //     dLayer.ExecuteScalar("Update Inv_Purchase Set n_DivisionID =" + nCostCentreID + " Where  N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                //  }
+
+                  
+                    //  object nPurchaseRefID = dLayer.ExecuteScalar("Select count(*) From Inv_Purchase where N_PurchaseRefID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                    //  if(myFunctions.getIntVAL(nPurchaseRefID.ToString())>0){
+                    //         dLayer.ExecuteScalar("Update Inv_Purchase Set n_DivisionID =" + nCostCentreID + " Where  N_PurchaseRefID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                    //  }
+                  
+                //  }
 
 
 

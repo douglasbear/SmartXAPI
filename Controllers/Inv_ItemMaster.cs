@@ -2096,10 +2096,10 @@ namespace SmartxAPI.Controllers
                         object divisionsql = "";
                         object xLevelsql = "";
                         object xLevelPattern = "";
-                        xLevelsql = dLayer.ExecuteScalar("select X_LevelPattern from Acc_CostCentreMaster where N_CompanyID=" + nCompanyID + " and N_CostCentreID=" + nDivisionID + " and N_GroupID=0", Params, connection);
+                        xLevelsql = dLayer.ExecuteScalar("select X_LevelPattern from Inv_DivisionMaster where N_CompanyID=" + nCompanyID + " and N_DivisionID=" + nDivisionID + " and N_GroupID=0", Params, connection);
                        if (xLevelsql != null && xLevelsql.ToString() != "")
                         {
-                         divisionsql = "select N_CostCentreID from Acc_CostCentreMaster where N_CompanyID=" + nCompanyID + " and  X_LevelPattern like '" + xLevelsql.ToString()  + "%'";
+                         divisionsql = "select N_CostCentreID from Inv_DivisionMaster where N_CompanyID=" + nCompanyID + " and  X_LevelPattern like '" + xLevelsql.ToString()  + "%'";
                     
                         }                       
             
