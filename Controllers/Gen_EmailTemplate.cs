@@ -463,7 +463,7 @@ namespace SmartxAPI.Controllers
             }
             else if (type.ToLower() == "customer portal")
             {
-                sqlCommandText = "SELECT N_CustomerID AS N_PKeyID,N_CustomerID AS N_PartyID,X_CustomerCode AS X_PartyCode,X_Email,X_CustomerName AS X_PartyName ,'customer' AS X_PartyType,'Customer Portal' AS X_TxnType,N_FnYearID,N_FnYearID  From Inv_Customer where  N_CompanyID=@nCompanyID and N_CustomerID=@nPkeyID";
+                sqlCommandText = "SELECT N_CustomerID AS N_PKeyID,N_CustomerID AS N_PartyID,X_CustomerCode AS X_PartyCode,X_Email,X_CustomerName AS X_PartyName ,'customer' AS X_PartyType,'Customer Portal' AS X_TxnType,N_FnYearID,N_FnYearID  From Inv_Customer where  N_CompanyID=@nCompanyID and N_CustomerID=@nPkeyID and N_FnYearID=@nFnYearID";
 
             }
             else if (type.ToLower() == "amendment")
