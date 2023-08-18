@@ -513,10 +513,12 @@ namespace SmartxAPI.Controllers
                 SortedList Params = new SortedList();
                 String xButtonAction="";
                 int N_POrderID = 0; var X_POrderNo = "";
+                int nDivisionID = 0;
               
 
                 if (ds.Tables.Contains("detailsImport"))
                     B_isImport = true;
+       
                 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -534,7 +536,10 @@ namespace SmartxAPI.Controllers
                     DataRow Master = MasterTable.Rows[0];
                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(Master["N_FnYearID"].ToString());
-
+                    if (MasterTable.Columns.Contains("n_DivisionID"))
+                    {
+                    nDivisionID=myFunctions.getIntVAL(Master["n_DivisionID"].ToString());
+                   }
                     N_POrderID = myFunctions.getIntVAL(Master["n_POrderID"].ToString());
                     if (N_POrderID > 0)
                     {
@@ -734,6 +739,29 @@ namespace SmartxAPI.Controllers
                         ProParam.Add("X_Type", "purchase order");
                         DetailTable = dLayer.ExecuteDataTablePro("SP_ScreenDataImport", ProParam, connection,transaction);
                     }
+
+                    if(nDivisionID>0)
+                    {
+                    if (DetailTable.Rows.Count > 0)
+                    {
+                     object xLevelsql = dLayer.ExecuteScalar("select X_LevelPattern from Acc_CostCentreMaster where N_CompanyID=" + nCompanyId + " and N_CostCentreID=" + nDivisionID + " and N_GroupID=0", Params, connection,transaction);
+                      
+                       if (xLevelsql != null && xLevelsql.ToString() != "")
+                        {
+                        for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        {
+                            object xLevelPattern = dLayer.ExecuteScalar("SELECT  Acc_CostCentreMaster.X_LevelPattern FROM         Acc_CostCentreMaster LEFT OUTER JOIN    Inv_ItemCategory ON Acc_CostCentreMaster.N_CostCentreID = Inv_ItemCategory.N_CostCenterID AND Acc_CostCentreMaster.N_CompanyID = Inv_ItemCategory.N_CompanyID RIGHT OUTER JOIN "+
+                            "Inv_ItemMaster ON Inv_ItemCategory.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemCategory.N_CategoryID = Inv_ItemMaster.N_CategoryID  where Inv_ItemMaster.N_ItemID="+ DetailTable.Rows[j]["N_ItemID"]+" and Inv_ItemMaster.N_CompanyID="+nCompanyId+"", Params, connection,transaction);
+                            if (xLevelsql.ToString() != xLevelPattern.ToString().Substring(0, 3))
+                             {
+                                  transaction.Rollback();
+                                  return Ok(api.Error(User, "Unable To save!...Division Mismatch"));
+                             }
+                           
+                        }
+                        }
+                    }}
+                    
                     // for (int j = 0; j < DetailTable.Rows.Count; j++)
                     // {
                     //     int UnitID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit where N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_ItemID"].ToString()) + " and N_CompanyID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_CompanyID"].ToString()) + " and X_ItemUnit='" + DetailTable.Rows[j]["X_ItemUnit"].ToString() + "'", connection, transaction).ToString());
