@@ -249,7 +249,7 @@ namespace SmartxAPI.Controllers
                             Criterea = "N_CompanyID=@cVal and N_FnYearID=@fVal and N_FormID in (64) and N_CompanyID=@cVal and N_FnYearID=@fVal and N_CustomerID=@custVal";
 
                         if (nFormID == 1335 && deptID == 0)
-                            Criterea = "N_FnYearID=@fVal and N_BranchID=@bVal";
+                            Criterea = "N_FnYearID=@fVal and N_BranchID=@bVal and N_Status NOT IN (2, 3)";
                     }
 
                     if (bAllBranchData == false && dRow["X_BranchCriteria"].ToString() != "")
