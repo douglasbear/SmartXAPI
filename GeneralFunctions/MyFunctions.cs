@@ -1812,6 +1812,9 @@ namespace SmartxAPI.GeneralFunctions
                         B_IsDelete = true;
                         break;
                     case 684://Material Dispatch
+                    case 1309://Material Request
+                    case 1592://Transfer Request
+                        DeleteParamsPro["X_TransType"]="MATERIAL DISPATCH";
                         DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParamsPro, connection, transaction);
                         B_IsDelete = true;
                         break;
