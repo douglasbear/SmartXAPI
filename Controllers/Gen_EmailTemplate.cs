@@ -61,8 +61,8 @@ namespace SmartxAPI.Controllers
                     string Email = MasterRow["X_ContactEmail"].ToString();
                     string Body = MasterRow["X_Body"].ToString();
                     string Subjectval = MasterRow["x_TempSubject"].ToString();
-                    int nTemplateID = myFunctions.getIntVAL(MasterRow["n_TemplateID"].ToString());
-                    int nopportunityID = myFunctions.getIntVAL(MasterRow["N_OpportunityID"].ToString());
+                    int nTemplateID = 0;//myFunctions.getIntVAL(MasterRow["n_TemplateID"].ToString());
+                    int nopportunityID = 0;//myFunctions.getIntVAL(MasterRow["N_OpportunityID"].ToString());
                     if (Master.Columns.Contains("x_RecruitmentCode"))
                         xRecruitmentCode = MasterRow["x_RecruitmentCode"].ToString();
                     if (Master.Columns.Contains("x_TemplateName"))
@@ -73,8 +73,8 @@ namespace SmartxAPI.Controllers
                     object Company, Oppportunity, Contact, CustomerID;
                     int nCompanyId = myFunctions.GetCompanyID(User);
 
-                    companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, Params, connection, transaction);
-                    companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + companyid, Params, connection, transaction);
+                    companyemail = dLayer.ExecuteScalar("select X_Email from Sec_GeneralScreenSettings where n_companyid="+companyid, Params, connection, transaction);
+                    companypassword = dLayer.ExecuteScalar("select X_Password from Sec_GeneralScreenSettings where n_companyid="+companyid, Params, connection, transaction);
 
                     string Subject = "";
                     if (Toemail.ToString() != "")
@@ -135,7 +135,7 @@ namespace SmartxAPI.Controllers
                     }
                     Master.Columns.Remove("x_TemplateCode");
                     Master.Columns.Remove("x_TemplateName");
-                    Master.Columns.Remove("n_TemplateID");
+                   // Master.Columns.Remove("n_TemplateID");
                     Master.Columns.Remove("x_TempSubject");
                     if (Master.Columns.Contains("n_PkeyId"))
                         Master.Columns.Remove("n_PkeyId");
@@ -313,13 +313,14 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("emaildetails")]
-        public ActionResult EmailTemplateDetails(string nFormID)
+        public ActionResult EmailTemplateDetails(int nFormID,int pKeyID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandText = "";
+            string partyname="",date="",company= myFunctions.GetCompanyName(User);;
 
             sqlCommandText = "select  * from vw_MailGeneralScreenSettings where N_CompanyID=@p1 and N_MenuID=@p2";
             Params.Add("@p1", nCompanyId);
@@ -333,8 +334,9 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
 
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection,transaction); 
 
                     if (dt.Rows.Count == 0)
                     {
@@ -342,7 +344,22 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(api.Success(dt));
+                    if(nFormID==82)
+                    {
+                      object party = dLayer.ExecuteScalar("select X_VendorName from vw_InvPurchaseOrder where N_POrderID="+pKeyID+" and N_CompanyID="+nCompanyId, Params, connection, transaction);
+                      object Date = dLayer.ExecuteScalar("select cast(D_POrderDate as Date) from vw_InvPurchaseOrder where N_POrderID="+pKeyID+" and N_CompanyID="+nCompanyId, Params, connection, transaction);
+                      object Email = dLayer.ExecuteScalar("select X_Email from vw_InvPurchaseOrder where N_POrderID="+pKeyID+" and N_CompanyID="+nCompanyId, Params, connection, transaction);
+                               
+                     string x_Body = dt.Rows[0]["x_Body"].ToString();
+                     x_Body = x_Body.ToString().Replace("@CompanyName", company);
+                     x_Body = x_Body.ToString().Replace("@PartyName", party.ToString());
+                     x_Body = x_Body.ToString().Replace("@Date", Date.ToString());
+                     dt.Rows[0]["x_Body"]=x_Body;
+                     dt.Rows[0]["x_Email"]=Email.ToString();
+                    dt.AcceptChanges();  
+                    }
+                    transaction.Commit();
+                    return Ok(api.Success(dt));
                     }
 
                 }
