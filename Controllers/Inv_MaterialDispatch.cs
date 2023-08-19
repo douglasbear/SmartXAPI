@@ -401,9 +401,9 @@ namespace SmartxAPI.Controllers
                     else
                      xTransType = "purchase Request";
 
-            Params.Add("@nCompanyID", nCompanyID);
-            Params.Add("@nFnYearID", nFnYearID);
-            Params.Add("@nDispatchID", nDispatchID);
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@nFnYearID", nFnYearID);
+                    Params.Add("@nDispatchID", nDispatchID);
 
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,X_DispatchNo,N_DispatchID from Inv_MaterialDispatch where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_DispatchId=@nDispatchID";
                     TransData = dLayer.ExecuteDataTable(Sql,Params,connection);
@@ -414,10 +414,10 @@ namespace SmartxAPI.Controllers
                     DataRow TransRow = TransData.Rows[0];
                     string X_Criteria = "N_DispatchID=" + nDispatchID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) ;
 
-                DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, nFormID, nDispatchID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID,0, 0, User, dLayer, connection));
-                 Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
-                  SqlTransaction transaction = connection.BeginTransaction();
-                   string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, nFormID, nDispatchID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID,0, 0, User, dLayer, connection));
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
                   
                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, xTransType, nDispatchID, TransRow["X_DispatchNo"].ToString(), ProcStatus, "Inv_MaterialDispatch", X_Criteria, "", User, dLayer, connection, transaction);

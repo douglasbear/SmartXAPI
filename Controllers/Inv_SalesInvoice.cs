@@ -2126,7 +2126,7 @@ namespace SmartxAPI.Controllers
                     var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                     object objSalesReturnProcessed = dLayer.ExecuteScalar("Select Isnull(N_DebitNoteId,0) from Inv_SalesReturnMaster where N_CompanyID=" + nCompanyID + " and N_SalesId=" + nInvoiceID + " and isnull(B_IsSaveDraft,0)=0", connection, transaction);
                     object objPaymentProcessed = dLayer.ExecuteScalar("Select Isnull(N_PayReceiptId,0) from Inv_PayReceiptDetails where N_CompanyID=" + nCompanyID + " and N_InventoryId=" + nInvoiceID + " and X_TransType='SALES'", connection, transaction);
-                    //Results = dLayer.DeleteData("Inv_SalesInvoice", "n_InvoiceID", N_InvoiceID, "",connection,transaction);
+
                     if (objSalesReturnProcessed == null)
                         objSalesReturnProcessed = 0;
                     if (objPaymentProcessed == null)
@@ -2231,6 +2231,11 @@ namespace SmartxAPI.Controllers
                                     myAttachments.DeleteAttachment(dLayer, 1, nInvoiceID, N_CustomerId, nFnYearID, N_FormID, User, transaction, connection);
                                 }
                             }
+                            else if (ButtonTag == "4")
+                            {
+                                dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails_Segments where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='SALES' AND N_AccTransID  in (select N_AccTransID from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='SALES' AND X_VoucherNo='"+InvoiceNO+"')", QueryParams, connection, transaction);
+                                dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='SALES' AND X_VoucherNo='"+InvoiceNO+"'", QueryParams, connection, transaction);
+                            }
 
                             if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator", "X_UserCategory", dLayer, connection, transaction))
                                 if (myFunctions.CheckPermission(nCompanyID, 81, xUserCategory.ToString(), "N_UserCategoryID", dLayer, connection, transaction))
@@ -2242,30 +2247,7 @@ namespace SmartxAPI.Controllers
                             if (InvoiceNO == LastInvoiceNO)
                             {
                                 dLayer.ExecuteNonQuery("update inv_invoicecounter set N_lastUsedNo=" + (myFunctions.getVAL(InvoiceNO.ToString()) - 1) + " where n_formid=64 and n_companyid=" + nCompanyID + " and N_FnyearID=" + nFnYearID, Params, connection, transaction);
-                            }
-                            //Activity Log
-
-                            // string ipAddress = "";
-                            // if (Request.Headers.ContainsKey("X-Forwarded-For"))
-                            //     ipAddress = Request.Headers["X-Forwarded-For"];
-                            // else
-                            //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                            // SortedList LogParams = new SortedList();
-                            // LogParams.Add("N_CompanyID", nCompanyID);
-                            // LogParams.Add("N_FnYearID", nFnYearID);
-                            // LogParams.Add("N_TransID", nInvoiceID);
-                            // LogParams.Add("N_FormID", this.N_FormID);
-                            // LogParams.Add("N_UserId", nUserID);
-                            // //LogParams.Add("N_UserID", nUserID);
-                            // LogParams.Add("X_Action", xButtonAction);
-                            // LogParams.Add("X_SystemName", "ERP Cloud");
-                            // LogParams.Add("X_IP", ipAddress);
-                            // LogParams.Add("X_TransCode", InvoiceNO);
-                            // LogParams.Add("X_Remark", " ");
-                            // dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);
-                            // DataTable MasterTable =new DataTable();
-                            // myFunctions.LogScreenActivitys(nFnYearID,nInvoiceID,TransRow["x_ReceiptNo"].ToString(),this.N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-
+                            }                        
 
                             //StatusUpdate
                             int tempQtn = 0, tempSO = 0, tempDevnote = 0;
