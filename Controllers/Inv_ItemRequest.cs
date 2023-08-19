@@ -472,6 +472,20 @@ namespace SmartxAPI.Controllers
 
                     Master = api.Format(Master, "master");
 
+                     object RfqID=0;
+                      RfqID = dLayer.ExecuteScalar("Select count(*) from Inv_VendorRequestDetails where N_PRSID=" + myFunctions.getIntVAL(Master.Rows[0]["N_PRSID"].ToString()) + " and N_CompanyID=" + companyid, connection);
+                      if (RfqID==null){
+                        RfqID=0;
+                      }
+                         if (myFunctions.getIntVAL(RfqID.ToString())>0){
+                            Master = myFunctions.AddNewColumnToDataTable(Master, "isreqstProcessed", typeof(Boolean), true);
+                         }
+                         else{
+                            Master = myFunctions.AddNewColumnToDataTable(Master, "isreqstProcessed", typeof(Boolean), false);
+                         }
+              
+                           Master.AcceptChanges();
+
                     if (Master.Rows.Count == 0)
                     {
                         return Ok(api.Notice("No Results Found"));

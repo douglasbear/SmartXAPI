@@ -1820,8 +1820,11 @@ namespace SmartxAPI.GeneralFunctions
                         break;
                     case 81://Sales Order
                     case 1045://BOM
-                        DeleteStatus = dLayer.ExecuteNonQuery("UPDATE Prj_BOMDetails SET B_BOMProcessed=0 where N_BOMDetailID in (select N_BOMDetailID from Inv_SalesOrderDetails where N_SalesOrderID=@nTransID and N_CompanyID=@nFnYearID and N_FnYearId=@nFnYearID)", DeleteParams, connection, transaction);
-                        DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
+                    case 1757://Book Order
+                        // DeleteParamsPro["X_TransType"] = "SALES ORDER";
+                        // DeleteStatus = dLayer.ExecuteNonQuery("UPDATE Prj_BOMDetails SET B_BOMProcessed=0 where N_BOMDetailID in (select N_BOMDetailID from Inv_SalesOrderDetails where N_SalesOrderID=@nTransID and N_CompanyID=@nFnYearID and N_FnYearId=@nFnYearID)", DeleteParams, connection, transaction);
+                        // DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
+                         DeleteStatus = 1;
                         B_IsDelete = true;
                         break;
                     case 1015://PROJECT TRANSFER
@@ -2691,7 +2694,7 @@ namespace SmartxAPI.GeneralFunctions
                             message.From = new MailAddress(Sender);
                             message.IsBodyHtml = true; //HTML email 
                             if (nFormID > 0)
-                               // message.Attachments.Add(new Attachment(this.TempFilesPath + ReportName));
+                                message.Attachments.Add(new Attachment(this.TempFilesPath + ReportName));
                             client.Send(message);
 
                         }

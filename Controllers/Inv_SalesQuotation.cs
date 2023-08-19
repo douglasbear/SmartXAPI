@@ -541,6 +541,7 @@ namespace SmartxAPI.Controllers
 
 
                     int N_QuotationID = myFunctions.getIntVAL(MasterRow["n_QuotationID"].ToString());
+                    int NreQuotationID = myFunctions.getIntVAL(MasterRow["n_QuotationID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
@@ -548,13 +549,25 @@ namespace SmartxAPI.Controllers
                     int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
                     int N_CrmCompanyID = MasterTable.Columns.Contains("N_CrmCompanyID") ? myFunctions.getIntVAL(MasterRow["N_CrmCompanyID"].ToString()) : 0;
                     int N_ContactID = MasterTable.Columns.Contains("N_ContactID") ? myFunctions.getIntVAL(MasterRow["N_ContactID"].ToString()) : 0;
+                    int nParentQuotationID = MasterTable.Columns.Contains("n_ParentQuotationID") ? myFunctions.getIntVAL(MasterRow["n_ParentQuotationID"].ToString()) : 0;
                     int N_NextApproverID = 0;
-
+                    bool bRevised=false;
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nFnYearID", N_FnYearID);
                     QueryParams.Add("@nQuotationID", N_QuotationID);
                     QueryParams.Add("@nBranchID", N_BranchID);
                     QueryParams.Add("@nLocationID", N_LocationID);
+                    QueryParams.Add("@nParentQuotationID", nParentQuotationID);
+
+                    
+
+                      if (MasterTable.Columns.Contains("B_Revised"))
+                      {
+                    
+                       bRevised= myFunctions.getBoolVAL(MasterTable.Rows[0]["B_Revised"].ToString());
+
+
+                      }
                    
                     bool B_SalesEnquiry = myFunctions.CheckPermission(N_CompanyID, 724, "Administrator", "X_UserCategory", dLayer, connection, transaction);
 
@@ -732,6 +745,12 @@ namespace SmartxAPI.Controllers
                         //transaction.Commit();
                         //myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_QuotationID, "Sales Quotation", QuotationNo, dLayer, connection, transaction, User);
                     }
+                   if(bRevised && NreQuotationID==0)
+                   {
+                      dLayer.ExecuteNonQuery("Update Inv_SalesQuotation Set B_HideRevised=1 Where N_QuotationID=@nParentQuotationID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                   }
+
+
                     transaction.Commit();
 
                     SortedList Result = new SortedList();
@@ -979,13 +998,17 @@ namespace SmartxAPI.Controllers
 
                     SqlTransaction transaction = connection.BeginTransaction();
 
-
+                    object nFormID=0;
                     object objSalesProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesID,0) from Inv_Sales where N_CompanyID=" + nCompanyID + " and N_QuotationID=" + N_QuotationID + " and B_IsSaveDraft = 0", connection, transaction);
                     object objOrderProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesOrderId,0) from Inv_SalesOrder where N_CompanyID=" + nCompanyID + " and N_QuotationID=" + N_QuotationID + "", connection, transaction);
+                   
                     if (objSalesProcessed == null)
                         objSalesProcessed = 0;
                     if (objOrderProcessed == null)
                         objOrderProcessed = 0;
+                        if (myFunctions.getIntVAL(objOrderProcessed.ToString()) > 0){
+                         nFormID = dLayer.ExecuteScalar("Select Isnull(N_FormID,0) from Inv_SalesOrder where N_CompanyID=" + nCompanyID + " and N_SalesOrderId=" + objOrderProcessed + "", connection, transaction);
+                    }
                     if (myFunctions.getIntVAL(objSalesProcessed.ToString()) == 0 && myFunctions.getIntVAL(objOrderProcessed.ToString()) == 0)
                     {
 
@@ -1041,13 +1064,20 @@ namespace SmartxAPI.Controllers
 
                
                     }
+                     
                     else
                     {
                         transaction.Rollback();
                         if (myFunctions.getIntVAL(objSalesProcessed.ToString()) > 0)
                             return Ok(_api.Error(User, "Sales invoice processed! Unable to delete"));
                         else if (myFunctions.getIntVAL(objOrderProcessed.ToString()) > 0)
-                            return Ok(_api.Error(User, "Sales order processed! Unable to delete"));
+                            if(myFunctions.getIntVAL(nFormID.ToString())==1546)
+                            return Ok(_api.Error(User, "Service order processed! Unable to delete"));
+                      
+                          else
+                         return Ok(_api.Error(User, "Sales order processed! Unable to delete"));
+                   
+                        
                         else
                             return Ok(_api.Error(User, "Unable to delete!"));
 

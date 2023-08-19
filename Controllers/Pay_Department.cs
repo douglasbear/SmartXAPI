@@ -273,7 +273,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
 
-            string sqlCommandText = "Select *  from Acc_CostCentreMaster Where N_CompanyID= " + nCompanyID + " and  N_GroupID=0 and N_FnYearID=" + nFnYearID + "";
+            string sqlCommandText = "Select N_CostCentreID as N_DivisionID,X_CostCentreName as X_DivisionName,*  from Acc_CostCentreMaster Where N_CompanyID= " + nCompanyID + " and  N_GroupID=0 and N_FnYearID=" + nFnYearID + "";
 
 
             try

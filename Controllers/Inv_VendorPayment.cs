@@ -701,13 +701,17 @@ namespace SmartxAPI.Controllers
 
                     if (n_PayReceiptID > 0)
                     {
-                        SortedList PostingParams = new SortedList();
-                        PostingParams.Add("N_CompanyID", nCompanyId);
-                        PostingParams.Add("X_InventoryMode", x_Type);
-                        PostingParams.Add("N_InternalID", n_PayReceiptID);
-                        PostingParams.Add("N_UserID", myFunctions.GetUserID(User));
-                        PostingParams.Add("X_SystemName", "ERP Cloud");
-                        object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
+                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_PayReceipt where N_PayReceiptId=" + n_PayReceiptID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
+                        if (N_SaveDraft == 0)
+                        {
+                            SortedList PostingParams = new SortedList();
+                            PostingParams.Add("N_CompanyID", nCompanyId);
+                            PostingParams.Add("X_InventoryMode", x_Type);
+                            PostingParams.Add("N_InternalID", n_PayReceiptID);
+                            PostingParams.Add("N_UserID", myFunctions.GetUserID(User));
+                            PostingParams.Add("X_SystemName", "ERP Cloud");
+                            object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
+                        }
 
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)

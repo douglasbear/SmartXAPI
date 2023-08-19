@@ -289,6 +289,7 @@ namespace SmartxAPI.Controllers
                     costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_GridLineNo", typeof(int), 0);
                     costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_EmpID", typeof(int), 0);
                     costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_ProjectID", typeof(int), 0);
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_DivisionID", typeof(int), 0);
 
                     foreach (DataRow dRow in CostCenterTable.Rows)
                     {
@@ -309,6 +310,8 @@ namespace SmartxAPI.Controllers
                         row["N_GridLineNo"] = dRow["rowID"];
                         row["N_EmpID"] = myFunctions.getIntVAL(dRow["N_Segment_4"].ToString());
                         row["N_ProjectID"] = myFunctions.getIntVAL(dRow["N_Segment_3"].ToString());
+                        row["N_DivisionID"] = myFunctions.getIntVAL(dRow["N_Segment_6"].ToString());
+
                         costcenter.Rows.Add(row);
                     }
                     //Activity Log
@@ -449,12 +452,12 @@ namespace SmartxAPI.Controllers
 
                     // Acc_CostCentreTrans = dLayer.ExecuteDataTablePro("SP_Acc_Voucher_Disp_CLOUD", ProParams, connection);
 
-                    string CostcenterSql = "SELECT X_EmpCode, X_EmpName, N_ProjectID as N_Segment_3,N_EmpID as N_Segment_4, X_ProjectCode,X_ProjectName,N_EmpID,N_ProjectID,N_CompanyID,N_FnYearID, " +
-" N_VoucherID, N_VoucherDetailsID, N_CostCentreID,X_CostCentreName,X_CostCentreCode,N_BranchID,X_BranchName,X_BranchCode , " +
-" N_Amount, N_LedgerID, N_CostCenterTransID, N_GridLineNo,X_Naration,0 AS N_AssetID, '' As X_AssetCode, " +
-" GETDATE() AS D_RepaymentDate, '' AS X_AssetName,'' AS X_PayCode,0 AS N_PayID,0 AS N_Inst,CAST(0 AS BIT) AS B_IsCategory,D_Entrydate " +
-" FROM   vw_InvFreeTextPurchaseCostCentreDetails where N_InventoryID = " + N_SalesID + " And N_InventoryType=0 And N_FnYearID=" + nFnYearId +
-" And N_CompanyID=" + nCompanyId + " Order By N_InventoryID,N_VoucherDetailsID ";
+                         string CostcenterSql = "SELECT X_EmpCode, X_EmpName, N_ProjectID as N_Segment_3,N_DivisionID,N_EmpID as N_Segment_4, X_ProjectCode,X_ProjectName,N_EmpID,N_ProjectID,N_CompanyID,N_FnYearID, " +
+                    " N_VoucherID, N_VoucherDetailsID, N_CostCentreID,X_CostCentreName as X_CostcentreName,N_CostCentreID as n_Segment_2,X_CostCentreCode,X_DivisionName,N_BranchID as N_Segment_1,X_BranchName,X_BranchCode , " +
+                    " N_Amount, N_LedgerID, N_CostCenterTransID, N_GridLineNo,X_Naration,0 AS N_AssetID, '' As X_AssetCode, " +
+                    " GETDATE() AS D_RepaymentDate, '' AS X_AssetName,'' AS X_PayCode,0 AS N_PayID,0 AS N_Inst,CAST(0 AS BIT) AS B_IsCategory,D_Entrydate " +
+                    " FROM   vw_InvFreeTextPurchaseCostCentreDetails where N_InventoryID = " + N_SalesID + " And N_InventoryType=0 And N_FnYearID=" + nFnYearId +
+                    " And N_CompanyID=" + nCompanyId + " Order By N_InventoryID,N_VoucherDetailsID ";
 
                     Acc_CostCentreTrans = dLayer.ExecuteDataTable(CostcenterSql, ProParams, connection);
 

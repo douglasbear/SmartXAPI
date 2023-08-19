@@ -325,6 +325,17 @@ namespace SmartxAPI.Controllers
 
                      DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_RFQDecisionID"].ToString()), this.FormID, myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()), User, connection);
                     Attachments = api.Format(Attachments, "attachments");
+
+
+                //    object value = dLayer.ExecuteScalar("select ISNULL(N_QuotationID,0) from Inv_SalesQuotation where N_RFQID = '" + Master.Rows[0]["N_RFQDecisionID"].ToString() + "' and N_CompanyID = '" + companyid + "'", connection);
+                //    if (value==null)
+                //    value=0;
+                //    if(myFunctions.getVAL(value.ToString())!=0){
+                //         myFunctions.AddNewColumnToDataTable(Master, "quotationProcessed", typeof(Boolean), true);
+                //    }
+                //    else{
+                //         myFunctions.AddNewColumnToDataTable(Master, "quotationProcessed", typeof(Boolean), false);
+                //    }
                   
                     if (Master.Rows.Count == 0)
                     {
