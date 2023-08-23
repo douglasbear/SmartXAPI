@@ -466,6 +466,7 @@ namespace SmartxAPI.Controllers
                     string X_TaskCode = MasterTable.Rows[0]["X_TaskCode"].ToString();
                     string xTaskSummery = MasterTable.Rows[0]["x_TaskSummery"].ToString();
                     int nProjectID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ProjectID"].ToString());
+                    int nOpportunityID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_OpportunityID"].ToString());
                     int nParentyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ParentID"].ToString());
                     DataTable SavedData;
 
@@ -571,6 +572,23 @@ namespace SmartxAPI.Controllers
 
                                 int NOrder = myFunctions.getIntVAL(Count.ToString()) + 1;
                                 dLayer.ExecuteNonQuery("update tsk_taskmaster set N_Order=" + NOrder + " where N_CompanyID=" + nCompanyID + " and N_Order=" + Count + " and N_ProjectID=" + MasterTable.Rows[0]["N_ProjectID"].ToString(), Params, connection, transaction);
+                                if (!MasterTable.Columns.Contains("N_Order"))
+                                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_Order", typeof(int), 0);
+                                MasterTable.Rows[0]["N_Order"] = Count.ToString();
+                            }
+                        }
+
+                    }
+                    if (nOpportunityID > 0)
+                    {
+                        if (nTaskId == 0)
+                        {
+                            object Count = dLayer.ExecuteScalar("select isnull(MAX(N_Order),0) from tsk_taskmaster where N_CompanyID=" + nCompanyID + " and n_OpportunityID=" + MasterTable.Rows[0]["n_OpportunityID"].ToString(), Params, connection, transaction);
+                            if (Count != null)
+                            {
+
+                                int NOrder = myFunctions.getIntVAL(Count.ToString()) + 1;
+                                dLayer.ExecuteNonQuery("update tsk_taskmaster set N_Order=" + NOrder + " where N_CompanyID=" + nCompanyID + " and N_Order=" + Count + " and n_OpportunityID=" + MasterTable.Rows[0]["n_OpportunityID"].ToString(), Params, connection, transaction);
                                 if (!MasterTable.Columns.Contains("N_Order"))
                                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_Order", typeof(int), 0);
                                 MasterTable.Rows[0]["N_Order"] = Count.ToString();
@@ -746,7 +764,6 @@ namespace SmartxAPI.Controllers
                         }
 
 
-
                     }
 
                     /// all Updates
@@ -872,8 +889,13 @@ namespace SmartxAPI.Controllers
 
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=1 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                         if (myFunctions.getVAL(MasterTable.Rows[0]["n_StageID"].ToString()) > 0)
-                            dLayer.ExecuteNonQuery("Update inv_customerprojects SET N_StageID=" + MasterTable.Rows[0]["n_StageID"].ToString()  + " where N_ProjectID=" + MasterTable.Rows[0]["n_ProjectID"].ToString()  + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-
+                        {
+                        if (myFunctions.getVAL(MasterTable.Rows[0]["n_OpportunityID"].ToString()) > 0)
+                            dLayer.ExecuteNonQuery("Update CRM_Opportunity SET N_StageID=" + MasterTable.Rows[0]["n_StageID"].ToString()  + " where N_OpportunityID=" + MasterTable.Rows[0]["n_OpportunityID"].ToString()  + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                        else
+                         dLayer.ExecuteNonQuery("Update inv_customerprojects SET N_StageID=" + MasterTable.Rows[0]["n_StageID"].ToString()  + " where N_ProjectID=" + MasterTable.Rows[0]["n_ProjectID"].ToString()  + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                        }
+                            
                     }
                     if (masterStatus == 8)
                     {
