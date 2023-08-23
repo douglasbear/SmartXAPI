@@ -1119,6 +1119,48 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+        [HttpGet("taskview")]
+        public ActionResult GetTaskview(int byUser)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            Params.Add("@nCompanyId", nCompanyID);
+            Params.Add("@nUserID", nUserID);
+            string sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_creatorid="+nUserID;
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    for (int k = 0; k < dt.Rows.Count; k++)
+                    {
+                        if(myFunctions.getIntVAL(dt.Rows[k]["N_StatusID"].ToString())==2)
+                            dt.Rows[k]["N_StageID"]=1695;
+                        if(myFunctions.getIntVAL(dt.Rows[k]["N_StatusID"].ToString())==4)
+                            dt.Rows[k]["N_StageID"]=1696;
+
+                    }
+                    dt.AcceptChanges();
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Success(dt));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
 
         [HttpGet("updateDashboard")]
         public ActionResult UpdateDashboard(int nTaskID, int nStatus, int nProjectID, int nStageID, bool b_Closed)
