@@ -1138,9 +1138,15 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     for (int k = 0; k < dt.Rows.Count; k++)
                     {
-                        if(myFunctions.getIntVAL(dt.Rows[k]["N_StatusID"].ToString())==2)
+                        if(myFunctions.getIntVAL(dt.Rows[k]["N_StatusID"].ToString())==2)//Open
                             dt.Rows[k]["N_StageID"]=1695;
-                        if(myFunctions.getIntVAL(dt.Rows[k]["N_StatusID"].ToString())==4)
+                        if(myFunctions.getIntVAL(dt.Rows[k]["N_StatusID"].ToString())==4)//Todo
+                            dt.Rows[k]["N_StageID"]=1696;
+                        if(myFunctions.getIntVAL(dt.Rows[k]["N_StatusID"].ToString())==4)//Completed
+                            dt.Rows[k]["N_StageID"]=1696;
+                        if(myFunctions.getIntVAL(dt.Rows[k]["N_StatusID"].ToString())==4)//Submitted
+                            dt.Rows[k]["N_StageID"]=1696;
+                        if(myFunctions.getIntVAL(dt.Rows[k]["N_StatusID"].ToString())==4)//Closed
                             dt.Rows[k]["N_StageID"]=1696;
 
                     }
