@@ -211,7 +211,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         Params.Add("@xTaskCode", xTaskCode);
-                        Mastersql = "select * from vw_Tsk_TaskMaster where N_CompanyId=@nCompanyID and X_TaskCode=@xTaskCode  ";
+                        Mastersql = "select * from vw_Tsk_TaskMaster where N_CompanyId=@nCompanyID and X_TaskCode=@xTaskCode ";
                     }
 
 
@@ -1167,6 +1167,40 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+        [HttpGet("taskaction")]
+        public ActionResult GetTaskaction()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            Params.Add("@nCompanyId", nCompanyID);
+            Params.Add("@nUserID", nUserID);
+            string sqlCommandText = "select N_ActionID as n_PkeyId,X_ActionName as x_Name from Tsk_TaskAction  order by N_SortID";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Success(dt));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+        
 
         [HttpGet("updateDashboard")]
         public ActionResult UpdateDashboard(int nTaskID, int nStatus, int nProjectID, int nStageID, bool b_Closed)
