@@ -640,7 +640,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                    if(nFormID==82)
+                    if(nFormID==82 && pKeyID!="new")
                     {
                       object party = dLayer.ExecuteScalar("select X_VendorName from vw_InvPurchaseOrder where OrderNo='"+pKeyID+"' and N_CompanyID="+nCompanyId, Params, connection, transaction);
                       object Date = dLayer.ExecuteScalar("select cast(D_POrderDate as Date) from vw_InvPurchaseOrder where OrderNo='"+pKeyID+"' and N_CompanyID="+nCompanyId, Params, connection, transaction);
