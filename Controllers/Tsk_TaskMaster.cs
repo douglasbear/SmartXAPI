@@ -1120,37 +1120,30 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("taskview")]
-        public ActionResult GetTaskview(int byUser)
+        public ActionResult GetTaskview(int nUserID,int nTeamID,int nType)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            int nUserID = myFunctions.GetUserID(User);
-            Params.Add("@nCompanyId", nCompanyID);
-            Params.Add("@nUserID", nUserID);
-            string sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_creatorid="+nUserID;
-
+            //int nUserID = myFunctions.GetUserID(User);
+            // Params.Add("@nCompanyId", nCompanyID);
+            // Params.Add("@nUserID", nUserID);
+            string sqlCommandText="";
+            if(nType==0)
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_creatorid="+nUserID;
+            else if(nTeamID>0 && nType==1 && nUserID>0)
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and N_UserMappingID="+nTeamID +" and n_assigneeID="+nUserID;
+            else if(nTeamID==0&& nType==1 && nUserID>0)
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_assigneeID="+nUserID;
+            else if(nTeamID>0 && nType==1 && nUserID==0)
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and N_UserMappingID="+nTeamID;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    for (int k = 0; k < dt.Rows.Count; k++)
-                    {
-                        if(myFunctions.getIntVAL(dt.Rows[k]["N_StatusID"].ToString())==2)//Open
-                            dt.Rows[k]["N_StageID"]=1695;
-                        if(myFunctions.getIntVAL(dt.Rows[k]["N_StatusID"].ToString())==4)//Todo
-                            dt.Rows[k]["N_StageID"]=1696;
-                        if(myFunctions.getIntVAL(dt.Rows[k]["N_StatusID"].ToString())==4)//Completed
-                            dt.Rows[k]["N_StageID"]=1696;
-                        if(myFunctions.getIntVAL(dt.Rows[k]["N_StatusID"].ToString())==4)//Submitted
-                            dt.Rows[k]["N_StageID"]=1696;
-                        if(myFunctions.getIntVAL(dt.Rows[k]["N_StatusID"].ToString())==4)//Closed
-                            dt.Rows[k]["N_StageID"]=1696;
-
-                    }
-                    dt.AcceptChanges();
+                   
                 }
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
