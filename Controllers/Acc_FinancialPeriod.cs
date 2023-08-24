@@ -56,15 +56,15 @@ namespace SmartxAPI.Controllers
                 Searchkey = " and ([Period Code] like'%" + xSearchkey + "%'or x_Description like'%" + xSearchkey + "%'or cast([Start Date ]  as VarChar) like'%" + xSearchkey + "%' or cast([End Date] as VarChar) like'%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by [Period Code]  desc";
+                xSortBy = " order by periodCode desc";
                     else
                 xSortBy = " order by " + xSortBy;
 
                     int Count = (nPage - 1) * nSizeperpage;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") [X_Period] AS X_Period,* from vw_AccPeriod_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [X_Period] AS X_Period,* from vw_AccPeriod_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " ";
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") [X_Period] AS X_Period,* from vw_AccPeriod_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_PeriodID not in (select top(" + Count + ") N_PeriodID from vw_AccPeriod_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [X_Period] AS X_Period,* from vw_AccPeriod_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_PeriodID not in (select top(" + Count + ") N_PeriodID from vw_AccPeriod_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + " ) ";
 
                     // sqlCommandText = "select * from Inv_MRNDetails where N_CompanyID=@p1";
                     Params.Add("@p1", nCompanyId);
@@ -119,6 +119,8 @@ namespace SmartxAPI.Controllers
                     int nFnYearID = myFunctions.getIntVAL(MasterRow["N_FnYearID"].ToString());
                     int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     string xPeriodCode = MasterRow["x_PeriodCode"].ToString();
+                     var dDateFrom = MasterRow["d_Start"].ToString();
+                      var dDateTo = MasterRow["d_End"].ToString();
                     string x_PeriodCode = "";
                     if (xPeriodCode == "@Auto")
                     {
@@ -138,6 +140,14 @@ namespace SmartxAPI.Controllers
                          dLayer.DeleteData("Acc_Period", "N_PeriodID", nPeriodID, "", connection,transaction);
            
                     }
+                      DataTable count = new DataTable();
+                        string sql = "select * from Acc_Period where d_Start='"+dDateFrom+"' and  d_End='"+dDateTo+"' and N_CompanyID="+nCompanyID+"" ;
+                        count = dLayer.ExecuteDataTable(sql, Params, connection, transaction);
+                        if(count.Rows.Count > 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Period Range  already exists"));
+                        }
                    
                     int n_PeriodID = dLayer.SaveData("Acc_Period", "N_PeriodID", "", "", MasterTable, connection, transaction);
                     if (n_PeriodID <= 0)
@@ -225,6 +235,54 @@ namespace SmartxAPI.Controllers
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User,ex));
+            }
+        }
+
+
+             [HttpPost("monthlyPeriod")]
+          public ActionResult MonthlyPeriod([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    MasterTable = ds.Tables["master"];
+                    DataRow MasterRow = MasterTable.Rows[0];
+                    SortedList Params = new SortedList();
+
+                    int nPeriodID = myFunctions.getIntVAL(MasterRow["N_PeriodID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(MasterRow["N_FnYearID"].ToString());
+                    int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+
+                       SortedList PostingParam = new SortedList();
+                            PostingParam.Add("N_CompanyID", nCompanyID);
+                            PostingParam.Add("N_FnYearID", nFnYearID);
+                          
+                            PostingParam.Add("D_Start", MasterRow["d_start"].ToString());
+                            PostingParam.Add("D_End",MasterRow["d_End"].ToString());
+                            PostingParam.Add("X_Type",MasterRow["type"].ToString());
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_FinancialYear_Create_New", PostingParam, connection, transaction);
+                            }  
+                         catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User,ex));
+                        }
+                   
+
+                    transaction.Commit();
+                    return Ok(_api.Success("Financial Period Created")) ;
+                }
+            }
+            
             catch (Exception ex)
             {
                 return Ok(_api.Error(User,ex));

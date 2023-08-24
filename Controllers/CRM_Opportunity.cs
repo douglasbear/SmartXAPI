@@ -192,7 +192,7 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, Items, Activity, Participants,Materials;
+                DataTable MasterTable, Items, TaskMaster,TaskStatus,Activity, Participants,Materials;
                 MasterTable = ds.Tables["master"];
                 Items = ds.Tables["Items"];
                 Materials = ds.Tables["Materials"];
@@ -244,75 +244,181 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        if (N_WorkFlowID != null)
+
+                if (N_WorkFlowID != null)
                         {
                             if (nWActivityID != myFunctions.getIntVAL(N_WorkFlowID.ToString()))
                             {
                                 if (nWActivityID > 0)
                                 {
-                                    dLayer.DeleteData("CRM_Activity", "N_ReffID", nOpportunityID, "", connection, transaction);
-                                    Activity = dLayer.ExecuteDataTable("select * from CRM_WorkflowActivities where N_CompanyID=" + nCompanyID + " and N_WActivityID=" + nWActivityID + " order by N_Order", Params, connection, transaction);
-                                    if (Activity.Rows.Count > 0)
+                                    //dLayer.DeleteData("Tsk_TaskMaster", "N_ProjectID", nProjectID, "", connection, transaction);
+
+                                //    dLayer.DeleteData("Tsk_TaskStatus", "N_ProjectID", nProjectID, "", connection, transaction);
+
+                                    TaskMaster = dLayer.ExecuteDataTable("select N_CompanyID,2 as N_StatusID,N_StageID,x_tasksummery,x_taskdescription,'' as D_TaskDate,'' as D_DueDate, "+myFunctions.GetUserID(User)+" as N_CreatorID, "+myFunctions.GetUserID(User)+" as N_CurrentAssigneeID, "+myFunctions.GetUserID(User)+"  as n_ClosedUserID ,"+myFunctions.GetUserID(User)+"  as n_SubmitterID,"+myFunctions.GetUserID(User)+" as N_CurrentAssignerID,'" + DateTime.Today + "' as D_EntryDate, "+myFunctions.GetUserID(User)+" as N_AssigneeID, N_StartDateBefore,N_StartDateUnitID,N_EndDateBefore,N_EndUnitID,N_WTaskDetailID,N_Order,N_TemplateID,N_PriorityID,N_CategoryID from vw_Prj_WorkflowDetails where N_CompanyID=" + nCompanyID + " and N_WTaskID=" + nWActivityID + " order by N_Order", Params, connection, transaction);
+                                    if (TaskMaster.Rows.Count > 0)
                                     {
                                         SortedList AParams = new SortedList();
-                                        Activity = myFunctions.AddNewColumnToDataTable(Activity, "X_ContactEmail", typeof(string), "");
-                                        Activity = myFunctions.AddNewColumnToDataTable(Activity, "X_ContactNumber", typeof(string), "");
-                                        Activity = myFunctions.AddNewColumnToDataTable(Activity, "x_ActivityCode", typeof(string), "");
-                                        Activity = myFunctions.AddNewColumnToDataTable(Activity, "N_TaskOwner", typeof(int), 0);
-                                        Activity = myFunctions.AddNewColumnToDataTable(Activity, "n_ActivityID", typeof(int), 0);
-                                        Activity = myFunctions.AddNewColumnToDataTable(Activity, "X_Contact", typeof(string), "");
-                                        string ActivityCode = "";
                                         AParams.Add("N_CompanyID", nCompanyID);
                                         AParams.Add("N_YearID", nFnYearId);
-                                        AParams.Add("N_FormID", 1307);
-                                        Activity.Columns.Remove("N_WActivityID");
-                                        Activity.Columns.Remove("N_WActivityDetailID");
-                                        int Order = 1;
+                                        AParams.Add("N_FormID", 1056);
+                                        string TaskCode = "";
                                         double Minuts = 0;
-                                        object Contact = dLayer.ExecuteScalar("select X_Contact from crm_Contact where N_ContactID=" + nContactID, Params, connection, transaction);
-                                        foreach (DataRow var in Activity.Rows)
+                                        int N_TaskID = 0;
+                                        TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "n_TaskID", typeof(int), 0);
+                                        TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "x_TaskCode", typeof(string), "");
+                                        TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "n_OpportunityID", typeof(int), nOpportunityID);
+                                        TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "B_Closed", typeof(int), 0);
+                                        // if(!TaskMaster.columns.Contains("D_TaskDate"))
+                                        //     TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "D_TaskDate", typeof(int), 0);
+                                     
+                                        TaskMaster.Rows[0]["B_Closed"] = 0;
+                                        foreach (DataRow var in TaskMaster.Rows)
                                         {
-                                            ActivityCode = dLayer.GetAutoNumber("CRM_Activity", "x_ActivityCode", AParams, connection, transaction);
-                                            if (ActivityCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Activity Code")); }
-                                            var["x_ActivityCode"] = ActivityCode;
-                                            var["N_RelatedTo"] = 294;
-                                            var["N_ReffID"] = nOpportunityID;
-                                            var["X_ContactEmail"] = X_ContactEmail;
-                                            var["X_ContactNumber"] = X_ContactNumber;
-                                            var["N_TaskOwner"] = nTaskOwner;
-                                            var["n_ActivityID"] = 0;
-                                            var["N_Order"] = Order;
-                                            var["X_Contact"] = Contact;
-                                            var["N_FnYearId"] = nFnYearId;
-                                            if (Order == 1)
-                                            {
-                                                var["b_closed"] = 1;
-                                                var["x_status"] = "Closed";
-                                            }
-                                            if (var["N_ReminderUnitID"].ToString() == "248")
+                                            TaskCode = dLayer.GetAutoNumber("Tsk_TaskMaster", "X_TaskCode", AParams, connection, transaction);
+                                            if (TaskCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Task Code")); }
+                                            var["x_TaskCode"] = TaskCode;
+
+                                            if (var["N_StartDateUnitID"].ToString() == "248")
                                                 Minuts = 1;
-                                            else if (var["N_ReminderUnitID"].ToString() == "247")
+                                            else if (var["N_StartDateUnitID"].ToString() == "247")
                                                 Minuts = 60;
-                                            else if (var["N_ReminderUnitID"].ToString() == "246")
+                                            else if (var["N_StartDateUnitID"].ToString() == "246")
                                                 Minuts = 1440;
                                             else
                                                 Minuts = 10080;
 
-                                            if (var["N_ReminderBrfore"].ToString() == "0")
+                                            if (var["N_StartDateBefore"].ToString() == "0")
                                                 Minuts = 0;
                                             else
-                                                Minuts = myFunctions.getVAL(var["N_ReminderBrfore"].ToString()) * Minuts;
+                                                Minuts = myFunctions.getVAL(var["N_StartDateBefore"].ToString()) * Minuts;
 
-                                            var["D_ScheduleDate"] = DateTime.Now.AddMinutes(Minuts);
-                                            Order++;
+                                            if(Minuts==0)
+                                                var["D_TaskDate"] = DateTime.Now;
+                                            else
+                                                var["D_TaskDate"] = DateTime.Now.AddMinutes(Minuts);
+
+                                            if (var["N_EndUnitID"].ToString() == "248")
+                                                Minuts = 1;
+                                            else if (var["N_EndUnitID"].ToString() == "247")
+                                                Minuts = 60;
+                                            else if (var["N_EndUnitID"].ToString() == "246")
+                                                Minuts = 1440;
+                                            else
+                                                Minuts = 10080;
+
+                                            if (var["N_EndDateBefore"].ToString() == "0")
+                                                Minuts = 0;
+                                            else
+                                                Minuts = myFunctions.getVAL(var["N_EndDateBefore"].ToString()) * Minuts;
+
+                                            if(Minuts==0)
+                                                var["D_DueDate"]=null;
+                                            else
+                                                var["D_DueDate"] = DateTime.Parse(var["D_TaskDate"].ToString()).AddMinutes(Minuts);
+
                                         }
-                                        dLayer.SaveData("CRM_Activity", "n_ActivityID", Activity, connection, transaction);
+                                        TaskMaster.Columns.Remove("N_StartDateBefore");
+                                        TaskMaster.Columns.Remove("N_StartDateUnitID");
+                                        TaskMaster.Columns.Remove("N_EndDateBefore");
+                                        TaskMaster.Columns.Remove("N_EndUnitID");
+                                        int N_CreatorID = myFunctions.GetUserID(User);
+                                        for (int j = 0; j < TaskMaster.Rows.Count; j++)
+                                        {
+
+                                            N_TaskID = dLayer.SaveDataWithIndex("Tsk_TaskMaster", "N_TaskID", "", "", j, TaskMaster, connection, transaction);
+                                             TaskStatus = dLayer.ExecuteDataTable("select N_CompanyID,N_AssigneeID,N_SubmitterID,N_CreaterID,N_ClosedUserID,'" + DateTime.Today + "' as D_EntryDate,1 as N_Status from Prj_WorkflowTasks where N_CompanyID=" + nCompanyID + " and N_WTaskDetailID=" + TaskMaster.Rows[j]["N_WTaskDetailID"] + " order by N_Order", Params, connection, transaction);
+                                            if (TaskStatus.Rows.Count > 0)
+                                            {
+                                                TaskStatus = myFunctions.AddNewColumnToDataTable(TaskStatus, "n_TaskID", typeof(int), N_TaskID);
+                                                TaskStatus = myFunctions.AddNewColumnToDataTable(TaskStatus, "n_TaskStatusID", typeof(int), 0);
+                                                dLayer.SaveData("Tsk_TaskStatus", "n_TaskStatusID", TaskStatus, connection, transaction);
+                                                TaskStatus.Clear();
+
+                                            }
+                                            if (j == 0)
+                                            {
+                                                string qry = "Select " + nCompanyID + " as N_CompanyID," + 0 + " as N_TaskStatusID," + N_TaskID + " as N_TaskID,"+myFunctions.GetUserID(User)+" as N_AssigneeID,"+myFunctions.GetUserID(User)+" as N_SubmitterID ,"+myFunctions.GetUserID(User)+" as  N_CreaterID,'" + DateTime.Today + "' as D_EntryDate,'" + "" + "' as X_Notes ," + 4 + " as N_Status ," + 100 + " as N_WorkPercentage";
+                                                DataTable DetailTable = dLayer.ExecuteDataTable(qry, Params, connection, transaction);
+                                                int nID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", DetailTable, connection, transaction);
+                                            }
+                                           
+                                        }
                                     }
                                 }
-
                             }
+                        }
 
-                        }                   
+                        
+                        // if (N_WorkFlowID != null)
+                        // {
+                        //     if (nWActivityID != myFunctions.getIntVAL(N_WorkFlowID.ToString()))
+                        //     {
+                        //         if (nWActivityID > 0)
+                        //         {
+                        //             dLayer.DeleteData("CRM_Activity", "N_ReffID", nOpportunityID, "", connection, transaction);
+                        //             Activity = dLayer.ExecuteDataTable("select * from CRM_WorkflowActivities where N_CompanyID=" + nCompanyID + " and N_WActivityID=" + nWActivityID + " order by N_Order", Params, connection, transaction);
+                        //             if (Activity.Rows.Count > 0)
+                        //             {
+                        //                 SortedList AParams = new SortedList();
+                        //                 Activity = myFunctions.AddNewColumnToDataTable(Activity, "X_ContactEmail", typeof(string), "");
+                        //                 Activity = myFunctions.AddNewColumnToDataTable(Activity, "X_ContactNumber", typeof(string), "");
+                        //                 Activity = myFunctions.AddNewColumnToDataTable(Activity, "x_ActivityCode", typeof(string), "");
+                        //                 Activity = myFunctions.AddNewColumnToDataTable(Activity, "N_TaskOwner", typeof(int), 0);
+                        //                 Activity = myFunctions.AddNewColumnToDataTable(Activity, "n_ActivityID", typeof(int), 0);
+                        //                 Activity = myFunctions.AddNewColumnToDataTable(Activity, "X_Contact", typeof(string), "");
+                        //                 string ActivityCode = "";
+                        //                 AParams.Add("N_CompanyID", nCompanyID);
+                        //                 AParams.Add("N_YearID", nFnYearId);
+                        //                 AParams.Add("N_FormID", 1307);
+                        //                 Activity.Columns.Remove("N_WActivityID");
+                        //                 Activity.Columns.Remove("N_WActivityDetailID");
+                        //                 int Order = 1;
+                        //                 double Minuts = 0;
+                        //                 object Contact = dLayer.ExecuteScalar("select X_Contact from crm_Contact where N_ContactID=" + nContactID, Params, connection, transaction);
+                        //                 foreach (DataRow var in Activity.Rows)
+                        //                 {
+                        //                     ActivityCode = dLayer.GetAutoNumber("CRM_Activity", "x_ActivityCode", AParams, connection, transaction);
+                        //                     if (ActivityCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Activity Code")); }
+                        //                     var["x_ActivityCode"] = ActivityCode;
+                        //                     var["N_RelatedTo"] = 294;
+                        //                     var["N_ReffID"] = nOpportunityID;
+                        //                     var["X_ContactEmail"] = X_ContactEmail;
+                        //                     var["X_ContactNumber"] = X_ContactNumber;
+                        //                     var["N_TaskOwner"] = nTaskOwner;
+                        //                     var["n_ActivityID"] = 0;
+                        //                     var["N_Order"] = Order;
+                        //                     var["X_Contact"] = Contact;
+                        //                     var["N_FnYearId"] = nFnYearId;
+                        //                     if (Order == 1)
+                        //                     {
+                        //                         var["b_closed"] = 1;
+                        //                         var["x_status"] = "Closed";
+                        //                     }
+                        //                     if (var["N_ReminderUnitID"].ToString() == "248")
+                        //                         Minuts = 1;
+                        //                     else if (var["N_ReminderUnitID"].ToString() == "247")
+                        //                         Minuts = 60;
+                        //                     else if (var["N_ReminderUnitID"].ToString() == "246")
+                        //                         Minuts = 1440;
+                        //                     else
+                        //                         Minuts = 10080;
+
+                        //                     if (var["N_ReminderBrfore"].ToString() == "0")
+                        //                         Minuts = 0;
+                        //                     else
+                        //                         Minuts = myFunctions.getVAL(var["N_ReminderBrfore"].ToString()) * Minuts;
+
+                        //                     var["D_ScheduleDate"] = DateTime.Now.AddMinutes(Minuts);
+                        //                     Order++;
+                        //                 }
+                        //                 dLayer.SaveData("CRM_Activity", "n_ActivityID", Activity, connection, transaction);
+                        //             }
+                        //         }
+
+                        //     }
+
+                        // }                   
 
                         dLayer.SaveData("Crm_Products", "N_CrmItemID", Items, connection, transaction);
 

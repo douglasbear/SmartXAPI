@@ -38,7 +38,8 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
 
-            string sqlCommandActivitiesList = "select * from vw_CRM_Activity where N_CompanyID=@p1 and X_OpportunityCode=@p2 order by N_Order";
+            //string sqlCommandActivitiesList = "select * from vw_CRM_Activity where N_CompanyID=@p1 and X_OpportunityCode=@p2 order by N_Order";
+            string sqlCommandActivitiesList = "select * from vw_Tsk_TaskMaster where N_CompanyID=@p1 and n_opportunityID=@p3 order by N_Order";
             string sqlCommandLeadsList = "select CONVERT(varchar,d_EntryDate,101) as d_Entry,* from vw_CRMOpportunity where N_CompanyID =@p1 and X_OpportunityCode=@p2";
             string sqlCommandContactList = "Select * from vw_CRMContact where N_CompanyID=@p1 and X_OpportunityCode=@p2";
             string sqlCommandQuotationList = "Select * from inv_salesquotation where N_CompanyID=@p1 and n_opportunityID=@p3";
@@ -198,7 +199,8 @@ namespace SmartxAPI.Controllers
                     int N_Order = 1;
                     foreach (DataRow var in MasterTable.Rows)
                     {
-                        dLayer.ExecuteNonQuery("update crm_activity set N_Order=" + N_Order + " where N_CompanyID=@p1 and X_ActivityCode=" + var["x_ActivityCode"].ToString(), Params, connection);
+                        //dLayer.ExecuteNonQuery("update crm_activity set N_Order=" + N_Order + " where N_CompanyID=@p1 and X_ActivityCode=" + var["x_ActivityCode"].ToString(), Params, connection);
+                        dLayer.ExecuteNonQuery("update tsk_taskmaster set N_Order=" + N_Order + " where N_CompanyID=@p1 and x_TaskCode=" + var["x_TaskCode"].ToString(), Params, connection);
                         N_Order++;
                     }
                 }
