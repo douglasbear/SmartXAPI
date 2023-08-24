@@ -466,7 +466,7 @@ namespace SmartxAPI.Controllers
                     string X_TaskCode = MasterTable.Rows[0]["X_TaskCode"].ToString();
                     string xTaskSummery = MasterTable.Rows[0]["x_TaskSummery"].ToString();
                     int nProjectID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ProjectID"].ToString());
-                    int nOpportunityID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_OpportunityID"].ToString());
+                    int nOpportunityID = myFunctions.ContainColumn("n_OpportunityID", MasterTable) ? myFunctions.getIntVAL(MasterTable.Rows[0]["n_OpportunityID"].ToString()) : 0;
                     int nParentyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ParentID"].ToString());
                     DataTable SavedData;
 
