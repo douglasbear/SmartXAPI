@@ -1846,7 +1846,7 @@ namespace SmartxAPI.GeneralFunctions
                     case 64://Sales
                     case 65://Purchase
                     case 66://Sales Receipt
-                    case 67://Vendor Payment
+                    case 67://Vendor Payment 
                         DeleteStatus = 1;
                         X_Action = "Delete";
                         B_IsDelete = true;
