@@ -258,6 +258,7 @@ namespace SmartxAPI.Controllers
                         row["N_EmpID"] = myFunctions.getIntVAL(dRow["N_Segment_4"].ToString());
                         row["N_ProjectID"] = myFunctions.getIntVAL(dRow["N_Segment_3"].ToString());
                         row["N_DivisionID"] = myFunctions.getIntVAL(dRow["N_Segment_6"].ToString());
+            
                         costcenter.Rows.Add(row);
                     }
                         //Activity Log
