@@ -1129,8 +1129,8 @@ namespace SmartxAPI.Controllers
             // Params.Add("@nCompanyId", nCompanyID);
             // Params.Add("@nUserID", nUserID);
             string sqlCommandText="";
-            if(nType==0)
-                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_creatorid="+nUserID;
+            if(nType==0||(nUserID==0&&nTeamID==0))
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + 50000 + " and n_assigneeID="+nUserID;
             else if(nTeamID>0 && nType==1 && nUserID>0)
                 sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and N_UserMappingID="+nTeamID +" and n_assigneeID="+nUserID;
             else if(nTeamID==0&& nType==1 && nUserID>0)

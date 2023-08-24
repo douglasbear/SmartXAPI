@@ -157,7 +157,11 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyId", nCompanyID);
             Params.Add("@nUserID", nUserID);
-            string sqlCommandText = "Select *  from tsk_UserMapping Where N_CompanyID= " + nCompanyID + " and n_userid="+nUserID + " and X_Team is not null";
+            string sqlCommandText ="";
+            if(nUserID>0)
+                sqlCommandText = "Select *  from tsk_UserMapping Where N_CompanyID= " + nCompanyID + " and n_userid="+nUserID + " and X_Team is not null";
+            else
+                sqlCommandText = "Select *  from tsk_UserMapping Where N_CompanyID= " + nCompanyID + " and X_Team is not null";
 
             try
             {
