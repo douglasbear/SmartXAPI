@@ -942,6 +942,8 @@ namespace SmartxAPI.Controllers
                     object RecuredDays=  dLayer.ExecuteScalar("select N_RecuringDays from Tsk_TaskMaster where  N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     if(b_Closed.ToString()=="True")
                     {
+                        if(RecuredDays!=null)
+                        {
                         if(myFunctions.getIntVAL(RecuredDays.ToString())>0)
                         {
                              int N_AssigneeID=  myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_AssigneeID from Tsk_TaskMaster where  N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction).ToString());
@@ -1010,6 +1012,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable To Save"));
                     }
                             
+                        }
                         }
 
                     }
