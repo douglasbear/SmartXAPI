@@ -1215,6 +1215,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
+            int nloginUserID = myFunctions.GetUserID(User);
             string sqlCommandText="";
             if((nUserID==0&&nTeamID==0))
                 sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= 50000  and n_assigneeID="+nUserID;
@@ -1224,6 +1225,8 @@ namespace SmartxAPI.Controllers
                 sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and N_UserMappingID="+nTeamID +" and n_assigneeID="+nUserID;
             else if(nTeamID>0 && nType==1 && nUserID==0)
                 sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and N_UserMappingID="+nTeamID;
+            else if((nUserID>0&&nType==1&&nUserID!=nloginUserID))
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_assigneeID="+nUserID;
             else if((nType==1))
                 sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID=  50000  and n_assigneeID="+nUserID;
             try
