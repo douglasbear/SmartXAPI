@@ -85,13 +85,33 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(api.Error(User,"Unable to save"));
                     }
+                    
 
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["N_UserMappingID"] = nUserMappingID;
                        
                        
-                    }
+                    } 
+                            DataRow row = DetailTable.NewRow();
+                            row["n_CompanyID"] =nCompanyID;
+                            row["n_UserMappingID"] = nUserMappingID;
+                            row["n_UserMappingDetailID"] = 0;
+                            row["d_Entrydate"] =DetailTable.Rows[0]["d_Entrydate"];
+                            row["n_UsersID"] =  myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString());
+                            row["n_UserID"] =myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString()); //myFunctions.getIntVAL(Math.Round(Convert.ToDouble(nInstAmount)).ToString());
+                            DetailTable.Rows.Add(row);
+                          
+
+
+
+
+
+
+
+
+
+
                     int nRouteDetailID = dLayer.SaveData("tsk_UserMappingDetails", "N_UserMappingDetailID", DetailTable, connection, transaction);
                     // if (nRouteDetailID <= 0)
                     // {
@@ -111,7 +131,7 @@ namespace SmartxAPI.Controllers
 
 
         
-             [HttpGet("details")]
+        [HttpGet("details")]
         public ActionResult BusRegDetails(string nUserID)
         {
             DataSet dt=new DataSet();
