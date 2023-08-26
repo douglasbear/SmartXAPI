@@ -1261,7 +1261,7 @@ namespace SmartxAPI.Controllers
             int nUserID = myFunctions.GetUserID(User);
             Params.Add("@nCompanyId", nCompanyID);
             Params.Add("@nUserID", nUserID);
-            string sqlCommandText = "select N_ActionID as n_PkeyId,X_ActionName as x_Name from Tsk_TaskAction  order by N_SortID";
+            string sqlCommandText = "select N_StageActionID as n_PkeyId,X_Stage as x_Name from Tsk_TaskAction  where X_Stage is not null order by N_StageSortID";
 
             try
             {
