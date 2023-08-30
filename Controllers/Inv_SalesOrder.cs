@@ -651,6 +651,11 @@ namespace SmartxAPI.Controllers
                     {
                        nDivisionID=myFunctions.getIntVAL(MasterRow["n_DivisionID"].ToString());
                     }
+                    int n_OpportunityID = 0;
+                    if (MasterTable.Columns.Contains("n_OpportunityID"))
+                    {
+                       n_OpportunityID=myFunctions.getIntVAL(MasterRow["n_OpportunityID"].ToString());
+                    }
 
                     CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID="+ N_CustomerId, QueryParams, connection, transaction);
                     if (MasterTable.Columns.Contains("N_FormID"))
@@ -831,7 +836,10 @@ namespace SmartxAPI.Controllers
                         }
                     
                     }
-                    }
+                    } 
+                    if (n_OpportunityID > 0)
+                        dLayer.ExecuteNonQuery("Update CRM_Opportunity Set  N_ClosingStatusID=1 Where n_OpportunityID=" + n_OpportunityID + " and N_CompanyID=" + N_CompanyID.ToString(), connection, transaction);
+
 
                     if (N_QuotationID > 0)
                         dLayer.ExecuteNonQuery("Update Inv_SalesQuotation Set  N_Processed=1, N_StatusID=1 Where N_QuotationID=" + N_QuotationID + " and N_FnYearID=" + N_FnYearID + " and N_CompanyID=" + N_CompanyID.ToString(), connection, transaction);
