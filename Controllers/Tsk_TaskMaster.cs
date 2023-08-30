@@ -856,7 +856,7 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed= 1  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection, transaction);
                            
                     }
-                    else if (nStatus == "9" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_SubmitterID"].ToString()))
+                    else if ((nStatus == "9"|| nStatus=="14")  && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_SubmitterID"].ToString()))
                     {
                         DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
                     }
@@ -957,6 +957,94 @@ namespace SmartxAPI.Controllers
 
                         }
                     }
+
+                    object b_Closed=  dLayer.ExecuteScalar("select B_Closed from Tsk_TaskMaster where  N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    object RecuredDays=  dLayer.ExecuteScalar("select N_RecuringDays from Tsk_TaskMaster where  N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    if(b_Closed.ToString()=="True")
+                    {
+                        if(RecuredDays!=null)
+                        {
+                        if(myFunctions.getIntVAL(RecuredDays.ToString())>0)
+                        {
+                             int N_AssigneeID=  myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_AssigneeID from Tsk_TaskMaster where  N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction).ToString());
+                             int N_SubmitterID=  myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_SubmitterID from Tsk_TaskMaster where  N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction).ToString());
+                             int n_ClosedUserID=  myFunctions.getIntVAL(dLayer.ExecuteScalar("select n_ClosedUserID from Tsk_TaskMaster where  N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction).ToString());
+
+                           string DueDate= MasterTable.Rows[0]["d_DueDate"].ToString();
+                           DateTime Due = new DateTime(
+                                           Convert.ToDateTime(DueDate.ToString()).Year,
+                                            Convert.ToDateTime(DueDate.ToString()).Month,
+                                           Convert.ToDateTime(DueDate.ToString()).Day,
+                                          Convert.ToDateTime(DueDate.ToString()).Hour,
+                                           Convert.ToDateTime(DueDate.ToString()).Minute,
+                                           Convert.ToDateTime(DueDate.ToString()).Second
+                                         );
+
+                             DateTime DuePlusOneDay = Due.AddDays(myFunctions.getIntVAL(RecuredDays.ToString()));
+                            string StartDate= MasterTable.Rows[0]["d_TaskDate"].ToString();
+                           DateTime start = new DateTime(
+                                           Convert.ToDateTime(DueDate.ToString()).Year,
+                                            Convert.ToDateTime(DueDate.ToString()).Month,
+                                           Convert.ToDateTime(DueDate.ToString()).Day,
+                                          Convert.ToDateTime(DueDate.ToString()).Hour,
+                                           Convert.ToDateTime(DueDate.ToString()).Minute,
+                                           Convert.ToDateTime(DueDate.ToString()).Second
+                                         );
+
+                             DateTime startPlusOneDay = start.AddDays(myFunctions.getIntVAL(RecuredDays.ToString()));
+                               dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET d_DueDate='" + DuePlusOneDay.ToString() +"' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                               dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET d_TaskDate='" + startPlusOneDay.ToString() +"' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                               dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CurrentAssigneeID='" + N_AssigneeID + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                              dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CurrentAssignerID='" + DetailTable.Rows[0]["n_CreaterID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                             dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_SubmitterID='" + N_SubmitterID + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                            dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_ClosedUserID='" +n_ClosedUserID + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                           dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET D_EntryDate='" + DetailTable.Rows[0]["D_EntryDate"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                           dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID=2  where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                           dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=0  where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                           dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_RecuringDays="+RecuredDays+"  where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+
+                        DataTable dt = new DataTable();
+                        dt.Clear();
+                        dt.Columns.Add("N_TaskID");
+                        dt.Columns.Add("n_TaskStatusID");
+                        dt.Columns.Add("n_CompanyId");
+                        dt.Columns.Add("n_AssigneeID");
+                        dt.Columns.Add("n_CreaterID");
+                        dt.Columns.Add("n_SubmitterID");
+                        dt.Columns.Add("n_ClosedUserID");
+                        dt.Columns.Add("n_Status");
+                        dt.Columns.Add("d_EntryDate");
+                        DataRow row = dt.NewRow();
+                        row["N_TaskID"] = nTaskID;
+                        row["n_TaskStatusID"] = 0;
+                        row["n_CompanyId"] = nCompanyID;
+                        row["n_AssigneeID"] =N_AssigneeID;
+                        row["n_CreaterID"] = DetailTable.Rows[0]["n_CreaterID"];
+                        row["n_SubmitterID"] =N_SubmitterID;
+                        row["n_ClosedUserID"] = n_ClosedUserID;
+                        row["n_Status"] = 2;
+                        row["d_EntryDate"] = DetailTable.Rows[0]["d_EntryDate"];
+                          dt.Rows.Add(row);
+                       int nTaskStatusNewID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", dt, connection, transaction);
+                    if (nTaskStatusNewID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable To Save"));
+                    }
+                            
+                        }
+                        }
+
+                    }
+
+
+
+
+
+
+
+
+
 
                     transaction.Commit();
                     return Ok(_api.Success(Result, "Task Updated Successfully"));
@@ -1141,6 +1229,83 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+        [HttpGet("taskview")]
+        public ActionResult GetTaskview(int nUserID,int nTeamID,int nType)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            int nloginUserID = myFunctions.GetUserID(User);
+            string sqlCommandText="";
+            if((nUserID==0&&nTeamID==0))
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID=-1  and n_assigneeID="+nUserID;
+            if(nType==0)
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_assigneeID="+nUserID;    
+            else if(nTeamID>0 && nType==1 && nUserID>0)
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and N_UserMappingID="+nTeamID +" and n_assigneeID="+nUserID;
+            else if(nTeamID>0 && nType==1 && nUserID==0)
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and N_UserMappingID="+nTeamID;
+            else if((nUserID>0&&nType==1&&nUserID!=nloginUserID))
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_assigneeID="+nUserID;
+            else if((nType==1))
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= -1  and n_assigneeID="+nUserID;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                   
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Success(dt));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+        [HttpGet("taskaction")]
+        public ActionResult GetTaskaction()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            Params.Add("@nCompanyId", nCompanyID);
+            Params.Add("@nUserID", nUserID);
+            string sqlCommandText = "select N_StageActionID as n_PkeyId,X_Stage as x_Name from Tsk_TaskAction  where X_Stage is not null order by N_StageSortID";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Success(dt));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+        
 
         [HttpGet("updateDashboard")]
         public ActionResult UpdateDashboard(int nTaskID, int nStatus, int nProjectID, int nStageID, bool b_Closed)
