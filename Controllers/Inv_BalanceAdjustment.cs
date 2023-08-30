@@ -181,7 +181,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p3", nFnYearId);
             Params.Add("@p4", X_ReceiptNo);
             Params.Add("@p5", N_PartyType);
-            Params.Add("@p6", nFormID);
+            Params.Add("@p7", nFormID);
             
 
             try
@@ -219,7 +219,7 @@ namespace SmartxAPI.Controllers
                         " N_Amount, N_LedgerID, N_CostCenterTransID, N_GridLineNo,X_Naration,0 AS N_AssetID, '' As X_AssetCode, " +
                         " GETDATE() AS D_RepaymentDate, '' AS X_AssetName,'' AS X_PayCode,0 AS N_PayID,0 AS N_Inst,CAST(0 AS BIT) AS B_IsCategory,D_Entrydate, N_FormID " +
                         " FROM   vw_InvFreeTextPurchaseCostCentreDetails where N_InventoryID = " + N_AdjustmentID + " And N_InventoryType=0 And N_FnYearID=" + nFnYearId +
-                        " And N_CompanyID=" + nCompanyId + " and N_FormID=@p6 Order By N_InventoryID,N_VoucherDetailsID ";
+                        " And N_CompanyID=" + nCompanyId + " and N_FormID=@p7 Order By N_InventoryID,N_VoucherDetailsID ";
 
                     Acc_CostCentreTrans = dLayer.ExecuteDataTable(CostcenterSql, Params, connection);
 
