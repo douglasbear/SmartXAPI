@@ -41,7 +41,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
             string sqlCommandText = "";
-                sqlCommandText = "Select *  from Inv_DivisionMaster Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "  Order By X_DivisionCode ";
+                sqlCommandText = "Select N_DivisionID as N_DimensionID,X_DivisionName As X_DimensionName,*  from vw_Divisionmaster_Disp Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "  Order By X_DivisionCode ";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
