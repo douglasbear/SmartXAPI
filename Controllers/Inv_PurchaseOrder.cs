@@ -278,9 +278,15 @@ namespace SmartxAPI.Controllers
                         if (InPurchase != null)
                             MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), "Invoice Processed");
                     }
+                    bool Invoice2Enable = false;
+                    object Invoice2Enableobj = dLayer.ExecuteScalar("select 1 from gen_printtemplates where N_CompanyID =" + nCompanyId + " and N_FormID=1793 and X_RptName<>'' and N_UsercategoryID=" + myFunctions.GetUserCategory(User), connection);
+                    if (Invoice2Enableobj != null)
+                        Invoice2Enable = true;
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "Invoice2Enable", typeof(bool), Invoice2Enable);
 
                     MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
+
 
                     //PurchaseOrder Details
 
@@ -482,6 +488,7 @@ namespace SmartxAPI.Controllers
                         RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
                         RentalSchedule = api.Format(RentalSchedule, "RentalSchedule");
                     };
+                    
 
                     dt.Tables.Add(Attachments);
                     dt.Tables.Add(DetailTable);

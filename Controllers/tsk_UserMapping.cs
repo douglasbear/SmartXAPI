@@ -85,13 +85,33 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(api.Error(User,"Unable to save"));
                     }
+                    
 
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["N_UserMappingID"] = nUserMappingID;
                        
                        
-                    }
+                    } 
+                            DataRow row = DetailTable.NewRow();
+                            row["n_CompanyID"] =nCompanyID;
+                            row["n_UserMappingID"] = nUserMappingID;
+                            row["n_UserMappingDetailID"] = 0;
+                            row["d_Entrydate"] =DetailTable.Rows[0]["d_Entrydate"];
+                            row["n_UsersID"] =  myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString());
+                            row["n_UserID"] =myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString()); //myFunctions.getIntVAL(Math.Round(Convert.ToDouble(nInstAmount)).ToString());
+                            DetailTable.Rows.Add(row);
+                          
+
+
+
+
+
+
+
+
+
+
                     int nRouteDetailID = dLayer.SaveData("tsk_UserMappingDetails", "N_UserMappingDetailID", DetailTable, connection, transaction);
                     // if (nRouteDetailID <= 0)
                     // {
@@ -111,7 +131,7 @@ namespace SmartxAPI.Controllers
 
 
         
-             [HttpGet("details")]
+        [HttpGet("details")]
         public ActionResult BusRegDetails(string nUserID)
         {
             DataSet dt=new DataSet();
@@ -147,6 +167,42 @@ namespace SmartxAPI.Controllers
             catch (Exception e)
             {
                 return Ok(api.Error(User,e));
+            }
+        }
+        [HttpGet("list")]
+        public ActionResult GetteamList(int nUserID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyId", nCompanyID);
+            Params.Add("@nUserID", nUserID);
+            string sqlCommandText ="";
+            if(nUserID>0)
+                sqlCommandText = "Select *  from tsk_UserMapping Where N_CompanyID= " + nCompanyID + " and n_userid="+nUserID + " and X_Team is not null";
+            else
+                sqlCommandText = "Select *  from tsk_UserMapping Where N_CompanyID= " + nCompanyID + " and X_Team is not null";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Success(dt));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
             }
         }
     }
