@@ -510,16 +510,21 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 DataTable DetailTable;
+                DataTable Approvals;
                 DataTable DetailsToImport;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
+                Approvals = ds.Tables["approval"];
                 DataTable Attachment = ds.Tables["attachments"];
                 DetailsToImport = ds.Tables["detailsImport"];
                 DataTable rentalItem = ds.Tables["segmentTable"];
+                 DataRow ApprovalRow = Approvals.Rows[0];
                 bool B_isImport = false;
                 SortedList Params = new SortedList();
                 String xButtonAction="";
                 int N_POrderID = 0; var X_POrderNo = "";
+                int N_NextApproverID = 0;
+                int N_SaveDraft = 0;
               
 
                 if (ds.Tables.Contains("detailsImport"))
@@ -601,6 +606,31 @@ namespace SmartxAPI.Controllers
                       return Ok(api.Error(User, "Transaction date must be in the active Financial Year."));
                    }
                 }
+                    SortedList VendParams = new SortedList();
+                    VendParams.Add("@nCompanyID", nCompanyId);
+                    VendParams.Add("@N_VendorID", N_VendorID);
+                    VendParams.Add("@nFnYearID", N_FnYearID);
+
+                  object objVendorName = dLayer.ExecuteScalar("Select X_VendorName From Inv_Vendor where N_VendorID=@N_VendorID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", VendParams, connection, transaction);
+                  object objVendorCode = dLayer.ExecuteScalar("Select X_VendorCode From Inv_Vendor where N_VendorID=@N_VendorID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", VendParams, connection, transaction);
+                        
+
+                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_POrderID>0)
+                     {                                     
+                        int N_PkeyID = N_POrderID;
+                        var values = MasterTable.Rows[0]["x_POrderNo"].ToString();
+                        string X_Criteria = "N_POrderID=" + N_PkeyID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + N_FnYearID;
+                        myFunctions.UpdateApproverEntry(Approvals, "Inv_PurchaseOrder", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "PURCHASE ORDER", N_PkeyID, values, 1, objVendorName.ToString(), 0, "", 0, User, dLayer, connection, transaction);
+                        // N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_PurchaseOrder where n_POrderID=" + N_POrderID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
+                          transaction.Commit();
+                        return Ok(api.Success("purchase order Approved " + "-" + X_POrderNo));
+                    }
+
+
+
+
+
                  object B_YearEndProcess=dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID="+nCompanyId+" and convert(date ,'" + MasterTable.Rows[0]["D_POrderDate"].ToString() + "') between D_Start and D_End", connection, transaction);
                  if(myFunctions.getBoolVAL(B_YearEndProcess.ToString()))
                  {
@@ -688,14 +718,15 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
                         }
                     }
-
-
+                      
+                    MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);  
                     N_POrderID = dLayer.SaveData("Inv_PurchaseOrder", "n_POrderID", MasterTable, connection, transaction);
                     if (N_POrderID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error(User, "Error"));
                     }
+
 
                     if (B_isImport)
                     {
@@ -850,7 +881,7 @@ namespace SmartxAPI.Controllers
                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
                        myFunctions.LogScreenActivitys(N_FnYearID,N_POrderID,X_POrderNo,82,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
                         
-
+                     N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "Purchase Order", N_POrderID, X_POrderNo, 1, "", 0, "",0, User, dLayer, connection, transaction);
                     transaction.Commit();
                 }
                 SortedList Result = new SortedList();
@@ -898,7 +929,7 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nTransID", nPOrderID);
                     ParamList.Add("@nCompanyID", nCompanyID);
                     ParamList.Add("@nFnYearID", nFnYearID);
-                    string Sql = "select N_POrderID,N_VendorID,X_POrderNo from Inv_PurchaseOrder where N_POrderID=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+                    string Sql = "select N_POrderID,N_VendorID,X_POrderNo,N_UserID,N_ProcStatus,N_ApprovalLevelId from Inv_PurchaseOrder where N_POrderID=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
                      string xButtonAction="Delete";
                      string X_POrderNo="";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
@@ -909,6 +940,7 @@ namespace SmartxAPI.Controllers
                     DataRow TransRow = TransData.Rows[0];
 
                     int VendorID = myFunctions.getIntVAL(TransRow["N_VendorID"].ToString());
+                     DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, FormID, nPOrderID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
 
                     SqlTransaction transaction = connection.BeginTransaction();
 
@@ -930,7 +962,19 @@ namespace SmartxAPI.Controllers
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
                        myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nPOrderID,TransRow["X_POrderNo"].ToString(),82,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
+                                      
+                                      
+                    string X_Criteria = "N_POrderID=" + nPOrderID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                    string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
+                    
 
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "PURCHASE ORDER", nPOrderID, TransRow["X_POrderNo"].ToString(), ProcStatus, "Inv_PurchaseOrder", X_Criteria, "", User, dLayer, connection, transaction);
+
+                    if (status != "Error")
+                    {
+                    if (ButtonTag == "6" || ButtonTag == "0")
+                 {
 
                     if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) == 0 && myFunctions.getIntVAL(objGRNProcessed.ToString()) == 0)
                     {
@@ -977,6 +1021,8 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error(User, "Unable to delete!"));
 
                     }
+                        }
+                    }
 
                     //     Results = dLayer.DeleteData("Inv_PurchaseOrderDetails", "n_POrderID", nPOrderID, "", connection, transaction);
                     //     if (Results <= 0)
@@ -1002,6 +1048,8 @@ namespace SmartxAPI.Controllers
                     // }
 
                     // return Ok(api.Error(User,"Unable to Delete PurchaseOrder"));
+                     transaction.Commit();
+                    return Ok(api.Success("Purchase order " + status + " Successfully"));
 
 
                 }
