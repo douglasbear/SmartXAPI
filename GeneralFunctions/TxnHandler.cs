@@ -616,11 +616,11 @@ namespace SmartxAPI.GeneralFunctions
                         };
                         dLayer.ExecuteNonQueryPro("SP_FillFreightToPurchase", ProcParams, connection, transaction);
                     }
-                   if(nDivisionID>0)
+                if(nDivisionID>0)
                     {
                     if (DetailTable.Rows.Count > 0)
                     {
-                     object xLevelsql = dLayer.ExecuteScalar("select X_LevelPattern from Acc_CostCentreMaster where N_CompanyID=" + nCompanyID + " and N_CostCentreID=" + nDivisionID + " and N_GroupID=0", Params, connection,transaction);
+                     object xLevelsql = dLayer.ExecuteScalar("select X_LevelPattern from Inv_DivisionMaster where N_CompanyID=" + nCompanyID + " and N_DivisionID=" + nDivisionID + " and N_GroupID=0", Params, connection,transaction);
                       
                        if (xLevelsql != null && xLevelsql.ToString() != "")
                         {
@@ -628,7 +628,7 @@ namespace SmartxAPI.GeneralFunctions
                         {
 
                             //  detailTable.Rows[j]["N_SalesId"] = N_SalesID;
-                            object xLevelPattern = dLayer.ExecuteScalar("SELECT  Acc_CostCentreMaster.X_LevelPattern FROM         Acc_CostCentreMaster LEFT OUTER JOIN    Inv_ItemCategory ON Acc_CostCentreMaster.N_CostCentreID = Inv_ItemCategory.N_CostCenterID AND Acc_CostCentreMaster.N_CompanyID = Inv_ItemCategory.N_CompanyID RIGHT OUTER JOIN "+
+                            object xLevelPattern = dLayer.ExecuteScalar("SELECT  Inv_DivisionMaster.X_LevelPattern FROM         Inv_DivisionMaster LEFT OUTER JOIN    Inv_ItemCategory ON Inv_DivisionMaster.N_DivisionID = Inv_ItemCategory.N_DivisionID AND Inv_DivisionMaster.N_CompanyID = Inv_ItemCategory.N_CompanyID RIGHT OUTER JOIN "+
                             "Inv_ItemMaster ON Inv_ItemCategory.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemCategory.N_CategoryID = Inv_ItemMaster.N_CategoryID  where Inv_ItemMaster.N_ItemID="+ DetailTable.Rows[j]["N_ItemID"]+" and Inv_ItemMaster.N_CompanyID="+nCompanyID+"", Params, connection,transaction);
                            // object xLevelPattern = dLayer.ExecuteScalar("select X_LevelPattern from Acc_CostCentreMaster where N_CompanyID=" + N_CompanyID + " and N_CostCentreID=" + nDivisionID + " and N_GroupID=0", Params, connection);
                              if (xLevelsql.ToString() != xLevelPattern.ToString().Substring(0, 3))
@@ -1530,7 +1530,7 @@ namespace SmartxAPI.GeneralFunctions
                     {
                     if (DetailTable.Rows.Count > 0)
                     {
-                     object xLevelsql = dLayer.ExecuteScalar("select X_LevelPattern from Acc_CostCentreMaster where N_CompanyID=" + N_CompanyID + " and N_CostCentreID=" + nDivisionID + " and N_GroupID=0", Params, connection,transaction);
+                     object xLevelsql = dLayer.ExecuteScalar("select X_LevelPattern from Inv_DivisionMaster where N_CompanyID=" + N_CompanyID + " and N_DivisionID=" + nDivisionID + " and N_GroupID=0", Params, connection,transaction);
                       
                        if (xLevelsql != null && xLevelsql.ToString() != "")
                         {
@@ -1538,7 +1538,7 @@ namespace SmartxAPI.GeneralFunctions
                         {
 
                             //  detailTable.Rows[j]["N_SalesId"] = N_SalesID;
-                            object xLevelPattern = dLayer.ExecuteScalar("SELECT  Acc_CostCentreMaster.X_LevelPattern FROM         Acc_CostCentreMaster LEFT OUTER JOIN    Inv_ItemCategory ON Acc_CostCentreMaster.N_CostCentreID = Inv_ItemCategory.N_CostCenterID AND Acc_CostCentreMaster.N_CompanyID = Inv_ItemCategory.N_CompanyID RIGHT OUTER JOIN "+
+                            object xLevelPattern = dLayer.ExecuteScalar("SELECT  Inv_DivisionMaster.X_LevelPattern FROM         Inv_DivisionMaster LEFT OUTER JOIN    Inv_ItemCategory ON Inv_DivisionMaster.N_DivisionID = Inv_ItemCategory.N_DivisionID AND Inv_DivisionMaster.N_CompanyID = Inv_ItemCategory.N_CompanyID RIGHT OUTER JOIN "+
                             "Inv_ItemMaster ON Inv_ItemCategory.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemCategory.N_CategoryID = Inv_ItemMaster.N_CategoryID  where Inv_ItemMaster.N_ItemID="+ DetailTable.Rows[j]["N_ItemID"]+" and Inv_ItemMaster.N_CompanyID="+N_CompanyID+" ", Params, connection,transaction);
                            // object xLevelPattern = dLayer.ExecuteScalar("select X_LevelPattern from Acc_CostCentreMaster where N_CompanyID=" + N_CompanyID + " and N_CostCentreID=" + nDivisionID + " and N_GroupID=0", Params, connection);
                              if (xLevelsql.ToString() != xLevelPattern.ToString().Substring(0, 3))
@@ -1559,22 +1559,22 @@ namespace SmartxAPI.GeneralFunctions
 
                    
                 
-                object costcntrID=null;
-                object nCostCentreID=null;
-                object xPattern=null;
+                // object costcntrID=null;
+                // object nCostCentreID=null;
+                // object xPattern=null;
 
-                costcntrID=dLayer.ExecuteScalar(" select top(1) N_CostCentreID from Vw_SalesCostcenterDetails where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + "ORDER BY N_SalesDetailsID ASC",connection, transaction); 
-                if(costcntrID!=null)
-                {
-                  xPattern=dLayer.ExecuteScalar(" SELECT SUBSTRING(X_LevelPattern, 1, 3) AS X_Pattern FROM Acc_CostCentreMaster where N_CostCentreID=" + costcntrID + " and N_CompanyID =" + N_CompanyID+"",connection, transaction); 
-                }
-                if(xPattern!=null){
-                 nCostCentreID=dLayer.ExecuteScalar(" select N_CostCentreID from Acc_CostCentreMaster where X_LevelPattern= '" + xPattern + "' and N_CompanyID=" + N_CompanyID +"",connection, transaction); 
-                }
+                // costcntrID=dLayer.ExecuteScalar(" select top(1) N_CostCentreID from Vw_SalesCostcenterDetails where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + "ORDER BY N_SalesDetailsID ASC",connection, transaction); 
+                // if(costcntrID!=null)
+                // {
+                //   xPattern=dLayer.ExecuteScalar(" SELECT SUBSTRING(X_LevelPattern, 1, 3) AS X_Pattern FROM Acc_CostCentreMaster where N_CostCentreID=" + costcntrID + " and N_CompanyID =" + N_CompanyID+"",connection, transaction); 
+                // }
+                // if(xPattern!=null){
+                //  nCostCentreID=dLayer.ExecuteScalar(" select N_CostCentreID from Acc_CostCentreMaster where X_LevelPattern= '" + xPattern + "' and N_CompanyID=" + N_CompanyID +"",connection, transaction); 
+                // }
 
-                 if (nCostCentreID !=null){
-                    dLayer.ExecuteScalar("Update Inv_Sales Set n_DivisionID =" + nCostCentreID + " Where  N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID, connection, transaction);
-                 }
+                //  if (nCostCentreID !=null){
+                //     dLayer.ExecuteScalar("Update Inv_Sales Set n_DivisionID =" + nCostCentreID + " Where  N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID, connection, transaction);
+                //  }
 
                 }
 
