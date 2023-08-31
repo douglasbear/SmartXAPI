@@ -38,7 +38,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("settingsDetails")]
-        public ActionResult GetDetails(int nFnYearID, int nLangID, int nFormID, int nCompanyID, int nBranchID)
+        public ActionResult GetDetails(int nFnYearID, int nLangID, int nFormID, int nCompanyID, int nBranchID,int nDivisionID)
         {
             try
             {
