@@ -452,6 +452,12 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
+                   object N_SaleinvID = dLayer.ExecuteScalar("Select N_SalesID from inv_Sales where N_SalesOrderId=@nSOrderID and N_CompanyID=@nCompanyID", DetailParams, connection);
+                    if(N_SaleinvID!=null)
+                   {
+                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_RentalInvID", typeof(int), N_SaleinvID);
+                   }
+
                    object countOfOrder =  dLayer.ExecuteScalar("Select count(1) from vw_pendingSO Where N_CompanyID = " + nCompanyID + "  and N_SalesOrderId=" + myFunctions.getIntVAL(N_SOrderID.ToString()), DetailParams, connection);
                    if(countOfOrder!=null)
                    {
