@@ -11,6 +11,7 @@ using Microsoft.Data.SqlClient;
 using Newtonsoft.Json;
 using System.IO;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore.Migrations.Operations;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -38,7 +39,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("settingsDetails")]
-        public ActionResult GetDetails(int nFnYearID, int nLangID, int nFormID, int nCompanyID, int nBranchID)
+        public ActionResult GetDetails(int nFnYearID, int nLangID, int nFormID, int nCompanyID, int nBranchID,int nDivisionID)
         {
             try
             {
@@ -145,7 +146,8 @@ namespace SmartxAPI.Controllers
                         {"N_LanguageID",nLangID},
                         {"X_UserCategoryIDList",myFunctions.GetUserCategoryList(User)},
                         {"N_ParentmenuID",NParentMenuId},
-                         {"N_BranchID",nBranchID}
+                         {"N_BranchID",nBranchID},
+                         {"N_DivisionID",nDivisionID}
                     };
 
                     DataTable MasterTable = dLayer.ExecuteDataTablePro("SP_InvInvoiceCounter_Disp_Cloud", mParamsList, connection);
@@ -329,22 +331,106 @@ namespace SmartxAPI.Controllers
 
                     int nFnYearID = myFunctions.getIntVAL(General.Rows[0]["n_FnYearID"].ToString());
                     int nBranchID = myFunctions.getIntVAL(General.Rows[0]["n_BranchID"].ToString());
+                    int nDivisionID = myFunctions.getIntVAL(General.Rows[0]["n_DivisionID"].ToString());
                     int nCompanyID = myFunctions.GetCompanyID(User);
-                    // int nOffID = myFunctions.getIntVAL(General.Rows[0]["n_OffID"].ToString());
 
+
+                    if(nDivisionID>0)
+                    {
+                       
+                        DataTable dt = new DataTable();
+                        dt.Clear();
+                        dt.Columns.Add("N_CompanyID");
+                        dt.Columns.Add("N_FormID");
+                        dt.Columns.Add("X_Prefix");
+                        dt.Columns.Add("N_StartNo");
+                        dt.Columns.Add("N_LastUsedNo");
+                        dt.Columns.Add("B_AutoInvoiceEnabled");
+                        dt.Columns.Add("N_MenuID");
+                        dt.Columns.Add("N_FnYearID");
+                        dt.Columns.Add("B_YearWise");
+                        dt.Columns.Add("N_BranchID");
+                        dt.Columns.Add("N_MinimumLen");
+                        dt.Columns.Add("B_Suffix");
+                        dt.Columns.Add("X_Suffix");
+                        dt.Columns.Add("B_ResetYearly");
+                        dt.Columns.Add("X_Type");
+                        dt.Columns.Add("X_Type2");
+                        dt.Columns.Add("N_DivisionID");
+                     int BEnabled = 0;
                     foreach (DataRow var in InvoiceCounter.Rows)
                     {
-                        int Enabled = 0, Reset = 0;
+                        object divisionCount=dLayer.ExecuteScalar("select Count(1) from Inv_InvoiceCounter where N_CompanyID="+nCompanyID+" and N_BranchID="+nBranchID+" and N_DivisionID="+nDivisionID+" and N_MenuID="+myFunctions.getVAL(var["n_FormID"].ToString())+"",connection, transaction);
+                        if(myFunctions.getIntVAL(divisionCount.ToString())==0)
+                        {
+                       
+                            if (Convert.ToBoolean(var["Enabled"].ToString()))
+                                    BEnabled = 1;
+
+                         DataRow row = dt.NewRow();
+                          row["N_CompanyID"] =nCompanyID;
+                          row["N_FormID"] =myFunctions.getVAL(var["n_FormID"].ToString());
+                          row["X_Prefix"] =var["prefix"].ToString();
+                          row["N_StartNo"] = myFunctions.getVAL(var["startingNo"].ToString());
+                          row["N_LastUsedNo"] =myFunctions.getVAL(var["StartingNo"].ToString()) - 1;
+                          row["B_AutoInvoiceEnabled"] = BEnabled;
+                          row["N_MenuID"] = myFunctions.getVAL(var["n_FormID"].ToString());
+                          row["N_FnYearID"] = nFnYearID;
+                          row["B_YearWise"] = 0;
+                          row["N_BranchID"] =nBranchID;
+                          row["N_MinimumLen"] = var["MinLength"].ToString() ;
+                          row["B_Suffix"] = 0;
+                          row["X_Suffix"] =var["Suffix"].ToString();
+                          row["B_ResetYearly"] =0;
+                          row["X_Type"] ="";
+                          row["X_Type2"] ="";
+                          row["N_DivisionID"] =nDivisionID;
+                           dt.Rows.Add(row);
+                        }
+                        else
+
+                        {
+                            int Enabled = 0, Reset = 0;
                         if (Convert.ToBoolean(var["Enabled"].ToString()))
                             Enabled = 1;
 
                         Reset = 0;
 
                         if (myFunctions.getVAL(var["StartingNo"].ToString()) > myFunctions.getVAL(var["LastUsedNo"].ToString()))
-                            dLayer.ExecuteNonQuery("update Inv_InvoiceCounter set N_StartNo=" + myFunctions.getVAL(var["StartingNo"].ToString()).ToString() + ",N_LastUsedNo=" + (myFunctions.getVAL(var["StartingNo"].ToString()) - 1) + ",X_Prefix='" + var["Prefix"].ToString() + "',X_Suffix='" + var["Suffix"].ToString() + "',N_MinimumLen='" + var["MinLength"].ToString() + "',B_AutoInvoiceEnabled=" + Enabled.ToString() + ",B_ResetYearly=" + Reset.ToString() + " Where N_FormID= " + var["N_FormID"].ToString() + " and N_CompanyId=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_BranchID=" + nBranchID, connection, transaction);
+                            dLayer.ExecuteNonQuery("update Inv_InvoiceCounter set N_StartNo=" + myFunctions.getVAL(var["StartingNo"].ToString()).ToString() + ",N_LastUsedNo=" + (myFunctions.getVAL(var["StartingNo"].ToString()) - 1) + ",X_Prefix='" + var["Prefix"].ToString() + "',X_Suffix='" + var["Suffix"].ToString() + "',N_MinimumLen='" + var["MinLength"].ToString() + "',B_AutoInvoiceEnabled=" + Enabled.ToString() + ",B_ResetYearly=" + Reset.ToString() + " Where N_FormID= " + var["N_FormID"].ToString() + " and N_CompanyId=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_BranchID=" + nBranchID+" and N_DivisionID="+nDivisionID, connection, transaction);
                         else
-                            dLayer.ExecuteNonQuery("update Inv_InvoiceCounter set X_Prefix='" + var["Prefix"].ToString() + "',X_Suffix='" + var["Suffix"].ToString() + "',N_MinimumLen='" + var["MinLength"].ToString() + "',B_AutoInvoiceEnabled=" + Enabled.ToString() + ",B_ResetYearly=" + Reset.ToString() + ",N_LastUsedNo=" + (myFunctions.getVAL(var["lastUsedNo"].ToString())) + " Where N_FormID= " + var["N_FormID"].ToString() + " and N_CompanyId=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_BranchID=" + nBranchID, connection, transaction);
+                            dLayer.ExecuteNonQuery("update Inv_InvoiceCounter set X_Prefix='" + var["Prefix"].ToString() + "',X_Suffix='" + var["Suffix"].ToString() + "',N_MinimumLen='" + var["MinLength"].ToString() + "',B_AutoInvoiceEnabled=" + Enabled.ToString() + ",B_ResetYearly=" + Reset.ToString() + ",N_LastUsedNo=" + myFunctions.getVAL(var["lastUsedNo"].ToString()) + " Where N_FormID= " + var["N_FormID"].ToString() + " and N_CompanyId=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_BranchID=" + nBranchID+"  and N_DivisionID="+nDivisionID, connection, transaction);
 
+
+
+                        }
+                        if(dt.Rows.Count>0)
+                        {
+                            
+                            dLayer.ExecuteNonQuery("insert into Inv_InvoiceCounter(N_CompanyID,N_FormID,X_Prefix,N_StartNo,N_LastUsedNo,B_AutoInvoiceEnabled,N_MenuID,N_FnYearID,B_YearWise,N_BranchID,N_MinimumLen,B_Suffix,X_Suffix,B_ResetYearly,X_Type,X_Type2,N_DivisionID)values("+nCompanyID+","+myFunctions.getVAL(var["n_FormID"].ToString())+",'"+var["prefix"].ToString()+"',"+myFunctions.getVAL(var["startingNo"].ToString())+","+(myFunctions.getVAL(var["StartingNo"].ToString()) - 1)+","+BEnabled+","+myFunctions.getVAL(var["n_FormID"].ToString())+","+nFnYearID+",0,"+nBranchID+","+var["MinLength"].ToString()+",0,'"+var["Suffix"].ToString()+"',0,'','',"+nDivisionID+")",connection, transaction);
+                        }
+                    }
+
+
+                    }
+                    else
+                    {
+
+
+                    foreach (DataRow Kvar in InvoiceCounter.Rows)
+                    {
+                        int Enabled = 0, Reset = 0;
+                        if (Convert.ToBoolean(Kvar["Enabled"].ToString()))
+                            Enabled = 1;
+
+                        Reset = 0;
+
+                        if (myFunctions.getVAL(Kvar["StartingNo"].ToString()) > myFunctions.getVAL(Kvar["LastUsedNo"].ToString()))
+                            dLayer.ExecuteNonQuery("update Inv_InvoiceCounter set N_StartNo=" + myFunctions.getVAL(Kvar["StartingNo"].ToString()).ToString() + ",N_LastUsedNo=" + (myFunctions.getVAL(Kvar["StartingNo"].ToString()) - 1) + ",X_Prefix='" + Kvar["Prefix"].ToString() + "',X_Suffix='" + Kvar["Suffix"].ToString() + "',N_MinimumLen='" + Kvar["MinLength"].ToString() + "',B_AutoInvoiceEnabled=" + Enabled.ToString() + ",B_ResetYearly=" + Reset.ToString() + " Where N_FormID= " + Kvar["N_FormID"].ToString() + " and N_CompanyId=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_BranchID=" + nBranchID, connection, transaction);
+                        else
+                            dLayer.ExecuteNonQuery("update Inv_InvoiceCounter set X_Prefix='" + Kvar["Prefix"].ToString() + "',X_Suffix='" + Kvar["Suffix"].ToString() + "',N_MinimumLen='" + Kvar["MinLength"].ToString() + "',B_AutoInvoiceEnabled=" + Enabled.ToString() + ",B_ResetYearly=" + Reset.ToString() + ",N_LastUsedNo=" + myFunctions.getVAL(Kvar["lastUsedNo"].ToString()) + " Where N_FormID= " + Kvar["N_FormID"].ToString() + " and N_CompanyId=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_BranchID=" + nBranchID, connection, transaction);
+
+                    }
                     }
 
                     foreach (DataRow var in GenSettinngs.Rows)
