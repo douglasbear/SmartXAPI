@@ -680,16 +680,22 @@ namespace SmartxAPI.GeneralFunctions
         public string GetAutoNumber(string TableName, String Coloumn, SortedList Params, SqlConnection connection, SqlTransaction transaction)
         {
             string AutoNumber = "";
-            string BranchId = "0";
-            string xType = "";
-            if (Params.Contains("N_BranchID")) { BranchId = Params["N_BranchID"].ToString(); }
+            string xType = "",xType2="";
+            int BranchId=0,nDivisionID=0;
+
+            if (Params.Contains("N_BranchID")) { BranchId =myFunctions.getIntVAL(Params["N_BranchID"].ToString()); }
             if (Params.Contains("X_Type")) { xType = Params["X_Type"].ToString();}
+            if (Params.Contains("X_Type2")) { xType2 = Params["X_Type2"].ToString();}
+            if (Params.Contains("N_DivisionID")) { nDivisionID = myFunctions.getIntVAL(Params["N_DivisionID"].ToString());}
+
             SortedList paramList = new SortedList(){
                 {"N_CompanyID", Params["N_CompanyID"]},
                 {"N_YearID", Params["N_YearID"]},
                 {"N_FormID", Params["N_FormID"]},
                 {"N_BranchID", BranchId},
-                 {"X_Type", xType},
+                {"X_Type", xType},
+                {"X_Type2", xType2},
+                {"N_DivisionID", nDivisionID},
                 };
             SortedList validParam = new SortedList(){
                 {"@CompanyID", Params["N_CompanyID"]},
@@ -719,13 +725,21 @@ namespace SmartxAPI.GeneralFunctions
         public string GetAutoNumberLoc(string TableName, String Coloumn, SortedList Params, SqlConnection connection, SqlTransaction transaction)
         {
             string AutoNumber = "";
-            string BranchId = "0";
+            string BranchId = "0",xType = "",xType2="",nDivisionID="0";
+
             if (Params.Contains("N_BranchID")) { BranchId = Params["N_BranchID"].ToString(); }
-            SortedList paramList = new SortedList(){
+            if (Params.Contains("X_Type")) { xType = Params["X_Type"].ToString();}
+            if (Params.Contains("X_Type2")) { xType2 = Params["X_Type2"].ToString();}
+            if (Params.Contains("N_DivisionID")) { nDivisionID = Params["N_DivisionID"].ToString();}
+
+             SortedList paramList = new SortedList(){
                 {"N_CompanyID", Params["N_CompanyID"]},
                 {"N_YearID", Params["N_YearID"]},
                 {"N_FormID", Params["N_FormID"]},
-                {"N_BranchID", BranchId}
+                {"N_BranchID", BranchId},
+                {"X_Type", xType},
+                {"X_Type2", xType2},
+                {"N_DivisionID", nDivisionID},
                 };
             SortedList validParam = new SortedList(){
                 {"@CompanyID", Params["N_CompanyID"]},

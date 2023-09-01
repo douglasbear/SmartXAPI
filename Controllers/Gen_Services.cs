@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("code")]
-        public ActionResult GetCode(string docNo, int nFnYearID, int formID, string xDescription,int nBranchID)
+        public ActionResult GetCode(string docNo, int nFnYearID, int formID, string xDescription,int nBranchID,int nDivisionID)
         {
             try
             {
@@ -59,9 +59,7 @@ namespace SmartxAPI.Controllers
                     if (formID == 64 || formID == 1346 || formID == 1665)
                     {
                         masterTable = "Inv_Sales";
-                        column = "X_ReceiptNo";
-                        if(nCompanyID!=74)
-                         Params.Add("N_BranchID", nBranchID);
+                        column = "X_ReceiptNo";                        
                     }
                     if (formID == 53)
                     {
@@ -72,8 +70,7 @@ namespace SmartxAPI.Controllers
                     {
                         masterTable = "Inv_Purchase";
                         column = "X_InvoiceNo";
-                        if(nCompanyID!=74)
-                            Params.Add("N_BranchID", nBranchID);
+                        //Params.Add("N_BranchID", nBranchID);
                         
                     }
                      if (formID == 155)
@@ -121,7 +118,7 @@ namespace SmartxAPI.Controllers
                             while (true)
                             {
 
-                                newCode = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate_New", Params, connection, transaction).ToString();
+                                newCode = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
                                 object N_Result = dLayer.ExecuteScalar("Select 1 from Pay_Employee Where X_EmpCode ='" + newCode + "' and N_CompanyID= " + nCompanyID, Params, connection, transaction);
                                 if (N_Result == null)
                                     break;
@@ -132,6 +129,8 @@ namespace SmartxAPI.Controllers
                             Params.Add("N_CompanyID", nCompanyID);
                             Params.Add("N_YearID", nFnYearID);
                             Params.Add("N_FormID", formID);
+                            Params.Add("N_BranchID", nBranchID);
+                            Params.Add("N_DivisionID", nDivisionID);
 
                             if (formID==1636)
                             {
