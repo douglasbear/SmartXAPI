@@ -319,7 +319,7 @@ namespace SmartxAPI.Controllers
 
 
                     //Detail
-                    DetailSql = "select * from [vw_TaskCurrentStatus] where N_CompanyId=@nCompanyID and N_TaskID=@nTaskID ";
+                    DetailSql = "select * from [vw_Tsk_TaskCurrentStatus] where N_CompanyId=@nCompanyID and N_TaskID=@nTaskID ";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     if (DetailTable.Rows.Count > 0)
                     {
