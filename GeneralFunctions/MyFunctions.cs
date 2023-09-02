@@ -1772,6 +1772,7 @@ namespace SmartxAPI.GeneralFunctions
                 switch (FormID)
                 {
                     case 82://PO
+                    case 1586://rentalPurchaseOrder
                         //DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
                         DeleteStatus = 1;
                         X_Action = "Delete";
@@ -1849,6 +1850,7 @@ namespace SmartxAPI.GeneralFunctions
                         X_Action = "Delete";
                         B_IsDelete = true;
                         break;
+                   
                     default:
                         DeleteStatus = dLayer.ExecuteNonQuery("DELETE FROM " + X_ScreenTable + " where " + X_Criteria, connection, transaction);
                         X_Action = "Delete";
