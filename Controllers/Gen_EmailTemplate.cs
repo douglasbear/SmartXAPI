@@ -179,12 +179,12 @@ namespace SmartxAPI.Controllers
                              {
                             SmtpClient client = new SmtpClient
                             {
-                                Host = "smtp.gmail.com",
+                                Host = "smtp.office365.com",
                                 Port = 587,
                                 EnableSsl = true,
                                 DeliveryMethod = SmtpDeliveryMethod.Network,
                                 Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString()),
-                                Timeout = 10000,
+                                Timeout = 30000,
                             };
 
 
