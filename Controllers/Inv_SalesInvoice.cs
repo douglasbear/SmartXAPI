@@ -344,7 +344,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesInvoiceDetails(int nCompanyId, bool bAllBranchData, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID, string xDeliveryNoteID,int nServiceSheetID, string xServiceSheetID,string xSchSalesID,bool isServiceOrder, int nFormID, bool enableDayWise, string multipleJobOrder)
+        public ActionResult GetSalesInvoiceDetails(int nCompanyId, bool bAllBranchData, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID, string xDeliveryNoteID,int nServiceSheetID, string xServiceSheetID,string xSchSalesID,bool isServiceOrder, int nFormID, bool enableDayWise, string multipleJobOrder, string serviceSheetID)
         {
             if (xInvoiceNo != null)
                 xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
@@ -368,6 +368,7 @@ namespace SmartxAPI.Controllers
                     string x_DeliveryNoteNo = "";
                     bool IsDirectMRN = false;
                     string DisplayName = "";
+                    int ServiceSheetID = 0;
                     //CRM Quotation Checking
                     if (n_OpportunityID > 0)
                     {
@@ -585,7 +586,9 @@ namespace SmartxAPI.Controllers
                     }
                     else if (multipleJobOrder != null && multipleJobOrder != "")
                     {
-                        string Mastersql = "select * from vw_ServiceTimesheetToSales where N_CompanyId=@nCompanyID and N_SalesOrderId in (" + multipleJobOrder + ")";
+                        string[] X_ServiceSheetID = serviceSheetID.Split(",");
+                        ServiceSheetID = myFunctions.getIntVAL(X_ServiceSheetID[0].ToString());
+                        string Mastersql = "select * from vw_ServiceTimesheetToSales where N_CompanyId=@nCompanyID and N_SalesOrderId in (" + multipleJobOrder + ") and N_ServiceSheetID in ("+ServiceSheetID+")";
                         DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
 
@@ -598,7 +601,7 @@ namespace SmartxAPI.Controllers
                         }
 
                         string DetailSql = "";
-                        DetailSql = "select * from vw_ServiceTimesheetDetailsToSales where N_CompanyId=@nCompanyID and N_SalesOrderId in (" + multipleJobOrder + ")";
+                        DetailSql = "select * from vw_ServiceTimesheetDetailsToSales where N_CompanyId=@nCompanyID and N_SalesOrderId in (" + multipleJobOrder + ") and N_ServiceSheetID in ("+ServiceSheetID+")";
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
 
