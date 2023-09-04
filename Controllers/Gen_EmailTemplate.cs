@@ -83,6 +83,50 @@ namespace SmartxAPI.Controllers
         }
         [AllowAnonymous]
 
+        public void sendmail()
+    {
+        // Configure your Office 365 SMTP settings
+        string smtpServer = "smtp.office365.com";
+        int smtpPort = 587; // Use 587 for TLS or 25 for non-TLS
+        string smtpUsername = "yousuf.mansoor@oxfordsaudia.com";
+        string smtpPassword = "Snca@1280";
+
+        // Create a new SmtpClient
+        SmtpClient smtpClient = new SmtpClient(smtpServer)
+        {
+            Port = smtpPort,
+            Credentials = new NetworkCredential(smtpUsername, smtpPassword),
+            EnableSsl = true, // Use SSL/TLS
+        };
+
+        try
+        {
+            // Create a new MailMessage
+            MailMessage mailMessage = new MailMessage
+            {
+                From = new MailAddress(smtpUsername),
+                Subject = "Hello from C#",
+                Body = "This is a test email sent from C#.",
+            };
+
+            // Add recipients
+            mailMessage.To.Add("sanjaykrishna954@gmail.com");
+
+            // Send the email
+            smtpClient.Send(mailMessage);
+
+            Console.WriteLine("Email sent successfully!");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error: " + ex.Message);
+        }
+        finally
+        {
+            smtpClient.Dispose();
+        }
+    }
+
 
         [HttpPost("send")]
         public ActionResult SendData([FromBody] DataSet ds)
@@ -115,6 +159,7 @@ namespace SmartxAPI.Controllers
                     object companypassword = "";
                     object Company, Oppportunity, Contact, CustomerID;
                     int nCompanyId = myFunctions.GetCompanyID(User);
+                    sendmail();
 
                     companyemail = dLayer.ExecuteScalar("select X_Email from vw_MailGeneralScreenSettings where n_companyid="+companyid, Params, connection, transaction);
                     companypassword = dLayer.ExecuteScalar("select X_Password from vw_MailGeneralScreenSettings where n_companyid="+companyid, Params, connection, transaction);
