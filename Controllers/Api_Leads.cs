@@ -70,11 +70,15 @@ namespace SmartxAPI.Controllers
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_Phone1", typeof(string), Details.Rows[0]["phone"].ToString());
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_Company", typeof(string), Details.Rows[0]["companyname"].ToString());
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_Referredby", typeof(string), Details.Rows[0]["referredby"].ToString());
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_LeadSource", typeof(int), 304);
 
 
                     string Description = "";
                     if (Details.Columns.Contains("product"))
+                    {
                         Description = "Product : " + Details.Rows[0]["product"].ToString() ;
+                        MasterTable.Rows[0]["X_Lead"].ToString()= Details.Rows[0]["product"].ToString() + " for " +  Details.Rows[0]["companyname"].ToString();
+                    }
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_ProjectDescription", typeof(string), Description);
                     MasterTable.Rows[0]["X_LeadCode"] = LeadCode;
                     DataTable Maildata = dLayer.ExecuteDataTable("select * from gen_mailtemplates where N_CompanyId=-1 and X_TemplateName='Schedule Demo Request'", Params, connection, transaction);
