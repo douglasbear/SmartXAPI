@@ -409,7 +409,7 @@ namespace SmartxAPI.Controllers
                             }
                          else
                              {
-                              // dLayer.ExecuteNonQueryPro("SP_SetupData_cloud", Params, connection, transaction);
+                               dLayer.ExecuteNonQueryPro("SP_SetupData_cloud", Params, connection, transaction);
                              }
 
                             if (nMasterID <= 0)

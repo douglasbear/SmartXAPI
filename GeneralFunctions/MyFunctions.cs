@@ -1772,7 +1772,9 @@ namespace SmartxAPI.GeneralFunctions
                 switch (FormID)
                 {
                     case 82://PO
-                        DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
+                    case 1586://rentalPurchaseOrder
+                        //DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
+                        DeleteStatus = 1;
                         X_Action = "Delete";
                         B_IsDelete = true;
                         break;
@@ -1812,9 +1814,6 @@ namespace SmartxAPI.GeneralFunctions
                         B_IsDelete = true;
                         break;
                     case 684://Material Dispatch
-                    case 1309://Material Request
-                    case 1592://Transfer Request
-                        DeleteParamsPro["X_TransType"]="MATERIAL DISPATCH";
                         DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParamsPro, connection, transaction);
                         B_IsDelete = true;
                         break;
@@ -1846,11 +1845,12 @@ namespace SmartxAPI.GeneralFunctions
                     case 64://Sales
                     case 65://Purchase
                     case 66://Sales Receipt
-                    case 67://Vendor Payment 
+                    case 67://Vendor Payment
                         DeleteStatus = 1;
                         X_Action = "Delete";
                         B_IsDelete = true;
                         break;
+                   
                     default:
                         DeleteStatus = dLayer.ExecuteNonQuery("DELETE FROM " + X_ScreenTable + " where " + X_Criteria, connection, transaction);
                         X_Action = "Delete";
@@ -2693,7 +2693,7 @@ namespace SmartxAPI.GeneralFunctions
                             message.From = new MailAddress(Sender);
                             message.IsBodyHtml = true; //HTML email 
                             if (nFormID > 0)
-                                message.Attachments.Add(new Attachment(this.TempFilesPath + ReportName));
+                               // message.Attachments.Add(new Attachment(this.TempFilesPath + ReportName));
                             client.Send(message);
 
                         }

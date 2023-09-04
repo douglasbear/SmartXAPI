@@ -253,7 +253,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listdetails")]
-        public ActionResult GetPurchaseInvoiceDetails(int nCompanyId, int nFnYearId, string nPurchaseNO, bool showAllBranch, int nBranchId, string xPOrderNo, string xGrnNo, string multipleGrnNo, int nServiceSheetID,bool invoiceTax, string multipleRentalPO,bool enableDayWise)
+        public ActionResult GetPurchaseInvoiceDetails(int nCompanyId, int nFnYearId, string nPurchaseNO, bool showAllBranch, int nBranchId, string xPOrderNo, string xGrnNo, string multipleGrnNo, int nServiceSheetID,bool invoiceTax, string multipleRentalPO,bool enableDayWise, string xServiceSheetID)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
@@ -271,6 +271,7 @@ namespace SmartxAPI.Controllers
                 bool IsDirectMRN = false;
                 N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Purchase", "Decimal_Place", "N_Value", nCompanyID, dLayer, connection));
                 N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
+                int ServiceSheetID = 0;
 
                 if(xGrnNo!=null){
                      object purchaseOrderNo = dLayer.ExecuteScalar("select N_POrderid from Inv_MRN where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId +" and X_MRNNo='" + xGrnNo + "'", Params, connection);
@@ -345,7 +346,9 @@ namespace SmartxAPI.Controllers
                     {
                         string[] X_POrderID = multipleRentalPO.Split(",");
                         int N_POID = myFunctions.getIntVAL(X_POrderID[0].ToString());
-                        X_MasterSql = "select * from vw_InvVendorSTAsInvoiceMaster where N_CompanyID=@CompanyID and N_POrderID in (" + N_POID + ")" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                        string[] X_ServiceSheetID = xServiceSheetID.Split(",");
+                        ServiceSheetID = myFunctions.getIntVAL(X_ServiceSheetID[0].ToString());
+                        X_MasterSql = "select * from vw_InvVendorSTAsInvoiceMaster where N_CompanyID=@CompanyID and N_ServiceSheetID in ("+ServiceSheetID+") and N_POrderID in (" + N_POID + ")" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                     }
                    
 
@@ -434,7 +437,7 @@ namespace SmartxAPI.Controllers
                     }
                     if (multipleRentalPO != null && multipleRentalPO != "")
                     {
-                        X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_POrderID in (" + multipleRentalPO + ")" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                        X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_ServiceSheetID in ("+ServiceSheetID+") and N_POrderID in (" + multipleRentalPO + ")" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                     }
 
                     //multiple GRN From Invoice
@@ -1543,11 +1546,6 @@ namespace SmartxAPI.Controllers
                                 }
                                 tempPOrderID=n_POrderID;
                             };
-                        }
-                        else if (ButtonTag == "4")
-                        {
-                            dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails_Segments where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='PURCHASE' AND N_AccTransID  in (select N_AccTransID from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='PURCHASE' AND X_VoucherNo='"+TransRow["X_InvoiceNo"].ToString()+"')", ParamList, connection, transaction);
-                            dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='PURCHASE' AND X_VoucherNo='"+TransRow["X_InvoiceNo"].ToString()+"'", ParamList, connection, transaction);
                         }
                         transaction.Commit();
                         return Ok(_api.Success("Purchase Invoice " + status + " Successfully"));

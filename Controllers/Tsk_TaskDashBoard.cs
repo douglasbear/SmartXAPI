@@ -711,17 +711,13 @@ namespace SmartxAPI.Controllers
 
 
           [HttpGet("teamEmployee")]
-        public ActionResult GetcompletedDetails1(int nUserID,int nUserMappingID)
+        public ActionResult GetTeamEmployeeDetails(int nUserID,int nUserMappingID)
         {
              SortedList Params = new SortedList();
              DataTable dt = new DataTable();
              int nCompanyID=myFunctions.GetCompanyID(User);
-             string x_Critiria="";
              Params.Add("@nCompanyID",nCompanyID);
-             if(nUserMappingID>0)
-                x_Critiria=" and N_UserMappingID="+nUserMappingID;
-                
-             string sqlCommandText="Select X_UserName,N_UsersID from vw_tsk_TeamEmployee Where N_CompanyID=@nCompanyID and N_UserID="+nUserID+" "+x_Critiria + " group by X_UserName,N_UsersID" ;
+             string sqlCommandText="Select * from vw_tsk_TeamEmployee Where N_CompanyID=@nCompanyID and N_UserID="+nUserID+" and n_UserMappingID="+nUserMappingID+"" ;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

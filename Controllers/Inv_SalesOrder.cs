@@ -452,6 +452,12 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
+                   object N_SaleinvID = dLayer.ExecuteScalar("Select N_SalesID from inv_Sales where N_SalesOrderId=@nSOrderID and N_CompanyID=@nCompanyID", DetailParams, connection);
+                    if(N_SaleinvID!=null)
+                   {
+                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_RentalInvID", typeof(int), N_SaleinvID);
+                   }
+
                    object countOfOrder =  dLayer.ExecuteScalar("Select count(1) from vw_pendingSO Where N_CompanyID = " + nCompanyID + "  and N_SalesOrderId=" + myFunctions.getIntVAL(N_SOrderID.ToString()), DetailParams, connection);
                    if(countOfOrder!=null)
                    {
@@ -646,6 +652,17 @@ namespace SmartxAPI.Controllers
                     int N_FormID = 0;
                     int N_NextApproverID = 0;
                     int N_SaveDraft = myFunctions.getIntVAL(MasterRow["b_IsSaveDraft"].ToString());
+                     int nDivisionID = 0;
+                    if (MasterTable.Columns.Contains("n_DivisionID"))
+                    {
+                       nDivisionID=myFunctions.getIntVAL(MasterRow["n_DivisionID"].ToString());
+                    }
+                    int n_OpportunityID = 0;
+                    if (MasterTable.Columns.Contains("n_OpportunityID"))
+                    {
+                       n_OpportunityID=myFunctions.getIntVAL(MasterRow["n_OpportunityID"].ToString());
+                    }
+
                     CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID="+ N_CustomerId, QueryParams, connection, transaction);
                     if (MasterTable.Columns.Contains("N_FormID"))
                     {
@@ -795,6 +812,40 @@ namespace SmartxAPI.Controllers
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "BOOK ORDER", n_SalesOrderId, x_OrderNo, 1, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), 0, "",0, User, dLayer, connection, transaction);
                         N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_SalesOrder where N_SalesOrderId=" + n_SalesOrderId + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
                     }
+
+
+
+                   if(nDivisionID>0)
+                    {
+                    if (DetailTable.Rows.Count > 0)
+                    {
+                     object xLevelsql = dLayer.ExecuteScalar("select X_LevelPattern from Inv_DivisionMaster where N_CompanyID=" + N_CompanyID + " and N_DivisionID=" + nDivisionID + " and N_GroupID=0", Params, connection,transaction);
+                      
+                       if (xLevelsql != null && xLevelsql.ToString() != "")
+                        {
+                        for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        {
+
+                            //  detailTable.Rows[j]["N_SalesId"] = N_SalesID;
+                            object xLevelPattern = dLayer.ExecuteScalar("SELECT  Inv_DivisionMaster.X_LevelPattern FROM  Inv_DivisionMaster LEFT OUTER JOIN    Inv_ItemCategory ON Inv_DivisionMaster.N_DivisionID = Inv_ItemCategory.N_DivisionID AND Inv_DivisionMaster.N_CompanyID = Inv_ItemCategory.N_CompanyID RIGHT OUTER JOIN "+
+                            "Inv_ItemMaster ON Inv_ItemCategory.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemCategory.N_CategoryID = Inv_ItemMaster.N_CategoryID  where Inv_ItemMaster.N_ItemID="+ DetailTable.Rows[j]["N_ItemID"]+" and Inv_ItemMaster.N_CompanyID="+N_CompanyID+" ", Params, connection,transaction);
+                           // object xLevelPattern = dLayer.ExecuteScalar("select X_LevelPattern from Acc_CostCentreMaster where N_CompanyID=" + N_CompanyID + " and N_CostCentreID=" + nDivisionID + " and N_GroupID=0", Params, connection);
+                             if (xLevelsql.ToString() != xLevelPattern.ToString().Substring(0, 3))
+                             {
+                                 Result.Add("b_IsCompleted", 0);
+                                // Result.Add("x_Msg", "Unable To save!...Division Mismatch");
+                                return Ok(_api.Error(User, "Unable To save!...Division Mismatch"));
+                                //  return Result;
+                             }
+                           
+                        }
+                        }
+                    
+                    }
+                    }
+                    if (n_OpportunityID > 0)
+                        dLayer.ExecuteNonQuery("Update CRM_Opportunity Set  N_ClosingStatusID=1 Where n_OpportunityID=" + n_OpportunityID + " and N_CompanyID=" + N_CompanyID.ToString(), connection, transaction);
+
 
                     if (N_QuotationID > 0)
                         dLayer.ExecuteNonQuery("Update Inv_SalesQuotation Set  N_Processed=1, N_StatusID=1 Where N_QuotationID=" + N_QuotationID + " and N_FnYearID=" + N_FnYearID + " and N_CompanyID=" + N_CompanyID.ToString(), connection, transaction);

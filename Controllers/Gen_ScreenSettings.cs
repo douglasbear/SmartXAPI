@@ -83,15 +83,13 @@ namespace SmartxAPI.Controllers
 
                     SecAllMenus.Columns.Add("X_WhatsappNumber", typeof(System.String));
                     SecAllMenus.Columns.Add("X_WhatsappKey", typeof(System.String));
-                    SecAllMenus.Columns.Add("N_TemplateID", typeof(System.String));
+                    SecAllMenus.Columns.Add("N_TemplateID", typeof(System.Int32));
                     SecAllMenus.Columns.Add("X_TemplateName", typeof(System.String));
                     SecAllMenus.Columns.Add("B_AttachPdf", typeof(System.Boolean));
                     SecAllMenus.Columns.Add("B_AutoSend", typeof(System.Boolean));
-                    SecAllMenus.Columns.Add("B_showinScreen", typeof(System.Boolean));
                     SecAllMenus.Columns.Add("X_Email", typeof(System.String));
                     SecAllMenus.Columns.Add("X_Password", typeof(System.String));
                     SecAllMenus.Columns.Add("N_Type", typeof(System.Int32));
-                    List<DataRow> rowsToDelete = new List<DataRow>();
 
 
                     foreach (DataRow Rows in SecAllMenus.Rows)
@@ -107,15 +105,10 @@ namespace SmartxAPI.Controllers
                                 Rows["X_TemplateName"] = KRows["X_TemplateName"].ToString();
                                 Rows["B_AttachPdf"] = Convert.ToBoolean(KRows["B_AttachPdf"].ToString());
                                 Rows["B_AutoSend"] = Convert.ToBoolean(KRows["B_AutoSend"].ToString());
-                                Rows["B_showinScreen"] = Convert.ToBoolean(KRows["B_showinScreen"].ToString());
                                 Rows["X_Email"] = KRows["X_Email"].ToString();
                                 Rows["X_Password"] = KRows["X_Password"].ToString();
                                 Rows["N_Type"] = KRows["N_Type"].ToString();
                                 SecAllMenus.AcceptChanges();
-                            }
-                            else
-                            {
-                                rowsToDelete.Add(Rows);
                             }
 
                             SecAllMenus.AcceptChanges();
@@ -137,14 +130,6 @@ namespace SmartxAPI.Controllers
                             continue;
                         }
 
-                    }
-                    SecAllMenus.AcceptChanges();
-
-                    foreach (DataRow rowToDelete in rowsToDelete)
-                    {
-                        try{
-                         SecAllMenus.Rows.Remove(rowToDelete);}
-                         catch{continue;}
                     }
                     SecAllMenus.AcceptChanges();
 
