@@ -96,8 +96,8 @@ namespace SmartxAPI.Controllers
 
 
 
-                    if (docNo == "@Auto" || docNo == "new")
-                    {
+                    // if (docNo == "@Auto" || docNo == "new")
+                    // {
                         if (formID == 188)
                         {
                             if (xDescription == null || xDescription == "")
@@ -149,7 +149,7 @@ namespace SmartxAPI.Controllers
                             if (newCode == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate ")); }
                         }
 
-                    }
+                    // }
 
 
 

@@ -221,7 +221,7 @@ namespace SmartxAPI.Controllers
                     if (xTerminalCode == "@Auto" && nCurrentBranch >0)
                     {
                     int invoiceCounterInsert = dLayer.ExecuteNonQuery("insert into Inv_InvoiceCounter " +
-                                    "select N_CompanyID,N_FormID, X_Prefix,N_StartNo,(N_StartNo-1) AS N_LastUsedNo,B_AutoInvoiceEnabled,N_MenuID,N_FnYearID,B_Yearwise,"+nBranchID+",N_MinimumLen,B_Suffix, X_Suffix, B_ResetYearly, X_Type, X_Type2  from Inv_InvoiceCounter "+
+                                    "select N_CompanyID,N_FormID, X_Prefix,N_StartNo,(N_StartNo-1) AS N_LastUsedNo,B_AutoInvoiceEnabled,N_MenuID,N_FnYearID,B_Yearwise,"+nBranchID+",N_MinimumLen,B_Suffix, X_Suffix, B_ResetYearly, X_Type, X_Type2,N_DivisionID  from Inv_InvoiceCounter "+
                                     "where N_BranchID=" + nCurrentBranch + " and N_CompanyID=" + nCompanyID , Params, connection, transaction);
 
                                 if (invoiceCounterInsert <= 0)
