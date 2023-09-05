@@ -70,11 +70,16 @@ namespace SmartxAPI.Controllers
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_Phone1", typeof(string), Details.Rows[0]["phone"].ToString());
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_Company", typeof(string), Details.Rows[0]["companyname"].ToString());
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_Referredby", typeof(string), Details.Rows[0]["referredby"].ToString());
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_City", typeof(string), Details.Rows[0]["city"].ToString());
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_subsource", typeof(int), 304);
 
 
                     string Description = "";
                     if (Details.Columns.Contains("product"))
+                    {
                         Description = "Product : " + Details.Rows[0]["product"].ToString() ;
+                        MasterTable.Rows[0]["X_Lead"]= Details.Rows[0]["product"].ToString() + " for " +  Details.Rows[0]["companyname"].ToString();
+                    }
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_ProjectDescription", typeof(string), Description);
                     MasterTable.Rows[0]["X_LeadCode"] = LeadCode;
                     DataTable Maildata = dLayer.ExecuteDataTable("select * from gen_mailtemplates where N_CompanyId=-1 and X_TemplateName='Schedule Demo Request'", Params, connection, transaction);
@@ -95,8 +100,8 @@ namespace SmartxAPI.Controllers
                             //Whatsapp
                             string Company = myFunctions.GetCompanyName(User);
                             object WhatsappAPI = dLayer.ExecuteScalar("select X_Value from Gen_Settings where N_CompanyID=1 and X_Group='1334' and X_Description='Whatsapp Message'", Params, connection, transaction);
-                            //object Employee = dLayer.ExecuteScalar("select x_empname from vw_PayEmployee where n_companyid=" + myFunctions.GetCompanyID(User) + " and  n_empid=" + nEmpID, Params, connection, transaction);
-                            object Receip = "+966506195881,,+919895213365";//dLayer.ExecuteScalar("select x_phone1 from acc_company where n_companyid=1", Params, connection, transaction);
+                            object Receip = "+966506195881,+919895213365";
+                           
                             string[] splitStrings = Receip.ToString().Split(',');
                             int i = 0;
                             Data = "*DEMO REQUEST*%0A%0A" + Data.Replace("<br>", "%0A");
