@@ -41,17 +41,17 @@ namespace SmartxAPI.Controllers
             string Pattern = "";
             string AssigneePattern = "";
             string CustCriteria = "";
-            if (UserPattern != "")
-            {
-                Params.Add("@UserPattern", UserPattern);
-                Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
-                AssigneePattern =" and (Left(X_Pattern,Len(@UserPattern))=@UserPattern or N_LoginUserID="+nUserID+") ";
-            }
-            else
-            {
-                 Pattern = " and N_CreatedUser=" + nUserID;
-                //  AssigneePattern = " and (N_CreatedUser=" + nUserID + " or N_LoginUserID="+nUserID+" or )";
-            }
+            // if (UserPattern != "")
+            // {
+            //     Params.Add("@UserPattern", UserPattern);
+            //     Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
+            //     AssigneePattern =" and (Left(X_Pattern,Len(@UserPattern))=@UserPattern or N_LoginUserID="+nUserID+") ";
+            // }
+            // else
+            // {
+            //      Pattern = " and N_CreatedUser=" + nUserID;
+            //     //  AssigneePattern = " and (N_CreatedUser=" + nUserID + " or N_LoginUserID="+nUserID+" or )";
+            // }
 
         //     if (nFormID == 1790)
         //     {
