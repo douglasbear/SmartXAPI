@@ -33,7 +33,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult CustomerList(int nFnYearId,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult CustomerList(int nFnYearId,int nPage,int nSizeperpage, string xSearchkey, string xSortBy, int nCustomerID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -63,11 +63,21 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by N_CustomerID desc";
             else
                 xSortBy = " order by " + xSortBy;
-             
-             if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1  " + Pattern + Searchkey + " " + xSortBy;
+            if (nCustomerID > 0)
+            {
+                if(Count==0)
+                    sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1 and N_CustID="+ nCustomerID + Pattern + Searchkey + " " + xSortBy;
+                else
+                    sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1 and N_CustID="+ nCustomerID + Pattern + Searchkey + " and N_CustomerID not in (select top("+ Count +") N_CustomerID from vw_CRMCustomer where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+            }
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1  " + Pattern + Searchkey + " and N_CustomerID not in (select top("+ Count +") N_CustomerID from vw_CRMCustomer where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+            {
+                if(Count==0)
+                    sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1" + Pattern + Searchkey + " " + xSortBy;
+                else
+                    sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1  " + Pattern + Searchkey + " and N_CustomerID not in (select top("+ Count +") N_CustomerID from vw_CRMCustomer where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+            }
+
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", nFnYearId);
             SortedList OutPut = new SortedList();

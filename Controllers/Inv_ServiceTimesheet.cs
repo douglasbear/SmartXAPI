@@ -523,6 +523,74 @@ namespace SmartxAPI.Controllers
 
         }
 
+        [HttpGet("combinedVendorList")]
+        public ActionResult GetCombinedVendorList(int nFnYearID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            Params.Add("@N_CompanyID", myFunctions.GetCompanyID(User));
+            Params.Add("@N_FnyearID", nFnYearID);
+
+            string sqlCommandText = "select * from vw_CombinedVendorListforVST where N_CompanyID=@N_CompanyID and N_FnYearID=@N_FnyearID";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+        // [HttpGet("combinedProjectList")]
+        // public ActionResult GetCombinedProjectList(int nFnYearID)
+        // {
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
+
+        //     Params.Add("@N_CompanyID", myFunctions.GetCompanyID(User));
+        //     Params.Add("@N_FnyearID", nFnYearID);
+
+        //     string sqlCommandText = "select * from vw_CombinedProjectListforVST where N_CompanyID=@N_CompanyID and N_FnYearID=@N_FnyearID";
+
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+        //         }
+        //         dt = _api.Format(dt);
+        //         if (dt.Rows.Count == 0)
+        //         {
+        //             return Ok(_api.Notice("No Results Found"));
+        //         }
+        //         else
+        //         {
+        //             return Ok(_api.Success(dt));
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(User, e));
+        //     }
+        // }
+
     }
 }
     
