@@ -32,6 +32,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString =
             conf.GetConnectionString("SmartxConnection");
+            
         }
 
         [HttpPost()]
@@ -68,6 +69,33 @@ namespace SmartxAPI.Controllers
 
                         dLayer.ExecuteNonQuery("delete from Mig_Vouchers", Params, connection, transaction);
                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_CompanyID", typeof(int), dt.Rows[0]["N_CompanyID"]);
+                        double debit=0;
+                        double credit=0;
+                        double debittax=0;
+                        double credittax=0;
+                        foreach (DataRow row in MasterTable.Rows)
+                        {
+                            if(row["d_date"].ToString()=="")    
+                                return Ok(api.Error(User, "Transaction Date is Missing"));
+                             debit= debit+myFunctions.getVAL(row["debit"].ToString());  
+                             credit= credit+myFunctions.getVAL(row["credit"].ToString());  
+                             if(myFunctions.getVAL(row["debit"].ToString())==0)
+                                credittax=credittax+myFunctions.getVAL(row["Tax_Percentage"].ToString());
+                             if(myFunctions.getVAL(row["credit"].ToString())==0)
+                                debittax=debittax+myFunctions.getVAL(row["Tax_Percentage"].ToString());
+                            object N_LedgerID = dLayer.ExecuteScalar("select N_LedgerID from Acc_Mastledger where X_Ledgername='" +row["account_name"].ToString() +"' and N_CompanyID="+dt.Rows[0]["N_CompanyID"], connection, transaction);
+                            if(N_LedgerID==null)
+                                return Ok(api.Error(User, "Missing Ledger - "+row["account_name"].ToString() ));
+
+                        }
+                        if(debit!=credit)
+                            return Ok(api.Error(User, "Unbalanced Posting not Possible"));
+                         if(debit==0 && credit==0)
+                            return Ok(api.Error(User, "Please Enter a Valid Amount !"));
+                         if(debittax!=credittax)
+                            return Ok(api.Error(User, "Please Enter a Valid Amount !"));
+
+
                         dLayer.SaveData("Mig_Vouchers", "pkeyID", MasterTable, connection, transaction);
                         dLayer.ExecuteNonQuery("Update sec_user Set X_Token= '' where N_UserID = " + dt.Rows[0]["N_UserID"], Params, connection, transaction);
                         VoucherID =dLayer.ExecuteScalarPro("SP_VouchersImport", Params, connection, transaction).ToString();
@@ -102,7 +130,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User, ex));
+                return Ok(api.Error(ex.Message));
             }
         }
     }
