@@ -485,6 +485,7 @@ namespace SmartxAPI.Controllers
                     dLayer.DeleteData("Crm_Materials", "N_OpportunityID", nOpportunityID, "", connection, transaction);
                     dLayer.DeleteData("Crm_Products", "N_OpportunityID", nOpportunityID, "", connection, transaction);
                     dLayer.DeleteData("CRM_Activity", "N_ReffID", nOpportunityID, "", connection, transaction);
+                    dLayer.DeleteData("TSK_TaskMaster", "N_OpportunityID", nOpportunityID, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)

@@ -645,6 +645,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", Master["n_FnYearId"].ToString());
                         Params.Add("N_FormID", this.FormID);
                         Params.Add("N_BranchID",Master["n_BranchID"].ToString());
+                        Params.Add("N_DivisionID",nDivisionID);
 
                         X_POrderNo = dLayer.GetAutoNumber("Inv_PurchaseOrder", "x_POrderNo", Params, connection, transaction);
                         xButtonAction="Insert"; 

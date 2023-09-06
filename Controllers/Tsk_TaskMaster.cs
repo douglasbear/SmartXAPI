@@ -949,6 +949,11 @@ namespace SmartxAPI.Controllers
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_ClosedUserID='" + DetailTable.Rows[0]["n_ClosedUserID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET D_EntryDate='" + DetailTable.Rows[0]["D_EntryDate"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET x_SolutionNotes='" + MasterTable.Rows[0]["x_SolutionNotes"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    
+                    
+                    
+                    
+                    
                     if (MasterTable.Columns.Contains("N_WorkHours"))
                     {
                         if (myFunctions.getVAL(MasterTable.Rows[0]["N_WorkHours"].ToString()) > 0)
@@ -962,6 +967,14 @@ namespace SmartxAPI.Controllers
                     object RecuredDays=  dLayer.ExecuteScalar("select N_RecuringDays from Tsk_TaskMaster where  N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     if(b_Closed.ToString()=="True")
                     {
+
+                        if (myFunctions.getVAL(MasterTable.Rows[0]["n_StageID"].ToString()) > 0)
+                        {
+                        if (myFunctions.getVAL(MasterTable.Rows[0]["n_OpportunityID"].ToString()) > 0)
+                            dLayer.ExecuteNonQuery("Update CRM_Opportunity SET N_StageID=" + MasterTable.Rows[0]["n_StageID"].ToString()  + " where N_OpportunityID=" + MasterTable.Rows[0]["n_OpportunityID"].ToString()  + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                        else
+                         dLayer.ExecuteNonQuery("Update inv_customerprojects SET N_StageID=" + MasterTable.Rows[0]["n_StageID"].ToString()  + " where N_ProjectID=" + MasterTable.Rows[0]["n_ProjectID"].ToString()  + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                        }
                         if(RecuredDays!=null)
                         {
                         if(myFunctions.getIntVAL(RecuredDays.ToString())>0)
