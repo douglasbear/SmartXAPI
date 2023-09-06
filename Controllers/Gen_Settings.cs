@@ -331,7 +331,12 @@ namespace SmartxAPI.Controllers
 
                     int nFnYearID = myFunctions.getIntVAL(General.Rows[0]["n_FnYearID"].ToString());
                     int nBranchID = myFunctions.getIntVAL(General.Rows[0]["n_BranchID"].ToString());
-                    int nDivisionID = myFunctions.getIntVAL(General.Rows[0]["n_DivisionID"].ToString());
+                    int nDivisionID =0;
+                    if(General.Columns.Contains("n_DivisionID"))
+                    {
+                       nDivisionID = myFunctions.getIntVAL(General.Rows[0]["n_DivisionID"].ToString());
+                    }
+                   
                     int nCompanyID = myFunctions.GetCompanyID(User);
 
 
