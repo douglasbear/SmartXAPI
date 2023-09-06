@@ -66,9 +66,9 @@ namespace SmartxAPI.Controllers
             if (nCustomerID > 0)
             {
                 if(Count==0)
-                    sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1 and N_CustID="+ nCustomerID + Pattern + Searchkey + " " + xSortBy;
+                    sqlCommandText = "select top("+ nSizeperpage +") * from vw_ClientCRMCustomer where N_CompanyID=@p1 and N_CustID="+ nCustomerID + Pattern + Searchkey + " " + xSortBy;
                 else
-                    sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1 and N_CustID="+ nCustomerID + Pattern + Searchkey + " and N_CustomerID not in (select top("+ Count +") N_CustomerID from vw_CRMCustomer where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                    sqlCommandText = "select top("+ nSizeperpage +") * from vw_ClientCRMCustomer where N_CompanyID=@p1 and N_CustID="+ nCustomerID + Pattern + Searchkey + " and N_CustomerID not in (select top("+ Count +") N_CustomerID from vw_CRMCustomer where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             }
             else
             {
@@ -89,8 +89,10 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
-
-                    sqlCommandCount = "select count(1) as N_Count  from vw_CRMCustomer where N_CompanyID=@p1  " + Pattern;
+                    if (nCustomerID > 0)
+                        sqlCommandCount = "select count(1) as N_Count from vw_ClientCRMCustomer where N_CompanyID=@p1 and N_CustID="+ nCustomerID + Pattern + Searchkey + " " + xSortBy;
+                    else
+                        sqlCommandCount = "select count(1) as N_Count  from vw_CRMCustomer where N_CompanyID=@p1  " + Pattern;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
