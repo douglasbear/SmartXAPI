@@ -47,11 +47,11 @@ namespace SmartxAPI.Controllers
                 Pattern = " and Left(X_Pattern,Len(@p2))=@p2";
                 Params.Add("@p2", UserPattern);
             }
-            else
-            {
-                Pattern = " and N_CreatedUser=" + nUserID;
+            // else
+            // {
+            //     Pattern = " and N_CreatedUser=" + nUserID;
 
-            }
+            // }
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
 
@@ -73,9 +73,9 @@ namespace SmartxAPI.Controllers
             else
             {
                 if(Count==0)
-                    sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1" + Pattern + Searchkey + " " + xSortBy;
+                    sqlCommandText = "select * from vw_CRMCustomer where N_CompanyID=@p1" + Pattern + Searchkey + " " + xSortBy;
                 else
-                    sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1  " + Pattern + Searchkey + " and N_CustomerID not in (select top("+ Count +") N_CustomerID from vw_CRMCustomer where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                    sqlCommandText = "select * from vw_CRMCustomer where N_CompanyID=@p1  " + Pattern + Searchkey + " and N_CustomerID not in (select top("+ Count +") N_CustomerID from vw_CRMCustomer where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             }
 
             Params.Add("@p1", nCompanyId);
