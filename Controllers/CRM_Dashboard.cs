@@ -41,17 +41,17 @@ namespace SmartxAPI.Controllers
             string Pattern = "";
             string AssigneePattern = "";
             string CustCriteria = "";
-            if (UserPattern != "")
-            {
-                Params.Add("@UserPattern", UserPattern);
-                Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
-                AssigneePattern =" and (Left(X_Pattern,Len(@UserPattern))=@UserPattern or N_LoginUserID="+nUserID+") ";
-            }
-            else
-            {
-                 Pattern = " and N_CreatedUser=" + nUserID;
-                 AssigneePattern = " and (N_CreatedUser=" + nUserID + " or N_LoginUserID="+nUserID+")";
-            }
+            // if (UserPattern != "")
+            // {
+            //     Params.Add("@UserPattern", UserPattern);
+            //     Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
+            //     AssigneePattern =" and (Left(X_Pattern,Len(@UserPattern))=@UserPattern or N_LoginUserID="+nUserID+") ";
+            // }
+            // else
+            // {
+            //      Pattern = " and N_CreatedUser=" + nUserID;
+            //     //  AssigneePattern = " and (N_CreatedUser=" + nUserID + " or N_LoginUserID="+nUserID+" or )";
+            // }
 
         //     if (nFormID == 1790)
         //     {
@@ -114,7 +114,7 @@ namespace SmartxAPI.Controllers
 
                                 if (nFormID == 1790)
             {
-                object crmCustomer = dLayer.ExecuteScalar("select N_CustomerID from Crm_Customer where N_FnYearId="+nFnYearId+" and N_CustomerID = (select N_CrmCompanyID from Inv_Customer where N_FnYearID="+nFnYearId+" and N_CustomerID="+nCustomerID+")", connection);
+                object crmCustomer = dLayer.ExecuteScalar("select N_CustomerID from Crm_Customer where N_CustomerID = (select N_CrmCompanyID from Inv_Customer where N_CustomerID="+nCustomerID+")", connection);
 
                 if (myFunctions.getIntVAL(crmCustomer.ToString()) > 0)
                 {
