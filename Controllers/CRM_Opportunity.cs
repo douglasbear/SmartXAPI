@@ -79,10 +79,17 @@ namespace SmartxAPI.Controllers
 
             if(screen =="Lose" ||  screen=="Win")
             {
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1  " + criteria + Pattern + Searchkey + " " + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1  " + criteria + Pattern + Searchkey + " and N_OpportunityID not in (select top(" + Count + ") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1 " + criteria + xSortBy + " ) " + xSortBy;
+                if (nCustomerID > 0) {
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1 and N_CustID="+ nCustomerID + criteria + Pattern + Searchkey + " " + xSortBy;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1 and N_CustID="+ nCustomerID + criteria + Pattern + Searchkey + " and N_OpportunityID not in (select top(" + Count + ") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1 and N_CustID="+ nCustomerID + criteria + xSortBy + " ) " + xSortBy;
+                } else {
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1  " + criteria + Pattern + Searchkey + " " + xSortBy;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1  " + criteria + Pattern + Searchkey + " and N_OpportunityID not in (select top(" + Count + ") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1 " + criteria + xSortBy + " ) " + xSortBy;
+                }
              }
              else
              {
@@ -90,7 +97,7 @@ namespace SmartxAPI.Controllers
                     if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1  and isnull(N_ClosingStatusID,0) = 0 and N_CustID="+ nCustomerID + criteria + Pattern + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1  and isnull(N_ClosingStatusID,0) = 0 and N_CustID=" + criteria + Pattern + Searchkey + " and N_OpportunityID not in (select top(" + Count + ") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1 " + criteria + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1  and isnull(N_ClosingStatusID,0) = 0 and N_CustID="+ nCustomerID + criteria + Pattern + Searchkey + " and N_OpportunityID not in (select top(" + Count + ") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1 and N_CustID="+ nCustomerID + criteria + xSortBy + " ) " + xSortBy;
                 } else {
                     if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1  and isnull(N_ClosingStatusID,0) = 0 " + criteria + Pattern + Searchkey + " " + xSortBy;
@@ -110,7 +117,11 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(1) as N_Count  from vw_CRMOpportunity where N_CompanyID=@p1  and  isnull(N_ClosingStatusID,0) = 0 " + criteria + Pattern;
+                    if (nCustomerID > 0) {
+                        sqlCommandCount = "select count(1) as N_Count  from vw_CRMOpportunity where N_CompanyID=@p1  and  isnull(N_ClosingStatusID,0) = 0 and N_CustID="+ nCustomerID + criteria + Pattern;
+                    } else {
+                        sqlCommandCount = "select count(1) as N_Count  from vw_CRMOpportunity where N_CompanyID=@p1  and  isnull(N_ClosingStatusID,0) = 0 " + criteria + Pattern;
+                    }
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
 
                     //sqlCommandTotRevenue = "select N_StageID,X_Stage,SUM(ISNULL(N_ExpRevenue,0)) AS N_TotExpRevenue from vw_CRMOpportunity where N_CompanyID=@p1  and isnull(N_ClosingStatusID,0) = 0 " + Pattern +" group by N_StageID,X_Stage";
