@@ -98,7 +98,7 @@ namespace SmartxAPI.Controllers
 
                         dLayer.SaveData("Mig_Vouchers", "pkeyID", MasterTable, connection, transaction);
                         dLayer.ExecuteNonQuery("Update sec_user Set X_Token= '' where N_UserID = " + dt.Rows[0]["N_UserID"], Params, connection, transaction);
-                        VoucherID =dLayer.ExecuteScalarPro("SP_VouchersImport", Params, connection, transaction).ToString();
+                        object VoucherIDD =dLayer.ExecuteScalarPro("SP_VouchersImport", Params, connection, transaction).ToString();
 
                         //Posting...
                         SortedList PostingParams = new SortedList();
