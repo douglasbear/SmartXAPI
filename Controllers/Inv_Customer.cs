@@ -467,7 +467,7 @@ namespace SmartxAPI.Controllers
                             }
                             else
                             {
-                                int nUserCat = dLayer.ExecuteNonQuery("insert into Sec_UserCategory SELECT " + nCompanyID + ", MAX(N_UserCategoryID)+1, (select X_UserCategory from Sec_UserCategory where N_CompanyID=-1 and N_AppID=10), MAX(N_UserCategoryID)+1, 12, 10, 3, NULL FROM Sec_UserCategory ", Params, connection, transaction);
+                                int nUserCat = dLayer.ExecuteNonQuery("insert into Sec_UserCategory SELECT " + nCompanyID + ", MAX(N_UserCategoryID)+1, (select X_UserCategory from Sec_UserCategory where N_CompanyID=-1 and N_AppID=13), MAX(N_UserCategoryID)+1, 12, 13, 3, NULL FROM Sec_UserCategory ", Params, connection, transaction);
                                 if (nUserCat <= 0)
                                 {
                                     transaction.Rollback();

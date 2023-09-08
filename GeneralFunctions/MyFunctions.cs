@@ -1772,7 +1772,9 @@ namespace SmartxAPI.GeneralFunctions
                 switch (FormID)
                 {
                     case 82://PO
-                        DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
+                    case 1586://rentalPurchaseOrder
+                        //DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
+                        DeleteStatus = 1;
                         X_Action = "Delete";
                         B_IsDelete = true;
                         break;
@@ -1848,6 +1850,7 @@ namespace SmartxAPI.GeneralFunctions
                         X_Action = "Delete";
                         B_IsDelete = true;
                         break;
+                   
                     default:
                         DeleteStatus = dLayer.ExecuteNonQuery("DELETE FROM " + X_ScreenTable + " where " + X_Criteria, connection, transaction);
                         X_Action = "Delete";
@@ -2689,7 +2692,7 @@ namespace SmartxAPI.GeneralFunctions
                             message.Body = MailBody;
                             message.From = new MailAddress(Sender);
                             message.IsBodyHtml = true; //HTML email 
-                            if (nFormID > 0)
+                            // if (nFormID > 0)
                                // message.Attachments.Add(new Attachment(this.TempFilesPath + ReportName));
                             client.Send(message);
 

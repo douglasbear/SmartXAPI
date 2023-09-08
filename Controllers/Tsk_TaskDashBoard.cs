@@ -711,13 +711,13 @@ namespace SmartxAPI.Controllers
 
 
           [HttpGet("teamEmployee")]
-        public ActionResult GetcompletedDetails(int nUserID )
+        public ActionResult GetTeamEmployeeDetails(int nUserID,int nUserMappingID)
         {
              SortedList Params = new SortedList();
              DataTable dt = new DataTable();
              int nCompanyID=myFunctions.GetCompanyID(User);
              Params.Add("@nCompanyID",nCompanyID);
-             string sqlCommandText="Select * from vw_tsk_TeamEmployee Where N_CompanyID=@nCompanyID and N_UserID="+nUserID+"" ;
+             string sqlCommandText="Select * from vw_tsk_TeamEmployee Where N_CompanyID=@nCompanyID and N_UserID="+nUserID+" and n_UserMappingID="+nUserMappingID+"" ;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

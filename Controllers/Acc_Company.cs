@@ -425,7 +425,23 @@ namespace SmartxAPI.Controllers
                             cnn1.Open();
                            SortedList proParams6 = new SortedList(){
                                   {"N_ClientID",n_ClientID}};
+                          object SettingsCount = dLayer.ExecuteScalar("select count(1) from GenSettings where  N_ClientID=" + myFunctions.GetClientID(User), cnn1);
+                          if(myFunctions.getIntVAL(SettingsCount.ToString())>0)
+                          {
+                            string settingsUserUpdate = "Update GenSettings set N_Value= (SELECT N_Value + (select isnull(N_FreeUsers,0) from AppMaster where N_AppID="+appID+") as N_Value FROM GenSettings where N_ClientID="+n_ClientID+" and X_Description='USER LIMIT') WHERE N_ClientID="+n_ClientID+" and X_Description='USER LIMIT'";
+                            dLayer.ExecuteScalar(settingsUserUpdate, proParams6, cnn1);
 
+                            string settingsCompanyUpdate = "Update GenSettings set N_Value= (SELECT N_Value + 1 FROM GenSettings where N_ClientID="+n_ClientID+" and X_Description='COMPANY LIMIT') WHERE N_ClientID="+n_ClientID+" and X_Description='COMPANY LIMIT'";
+                            dLayer.ExecuteScalar(settingsCompanyUpdate, proParams6, cnn1);
+
+                            string settingsBranchUpdate = "Update GenSettings set N_Value= (SELECT N_Value + (select isnull(N_FreeBranches,0) from AppMaster where N_AppID="+appID+") as N_Value FROM GenSettings where N_ClientID="+n_ClientID+" and X_Description='BRANCH LIMIT') WHERE N_ClientID="+n_ClientID+" and X_Description='BRANCH LIMIT'";
+                            dLayer.ExecuteScalar(settingsBranchUpdate, proParams6, cnn1);
+                            string settingsEmpUpdate = "Update GenSettings set N_Value= (SELECT N_Value + (select isnull(N_FreeEmployees,0) from AppMaster where N_AppID="+appID+") as N_Value FROM GenSettings where N_ClientID="+n_ClientID+" and X_Description='EMPLOYEE LIMIT') WHERE N_ClientID="+n_ClientID+" and X_Description='EMPLOYEE LIMIT'";
+                            dLayer.ExecuteScalar(settingsEmpUpdate, proParams6, cnn1);
+                            string settingsStuUpdate = "Update GenSettings set N_Value= (SELECT N_Value + (select isnull(N_FreeStudents,0) from AppMaster where N_AppID="+appID+") as N_Value FROM GenSettings where N_ClientID="+n_ClientID+" and X_Description='STUDENT LIMIT') WHERE N_ClientID="+n_ClientID+" and X_Description='STUDENT LIMIT'";
+                            dLayer.ExecuteScalar(settingsStuUpdate, proParams6, cnn1);
+                          }
+                          else
                           dLayer.ExecuteNonQueryPro("Sp_GenSettingInsert", proParams6, cnn1);
                         }
 
@@ -474,6 +490,7 @@ namespace SmartxAPI.Controllers
                         SortedList proParams5 = new SortedList(){
                                   {"N_CompanyID",N_CompanyId}};
 
+                        
                          dLayer.ExecuteNonQueryPro("UTL_UpdateGenSettings", proParams5, connection, transaction);
                       
 

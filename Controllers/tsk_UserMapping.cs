@@ -108,6 +108,43 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,ex));
             }
         }
+          [HttpGet("list")]
+        public ActionResult GetteamList(int nUserID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyId", nCompanyID);
+            Params.Add("@nUserID", nUserID);
+            string sqlCommandText ="";
+            if(nUserID>0)
+                sqlCommandText = "Select *  from vw_tsk_UserMapping Where N_CompanyID= " + nCompanyID + " and N_UsersId in ("+nUserID + ") and X_Team is not null";
+            else
+                sqlCommandText = "Select *  from vw_tsk_UserMapping Where N_CompanyID= " + nCompanyID + " and X_Team is not null";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Success(dt));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+        
 
 
         

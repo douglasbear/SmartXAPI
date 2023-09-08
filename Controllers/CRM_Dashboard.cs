@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetDashboardDetails(int nFnYearId)
+        public ActionResult GetDashboardDetails(int nFnYearId, int nCustomerID, int nFormID)
         {
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -40,33 +40,45 @@ namespace SmartxAPI.Controllers
             string UserPattern = myFunctions.GetUserPattern(User);
             string Pattern = "";
             string AssigneePattern = "";
-            if (UserPattern != "")
-            {
-                Params.Add("@UserPattern", UserPattern);
-                Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
-                AssigneePattern =" and (Left(X_Pattern,Len(@UserPattern))=@UserPattern or N_LoginUserID="+nUserID+") ";
-            }
-            else
-            {
-                 Pattern = " and N_CreatedUser=" + nUserID;
-                 AssigneePattern = " and (N_CreatedUser=" + nUserID + " or N_LoginUserID="+nUserID+")";
-            }
-            string sqlCurrentLead = "SELECT count(1) as N_ThisMonth FROM vw_CRMLeads WHERE MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = "+nCompanyID+""+ Pattern;
-            string sqlWin = "select count(1) as N_ThisMonth from vw_CRMOpportunity where N_StatusTypeID=308 and MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = "+nCompanyID+""+ AssigneePattern; 
-            string sqlLose = "select count(1) as N_ThisMonth from vw_CRMOpportunity where N_StatusTypeID=309 and  MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = "+nCompanyID+""+ AssigneePattern; 
-            string sqlCurrentRevenue = "SELECT count(1) as N_ThisMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_CRMOpportunity WHERE MONTH(D_EntryDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_EntryDate) = YEAR(CURRENT_TIMESTAMP) and N_StatusTypeID=308 and N_CompanyID = "+nCompanyID+""+ AssigneePattern;
-            string sqlPipelineoppotunity = "select count(1) as N_Count,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount from vw_CRMOpportunity where N_ClosingStatusID=0 or N_ClosingStatusID is null and N_CompanyID = "+nCompanyID+""+ AssigneePattern;
-            string sqlOpportunitiesStage = "select isNull(X_Stage,'Others') as X_Stage,CAST(count(1) as varchar(50)) as N_Percentage  from vw_CRMOpportunity where N_CompanyID = "+nCompanyID + AssigneePattern +" group by X_Stage,N_Sort order by ISNULL(N_Sort,1000)";
-            string sqlLeadsbySource = "select isnull(x_SubSource,'Other') as X_LeadSource ,CAST(count(1) as varchar(50)) as N_Percentage from vw_CRMOpportunity where isnull(N_ClosingStatusID,0) = 0 and  N_CompanyID = "+nCompanyID + Pattern +" group by x_SubSource";
-            string sqlPreviousLead = "SELECT count(1) as N_LastMonth FROM vw_CRMLeads WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate())) and N_CompanyID = "+nCompanyID+""+ Pattern;
-            string sqlCurrentCustomer = "SELECT count(1) as N_ThisMonth FROM CRM_Customer WHERE MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+"";
-            string sqlPreviousCustomer = "SELECT count(1) as N_LastMonth FROM CRM_Customer WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate())) and N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+"";
-           // string sqlPerformance = " SELECT 'Leads Created' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count FROM crm_leads WHERE N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'Opportunities Created' as X_Status,CONVERT(VARCHAR,count(1))as N_Count FROM CRM_Opportunity WHERE N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'Customer Created' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count FROM CRM_Customer WHERE  N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT  'Revenue Generated' as X_Status, CAST(CONVERT(VARCHAR, CAST(sum(N_TotAmt) AS MONEY), 1) AS VARCHAR) as N_Count FROM vw_InvSalesOrderNo_Search WHERE N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" and D_OrderDate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'Close Deals' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count from vw_CRMOpportunity where ( N_StatusTypeID=308 OR N_StatusTypeID=309) and N_CompanyID= "+nCompanyID+" and N_UserID = "+nUserID+"  and D_Entrydate >= DATEADD(DAY, -90, GETDATE())  union SELECT 'Lose Deals' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count from vw_CRMOpportunity where  N_StatusTypeID=309 and N_CompanyID= "+nCompanyID+" and N_UserID = "+nUserID+"  and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) --'Contacts Created' as X_Status,count(1) as N_Count FROM CRM_Contact WHERE N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" and D_Entrydate >= DATEADD(DAY, -90, GETDATE())  union SELECT 'Projects Created' as X_Status,count(1) as N_Count FROM CRM_Project WHERE N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) " ;
-            string sqlPerformance = "SELECT 'New Opportunities' as X_Status,CONVERT(VARCHAR,count(1))as N_Count,'2' as OrderNo FROM vw_CRMOpportunity WHERE N_CompanyID = "+nCompanyID + Pattern +" and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'New Customers' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count,'1' as OrderNo FROM vw_CRMCustomer WHERE  N_CompanyID = "+nCompanyID+ Pattern +" and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT  'Revenue Generated' as X_Status, CAST(CONVERT(VARCHAR, CAST(sum(N_TotAmt) AS MONEY), 1) AS VARCHAR) as N_Count,'5' as OrderNo FROM vw_InvSalesOrderNo_Search_Cloud WHERE N_CompanyID = "+nCompanyID+ Pattern +" and D_OrderDate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'Closed Deals' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count,'3' as OrderNo from vw_CRMOpportunity where ( N_StatusTypeID=308 OR N_StatusTypeID=309) and N_CompanyID= "+nCompanyID + Pattern +"  and D_Entrydate >= DATEADD(DAY, -90, GETDATE())  union SELECT 'Lose Deals' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count,'4' as OrderNo from vw_CRMOpportunity where  N_StatusTypeID=309 and N_CompanyID= "+nCompanyID + Pattern +"  and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) order by OrderNo" ;
-            string sqlPreviousRevenue ="SELECT count(1) as N_LastMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_CRMOpportunity WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate()))and N_CompanyID = "+nCompanyID+""+ Pattern;
-            string sqlTopSalesman ="select top(5) X_SalesmanName as X_SalesmanName, N_TotRevenue N_Percentage from vw_InvSalesmanRevenue where N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" order by N_TotRevenue Desc";
-            string sqlQuarterlyRevenue = "select sum(N_TotAmt) as N_Amount,quarter from vw_QuarterlyRevenue where N_CompanyID = "+nCompanyID+" and N_FnyearID ="+nFnYearId+" and N_UserID = "+nUserID+" group by quarter ";
-            string sqlTotTargetAmount ="select Sum(N_TargetAmount) as TotalAmount from Inv_SalesMan where N_CompanyID="+nCompanyID+"" ;
+            string CustCriteria = "";
+            // if (UserPattern != "")
+            // {
+            //     Params.Add("@UserPattern", UserPattern);
+            //     Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
+            //     AssigneePattern =" and (Left(X_Pattern,Len(@UserPattern))=@UserPattern or N_LoginUserID="+nUserID+") ";
+            // }
+            // else
+            // {
+            //      Pattern = " and N_CreatedUser=" + nUserID;
+            //     //  AssigneePattern = " and (N_CreatedUser=" + nUserID + " or N_LoginUserID="+nUserID+" or )";
+            // }
+
+        //     if (nFormID == 1790)
+        //     {
+        //         object crmCustomer = dLayer.ExecuteScalar("select N_CustomerID from Crm_Customer where N_FnYearId="+nFnYearId+" and N_CustomerID = (select N_CrmCompanyID from Inv_Customer where N_FnYearID="+nFnYearId+" and N_CustomerID="+nCustomerID+")");
+
+        //         if (myFunctions.getIntVAL(crmCustomer.ToString()) > 0)
+        //         {
+        //             CustCriteria = " and N_CustomerID="+myFunctions.getIntVAL(crmCustomer.ToString())+"";
+        //         }
+        //     }
+
+        //     string sqlCurrentLead = "SELECT count(1) as N_ThisMonth FROM vw_CRMLeads WHERE MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = "+nCompanyID+""+ Pattern;
+        //     string sqlWin = "select count(1) as N_ThisMonth from vw_CRMOpportunity where N_StatusTypeID=308 and MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = "+nCompanyID+""+ AssigneePattern; 
+        //     string sqlLose = "select count(1) as N_ThisMonth from vw_CRMOpportunity where N_StatusTypeID=309 and  MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = "+nCompanyID+""+ AssigneePattern; 
+        //     string sqlCurrentRevenue = "SELECT count(1) as N_ThisMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_CRMOpportunity WHERE MONTH(D_EntryDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_EntryDate) = YEAR(CURRENT_TIMESTAMP) and N_StatusTypeID=308 and N_CompanyID = "+nCompanyID+""+ AssigneePattern;
+        //     string sqlPipelineoppotunity = "select count(1) as N_Count,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount from vw_CRMOpportunity where N_ClosingStatusID=0 or N_ClosingStatusID is null and N_CompanyID = "+nCompanyID+""+ AssigneePattern;
+        //     string sqlOpportunitiesStage = "select isNull(X_Stage,'Others') as X_Stage,CAST(count(1) as varchar(50)) as N_Percentage  from vw_CRMOpportunity where N_CompanyID = "+nCompanyID + AssigneePattern +" group by X_Stage,N_Sort order by ISNULL(N_Sort,1000)";
+        //     string sqlLeadsbySource = "select isnull(x_SubSource,'Other') as X_LeadSource ,CAST(count(1) as varchar(50)) as N_Percentage from vw_CRMOpportunity where isnull(N_ClosingStatusID,0) = 0 and  N_CompanyID = "+nCompanyID + Pattern +" group by x_SubSource";
+        //     string sqlPreviousLead = "SELECT count(1) as N_LastMonth FROM vw_CRMLeads WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate())) and N_CompanyID = "+nCompanyID+""+ Pattern;
+        //     string sqlCurrentCustomer = "SELECT count(1) as N_ThisMonth FROM CRM_Customer WHERE MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+"";
+        //     string sqlPreviousCustomer = "SELECT count(1) as N_LastMonth FROM CRM_Customer WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate())) and N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+"";
+        //    // string sqlPerformance = " SELECT 'Leads Created' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count FROM crm_leads WHERE N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'Opportunities Created' as X_Status,CONVERT(VARCHAR,count(1))as N_Count FROM CRM_Opportunity WHERE N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'Customer Created' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count FROM CRM_Customer WHERE  N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT  'Revenue Generated' as X_Status, CAST(CONVERT(VARCHAR, CAST(sum(N_TotAmt) AS MONEY), 1) AS VARCHAR) as N_Count FROM vw_InvSalesOrderNo_Search WHERE N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" and D_OrderDate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'Close Deals' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count from vw_CRMOpportunity where ( N_StatusTypeID=308 OR N_StatusTypeID=309) and N_CompanyID= "+nCompanyID+" and N_UserID = "+nUserID+"  and D_Entrydate >= DATEADD(DAY, -90, GETDATE())  union SELECT 'Lose Deals' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count from vw_CRMOpportunity where  N_StatusTypeID=309 and N_CompanyID= "+nCompanyID+" and N_UserID = "+nUserID+"  and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) --'Contacts Created' as X_Status,count(1) as N_Count FROM CRM_Contact WHERE N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" and D_Entrydate >= DATEADD(DAY, -90, GETDATE())  union SELECT 'Projects Created' as X_Status,count(1) as N_Count FROM CRM_Project WHERE N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) " ;
+        //     string sqlPerformance = "SELECT 'New Opportunities' as X_Status,CONVERT(VARCHAR,count(1))as N_Count,'2' as OrderNo FROM vw_CRMOpportunity WHERE N_CompanyID = "+nCompanyID + Pattern +" and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'New Customers' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count,'1' as OrderNo FROM vw_CRMCustomer WHERE  N_CompanyID = "+nCompanyID+ Pattern +" and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT  'Revenue Generated' as X_Status, CAST(CONVERT(VARCHAR, CAST(sum(N_TotAmt) AS MONEY), 1) AS VARCHAR) as N_Count,'5' as OrderNo FROM vw_InvSalesOrderNo_Search_Cloud WHERE N_CompanyID = "+nCompanyID+ Pattern +" and D_OrderDate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'Closed Deals' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count,'3' as OrderNo from vw_CRMOpportunity where ( N_StatusTypeID=308 OR N_StatusTypeID=309) and N_CompanyID= "+nCompanyID + Pattern +"  and D_Entrydate >= DATEADD(DAY, -90, GETDATE())  union SELECT 'Lose Deals' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count,'4' as OrderNo from vw_CRMOpportunity where  N_StatusTypeID=309 and N_CompanyID= "+nCompanyID + Pattern +"  and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) order by OrderNo" ;
+        //     string sqlPreviousRevenue ="SELECT count(1) as N_LastMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_CRMOpportunity WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate()))and N_CompanyID = "+nCompanyID+""+ Pattern;
+        //     string sqlTopSalesman ="select top(5) X_SalesmanName as X_SalesmanName, N_TotRevenue N_Percentage from vw_InvSalesmanRevenue where N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" order by N_TotRevenue Desc";
+        //     string sqlQuarterlyRevenue = "select sum(N_TotAmt) as N_Amount,quarter from vw_QuarterlyRevenue where N_CompanyID = "+nCompanyID+" and N_FnyearID ="+nFnYearId+" and N_UserID = "+nUserID+" group by quarter ";
+        //     string sqlTotTargetAmount ="select Sum(N_TargetAmount) as TotalAmount from Inv_SalesMan where N_CompanyID="+nCompanyID+"" ;
 
 
 
@@ -99,6 +111,33 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+
+                                if (nFormID == 1790)
+            {
+                object crmCustomer = dLayer.ExecuteScalar("select N_CustomerID from Crm_Customer where N_CustomerID = (select N_CrmCompanyID from Inv_Customer where N_CustomerID="+nCustomerID+")", connection);
+
+                if (myFunctions.getIntVAL(crmCustomer.ToString()) > 0)
+                {
+                    CustCriteria = " and N_CustomerID="+myFunctions.getIntVAL(crmCustomer.ToString())+"";
+                }
+            }
+
+            string sqlCurrentLead = "SELECT count(1) as N_ThisMonth FROM vw_CRMLeads WHERE MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = "+nCompanyID+""+ Pattern;
+            string sqlWin = "select count(1) as N_ThisMonth from vw_CRMOpportunity where N_StatusTypeID=308 and MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = "+nCompanyID+""+ AssigneePattern+""+CustCriteria; 
+            string sqlLose = "select count(1) as N_ThisMonth from vw_CRMOpportunity where N_StatusTypeID=309 and  MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = "+nCompanyID+""+ AssigneePattern+""+CustCriteria; 
+            string sqlCurrentRevenue = "SELECT count(1) as N_ThisMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_CRMOpportunity WHERE MONTH(D_EntryDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_EntryDate) = YEAR(CURRENT_TIMESTAMP) and N_StatusTypeID=308 and N_CompanyID = "+nCompanyID+""+ AssigneePattern+""+CustCriteria;
+            string sqlPipelineoppotunity = "select count(1) as N_Count,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount from vw_CRMOpportunity where N_ClosingStatusID=0 or N_ClosingStatusID is null and N_CompanyID = "+nCompanyID+""+ AssigneePattern+""+CustCriteria;
+            string sqlOpportunitiesStage = "select isNull(X_Stage,'Others') as X_Stage,CAST(count(1) as varchar(50)) as N_Percentage  from vw_CRMOpportunity where N_CompanyID = "+nCompanyID + AssigneePattern +CustCriteria+" group by X_Stage,N_Sort order by ISNULL(N_Sort,1000)";
+            string sqlLeadsbySource = "select isnull(x_SubSource,'Other') as X_LeadSource ,CAST(count(1) as varchar(50)) as N_Percentage from vw_CRMOpportunity where isnull(N_ClosingStatusID,0) = 0 and  N_CompanyID = "+nCompanyID + Pattern + CustCriteria+" group by x_SubSource";
+            string sqlPreviousLead = "SELECT count(1) as N_LastMonth FROM vw_CRMLeads WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate())) and N_CompanyID = "+nCompanyID+""+ Pattern;
+            string sqlCurrentCustomer = "SELECT count(1) as N_ThisMonth FROM CRM_Customer WHERE MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+CustCriteria+"";
+            string sqlPreviousCustomer = "SELECT count(1) as N_LastMonth FROM CRM_Customer WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate())) and N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+CustCriteria+"";
+           // string sqlPerformance = " SELECT 'Leads Created' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count FROM crm_leads WHERE N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'Opportunities Created' as X_Status,CONVERT(VARCHAR,count(1))as N_Count FROM CRM_Opportunity WHERE N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'Customer Created' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count FROM CRM_Customer WHERE  N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT  'Revenue Generated' as X_Status, CAST(CONVERT(VARCHAR, CAST(sum(N_TotAmt) AS MONEY), 1) AS VARCHAR) as N_Count FROM vw_InvSalesOrderNo_Search WHERE N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" and D_OrderDate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'Close Deals' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count from vw_CRMOpportunity where ( N_StatusTypeID=308 OR N_StatusTypeID=309) and N_CompanyID= "+nCompanyID+" and N_UserID = "+nUserID+"  and D_Entrydate >= DATEADD(DAY, -90, GETDATE())  union SELECT 'Lose Deals' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count from vw_CRMOpportunity where  N_StatusTypeID=309 and N_CompanyID= "+nCompanyID+" and N_UserID = "+nUserID+"  and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) --'Contacts Created' as X_Status,count(1) as N_Count FROM CRM_Contact WHERE N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" and D_Entrydate >= DATEADD(DAY, -90, GETDATE())  union SELECT 'Projects Created' as X_Status,count(1) as N_Count FROM CRM_Project WHERE N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) " ;
+            string sqlPerformance = "SELECT 'New Opportunities' as X_Status,CONVERT(VARCHAR,count(1))as N_Count,'2' as OrderNo FROM vw_CRMOpportunity WHERE N_CompanyID = "+nCompanyID + Pattern + CustCriteria+" and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'New Customers' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count,'1' as OrderNo FROM vw_CRMCustomer WHERE  N_CompanyID = "+nCompanyID+ Pattern + CustCriteria+" and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT  'Revenue Generated' as X_Status, CAST(CONVERT(VARCHAR, CAST(sum(N_TotAmt) AS MONEY), 1) AS VARCHAR) as N_Count,'5' as OrderNo FROM vw_InvSalesOrderNo_Search_Cloud WHERE N_CompanyID = "+nCompanyID+ Pattern + CustCriteria+" and D_OrderDate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'Closed Deals' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count,'3' as OrderNo from vw_CRMOpportunity where ( N_StatusTypeID=308 OR N_StatusTypeID=309) and N_CompanyID= "+nCompanyID + Pattern + CustCriteria+"  and D_Entrydate >= DATEADD(DAY, -90, GETDATE())  union SELECT 'Lose Deals' as X_Status,CONVERT(VARCHAR,count(1)) as N_Count,'4' as OrderNo from vw_CRMOpportunity where  N_StatusTypeID=309 and N_CompanyID= "+nCompanyID + Pattern + CustCriteria+"  and D_Entrydate >= DATEADD(DAY, -90, GETDATE()) order by OrderNo" ;
+            string sqlPreviousRevenue ="SELECT count(1) as N_LastMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_CRMOpportunity WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate()))and N_CompanyID = "+nCompanyID+""+ Pattern+""+CustCriteria;
+            string sqlTopSalesman ="select top(5) X_SalesmanName as X_SalesmanName, N_TotRevenue N_Percentage from vw_InvSalesmanRevenue where N_CompanyID = "+nCompanyID+" and N_UserID = "+nUserID+" order by N_TotRevenue Desc";
+            string sqlQuarterlyRevenue = "select sum(N_TotAmt) as N_Amount,quarter from vw_QuarterlyRevenue where N_CompanyID = "+nCompanyID+" and N_FnyearID ="+nFnYearId+" and N_UserID = "+nUserID+" group by quarter ";
+            string sqlTotTargetAmount ="select Sum(N_TargetAmount) as TotalAmount from Inv_SalesMan where N_CompanyID="+nCompanyID+"" ;
 
                     CurrentLead = dLayer.ExecuteDataTable(sqlCurrentLead, Params, connection);
                     CurrentCustomer = dLayer.ExecuteDataTable(sqlCurrentCustomer, Params, connection);
