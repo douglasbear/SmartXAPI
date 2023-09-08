@@ -92,7 +92,7 @@ namespace SmartxAPI.Controllers
                 if (nCustomerID > 0)
                     Criteria = " and  ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0  and  (N_CustomerID =@p3 or  N_CustomerID=0 ) and  N_StatusID=1";
                 else
-                    Criteria = " and  N_BranchID=@p4 and ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 and N_StatusID=1 ";
+                    Criteria = " and  ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 and N_StatusID=1 ";
 
             }
 
