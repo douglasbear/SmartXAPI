@@ -2028,7 +2028,7 @@ namespace SmartxAPI.GeneralFunctions
             {
                 Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
                 Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
-                Params.Add("N_FormID", 80);
+                Params.Add("N_FormID", 68);
                 Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                    if(nDivisionID>0)
                     {
