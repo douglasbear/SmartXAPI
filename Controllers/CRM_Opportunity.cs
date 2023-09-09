@@ -272,7 +272,7 @@ namespace SmartxAPI.Controllers
 
                                 //    dLayer.DeleteData("Tsk_TaskStatus", "N_ProjectID", nProjectID, "", connection, transaction);
 
-                                    TaskMaster = dLayer.ExecuteDataTable("select N_CompanyID,2 as N_StatusID,N_StageID,x_tasksummery,x_taskdescription,'' as D_TaskDate,'' as D_DueDate, "+myFunctions.GetUserID(User)+" as N_CreatorID, "+myFunctions.GetUserID(User)+" as N_CurrentAssigneeID, "+myFunctions.GetUserID(User)+"  as n_ClosedUserID ,"+myFunctions.GetUserID(User)+"  as n_SubmitterID,"+myFunctions.GetUserID(User)+" as N_CurrentAssignerID,'" + DateTime.Today + "' as D_EntryDate, "+myFunctions.GetUserID(User)+" as N_AssigneeID, N_StartDateBefore,N_StartDateUnitID,N_EndDateBefore,N_EndUnitID,N_WTaskDetailID,N_Order,N_TemplateID,N_PriorityID,N_CategoryID from vw_Prj_WorkflowDetails where N_CompanyID=" + nCompanyID + " and N_WTaskID=" + nWActivityID + " order by N_Order", Params, connection, transaction);
+                                    TaskMaster = dLayer.ExecuteDataTable("select N_CompanyID,2 as N_StatusID,N_StageID,x_tasksummery,x_taskdescription,'"+DateTime.Today+"'  as D_TaskDate,'"+DateTime.Today+"' as D_DueDate, "+myFunctions.GetUserID(User)+" as N_CreatorID, "+myFunctions.GetUserID(User)+" as N_CurrentAssigneeID, "+myFunctions.GetUserID(User)+"  as n_ClosedUserID ,"+myFunctions.GetUserID(User)+"  as n_SubmitterID,"+myFunctions.GetUserID(User)+" as N_CurrentAssignerID,'" + DateTime.Today + "' as D_EntryDate, "+myFunctions.GetUserID(User)+" as N_AssigneeID, N_StartDateBefore,N_StartDateUnitID,N_EndDateBefore,N_EndUnitID,N_WTaskDetailID,N_Order,N_TemplateID,N_PriorityID,N_CategoryID from vw_Prj_WorkflowDetails where N_CompanyID=" + nCompanyID + " and N_WTaskID=" + nWActivityID + " order by N_Order", Params, connection, transaction);
                                     if (TaskMaster.Rows.Count > 0)
                                     {
                                         SortedList AParams = new SortedList();
@@ -330,9 +330,9 @@ namespace SmartxAPI.Controllers
                                                 Minuts = myFunctions.getVAL(var["N_EndDateBefore"].ToString()) * Minuts;
 
                                             if(Minuts==0)
-                                                var["D_DueDate"]=null;
+                                                var["D_DueDate"]=DateTime.Now;
                                             else
-                                                var["D_DueDate"] = DateTime.Parse(var["D_TaskDate"].ToString()).AddMinutes(Minuts);
+                                                var["D_DueDate"] = DateTime.Now;
 
                                         }
                                         TaskMaster.Columns.Remove("N_StartDateBefore");
