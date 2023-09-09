@@ -92,7 +92,7 @@ namespace SmartxAPI.Controllers
                 if (nCustomerID > 0)
                     Criteria = " and  ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0  and  (N_CustomerID =@p3 or  N_CustomerID=0 ) and  N_StatusID=1";
                 else
-                    Criteria = " and  N_BranchID=@p4 and ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 and N_StatusID=1 ";
+                    Criteria = " and  ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 and N_StatusID=1 ";
 
             }
 
@@ -604,9 +604,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
                 if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,N_StatusID,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID,X_Stage,CONVERT(VARCHAR(10), D_EndDate,111) as D_EndDate,N_LastActionID,X_ClosingRemarks,x_TaskSummery,CONVERT(VARCHAR(10), D_DueDate,111) as D_DueDate from vw_InvProjectDashBoard where N_CompanyID=@p1 "+ Pattern  + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,N_StatusID,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID,X_Stage,CONVERT(VARCHAR(10), D_EndDate,111) as D_EndDate,N_LastActionID,X_ClosingRemarks,x_TaskSummery,CONVERT(VARCHAR(10), D_DueDate,111) as D_DueDate,X_ProjectManager from vw_InvProjectDashBoard where N_CompanyID=@p1 "+ Pattern  + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,N_StatusID,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID,X_Stage,CONVERT(VARCHAR(10), D_EndDate,111) as D_EndDate,N_LastActionID,X_ClosingRemarks,x_TaskSummery,CONVERT(VARCHAR(10), D_DueDate,111) as D_DueDate from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Pattern + Searchkey + " and N_ProjectID not in (select top(" + Count + ") N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Pattern + Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,N_StatusID,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID,X_Stage,CONVERT(VARCHAR(10), D_EndDate,111) as D_EndDate,N_LastActionID,X_ClosingRemarks,x_TaskSummery,CONVERT(VARCHAR(10), D_DueDate,111) as D_DueDate,X_ProjectManager from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Pattern + Searchkey + " and N_ProjectID not in (select top(" + Count + ") N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Pattern + Searchkey + xSortBy + " ) " + xSortBy;
                Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
