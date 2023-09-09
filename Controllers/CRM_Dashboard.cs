@@ -114,7 +114,7 @@ namespace SmartxAPI.Controllers
 
                                 if (nFormID == 1790)
             {
-                object crmCustomer = dLayer.ExecuteScalar("select N_CustomerID from Crm_Customer where N_CustomerID = (select N_CrmCompanyID from Inv_Customer where N_CustomerID="+nCustomerID+")", connection);
+                object crmCustomer = dLayer.ExecuteScalar("select N_CustomerID from Crm_Customer where N_CustomerID in (select N_CrmCompanyID from Inv_Customer where N_CustomerID = "+nCustomerID+")", connection);
 
                 if (myFunctions.getIntVAL(crmCustomer.ToString()) > 0)
                 {
