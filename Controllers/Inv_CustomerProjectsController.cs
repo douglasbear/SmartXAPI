@@ -598,7 +598,7 @@ namespace SmartxAPI.Controllers
 
             if(nEmpID>0)
             {
-                Criterea=" and x_EmpsID like '%"+nEmpID+"%' or n_ProjectCoordinator ="+nEmpID+"";
+                Criterea=" and x_EmpsID like '%"+nEmpID+"%' or n_ProjectCoordinator ="+nEmpID+" or n_ProjectManager="+nEmpID+"";
 
             }
           
