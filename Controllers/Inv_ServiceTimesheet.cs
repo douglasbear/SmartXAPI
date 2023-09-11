@@ -231,7 +231,10 @@ namespace SmartxAPI.Controllers
                     Result.Add("N_ServiceSheetID", nServiceSheetID);
                     Result.Add("X_ServiceSheetCode", xServiceSheetCode);
 
-                    return Ok(_api.Success(Result, "Service Timesheet saved successfully!"));
+                     if (nFormID == 1145)
+                        return Ok(_api.Success(Result, "Customer Service Timesheet Saved Successfully!"));
+                    else 
+                        return Ok(_api.Success(Result, "Vendor Service Timesheet Saved Successfully!"));
                 }
             }
             catch (Exception ex)

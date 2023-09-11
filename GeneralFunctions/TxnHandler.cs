@@ -805,7 +805,10 @@ namespace SmartxAPI.GeneralFunctions
                         }
                     }
                     Result.Add("b_IsCompleted", 1);
-                    Result.Add("x_Msg", "Purchase Invoice Saved");
+                    if (myFunctions.getIntVAL(masterRow["n_FormID"].ToString()) == 1605)
+                        Result.Add("x_Msg", "Rental Purchase Invoice Saved Successfully");
+                    else 
+                        Result.Add("x_Msg", "Purchase Invoice Successfully Created");      
                     Result.Add("n_InvoiceID", N_PurchaseID);
                     Result.Add("x_InvoiceNo", InvoiceNo);
                     return Result;
