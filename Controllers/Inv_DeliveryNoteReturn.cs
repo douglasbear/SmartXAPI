@@ -458,7 +458,7 @@ namespace SmartxAPI.Controllers
                         }
 
                         transaction.Commit();
-                        return Ok(_api.Success("Delivery Note Return deleted"));
+                        return Ok(_api.Success("Rental Delivery Return Deleted Successfully"));
                     }
                     else
                     {

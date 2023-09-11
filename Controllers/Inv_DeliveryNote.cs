@@ -920,7 +920,7 @@ namespace SmartxAPI.Controllers
                         transaction.Commit();
                         if (N_FormID == 1572)
                         {
-                           return Ok(_api.Success(Result, "Rental Delivery Saved"));
+                           return Ok(_api.Success(Result, "Rental Delivery Saved Successfully"));
                         }
                         else if(N_FormID == 1426) 
                         {
@@ -1146,7 +1146,7 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Success("Book Delivery deleted"));
                     }
-                    return Ok(_api.Success("Delivery note deleted"));
+                    return Ok(_api.Success("Rental Delivery Deleted Successfully"));
                 }
             }
             catch (Exception ex)
