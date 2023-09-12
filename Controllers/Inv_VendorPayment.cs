@@ -536,7 +536,21 @@ namespace SmartxAPI.Controllers
                         transaction.Commit();
                         return Ok(api.Success("Vendor Payment Approved " + "-" + x_VoucherNo));
                     }
-
+                   if (n_PayReceiptID == 0 && x_VoucherNo != "@Auto")
+                    {
+                    object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_PayReceipt Where x_VoucherNo ='" + x_VoucherNo + "' and N_CompanyID= " + nCompanyId + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                    if (N_DocNumber == null)
+                    {
+                        N_DocNumber = 0;
+                    }
+                    if (myFunctions.getVAL(N_DocNumber.ToString()) >= 1)
+                    {
+                        // transaction.Rollback();
+                        // return Ok(_api.Error(User, "Invoice number already in use"));
+                       transaction.Rollback();
+                        return Ok(api.Error(User, "Voucher Number Already exist"));
+                    }
+                   }
 
                     if (x_VoucherNo == "@Auto")
                     {
@@ -586,22 +600,6 @@ namespace SmartxAPI.Controllers
 
                         }
                     }
-
-  DataTable count1 = new DataTable();
-                      SortedList Paramss = new SortedList();
-                        string sql = "select * from Inv_PayReceipt where x_VoucherNo='"+x_VoucherNo+"' and N_CompanyID="+nCompanyId+"" ;
-                        count1= dLayer.ExecuteDataTable(sql, Paramss, connection, transaction);
-                        if(count1.Rows.Count > 0)
-                        {
-                            transaction.Rollback();
-                            return Ok(api.Error(User, "Voucher Number Already in Use"));
-                        }
-
-
-
-
-
-
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
 

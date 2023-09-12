@@ -670,15 +670,15 @@ namespace SmartxAPI.Controllers
 
 
 
-                    DataTable count = new DataTable();
-                    SortedList Paramss = new SortedList();
-                    string sql = "select * from Inv_DeliveryNote where x_ReceiptNo='" + values + "' and N_CompanyID=" + N_CompanyID + "";
-                    count = dLayer.ExecuteDataTable(sql, Paramss, connection, transaction);
-                    if (count.Rows.Count > 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Voucher Number Already in Use"));
-                    }
+                    // DataTable count = new DataTable();
+                    // SortedList Paramss = new SortedList();
+                    // string sql = "select * from Inv_DeliveryNote where x_ReceiptNo='" + values + "' and N_CompanyID=" + N_CompanyID + "";
+                    // count = dLayer.ExecuteDataTable(sql, Paramss, connection, transaction);
+                    // if (count.Rows.Count > 0)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(_api.Error(User, "Voucher Number Already in Use"));
+                    // }
 
 
 

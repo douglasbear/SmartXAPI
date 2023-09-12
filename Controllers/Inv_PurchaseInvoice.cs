@@ -307,17 +307,17 @@ namespace SmartxAPI.Controllers
 
                 {
                     Params.Add("@PurchaseNo", nPurchaseNO);
-                    X_MasterSql = "select * from vw_Inv_PurchaseDisp where N_CompanyID=@CompanyID and X_InvoiceNo=@PurchaseNo and N_FnYearID=@YearID and X_TransType=@TransType" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                    X_MasterSql = "select * from vw_Inv_PurchaseDisp where N_CompanyID=@CompanyID and X_InvoiceNo=@PurchaseNo and N_FnYearID=@YearID and X_TransType=@TransType and  N_BranchId=@BranchID";
                 }
                 else if (xPOrderNo != null)
                 {
                     Params.Add("@POrderNo", xPOrderNo);
-                    X_MasterSql = "select * from vw_Inv_PurchaseOrderAsInvoiceMaster where N_CompanyID=@CompanyID and X_POrderNo=@POrderNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                    X_MasterSql = "select * from vw_Inv_PurchaseOrderAsInvoiceMaster where N_CompanyID=@CompanyID and X_POrderNo=@POrderNo and N_FnYearID=@YearID  and  N_BranchId=@BranchID";
                 }
                 else if (nServiceSheetID > 0)
                 {
                     Params.Add("@nServiceSheetID", nServiceSheetID);
-                    X_MasterSql = "select * from vw_InvVendorSTAsInvoiceMaster where N_CompanyID=@CompanyID and N_ServiceSheetID=@nServiceSheetID and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                    X_MasterSql = "select * from vw_InvVendorSTAsInvoiceMaster where N_CompanyID=@CompanyID and N_ServiceSheetID=@nServiceSheetID and N_FnYearID=@YearID and  N_BranchId=@BranchID";
                 }
 
                 try
