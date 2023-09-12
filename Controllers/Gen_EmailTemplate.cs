@@ -42,6 +42,10 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Net;
 using System.Threading;
+// using Microsoft.Graph;
+// using Microsoft.Graph.Auth;
+// using Microsoft.Identity.Client;
+using System.Threading.Tasks;
 
 namespace SmartxAPI.Controllers
 {
@@ -85,46 +89,49 @@ namespace SmartxAPI.Controllers
 
         public void sendmail()
     {
-        // Configure your Office 365 SMTP settings
-        string smtpServer = "smtp.office365.com";
-        int smtpPort = 587; // Use 587 for TLS or 25 for non-TLS
-        string smtpUsername = "yousuf.mansoor@oxfordsaudia.com";
-        string smtpPassword = "Snca@1280";
+// string clientId = "729af9a3-0fb9-4f4b-a66b-6e31d1379ece";
+//         string clientSecret = "728adfb6-8744-467b-bec3-799527f9b51d";
+//         string tenantId = "5eb03860-d5d1-4545-a3d0-3543416c4fcc";
 
-        // Create a new SmtpClient
-        SmtpClient smtpClient = new SmtpClient(smtpServer)
-        {
-            Port = smtpPort,
-            Credentials = new NetworkCredential(smtpUsername, smtpPassword),
-            EnableSsl = true, // Use SSL/TLS
-        };
+//         IConfidentialClientApplication confidentialClientApplication = ConfidentialClientApplicationBuilder
+//             .Create(clientId)
+//             .WithClientSecret(clientSecret)
+//             .WithAuthority(new Uri($"https://login.microsoftonline.com/{tenantId}"))
+//             .Build();
 
-        try
-        {
-            // Create a new MailMessage
-            MailMessage mailMessage = new MailMessage
-            {
-                From = new MailAddress(smtpUsername),
-                Subject = "Hello from C#",
-                Body = "This is a test email sent from C#.",
-            };
+//         ClientCredentialProvider authProvider = new ClientCredentialProvider(confidentialClientApplication);
 
-            // Add recipients
-            mailMessage.To.Add("sanjaykrishna954@gmail.com");
+//         var graphServiceClient = new GraphServiceClient(authProvider);
 
-            // Send the email
-            smtpClient.Send(mailMessage);
+//         var message = new Message
+//         {
+//             Subject = "Test Email",
+//             Body = new ItemBody
+//             {
+//                 ContentType = BodyType.Text,
+//                 Content = "This is a test email sent from C#."
+//             },
+//             ToRecipients = new List<Recipient>
+//             {
+//                 new Recipient
+//                 {
+//                     EmailAddress = new EmailAddress
+//                     {
+//                         Address = "sanjaykrishna954@gmail.com"
+//                     }
+//                 }
+//             }
+//         };
 
-            Console.WriteLine("Email sent successfully!");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Error: " + ex.Message);
-        }
-        finally
-        {
-            smtpClient.Dispose();
-        }
+//         try
+//         {
+//             await graphServiceClient.Me.SendMail(message, true).Request().PostAsync();
+//             Console.WriteLine("Email sent successfully.");
+//         }
+//         catch (Exception ex)
+//         {
+//             Console.WriteLine($"Error: {ex.Message}");
+//         }
     }
 
 
@@ -305,7 +312,6 @@ namespace SmartxAPI.Controllers
             critiria = "";
             TableName = "";
             ReportName = "";
-            //int N_UserCategoryID=myFunctions.GetUserCategory(User);
             bool b_Custom = false;
             string xUserCategoryList = myFunctions.GetUserCategoryList(User);
             try

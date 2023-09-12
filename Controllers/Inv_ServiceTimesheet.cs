@@ -524,15 +524,22 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("combinedVendorList")]
-        public ActionResult GetCombinedVendorList(int nFnYearID)
+        public ActionResult GetCombinedVendorList(int nProjectID, int nFormID, DateTime dDateFrom, DateTime dDateTo)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
+            string sqlCommandText = "";
             Params.Add("@N_CompanyID", myFunctions.GetCompanyID(User));
-            Params.Add("@N_FnyearID", nFnYearID);
+            Params.Add("@N_ProjectID", nProjectID);
+            Params.Add("@N_FormID", nFormID);
+            Params.Add("@D_DateFrom", dDateFrom);
+            Params.Add("@D_DateTo", dDateTo);
 
-            string sqlCommandText = "select * from vw_CombinedVendorListforVST where N_CompanyID=@N_CompanyID and N_FnYearID=@N_FnyearID";
+            if (nProjectID > 0)
+                sqlCommandText = "select N_CompanyID, N_VendorID, X_VendorName, X_VendorName_Ar, X_VendorCode, N_CurrencyID, N_ExchangeRate from vw_PurchaseOrderReceive where N_CompanyID=@N_CompanyID and N_ProjectID=@N_ProjectID and ((D_ReceiveDate<=@D_DateFrom) or (D_ReceiveDate>=@D_DateFrom AND D_ReceiveDate<=@D_DateTo)) AND ISNULL(D_ReceiveReturnDate,@D_DateFrom)>=@D_DateFrom and N_POrderID NOT IN (select N_POID from Inv_ServiceTimesheet where N_FormID=@N_FormID and N_CompanyID=@N_CompanyID and D_DateFrom=@D_DateFrom and D_DateTo=@D_DateTo) GROUP BY N_CompanyID, N_VendorID, X_VendorName, X_VendorName_Ar, X_VendorCode, N_CurrencyID, N_ExchangeRate";
+            else
+                sqlCommandText = "select N_CompanyID, N_VendorID, X_VendorName, X_VendorName_Ar, X_VendorCode, N_CurrencyID, N_ExchangeRate from vw_PurchaseOrderReceive where N_CompanyID=@N_CompanyID and ((D_ReceiveDate<=@D_DateFrom) or (D_ReceiveDate>=@D_DateFrom AND D_ReceiveDate<=@D_DateTo)) AND ISNULL(D_ReceiveReturnDate,@D_DateFrom)>=@D_DateFrom and N_POrderID NOT IN (select N_POID from Inv_ServiceTimesheet where N_FormID=@N_FormID and N_CompanyID=@N_CompanyID and D_DateFrom=@D_DateFrom and D_DateTo=@D_DateTo) GROUP BY N_CompanyID, N_VendorID, X_VendorName, X_VendorName_Ar, X_VendorCode, N_CurrencyID, N_ExchangeRate";
 
             try
             {
@@ -558,15 +565,22 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("combinedProjectList")]
-        public ActionResult GetCombinedProjectList(int nFnYearID)
+        public ActionResult GetCombinedProjectList(int nVendorID, int nFormID, DateTime dDateFrom, DateTime dDateTo)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
+            string sqlCommandText = "";
             Params.Add("@N_CompanyID", myFunctions.GetCompanyID(User));
-            Params.Add("@N_FnyearID", nFnYearID);
-
-            string sqlCommandText = "select * from vw_CombinedProjectListforVST where N_CompanyID=@N_CompanyID and N_FnYearID=@N_FnyearID";
+            Params.Add("@N_VendorID", nVendorID);
+            Params.Add("@N_FormID", nFormID);
+            Params.Add("@D_DateFrom", dDateFrom);
+            Params.Add("@D_DateTo", dDateTo);
+            
+            if (nVendorID > 0)
+                sqlCommandText = "select N_CompanyID, N_ProjectID, X_ProjectName, X_ProjectCode from vw_PurchaseOrderReceive where N_CompanyID=@N_CompanyID and N_VendorID=@N_VendorID and ((D_ReceiveDate<=@D_DateFrom) or (D_ReceiveDate>=@D_DateFrom AND D_ReceiveDate<=@D_DateTo)) AND ISNULL(D_ReceiveReturnDate,@D_DateFrom)>=@D_DateFrom and N_POrderID NOT IN (select N_POID from Inv_ServiceTimesheet where N_FormID=@N_FormID and N_CompanyID=@N_CompanyID and D_DateFrom=@D_DateFrom and D_DateTo=@D_DateTo) GROUP BY N_CompanyID, N_ProjectID, X_ProjectName, X_ProjectCode";
+            else
+                sqlCommandText = "select N_CompanyID, N_ProjectID, X_ProjectName, X_ProjectCode from vw_PurchaseOrderReceive where N_CompanyID=@N_CompanyID and ((D_ReceiveDate<=@D_DateFrom) or (D_ReceiveDate>=@D_DateFrom AND D_ReceiveDate<=@D_DateTo)) AND ISNULL(D_ReceiveReturnDate,@D_DateFrom)>=@D_DateFrom and N_POrderID NOT IN (select N_POID from Inv_ServiceTimesheet where N_FormID=@N_FormID and N_CompanyID=@N_CompanyID and D_DateFrom=@D_DateFrom and D_DateTo=@D_DateTo) GROUP BY N_CompanyID, N_ProjectID, X_ProjectName, X_ProjectCode";
 
             try
             {
@@ -590,41 +604,6 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-
-        [HttpGet("combinedPONoList")]
-        public ActionResult GetCombinedPONoList(int nFnYearID)
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-
-            Params.Add("@N_CompanyID", myFunctions.GetCompanyID(User));
-            Params.Add("@N_FnyearID", nFnYearID);
-
-            string sqlCommandText = "select * from vw_CombinedPOListforVST where N_CompanyID=@N_CompanyID and N_FnYearID=@N_FnyearID";
-
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(dt));
-                }
-            }
-            catch (Exception e)
-            {
-                return Ok(_api.Error(User, e));
-            }
-        }
-
     }
 }
     
