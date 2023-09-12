@@ -84,6 +84,7 @@ namespace SmartxAPI.Controllers
             int nVoucherID = 0;
             string sqlCommandText = "", sqlCommandText2 = "", sqlQry = "";
 
+
             if (nLanguageID == 2) AccountField = 1;
 
             Params.Add("@nCompanyID", nCompanyID);
@@ -251,7 +252,10 @@ namespace SmartxAPI.Controllers
                                 break;
                         }
                         MasterTable.Rows[0]["x_VoucherNo"] = InvoiceNo.ToString();
-                    }
+                    } 
+                    
+
+
                     nVoucherID = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherID", MasterTable, connection, transaction);
                     if (nVoucherID <= 0)
                     {

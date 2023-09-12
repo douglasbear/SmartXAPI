@@ -724,6 +724,16 @@ namespace SmartxAPI.Controllers
                     }
                       xVoucherNo = MasterTable.Rows[0]["x_VoucherNo"].ToString();
 
+                      DataTable count = new DataTable();
+                      SortedList Paramss = new SortedList();
+                        string sql = "select * from Inv_PayReceipt where x_VoucherNo='"+xVoucherNo+"' and N_CompanyID="+nCompanyId+"" ;
+                        count = dLayer.ExecuteDataTable(sql, Paramss, connection, transaction);
+                        if(count.Rows.Count > 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, "Voucher Number Already in Use"));
+                        }
+
                
                     MasterTable.Rows[0]["n_UserID"] = myFunctions.GetUserID(User);
                     MasterTable.AcceptChanges();
