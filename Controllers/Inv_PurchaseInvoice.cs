@@ -437,7 +437,7 @@ namespace SmartxAPI.Controllers
                     }
                     if (multipleRentalPO != null && multipleRentalPO != "")
                     {
-                        X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_ServiceSheetID in ("+ServiceSheetID+") and N_POrderID in (" + multipleRentalPO + ")" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                        X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_ServiceSheetID in ("+ xServiceSheetID +") and N_POrderID in (" + multipleRentalPO + ")" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                     }
 
                     //multiple GRN From Invoice
