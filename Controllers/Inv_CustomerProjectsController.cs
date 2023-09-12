@@ -36,12 +36,21 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllProjects(int? nCompanyId, int? nFnYearID)
+        public ActionResult GetAllProjects(int? nCompanyId, int? nFnYearID, int nEmpID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            string sqlCommandText="";
 
-            string sqlCommandText = "select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p2 and X_ProjectCode is not null  order by N_ProjectID desc";
+            if(nEmpID>0)
+            {
+                 sqlCommandText = "select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p2 and X_ProjectCode is not null and x_EmpsID like '%"+nEmpID+"%' or n_ProjectCoordinator ="+nEmpID+" or n_ProjectManager="+nEmpID+" order by N_ProjectID desc";
+                // Criterea=" and x_EmpsID like '%"+nEmpID+"%' or n_ProjectCoordinator ="+nEmpID+" or n_ProjectManager="+nEmpID+"";
+            }
+            else{
+                     sqlCommandText = "select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p2 and X_ProjectCode is not null  order by N_ProjectID desc";
+            }
+      
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearID);
             
@@ -612,9 +621,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
                 if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,N_StatusID,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID,X_Stage,CONVERT(VARCHAR(10), D_EndDate,111) as D_EndDate,N_LastActionID,X_ClosingRemarks,x_TaskSummery,CONVERT(VARCHAR(10), D_DueDate,111) as D_DueDate,X_ProjectManager from vw_InvProjectDashBoard where N_CompanyID=@p1 "+Criterea + Pattern  + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,N_StatusID,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID,X_Stage,CONVERT(VARCHAR(10), D_EndDate,111) as D_EndDate,N_LastActionID,X_ClosingRemarks,x_TaskSummery,CONVERT(VARCHAR(10), D_DueDate,111) as D_DueDate,X_ProjectManager,N_ProjectCoordinator,N_ProjectManager,x_EmpsID from vw_InvProjectDashBoard where N_CompanyID=@p1 "+Criterea + Pattern  + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,N_StatusID,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID,X_Stage,CONVERT(VARCHAR(10), D_EndDate,111) as D_EndDate,N_LastActionID,X_ClosingRemarks,x_TaskSummery,CONVERT(VARCHAR(10), D_DueDate,111) as D_DueDate,X_ProjectManager from vw_InvProjectDashBoard where N_CompanyID=@p1 " +Criterea + Pattern + Searchkey + " and N_ProjectID not in (select top(" + Count + ") N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Pattern + Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,N_StatusID,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID,X_Stage,CONVERT(VARCHAR(10), D_EndDate,111) as D_EndDate,N_LastActionID,X_ClosingRemarks,x_TaskSummery,CONVERT(VARCHAR(10), D_DueDate,111) as D_DueDate,X_ProjectManager,N_ProjectCoordinator,N_ProjectManager,x_EmpsID from vw_InvProjectDashBoard where N_CompanyID=@p1 " +Criterea + Pattern + Searchkey + " and N_ProjectID not in (select top(" + Count + ") N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Pattern + Searchkey + xSortBy + " ) " + xSortBy;
                Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();

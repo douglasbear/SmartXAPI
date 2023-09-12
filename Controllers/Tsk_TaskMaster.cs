@@ -1243,7 +1243,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("taskview")]
-        public ActionResult GetTaskview(int nUserID,int nTeamID,int nType)
+        public ActionResult GetTaskview(int nUserID,int nTeamID,int nType, int nProjectID, int nEmpID,int nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -1252,7 +1252,12 @@ namespace SmartxAPI.Controllers
             string sqlCommandText="";
             if((nUserID==0&&nTeamID==0))
                 sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID=-1  and n_assigneeID="+nUserID;
-            if(nType==0)
+
+            if((nProjectID>0))
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + "  and n_ProjectID="+nProjectID;
+            else if(nEmpID>0)
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_ProjectID in (select n_ProjectID from Vw_InvCustomerProjects where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "  and X_ProjectCode is not null and x_EmpsID like '%"+nEmpID+"%' or n_ProjectCoordinator =" + nEmpID + " or n_ProjectManager=" + nEmpID + ")";  
+            else if(nType==0)
                 sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_assigneeID="+nUserID;    
             else if(nTeamID>0 && nType==1 && nUserID>0)
                 sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and N_UserMappingID="+nTeamID +" and n_assigneeID="+nUserID;
