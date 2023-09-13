@@ -401,16 +401,16 @@ namespace SmartxAPI.Controllers
 
                     if (Count == 0)
                     {
-                        sqlOverDueList = "select top(" + nSizeperpage + ") * from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID in (" + UsersIDs + ") and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) < '" + d_Date + "'"+critiria+" order by N_PriorityID asc";
+                        sqlOverDueList = "select top(" + nSizeperpage + ") * from [vw_Tsk_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID in (" + UsersIDs + ") and  x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) < '" + d_Date + "'"+critiria+" order by N_PriorityID asc";
                     }
                     else
                     {
-                        sqlOverDueList = "select top(" + nSizeperpage + ") * from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID in (" + UsersIDs + ")  and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) < '" + d_Date + "'"+critiria+" and N_TaskID not in (select top(" + Count + ") N_TaskID from [vw_TaskCurrentStatus] where  N_CompanyID=" + nCompanyID + " and N_AssigneeID in (" + UsersIDs + ") and  D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) < '" + d_Date + "'"+critiria+" order by N_PriorityID asc ) order by N_PriorityID asc";
+                        sqlOverDueList = "select top(" + nSizeperpage + ") * from [vw_Tsk_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID in (" + UsersIDs + ")  and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) < '" + d_Date + "'"+critiria+" and N_TaskID not in (select top(" + Count + ") N_TaskID from [vw_Tsk_TaskCurrentStatus] where  N_CompanyID=" + nCompanyID + " and N_AssigneeID in (" + UsersIDs + ") and  D_TaskDate>0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) < '" + d_Date + "'"+critiria+" order by N_PriorityID asc ) order by N_PriorityID asc";
                     }
 
                     OverDueTasks = dLayer.ExecuteDataTable(sqlOverDueList, Params, connection);
                     OverDueTasks = api.Format(OverDueTasks, "OverDueTasks");
-                    string sqlCommandCount1 = "select count(1) as N_Count from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID in (" + UsersIDs + ") and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) < '" + d_Date + "'"+critiria;
+                    string sqlCommandCount1 = "select count(1) as N_Count from [vw_Tsk_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID in (" + UsersIDs + ") and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) < '" + d_Date + "'"+critiria;
                     DataTable Summary1 = dLayer.ExecuteDataTable(sqlCommandCount1, Params, connection);
                     string TotalCount1 = "0";
                     if (Summary1.Rows.Count > 0)
