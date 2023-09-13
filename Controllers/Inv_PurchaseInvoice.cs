@@ -305,7 +305,7 @@ namespace SmartxAPI.Controllers
 
                 if (nPurchaseNO != null)
 
-                {
+                     {
                     Params.Add("@PurchaseNo", nPurchaseNO);
                     X_MasterSql = "select * from vw_Inv_PurchaseDisp where N_CompanyID=@CompanyID and X_InvoiceNo=@PurchaseNo and N_FnYearID=@YearID and X_TransType=@TransType" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                 }
