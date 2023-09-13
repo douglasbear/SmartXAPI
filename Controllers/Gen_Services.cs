@@ -93,6 +93,18 @@ namespace SmartxAPI.Controllers
                         masterTable = "Inv_Location";
                         column = "X_LocationCode";
                     }
+                    if (formID == 66)
+                    {
+                        masterTable = "Inv_PayReceipt";
+                        column = "X_VoucherNo";
+                    }
+                    if (formID == 67)
+                    {
+                        masterTable = "Inv_PayReceipt";
+                        column = "X_VoucherNo";
+                    }
+
+
 
 
 

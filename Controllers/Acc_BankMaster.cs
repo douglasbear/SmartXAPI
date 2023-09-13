@@ -34,21 +34,21 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetBankList(int isCompany,int nFnYearID)
+        public ActionResult GetBankList(int isCompany, int nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyID=myFunctions.GetCompanyID(User);
-            Params.Add("@nCompanyID",nCompanyID);
-            Params.Add("@isCompany",isCompany);
-            Params.Add("@nFnYearID",nFnYearID);
-            string sqlCommandText="select N_CompanyID,N_BankID,X_BankCode,X_BankName,X_BankNameLocale,N_LedgerID,N_CountryID from Acc_BankMaster where N_CompanyID=@nCompanyID  and B_isCompany=@isCompany and N_FnYearID=@nFnYearID order by X_BankCode";
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@isCompany", isCompany);
+            Params.Add("@nFnYearID", nFnYearID);
+            string sqlCommandText = "select N_CompanyID,N_BankID,X_BankCode,X_BankName,X_BankNameLocale,N_LedgerID,N_CountryID from Acc_BankMaster where N_CompanyID=@nCompanyID  and B_isCompany=@isCompany and N_FnYearID=@nFnYearID order by X_BankCode";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -62,13 +62,13 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
         [HttpPost("save")]
-        public ActionResult SaveData([FromBody]DataSet ds)
-        { 
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -78,61 +78,61 @@ namespace SmartxAPI.Controllers
                     DataTable MasterTable;
                     MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
-                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-                int nBankID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BankID"].ToString());
-                int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-                string logo = myFunctions.ContainColumn("i_Logo", MasterTable) ? MasterTable.Rows[0]["i_Logo"].ToString() : "";    
-                string xBankCode = MasterTable.Rows[0]["x_BankCode"].ToString();
-                   string xBankCodeRef = MasterTable.Rows[0]["x_BankCodeRef"].ToString();
+                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                    int nBankID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BankID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                    string logo = myFunctions.ContainColumn("i_Logo", MasterTable) ? MasterTable.Rows[0]["i_Logo"].ToString() : "";
+                    string xBankCode = MasterTable.Rows[0]["x_BankCode"].ToString();
+                    string xBankCodeRef = MasterTable.Rows[0]["x_BankCodeRef"].ToString();
 
-                 Byte[] logoBitmap = new Byte[logo.Length];
-                 logoBitmap = Convert.FromBase64String(logo);
-                 if (myFunctions.ContainColumn("i_Logo", MasterTable))
+                    Byte[] logoBitmap = new Byte[logo.Length];
+                    logoBitmap = Convert.FromBase64String(logo);
+                    if (myFunctions.ContainColumn("i_Logo", MasterTable))
                         MasterTable.Columns.Remove("i_Logo");
-                 MasterTable.AcceptChanges();
+                    MasterTable.AcceptChanges();
 
-                //  if (xBankCode == "@Auto")
-                //     {
-                //         Params.Add("N_CompanyID", nCompanyID);
-                //         Params.Add("N_YearID", nFnYearID);
-                //         Params.Add("N_FormID", this.FormID);
-                //          xBankCode = dLayer.GetAutoNumber("Acc_BankMaster", "x_BankCode", Params, connection, transaction);
-                //         if (xBankCode == "") { transaction.Rollback();return Ok(_api.Error(User,"Unable to generate Bank Code")); }
-                //         MasterTable.Rows[0]["x_BankCode"] = xBankCode;
-                //     }
-                //     else
-                //     {
-                //         dLayer.DeleteData("Acc_BankMaster", "N_BankID", nBankID, "", connection, transaction);
-                //     }
-                //     if(xBankCodeRef=="@Auto")
-                //     {
-                //           xBankCode = dLayer.GetAutoNumber("Acc_BankMaster", "x_BankCode", Params, connection, transaction);
-                //          MasterTable.Rows[0]["x_BankCode"] = xBankCodeRef;
-                //     }
+                    //  if (xBankCode == "@Auto")
+                    //     {
+                    //         Params.Add("N_CompanyID", nCompanyID);
+                    //         Params.Add("N_YearID", nFnYearID);
+                    //         Params.Add("N_FormID", this.FormID);
+                    //          xBankCode = dLayer.GetAutoNumber("Acc_BankMaster", "x_BankCode", Params, connection, transaction);
+                    //         if (xBankCode == "") { transaction.Rollback();return Ok(_api.Error(User,"Unable to generate Bank Code")); }
+                    //         MasterTable.Rows[0]["x_BankCode"] = xBankCode;
+                    //     }
+                    //     else
+                    //     {
+                    //         dLayer.DeleteData("Acc_BankMaster", "N_BankID", nBankID, "", connection, transaction);
+                    //     }
+                    //     if(xBankCodeRef=="@Auto")
+                    //     {
+                    //           xBankCode = dLayer.GetAutoNumber("Acc_BankMaster", "x_BankCode", Params, connection, transaction);
+                    //          MasterTable.Rows[0]["x_BankCode"] = xBankCodeRef;
+                    //     }
 
-                if (xBankCode == "@Auto")
+                    if (xBankCode == "@Auto")
                     {
-                         Params.Add("N_CompanyID", nCompanyID);
-                         Params.Add("N_YearID", nFnYearID);
-                         Params.Add("N_FormID", this.FormID);
-                          xBankCode = dLayer.GetAutoNumber("Acc_BankMaster", "x_BankCode", Params, connection, transaction);
-                       if (xBankCode == "")
-                           {
+                        Params.Add("N_CompanyID", nCompanyID);
+                        Params.Add("N_YearID", nFnYearID);
+                        Params.Add("N_FormID", this.FormID);
+                        xBankCode = dLayer.GetAutoNumber("Acc_BankMaster", "x_BankCode", Params, connection, transaction);
+                        if (xBankCode == "")
+                        {
                             transaction.Rollback();
-                             return Ok(_api.Error(User, "Unable to generate Bank Code"));
-                            }
-                            MasterTable.Rows[0]["x_BankCode"] = xBankCode;
-                          }
+                            return Ok(_api.Error(User, "Unable to generate Bank Code"));
+                        }
+                        MasterTable.Rows[0]["x_BankCode"] = xBankCode;
+                    }
 
-                        if (xBankCodeRef == "@Auto")
-            {
-              xBankCodeRef = xBankCode; // Use the auto-generated value for x_BankCodeRef
-            }
+                    if (xBankCodeRef == "@Auto")
+                    {
+                        xBankCodeRef = xBankCode; // Use the auto-generated value for x_BankCodeRef
+                    }
 
-             MasterTable.Rows[0]["x_BankCodeRef"] = xBankCodeRef;
-                    
-                    nBankID=dLayer.SaveData("Acc_BankMaster","N_BankID",MasterTable,connection,transaction);  
-                      if (nBankID <= 0)
+                    MasterTable.Rows[0]["x_BankCodeRef"] = xBankCodeRef;
+
+                    nBankID = dLayer.SaveData("Acc_BankMaster", "N_BankID", MasterTable, connection, transaction);
+                    if (nBankID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Warning("Unable to save"));
@@ -140,45 +140,50 @@ namespace SmartxAPI.Controllers
                     else
                     {
 
-                    if (logo.Length > 0)
-                    dLayer.SaveImage("Acc_BankMaster", "I_Logo", logoBitmap, "N_BankID", nBankID, connection, transaction);
-                    transaction.Commit();
-                    return Ok(_api.Success("Bank Saved")) ;
-                }
+                        if (logo.Length > 0)
+                            dLayer.SaveImage("Acc_BankMaster", "I_Logo", logoBitmap, "N_BankID", nBankID, connection, transaction);
+                        transaction.Commit();
+                        return Ok(_api.Success("Bank Saved"));
+                    }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
         [HttpGet("details")]
-        public ActionResult GetBankDetails(int nBankID,int nIsCompany)
+        public ActionResult GetBankDetails(int nBankID, int nIsCompany)
         {
-            DataTable dt=new DataTable();
-            SortedList Params=new SortedList();
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText="select * from vw_AccBank_Disp where N_CompanyID=@nCompanyID and N_BankID=@nBankID and B_Iscompany=@nIsCompany";
-            Params.Add("@nCompanyID",nCompanyID);
-            Params.Add("@nBankID",nBankID);
-            Params.Add("@nIsCompany",nIsCompany);
-            try{
+            string sqlCommandText = "select * from vw_AccBank_Disp where N_CompanyID=@nCompanyID and N_BankID=@nBankID and B_Iscompany=@nIsCompany";
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nBankID", nBankID);
+            Params.Add("@nIsCompany", nIsCompany);
+            try
+            {
                 using (SqlConnection connection = new SqlConnection(connectionString))
-                    {
-                        connection.Open();
-                        dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
-                    }
-                    if(dt.Rows.Count==0)
-                        {
-                            return Ok(_api.Notice("No Results Found" ));
-                        }else{
-                            return Ok(_api.Success(dt));
-                        }
-            }catch(Exception e){
-                return Ok(_api.Error(User,e));
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
             }
-          
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+
         }
 
         [HttpDelete("delete")]
@@ -193,17 +198,17 @@ namespace SmartxAPI.Controllers
                     Results = dLayer.DeleteData("Acc_BankMaster", "N_BankID", nBankID, "", connection);
                     if (Results > 0)
                     {
-                        return Ok( _api.Success("Bank deleted"));
+                        return Ok(_api.Success("Bank deleted"));
                     }
                     else
                     {
-                        return Ok(_api.Error(User,"Unable to delete Bank"));
+                        return Ok(_api.Error(User, "Unable to delete Bank"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
