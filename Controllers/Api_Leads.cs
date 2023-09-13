@@ -77,7 +77,7 @@ namespace SmartxAPI.Controllers
                     if (Details.Columns.Contains("product"))
                     {
                         Description = "Product : " + Details.Rows[0]["product"].ToString() ;
-                        MasterTable.Rows[0]["X_Lead"].ToString()= Details.Rows[0]["product"].ToString() + " for " +  Details.Rows[0]["companyname"].ToString();
+                    // MasterTable.Rows[0]["X_Lead"].ToString()= Details.Rows[0]["product"].ToString() + " for " +  Details.Rows[0]["companyname"].ToString();
                     }
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_ProjectDescription", typeof(string), Description);
                     MasterTable.Rows[0]["X_LeadCode"] = LeadCode;

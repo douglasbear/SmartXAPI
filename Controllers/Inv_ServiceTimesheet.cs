@@ -230,8 +230,14 @@ namespace SmartxAPI.Controllers
                     SortedList Result = new SortedList();
                     Result.Add("N_ServiceSheetID", nServiceSheetID);
                     Result.Add("X_ServiceSheetCode", xServiceSheetCode);
-
-                    return Ok(_api.Success(Result, "Service Timesheet saved successfully!"));
+                    if( nFormID== 1145) {
+                        return Ok(_api.Success(Result, " Customer Service Timesheet Saved Successfully!"));
+                    }
+                     else  {
+                        return Ok(_api.Success(Result, " Vendor Service Timesheet Saved Successfully!"));
+                    }
+                    // return Ok(_api.Success("Vendor Service Timesheet deleted"));
+                    
                 }
             }
             catch (Exception ex)
@@ -374,7 +380,14 @@ namespace SmartxAPI.Controllers
                         {
                             dLayer.DeleteData("Inv_ServiceTimesheetItems", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID, connection);
                             dLayer.DeleteData("Inv_ServiceTimesheetDetails", "N_ServiceSheetID", nServiceSheetID, "N_CompanyID =" + nCompanyID, connection);
-                            return Ok(_api.Success("Service Timesheet deleted"));
+                        
+                            if(nFormID==1145) {
+                                return Ok(_api.Success("Customer Service Timesheet Deleted"));
+                            }
+                            else {
+                                return Ok(_api.Success("Vendor Service Timesheet Deleted"));
+                            }
+                            
                         }
                         else
                         {
