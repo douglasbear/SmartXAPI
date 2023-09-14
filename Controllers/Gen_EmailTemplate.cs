@@ -87,54 +87,6 @@ namespace SmartxAPI.Controllers
         }
         [AllowAnonymous]
 
-        public void sendmail()
-    {
-// string clientId = "729af9a3-0fb9-4f4b-a66b-6e31d1379ece";
-//         string clientSecret = "728adfb6-8744-467b-bec3-799527f9b51d";
-//         string tenantId = "5eb03860-d5d1-4545-a3d0-3543416c4fcc";
-
-//         IConfidentialClientApplication confidentialClientApplication = ConfidentialClientApplicationBuilder
-//             .Create(clientId)
-//             .WithClientSecret(clientSecret)
-//             .WithAuthority(new Uri($"https://login.microsoftonline.com/{tenantId}"))
-//             .Build();
-
-//         ClientCredentialProvider authProvider = new ClientCredentialProvider(confidentialClientApplication);
-
-//         var graphServiceClient = new GraphServiceClient(authProvider);
-
-//         var message = new Message
-//         {
-//             Subject = "Test Email",
-//             Body = new ItemBody
-//             {
-//                 ContentType = BodyType.Text,
-//                 Content = "This is a test email sent from C#."
-//             },
-//             ToRecipients = new List<Recipient>
-//             {
-//                 new Recipient
-//                 {
-//                     EmailAddress = new EmailAddress
-//                     {
-//                         Address = "sanjaykrishna954@gmail.com"
-//                     }
-//                 }
-//             }
-//         };
-
-//         try
-//         {
-//             await graphServiceClient.Me.SendMail(message, true).Request().PostAsync();
-//             Console.WriteLine("Email sent successfully.");
-//         }
-//         catch (Exception ex)
-//         {
-//             Console.WriteLine($"Error: {ex.Message}");
-//         }
-    }
-
-
         [HttpPost("send")]
         public ActionResult SendData([FromBody] DataSet ds)
         {
@@ -166,7 +118,6 @@ namespace SmartxAPI.Controllers
                     object companypassword = "";
                     object Company, Oppportunity, Contact, CustomerID;
                     int nCompanyId = myFunctions.GetCompanyID(User);
-                    sendmail();
 
                     companyemail = dLayer.ExecuteScalar("select X_Email from vw_MailGeneralScreenSettings where n_companyid="+companyid, Params, connection, transaction);
                     companypassword = dLayer.ExecuteScalar("select X_Password from vw_MailGeneralScreenSettings where n_companyid="+companyid, Params, connection, transaction);
