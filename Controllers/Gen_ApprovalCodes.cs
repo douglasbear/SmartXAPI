@@ -189,7 +189,7 @@ namespace SmartxAPI.Controllers
                         }
                         X_ApprovalCode = DocNo;
 
-
+                        //TEST
                         if (X_ApprovalCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Approval Code")); }
                         MasterTable.Rows[0]["X_ApprovalCode"] = X_ApprovalCode;
 
