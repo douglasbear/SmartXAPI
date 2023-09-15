@@ -922,7 +922,7 @@ namespace SmartxAPI.Controllers
                 SortedList Result = new SortedList();
                 Result.Add("n_POrderID", N_POrderID);
                 Result.Add("x_POrderNo", X_POrderNo);
-                Result.Add("b_IsSaveDraft", myFunctions.getIntVAL(IsSaveDraft.ToString()));
+                Result.Add("b_IsSaveDraft", myFunctions.getBoolVAL(IsSaveDraft.ToString()));
                 return Ok(api.Success(Result, "Purchase Order Saved"));
             }
             catch (Exception ex)
