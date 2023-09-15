@@ -1262,6 +1262,10 @@ namespace SmartxAPI.Controllers
                         {
                             return Ok(_api.Success("Book Order " + status + " Successfully")); 
                         }
+                        if(nFormID==1571)
+                        {
+                            return Ok(_api.Success("Job Order " + status + " Successfully"));
+                        }
                         else
                             return Ok(_api.Success("Sales Order " + status + " Successfully"));
                                                
