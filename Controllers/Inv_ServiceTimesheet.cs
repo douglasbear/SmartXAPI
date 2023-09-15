@@ -533,6 +533,138 @@ namespace SmartxAPI.Controllers
 
         }
 
+        [HttpGet("combinedVendorList")]
+        public ActionResult GetCombinedVendorList(int nProjectID, int nFormID, DateTime dDateFrom, DateTime dDateTo)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            string sqlCommandText = "";
+            Params.Add("@N_CompanyID", myFunctions.GetCompanyID(User));
+            Params.Add("@N_ProjectID", nProjectID);
+            Params.Add("@N_FormID", nFormID);
+            Params.Add("@D_DateFrom", dDateFrom);
+            Params.Add("@D_DateTo", dDateTo);
+
+            if (nProjectID > 0)
+                sqlCommandText = "select N_CompanyID, N_VendorID, X_VendorName, X_VendorName_Ar, X_VendorCode, N_CurrencyID, N_ExchangeRate from vw_PurchaseOrderReceive where N_CompanyID=@N_CompanyID and N_ProjectID=@N_ProjectID and ((D_ReceiveDate<=@D_DateFrom) or (D_ReceiveDate>=@D_DateFrom AND D_ReceiveDate<=@D_DateTo)) AND ISNULL(D_ReceiveReturnDate,@D_DateFrom)>=@D_DateFrom and N_POrderID NOT IN (select N_POID from Inv_ServiceTimesheet where N_FormID=@N_FormID and N_CompanyID=@N_CompanyID and D_DateFrom=@D_DateFrom and D_DateTo=@D_DateTo) GROUP BY N_CompanyID, N_VendorID, X_VendorName, X_VendorName_Ar, X_VendorCode, N_CurrencyID, N_ExchangeRate";
+            else
+                sqlCommandText = "select N_CompanyID, N_VendorID, X_VendorName, X_VendorName_Ar, X_VendorCode, N_CurrencyID, N_ExchangeRate from vw_PurchaseOrderReceive where N_CompanyID=@N_CompanyID and ((D_ReceiveDate<=@D_DateFrom) or (D_ReceiveDate>=@D_DateFrom AND D_ReceiveDate<=@D_DateTo)) AND ISNULL(D_ReceiveReturnDate,@D_DateFrom)>=@D_DateFrom and N_POrderID NOT IN (select N_POID from Inv_ServiceTimesheet where N_FormID=@N_FormID and N_CompanyID=@N_CompanyID and D_DateFrom=@D_DateFrom and D_DateTo=@D_DateTo) GROUP BY N_CompanyID, N_VendorID, X_VendorName, X_VendorName_Ar, X_VendorCode, N_CurrencyID, N_ExchangeRate";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+        [HttpGet("combinedProjectList")]
+        public ActionResult GetCombinedProjectList(int nPartyID, int nFormID, DateTime dDateFrom, DateTime dDateTo)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            string sqlCommandText = "";
+            Params.Add("@N_CompanyID", myFunctions.GetCompanyID(User));
+            Params.Add("@N_PartyID", nPartyID);
+            Params.Add("@N_FormID", nFormID);
+            Params.Add("@D_DateFrom", dDateFrom);
+            Params.Add("@D_DateTo", dDateTo);
+            
+            if (nFormID == 1147)
+            {
+                if (nPartyID > 0)
+                    sqlCommandText = "select N_CompanyID, N_ProjectID, X_ProjectName, X_ProjectCode from vw_PurchaseOrderReceive where N_CompanyID=@N_CompanyID and ISNULL(N_ProjectID, 0)>0 and N_VendorID=@N_PartyID and ((D_ReceiveDate<=@D_DateFrom) or (D_ReceiveDate>=@D_DateFrom AND D_ReceiveDate<=@D_DateTo)) AND ISNULL(D_ReceiveReturnDate,@D_DateFrom)>=@D_DateFrom and N_POrderID NOT IN (select N_POID from Inv_ServiceTimesheet where N_FormID=@N_FormID and N_CompanyID=@N_CompanyID and D_DateFrom=@D_DateFrom and D_DateTo=@D_DateTo) GROUP BY N_CompanyID, N_ProjectID, X_ProjectName, X_ProjectCode";
+                else
+                    sqlCommandText = "select N_CompanyID, N_ProjectID, X_ProjectName, X_ProjectCode from vw_PurchaseOrderReceive where N_CompanyID=@N_CompanyID and ISNULL(N_ProjectID, 0)>0 and ((D_ReceiveDate<=@D_DateFrom) or (D_ReceiveDate>=@D_DateFrom AND D_ReceiveDate<=@D_DateTo)) AND ISNULL(D_ReceiveReturnDate,@D_DateFrom)>=@D_DateFrom and N_POrderID NOT IN (select N_POID from Inv_ServiceTimesheet where N_FormID=@N_FormID and N_CompanyID=@N_CompanyID and D_DateFrom=@D_DateFrom and D_DateTo=@D_DateTo) GROUP BY N_CompanyID, N_ProjectID, X_ProjectName, X_ProjectCode";
+            }
+            else
+            {
+                if (nPartyID > 0)
+                    sqlCommandText = "select N_CompanyID, N_ProjectID, X_ProjectName, X_ProjectCode from vw_SalesorderDelivery where N_CompanyID=@N_CompanyID and ISNULL(N_ProjectID, 0)>0 and N_CustomerID=@N_PartyID and ((D_DeliveryDate<=@D_DateFrom) or (D_DeliveryDate>=@D_DateFrom AND D_DeliveryDate<=@D_DateTo)) AND ISNULL(D_DeliveryReturnDate,@D_DateFrom)>=@D_DateFrom and N_SalesOrderId NOT IN (select N_SOID from Inv_ServiceTimesheet where N_FormID=@N_FormID and N_CompanyID=@N_CompanyID and D_DateFrom=@D_DateFrom and D_DateTo=@D_DateTo) GROUP BY N_CompanyID, N_ProjectID, X_ProjectName, X_ProjectCode";
+                else
+                    sqlCommandText = "select N_CompanyID, N_ProjectID, X_ProjectName, X_ProjectCode from vw_SalesorderDelivery where N_CompanyID=@N_CompanyID and ISNULL(N_ProjectID, 0)>0 and ((D_DeliveryDate<=@D_DateFrom) or (D_DeliveryDate>=@D_DateFrom AND D_DeliveryDate<=@D_DateTo)) AND ISNULL(D_DeliveryReturnDate,@D_DateFrom)>=@D_DateFrom and N_SalesOrderId NOT IN (select N_SOID from Inv_ServiceTimesheet where N_FormID=@N_FormID and N_CompanyID=@N_CompanyID and D_DateFrom=@D_DateFrom and D_DateTo=@D_DateTo) GROUP BY N_CompanyID, N_ProjectID, X_ProjectName, X_ProjectCode";
+            }
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+        [HttpGet("combinedCustomerList")]
+        public ActionResult GetCombinedCustomerList(int nProjectID, int nFormID, DateTime dDateFrom, DateTime dDateTo)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            string sqlCommandText = "";
+            Params.Add("@N_CompanyID", myFunctions.GetCompanyID(User));
+            Params.Add("@N_ProjectID", nProjectID);
+            Params.Add("@N_FormID", nFormID);
+            Params.Add("@D_DateFrom", dDateFrom);
+            Params.Add("@D_DateTo", dDateTo);
+
+            if (nProjectID > 0)
+                sqlCommandText = "select N_CompanyID, N_CustomerID, X_CustomerName, X_CustomerName_Ar, X_CustomerCode, N_CurrencyID, N_ExchangeRate from vw_SalesorderDelivery where N_CompanyID=@N_CompanyID and N_ProjectID=@N_ProjectID and ((D_DeliveryDate<=@D_DateFrom) or (D_DeliveryDate>=@D_DateFrom AND D_DeliveryDate<=@D_DateTo)) AND ISNULL(D_DeliveryReturnDate,@D_DateFrom)>=@D_DateFrom and N_SalesOrderId NOT IN (select N_SOID from Inv_ServiceTimesheet where N_FormID=@N_FormID and N_CompanyID=@N_CompanyID and D_DateFrom=@D_DateFrom and D_DateTo=@D_DateTo) GROUP BY N_CompanyID, N_CustomerID, X_CustomerName, X_CustomerName_Ar, X_CustomerCode, N_CurrencyID, N_ExchangeRate";
+            else
+                sqlCommandText = "select N_CompanyID, N_CustomerID, X_CustomerName, X_CustomerName_Ar, X_CustomerCode, N_CurrencyID, N_ExchangeRate from vw_SalesorderDelivery where N_CompanyID=@N_CompanyID and ((D_DeliveryDate<=@D_DateFrom) or (D_DeliveryDate>=@D_DateFrom AND D_DeliveryDate<=@D_DateTo)) AND ISNULL(D_DeliveryReturnDate,@D_DateFrom)>=@D_DateFrom and N_SalesOrderId NOT IN (select N_SOID from Inv_ServiceTimesheet where N_FormID=@N_FormID and N_CompanyID=@N_CompanyID and D_DateFrom=@D_DateFrom and D_DateTo=@D_DateTo) GROUP BY N_CompanyID, N_CustomerID, X_CustomerName, X_CustomerName_Ar, X_CustomerCode, N_CurrencyID, N_ExchangeRate";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
     }
 }
     

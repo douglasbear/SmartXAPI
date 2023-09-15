@@ -308,7 +308,7 @@ namespace SmartxAPI.Controllers
 
                 if (nPurchaseNO != null)
 
-                {
+                     {
                     Params.Add("@PurchaseNo", nPurchaseNO);
                     X_MasterSql = "select * from vw_Inv_PurchaseDisp where N_CompanyID=@CompanyID and X_InvoiceNo=@PurchaseNo and N_FnYearID=@YearID and X_TransType=@TransType" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                 }
@@ -440,7 +440,7 @@ namespace SmartxAPI.Controllers
                     }
                     if (multipleRentalPO != null && multipleRentalPO != "")
                     {
-                        X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_ServiceSheetID in (" + ServiceSheetID + ") and N_POrderID in (" + multipleRentalPO + ")" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                        X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_ServiceSheetID in ("+ xServiceSheetID +") and N_POrderID in (" + multipleRentalPO + ")" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                     }
 
                     //multiple GRN From Invoice
@@ -1545,7 +1545,7 @@ namespace SmartxAPI.Controllers
                                     }
                                     else
                                     {
-                                        if (!myFunctions.UpdateTxnStatus(nCompanyID, n_POrderID, 82, false, dLayer, connection, transaction))
+                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,true,dLayer,connection,transaction))
                                         {
                                             transaction.Rollback();
                                             return Ok(_api.Error(User, "Unable To Update Txn Status"));

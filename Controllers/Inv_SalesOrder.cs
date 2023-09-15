@@ -652,7 +652,7 @@ namespace SmartxAPI.Controllers
                     int N_FormID = 0;
                     int N_NextApproverID = 0;
                     int N_SaveDraft = myFunctions.getIntVAL(MasterRow["b_IsSaveDraft"].ToString());
-                     int nDivisionID = 0;
+                    int nDivisionID = 0;
                     if (MasterTable.Columns.Contains("n_DivisionID"))
                     {
                        nDivisionID=myFunctions.getIntVAL(MasterRow["n_DivisionID"].ToString());
@@ -754,6 +754,8 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", N_FnYearID);
                         Params.Add("N_FormID", N_FormID);
                         Params.Add("N_BranchID", N_BranchID);
+                        if(nDivisionID!=0)
+                            Params.Add("N_DivisionID", nDivisionID);
                         x_OrderNo = dLayer.GetAutoNumber("Inv_SalesOrder", "X_OrderNo", Params, connection, transaction);
                         xButtonAction="Insert"; 
                         if (x_OrderNo == "")

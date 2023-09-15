@@ -278,9 +278,18 @@ namespace SmartxAPI.Controllers
                         if (InPurchase != null)
                             MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), "Invoice Processed");
                     }
+                    bool Invoice2Enable = false;
+                    object Invoice2Enableobj = dLayer.ExecuteScalar("select 1 from gen_printtemplates where N_CompanyID =" + nCompanyId + " and N_FormID=1793 and X_RptName<>'' and N_UsercategoryID=" + myFunctions.GetUserCategory(User), connection);
+                    if (Invoice2Enableobj != null)
+                        Invoice2Enable = true;
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "Invoice2Enable", typeof(bool), Invoice2Enable);
 
                     MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
+
+
+
+
 
                     //PurchaseOrder Details
 
@@ -651,6 +660,8 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", Master["n_FnYearId"].ToString());
                         Params.Add("N_FormID", this.FormID);
                         Params.Add("N_BranchID", Master["n_BranchID"].ToString());
+                        // Params.Add("N_BranchID",Master["n_BranchID"].ToString());
+                        Params.Add("N_DivisionID",nDivisionID);
 
                         X_POrderNo = dLayer.GetAutoNumber("Inv_PurchaseOrder", "x_POrderNo", Params, connection, transaction);
                         xButtonAction = "Insert";
