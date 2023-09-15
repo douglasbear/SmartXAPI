@@ -528,6 +528,7 @@ namespace SmartxAPI.Controllers
                 int nDivisionID = 0;
                 int N_NextApproverID = 0;
                 int N_SaveDraft = 0;
+                object IsSaveDraft="0";
               
 
                 if (ds.Tables.Contains("detailsImport"))
@@ -913,11 +914,15 @@ namespace SmartxAPI.Controllers
                        myFunctions.LogScreenActivitys(N_FnYearID,N_POrderID,X_POrderNo,82,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
                         
                      N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "Purchase Order", N_POrderID, X_POrderNo, 1, "", 0, "",0, User, dLayer, connection, transaction);
+                    IsSaveDraft = dLayer.ExecuteScalar("Select b_IsSaveDraft From Inv_PurchaseOrder Where  N_CompanyID=" + nCompanyId + " and N_POrderID=" + N_POrderID , connection,transaction);
+                
                     transaction.Commit();
                 }
+
                 SortedList Result = new SortedList();
                 Result.Add("n_POrderID", N_POrderID);
                 Result.Add("x_POrderNo", X_POrderNo);
+                Result.Add("b_IsSaveDraft", myFunctions.getIntVAL(IsSaveDraft.ToString()));
                 return Ok(api.Success(Result, "Purchase Order Saved"));
             }
             catch (Exception ex)
