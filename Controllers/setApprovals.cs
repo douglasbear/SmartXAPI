@@ -222,7 +222,7 @@ namespace SmartxAPI.Controllers
                     if (n_ModuleID>0)
                     {
                         
-                         dLayer.DeleteData("Sec_ApprovalSettings_General", "N_ModuleID", n_ModuleID, "", connection,transaction);
+                         dLayer.DeleteData("Sec_ApprovalSettings_General", "N_ModuleID", n_ModuleID, "N_CompanyID ="+N_CompanyID, connection,transaction);
 
                     }
                     n_SecApprovalID = dLayer.SaveData("Sec_ApprovalSettings_General", "N_SecApprovalID", "", "", DetailTable, connection, transaction);
@@ -249,13 +249,14 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nModuleID)
         {
             int Results = 0;
+            int nCompanyId = myFunctions.GetCompanyID(User);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     
                     connection.Open();
-                    Results = dLayer.DeleteData("Sec_ApprovalSettings_General", "N_ModuleID", nModuleID, "", connection);
+                    Results = dLayer.DeleteData("Sec_ApprovalSettings_General", "N_ModuleID", nModuleID, "N_CompanyID ="+nCompanyId, connection);
                     if (Results > 0)
                     {
                     
