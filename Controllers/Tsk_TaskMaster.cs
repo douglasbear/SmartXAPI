@@ -1280,7 +1280,9 @@ namespace SmartxAPI.Controllers
              if((nProjectID>0))
                 sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + "  and n_ProjectID="+nProjectID;
             else if(nEmpID>0)
-                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_ProjectID in (select n_ProjectID from Vw_InvCustomerProjects where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "  and X_ProjectCode is not null and x_EmpsID like '%"+nEmpID+"%' or n_ProjectCoordinator =" + nEmpID + " or n_ProjectManager=" + nEmpID + ")";  
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_ProjectID in (select n_ProjectID from Vw_InvCustomerProjects"+
+               " where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "  and X_ProjectCode is not null and x_EmpsID like '%"+nEmpID+"%' or n_ProjectCoordinator =" + nEmpID + " or n_ProjectManager=" + nEmpID + ")"+
+               " or n_ProjectID in (select n_ProjectID from Tsk_ProjectSettingsDetails where n_UserID="+nUserID+" and n_CompanyID=" + nCompanyID + " and b_View=1)";  
            
             else if(nType==0)
                 sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_assigneeID="+nUserID;    
