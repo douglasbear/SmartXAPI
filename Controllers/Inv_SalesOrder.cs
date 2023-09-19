@@ -802,6 +802,7 @@ namespace SmartxAPI.Controllers
                     //MasterTable.Columns.Add("b_IsService", typeof(bool)); 
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+                    
 
                     n_SalesOrderId = dLayer.SaveData("Inv_SalesOrder", "N_SalesOrderID", DupCriteria, "", MasterTable, connection, transaction);
                     if (n_SalesOrderId <= 0)
