@@ -729,6 +729,7 @@ namespace SmartxAPI.Controllers
                     }
                       
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);  
+                    MasterTable.Rows[0]["N_UserID"] = myFunctions.GetUserID(User);
                     N_POrderID = dLayer.SaveData("Inv_PurchaseOrder", "n_POrderID", MasterTable, connection, transaction);
                     if (N_POrderID <= 0)
                     {
