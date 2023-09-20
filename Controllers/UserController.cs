@@ -111,14 +111,23 @@ namespace SmartxAPI.Controllers
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet("list")]
-        public ActionResult GetUserList()
+        public ActionResult GetUserList(int userMappingID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "Sp_UserList";
+            string sqlCommandText = "";
             Params.Add("N_CompanyID", nCompanyId);
-            // Params.Add("N_UserId", userid);
+            // Params.Add("N_UserId", userid);           
+            if (userMappingID>0)
+            {
+            Params.Add("N_UserMapID", userMappingID);
+            sqlCommandText = "Sp_TeamUserList";
+
+            }
+            else
+            sqlCommandText = "Sp_UserList";
+            
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

@@ -620,9 +620,9 @@ namespace SmartxAPI.Controllers
                 Result.Add("X_MRNNo", GRNNo);
 
                 if (n_FormID == 1593)
-                    return Ok(_api.Success(Result, "Rental MRN Saved"));
+                    return Ok(_api.Success(Result, "Rental MRN Successfully Saved"));
                 else
-                    return Ok(_api.Success(Result, "Goods Receive Note Saved"));
+                    return Ok(_api.Success(Result, "Material Receipt Note Successfully Saved"));
             }
             catch (Exception ex)
             {
@@ -674,7 +674,7 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nCompanyID", nCompanyID);
                     string Sql = "select N_VendorID,N_FnYearID,X_MRNNo from Inv_MRN where N_MRNID=@nTransID and N_CompanyID=@nCompanyID";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
-                     string xButtonAction = "Delete";
+                     string xButtonAction = " Delete";
                     if (TransData.Rows.Count == 0)
                     {
                         return Ok(_api.Error(User,"Transaction not Found"));
@@ -760,7 +760,7 @@ namespace SmartxAPI.Controllers
                                     }
                                     else
                                     {
-                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
+                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,true,dLayer,connection,transaction))
                                         {
                                             transaction.Rollback();
                                             return Ok(_api.Error(User, "Unable To Update Txn Status"));
@@ -770,7 +770,10 @@ namespace SmartxAPI.Controllers
                                 tempPOrderID=n_POrderID;
                             };
                         transaction.Commit();
-                        return Ok(_api.Success("Goods Receive Note deleted"));
+                        if (nFormID == 1593 ) 
+                        return Ok(_api.Success("Rental MRN Deleted"));
+                        else 
+                        return Ok(_api.Success("Material Receipt Note Deleted"));
                     }
                     else
                     {

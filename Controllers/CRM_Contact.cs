@@ -185,7 +185,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select  * from vw_CRMContact where N_CompanyID=@p1";
+            string sqlCommandText = "select  * from vw_CRMContactList where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
             try
             {
