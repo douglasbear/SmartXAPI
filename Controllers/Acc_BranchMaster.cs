@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;een
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System;
@@ -20,6 +20,7 @@ namespace SmartxAPI.Controllers
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
+        private readonly IApiFunctions api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly string masterDBConnectionString;
@@ -157,6 +158,8 @@ namespace SmartxAPI.Controllers
                     string xLocationName = MasterTable.Rows[0]["x_BranchName"].ToString();
                     string logo = myFunctions.ContainColumn("i_Logo", MasterTable) ? MasterTable.Rows[0]["i_Logo"].ToString() : "";
                     bool bDefaultBranch = false;
+                    string xButtonAction = "";
+                    string ipAddress = "";
                     if (MasterTable.Columns.Contains("b_DefaultBranch"))
                     {
                         bDefaultBranch = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_DefaultBranch"].ToString());
@@ -185,11 +188,11 @@ namespace SmartxAPI.Controllers
                          if(limit==null){limit="0";}
                          if (BranchCount != null && limit != null)
                          {
-                            if (myFunctions.getIntVAL(BranchCount.ToString()) >= myFunctions.getIntVAL(limit.ToString()))
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, "Branch Limit exceeded!!!"));
-                            }
+                            // if (myFunctions.getIntVAL(BranchCount.ToString()) >= myFunctions.getIntVAL(limit.ToString()))
+                            // {
+                            //     transaction.Rollback();
+                            //     return Ok(_api.Error(User, "Branch Limit exceeded!!!"));
+                            // }
                          }
                         }
                       if(bDefaultBranch==true)
@@ -208,6 +211,8 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xBranchCode = dLayer.GetAutoNumber("Acc_BranchMaster", "x_BranchCode", Params, connection, transaction);
+                        xButtonAction = "Insert";
+                        
                         if (xBranchCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Branch Code")); }
                         MasterTable.Rows[0]["x_BranchCode"] = xBranchCode;
                     }
@@ -215,6 +220,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         dLayer.DeleteData("Acc_BranchMaster", "N_BranchID", nBranchID, "", connection, transaction);
+                        xButtonAction = "Update";
                     }
                 
                     nBranchID = dLayer.SaveData("Acc_BranchMaster", "N_BranchID", MasterTable, connection, transaction);
@@ -293,13 +299,30 @@ namespace SmartxAPI.Controllers
 
                         }
 
+                   
+                    // Activity Log 
+                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    myFunctions.LogScreenActivitys(nFnYearID, nBranchID, xLocationCode , 370 , xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
+                   
+
+
 
                         if (logo.Length > 0)
                             dLayer.SaveImage("Acc_BranchMaster", "I_Logo", logoBitmap, "N_BranchID", nBranchID, connection, transaction);
                         transaction.Commit();
                         return Ok(_api.Success("Branch Saved"));
+                        
+
+
+                               
+              
+                   
                     }
 
+             
 
                 }
             }
@@ -313,39 +336,65 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nBranchID,int nFnYearID)
         {
             int Results = 0;
-
-            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            SortedList ParamList = new SortedList();
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
 
+                    DataTable TransData = new DataTable();
                     // dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    Params.Add("@nBranchID", nBranchID);
+                    ParamList.Add("@nBranchID", nBranchID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
                     int nCompanyId = myFunctions.GetCompanyID(User);
-                    object count = dLayer.ExecuteScalar("select count(1) as N_Count from Vw_Acc_BranchMaster_Disp where N_BranchID=@nBranchID and N_CompanyID=N_CompanyID", Params, connection);
+                    string Sql ="SELECT X_BranchCode FROM Acc_BranchMaster WHERE N_BranchID = @nBranchID AND N_CompanyID = @nCompanyID";
+                    object count = dLayer.ExecuteScalar("select count(1) as N_Count from Vw_Acc_BranchMaster_Disp where N_BranchID=@nBranchID and N_CompanyID=@nCompanyID", ParamList, connection);
+                    string xButtonAction = "Delete";
                     int N_Count = myFunctions.getIntVAL(count.ToString());
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                    // if (TransData.Rows.Count == 0)
+                    // {
+                    //     return Ok(api.Error(User, "Branch Not Found!!"));
+                    // }
+                    // DataRow TransRow = TransData.Rows[0];
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    
+
+                     string ipAddress = "";
+                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                          myFunctions.LogScreenActivitys(myFunctions.getIntVAL(nFnYearID.ToString()), nBranchID, TransData.Rows[0]["X_BranchCode"].ToString(), 370, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);                   
+
                     if (N_Count <= 0)
                     {
-                        Results = dLayer.DeleteData("Acc_BranchMaster", "N_BranchID", nBranchID, "", connection);
+                        Results = dLayer.DeleteData("Acc_BranchMaster", "N_BranchID", nBranchID, "", connection,transaction);
 
-                        Results = dLayer.DeleteData("Inv_Location", "N_BranchID", nBranchID, "B_IsDefault=1", connection);
-                        Results = dLayer.DeleteData("inv_invoiceCounter", "N_BranchID", nBranchID,"N_CompanyID="+nCompanyId , connection);
+                        Results = dLayer.DeleteData("Inv_Location", "N_BranchID", nBranchID, "B_IsDefault=1", connection,transaction);
+                        Results = dLayer.DeleteData("inv_invoiceCounter", "N_BranchID", nBranchID,"N_CompanyID="+nCompanyId , connection,transaction);
+                        transaction.Commit();
+                        return Ok(_api.Success("Branch deleted"));
 
                     }
                     else
                     {
+                        transaction.Rollback();
                         return Ok(_api.Success("unable to delete this branch"));
                     }
                     if (Results >= 0)
                     {
+                        transaction.Commit();
                         return Ok(_api.Success("Branch deleted"));
                     }
                     else
                     {
+                        transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to delete Branch"));
                     }
+
 
 
                 }
