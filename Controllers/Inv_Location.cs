@@ -252,6 +252,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     SortedList ValidateParams = new SortedList();
                     // Auto Gen
+                    String xButtonAction="";
                     string LocationCode = MasterTable.Rows[0]["x_LocationCode"].ToString();
                     char x_LocationCodePattern;
                     char initialCode;
@@ -284,6 +285,7 @@ namespace SmartxAPI.Controllers
                       int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
 
                     if(N_LocationID>0)
+                    xButtonAction="Update";
                     xTerminalCode="1";
 
                     if (MasterTable.Columns.Contains("N_MainLocationID"))
@@ -332,6 +334,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", nFormID);
                         // Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         LocationCode = dLayer.GetAutoNumber("Inv_Location", "X_LocationCode", Params, connection, transaction);
+                        xButtonAction="Insert";
                         if (LocationCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Location Code")); }
                         MasterTable.Rows[0]["X_LocationCode"] = LocationCode;
                     }
@@ -533,11 +536,21 @@ namespace SmartxAPI.Controllers
                         
 
                         }
+                        // Activity Log
+                        string ipAddress = "";
+                        if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                           ipAddress = Request.Headers["X-Forwarded-For"];
+                        else
+                           ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                           myFunctions.LogScreenActivitys(nFnYearID,N_LocationID,LocationCode,450,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
                         transaction.Commit();
                         return Ok(_api.Success("Location Saved"));
                         // return GetLocationDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()), N_LocationID);
                     }
+
+                
+
                 }
             }
             catch (Exception ex)
@@ -547,7 +560,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nLocationId)
+        public ActionResult DeleteData(int nLocationId,int nFnYearID)
         {
             int Results = 0;
             SortedList Params = new SortedList();
@@ -556,23 +569,43 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable TransData = new DataTable();
                     Params.Add("@nLocationId", nLocationId);
+                    string Sql = "select N_LocationID,X_LocationCode,X_LocationName,N_BranchID,getDate() from Inv_Location where N_LocationID=@nLocationId and N_CompanyID=N_CompanyID";
                     object count = dLayer.ExecuteScalar("select count(1) as N_Count from vw_Inv_Location_Disp where N_LocationID=@nLocationId and N_CompanyID=N_CompanyID", Params, connection);
                     int N_Count = myFunctions.getIntVAL(count.ToString());
+                    string xButtonAction="Delete";
+                    string X_LocationCode = "";
+                    TransData = dLayer.ExecuteDataTable(Sql, Params, connection);
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    // Activity Log
+                            string ipAddress = "";
+                            if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                                ipAddress = Request.Headers["X-Forwarded-For"];
+                            else
+                                ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                                myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nLocationId,TransData.Rows[0]["X_LocationCode"].ToString(),450,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                    
                     if (N_Count <= 0)
                     {
-                        Results = dLayer.DeleteData("Inv_Location", "N_LocationID", nLocationId, "", connection);
+                        Results = dLayer.DeleteData("Inv_Location", "N_LocationID", nLocationId, "", connection,transaction);
+
                     }
-                }
+                    DataRow TransRow = TransData.Rows[0];
+                    
+                
+                
                 if (Results > 0)
                 {
+                    transaction.Commit();
                     return Ok(_api.Success("Location deleted"));
                 }
                 else
                 {
+                    transaction.Rollback();
                     return Ok(_api.Error(User, "Unable to delete Location"));
                 }
-
+                }
             }
             catch (Exception ex)
             {
