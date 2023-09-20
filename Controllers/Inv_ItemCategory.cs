@@ -60,7 +60,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -95,28 +95,29 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
 
         //Save....
         [HttpPost("save")]
-        public ActionResult SaveData([FromBody] DataSet ds)
+        public ActionResult SaveData([FromBody] DataSet ds, string xCategory)
         {
             try
             {
                 DataTable MasterTable;
                 MasterTable = ds.Tables["master"];
+                string xButtonAction = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     int N_CategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CategoryID"].ToString());
                     int N_FnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearId"].ToString());
-                    int nCompanyID=myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyId"].ToString());
+                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyId"].ToString());
                     SortedList Params = new SortedList();
-                    // Auto Gen
+                    //  Auto Gen;
                     string CategoryCode = "";
                     var values = MasterTable.Rows[0]["X_CategoryCode"].ToString();
                     if (values == "@Auto")
@@ -125,76 +126,137 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", N_FnYearId);
                         Params.Add("N_FormID", 73);
                         CategoryCode = dLayer.GetAutoNumber("Inv_ItemCategory", "X_CategoryCode", Params, connection, transaction);
-                        if (CategoryCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Category Code")); }
+                        xButtonAction = "update";
+
+
+                        if (CategoryCode == "")
+                        {
+
+                            // string ipAddress = "";
+                            // if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                            //     ipAddress = Request.Headers["X-Forwarded-For"];
+                            // else
+                            //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                            // myFunctions.LogScreenActivitys(N_FnYearId, N_CategoryID, xCategory, 73, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
+                            transaction.Rollback();
+                            // SortedList Result = new SortedList();
+                            // Result.Add("N_CategoryID", N_CategoryID);
+                            // Result.Add("X_Category", xCategory);
+                            return Ok(_api.Error(User, "Unable to generate Category Code"));
+                        }
                         MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
                     }
                     MasterTable.Columns.Remove("N_FnYearId");
                     //MasterTable.Columns.Remove("b_IsParent");
                     string X_Category = MasterTable.Rows[0]["X_Category"].ToString();
-                    string DupCriteria = "X_Category='" + X_Category + "' and N_CompanyID="+nCompanyID+"";
+                    string DupCriteria = "X_Category='" + X_Category + "' and N_CompanyID=" + nCompanyID + "";
                     N_CategoryID = dLayer.SaveData("Inv_ItemCategory", "N_CategoryID", DupCriteria, "", MasterTable, connection, transaction);
                     if (N_CategoryID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save...Category Name Exists"));
+                        return Ok(_api.Error(User, "Unable to save...Category Name Exists"));
                     }
 
                     else
+
                     {
+                        xButtonAction = "Insert";
+                        string ipAddress = "";
+                        if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                            ipAddress = Request.Headers["X-Forwarded-For"];
+                        else
+                            ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                        myFunctions.LogScreenActivitys(N_FnYearId, N_CategoryID, X_Category, 73, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
                         transaction.Commit();
+                        SortedList Result = new SortedList();
+                        Result.Add("N_CategoryID", N_CategoryID);
+                        Result.Add("X_Category", X_Category);
                         return Ok(_api.Success("Financial Category Saved"));
                     }
+
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCategoryID)
+        public ActionResult DeleteData(int nCategoryID, int nFnyearID)
         {
             int Results = 0;
+            int nCompanyID = myFunctions.GetCompanyID(User);
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList();
+                    ParamList.Add("@nCategoryID", nCategoryID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+
+                    string Sql = "select X_CategoryCode,X_Category from Inv_ItemCategory where N_CategoryID=@nCategoryID and N_CompanyID=@nCompanyID";
                     object xCategory = dLayer.ExecuteScalar("Select X_Category From Inv_ItemCategory Where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User), connection);
                     object Objcount = dLayer.ExecuteScalar("Select count(1) From Inv_ItemMaster where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User), connection);
                     int Obcount = myFunctions.getIntVAL(Objcount.ToString());
+                    string xButtonAction = "Delete";
+                    string N_CategoryID = "";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+
+                    SqlTransaction transaction = connection.BeginTransaction();
+
+                    string ipAddress = "";
+                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    myFunctions.LogScreenActivitys(myFunctions.getIntVAL(nFnyearID.ToString()), nCategoryID, TransData.Rows[0]["X_CategoryCode"].ToString(), 73, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
                     if (Obcount != 0)
                     {
-
-                        return Ok(_api.Error(User,"Unable to Delete.Financial category Allready Used"));
+                        transaction.Commit();
+                        return Ok(_api.Error(User, "Unable to Delete.Financial category Allready Used"));
                     }
+                    DataRow TransRow = TransData.Rows[0];
 
-                    Results = dLayer.DeleteData("Inv_ItemCategory", "N_CategoryID", nCategoryID, "", connection);
+                    //          SqlTransaction transaction = connection.BeginTransaction();
+
+                    //      string ipAddress = "";
+                    // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    //     ipAddress = Request.Headers["X-Forwarded-For"];
+                    // else
+                    //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    //        myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnyearID.ToString()),nCategoryID,TransRow["N_CategoryID"].ToString(),73,xButtonAction,ipAddress,"",User,dLayer,connection, transaction);
+
+                    Results = dLayer.DeleteData("Inv_ItemCategory", "N_CategoryID", nCategoryID, "", connection, transaction);
+
+
                     if (Results > 0)
                     {
 
-                        dLayer.ExecuteNonQuery("Update  Gen_Settings SET  X_Value='' Where X_Group ='Inventory' and X_Description='Default Item Category' and X_Value='" + xCategory.ToString() + "'", connection);
-
+                        dLayer.ExecuteNonQuery("Update  Gen_Settings SET  X_Value='' Where X_Group ='Inventory' and X_Description='Default Item Category' and X_Value='" + xCategory.ToString() + "'", connection, transaction);
+                        transaction.Commit();
                         return Ok(_api.Success("Financial category deleted"));
                     }
                     else
                     {
-                        return Ok(_api.Error(User,"Unable to delete Financial category"));
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable to delete Financial category"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
 
 
         }
 
-           [HttpGet("dashboardList")]
-        public ActionResult GetProductUnitList(int nPage,bool adjustment,int nSizeperpage, string xSearchkey, string xSortBy,int nCategoryID,int nCompanyId)
+        [HttpGet("dashboardList")]
+        public ActionResult GetProductUnitList(int nPage, bool adjustment, int nSizeperpage, string xSearchkey, string xSortBy, int nCategoryID, int nCompanyId)
         {
             try
             {
@@ -203,7 +265,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     DataTable dt = new DataTable();
                     SortedList Params = new SortedList();
-                     nCompanyId = myFunctions.GetCompanyID(User);
+                    nCompanyId = myFunctions.GetCompanyID(User);
                     string sqlCommandCount = "", xCriteria = "";
                     int Count = (nPage - 1) * nSizeperpage;
                     string sqlCommandText = "";
@@ -211,20 +273,20 @@ namespace SmartxAPI.Controllers
                     string cndn = "";
                     Params.Add("@p1", nCompanyId);
                     string Searchkey = "";
-      
-                //    if (xSearchkey != null && xSearchkey.Trim() != "")
-                //     Searchkey = "and (X_CategoryCode like '%" + xSearchkey + "%' OR X_Category like '%" + xSearchkey + "%')";
 
-                    
-                   
-                //    if (xSortBy == null || xSortBy.Trim() == "")
-                //         xSortBy = "order by N_CategoryID desc";
-                      
-                   if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") X_Category,N_CategoryID,X_CategoryCode from Inv_ItemCategory where N_CompanyID=@p1"+ criteria + cndn + Searchkey + " " + xSortBy;
+                    //    if (xSearchkey != null && xSearchkey.Trim() != "")
+                    //     Searchkey = "and (X_CategoryCode like '%" + xSearchkey + "%' OR X_Category like '%" + xSearchkey + "%')";
+
+
+
+                    //    if (xSortBy == null || xSortBy.Trim() == "")
+                    //         xSortBy = "order by N_CategoryID desc";
+
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") X_Category,N_CategoryID,X_CategoryCode from Inv_ItemCategory where N_CompanyID=@p1" + criteria + cndn + Searchkey + " " + xSortBy;
                     else
-                       // sqlCommandText = "select top(" + nSizeperpage + ") ,X_Category,N_CategoryID,X_CategoryCode from Inv_ItemCategory where N_CompanyID=@p1";
-                         sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_ItemCategory where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1 and N_CategoryID not in (select top(" + Count + ") N_CategoryID from Inv_ItemCategory where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1)"+ criteria + cndn + Searchkey + " " + xSortBy;
+                        // sqlCommandText = "select top(" + nSizeperpage + ") ,X_Category,N_CategoryID,X_CategoryCode from Inv_ItemCategory where N_CompanyID=@p1";
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from Inv_ItemCategory where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1 and N_CategoryID not in (select top(" + Count + ") N_CategoryID from Inv_ItemCategory where ISNULL(N_BaseUnitID,0)=0 and N_CompanyID=@p1)" + criteria + cndn + Searchkey + " " + xSortBy;
 
 
 
@@ -232,7 +294,7 @@ namespace SmartxAPI.Controllers
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
-                   sqlCommandCount = "select count(1) as N_Count  from Inv_ItemCategory where N_CompanyID=@p1";
+                    sqlCommandCount = "select count(1) as N_Count  from Inv_ItemCategory where N_CompanyID=@p1";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -246,11 +308,11 @@ namespace SmartxAPI.Controllers
                     }
                 }
             }
-              catch (Exception e)
-                {
+            catch (Exception e)
+            {
                 return BadRequest(_api.Error(User, e));
-                }
-            
+            }
+
 
         }
 
