@@ -767,7 +767,7 @@ namespace SmartxAPI.Controllers
                             if (B_SRS)
                             {
                                 if (N_PRSID > 0)
-                                    dLayer.ExecuteNonQuery("update  Inv_PRS set N_DeliveryNoteID=" + N_DeliveryNoteID + ", N_Processed=3 where N_PRSID=" + N_PRSID + " and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
+                                    dLayer.ExecuteNonQuery("  Inv_PRS set N_DeliveryNoteID=" + N_DeliveryNoteID + ", N_Processed=3 where N_PRSID=" + N_PRSID + " and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
                             }
                             if (N_SalesOrderID > 0)
                             {
