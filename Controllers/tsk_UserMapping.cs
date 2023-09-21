@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
             }
         }
           [HttpGet("list")]
-        public ActionResult GetteamList(int nUserID)
+        public ActionResult GetteamList(int nUserID,bool IsEdit,bool IsView)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -117,8 +117,25 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyId", nCompanyID);
             Params.Add("@nUserID", nUserID);
             string sqlCommandText ="";
-            if(nUserID>0)
-                sqlCommandText = "Select *  from vw_tsk_UserMapping Where N_CompanyID= " + nCompanyID + " and N_UsersId in ("+nUserID + ") and X_Team is not null";
+            if(nUserID>0 && IsEdit){
+                               sqlCommandText = " SELECT Tsk_UserMapping.N_CompanyID, Tsk_UserMapping.N_UserMappingID, Tsk_UserMapping.X_UserMappingCode, Tsk_UserMapping.D_EntryDate, Tsk_UserMapping.N_EntryUserID,Tsk_UserMapping.N_UserID, Sec_User.X_UserName, Tsk_UserMapping.X_Team, Tsk_UserMappingDetails.N_UsersID"+
+                                 " FROM Tsk_UserMapping LEFT OUTER JOIN Tsk_UserMappingDetails ON Tsk_UserMapping.N_CompanyID = Tsk_UserMappingDetails.N_CompanyID AND Tsk_UserMapping.N_UserMappingID = Tsk_UserMappingDetails.N_UserMappingID  LEFT OUTER JOIN "+
+                                 " Sec_User ON Tsk_UserMapping.N_CompanyID = Sec_User.N_CompanyID AND Tsk_UserMapping.N_UserID = Sec_User.N_UserID  where Tsk_UserMapping.N_CompanyID="+nCompanyID+" and Tsk_UserMappingDetails.N_UsersID="+nUserID+" and X_Team is not null union all SELECT Tsk_UserMapping.N_CompanyID, Tsk_UserMapping.N_UserMappingID, Tsk_UserMapping.X_UserMappingCode, Tsk_UserMapping.D_EntryDate, Tsk_UserMapping.N_EntryUserID,"+
+                                 " Tsk_UserMapping.N_UserID, Sec_User.X_UserName, Tsk_UserMapping.X_Team, Tsk_TeamSettingsDetails.N_UserID AS N_UsersID FROM Tsk_UserMapping RIGHT OUTER JOIN Tsk_TeamSettingsDetails ON Tsk_UserMapping.N_UserMappingID = Tsk_TeamSettingsDetails.N_TeamID AND Tsk_UserMapping.N_CompanyID = Tsk_TeamSettingsDetails.N_CompanyID LEFT OUTER JOIN "+
+                                 " Sec_User ON Tsk_UserMapping.N_CompanyID = Sec_User.N_CompanyID AND Tsk_UserMapping.N_UserID = Sec_User.N_UserID Where Tsk_UserMapping.N_CompanyID="+nCompanyID+" and Tsk_TeamSettingsDetails.N_UserID="+nUserID+" and Tsk_TeamSettingsDetails.B_Edit=1";
+            }
+            else if (nUserID>0 && IsView){
+                                               sqlCommandText = " SELECT Tsk_UserMapping.N_CompanyID, Tsk_UserMapping.N_UserMappingID, Tsk_UserMapping.X_UserMappingCode, Tsk_UserMapping.D_EntryDate, Tsk_UserMapping.N_EntryUserID,Tsk_UserMapping.N_UserID, Sec_User.X_UserName, Tsk_UserMapping.X_Team, Tsk_UserMappingDetails.N_UsersID"+
+                                 " FROM Tsk_UserMapping LEFT OUTER JOIN Tsk_UserMappingDetails ON Tsk_UserMapping.N_CompanyID = Tsk_UserMappingDetails.N_CompanyID AND Tsk_UserMapping.N_UserMappingID = Tsk_UserMappingDetails.N_UserMappingID  LEFT OUTER JOIN "+
+                                 " Sec_User ON Tsk_UserMapping.N_CompanyID = Sec_User.N_CompanyID AND Tsk_UserMapping.N_UserID = Sec_User.N_UserID  where Tsk_UserMapping.N_CompanyID="+nCompanyID+" and Tsk_UserMappingDetails.N_UsersID="+nUserID+" and X_Team is not null union all SELECT Tsk_UserMapping.N_CompanyID, Tsk_UserMapping.N_UserMappingID, Tsk_UserMapping.X_UserMappingCode, Tsk_UserMapping.D_EntryDate, Tsk_UserMapping.N_EntryUserID,"+
+                                 " Tsk_UserMapping.N_UserID, Sec_User.X_UserName, Tsk_UserMapping.X_Team, Tsk_TeamSettingsDetails.N_UserID AS N_UsersID FROM Tsk_UserMapping RIGHT OUTER JOIN Tsk_TeamSettingsDetails ON Tsk_UserMapping.N_UserMappingID = Tsk_TeamSettingsDetails.N_TeamID AND Tsk_UserMapping.N_CompanyID = Tsk_TeamSettingsDetails.N_CompanyID LEFT OUTER JOIN "+
+                                 " Sec_User ON Tsk_UserMapping.N_CompanyID = Sec_User.N_CompanyID AND Tsk_UserMapping.N_UserID = Sec_User.N_UserID Where Tsk_UserMapping.N_CompanyID="+nCompanyID+" and Tsk_TeamSettingsDetails.N_UserID="+nUserID+" and Tsk_TeamSettingsDetails.B_View=1";
+            }
+
+            else if (nUserID>0&&!IsEdit&&!IsView){
+                sqlCommandText ="Select *  from vw_tsk_UserMapping Where N_CompanyID= " + nCompanyID + " and N_UsersId in ("+nUserID +") and X_Team is not null";
+                 }
+
             else
                 sqlCommandText = "Select *  from vw_tsk_UserMapping Where N_CompanyID= " + nCompanyID + " and X_Team is not null";
 
@@ -209,7 +226,7 @@ namespace SmartxAPI.Controllers
 
 
                      if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = " and  ( x_UserMappingCode like'%" + xSearchkey + "%'or x_Team like'%" + xSearchkey + "%')";
+                Searchkey = " and  ( x_UserMappingCode like'%" + xSearchkey + "%'or x_Team like'%" + xSearchkey + "%'or x_UserName like'%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by x_UserMappingCode desc";
@@ -229,7 +246,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(1) as N_Count from Vw_TskUsermapping where N_CompanyID=@p1 " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count from Vw_TskUsermapping where  X_Team is not null and N_CompanyID=@p1 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     if (Summary.Rows.Count > 0)
