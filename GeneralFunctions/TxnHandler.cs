@@ -299,12 +299,18 @@ namespace SmartxAPI.GeneralFunctions
                         Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
                         Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
                         Params.Add("N_FormID", 65);
+                        Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
+                        if(nDivisionID>0)
+                        {
+                        Params.Add("N_DivisionID",  MasterTable.Rows[0]["N_DivisionID"].ToString());
+                        }
+                       
                         
                         while (true)
                         {
                             InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
                             xButtonAction="Insert"; 
-                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Purchase Where X_InvoiceNo ='" + values + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Purchase Where X_InvoiceNo ='" + InvoiceNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
                             if (N_Result == null)
                                 break;
                         }
@@ -1796,6 +1802,12 @@ namespace SmartxAPI.GeneralFunctions
             double N_TotalPaidF = myFunctions.getVAL(MasterTable.Rows[0]["n_TotalPaidAmountF"].ToString());
             MasterTable.Rows[0]["n_TotalPaidAmountF"] = N_TotalPaidF;
             string xButtonAction="";
+             int nDivisionID = 0;
+            if (MasterTable.Columns.Contains("n_DivisionID"))
+            {
+               nDivisionID=myFunctions.getIntVAL(MasterTable.Rows[0]["n_DivisionID"].ToString());
+
+            }
 
             if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_ReturnDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
             {
@@ -1822,6 +1834,14 @@ namespace SmartxAPI.GeneralFunctions
                 Params.Add("N_YearID", nFnYearID);
                 Params.Add("N_FormID", 55);
                 Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
+
+
+                
+                   if(nDivisionID>0)
+                        {
+                        Params.Add("N_DivisionID",  MasterTable.Rows[0]["N_DivisionID"].ToString());
+                        }
+                
                 InvoiceNo = dLayer.GetAutoNumber("Inv_SalesReturnMaster", "X_DebitNoteNo", Params, connection, transaction);
                   xButtonAction="Insert"; 
                 if (InvoiceNo == "") 
@@ -1981,6 +2001,13 @@ namespace SmartxAPI.GeneralFunctions
             int N_VendorID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_VendorID"].ToString());
              int nFnYearID = myFunctions.getIntVAL(masterRow["N_fnYearId"].ToString());;
             string xButtonAction="";
+                  int nDivisionID = 0;
+            if (MasterTable.Columns.Contains("n_DivisionID"))
+            {
+               nDivisionID=myFunctions.getIntVAL(MasterTable.Rows[0]["n_DivisionID"].ToString());
+
+            }
+
 
             if (!myFunctions.CheckActiveYearTransaction(myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString()), Convert.ToDateTime(MasterTable.Rows[0]["D_RetDate"].ToString()), dLayer, connection, transaction))
             {
@@ -2004,8 +2031,12 @@ namespace SmartxAPI.GeneralFunctions
             {
                 Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
                 Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
-                Params.Add("N_FormID", 80);
+                Params.Add("N_FormID", 68);
                 Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
+                   if(nDivisionID>0)
+                    {
+                        Params.Add("N_DivisionID",  MasterTable.Rows[0]["N_DivisionID"].ToString());
+                    }
                 ReturnNo = dLayer.GetAutoNumber("Inv_PurchaseReturnMaster", "X_CreditNoteNo", Params, connection, transaction);
                 xButtonAction="Insert"; 
                 if (ReturnNo == "") 

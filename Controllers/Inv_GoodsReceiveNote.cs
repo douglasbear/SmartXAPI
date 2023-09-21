@@ -760,7 +760,7 @@ namespace SmartxAPI.Controllers
                                     }
                                     else
                                     {
-                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
+                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,true,dLayer,connection,transaction))
                                         {
                                             transaction.Rollback();
                                             return Ok(_api.Error(User, "Unable To Update Txn Status"));

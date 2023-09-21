@@ -43,6 +43,7 @@ namespace SmartxAPI.Controllers
             string UserPattern = myFunctions.GetUserPattern(User);
             int nUserID = myFunctions.GetUserID(User);
             string Pattern = "";
+            string crite="";
             if (UserPattern != "")
             {
                 Pattern = " and Left(X_Pattern,Len(@p2))=@p2";
@@ -52,6 +53,8 @@ namespace SmartxAPI.Controllers
             {
                 Pattern = " and N_CreatedUser=" + nUserID;
             }
+
+           
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Searchkey = "";
@@ -64,9 +67,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_WorkflowMaster where N_CompanyID=@p1  " + Pattern + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_WorkflowMaster where N_CompanyID=@p1  " + Pattern +crite + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_WorkflowMaster where N_CompanyID=@p1  " + Pattern + Searchkey + " and N_WActivityID not in (select top(" + Count + ") N_WActivityID from CRM_WorkflowMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_WorkflowMaster where N_CompanyID=@p1  " + Pattern +crite+ Searchkey + " and N_WActivityID not in (select top(" + Count + ") N_WActivityID from CRM_WorkflowMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", nFnYearId);
             SortedList OutPut = new SortedList();
@@ -109,7 +112,8 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@p1", nCompanyID);
-            string sqlCommandText = "select * from vw_CRM_WorkflowMaster where N_CompanyID=@p1";
+            string sqlCommandText="select * from vw_CRM_WorkflowMaster where N_CompanyID=@p1";
+        
 
             try
             {
@@ -270,13 +274,21 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("taskworkflow")]
-        public ActionResult TaskWorkFlowList()
+        public ActionResult TaskWorkFlowList(bool isOpp)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@p1", nCompanyID);
-            string sqlCommandText = "select * from Prj_WorkflowMaster where N_CompanyID=@p1 order by N_WTaskID";
+            string sqlCommandText = "";
+  
+            if(isOpp)
+            {
+                  sqlCommandText = "select * from Prj_WorkflowMaster where N_CompanyID=@p1 and x_Type ='opportunity'";
+           
+            }
+            else
+            sqlCommandText = "select * from Prj_WorkflowMaster where N_CompanyID=@p1 order by N_WTaskID";
 
             try
             {

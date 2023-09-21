@@ -1274,6 +1274,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 int nPayRunID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayrunID"].ToString());
+                int nTransID =myFunctions.getIntVAL(MasterTable.Rows[0]["n_TransID"].ToString());
                 int nBankID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BankID"].ToString());
                 int IsSaveDraft = myFunctions.getIntVAL(MasterTable.Rows[0]["b_IsSaveDraft"].ToString());
                 var dCreatedDate = MasterTable.Rows[0]["d_TransDate"].ToString();
@@ -1455,7 +1456,7 @@ namespace SmartxAPI.Controllers
                             ipAddress = Request.Headers["X-Forwarded-For"];
                         else
                             ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                        myFunctions.LogScreenActivitys(nFnYearId, nPayRunID, x_Batch, 190, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
+                        myFunctions.LogScreenActivitys(nFnYearId, nTransID, x_Batch, 190, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
 
 
 
@@ -1521,7 +1522,7 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nTransID", nTransID);
                     string xButtonAction = "Delete";
                     string x_Batch = "";
-                    string Sql = "select n_PayRunID,x_Batch from Pay_PaymentMaster where n_TransID=@nTransID and N_CompanyID=@nCompanyID";
+                    string Sql = "select n_TransID,x_Batch from Pay_PaymentMaster where n_TransID=@nTransID and N_CompanyID=@nCompanyID";
 
                     int count = myFunctions.getIntVAL(dLayer.ExecuteNonQuery("Select count(1) from Acc_VoucherMaster Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " And N_FnyearID =@nFnYearID and X_TransType = 'ESI' and B_IsAccPosted = 1 and X_ReferenceNo=@xBatch", dltParams, connection, transaction).ToString());
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection, transaction);
@@ -1545,7 +1546,7 @@ namespace SmartxAPI.Controllers
                         ipAddress = Request.Headers["X-Forwarded-For"];
                     else
                         ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                    myFunctions.LogScreenActivitys(myFunctions.getIntVAL(nFnYearID.ToString()), nPayRunID, TransRow["x_Batch"].ToString(), 190, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
+                    myFunctions.LogScreenActivitys(myFunctions.getIntVAL(nFnYearID.ToString()), nTransID, TransRow["x_Batch"].ToString(), 190, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
 
 
 
