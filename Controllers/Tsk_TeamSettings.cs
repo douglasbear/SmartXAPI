@@ -64,6 +64,7 @@ namespace SmartxAPI.Controllers
 
                         
                         dLayer.ExecuteNonQuery("delete from Tsk_TeamSettingsDetails Where N_CompanyID = "+nCompanyID+"  and N_UserID ="+nUserID+"", connection, transaction);
+                        dLayer.ExecuteNonQuery("delete from Tsk_TeamSettings Where N_CompanyID = "+nCompanyID+"  and N_UserID ="+nUserID+"", connection, transaction);
 
                     }
 
