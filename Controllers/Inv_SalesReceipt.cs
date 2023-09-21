@@ -701,6 +701,21 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
                            xButtonAction="Update"; 
                     }
+                   if (PayReceiptId == 0 && xVoucherNo != "@Auto")
+                    {
+                    object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_PayReceipt Where X_VoucherNo ='" + xVoucherNo + "' and N_CompanyID= " + nCompanyId + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                    if (N_DocNumber == null)
+                    {
+                        N_DocNumber = 0;
+                    }
+                    if (myFunctions.getVAL(N_DocNumber.ToString()) >= 1)
+                    {
+                        // transaction.Rollback();
+                        // return Ok(_api.Error(User, "Invoice number already in use"));
+                       transaction.Rollback();
+                        return Ok(api.Error(User, "Voucher Number Already exist"));
+                    }
+                   }
 
                     if (xVoucherNo == "@Auto")
                     {
@@ -724,15 +739,7 @@ namespace SmartxAPI.Controllers
                     }
                       xVoucherNo = MasterTable.Rows[0]["x_VoucherNo"].ToString();
 
-                      DataTable count = new DataTable();
-                      SortedList Paramss = new SortedList();
-                        string sql = "select * from Inv_PayReceipt where x_VoucherNo='"+xVoucherNo+"' and N_CompanyID="+nCompanyId+"" ;
-                        count = dLayer.ExecuteDataTable(sql, Paramss, connection, transaction);
-                        if(count.Rows.Count > 0)
-                        {
-                            transaction.Rollback();
-                            return Ok(api.Error(User, "Voucher Number Already in Use"));
-                        }
+             
 
                
                     MasterTable.Rows[0]["n_UserID"] = myFunctions.GetUserID(User);

@@ -125,10 +125,17 @@ namespace SmartxAPI.Controllers
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
 
                     //sqlCommandTotRevenue = "select N_StageID,X_Stage,SUM(ISNULL(N_ExpRevenue,0)) AS N_TotExpRevenue from vw_CRMOpportunity where N_CompanyID=@p1  and isnull(N_ClosingStatusID,0) = 0 " + Pattern +" group by N_StageID,X_Stage";
-                    sqlCommandTotRevenue = "SELECT Gen_LookupTable.N_PkeyId AS N_StageID, Gen_LookupTable.X_Name AS X_Stage, ISNULL(CRM_Opp.N_TotExpRevenue ,0) AS N_TotExpRevenue from Gen_LookupTable LEFT OUTER JOIN "+
-                                            " (select N_StageID,X_Stage,SUM(ISNULL(N_ExpRevenue,0)) AS N_TotExpRevenue,N_CompanyID from vw_CRMOpportunity where N_CompanyID=@p1  and isnull(N_ClosingStatusID,0) = 0 " + Pattern +"  "+
-                                            " group by N_StageID,X_Stage,N_CompanyID) AS CRM_Opp ON Gen_LookupTable.N_CompanyID=CRM_Opp.N_CompanyID AND Gen_LookupTable.N_PkeyId=CRM_Opp.N_StageID "+
-                                            " WHERE Gen_LookupTable.N_ReferId=1310 AND Gen_LookupTable.N_CompanyID=@p1";
+                    if (nCustomerID > 0) {
+                        sqlCommandTotRevenue = "SELECT Gen_LookupTable.N_PkeyId AS N_StageID, Gen_LookupTable.X_Name AS X_Stage, ISNULL(CRM_Opp.N_TotExpRevenue ,0) AS N_TotExpRevenue from Gen_LookupTable LEFT OUTER JOIN "+
+                        " (select N_StageID,X_Stage,SUM(ISNULL(N_ExpRevenue,0)) AS N_TotExpRevenue,N_CompanyID from vw_CRMOpportunity where N_CompanyID=@p1  and isnull(N_ClosingStatusID,0) = 0 and N_CustID="+ nCustomerID + Pattern +"  "+
+                        " group by N_StageID,X_Stage,N_CompanyID) AS CRM_Opp ON Gen_LookupTable.N_CompanyID=CRM_Opp.N_CompanyID AND Gen_LookupTable.N_PkeyId=CRM_Opp.N_StageID "+
+                        " WHERE Gen_LookupTable.N_ReferId=1310 AND Gen_LookupTable.N_CompanyID=@p1";
+                    } else {
+                        sqlCommandTotRevenue = "SELECT Gen_LookupTable.N_PkeyId AS N_StageID, Gen_LookupTable.X_Name AS X_Stage, ISNULL(CRM_Opp.N_TotExpRevenue ,0) AS N_TotExpRevenue from Gen_LookupTable LEFT OUTER JOIN "+
+                        " (select N_StageID,X_Stage,SUM(ISNULL(N_ExpRevenue,0)) AS N_TotExpRevenue,N_CompanyID from vw_CRMOpportunity where N_CompanyID=@p1  and isnull(N_ClosingStatusID,0) = 0 " + Pattern +"  "+
+                        " group by N_StageID,X_Stage,N_CompanyID) AS CRM_Opp ON Gen_LookupTable.N_CompanyID=CRM_Opp.N_CompanyID AND Gen_LookupTable.N_PkeyId=CRM_Opp.N_StageID "+
+                        " WHERE Gen_LookupTable.N_ReferId=1310 AND Gen_LookupTable.N_CompanyID=@p1";
+                    };
                     dtRevenue = dLayer.ExecuteDataTable(sqlCommandTotRevenue, Params, connection);
 
                     OutPut.Add("Details", api.Format(dt));
@@ -272,7 +279,7 @@ namespace SmartxAPI.Controllers
 
                                 //    dLayer.DeleteData("Tsk_TaskStatus", "N_ProjectID", nProjectID, "", connection, transaction);
 
-                                    TaskMaster = dLayer.ExecuteDataTable("select N_CompanyID,2 as N_StatusID,N_StageID,x_tasksummery,x_taskdescription,'' as D_TaskDate,'' as D_DueDate, "+myFunctions.GetUserID(User)+" as N_CreatorID, "+myFunctions.GetUserID(User)+" as N_CurrentAssigneeID, "+myFunctions.GetUserID(User)+"  as n_ClosedUserID ,"+myFunctions.GetUserID(User)+"  as n_SubmitterID,"+myFunctions.GetUserID(User)+" as N_CurrentAssignerID,'" + DateTime.Today + "' as D_EntryDate, "+myFunctions.GetUserID(User)+" as N_AssigneeID, N_StartDateBefore,N_StartDateUnitID,N_EndDateBefore,N_EndUnitID,N_WTaskDetailID,N_Order,N_TemplateID,N_PriorityID,N_CategoryID from vw_Prj_WorkflowDetails where N_CompanyID=" + nCompanyID + " and N_WTaskID=" + nWActivityID + " order by N_Order", Params, connection, transaction);
+                                    TaskMaster = dLayer.ExecuteDataTable("select N_CompanyID,2 as N_StatusID,N_StageID,x_tasksummery,x_taskdescription,'"+DateTime.Today+"'  as D_TaskDate,'"+DateTime.Today+"' as D_DueDate, "+myFunctions.GetUserID(User)+" as N_CreatorID, "+myFunctions.GetUserID(User)+" as N_CurrentAssigneeID, "+myFunctions.GetUserID(User)+"  as n_ClosedUserID ,"+myFunctions.GetUserID(User)+"  as n_SubmitterID,"+myFunctions.GetUserID(User)+" as N_CurrentAssignerID,'" + DateTime.Today + "' as D_EntryDate, "+myFunctions.GetUserID(User)+" as N_AssigneeID, N_StartDateBefore,N_StartDateUnitID,N_EndDateBefore,N_EndUnitID,N_WTaskDetailID,N_Order,N_TemplateID,N_PriorityID,N_CategoryID from vw_Prj_WorkflowDetails where N_CompanyID=" + nCompanyID + " and N_WTaskID=" + nWActivityID + " order by N_Order", Params, connection, transaction);
                                     if (TaskMaster.Rows.Count > 0)
                                     {
                                         SortedList AParams = new SortedList();
@@ -330,9 +337,9 @@ namespace SmartxAPI.Controllers
                                                 Minuts = myFunctions.getVAL(var["N_EndDateBefore"].ToString()) * Minuts;
 
                                             if(Minuts==0)
-                                                var["D_DueDate"]=null;
+                                                var["D_DueDate"]=DateTime.Now;
                                             else
-                                                var["D_DueDate"] = DateTime.Parse(var["D_TaskDate"].ToString()).AddMinutes(Minuts);
+                                                var["D_DueDate"] = DateTime.Now;
 
                                         }
                                         TaskMaster.Columns.Remove("N_StartDateBefore");

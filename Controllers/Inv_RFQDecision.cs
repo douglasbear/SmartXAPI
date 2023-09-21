@@ -114,16 +114,16 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nRFQDecisionID,int nFnYearID,int nCustomerId)
+        public ActionResult DeleteData(int nRFQDecisionID,int nFnYearID,int nCustomerId,string comments)
         {
             int Results = 0;
+             DataTable TransData = new DataTable();
              SortedList ParamList=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             //  DataTable TransData = new DataTable();
             //  DataRow TransRow = TransData.Rows[0];
             //  int N_RFQDecisionID = myFunctions.getIntVAL(TransRow["N_RFQDecisionID"].ToString());
              SortedList Params = new SortedList();
-             ParamList.Add("@nFnYearID",nFnYearID);
               string xButtonAction="Delete";
               String X_RFQDecisionCode="";
             try
@@ -131,10 +131,26 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
+                   
 
                     
-              object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Inv_RFQDecisionMaster where N_RFQDecisionID =" + nRFQDecisionID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
+              object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Inv_RFQDecisionMaster where N_RFQDecisionID =" + nRFQDecisionID + " and N_CompanyID=" + nCompanyID, Params, connection); 
+                   
+                    
+                    ParamList.Add("@nRFQDecisionID", nRFQDecisionID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+
+               string Sql = "select N_RFQDecisionID,X_RFQDecisionCode,N_UserID,N_ProcStatus,N_ApprovalLevelId from Inv_RFQDecisionMaster where n_RFQDecisionID=@nRFQDecisionID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+               TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                    if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+                  DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, 1278, nRFQDecisionID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
+                  Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
+                   SqlTransaction transaction = connection.BeginTransaction();
                     //Activity Log
                 string ipAddress = "";
                 if (  Request.Headers.ContainsKey("X-Forwarded-For"))
@@ -142,9 +158,23 @@ namespace SmartxAPI.Controllers
                 else
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
                        myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nRFQDecisionID,X_RFQDecisionCode,955,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-                   
+
+                    string X_Criteria = "N_RFQDecisionID=" + nRFQDecisionID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                    string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
+                    
+                     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "RFQ DECISION", nRFQDecisionID, TransRow["X_RFQDecisionCode"].ToString(), ProcStatus, "Inv_RFQDecisionMaster", X_Criteria, "", User, dLayer, connection, transaction);
+
+                      if (status != "Error")
+                    {
+                    if (ButtonTag == "6" || ButtonTag == "0")
+                 {
                     dLayer.DeleteData("Inv_RFQDecisionDetails", "N_RFQDecisionID", nRFQDecisionID, "N_CompanyID=" + nCompanyID + " and N_RFQDecisionID=" + nRFQDecisionID, connection, transaction);
                     Results = dLayer.DeleteData("Inv_RFQDecisionMaster", "N_RFQDecisionID", nRFQDecisionID, "N_CompanyID=" + nCompanyID + " and N_RFQDecisionID=" + nRFQDecisionID, connection, transaction);
+                 }}
+
+                         transaction.Commit();
+                    return Ok(api.Success("RFQ Decision " + status + " Successfully"));
 
                     if (Results > 0)
                     {
@@ -175,11 +205,16 @@ namespace SmartxAPI.Controllers
 
             DataTable MasterTable;
             DataTable DetailTable;
-             DataTable CustomerInfo;
+            DataTable CustomerInfo;
+            DataTable Approvals;
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
+            Approvals = ds.Tables["approval"];
+             DataRow ApprovalRow = Approvals.Rows[0];
             SortedList Params = new SortedList();
             String xButtonAction="";
+            int N_NextApproverID = 0;
+            int N_SaveDraft = 0;
             // Auto Gen
             try
             {
@@ -189,12 +224,11 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    string X_RFQDecisionCode = "";
                     DataTable Attachment = ds.Tables["attachments"];
                     int N_RFQDecisionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RFQDecisionID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
-                     string x_RFQDecisionCode =MasterTable.Rows[0]["X_RFQDecisionCode"].ToString();
+                     string X_RFQDecisionCode =MasterTable.Rows[0]["X_RFQDecisionCode"].ToString();
                     int n_RFQDecisionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RFQDecisionID"].ToString());
                     int N_UserID = myFunctions.GetUserID(User);
                     int N_CustomerId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerId"].ToString());
@@ -204,6 +238,22 @@ namespace SmartxAPI.Controllers
                       MasterTable.Columns.Remove("n_CustomerId");
 
                     var values = MasterTable.Rows[0]["X_RFQDecisionCode"].ToString();
+
+
+                       if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_RFQDecisionID>0)
+                     {                                     
+                        int N_PkeyID = N_RFQDecisionID;
+                        var value = MasterTable.Rows[0]["x_RFQDecisionCode"].ToString();
+                        string X_Criteria = "N_RFQDecisionID=" + N_PkeyID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID;
+                        myFunctions.UpdateApproverEntry(Approvals, "Inv_RFQDecisionMaster", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "RFQ DECISION", N_PkeyID, value, 1, "", 0, "", 0, User, dLayer, connection, transaction);
+                        // N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_PurchaseOrder where n_POrderID=" + N_POrderID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
+                          transaction.Commit();
+                        return Ok(api.Success("RFQ Decision Approved " + "-" + X_RFQDecisionCode));
+                    }
+
+
+
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
@@ -221,6 +271,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Inv_RFQDecisionMaster", "N_RFQDecisionID", N_RFQDecisionID, "N_CompanyID=" + N_CompanyID + " and N_RFQDecisionID=" + N_RFQDecisionID, connection, transaction);
                     }
 
+                    MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
                     N_RFQDecisionID = dLayer.SaveData("Inv_RFQDecisionMaster", "N_RFQDecisionID", MasterTable, connection, transaction);
 
 
@@ -229,7 +280,7 @@ namespace SmartxAPI.Controllers
                     {
                         try
                         {
-                            myAttachments.SaveAttachment(dLayer, Attachment,x_RFQDecisionCode, N_RFQDecisionID, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), CustomerInfo.Rows[0]["X_CustomerCode"].ToString(), N_CustomerId, "Customer Document", User, connection, transaction);
+                            myAttachments.SaveAttachment(dLayer, Attachment,X_RFQDecisionCode, N_RFQDecisionID, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), CustomerInfo.Rows[0]["X_CustomerCode"].ToString(), N_CustomerId, "Customer Document", User, connection, transaction);
                         }
                         catch (Exception ex)
                         {
@@ -267,6 +318,7 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Error(User,"Unable to save"));
                     }
 
+                     N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "RFQ DECISION", N_RFQDecisionID, X_RFQDecisionCode, 1, "", 0, "",0, User, dLayer, connection, transaction);
                     transaction.Commit();
 
                     SortedList Result = new SortedList();

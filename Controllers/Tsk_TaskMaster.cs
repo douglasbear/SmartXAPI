@@ -1243,31 +1243,59 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("taskview")]
-        public ActionResult GetTaskview(int nUserID,int nTeamID,int nType)
+        public ActionResult GetTaskview(int nUserID,int nTeamID,int nType,int N_CategoryID,int N_ProjectID,int nProjectID, int nEmpID,int nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nloginUserID = myFunctions.GetUserID(User);
             string sqlCommandText="";
-            if((nUserID==0&&nTeamID==0))
-                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID=-1  and n_assigneeID="+nUserID;
-            if(nType==0)
-                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_assigneeID="+nUserID;    
-            else if(nTeamID>0 && nType==1 && nUserID>0)
-                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and N_UserMappingID="+nTeamID +" and n_assigneeID="+nUserID;
-            else if(nTeamID>0 && nType==1 && nUserID==0)
-                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and N_UserMappingID="+nTeamID;
-            else if((nUserID>0&&nType==1&&nUserID!=nloginUserID))
-                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_assigneeID="+nUserID;
-            else if((nType==1))
-                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= -1  and n_assigneeID="+nUserID;
+             string critiria="";
+            if(N_CategoryID>0)
+                critiria=" and N_CategoryID = "+N_CategoryID;
+             if(N_ProjectID>0)
+                critiria=critiria +" and N_ProjectID = "+N_ProjectID;
+
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+             string UsersIDs="";
+            UsersIDs=Convert.ToString(nUserID);
+            object Users = dLayer.ExecuteScalar("SELECT STRING_AGG(n_usersid, ', ') AS concatenated_values FROM tsk_usermappingdetails WHERE  n_usermappingid="+nTeamID, connection);
+            if(nTeamID>0&&nUserID==0)
+                UsersIDs=Users.ToString();
+            else
+                UsersIDs=nUserID.ToString();
+
+            if(UsersIDs!="0")
+                critiria=critiria+" and n_assigneeID in ("+UsersIDs+")";
+
+
+            if((nUserID==0&&nTeamID==0))
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID="+nCompanyID+critiria;
+
+             if((nProjectID>0))
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + "  and n_ProjectID="+nProjectID;
+            else if(nEmpID>0)
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_ProjectID in (select n_ProjectID from Vw_InvCustomerProjects"+
+               " where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "  and X_ProjectCode is not null and x_EmpsID like '%"+nEmpID+"%' or n_ProjectCoordinator =" + nEmpID + " or n_ProjectManager=" + nEmpID + ")"+
+               " or n_ProjectID in (select n_ProjectID from Tsk_ProjectSettingsDetails where n_UserID="+nUserID+" and n_CompanyID=" + nCompanyID + " and b_View=1)";  
+           
+            else if(nType==0)
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_assigneeID="+nUserID;    
+                
+            else if(nTeamID>0 && nType==1 && nUserID>0)
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID +critiria;
+            else if(nTeamID>0 && nType==1 && nUserID==0)
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID +critiria;
+            else if((nUserID>0&&nType==1&&nUserID!=nloginUserID))
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID +critiria;
+            else if((nType==1))
+                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= -1 "+critiria;
+             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                    
                 }
                 dt = _api.Format(dt);

@@ -253,6 +253,7 @@ namespace SmartxAPI.Controllers
                 int nVendorID = myFunctions.getIntVAL(MasterRow["n_VendorID"].ToString());
                 int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyId"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
+            
                 bool b_AutoGenerate = false;
                 int flag = 0;
                 String xButtonAction="";

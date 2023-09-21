@@ -22,6 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly string connectionString1;
         private readonly ISec_UserRepo _repository;
 
         public Api_Authkey(ISec_UserRepo repository, IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
@@ -31,7 +32,8 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString =
-            conf.GetConnectionString("SmartxConnection");
+            conf.GetConnectionString("OlivoClientConnection");
+            connectionString1=conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet()]
         public string Authkey(string username, string password)
@@ -45,11 +47,20 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    object N_UserID = dLayer.ExecuteScalar("select N_UserID from sec_user where  X_UserID='" + username + "' and x_password='" + genpassword + "'", connection, transaction);
+                    object N_UserID = dLayer.ExecuteScalar("select N_UserID from users where  x_emailid='" + username + "' and x_password='" + genpassword + "'", connection, transaction);
                     if (N_UserID != null)
                     {
                         tocken = Generatetocken();
-                        dLayer.ExecuteNonQuery("Update sec_user Set X_Token= '" + tocken + "' where N_UserID = " + N_UserID, Params, connection, transaction);
+                    }
+                }
+                using (SqlConnection connection1 = new SqlConnection(connectionString1))
+                {
+                    connection1.Open();
+                    SqlTransaction transaction = connection1.BeginTransaction();
+                    object N_UserID = dLayer.ExecuteScalar("select N_UserID from Sec_User where  X_UserID='" + username + "'", connection1, transaction);
+                    if(tocken!="")
+                    {
+                        dLayer.ExecuteNonQuery("Update sec_user Set X_Token= '" + tocken + "' where N_UserID = " + N_UserID, Params, connection1, transaction);
                         transaction.Commit();
                     }
                     else
@@ -65,64 +76,6 @@ namespace SmartxAPI.Controllers
                 return "Error";
             }
         }
-
-        //Save....
-        // [HttpPost("freetext-sales")]
-        // public ActionResult SaveData([FromBody] DataSet ds)
-        // {
-        //     try
-        //     {
-        //         DataTable MasterTable;
-        //         DataTable dt;
-        //         MasterTable = ds.Tables["master"];
-        //         int nSalesID = 0;
-        //         string Auth = "";
-        //         if (Request.Headers.ContainsKey("Authorization"))
-        //             Auth = Request.Headers["Authorization"];
-        //         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "pkey_code", typeof(int), 0);
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             SqlTransaction transaction = connection.BeginTransaction();
-        //             SortedList Params = new SortedList();
-        //             dt = dLayer.ExecuteDataTable("select * from sec_user where  X_Token='" + Auth + "'", Params, connection, transaction);
-        //             if (dt.Rows.Count > 0)
-        //             {
-        //                 MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_CompanyID", typeof(int), dt.Rows[0]["N_CompanyID"]);
-        //                 // dLayer.ExecuteNonQuery("delete from Mig_SalesInvoice", Params, connection, transaction);
-        //                 nSalesID = dLayer.SaveData("Mig_SalesInvoice", "pkey_code", MasterTable, connection, transaction);
-        //                 // object N_FnyearID = dLayer.ExecuteScalar("select MAX(N_FnyearID) from Acc_Fnyear where N_CompanyID=" + dt.Rows[0]["N_CompanyID"], connection, transaction);
-        //                 // Params.Add("N_CompanyID", dt.Rows[0]["N_CompanyID"]);
-        //                 // Params.Add("N_FnyearID", myFunctions.getIntVAL(N_FnyearID.ToString()));
-        //                 // Params.Add("N_UserID", dt.Rows[0]["N_UserID"]);
-        //                 // Params.Add("N_BranchID", dt.Rows[0]["N_BranchID"]);
-        //                 // Params.Add("N_LocationID", dt.Rows[0]["N_LocationID"]);
-        //                 // dLayer.ExecuteNonQueryPro("SP_SalesInvoiceImport", Params, connection, transaction);
-        //                 dLayer.ExecuteNonQuery("Update sec_user Set X_Token= '' where N_UserID = " + dt.Rows[0]["N_UserID"], Params, connection, transaction);
-
-        //             }
-        //             else
-        //                 return Ok(api.Error(User, "Invalid Token"));
-
-
-
-        //             if (nSalesID <= 0)
-        //             {
-        //                 transaction.Rollback();
-        //                 return Ok(api.Error(User, "Unable to save"));
-        //             }
-        //             else
-        //             {
-        //                 transaction.Commit();
-        //                 return Ok(api.Success("Sales Invoice Saved"));
-        //             }
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return Ok(api.Error(User, ex));
-        //     }
-        // }
         private string Generatetocken()
         {
             Guid g = Guid.NewGuid();

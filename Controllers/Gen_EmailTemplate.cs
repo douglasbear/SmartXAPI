@@ -42,6 +42,10 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Net;
 using System.Threading;
+// using Microsoft.Graph;
+// using Microsoft.Graph.Auth;
+// using Microsoft.Identity.Client;
+using System.Threading.Tasks;
 
 namespace SmartxAPI.Controllers
 {
@@ -83,51 +87,6 @@ namespace SmartxAPI.Controllers
         }
         [AllowAnonymous]
 
-        public void sendmail()
-    {
-        // Configure your Office 365 SMTP settings
-        string smtpServer = "smtp.office365.com";
-        int smtpPort = 587; // Use 587 for TLS or 25 for non-TLS
-        string smtpUsername = "yousuf.mansoor@oxfordsaudia.com";
-        string smtpPassword = "Snca@1280";
-
-        // Create a new SmtpClient
-        SmtpClient smtpClient = new SmtpClient(smtpServer)
-        {
-            Port = smtpPort,
-            Credentials = new NetworkCredential(smtpUsername, smtpPassword),
-            EnableSsl = true, // Use SSL/TLS
-        };
-
-        try
-        {
-            // Create a new MailMessage
-            MailMessage mailMessage = new MailMessage
-            {
-                From = new MailAddress(smtpUsername),
-                Subject = "Hello from C#",
-                Body = "This is a test email sent from C#.",
-            };
-
-            // Add recipients
-            mailMessage.To.Add("sanjaykrishna954@gmail.com");
-
-            // Send the email
-            smtpClient.Send(mailMessage);
-
-            Console.WriteLine("Email sent successfully!");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Error: " + ex.Message);
-        }
-        finally
-        {
-            smtpClient.Dispose();
-        }
-    }
-
-
         [HttpPost("send")]
         public ActionResult SendData([FromBody] DataSet ds)
         {
@@ -159,7 +118,6 @@ namespace SmartxAPI.Controllers
                     object companypassword = "";
                     object Company, Oppportunity, Contact, CustomerID;
                     int nCompanyId = myFunctions.GetCompanyID(User);
-                    sendmail();
 
                     companyemail = dLayer.ExecuteScalar("select X_Email from vw_MailGeneralScreenSettings where n_companyid="+companyid, Params, connection, transaction);
                     companypassword = dLayer.ExecuteScalar("select X_Password from vw_MailGeneralScreenSettings where n_companyid="+companyid, Params, connection, transaction);
@@ -215,7 +173,7 @@ namespace SmartxAPI.Controllers
                             }
                             object n_POID = dLayer.ExecuteScalar("select N_POrderID from vw_InvPurchaseOrder where OrderNo='"+MasterRow["n_PkeyID"].ToString()+"' and N_CompanyID="+nCompanyId, Params, connection, transaction);
                       
-                            string url=invoicepdf(82,myFunctions.getIntVAL(n_POID.ToString()), myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString()), 0,  "", "", "",false, false, 1);
+                            string url=invoicepdf(1793,myFunctions.getIntVAL(n_POID.ToString()), myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString()), 0,  "", "", "",false, false, 1);
 
                             string Sender = companyemail.ToString();
                             Subject = Subjectval;
@@ -305,7 +263,6 @@ namespace SmartxAPI.Controllers
             critiria = "";
             TableName = "";
             ReportName = "";
-            //int N_UserCategoryID=myFunctions.GetUserCategory(User);
             bool b_Custom = false;
             string xUserCategoryList = myFunctions.GetUserCategoryList(User);
             try
@@ -895,7 +852,7 @@ namespace SmartxAPI.Controllers
                                 if (xInwardCode == null)
                                 {
                                     string inwardInsert = "insert into Inv_RFQVendorListMaster " +
-                                    "select N_CompanyID,(select isnull(max(N_VendorListMasterID),0)+1 from Inv_RFQVendorListMaster) ,(select isnull(max(X_InwardsCode),0)+1 from Inv_RFQVendorListMaster),N_QuotationID,Getdate(),Getdate()," + myFunctions.getIntVAL(row["N_PartyID"].ToString()) + ",0    from Inv_VendorRequest where N_QuotationID=" + myFunctions.getIntVAL(row["N_PKeyID"].ToString()) + " and N_CompanyID=" + companyid;
+                                    "select N_CompanyID,(select isnull(max(N_VendorListMasterID),0)+1 from Inv_RFQVendorListMaster) ,(select isnull(max(cast(X_InwardsCode as int)),0)+1 from Inv_RFQVendorListMaster where N_CompanyID=" + companyid + "),N_QuotationID,Getdate(),Getdate()," + myFunctions.getIntVAL(row["N_PartyID"].ToString()) + ",0    from Inv_VendorRequest where N_QuotationID=" + myFunctions.getIntVAL(row["N_PKeyID"].ToString()) + " and N_CompanyID=" + companyid;
                                     object inwardID = dLayer.ExecuteNonQuery(inwardInsert, connection, transaction);
                                     if (inwardID == null)
                                         inwardID = 0;

@@ -310,7 +310,7 @@ namespace SmartxAPI.GeneralFunctions
                         {
                             InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
                             xButtonAction="Insert"; 
-                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Purchase Where X_InvoiceNo ='" + values + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Purchase Where X_InvoiceNo ='" + InvoiceNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
                             if (N_Result == null)
                                 break;
                         }
@@ -377,10 +377,32 @@ namespace SmartxAPI.GeneralFunctions
 
 
                         object OPaymentDone = dLayer.ExecuteScalar("SELECT DISTINCT 1	FROM dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId AND dbo.Inv_PayReceipt.N_CompanyID = dbo.Inv_PayReceiptDetails.N_CompanyID " +
-                                                                                        " WHERE dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and dbo.Inv_PayReceipt.N_CompanyID =" + nCompanyID + " and dbo.Inv_PayReceipt.N_FnYearID=" + nFnYearID + " and  dbo.Inv_PayReceiptDetails.N_InventoryId=" + N_PurchaseID, connection, transaction);
+                                                                                        " WHERE dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and dbo.Inv_PayReceipt.N_CompanyID =" + nCompanyID + " and  dbo.Inv_PayReceiptDetails.N_InventoryId=" + N_PurchaseID, connection, transaction);
+                        
+                         object OFreightPaymentDone = dLayer.ExecuteScalar("SELECT DISTINCT 1	FROM dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId AND dbo.Inv_PayReceipt.N_CompanyID = dbo.Inv_PayReceiptDetails.N_CompanyID "+
+                                                                            " WHERE dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and dbo.Inv_PayReceipt.N_CompanyID =" + nCompanyID + "  and  dbo.Inv_PayReceiptDetails.N_InventoryId in "+
+	                                                                        " (select N_PurchaseID from Inv_Purchase where N_CompanyID =" + nCompanyID + " and N_PurchaseRefID =" + N_PurchaseID+")", connection, transaction);
+
+                        
+                        
+                        
                         if (OPaymentDone != null)
                         {
-                            if (myFunctions.getIntVAL(OPaymentDone.ToString()) == 1)
+                            if (myFunctions.getIntVAL(OPaymentDone.ToString()) == 1 )
+                            {
+                                // transaction.Rollback();
+                                // return Ok(_api.Error(User, "Purchase Payment processed against this purchase."));
+                                Result.Add("b_IsCompleted", 0);
+                                Result.Add("x_Msg", "Purchase Payment processed against this purchase.");
+                                return Result;
+                            }
+                        }
+
+
+                             
+                        if (OFreightPaymentDone != null)
+                        {
+                            if (myFunctions.getIntVAL(OFreightPaymentDone.ToString()) == 1 )
                             {
                                 // transaction.Rollback();
                                 // return Ok(_api.Error(User, "Purchase Payment processed against this purchase."));
@@ -811,7 +833,10 @@ namespace SmartxAPI.GeneralFunctions
                         }
                     }
                     Result.Add("b_IsCompleted", 1);
-                    Result.Add("x_Msg", "Purchase Invoice Saved");
+                    if (myFunctions.getIntVAL(masterRow["n_FormID"].ToString()) == 1605)
+                        Result.Add("x_Msg", "Rental Purchase Invoice Saved Successfully");
+                    else 
+                        Result.Add("x_Msg", "Purchase Invoice Successfully Created");      
                     Result.Add("n_InvoiceID", N_PurchaseID);
                     Result.Add("x_InvoiceNo", InvoiceNo);
                     return Result;
@@ -2028,7 +2053,7 @@ namespace SmartxAPI.GeneralFunctions
             {
                 Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
                 Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
-                Params.Add("N_FormID", 80);
+                Params.Add("N_FormID", 68);
                 Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                    if(nDivisionID>0)
                     {

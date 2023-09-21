@@ -278,9 +278,18 @@ namespace SmartxAPI.Controllers
                         if (InPurchase != null)
                             MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), "Invoice Processed");
                     }
+                    bool Invoice2Enable = false;
+                    object Invoice2Enableobj = dLayer.ExecuteScalar("select 1 from gen_printtemplates where N_CompanyID =" + nCompanyId + " and N_FormID=1793 and X_RptName<>'' and N_UsercategoryID=" + myFunctions.GetUserCategory(User), connection);
+                    if (Invoice2Enableobj != null)
+                        Invoice2Enable = true;
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "Invoice2Enable", typeof(bool), Invoice2Enable);
 
                     MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
+
+
+
+
 
                     //PurchaseOrder Details
 
@@ -519,6 +528,7 @@ namespace SmartxAPI.Controllers
                 int nDivisionID = 0;
                 int N_NextApproverID = 0;
                 int N_SaveDraft = 0;
+                object IsSaveDraft="0";
               
 
                 if (ds.Tables.Contains("detailsImport"))
@@ -719,6 +729,7 @@ namespace SmartxAPI.Controllers
                     }
                       
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);  
+                    MasterTable.Rows[0]["N_UserID"] = myFunctions.GetUserID(User);
                     N_POrderID = dLayer.SaveData("Inv_PurchaseOrder", "n_POrderID", MasterTable, connection, transaction);
                     if (N_POrderID <= 0)
                     {
@@ -904,11 +915,15 @@ namespace SmartxAPI.Controllers
                        myFunctions.LogScreenActivitys(N_FnYearID,N_POrderID,X_POrderNo,82,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
                         
                      N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "Purchase Order", N_POrderID, X_POrderNo, 1, "", 0, "",0, User, dLayer, connection, transaction);
+                    IsSaveDraft = dLayer.ExecuteScalar("Select b_IsSaveDraft From Inv_PurchaseOrder Where  N_CompanyID=" + nCompanyId + " and N_POrderID=" + N_POrderID , connection,transaction);
+                
                     transaction.Commit();
                 }
+
                 SortedList Result = new SortedList();
                 Result.Add("n_POrderID", N_POrderID);
                 Result.Add("x_POrderNo", X_POrderNo);
+                Result.Add("b_IsSaveDraft", myFunctions.getBoolVAL(IsSaveDraft.ToString()));
                 return Ok(api.Success(Result, "Purchase Order Saved"));
             }
             catch (Exception ex)
