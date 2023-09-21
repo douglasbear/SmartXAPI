@@ -951,10 +951,16 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nPOrderID, int nBranchID, int nFnYearID,int FormID)
+        public ActionResult DeleteData(int nPOrderID, int nBranchID, int nFnYearID,int FormID,string comments)
         {
             int Results = 0;
             int nCompanyID = myFunctions.GetCompanyID(User);
+
+            if (comments == null)
+            {
+                comments = "";
+            }
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -978,7 +984,7 @@ namespace SmartxAPI.Controllers
 
                     int VendorID = myFunctions.getIntVAL(TransRow["N_VendorID"].ToString());
                      DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, FormID, nPOrderID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
-
+                     Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
                     SqlTransaction transaction = connection.BeginTransaction();
 
                     var xUserCategory = myFunctions.GetUserCategory(User);// User.FindFirst(ClaimTypes.GroupSid)?.Value;
@@ -1031,6 +1037,7 @@ namespace SmartxAPI.Controllers
                         else
                         {
                             dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + nPOrderID.ToString() + " and N_FormID=1586 and N_CompanyID=" + nCompanyID, connection, transaction);
+                            dLayer.ExecuteScalar("update Inv_RFQDecisionMaster set N_PorderID=null where N_PorderID=" + nPOrderID.ToString() + " and N_CompanyID=" + nCompanyID, connection, transaction);
                             myAttachments.DeleteAttachment(dLayer, 1, nPOrderID, VendorID, nFnYearID, this.FormID, User, transaction, connection);
 
                             transaction.Commit();
