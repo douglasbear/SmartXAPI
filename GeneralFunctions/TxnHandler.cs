@@ -377,10 +377,32 @@ namespace SmartxAPI.GeneralFunctions
 
 
                         object OPaymentDone = dLayer.ExecuteScalar("SELECT DISTINCT 1	FROM dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId AND dbo.Inv_PayReceipt.N_CompanyID = dbo.Inv_PayReceiptDetails.N_CompanyID " +
-                                                                                        " WHERE dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and dbo.Inv_PayReceipt.N_CompanyID =" + nCompanyID + " and dbo.Inv_PayReceipt.N_FnYearID=" + nFnYearID + " and  dbo.Inv_PayReceiptDetails.N_InventoryId=" + N_PurchaseID, connection, transaction);
+                                                                                        " WHERE dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and dbo.Inv_PayReceipt.N_CompanyID =" + nCompanyID + " and  dbo.Inv_PayReceiptDetails.N_InventoryId=" + N_PurchaseID, connection, transaction);
+                        
+                         object OFreightPaymentDone = dLayer.ExecuteScalar("SELECT DISTINCT 1	FROM dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId AND dbo.Inv_PayReceipt.N_CompanyID = dbo.Inv_PayReceiptDetails.N_CompanyID "+
+                                                                            " WHERE dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and dbo.Inv_PayReceipt.N_CompanyID =" + nCompanyID + "  and  dbo.Inv_PayReceiptDetails.N_InventoryId in "+
+	                                                                        " (select N_PurchaseID from Inv_Purchase where N_CompanyID =" + nCompanyID + " and N_PurchaseRefID =" + N_PurchaseID+")", connection, transaction);
+
+                        
+                        
+                        
                         if (OPaymentDone != null)
                         {
-                            if (myFunctions.getIntVAL(OPaymentDone.ToString()) == 1)
+                            if (myFunctions.getIntVAL(OPaymentDone.ToString()) == 1 )
+                            {
+                                // transaction.Rollback();
+                                // return Ok(_api.Error(User, "Purchase Payment processed against this purchase."));
+                                Result.Add("b_IsCompleted", 0);
+                                Result.Add("x_Msg", "Purchase Payment processed against this purchase.");
+                                return Result;
+                            }
+                        }
+
+
+                             
+                        if (OFreightPaymentDone != null)
+                        {
+                            if (myFunctions.getIntVAL(OFreightPaymentDone.ToString()) == 1 )
                             {
                                 // transaction.Rollback();
                                 // return Ok(_api.Error(User, "Purchase Payment processed against this purchase."));
