@@ -76,7 +76,7 @@ namespace SmartxAPI.Controllers
                     if (dt.Rows.Count == 0)
                     {
                         //return Ok(api.Warning("No Results Found"));
-                          return Ok(api.Success(OutPut));
+                        return Ok(api.Success(OutPut));
                     }
                     else
                     {
@@ -104,14 +104,14 @@ namespace SmartxAPI.Controllers
                 ExpiryTable = ds.Tables["expiry"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnyearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-                 int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationID"].ToString());
-                 string xItemName = MasterTable.Rows[0]["x_ItemName"].ToString();
+                int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationID"].ToString());
+                string xItemName = MasterTable.Rows[0]["x_ItemName"].ToString();
                 string xItemCode = MasterTable.Rows[0]["X_ItemCode"].ToString();
-                bool bAssetItem= myFunctions.getBoolVAL(MasterTable.Rows[0]["b_AssetItem"].ToString());
-                int nAddlInfoID=0;
+                bool bAssetItem = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_AssetItem"].ToString());
+                int nAddlInfoID = 0;
                 int nRentalItemID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_RentalItemID"].ToString());
-                String xButtonAction="";
-                if(ExpiryTable.Rows.Count>0)
+                String xButtonAction = "";
+                if (ExpiryTable.Rows.Count > 0)
                     nAddlInfoID = myFunctions.getIntVAL(ExpiryTable.Rows[0]["N_AddlInfoID"].ToString());
 
                 int nItemID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ItemID"].ToString());
@@ -121,24 +121,24 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
 
-                       if (MasterTable.Columns.Contains("n_FnYearID"))
+                    if (MasterTable.Columns.Contains("n_FnYearID"))
                         MasterTable.Columns.Remove("n_FnYearID");
 
-                        if (MasterTable.Columns.Contains("n_LocationID"))
+                    if (MasterTable.Columns.Contains("n_LocationID"))
                         MasterTable.Columns.Remove("n_LocationID");
 
-                        
-                        if (MasterTable.Columns.Contains("x_ItemName"))
+
+                    if (MasterTable.Columns.Contains("x_ItemName"))
                         MasterTable.Columns.Remove("x_ItemName");
 
-                        
-                        if (MasterTable.Columns.Contains("b_AssetItem"))
+
+                    if (MasterTable.Columns.Contains("b_AssetItem"))
                         MasterTable.Columns.Remove("b_AssetItem");
 
 
                     String DupCriteria = "X_ItemCode= '" + xItemCode + "' and N_CompanyID=" + nCompanyID;
                     nItemID = dLayer.SaveData("Ass_AssetMaster", "N_ItemID", DupCriteria, "", MasterTable, connection, transaction);
-                     xButtonAction="Insert"; 
+                    xButtonAction = "Insert";
                     if (nItemID <= 0)
                     {
                         transaction.Rollback();
@@ -147,10 +147,10 @@ namespace SmartxAPI.Controllers
                     if (nItemID > 0)
                     {
                         dLayer.DeleteData("Ass_AssetAddlInfo", "N_ItemID", nItemID, "N_CompanyID=" + nCompanyID, connection, transaction);
-                        xButtonAction="Update"; 
+                        xButtonAction = "Update";
                     }
 
-                    if(ExpiryTable.Rows.Count>0)
+                    if (ExpiryTable.Rows.Count > 0)
                     {
                         nAddlInfoID = dLayer.SaveData("Ass_AssetAddlInfo", "n_AddlInfoID", ExpiryTable, connection, transaction);
 
@@ -161,16 +161,17 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                      //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(nFnyearID,nItemID,xItemCode,452,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                    //Activity Log
+                    string ipAddress = "";
+                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    myFunctions.LogScreenActivitys(nFnyearID, nItemID, xItemCode, 452, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
 
                     SortedList ProcParam = new SortedList();
-                    if(bAssetItem==true){
+                    if (bAssetItem == true)
+                    {
                         ProcParam.Add("N_CompanyID", nCompanyID);
                         ProcParam.Add("N_FnYearID", nFnyearID);
                         ProcParam.Add("N_TransID", nItemID);
@@ -187,11 +188,8 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error(User, ex));
                         }
                     }
-                        
-                    // if (nRentalItemID > 0)
-                    //     dLayer.ExecuteNonQuery("Update Inv_ItemMaster Set N_AssItemID =" + nItemID + "where N_ItemID ="+ nRentalItemID +" and N_CompanyID ="+nCompanyID, ProcParam, connection, transaction);
-                    // else if (nRentalItemID == 0)
-                    //     dLayer.ExecuteNonQuery("Update Inv_ItemMaster Set N_AssItemID = 0 where N_AssItemID="+ nItemID +"and N_CompanyID="+ nCompanyID, ProcParam, connection, transaction);
+
+
 
                     transaction.Commit();
                     return Ok(api.Success(" Saved Successfully"));
@@ -211,30 +209,30 @@ namespace SmartxAPI.Controllers
             int Results = 0;
             try
             {
-            
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                        SortedList Params = new SortedList();
-                 SortedList ParamList=new SortedList();
+                    SortedList Params = new SortedList();
+                    SortedList ParamList=new SortedList();
 
                     SqlTransaction transaction = connection.BeginTransaction();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     ParamList.Add("@nFnYearID",nFnYearID);
                     string xButtonAction="Delete";
-                     String X_ItemCode="";
+                    String X_ItemCode="";
 
-                     object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Ass_AssetMaster where N_ItemID =" + nItemID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
-                
-               //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nItemID,X_ItemCode,452,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                    object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Ass_AssetMaster where N_ItemID =" + nItemID + " and N_CompanyID=" + nCompanyID, Params, connection,transaction);
 
-                    
+                    //Activity Log
+                    string ipAddress = "";
+                    if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nItemID,X_ItemCode,452,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
+
                     Results = dLayer.DeleteData("Ass_AssetAddlInfo", "N_ItemID", nItemID, "", connection, transaction);
                     transaction.Commit();
                 }
@@ -290,10 +288,10 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                       MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "d_NextMaintanance", typeof(string), 0);
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "d_NextMaintanance", typeof(string), 0);
 
 
-                 
+
                     if (MasterTable.Rows.Count == 0) { return Ok(api.Warning("No data found")); }
                     nItemID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_itemID"].ToString());
 
@@ -311,7 +309,7 @@ namespace SmartxAPI.Controllers
                     {
                         //DateTime endOfMonth = new DateTime(today.Year + 1, 1, DateTime.DaysInMonth(today.Year + 1, 1));
                         DateTime endOfMonth = new DateTime( Convert.ToDateTime(MasterTable.Rows[0]["d_PurchaseDate"]).Year,  Convert.ToDateTime(MasterTable.Rows[0]["d_PurchaseDate"]).Month, DateTime.DaysInMonth( Convert.ToDateTime(MasterTable.Rows[0]["d_PurchaseDate"]).Year,  Convert.ToDateTime(MasterTable.Rows[0]["d_PurchaseDate"]).Month));
-                       
+
                         MasterTable.Rows[0]["d_NextMaintanance"]= endOfMonth.ToShortDateString();
 
                     }
@@ -322,7 +320,7 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["d_NextMaintanance"]= endOfMonth.ToShortDateString();
 
                     }
-                       MasterTable = api.Format(MasterTable, "Master");
+                    MasterTable = api.Format(MasterTable, "Master");
 
                     HistoryTable = api.Format(HistoryTable, "History");
 
