@@ -287,7 +287,7 @@ namespace SmartxAPI.Controllers
                                     {"N_FnYearID",nFnYearID}};
                                 
 
-                        dLayer.ExecuteNonQueryPro("SP_Delete_VoucherMaster_Details", DeleteParams, connection, transaction);
+                        dLayer.ExecuteNonQueryPro("Delete_VoucherMaster_Details", DeleteParams, connection, transaction);
 
                         DetailTable.Rows[j]["N_VoucherID"] = nVoucherID;
                         DetailTable.Rows[j]["N_BranchID"] = nBranchID;
