@@ -918,7 +918,14 @@ namespace SmartxAPI.Controllers
                 SortedList Result = new SortedList();
                 Result.Add("n_POrderID", N_POrderID);
                 Result.Add("x_POrderNo", X_POrderNo);
-                return Ok(api.Success(Result, "Purchase Order Saved"));
+                if (myFunctions.getIntVAL(MasterTable.Rows[0]["n_FormID"].ToString()) == 1586)
+                {
+                    return Ok(api.Success(Result, "Rental Purchase Order Saved Successfully"));
+                }
+                else
+                {
+                    return Ok(api.Success(Result, "Purchase Order Saved Successfully"));
+                }
             }
             catch (Exception ex)
             {

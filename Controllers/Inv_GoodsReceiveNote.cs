@@ -770,7 +770,14 @@ namespace SmartxAPI.Controllers
                                 tempPOrderID=n_POrderID;
                             };
                         transaction.Commit();
-                        return Ok(_api.Success("Goods Receive Note deleted"));
+                        if (nFormID == 1593) 
+                        {
+                            return Ok(_api.Success("Rental MRN deleted successfully"));
+                        }
+                        else
+                        {
+                            return Ok(_api.Success("Goods Receive Note deleted successfully"));
+                        }
                     }
                     else
                     {

@@ -1160,9 +1160,16 @@ namespace SmartxAPI.Controllers
                     transaction.Commit();
                     if (myFunctions.getIntVAL(TransRow["N_FormID"].ToString()) == 1758)
                     {
-                        return Ok(_api.Success("Book Delivery deleted"));
+                        return Ok(_api.Success("Book Delivery deleted successfully"));
                     }
-                    return Ok(_api.Success("Delivery note deleted"));
+                    else if (myFunctions.getIntVAL(TransRow["N_FormID"].ToString()) == 1572)
+                    {
+                         return Ok(_api.Success("Rental Delivery deleted successfully"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success("Delivery note deleted successfully"));
+                    }
                 }
             }
             catch (Exception ex)
