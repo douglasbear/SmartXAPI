@@ -489,7 +489,22 @@ namespace SmartxAPI.Controllers
                             else
                             {
 
-                                SqlTransaction transaction = connection.BeginTransaction();
+                               SqlTransaction transaction = connection.BeginTransaction();
+                                      TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+                      if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+
+                    //Activity Log
+                        string ipAddress = "";
+                   if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                   else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,nPayCodeId,TransRow["X_PayCode"].ToString(),186,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                                    
                                 Results = dLayer.DeleteData("Pay_PayMaster ", "N_PayID", nPayCodeId, "", connection, transaction);
                                 transaction.Commit();
 

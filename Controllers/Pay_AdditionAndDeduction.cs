@@ -402,6 +402,7 @@ namespace SmartxAPI.Controllers
                 int nPayRunID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayrunID"].ToString());
                 string x_Batch = MasterTable.Rows[0]["x_Batch"].ToString();
                 int N_OldTransID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TransID"].ToString());
+                String xButtonAction="";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
 
@@ -410,7 +411,8 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@nPayRunID", nPayRunID);
-
+                    Params.Add("@N_TransID", N_OldTransID);
+                    
                     if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearId, DateTime.ParseExact(MasterTable.Rows[0]["d_TransDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
                     {
                         object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=" + nCompanyID + " and convert(date ,'" + MasterTable.Rows[0]["d_TransDate"].ToString() + "') between D_Start and D_End", connection, transaction);
@@ -436,7 +438,7 @@ namespace SmartxAPI.Controllers
                         int NewNo = 0, loop = 1;
                         while (OK)
                         {
-                            NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(count(1),0) + " + loop + " As Count FRom Pay_MonthlyAddOrDed Where N_CompanyID=@nCompanyID  And N_PayRunID =@nPayRunID", Params, connection, transaction).ToString());
+                            NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(count(1),0) + " + loop + " As Count FRom Pay_MonthlyAddOrDed Where N_CompanyID=@nCompanyID  And N_TransID =@N_TransID", Params, connection, transaction).ToString());
                             x_Batch = nPayRunID + "" + NewNo.ToString("0#");
                             if (myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(count(1),0) FRom Pay_MonthlyAddOrDed Where N_CompanyID=@nCompanyID And X_Batch = '" + x_Batch + "'", Params, connection, transaction).ToString()) == 0)
                             {
@@ -444,6 +446,7 @@ namespace SmartxAPI.Controllers
                             }
                             loop += 1;
                         }
+                        xButtonAction="Insert"; 
                         if (x_Batch == "")
                         {
                             transaction.Rollback();
@@ -452,8 +455,8 @@ namespace SmartxAPI.Controllers
                         }
                         MasterTable.Rows[0]["x_Batch"] = x_Batch;
                     }
-
-
+                    else
+                    xButtonAction="Update";
                     int N_TransID = dLayer.SaveData("Pay_MonthlyAddOrDed", "N_TransID", MasterTable, connection, transaction);
                     if (N_TransID <= 0)
                     {
@@ -508,13 +511,23 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Unable to save"));
                         }
-                        else
-                        {
-                            transaction.Commit();
-                            return Ok(_api.Success("Saved"));
-                        }
+                        else{
 
+// Activity Log
+                        string ipAddress = "";
+                        if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                            ipAddress = Request.Headers["X-Forwarded-For"];
+                        else
+                            ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                              myFunctions.LogScreenActivitys(nFnYearId,N_TransID,x_Batch,208,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                    
+                    transaction.Commit();
+                    return Ok(_api.Success("Saved"));
+                        }
+                        
                     }
+                    
+                
                 }
             }
             catch (Exception ex)
@@ -616,7 +629,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nTransID)
+        public ActionResult DeleteData(int nTransID,int nFnYearID)
         {
             int Results = 0;
             try
@@ -624,14 +637,22 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable TransData = new DataTable();
+                    SortedList Params = new SortedList();
+                    Params.Add("@N_TransID", nTransID);
+                    string Sql = "select N_TransID,X_Batch from Pay_MonthlyAddOrDed where N_TransID=@N_TransID and N_CompanyID=N_CompanyID";
+                    string xButtonAction="Delete";
+                    String X_Batch="";
+                    TransData = dLayer.ExecuteDataTable(Sql, Params, connection);
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Pay_MonthlyAddOrDed", "N_TransID", nTransID, "N_CompanyID=" + myFunctions.GetCompanyID(User), connection, transaction);
+                    DataRow TransRow = TransData.Rows[0];
+                    // Results = dLayer.DeleteData("Pay_MonthlyAddOrDed", "N_TransID", nTransID, "N_CompanyID=" + myFunctions.GetCompanyID(User), connection, transaction);
 
-                    if (Results <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to delete batch"));
-                    }
+                    // if (Results <= 0)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(_api.Error(User, "Unable to delete batch"));
+                    //}
                     Results = dLayer.DeleteData("Pay_MonthlyAddOrDedDetails", "N_TransID", nTransID, "N_CompanyID=" + myFunctions.GetCompanyID(User), connection, transaction);
 
                     if (Results <= 0)
@@ -639,7 +660,13 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to delete batch"));
                     }
-
+                    // Activity Log
+                            string ipAddress = "";
+                            if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                                ipAddress = Request.Headers["X-Forwarded-For"];
+                            else
+                                ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                            myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nTransID,TransRow["X_Batch"].ToString(),208,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
                     transaction.Commit();
                     return Ok(_api.Success("Batch deleted"));
                 }
