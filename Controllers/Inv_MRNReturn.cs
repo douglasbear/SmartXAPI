@@ -286,7 +286,7 @@ namespace SmartxAPI.Controllers
                         {
                             dLayer.ExecuteNonQuery("Update Inv_MRN Set N_Processed=0 Where N_MRNID=" + myFunctions.getIntVAL(nMRNID.ToString()) + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID, connection);
                         }
-                        return Ok(_api.Success("MRN Return deleted"));
+                        return Ok(_api.Success("Rental MRN Return Deleted"));
                     }
                     else
                     {

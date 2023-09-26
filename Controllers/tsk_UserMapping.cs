@@ -226,7 +226,7 @@ namespace SmartxAPI.Controllers
 
 
                      if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = " and  ( x_UserMappingCode like'%" + xSearchkey + "%'or x_Team like'%" + xSearchkey + "%')";
+                Searchkey = " and  ( x_UserMappingCode like'%" + xSearchkey + "%'or x_Team like'%" + xSearchkey + "%'or x_UserName like'%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by x_UserMappingCode desc";
@@ -246,7 +246,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(1) as N_Count from Vw_TskUsermapping where N_CompanyID=@p1 " + Searchkey + "";
+                    sqlCommandCount = "select count(1) as N_Count from Vw_TskUsermapping where  X_Team is not null and N_CompanyID=@p1 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     if (Summary.Rows.Count > 0)
