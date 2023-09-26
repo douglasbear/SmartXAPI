@@ -1240,6 +1240,7 @@ namespace SmartxAPI.Controllers
                                         }
                                     }
                                     dLayer.ExecuteScalar("delete from Inv_Prescription where N_SalesOrderID=" + nSalesOrderID.ToString() + "  and  N_CompanyID=" + nCompanyID, connection, transaction);                                       
+                                
                                 }
                             }
                             else if(nFormID==1740)
