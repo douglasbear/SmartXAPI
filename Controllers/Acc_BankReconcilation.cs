@@ -266,7 +266,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@N_CompanyID", nCompanyID);
             string qry = "";
 
-            qry = "select isnull(max([D_ToDate]),0)+1 as D_FromDate from Acc_BankReconcilation where N_CompanyID=@N_CompanyID";
+            qry = "select (max([D_ToDate]+1)) as D_FromDate from Acc_BankReconcilation where N_CompanyID=@N_CompanyID";
             
             try
             {
