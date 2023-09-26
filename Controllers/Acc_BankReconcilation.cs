@@ -159,6 +159,7 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             int N_CompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "";
 
             try
             {
@@ -175,7 +176,11 @@ namespace SmartxAPI.Controllers
                         {"N_LedgerID", N_LedgerID},
                         {"IsReconcil", 1},
                     };
-                    dt = dLayer.ExecuteDataTablePro("SP_BankReconcilation_Details", Params, connection);
+                    dLayer.ExecuteDataTablePro("SP_BankReconcilation_Details", Params, connection);
+
+                    sqlCommandText = "select * from Acc_BankAccountStatement where N_CompanyID="+N_CompanyID+"";
+                    dt = dLayer.ExecuteDataTablePro(sqlCommandText, Params, connection); 
+
                     dt = _api.Format(dt, "BankReconcil");
                 
                     if (dt.Rows.Count == 0)
