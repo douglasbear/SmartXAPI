@@ -310,7 +310,7 @@ namespace SmartxAPI.Controllers
                                     else
                                  {
                     //string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_CustomerCode='" + CustomerCode + "'";
-                   string  DupCriteria = "x_CustomerName='" + x_CustomerName.Replace("'", "''") + "' and N_CompanyID=" + nCompanyID;
+                   string  DupCriteria = "x_CustomerName='" + x_CustomerName.Replace("'", "''") + "' and N_CompanyID=" + nCompanyID+ "and  X_CustomerCode='" + CustomerCode + "'";
                    string  X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
                         nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
                         dLayer.ExecuteNonQuery("Update Inv_Customer_Contacts Set N_CustomerID =" + nCustomerID + " Where N_ContactID =" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_ContactID"].ToString()) + " and N_CompanyID=" + nCompanyID, Params, connection, transaction);

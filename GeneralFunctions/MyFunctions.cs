@@ -2695,7 +2695,7 @@ namespace SmartxAPI.GeneralFunctions
                             message.Body = MailBody;
                             message.From = new MailAddress(Sender);
                             message.IsBodyHtml = true; //HTML email 
-                            // if (nFormID > 0)
+                            if (nFormID > 0)
                                // message.Attachments.Add(new Attachment(this.TempFilesPath + ReportName));
                             client.Send(message);
 
