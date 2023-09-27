@@ -1001,8 +1001,16 @@ namespace SmartxAPI.Controllers
                                 N_CreatorID = myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring, Params, connection, transaction).ToString());
                                 N_ClosedUserID = myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring, Params, connection, transaction).ToString());
                                 N_SubmitterID = myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring, Params, connection, transaction).ToString());
-                                X_TaskDescription = (dLayer.ExecuteScalar(X_TaskDescriptionSql, Params, connection, transaction).ToString());
-                                X_TaskSummary = (dLayer.ExecuteScalar(X_TaskSummarySql, Params, connection, transaction).ToString());
+                                X_TaskDescription = dLayer.ExecuteScalar(X_TaskDescriptionSql, Params, connection, transaction).ToString();
+                                X_TaskSummary = dLayer.ExecuteScalar(X_TaskSummarySql, Params, connection, transaction).ToString();
+                                
+                                if(X_TaskSummary==""){
+                                string itemName="select X_Itemname from Inv_ItemMaster where N_ItemID=" + myFunctions.getIntVAL(var["N_ItemID"].ToString()) + " and N_CompanyID=" + N_CompanyID+"";
+                                X_TaskSummary = dLayer.ExecuteScalar(itemName, Params, connection, transaction).ToString();
+
+                                 dLayer.ExecuteNonQuery("Update Inv_ServiceInfo Set  X_ServiceItem='" + X_TaskSummary + "' Where N_ServiceInfoID =" + myFunctions.getIntVAL(var["N_ServiceID"].ToString()) + " and N_CompanyID=" + N_CompanyID+"", connection, transaction);
+
+                                }
                                 D_DueDate = Convert.ToDateTime(dLayer.ExecuteScalar(dueDateSql, Params, connection, transaction).ToString());
                                 D_StartDate = Convert.ToDateTime(dLayer.ExecuteScalar(startDateSql, Params, connection, transaction).ToString());
                                 D_EntryDate = Convert.ToDateTime(MasterTable.Rows[0]["D_EntryDate"].ToString());
