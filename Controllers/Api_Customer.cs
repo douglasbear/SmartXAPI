@@ -14,9 +14,9 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("freetext-sales")]
+    [Route("customerdata")]
     [ApiController]
-    public class Api_FTSales : ControllerBase
+    public class Api_Customer : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
@@ -24,7 +24,7 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly ISec_UserRepo _repository;
 
-        public Api_FTSales(ISec_UserRepo repository, IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Api_Customer(ISec_UserRepo repository, IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             _repository = repository;
             api = apifun;
@@ -69,9 +69,9 @@ namespace SmartxAPI.Controllers
                         MasterTable.Columns.Remove("N_LocationID");
                         
 
-                        dLayer.ExecuteNonQuery("delete from Mig_SalesInvoice", Params, connection, transaction);
-                        nSalesID = dLayer.SaveData("Mig_SalesInvoice", "pkey_code", MasterTable, connection, transaction);
-                        dLayer.ExecuteNonQueryPro("SP_SalesInvoiceImport", Params, connection, transaction);
+                        dLayer.ExecuteNonQuery("delete from mig_customers", Params, connection, transaction);
+                        nSalesID = dLayer.SaveData("mig_customers", "pkey_code", MasterTable, connection, transaction);
+                        dLayer.ExecuteNonQueryPro("SP_SetupData_cloud", Params, connection, transaction);
                         dLayer.ExecuteNonQuery("Update sec_user Set X_Token= '' where N_UserID = " + dt.Rows[0]["N_UserID"], Params, connection, transaction);
 
                     }
