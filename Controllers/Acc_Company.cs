@@ -294,12 +294,15 @@ namespace SmartxAPI.Controllers
                 GeneralTable = ds.Tables["general"];
                 DataTable Attachment = ds.Tables["attachments"];
                 string xUserName = GeneralTable.Rows[0]["X_AdminName"].ToString();
+                string xCompanyName = MasterTable.Rows[0]["X_CompanyName"].ToString();
                 string xPassword = myFunctions.EncryptString(GeneralTable.Rows[0]["X_AdminPwd"].ToString());
                 int n_userType=0;
                 int n_GBUserID=0;
                 int userID=0;
                 int n_ClientID=0;
                 int appID=0;
+                 DataTable clientCompany = new DataTable();
+
 
                 string x_DisplayName = myFunctions.ContainColumn("x_DisplayName", GeneralTable) ? GeneralTable.Rows[0]["x_DisplayName"].ToString() : "";
                 int n_PkeyID = 0;
@@ -385,11 +388,16 @@ namespace SmartxAPI.Controllers
                             //appID = myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_AppID"].ToString());
                             n_userType = myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_DefaultAppID"].ToString());
                            n_ClientID =myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_ClientID"].ToString());
+                           
+
+
                         }
 
 
                         if (values == "@Auto")
                         {
+
+
                             SortedList proParams1 = new SortedList(){
                                         {"N_CompanyID",N_CompanyId},
                                         {"X_ModuleCode","500"},
@@ -403,11 +411,40 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQueryPro("SP_NewAdminCreation", proParams1, connection, transaction);
                                 string usersql = "SELECT N_UserID FROM Sec_User where X_UserID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
                             userID = myFunctions.getIntVAL(dLayer.ExecuteScalar(usersql, connection, transaction).ToString());
-                         using (SqlConnection cnn4 = new SqlConnection(masterDBConnectionString))
-                        {
-                                    cnn4.Open();
+                           using (SqlConnection cnn4 = new SqlConnection(masterDBConnectionString))
+                           {
+                            cnn4.Open();
                             appID = myFunctions.getIntVAL(dLayer.ExecuteScalar( "SELECT Top(1) N_AppID FROM ClientApps where N_ClientID='" +n_ClientID + "'", cnn4).ToString());
-                        }
+                            //insert companywise apps in clientapps //26-09
+                            SortedList companyParams = new SortedList(){
+                            {"N_ClientID",n_ClientID}};
+
+                            string companyAppUpdate = "Update ClientApps set N_CompanyID= "+N_CompanyId+"where N_ClientID="+n_ClientID+" and N_AppID="+appID+"";
+                            dLayer.ExecuteScalar(companyAppUpdate, companyParams, cnn4);
+                            //client company creation
+                             
+                           SqlTransaction clienttransaction = cnn4.BeginTransaction();
+
+                            clientCompany.Clear();
+                            clientCompany.Columns.Add("N_ClientCompanyID");
+                            clientCompany.Columns.Add("N_ClientID");
+                            clientCompany.Columns.Add("N_CompanyID");
+                            clientCompany.Columns.Add("X_CompanyName");
+                            DataRow row1 = clientCompany.NewRow();
+                            row1["N_ClientCompanyID"] = 0;
+                            row1["N_ClientID"] = n_ClientID;
+                            row1["N_CompanyID"] =N_CompanyId;
+                            row1["X_CompanyName"] =xCompanyName.ToString();
+                            clientCompany.Rows.InsertAt(row1, 0);
+                            int ClientCompanyID = dLayer.SaveData("ClientCompany", "N_ClientCompanyID", clientCompany, cnn4, clienttransaction);
+                            clienttransaction.Commit();
+                            
+                      
+
+
+
+
+                             }
 
                             SortedList proParams2 = new SortedList(){
                                         {"N_CompanyID",N_CompanyId},
@@ -451,8 +488,7 @@ namespace SmartxAPI.Controllers
                            userApps.Columns.Add("N_AppID");
                            userApps.Columns.Add("N_UserID");
                            userApps.Columns.Add("N_GlobalUserID");
-                      
-
+                     
 
                         DataRow row = userApps.NewRow();
                         row["N_CompanyID"] = N_CompanyId;
