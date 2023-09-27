@@ -501,6 +501,29 @@ namespace SmartxAPI.Controllers
             }
 
         }
+
+        // [HttpGet("allCompanies")]
+        // public ActionResult allCompanies(int nClientID)
+        // {
+        //     try
+        //     {
+        //          using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
+        //         {
+        //             connection.Open();
+        //             SortedList Params = new SortedList();
+        //             Params.Add("@nClientID", nClientID);
+        //             string CompanyListSql=" SELECT  * from  Clientcompany where N_ClientID=@nClientID";
+                 
+        //             DataTable CompanyList = dLayer.ExecuteDataTable(CompanyListSql,Params, connection);
+        //             return Ok(_api.Success(CompanyList));
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(User,e));
+        //     }
+
+        // }
         
          [HttpPost("saveApps")]
          public ActionResult saveApps([FromBody] DataSet ds)
