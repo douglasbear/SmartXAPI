@@ -180,9 +180,8 @@ namespace SmartxAPI.Controllers
 
                     sqlCommandText = "select * from Acc_BankAccountStatement where N_CompanyID="+N_CompanyID+"";
                     dt = dLayer.ExecuteDataTablePro(sqlCommandText, Params, connection); 
-
+                    
                     dt = _api.Format(dt, "BankReconcil");
-                
                     if (dt.Rows.Count == 0)
                     { 
                         return Ok(_api.Warning("No data found")); 
@@ -254,7 +253,6 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User,e));
             }
         }
-
         
         [HttpGet("Reconcil")]
         public ActionResult GetReconcilValues()
@@ -266,7 +264,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@N_CompanyID", nCompanyID);
             string qry = "";
 
-            qry = "select (max([D_ToDate]+1)) as D_FromDate from Acc_BankReconcilation where N_CompanyID=@N_CompanyID";
+            qry = "select (max([D_ToDate]+1)) as D_FromDate from Acc_BankReconcilation where N_CompanyID=@N_CompanyID" ;
             
             try
             {
