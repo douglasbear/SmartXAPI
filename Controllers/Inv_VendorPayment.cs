@@ -509,7 +509,7 @@ namespace SmartxAPI.Controllers
                     VendParams.Add("@n_PartyID", n_PartyID);
                     VendParams.Add("@nFnYearID", nFnYearID);
                     object objVendName = dLayer.ExecuteScalar("Select X_VendorName From Inv_Vendor where N_VendorID=@n_PartyID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", VendParams, connection, transaction);
-
+                    MasterTable.Rows[0]["N_UserID"] = myFunctions.GetUserID(User);
                     if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && n_PayReceiptID > 0)
                     {
                         int N_PkeyID = n_PayReceiptID;
@@ -804,40 +804,7 @@ namespace SmartxAPI.Controllers
 
                     string X_Criteria = "N_PayReceiptId=" + nPayReceiptId + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnyearID;
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
-                    int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
-
-                    // if (ButtonTag == "6" || ButtonTag == "0")
-                    // {
-                    //     if (nPayReceiptId > 0)
-                    //     {
-                    //         SortedList DeleteParams = new SortedList(){
-                    //                 {"N_CompanyID",myFunctions.GetCompanyID(User)},
-                    //                 {"X_TransType",xTransType},
-                    //                 {"N_VoucherID",nPayReceiptId}};
-
-                    //         int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection,transaction);
-                    //         if (result > 0)
-                    //         {
-                    //             myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnyearID,67, User, transaction, connection);
-                    //             transaction.Commit();
-                    //             return Ok(api.Success("Vendor Payment Deleted"));
-                    //         }         
-                    //     }
-                    // }
-                    // else
-                    // {
-                    //     string status = myFunctions.UpdateApprovals(Approvals, nFnyearID, "PURCHASE PAYMENT", nPayReceiptId, TransRow["X_VoucherNo"].ToString(), ProcStatus, "Inv_PayReceipt", X_Criteria, "", User, dLayer, connection, transaction);
-                    //     if (status != "Error")
-                    //     {
-                    //         transaction.Commit();
-                    //         return Ok(api.Success("Vendor Payment " + status + " Successfully"));
-                    //     }
-                    //     else
-                    //     {
-                    //         transaction.Rollback();
-                    //         return Ok(api.Error(User, "Unable to delete Vendor Payment"));
-                    //     }
-                    // }
+                    int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());   
 
                     //Activity Log
                     string ipAddress = "";
@@ -882,10 +849,14 @@ namespace SmartxAPI.Controllers
                                     transaction.Commit();
                                     return Ok(api.Success("Vendor Payment Deleted"));
                                 }
-
-
                             }
                         }
+                        else if (ButtonTag == "4")
+                        {
+                            dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails_Segments where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='"+xTransType+"' AND N_AccTransID  in (select N_AccTransID from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='"+xTransType+"' AND X_VoucherNo='"+TransRow["X_VoucherNo"].ToString()+"')", ParamList, connection, transaction);
+                            dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='"+xTransType+"' AND X_VoucherNo='"+TransRow["X_VoucherNo"].ToString()+"'", ParamList, connection, transaction);
+                        }
+
                         transaction.Commit();
                         return Ok(api.Success("Vendor Payment " + status + " Successfully"));
                     }

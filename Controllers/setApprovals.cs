@@ -207,7 +207,6 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
                     
                     DataTable DetailTable;
                     
@@ -219,6 +218,9 @@ namespace SmartxAPI.Controllers
                   
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     int n_ModuleID = myFunctions.getIntVAL(MasterRow["N_ModuleID"].ToString());
+
+                    SqlTransaction transaction = connection.BeginTransaction();
+
                     if (n_ModuleID>0)
                     {
                         
