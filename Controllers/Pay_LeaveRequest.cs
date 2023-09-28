@@ -992,7 +992,7 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     ParamList.Add("@nCompanyID", nCompanyID);
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_EmpID,0) as N_EmpID,X_VacationGroupCode,N_vacTypeID,B_IsAdjustEntry from Pay_VacationMaster where N_CompanyId=@nCompanyID and N_VacationGroupID=@nTransID";
-                     string xButtonAction="";
+                     string xButtonAction="Delete";
                       string X_VacationGroupCode="";
 
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
@@ -1015,13 +1015,13 @@ namespace SmartxAPI.Controllers
                     Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
                     SqlTransaction transaction = connection.BeginTransaction(); 
 
-                     //  Activity Log
-                //          string ipAddress = "";
-                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                //     ipAddress = Request.Headers["X-Forwarded-For"];
-                // else
-                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                //        myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),n_VacationGroupID,TransRow["X_VacationGroupCode"].ToString(),nFormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                     // Activity Log
+                         string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),n_VacationGroupID,TransRow["X_VacationGroupCode"].ToString(),nFormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
 
 

@@ -114,7 +114,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nRFQDecisionID,int nFnYearID,int nCustomerId)
+        public ActionResult DeleteData(int nRFQDecisionID,int nFnYearID,int nCustomerId, string comments)
         {
             int Results = 0;
              DataTable TransData = new DataTable();
@@ -126,6 +126,10 @@ namespace SmartxAPI.Controllers
              SortedList Params = new SortedList();
               string xButtonAction="Delete";
               String X_RFQDecisionCode="";
+            if (comments == null)
+            {
+                comments = "";
+            }
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -148,7 +152,8 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Error(User, "Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
-                  DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, 1278, nRFQDecisionID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
+                   DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, 1278, nRFQDecisionID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
+                   Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
                    SqlTransaction transaction = connection.BeginTransaction();
                     //Activity Log
                 string ipAddress = "";
@@ -354,6 +359,7 @@ namespace SmartxAPI.Controllers
             
             string Condition = "";
             string _sqlQuery = "";
+            string Mastersql = "";
 
 
             try
@@ -368,9 +374,9 @@ namespace SmartxAPI.Controllers
                         Condition = "n_Companyid=@nCompanyID and X_RFQDecisionCode =@xRFQDecisionCode and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
 
 
-                    _sqlQuery = "Select * from vw_RFQDecisionMaster Where " + Condition + "";
+                    Mastersql = "Select * from vw_RFQDecisionMaster Where " + Condition + "";
 
-                    Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+                    Master = dLayer.ExecuteDataTable(Mastersql, QueryParams, connection);
 
                     Master = api.Format(Master, "master");
 

@@ -134,8 +134,13 @@ namespace SmartxAPI.Controllers
                 DataTable DetailTable;
                 DataTable DetailsTable;
                 DetailTable = ds.Tables["Details"];
+             DataTable MasterTable;
+           
+                MasterTable = ds.Tables["master"];
+
                 DataRow MasterRow = DetailTable.Rows[0];
                 int n_ClientID = myFunctions.getIntVAL(MasterRow["n_ClientID"].ToString());
+                DateTime dAppStartDate = Convert.ToDateTime(MasterTable.Rows[0]["d_AppStartDate"].ToString());
                 string Sql = "";
                  using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
                 {
@@ -167,12 +172,25 @@ namespace SmartxAPI.Controllers
                     dLayer.DeleteData("genSettings", "n_ClientID", n_ClientID, "", connection, transaction);
                     int settingsID = dLayer.SaveData("genSettings", "N_SettingsID", DetailTable, connection, transaction);
                     
+            //  SortedList Params = new SortedList();
+           
+                     if (n_ClientID >0)
+                            {
+                                
+                                //  dLayer.ExecuteNonQuery("update ClientMaster set d_AppStartDate= "+ MasterRow["d_AppStartDate"].ToString()+"and  where N_ClientID=" + n_ClientID, Params, connection);
+                                 dLayer.ExecuteNonQuery("UPDATE ClientMaster SET d_AppStartDate = '" + dAppStartDate + "' WHERE N_ClientID = " + n_ClientID, paramList, connection,transaction);
+
+
+                            }
+                    
+                    
                     if (settingsID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Something went wrong"));
                     }
-                    
+
+                     
                    
                     
                     transaction.Commit();
