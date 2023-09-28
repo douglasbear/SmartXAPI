@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly int N_FormID;
         private readonly ITxnHandler txnHandler;
-        public Inv_PurchaseInvoice(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf, IMyAttachments myAtt,ITxnHandler txn)
+        public Inv_PurchaseInvoice(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf, IMyAttachments myAtt, ITxnHandler txn)
         {
             _api = api;
             dLayer = dl;
@@ -43,7 +43,7 @@ namespace SmartxAPI.Controllers
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
             N_FormID = 65;
-            txnHandler=txn;
+            txnHandler = txn;
         }
 
 
@@ -94,8 +94,8 @@ namespace SmartxAPI.Controllers
                         criteria = " and MONTH(Cast(InvoiceDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(InvoiceDate)= YEAR(CURRENT_TIMESTAMP) and ISNULL(B_IsSaveDraft,0)=1 and X_TransType='PURCHASE' ";
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%' or x_BranchName like '%" + xSearchkey + "%' or x_VendorInvoice like '%"+ xSearchkey + "%' or [Invoice Date] like '%" + xSearchkey + "%' or invoiceNetAmt like '%" + xSearchkey + "%' or x_Description like '%" + xSearchkey + "%' or X_ProjectCode like '%" + xSearchkey + "%' or X_ProjectName like '%" + xSearchkey + "%' )";
-                       
+                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%' or x_BranchName like '%" + xSearchkey + "%' or x_VendorInvoice like '%" + xSearchkey + "%' or [Invoice Date] like '%" + xSearchkey + "%' or invoiceNetAmt like '%" + xSearchkey + "%' or x_Description like '%" + xSearchkey + "%' or X_ProjectCode like '%" + xSearchkey + "%' or X_ProjectName like '%" + xSearchkey + "%' )";
+
                     if (CheckClosedYear == false)
                     {
                         if (bAllBranchData == true)
@@ -134,10 +134,10 @@ namespace SmartxAPI.Controllers
                                 xSortBy = "Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(10," + N_decimalPlace + ")) " + xSortBy.Split(" ")[1];
                                 break;
                             case "x_ProjectName":
-                               xSortBy = "[x_ProjectName] " + xSortBy.Split(" ")[1];
+                                xSortBy = "[x_ProjectName] " + xSortBy.Split(" ")[1];
                                 break;
                             case "x_ProjectCode":
-                               xSortBy = "[x_ProjectCode] " + xSortBy.Split(" ")[1];
+                                xSortBy = "[x_ProjectCode] " + xSortBy.Split(" ")[1];
                                 break;
                             default: break;
                         }
@@ -147,7 +147,7 @@ namespace SmartxAPI.Controllers
 
                     int Count = (nPage - 1) * nSizeperpage;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate,x_VendorInvoice,N_FormID,X_VendorName_Ar,X_ProjectCode,X_ProjectName from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_FormID, 65)=@p3 " + criteria + Searchkey + " " + " Group By N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate,x_VendorInvoice,N_FormID,X_VendorName_Ar,X_ProjectCode,X_ProjectName"+ xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate,x_VendorInvoice,N_FormID,X_VendorName_Ar,X_ProjectCode,X_ProjectName from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_FormID, 65)=@p3 " + criteria + Searchkey + " " + " Group By N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate,x_VendorInvoice,N_FormID,X_VendorName_Ar,X_ProjectCode,X_ProjectName" + xSortBy;
                     else
                         sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate,x_VendorInvoice,N_FormID,X_VendorName_Ar,X_ProjectCode,X_ProjectName from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_FormID, 65)=@p3 " + criteria + Searchkey + " and  N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and isNull(N_FormID, 0)=@p3 " + criteria + Searchkey + xSortBy + " ) " + "Group By N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft,N_BalanceAmt,X_DueDate,X_POrderNo,d_PrintDate,x_VendorInvoice,N_FormID,X_VendorName_Ar,X_ProjectCode,X_ProjectName" + xSortBy;
 
@@ -253,7 +253,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listdetails")]
-        public ActionResult GetPurchaseInvoiceDetails(int nCompanyId, int nFnYearId, string nPurchaseNO, bool showAllBranch, int nBranchId, string xPOrderNo, string xGrnNo, string multipleGrnNo, int nServiceSheetID,bool invoiceTax, string multipleRentalPO,bool enableDayWise, string xServiceSheetID)
+        public ActionResult GetPurchaseInvoiceDetails(int nCompanyId, int nFnYearId, string nPurchaseNO, bool showAllBranch, int nBranchId, string xPOrderNo, string xGrnNo, string multipleGrnNo, int nServiceSheetID, bool invoiceTax, string multipleRentalPO, bool enableDayWise, string xServiceSheetID)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
@@ -273,15 +273,18 @@ namespace SmartxAPI.Controllers
                 N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
                 int ServiceSheetID = 0;
 
-                if(xGrnNo!=null){
-                     object purchaseOrderNo = dLayer.ExecuteScalar("select N_POrderid from Inv_MRN where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId +" and X_MRNNo='" + xGrnNo + "'", Params, connection);
-                 
-                 if( myFunctions.getVAL(purchaseOrderNo.ToString()) > 0){
-                    IsDirectMRN=false;
-                 }
-                 else{
-                    IsDirectMRN=true;
-                 }
+                if (xGrnNo != null)
+                {
+                    object purchaseOrderNo = dLayer.ExecuteScalar("select N_POrderid from Inv_MRN where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_MRNNo='" + xGrnNo + "'", Params, connection);
+
+                    if (myFunctions.getVAL(purchaseOrderNo.ToString()) > 0)
+                    {
+                        IsDirectMRN = false;
+                    }
+                    else
+                    {
+                        IsDirectMRN = true;
+                    }
                 }
 
                 if (nPurchaseNO != null)
@@ -305,7 +308,7 @@ namespace SmartxAPI.Controllers
 
                 if (nPurchaseNO != null)
 
-                {
+                     {
                     Params.Add("@PurchaseNo", nPurchaseNO);
                     X_MasterSql = "select * from vw_Inv_PurchaseDisp where N_CompanyID=@CompanyID and X_InvoiceNo=@PurchaseNo and N_FnYearID=@YearID and X_TransType=@TransType" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                 }
@@ -348,36 +351,36 @@ namespace SmartxAPI.Controllers
                         int N_POID = myFunctions.getIntVAL(X_POrderID[0].ToString());
                         string[] X_ServiceSheetID = xServiceSheetID.Split(",");
                         ServiceSheetID = myFunctions.getIntVAL(X_ServiceSheetID[0].ToString());
-                        X_MasterSql = "select * from vw_InvVendorSTAsInvoiceMaster where N_CompanyID=@CompanyID and N_ServiceSheetID in ("+ServiceSheetID+") and N_POrderID in (" + N_POID + ")" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                        X_MasterSql = "select * from vw_InvVendorSTAsInvoiceMaster where N_CompanyID=@CompanyID and N_ServiceSheetID in (" + ServiceSheetID + ") and N_POrderID in (" + N_POID + ")" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                     }
-                   
+
 
                     dtPurchaseInvoice = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
 
-                     if (IsDirectMRN && !invoiceTax)
-                     {
-                    object taxID = dLayer.ExecuteScalar("Select N_Value from Gen_Settings where N_CompanyId=" + nCompanyId+" and X_Description='DefaultTaxCategory' and X_Group='Inventory'", Params, connection);
-                        
-                         if(taxID==null)
-                         {
-                            taxID=0;
-                         }
-                         if(taxID!=null && myFunctions.getIntVAL(taxID.ToString())!=0)
-                         {
-                             object category = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_CompanyId=" + nCompanyId+" and X_PkeyCode=" + taxID+" ", Params, connection);
-                             object taxCatID = dLayer.ExecuteScalar("Select N_PkeyID from Acc_TaxCategory where N_CompanyId=" + nCompanyId+" and X_PkeyCode=" + taxID+" ", Params, connection);
-                             object percentage = dLayer.ExecuteScalar("Select Cast(REPLACE(N_Amount,',','') as Numeric(10,0)) from Acc_TaxCategory where N_PkeyID=" + taxID+" ", Params, connection);
-                            
-                                dtPurchaseInvoice.Rows[0]["X_DisplayName"] = category.ToString();
-                                dtPurchaseInvoice.Rows[0]["N_TaxCategoryId"] = myFunctions.getIntVAL(taxCatID.ToString());
-                                dtPurchaseInvoice.Rows[0]["n_TaxPercentage"] =myFunctions.getIntVAL(percentage.ToString());
-                               }
+                    if (IsDirectMRN && !invoiceTax)
+                    {
+                        object taxID = dLayer.ExecuteScalar("Select N_Value from Gen_Settings where N_CompanyId=" + nCompanyId + " and X_Description='DefaultTaxCategory' and X_Group='Inventory'", Params, connection);
 
-                               
+                        if (taxID == null)
+                        {
+                            taxID = 0;
+                        }
+                        if (taxID != null && myFunctions.getIntVAL(taxID.ToString()) != 0)
+                        {
+                            object category = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_CompanyId=" + nCompanyId + " and X_PkeyCode=" + taxID + " ", Params, connection);
+                            object taxCatID = dLayer.ExecuteScalar("Select N_PkeyID from Acc_TaxCategory where N_CompanyId=" + nCompanyId + " and X_PkeyCode=" + taxID + " ", Params, connection);
+                            object percentage = dLayer.ExecuteScalar("Select Cast(REPLACE(N_Amount,',','') as Numeric(10,0)) from Acc_TaxCategory where N_PkeyID=" + taxID + " ", Params, connection);
 
-                     }
+                            dtPurchaseInvoice.Rows[0]["X_DisplayName"] = category.ToString();
+                            dtPurchaseInvoice.Rows[0]["N_TaxCategoryId"] = myFunctions.getIntVAL(taxCatID.ToString());
+                            dtPurchaseInvoice.Rows[0]["n_TaxPercentage"] = myFunctions.getIntVAL(percentage.ToString());
+                        }
 
-                 
+
+
+                    }
+
+
                     object objPayment = dLayer.ExecuteScalar("SELECT dbo.Inv_PayReceipt.X_Type, dbo.Inv_PayReceiptDetails.N_InventoryId FROM dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and  dbo.Inv_PayReceipt.B_IsDraft <> 1 and dbo.Inv_PayReceiptDetails.N_InventoryId in (select N_PurchaseID from Inv_Purchase where X_InvoiceNo='" + nPurchaseNO + "' and N_CompanyID=@CompanyID and N_FnYearID=@YearID)", Params, connection);
                     if (objPayment != null)
                         myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "B_PaymentProcessed", typeof(Boolean), true);
@@ -437,59 +440,63 @@ namespace SmartxAPI.Controllers
                     }
                     if (multipleRentalPO != null && multipleRentalPO != "")
                     {
-                        X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_ServiceSheetID in ("+ServiceSheetID+") and N_POrderID in (" + multipleRentalPO + ")" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                        X_DetailsSql = "select * from vw_InvVendorSTAsInvoiceDetails where N_CompanyID=@CompanyID and N_ServiceSheetID in ("+ xServiceSheetID +") and N_POrderID in (" + multipleRentalPO + ")" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                     }
 
                     //multiple GRN From Invoice
 
-                    object Tax1ID="";
+                    object Tax1ID = "";
                     if (multipleGrnNo != null && multipleGrnNo != "")
 
-                      X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_UnitSPrice,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_SPrice,N_MrnID AS N_RsID  from vw_InvMRNDetailsDirect Where N_CompanyID=@CompanyID and N_MRNID in (" + multipleGrnNo + ")";
-             
-                    
+                        X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_UnitSPrice,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_SPrice,N_MrnID AS N_RsID  from vw_InvMRNDetailsDirect Where N_CompanyID=@CompanyID and N_MRNID in (" + multipleGrnNo + ")";
+
+
                     dtPurchaseInvoiceDetails = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
 
-                    string x_PONo =  dtPurchaseInvoiceDetails.Rows[0]["X_POrderNo"].ToString();
+                    string x_PONo = dtPurchaseInvoiceDetails.Rows[0]["X_POrderNo"].ToString();
                     for (int j = 1; j < dtPurchaseInvoiceDetails.Rows.Count; j++)
                     {
-                        if (dtPurchaseInvoiceDetails.Rows[j]["X_POrderNo"].ToString() != dtPurchaseInvoiceDetails.Rows[j-1]["X_POrderNo"].ToString())
-                        x_PONo = x_PONo + "," + dtPurchaseInvoiceDetails.Rows[j]["X_POrderNo"].ToString();
+                        if (dtPurchaseInvoiceDetails.Rows[j]["X_POrderNo"].ToString() != dtPurchaseInvoiceDetails.Rows[j - 1]["X_POrderNo"].ToString())
+                            x_PONo = x_PONo + "," + dtPurchaseInvoiceDetails.Rows[j]["X_POrderNo"].ToString();
                     };
-                     myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "X_PONo", typeof(string), x_PONo);
-                     dtPurchaseInvoice.AcceptChanges();
+                    myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "X_PONo", typeof(string), x_PONo);
+                    dtPurchaseInvoice.AcceptChanges();
 
-                    if (multipleGrnNo != null && multipleGrnNo != ""){
-                      foreach (DataRow Row in dtPurchaseInvoiceDetails.Rows)
-                       {
-                          if(myFunctions.getIntVAL(Row["n_POrderDetailsID"].ToString())>0){
-                             DataTable deliveryDetails = new DataTable();
-                            string directDelivery = "SELECT  Acc_TaxCategory.X_DisplayName, Inv_PurchaseOrderDetails.N_TaxCategoryID1, Inv_PurchaseOrderDetails.N_TaxAmt1, Inv_PurchaseOrderDetails.N_TaxPercentage1 FROM  Inv_PurchaseOrderDetails INNER JOIN Acc_TaxCategory ON Inv_PurchaseOrderDetails.N_TaxCategoryID1 = Acc_TaxCategory.N_PkeyID AND Inv_PurchaseOrderDetails.N_CompanyID = Acc_TaxCategory.N_CompanyID where Inv_PurchaseOrderDetails.N_POrderDetailsID="+myFunctions.getIntVAL(Row["n_POrderDetailsID"].ToString());
-                            deliveryDetails = dLayer.ExecuteDataTable(directDelivery, Params, connection);
+                    if (multipleGrnNo != null && multipleGrnNo != "")
+                    {
+                        foreach (DataRow Row in dtPurchaseInvoiceDetails.Rows)
+                        {
+                            if (myFunctions.getIntVAL(Row["n_POrderDetailsID"].ToString()) > 0)
+                            {
+                                DataTable deliveryDetails = new DataTable();
+                                string directDelivery = "SELECT  Acc_TaxCategory.X_DisplayName, Inv_PurchaseOrderDetails.N_TaxCategoryID1, Inv_PurchaseOrderDetails.N_TaxAmt1, Inv_PurchaseOrderDetails.N_TaxPercentage1 FROM  Inv_PurchaseOrderDetails INNER JOIN Acc_TaxCategory ON Inv_PurchaseOrderDetails.N_TaxCategoryID1 = Acc_TaxCategory.N_PkeyID AND Inv_PurchaseOrderDetails.N_CompanyID = Acc_TaxCategory.N_CompanyID where Inv_PurchaseOrderDetails.N_POrderDetailsID=" + myFunctions.getIntVAL(Row["n_POrderDetailsID"].ToString());
+                                deliveryDetails = dLayer.ExecuteDataTable(directDelivery, Params, connection);
 
-                            if(deliveryDetails.Rows.Count>0){                  
-                               Row["x_DisplayName1"] = deliveryDetails.Rows[0]["X_DisplayName"];
-                               Row["n_TaxPercentage1"]=deliveryDetails.Rows[0]["N_TaxPercentage1"];
-                               Row["n_TaxCategoryID1"]=deliveryDetails.Rows[0]["N_TaxCategoryID1"];
+                                if (deliveryDetails.Rows.Count > 0)
+                                {
+                                    Row["x_DisplayName1"] = deliveryDetails.Rows[0]["X_DisplayName"];
+                                    Row["n_TaxPercentage1"] = deliveryDetails.Rows[0]["N_TaxPercentage1"];
+                                    Row["n_TaxCategoryID1"] = deliveryDetails.Rows[0]["N_TaxCategoryID1"];
+                                }
+                                else
+                                {
+                                    DataTable OrderData = new DataTable();
+                                    string purchaseData = "SELECT Acc_TaxCategory.X_DisplayName, Inv_PurchaseOrder.N_TaxCategoryID, Inv_PurchaseOrder.N_TaxPercentage, Inv_PurchaseOrder.N_TaxAmt FROM  Inv_PurchaseOrder LEFT OUTER JOIN Acc_TaxCategory ON Inv_PurchaseOrder.N_TaxCategoryID = Acc_TaxCategory.N_PkeyID AND Inv_PurchaseOrder.N_CompanyID = Acc_TaxCategory.N_CompanyID where Inv_PurchaseOrder.N_POrderID=" + myFunctions.getIntVAL(Row["n_POrderID"].ToString());
+                                    OrderData = dLayer.ExecuteDataTable(purchaseData, Params, connection);
+                                    Row["x_DisplayName1"] = OrderData.Rows[0]["X_DisplayName"];
+                                    Row["n_TaxPercentage1"] = OrderData.Rows[0]["N_TaxPercentage"];
+                                    Row["n_TaxCategoryID1"] = OrderData.Rows[0]["N_TaxCategoryID"];
+                                }
+
+                                //    Row["N_TaxAmt1"]=deliveryDetails.Rows[0]["N_TaxAmt1"];
+
+
                             }
-                            else{
-                                DataTable OrderData = new DataTable();
-                              string purchaseData="SELECT Acc_TaxCategory.X_DisplayName, Inv_PurchaseOrder.N_TaxCategoryID, Inv_PurchaseOrder.N_TaxPercentage, Inv_PurchaseOrder.N_TaxAmt FROM  Inv_PurchaseOrder LEFT OUTER JOIN Acc_TaxCategory ON Inv_PurchaseOrder.N_TaxCategoryID = Acc_TaxCategory.N_PkeyID AND Inv_PurchaseOrder.N_CompanyID = Acc_TaxCategory.N_CompanyID where Inv_PurchaseOrder.N_POrderID="+myFunctions.getIntVAL(Row["n_POrderID"].ToString());  
-                              OrderData = dLayer.ExecuteDataTable(purchaseData, Params, connection);
-                              Row["x_DisplayName1"] = OrderData.Rows[0]["X_DisplayName"];
-                               Row["n_TaxPercentage1"]=OrderData.Rows[0]["N_TaxPercentage"];
-                               Row["n_TaxCategoryID1"]=OrderData.Rows[0]["N_TaxCategoryID"];
-                            }
-               
-                            //    Row["N_TaxAmt1"]=deliveryDetails.Rows[0]["N_TaxAmt1"];
-                                
-                       
-                     }
-                       }
-                     dtPurchaseInvoiceDetails.AcceptChanges();
+                        }
+                        dtPurchaseInvoiceDetails.AcceptChanges();
                     }
-                      
-            
+
+
 
                     X_FreightSql = "Select *,X_ShortName as X_CurrencyName FROM vw_InvPurchaseFreights WHERE N_PurchaseID=" + N_PurchaseID;
                     dtFreightCharges = dLayer.ExecuteDataTable(X_FreightSql, Params, connection);
@@ -697,35 +704,35 @@ namespace SmartxAPI.Controllers
             return TxnStatus;
         }
 
-     //Save....
+        //Save....
         [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             SortedList Result = new SortedList();
-            int n_IsCompleted=0;
-            string x_Message="";
+            int n_IsCompleted = 0;
+            string x_Message = "";
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                        connection.Open();
-                        SqlTransaction transaction;
-                        transaction = connection.BeginTransaction();
+                    connection.Open();
+                    SqlTransaction transaction;
+                    transaction = connection.BeginTransaction();
 
-                  string ipAddress = "";
-                    if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    string ipAddress = "";
+                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
                         ipAddress = Request.Headers["X-Forwarded-For"];
                     else
                         ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
 
 
-                        Result=txnHandler.PurchaseSaveData( ds,ipAddress,User, dLayer,  connection, transaction);
+                    Result = txnHandler.PurchaseSaveData(ds, ipAddress, User, dLayer, connection, transaction);
 
-                        n_IsCompleted=myFunctions.getIntVAL(Result["b_IsCompleted"].ToString());
-                        x_Message=Result["x_Msg"].ToString();
-                       
-                    if(n_IsCompleted==1)
+                    n_IsCompleted = myFunctions.getIntVAL(Result["b_IsCompleted"].ToString());
+                    x_Message = Result["x_Msg"].ToString();
+
+                    if (n_IsCompleted == 1)
                     {
                         transaction.Commit();
                         return Ok(_api.Success(Result, x_Message));
@@ -736,8 +743,8 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, x_Message));
                     }
                 }
-                     
-            }       
+
+            }
             catch (Exception ex)
             {
                 return Ok(_api.Error(User, ex));
@@ -834,7 +841,7 @@ namespace SmartxAPI.Controllers
         //                     Result.Add("x_Msg", "Transaction Started!");
         //                     return Result;
         //                 }
-                            
+
 
         //                 object Dir_PurchaseCount = dLayer.ExecuteScalar("SELECT COUNT(Inv_Purchase.N_PurchaseID) FROM Inv_Purchase INNER JOIN Inv_MRN ON Inv_Purchase.N_CompanyID = Inv_MRN.N_CompanyID AND Inv_Purchase.N_RsID = Inv_MRN.N_MRNID AND Inv_Purchase.N_FnYearID = Inv_MRN.N_FnYearID " +
         //                                                                 " WHERE Inv_MRN.B_IsDirectMRN=0 and Inv_Purchase.N_CompanyID=" + nCompanyID + " and Inv_Purchase.N_PurchaseID=" + N_PurchaseID, connection, transaction);
@@ -849,7 +856,7 @@ namespace SmartxAPI.Controllers
         //             VendParams.Add("@nFnYearID", nFnYearID);
         //             object objVendorName = dLayer.ExecuteScalar("Select X_VendorName From Inv_Vendor where N_VendorID=@N_VendorID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", VendParams, connection, transaction);
         //             object objVendorCode = dLayer.ExecuteScalar("Select X_VendorCode From Inv_Vendor where N_VendorID=@N_VendorID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", VendParams, connection, transaction);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+
         //             if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_PurchaseID > 0)
         //             {
         //                 int N_PkeyID = N_PurchaseID;
@@ -953,7 +960,7 @@ namespace SmartxAPI.Controllers
         //                 Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
         //                 Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
         //                 Params.Add("N_FormID", this.N_FormID);
-                       
+
         //                 while (true)
         //                 {
         //                     InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
@@ -1216,7 +1223,7 @@ namespace SmartxAPI.Controllers
         //                 dLayer.SaveData("Inv_PurchaseFreights", "N_PurchaseFreightID", PurchaseFreight, connection, transaction);
         //             }
 
-                   
+
 
         //             if (b_FreightAmountDirect == 0)
         //             {
@@ -1352,8 +1359,8 @@ namespace SmartxAPI.Controllers
 
         //     // }
 
-            
-                  
+
+
         //     // catch (Exception ex)
         //     // {
         //     //     return Ok(_api.Error(User, ex));
@@ -1408,8 +1415,8 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", nCompanyID);
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_VendorID,0) as N_VendorID,X_InvoiceNo,N_FormID from Inv_Purchase where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_PurchaseID=@nTransID";
-                   string xButtonAction="Delete";
-                    string X_InvoiceNo="";
+                    string xButtonAction = "Delete";
+                    string X_InvoiceNo = "";
 
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
@@ -1448,18 +1455,18 @@ namespace SmartxAPI.Controllers
 
                             SortedList StockUpdateParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
-	                            {"N_TransID",nMRNID},
-	                            {"X_TransType", "PURCHASE"}};
+                                {"N_TransID",nMRNID},
+                                {"X_TransType", "PURCHASE"}};
 
                             dLayer.ExecuteNonQueryPro("SP_StockDeleteUpdate", StockUpdateParams, connection, transaction);
-                       
-               //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nPurchaseID,TransRow["X_InvoiceNo"].ToString(),65,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
+                            //Activity Log
+                            string ipAddress = "";
+                            if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                                ipAddress = Request.Headers["X-Forwarded-For"];
+                            else
+                                ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                            myFunctions.LogScreenActivitys(myFunctions.getIntVAL(nFnYearID.ToString()), nPurchaseID, TransRow["X_InvoiceNo"].ToString(), 65, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
 
                             SortedList DeleteParams = new SortedList(){
                                     {"N_CompanyID",nCompanyID},
@@ -1471,32 +1478,33 @@ namespace SmartxAPI.Controllers
                             //{"B_MRNVisible",n_MRNID>0?"1":"0"}};
                             DataTable DetailTable = dLayer.ExecuteDataTable("select N_POrderID from Inv_PurchaseDetails where N_CompanyID=@nCompanyID and N_PurchaseID=@nTransID group by N_POrderID order by N_POrderID", ParamList, connection, transaction);
                             DataTable DetailsTable = dLayer.ExecuteDataTable("select N_CompanyID,N_ItemID from Inv_PurchaseDetails where N_CompanyID=@nCompanyID and N_PurchaseID=@nTransID group by N_CompanyID,N_ItemID ", ParamList, connection, transaction);
-                    
+
                             // Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
                             // if (Results <= 0)
                             // {
                             //     transaction.Rollback();
                             //     return Ok(_api.Error(User, "Unable to Delete PurchaseInvoice"));
                             // } 
-                        try
-                        {
-                           Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
-                    
-                        }
-                        catch (Exception ex)
-                        {
-                             if (ex.Message == "53")
-                                      {
-                                          transaction.Rollback();
-                                           return Ok(_api.Error(User, "Period Closed"));
-                                      }
-                                      else{
-                                         transaction.Rollback();
-                                         return Ok(_api.Error(User, "Unable to delete Purchase Invoice"));
+                            try
+                            {
+                                Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
 
-                                      }
-                                       
-                        }
+                            }
+                            catch (Exception ex)
+                            {
+                                if (ex.Message == "53")
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, "Period Closed"));
+                                }
+                                else
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, "Unable to delete Purchase Invoice"));
+
+                                }
+
+                            }
 
                             myAttachments.DeleteAttachment(dLayer, 1, nPurchaseID, VendorID, nFnYearID, N_FormID, User, transaction, connection);
 
@@ -1506,20 +1514,20 @@ namespace SmartxAPI.Controllers
                             StockOutParam.Add("N_CompanyID", nCompanyID);
 
                             dLayer.ExecuteNonQueryPro("SP_StockOutUpdate", StockOutParam, connection, transaction);
-                           
+
                             for (int i = 0; i < DetailTable.Rows.Count; i++)
                             {
-                                 dLayer.ExecuteScalar("UPDATE Inv_ItemMaster SET Inv_ItemMaster.N_PurchaseCost=LastCost.N_LPrice from Inv_ItemMaster INNER JOIN "+
-                                                " (select TOP 1 N_CompanyID,N_ItemID,N_LPrice from Inv_StockMaster where X_Type='Purchase' and N_ItemID="+myFunctions.getVAL(DetailsTable.Rows[i]["N_ItemID"].ToString())+" "+
-                                                " AND N_CompanyID= "+ myFunctions.getVAL(DetailsTable.Rows[i]["N_CompanyID"].ToString()) +" order by D_DateIn desc ,N_StockID desc) AS LastCost ON Inv_ItemMaster.N_CompanyID=LastCost.N_CompanyID AND "+
-                                                " Inv_ItemMaster.N_ItemID=LastCost.N_ItemID WHERE Inv_ItemMaster.N_CompanyID="+myFunctions.getVAL(DetailsTable.Rows[i]["N_CompanyID"].ToString())+" AND Inv_ItemMaster.N_ItemID= "+myFunctions.getVAL(DetailsTable.Rows[i]["N_ItemID"].ToString()), connection, transaction);
+                                dLayer.ExecuteScalar("UPDATE Inv_ItemMaster SET Inv_ItemMaster.N_PurchaseCost=LastCost.N_LPrice from Inv_ItemMaster INNER JOIN " +
+                                               " (select TOP 1 N_CompanyID,N_ItemID,N_LPrice from Inv_StockMaster where X_Type='Purchase' and N_ItemID=" + myFunctions.getVAL(DetailsTable.Rows[i]["N_ItemID"].ToString()) + " " +
+                                               " AND N_CompanyID= " + myFunctions.getVAL(DetailsTable.Rows[i]["N_CompanyID"].ToString()) + " order by D_DateIn desc ,N_StockID desc) AS LastCost ON Inv_ItemMaster.N_CompanyID=LastCost.N_CompanyID AND " +
+                                               " Inv_ItemMaster.N_ItemID=LastCost.N_ItemID WHERE Inv_ItemMaster.N_CompanyID=" + myFunctions.getVAL(DetailsTable.Rows[i]["N_CompanyID"].ToString()) + " AND Inv_ItemMaster.N_ItemID= " + myFunctions.getVAL(DetailsTable.Rows[i]["N_ItemID"].ToString()), connection, transaction);
                             }
                             //StatusUpdate
-                            int tempPOrderID=0;
+                            int tempPOrderID = 0;
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
                             {
                                 int n_POrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_POrderID"].ToString());
-                                if (n_POrderID > 0 && tempPOrderID!=n_POrderID)
+                                if (n_POrderID > 0 && tempPOrderID != n_POrderID)
                                 {
                                     // if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,true,dLayer,connection,transaction))
                                     // {
@@ -1529,7 +1537,7 @@ namespace SmartxAPI.Controllers
 
                                     if (myFunctions.getIntVAL(TransRow["n_FormID"].ToString()) == 1605)
                                     {
-                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,1586,false,dLayer,connection,transaction))
+                                        if (!myFunctions.UpdateTxnStatus(nCompanyID, n_POrderID, 1586, false, dLayer, connection, transaction))
                                         {
                                             transaction.Rollback();
                                             return Ok(_api.Error(User, "Unable To Update Txn Status"));
@@ -1537,14 +1545,14 @@ namespace SmartxAPI.Controllers
                                     }
                                     else
                                     {
-                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
+                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,true,dLayer,connection,transaction))
                                         {
                                             transaction.Rollback();
                                             return Ok(_api.Error(User, "Unable To Update Txn Status"));
                                         }
                                     }
                                 }
-                                tempPOrderID=n_POrderID;
+                                tempPOrderID = n_POrderID;
                             };
                         }
                         transaction.Commit();
@@ -1585,7 +1593,7 @@ namespace SmartxAPI.Controllers
             if (bAllbranchData)
                 sqlCommandText = "Select N_MRNID,X_MRNNo,D_MRNDate,X_VendorName,N_CompanyID,N_VendorID,X_VendorInvoice from vw_Inv_PendingPurchases_rpt  Where N_CompanyID=@nCompanyID and N_VendorID=@nVendorID  GROUP BY N_MRNID,X_MRNNO,D_MRNDate,X_VendorName,N_CompanyID,N_VendorID,X_VendorInvoice ";
             else
-               sqlCommandText = "Select N_MRNID,X_MRNNo,D_MRNDate,X_VendorName,N_CompanyID,N_VendorID,X_VendorInvoice from vw_Inv_PendingPurchases_rpt  Where N_CompanyID=@nCompanyID  and N_VendorID=@nVendorID  GROUP BY N_MRNID,X_MRNNO,D_MRNDate,X_VendorName,N_CompanyID,N_VendorID,X_VendorInvoice ";
+                sqlCommandText = "Select N_MRNID,X_MRNNo,D_MRNDate,X_VendorName,N_CompanyID,N_VendorID,X_VendorInvoice from vw_Inv_PendingPurchases_rpt  Where N_CompanyID=@nCompanyID  and N_VendorID=@nVendorID  GROUP BY N_MRNID,X_MRNNO,D_MRNDate,X_VendorName,N_CompanyID,N_VendorID,X_VendorInvoice ";
 
             try
             {
@@ -1612,7 +1620,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-         [HttpGet("warrantyDashboardList")]
+        [HttpGet("warrantyDashboardList")]
         public ActionResult WarrantyDashboardList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             try
@@ -1636,9 +1644,9 @@ namespace SmartxAPI.Controllers
 
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and (x_InvoiceNo like '%" + xSearchkey + "%' or X_VendorName like '%" + xSearchkey + "%' or x_ItemName like '%" + xSearchkey + "%' or x_ItemCode like '%" + xSearchkey  + "%' or d_InvoiceDate like '%" + xSearchkey + "%' or x_WarrantyDescription like '%" + xSearchkey + "%' )";
-                       
-                   
+                        Searchkey = "and (x_InvoiceNo like '%" + xSearchkey + "%' or X_VendorName like '%" + xSearchkey + "%' or x_ItemName like '%" + xSearchkey + "%' or x_ItemCode like '%" + xSearchkey + "%' or d_InvoiceDate like '%" + xSearchkey + "%' or x_WarrantyDescription like '%" + xSearchkey + "%' )";
+
+
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_PurchaseID desc";
                     else
@@ -1669,7 +1677,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                   
+
 
 
                     sqlCommandCount = "select count(1) as N_Count,0 as TotalAmount from Vw_Inv_PurchaseWarranty where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId " + criteria + " " + Searchkey + "";
@@ -1687,7 +1695,7 @@ namespace SmartxAPI.Controllers
                     OutPut.Add("TotalSum", TotalSum);
 
 
-                        return Ok(_api.Success(OutPut));
+                    return Ok(_api.Success(OutPut));
                 }
             }
             catch (Exception e)

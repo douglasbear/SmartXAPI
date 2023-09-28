@@ -241,7 +241,7 @@ namespace SmartxAPI.Controllers
                     {
 
                         Params.Add("N_CompanyID", nCompanyID);
-                        Params.Add("N_YearID", nFnYearID);
+                        Params.Add("N_YearID", nFnYearID);  
                         Params.Add("N_FormID", 46);
 
                         while (true)
@@ -287,7 +287,7 @@ namespace SmartxAPI.Controllers
                                     {"N_FnYearID",nFnYearID}};
                                 
 
-                        dLayer.ExecuteNonQueryPro("SP_Delete_VoucherMaster_Details", DeleteParams, connection, transaction);
+                        dLayer.ExecuteNonQueryPro("Delete_VoucherMaster_Details", DeleteParams, connection, transaction);
 
                         DetailTable.Rows[j]["N_VoucherID"] = nVoucherID;
                         DetailTable.Rows[j]["N_BranchID"] = nBranchID;

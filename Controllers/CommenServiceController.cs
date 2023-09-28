@@ -201,7 +201,10 @@ namespace SmartxAPI.Controllers
                                 DateTime expDate = DateTime.Today.AddDays(expDays);
                                 paramList.Add("@dExpDate", expDate);
                                 DateTime startDate = DateTime.Today;
+                                DateTime createdDate = DateTime.Today;
                                 paramList.Add("@dStartDate", startDate);
+                                paramList.Add("@dCreatedDate", createdDate);
+                                paramList.Add("@nCompanyID", companyid);
 
                                 bool isAttachment = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_EnableAttachment,0) from AppMaster where N_AppID=@nAppID", paramList, olivCnn).ToString());
                                 
@@ -215,7 +218,8 @@ namespace SmartxAPI.Controllers
                                     dLayer.ExecuteScalar(appUpdate, paramList, olivCnn);
                                 }
 
-                                int rows = dLayer.ExecuteNonQuery("insert into ClientApps select @nClientID,@nAppID,@xAppUrl,@xDBUri,@nUserLimit,0,'Service',max(N_RefID)+1,@dExpDate,0,null,@isAttachment,null,null,null,@dStartDate from ClientApps", paramList, olivCnn);
+                          
+                                int rows = dLayer.ExecuteNonQuery("insert into ClientApps select @nClientID,@nAppID,@xAppUrl,@xDBUri,@nUserLimit,0,'Service',max(N_RefID)+1,@dExpDate,0,null,@isAttachment,null,null,null,@dStartDate,@dCreatedDate,"+companyid+" from ClientApps", paramList, olivCnn);
                                   if (rows> 0)
                                 {
                                   string settingsUpdate = "Update GenSettings set N_Value= (SELECT N_Value + (select isnull(N_FreeUsers,0) from AppMaster where N_AppID=@nAppID) as N_Value FROM GenSettings where N_ClientID=@nClientID and X_Description='USER LIMIT') WHERE N_ClientID=@nClientID and X_Description='USER LIMIT'";

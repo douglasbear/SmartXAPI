@@ -116,21 +116,21 @@ namespace SmartxAPI.Controllers
                         else
                             sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID,X_CustomerName_Ar from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1572 " + Pattern + Searchkey + " and N_DeliveryNoteID not in (select top(" + Count + ") N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1572 " + xSortBy + " ) " + "Group By [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID,X_CustomerName_Ar" + xSortBy;
                     }
-                    else if (nFormID==1603)
+                    else if (nFormID == 1603)
                     {
                         if (Count == 0)
                             sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID,X_CustomerName_Ar from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1603 " + Pattern + Searchkey + " " + " group by [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID,X_CustomerName_Ar" + xSortBy;
                         else
                             sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID,X_CustomerName_Ar from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1603 " + Pattern + Searchkey + " and N_DeliveryNoteID not in (select top(" + Count + ") N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1603 " + xSortBy + " ) " + "Group By [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID,X_CustomerName_Ar" + xSortBy;
                     }
-                      else if (nFormID==884)
+                    else if (nFormID == 884)
                     {
                         if (Count == 0)
                             sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID,X_ActionName,X_ActionStatus,X_StatusColour,X_ClosingRemarks,X_CustomerName_Ar  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=884 " + Pattern + Searchkey + " " + " group by [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID,X_ActionName,X_ActionStatus,X_StatusColour,X_ClosingRemarks,X_CustomerName_Ar" + xSortBy;
                         else
                             sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID ,X_ActionName,X_ActionStatus,X_StatusColour,X_ClosingRemarks,X_CustomerName_Ar  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=884 " + Pattern + Searchkey + " and N_DeliveryNoteID not in (select top(" + Count + ") N_DeliveryNoteID from Inv_DeliveryNote where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=884 " + xSortBy + " ) " + "Group By [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID,X_ActionName,X_ActionStatus,X_StatusColour,X_ClosingRemarks,X_CustomerName_Ar" + xSortBy;
                     }
-                      else if (nFormID==1426)
+                    else if (nFormID == 1426)
                     {
                         if (Count == 0)
                             sqlCommandText = "select top(" + nSizeperpage + ") [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID,X_CustomerName_Ar from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1426 " + Pattern + Searchkey + " " + " group by [invoice No],[Invoice Date],customer,d_DeliveryDate,x_CustPONo,x_Notes,x_OrderNo,b_IsSaveDraft,N_DeliveryNoteID,X_CustomerName_Ar" + xSortBy;
@@ -154,10 +154,10 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     if (nFormID == 1572)
                         sqlCommandCount = "select count(1) as N_Count  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1572 " + Searchkey + "";
-                    else if (nFormID==1603)
-                        {
-                      sqlCommandCount = "select count(1) as N_Count  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1603 " + Searchkey + "";
-                        }
+                    else if (nFormID == 1603)
+                    {
+                        sqlCommandCount = "select count(1) as N_Count  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID=1603 " + Searchkey + "";
+                    }
                     else
                         sqlCommandCount = "select count(1) as N_Count  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_FormID!=1572 " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
@@ -176,7 +176,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetDeliveryNoteDetails(int nFnYearId, bool bAllBranchData, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nProformaID, int nPickListID, string xSalesOrderID,int nTransferId)
+        public ActionResult GetDeliveryNoteDetails(int nFnYearId, bool bAllBranchData, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nProformaID, int nPickListID, string xSalesOrderID, int nTransferId)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             try
@@ -211,26 +211,26 @@ namespace SmartxAPI.Controllers
                     }
                     if (nSalesOrderID > 0 || (xSalesOrderID != "" && xSalesOrderID != null))
                     {
-                        string Mastersql ="";
+                        string Mastersql = "";
                         DataTable MasterTable = new DataTable();
                         DataTable DetailTable = new DataTable();
                         DataTable RentalScheduleData = new DataTable();
                         string DetailSql = "";
-                        string RentalSql ="";
+                        string RentalSql = "";
                         if (nSalesOrderID > 0)
                         {
-                        QueryParamsList.Add("@nSalesorderID", nSalesOrderID);
-                        Mastersql = "select * from vw_SalesOrdertoDeliveryNote where N_CompanyId=@nCompanyID and N_SalesOrderId=@nSalesorderID";
-                        MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
-                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                        MasterTable = _api.Format(MasterTable, "Master");
-                        DetailSql = "select * from vw_SalesOrdertoDeliveryNoteDetails where N_CompanyId=@nCompanyID and N_SalesOrderId=@nSalesorderID";
-                        DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+                            QueryParamsList.Add("@nSalesorderID", nSalesOrderID);
+                            Mastersql = "select * from vw_SalesOrdertoDeliveryNote where N_CompanyId=@nCompanyID and N_SalesOrderId=@nSalesorderID";
+                            MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
+                            if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                            MasterTable = _api.Format(MasterTable, "Master");
+                            DetailSql = "select * from vw_SalesOrdertoDeliveryNoteDetails where N_CompanyId=@nCompanyID and N_SalesOrderId=@nSalesorderID";
+                            DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
 
-                        RentalSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nSalesorderID and N_FormID=1571";
-                        RentalScheduleData = dLayer.ExecuteDataTable(RentalSql, QueryParamsList, Con);
-                        RentalScheduleData = _api.Format(RentalScheduleData, "RentalSchedule");
-                       
+                            RentalSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nSalesorderID and N_FormID=1571";
+                            RentalScheduleData = dLayer.ExecuteDataTable(RentalSql, QueryParamsList, Con);
+                            RentalScheduleData = _api.Format(RentalScheduleData, "RentalSchedule");
+
 
                             SortedList DelParams = new SortedList();
                             DelParams.Add("N_CompanyID", nCompanyId);
@@ -249,7 +249,7 @@ namespace SmartxAPI.Controllers
                                             Kvar["N_QtyDisplay"] = 0;
                                         else
                                             Kvar["N_QtyDisplay"] = Avar["N_QtyDisplay"];
-                                            Kvar["N_SOQty"] = Avar["N_QtyDisplay"];
+                                        Kvar["N_SOQty"] = Avar["N_QtyDisplay"];
                                         if (myFunctions.getVAL(Avar["N_QtyDisplay"].ToString()) <= 0)
                                             Kvar["N_QtyDisplay"] = 0;
                                         else
@@ -292,7 +292,7 @@ namespace SmartxAPI.Controllers
                             }
 
                             if (myFunctions.ContainColumn("N_Flag", RentalScheduleData))
-                            RentalScheduleData.Columns.Remove("N_Flag");
+                                RentalScheduleData.Columns.Remove("N_Flag");
 
                             RentalScheduleData.AcceptChanges();
                         }
@@ -374,9 +374,9 @@ namespace SmartxAPI.Controllers
                     }
                     else if (nPickListID > 0)
                     {
-                         QueryParamsList.Add("@nPickListID", nPickListID);
-                       
-                       
+                        QueryParamsList.Add("@nPickListID", nPickListID);
+
+
                         string Mastersql = "select N_CompanyID,N_FnYearID,0 as N_DeliveryNoteId,'@Auto' as X_ReceiptNo,GETDATE() as D_DeliveryDate,GETDATE() as D_EntryDate,N_CustomerId,X_CustomerName,0 as B_BiginingBalEntry,0 as N_DeliveryType,N_LocationID,'DELIVERY' as X_TransType,0 as B_IsSaveDraft,X_LocationName from vw_WhPickListMaster where N_CompanyId=@nCompanyID and N_PickListID=@nPickListID";
                         DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -387,11 +387,11 @@ namespace SmartxAPI.Controllers
                         DetailTable = _api.Format(DetailTable, "Details");
                         dsSalesInvoice.Tables.Add(MasterTable);
                         dsSalesInvoice.Tables.Add(DetailTable);
-                                             
+
                         return Ok(_api.Success(dsSalesInvoice));
                     }
-                    else if(nTransferId>0)
-                        {
+                    else if (nTransferId > 0)
+                    {
                         QueryParamsList.Add("@nTransferId", nTransferId);
                         string Mastersql = "select N_CompanyID,N_FnYearID,0 as N_DeliveryNoteId,'@Auto' as X_ReceiptNo,GETDATE() as D_DeliveryDate,GETDATE() as D_EntryDate,N_CustomerId,X_CustomerName,0 as B_BiginingBalEntry,0 as N_DeliveryType,'DELIVERY' as X_TransType,0 as B_IsSaveDraft from vw_ProductTransferToDeliveryNoteMaster where N_CompanyId=@nCompanyID and N_TransferId=@nTransferId";
                         DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
@@ -400,11 +400,11 @@ namespace SmartxAPI.Controllers
                         string DetailSql = "";
                         DetailSql = "select N_CompanyID,0 as N_DeliveryNoteID,0 as N_DeliveryNoteDetailsID,0 as N_SalesQuotationID,N_ItemID,description AS X_ItemName,X_BatchCode,D_ExpiryDate,N_ItemUnitID,X_ItemUnit,0 as N_Sprice,0 as N_IteDiscAmt,2 as N_ClassID,N_Qty,N_AvlQty AS N_QtyDisplay,0 as N_Cost,N_LocationIDTo AS N_LocationID ,X_Temperature,X_CustomerSKU,X_Dimesnsion,N_Stock,X_LocationName from vw_ProductTransferToDeliveryNote where N_CompanyId=@nCompanyID and N_TransferId=@nTransferId";
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
-                         DetailTable = _api.Format(DetailTable, "Details");
+                        DetailTable = _api.Format(DetailTable, "Details");
                         dsSalesInvoice.Tables.Add(MasterTable);
                         dsSalesInvoice.Tables.Add(DetailTable);
                         return Ok(_api.Success(dsSalesInvoice));
-                        }
+                    }
                     else
                     {
                         QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);
@@ -420,10 +420,10 @@ namespace SmartxAPI.Controllers
                     int N_SalesOrderID = myFunctions.getIntVAL(MasterRow["n_SalesOrderID"].ToString());
                     QueryParamsList.Add("@nDelID", N_DelID);
                     QueryParamsList.Add("@nSaleOrderID", N_SalesOrderID);
-                    object InSales="";
+                    object InSales = "";
                     object inSaleID = dLayer.ExecuteScalar("select N_SalesID from Inv_SalesDetails where N_CompanyID=@nCompanyID and N_deliverynoteid=@nDelID ", QueryParamsList, Con);
-                    if(inSaleID!=null && inSaleID!="")
-                          InSales = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_Sales where N_CompanyID=@nCompanyID and  N_SalesID="+myFunctions.getIntVAL(inSaleID.ToString())+" and N_FnYearID=@nFnYearID", QueryParamsList, Con);
+                    if (inSaleID != null && inSaleID != "")
+                        InSales = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_Sales where N_CompanyID=@nCompanyID and  N_SalesID=" + myFunctions.getIntVAL(inSaleID.ToString()) + " and N_FnYearID=@nFnYearID", QueryParamsList, Con);
                     masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "x_SalesReceiptNo", typeof(string), InSales);
 
                     object InSalesOrder = dLayer.ExecuteScalar("select x_OrderNo from Inv_SalesOrder where N_CompanyID=@nCompanyID and N_SalesOrderID=@nSaleOrderID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
@@ -439,19 +439,19 @@ namespace SmartxAPI.Controllers
                     masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "isSalesDone", typeof(bool), false);
                     masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "isProformaDone", typeof(bool), false);
                     masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "isDeliveryReturnDone", typeof(bool), false);
-                  
+
                     if (myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()) > 0)
                     {
                         QueryParamsList.Add("@nDeliveryNoteId", myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()));
-                        if(inSaleID!=null && inSaleID!="")
+                        if (inSaleID != null && inSaleID != "")
                         {
-                        DataTable SalesData = dLayer.ExecuteDataTable("select X_ReceiptNo,N_SalesId from Inv_Sales where  N_CompanyId=@nCompanyID and N_SalesID="+myFunctions.getIntVAL(inSaleID.ToString())+" and  N_FnYearID=@nFnYearID", QueryParamsList, Con);
-                        if (SalesData.Rows.Count > 0)
-                        {
-                            masterTable.Rows[0]["X_SalesReceiptNo"] = SalesData.Rows[0]["X_ReceiptNo"].ToString();
-                            masterTable.Rows[0]["N_SalesId"] = myFunctions.getIntVAL(SalesData.Rows[0]["N_SalesId"].ToString());
-                            masterTable.Rows[0]["isSalesDone"] = true;
-                        }
+                            DataTable SalesData = dLayer.ExecuteDataTable("select X_ReceiptNo,N_SalesId from Inv_Sales where  N_CompanyId=@nCompanyID and N_SalesID=" + myFunctions.getIntVAL(inSaleID.ToString()) + " and  N_FnYearID=@nFnYearID", QueryParamsList, Con);
+                            if (SalesData.Rows.Count > 0)
+                            {
+                                masterTable.Rows[0]["X_SalesReceiptNo"] = SalesData.Rows[0]["X_ReceiptNo"].ToString();
+                                masterTable.Rows[0]["N_SalesId"] = myFunctions.getIntVAL(SalesData.Rows[0]["N_SalesId"].ToString());
+                                masterTable.Rows[0]["isSalesDone"] = true;
+                            }
                         }
                         else if (myFunctions.getIntVAL(masterTable.Rows[0]["n_SalesOrderID"].ToString()) > 0)
                         {
@@ -467,7 +467,7 @@ namespace SmartxAPI.Controllers
                         DataTable returnData = dLayer.ExecuteDataTable("select N_DeliveryNoteId from Inv_DeliveryNoteReturn where N_DeliveryNoteId=@nDeliveryNoteId and N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
                         if (returnData.Rows.Count > 0)
                         {
-                           
+
                             masterTable.Rows[0]["isDeliveryReturnDone"] = true;
                         }
                         else
@@ -550,72 +550,73 @@ namespace SmartxAPI.Controllers
                     string i_Signature = "";
                     string i_signature2 = "";
                     bool SigEnable = false;
-                      String xButtonAction="";
+                    String xButtonAction = "";
 
 
-                  if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_DeliveryDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
-                  {
-                   object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_DeliveryDate"].ToString() + "') between D_Start and D_End", connection, transaction);
-                  if (DiffFnYearID != null)
-                   {
-                    MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
-                    int nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
-
-                    
-                    QueryParams["@N_FnYearID"] = nFnYearID;
-                    QueryParams["@N_CustomerID"] = N_CustomerID;
-                    QueryParams["@N_CompanyID"] = N_CompanyID;
-
-
-                    SortedList PostingParam = new SortedList();
-                    PostingParam.Add("N_PartyID", N_CustomerID);
-                    PostingParam.Add("N_FnyearID", N_FnYearID);
-                    PostingParam.Add("N_CompanyID", N_CompanyID);
-                    PostingParam.Add("X_Type", "customer");
-
-
-                     object custCount = dLayer.ExecuteScalar("Select count(*) From Inv_Customer where N_FnYearID=@N_FnYearID and N_CompanyID=@N_CompanyID and N_CustomerID=@N_CustomerID", QueryParams, connection, transaction);
-                      
-                      if(myFunctions.getIntVAL(custCount.ToString())==0){
-                           try 
+                    if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_DeliveryDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
                     {
-                        dLayer.ExecuteNonQueryPro("SP_CratePartyBackYear", PostingParam, connection, transaction);
+                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=" + N_CompanyID + " and convert(date ,'" + MasterTable.Rows[0]["D_DeliveryDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                        if (DiffFnYearID != null)
+                        {
+                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                            int nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+
+
+                            QueryParams["@N_FnYearID"] = nFnYearID;
+                            QueryParams["@N_CustomerID"] = N_CustomerID;
+                            QueryParams["@N_CompanyID"] = N_CompanyID;
+
+
+                            SortedList PostingParam = new SortedList();
+                            PostingParam.Add("N_PartyID", N_CustomerID);
+                            PostingParam.Add("N_FnyearID", N_FnYearID);
+                            PostingParam.Add("N_CompanyID", N_CompanyID);
+                            PostingParam.Add("X_Type", "customer");
+
+
+                            object custCount = dLayer.ExecuteScalar("Select count(*) From Inv_Customer where N_FnYearID=@N_FnYearID and N_CompanyID=@N_CompanyID and N_CustomerID=@N_CustomerID", QueryParams, connection, transaction);
+
+                            if (myFunctions.getIntVAL(custCount.ToString()) == 0)
+                            {
+                                try
+                                {
+                                    dLayer.ExecuteNonQueryPro("SP_CratePartyBackYear", PostingParam, connection, transaction);
+                                }
+                                catch (Exception ex)
+                                {
+                                    transaction.Rollback();
+                                    throw ex;
+                                }
+                            }
+
+
+                        }
+                        else
+                        {
+                            // transaction.Rollback();
+                            // return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                            // Result.Add("b_IsCompleted", 0);
+                            // Result.Add("x_Msg", "Transaction date must be in the active Financial Year.");
+                            return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        throw ex;
-                    }
-                      }
-                 
-                  
-                  }
-                  else
-                  {
-                    // transaction.Rollback();
-                    // return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
-                    // Result.Add("b_IsCompleted", 0);
-                    // Result.Add("x_Msg", "Transaction date must be in the active Financial Year.");
-                      return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
-                   }
-                  }
 
 
 
                     QueryParams.Add("@nCompanyID", N_CompanyID);
-                     QueryParams.Add("@nFnYearID", N_FnYearID);
+                    QueryParams.Add("@nFnYearID", N_FnYearID);
                     QueryParams.Add("@nSalesID", N_DeliveryNoteID);
                     QueryParams.Add("@nBranchID", N_BranchID);
                     QueryParams.Add("@nLocationID", N_LocationID);
                     QueryParams.Add("@nCustomerID", N_CustomerID);
-                     int N_FormID = 0;
-                       if (MasterTable.Columns.Contains("N_FormID"))
+                    int N_FormID = 0;
+                    if (MasterTable.Columns.Contains("N_FormID"))
                     {
                         N_FormID = myFunctions.getIntVAL(MasterRow["N_FormID"].ToString());
                     }
 
 
-                 
+
                     //B_DirectPosting = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select B_DirPosting from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", QueryParams, connection, transaction).ToString());
                     object objAllBranchData = dLayer.ExecuteScalar("Select B_ShowAllData From Acc_BranchMaster where N_BranchID=@nBranchID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                     if (objAllBranchData != null)
@@ -636,12 +637,12 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 729);
                         Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
                         InvoiceNo = dLayer.GetAutoNumber("Inv_DeliveryNote", "x_ReceiptNo", Params, connection, transaction);
-                         xButtonAction="Insert"; 
-                        
+                        xButtonAction = "Insert";
+
                         if (InvoiceNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Delivery Number")); }
                         MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
                     }
-                       
+
 
                     else
                     {
@@ -655,7 +656,7 @@ namespace SmartxAPI.Controllers
                             try
                             {
                                 dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
-                                 xButtonAction="Update"; 
+                                xButtonAction = "Update";
                             }
                             catch (Exception ex)
                             {
@@ -664,6 +665,21 @@ namespace SmartxAPI.Controllers
                             }
                         }
                     }
+
+
+
+
+
+                    // DataTable count = new DataTable();
+                    // SortedList Paramss = new SortedList();
+                    // string sql = "select * from Inv_DeliveryNote where x_ReceiptNo='" + values + "' and N_CompanyID=" + N_CompanyID + "";
+                    // count = dLayer.ExecuteDataTable(sql, Paramss, connection, transaction);
+                    // if (count.Rows.Count > 0)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(_api.Error(User, "Voucher Number Already in Use"));
+                    // }
+
 
 
 
@@ -681,7 +697,7 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                     Byte[] ImageBitmap2 = new Byte[i_signature2.Length];
+                    Byte[] ImageBitmap2 = new Byte[i_signature2.Length];
                     if (MasterTable.Columns.Contains("i_signature2"))
                     {
                         if (!MasterRow["i_signature2"].ToString().Contains("undefined"))
@@ -700,30 +716,30 @@ namespace SmartxAPI.Controllers
                     N_DeliveryNoteID = dLayer.SaveData("Inv_DeliveryNote", "N_DeliveryNoteId", MasterTable, connection, transaction);
 
 
-                    if(N_DeliveryNoteID>0)
+                    if (N_DeliveryNoteID > 0)
                     {
-                             SortedList statusParams = new SortedList();
-                             statusParams.Add("@N_CompanyID", N_CompanyID);
-                             statusParams.Add("@N_TransID", N_DeliveryNoteID);
-                             statusParams.Add("@N_FormID", 884);
-                             statusParams.Add("@N_ForceUpdate", 1);  
-                            try
-                            {
-                                dLayer.ExecuteNonQueryPro("SP_TxnStatusUpdate", statusParams, connection, transaction);
-                                
-                            }
-                            catch (Exception ex)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, ex));
-                            }
+                        SortedList statusParams = new SortedList();
+                        statusParams.Add("@N_CompanyID", N_CompanyID);
+                        statusParams.Add("@N_TransID", N_DeliveryNoteID);
+                        statusParams.Add("@N_FormID", 884);
+                        statusParams.Add("@N_ForceUpdate", 1);
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_TxnStatusUpdate", statusParams, connection, transaction);
+
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, ex));
+                        }
                     }
 
                     if (SigEnable)
                     {
                         if (i_Signature.Length > 0)
                             dLayer.SaveImage("Inv_DeliveryNote", "i_signature", ImageBitmap, "N_DeliveryNoteId", N_DeliveryNoteID, connection, transaction);
-                             if (i_signature2.Length > 0)
+                        if (i_signature2.Length > 0)
                             dLayer.SaveImage("Inv_DeliveryNote", "i_signature2", ImageBitmap2, "N_DeliveryNoteId", N_DeliveryNoteID, connection, transaction);
                     }
 
@@ -751,7 +767,7 @@ namespace SmartxAPI.Controllers
                             if (B_SRS)
                             {
                                 if (N_PRSID > 0)
-                                    dLayer.ExecuteNonQuery("update  Inv_PRS set N_DeliveryNoteID=" + N_DeliveryNoteID + ", N_Processed=3 where N_PRSID=" + N_PRSID + " and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
+                                    dLayer.ExecuteNonQuery("  Inv_PRS set N_DeliveryNoteID=" + N_DeliveryNoteID + ", N_Processed=3 where N_PRSID=" + N_PRSID + " and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
                             }
                             if (N_SalesOrderID > 0)
                             {
@@ -792,15 +808,15 @@ namespace SmartxAPI.Controllers
                     }
                     rentalItem.AcceptChanges();
                     if (rentalItem.Columns.Contains("rowID"))
-                            rentalItem.Columns.Remove("rowID");
-                    if (N_DNoteID > 0 && rentalItem.Rows.Count>0 )
+                        rentalItem.Columns.Remove("rowID");
+                    if (N_DNoteID > 0 && rentalItem.Rows.Count > 0)
                     {
-                            N_FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
-                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + N_DNoteID.ToString() + " and N_FormID="+ N_FormID + " and N_CompanyID=" + N_CompanyID, connection, transaction);
-                       
+                        N_FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
+                        dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + N_DNoteID.ToString() + " and N_FormID=" + N_FormID + " and N_CompanyID=" + N_CompanyID, connection, transaction);
+
                     }
-                    if(rentalItem.Rows.Count>0 )
-                    dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
+                    if (rentalItem.Rows.Count > 0)
+                        dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
 
                     //int N_DeliveryNoteDetailsID = dLayer.SaveData("Inv_DeliveryNoteDetails", "n_DeliveryNoteDetailsID", DetailTable, connection, transaction);
                     if (N_DeliveryNoteDetailsID <= 0)
@@ -848,13 +864,13 @@ namespace SmartxAPI.Controllers
                             }
 
                             //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(N_FnYearID,N_DeliveryNoteID,InvoiceNo,884,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-                          
+                            string ipAddress = "";
+                            if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                                ipAddress = Request.Headers["X-Forwarded-For"];
+                            else
+                                ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                            myFunctions.LogScreenActivitys(N_FnYearID, N_DeliveryNoteID, InvoiceNo, 884, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
+
 
                             SortedList CustomerParams = new SortedList();
                             CustomerParams.Add("@nCustomerID", N_CustomerID);
@@ -903,15 +919,15 @@ namespace SmartxAPI.Controllers
 
                         for (int k = 0; k < rentalItem.Rows.Count; k++)
                         {
-                            if(!myFunctions.getBoolVAL(rentalItem.Rows[k]["B_Select"].ToString())) continue;
+                            if (!myFunctions.getBoolVAL(rentalItem.Rows[k]["B_Select"].ToString())) continue;
                             int nItemID = myFunctions.getIntVAL(rentalItem.Rows[k]["n_ItemID"].ToString());
-                            int nAssItemID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_AssItemID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID="+ nItemID , QueryParams, connection, transaction).ToString());
-                            int nRentalEmpID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_RentalEmpID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID="+ nItemID , QueryParams, connection, transaction).ToString());
+                            int nAssItemID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_AssItemID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID=" + nItemID, QueryParams, connection, transaction).ToString());
+                            int nRentalEmpID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_RentalEmpID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID=" + nItemID, QueryParams, connection, transaction).ToString());
 
                             if (nAssItemID > 0)
-                                dLayer.ExecuteNonQuery("update Ass_AssetMaster Set N_RentalStatus=1 where N_ItemID="+ nAssItemID +" and N_CompanyID=@nCompanyID ", QueryParams, connection, transaction);
+                                dLayer.ExecuteNonQuery("update Ass_AssetMaster Set N_RentalStatus=1 where N_ItemID=" + nAssItemID + " and N_CompanyID=@nCompanyID ", QueryParams, connection, transaction);
                             if (nRentalEmpID > 0)
-                                dLayer.ExecuteNonQuery("update Pay_Employee Set N_RentalStatus=1 where N_EmpID="+ nRentalEmpID +" and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ", QueryParams, connection, transaction);
+                                dLayer.ExecuteNonQuery("update Pay_Employee Set N_RentalStatus=1 where N_EmpID=" + nRentalEmpID + " and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ", QueryParams, connection, transaction);
                         }
 
                         SortedList Result = new SortedList();
@@ -920,15 +936,15 @@ namespace SmartxAPI.Controllers
                         transaction.Commit();
                         if (N_FormID == 1572)
                         {
-                           return Ok(_api.Success(Result, "Rental Delivery Saved"));
+                            return Ok(_api.Success(Result, "Rental Delivery Saved"));
                         }
-                        else if(N_FormID == 1426) 
+                        else if (N_FormID == 1426)
                         {
-                            return Ok(_api.Success(Result,"Wh deliveryNote Saved Successfully"));
+                            return Ok(_api.Success(Result, "Wh deliveryNote Saved Successfully"));
                         }
-                        else if(N_FormID == 1758) 
+                        else if (N_FormID == 1758)
                         {
-                            return Ok(_api.Success(Result,"Book Delivery Saved Successfully"));
+                            return Ok(_api.Success(Result, "Book Delivery Saved Successfully"));
                         }
                         return Ok(_api.Success(Result, "Delivery Note saved"));
                     }
@@ -1028,30 +1044,30 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     var xUserCategory = User.FindFirst(ClaimTypes.GroupSid)?.Value;
                     var nUserID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                     ParamList.Add("@nTransID", nDeliveryNoteID);
-                     ParamList.Add("@nCompanyID", nCompanyID);
+                    ParamList.Add("@nTransID", nDeliveryNoteID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
                     ParamList.Add("@nFnYearID", nFnYearID);
                     string Sql = "select N_DeliveryNoteId,X_ReceiptNo,N_FormID from Inv_DeliveryNote where N_DeliveryNoteId=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
-                    string xButtonAction="Delete";
-                    String X_ReceiptNo="";
-                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
-                     
+                    string xButtonAction = "Delete";
+                    String X_ReceiptNo = "";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection, transaction);
 
-                     
+
+
                     if (TransData.Rows.Count == 0)
                     {
                         return Ok(_api.Error(User, "Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
 
-                     
-           //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nDeliveryNoteID,TransRow["X_ReceiptNo"].ToString(),884,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
+                    //Activity Log
+                    string ipAddress = "";
+                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    myFunctions.LogScreenActivitys(myFunctions.getIntVAL(nFnYearID.ToString()), nDeliveryNoteID, TransRow["X_ReceiptNo"].ToString(), 884, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
 
 
                     //Results = dLayer.DeleteData("Inv_SalesInvoice", "n_InvoiceID", N_InvoiceID, "",connection,transaction);
@@ -1083,7 +1099,7 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.ExecuteNonQuery("delete from Inv_StockMaster where N_SalesID=@nDeliveryNoteID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
 
-                        dLayer.DeleteData("Inv_RentalSchedule", "N_TransID", nDeliveryNoteID, "  N_CompanyID="+ nCompanyID +" and N_FormID=1572 ", connection, transaction);
+                        dLayer.DeleteData("Inv_RentalSchedule", "N_TransID", nDeliveryNoteID, "  N_CompanyID=" + nCompanyID + " and N_FormID=1572 ", connection, transaction);
 
                         myAttachments.DeleteAttachment(dLayer, 1, nDeliveryNoteID, nCustomerID, nFnYearID, this.FormID, User, transaction, connection);
                     }
@@ -1098,13 +1114,13 @@ namespace SmartxAPI.Controllers
                         N_SalesOrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
                         if (N_SalesOrderID > 0 && N_SalesOrderID != tempSOID)
                         {
-                           
-                                if (!myFunctions.UpdateTxnStatus(nCompanyID, N_SalesOrderID, 81, true, dLayer, connection, transaction))
-                                {
-                                    transaction.Rollback();
-                                    return Ok(_api.Error(User, "Unable To Update Txn Status"));
-                                }
-                            
+
+                            if (!myFunctions.UpdateTxnStatus(nCompanyID, N_SalesOrderID, 81, true, dLayer, connection, transaction))
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                            }
+
                             else
                             {
                                 if (!myFunctions.UpdateTxnStatus(nCompanyID, N_SalesOrderID, 81, false, dLayer, connection, transaction))
@@ -1130,15 +1146,15 @@ namespace SmartxAPI.Controllers
 
                     for (int k = 0; k < rentalItem.Rows.Count; k++)
                     {
-                        if(!myFunctions.getBoolVAL(rentalItem.Rows[k]["B_Select"].ToString())) continue;
+                        if (!myFunctions.getBoolVAL(rentalItem.Rows[k]["B_Select"].ToString())) continue;
                         int nItemID = myFunctions.getIntVAL(rentalItem.Rows[k]["n_ItemID"].ToString());
-                        int nAssItemID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_AssItemID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID="+ nItemID , QueryParams, connection, transaction).ToString());
-                        int nRentalEmpID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_RentalEmpID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID="+ nItemID , QueryParams, connection, transaction).ToString());
+                        int nAssItemID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_AssItemID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID=" + nItemID, QueryParams, connection, transaction).ToString());
+                        int nRentalEmpID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_RentalEmpID,0) from Inv_ItemMaster where N_CompanyID=@nCompanyID and N_ItemID=" + nItemID, QueryParams, connection, transaction).ToString());
 
                         if (nAssItemID > 0)
-                        dLayer.ExecuteNonQuery("update Ass_AssetMaster Set N_RentalStatus=0 where N_ItemID="+ nAssItemID +" and N_CompanyID=@nCompanyID ", QueryParams, connection, transaction);
+                            dLayer.ExecuteNonQuery("update Ass_AssetMaster Set N_RentalStatus=0 where N_ItemID=" + nAssItemID + " and N_CompanyID=@nCompanyID ", QueryParams, connection, transaction);
                         if (nRentalEmpID > 0)
-                        dLayer.ExecuteNonQuery("update Pay_Employee Set N_RentalStatus=0 where N_EmpID="+ nRentalEmpID +" and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ", QueryParams, connection, transaction);
+                            dLayer.ExecuteNonQuery("update Pay_Employee Set N_RentalStatus=0 where N_EmpID=" + nRentalEmpID + " and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ", QueryParams, connection, transaction);
                     }
 
                     transaction.Commit();

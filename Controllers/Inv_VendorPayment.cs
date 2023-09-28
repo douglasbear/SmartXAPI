@@ -24,7 +24,7 @@ namespace SmartxAPI.Controllers
         private readonly int N_FormID;
 
 
-        public Inv_VendorPayment(IDataAccessLayer dl, IApiFunctions apiFun, IMyFunctions myFun, IConfiguration conf,IMyAttachments myAtt)
+        public Inv_VendorPayment(IDataAccessLayer dl, IApiFunctions apiFun, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             dLayer = dl;
             api = apiFun;
@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetVendorPayment(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,bool bAllBranchData,int nBranchID)
+        public ActionResult GetVendorPayment(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, bool bAllBranchData, int nBranchID)
         {
 
             try
@@ -57,10 +57,10 @@ namespace SmartxAPI.Controllers
                     string Pattern = "";
 
                     if (UserPattern != "")
-                     {
-                    Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
-                    Params.Add("@UserPattern", UserPattern);
-                     }  
+                    {
+                        Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern ";
+                        Params.Add("@UserPattern", UserPattern);
+                    }
                     //  else
                     //        {
                     // object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyID, Params, connection);
@@ -88,14 +88,14 @@ namespace SmartxAPI.Controllers
                     if (xSearchkey != null && xSearchkey.Trim() != "")
                         Searchkey = " and (Memo like '%" + xSearchkey + "%' or [Vendor Name] like '%" + xSearchkey + "%' or Cast(Date as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%" + xSearchkey + "%' or Amount like '%" + xSearchkey + "%' or x_ProjectCode like '%" + xSearchkey + "%'  or X_ProjectName like '%" + xSearchkey + "%')";
 
-                   if (bAllBranchData == true)
-                        {
-                            Searchkey = Searchkey + " ";
-                        }
-                        else
-                        {
-                            Searchkey = Searchkey + " and N_BranchID=" + nBranchID + " ";
-                        }
+                    if (bAllBranchData == true)
+                    {
+                        Searchkey = Searchkey + " ";
+                    }
+                    else
+                    {
+                        Searchkey = Searchkey + " and N_BranchID=" + nBranchID + " ";
+                    }
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_PayReceiptId desc";
                     else
@@ -115,10 +115,10 @@ namespace SmartxAPI.Controllers
                                 xSortBy = "Cast(REPLACE(Amount,',','') as Numeric(20," + N_decimalPlace + ")) " + xSortBy.Split(" ")[1];
                                 break;
                             case "x_ProjectName":
-                               xSortBy = "[x_ProjectName] " + xSortBy.Split(" ")[1];
+                                xSortBy = "[x_ProjectName] " + xSortBy.Split(" ")[1];
                                 break;
                             case "x_ProjectCode":
-                               xSortBy = "[x_ProjectCode] " + xSortBy.Split(" ")[1];
+                                xSortBy = "[x_ProjectCode] " + xSortBy.Split(" ")[1];
                                 break;
                             default: break;
                         }
@@ -231,9 +231,9 @@ namespace SmartxAPI.Controllers
         [HttpGet("payDetails")]
         public ActionResult GetVendorPayDetails(int nVendorID, int nFnYearId, string dTransDate, int nBranchID, bool bShowAllbranch, string xInvoiceNo, string xTransType)
         {
-                if (xInvoiceNo != null)
+            if (xInvoiceNo != null)
                 xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
-                
+
             SortedList OutPut = new SortedList();
             DataTable PayReceipt = new DataTable();
             DataTable PayInfo = new DataTable();
@@ -246,7 +246,7 @@ namespace SmartxAPI.Controllers
             OutPut.Add("totalBalance", 0);
             OutPut.Add("advanceAmount", 0);
             OutPut.Add("txnStarted", false);
-            object decimalobj=null;
+            object decimalobj = null;
             if (bShowAllbranch == true)
             {
                 AllBranch = 0;
@@ -277,8 +277,8 @@ namespace SmartxAPI.Controllers
                             xTransType = PayInfo.Rows[0]["X_Type"].ToString();
                             nVendorID = myFunctions.getIntVAL(PayInfo.Rows[0]["N_PartyID"].ToString());
                             int nCurrencyID = myFunctions.getIntVAL(PayInfo.Rows[0]["N_CurrencyID"].ToString());
-                            string X_CurrencyName = dLayer.ExecuteScalar("select X_CurrencyName from Acc_CurrencyMaster where N_CompanyID="+nCompanyId+" and N_CurrencyID="+nCurrencyID, connection).ToString();
-                            int N_CurrencyDecimal = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_Decimal from Acc_CurrencyMaster where N_CompanyID="+nCompanyId+" and N_CurrencyID="+nCurrencyID, connection).ToString());
+                            string X_CurrencyName = dLayer.ExecuteScalar("select X_CurrencyName from Acc_CurrencyMaster where N_CompanyID=" + nCompanyId + " and N_CurrencyID=" + nCurrencyID, connection).ToString();
+                            int N_CurrencyDecimal = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_Decimal from Acc_CurrencyMaster where N_CompanyID=" + nCompanyId + " and N_CurrencyID=" + nCurrencyID, connection).ToString());
                             myFunctions.AddNewColumnToDataTable(PayInfo, "X_CurrencyName", typeof(string), X_CurrencyName);
                             myFunctions.AddNewColumnToDataTable(PayInfo, "N_Decimal", typeof(int), N_CurrencyDecimal);
                             dTransDate = myFunctions.getDateVAL(Convert.ToDateTime(PayInfo.Rows[0]["D_Date"].ToString()));
@@ -344,15 +344,15 @@ namespace SmartxAPI.Controllers
                     {
                         PayReceipt = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_View", proParams2, connection);
                     }
-                    if(PayInfo.Rows.Count>0)
-                      Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), 67, 0, User, connection);
+                    if (PayInfo.Rows.Count > 0)
+                        Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), 67, 0, User, connection);
                     //Attachments = api.Format(Attachments, "attachments");
                     decimalobj = dLayer.ExecuteScalar("Select isnull(N_Decimal, 0)  from Acc_Company where N_CompanyID=@nCompanyID ", paramList, connection);
                 }
 
                 PayReceipt = myFunctions.AddNewColumnToDataTable(PayReceipt, "n_DueAmount", typeof(double), 0);
 
-                       
+
 
                 if (PayReceipt.Rows.Count > 0)
                 {
@@ -377,14 +377,14 @@ namespace SmartxAPI.Controllers
 
                         if (myFunctions.getIntVAL(decimalobj.ToString()) > 0)
                             dr["n_DueAmount"] = N_InvoiceDueAmt.ToString(myFunctions.decimalPlaceString(myFunctions.getIntVAL(decimalobj.ToString())));
-                        else 
+                        else
                             dr["n_DueAmount"] = N_InvoiceDueAmt.ToString(myFunctions.decimalPlaceString(2));
                     }
                 }
                 PayReceipt.AcceptChanges();
-                
-                return Ok(api.Success(new SortedList() { 
-              { "details", api.Format(PayReceipt) }, 
+
+                return Ok(api.Success(new SortedList() {
+              { "details", api.Format(PayReceipt) },
                 { "masterData", OutPut },
                  { "attachments", api.Format(Attachments) },
                  { "master", PayInfo } }));
@@ -413,7 +413,7 @@ namespace SmartxAPI.Controllers
                 int n_PayReceiptID = 0;
                 string PayReceiptNo = "";
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-                String xButtonAction="";
+                String xButtonAction = "";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -438,14 +438,14 @@ namespace SmartxAPI.Controllers
                     int n_PartyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PartyID"].ToString());
                     int N_SaveDraft = myFunctions.getIntVAL(Master["b_IsSaveDraft"].ToString());
                     int nUserID = myFunctions.GetUserID(User);
-                    int N_NextApproverID=0;
-                    if(!MasterTable.Columns.Contains("N_ProjectID"))
-                             myFunctions.AddNewColumnToDataTable(MasterTable, "N_ProjectID", typeof(int),0);
+                    int N_NextApproverID = 0;
+                    if (!MasterTable.Columns.Contains("N_ProjectID"))
+                        myFunctions.AddNewColumnToDataTable(MasterTable, "N_ProjectID", typeof(int), 0);
                     {
 
                     }
-                   
-                     if (!myFunctions.CheckActiveYearTransaction(nCompanyId, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_Date"].ToString()), dLayer, connection, transaction))
+
+                    if (!myFunctions.CheckActiveYearTransaction(nCompanyId, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_Date"].ToString()), dLayer, connection, transaction))
                     {
                         object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=" + nCompanyId + " and convert(date ,'" + MasterTable.Rows[0]["D_Date"].ToString() + "') between D_Start and D_End", Params, connection, transaction);
                         if (DiffFnYearID != null)
@@ -460,32 +460,32 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                    if(MasterTable.Columns.Contains("x_ChequeNo"))
+                    if (MasterTable.Columns.Contains("x_ChequeNo"))
                     {
-                       object count = dLayer.ExecuteScalar("Select count(*) from Inv_PayReceipt Where  N_CompanyID= " + nCompanyId + " and  N_PayReceiptID <> "+myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayReceiptID"].ToString())+" and  N_DefLedgerID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_DefLedgerID"].ToString())+" and X_ChequeNo='"+myFunctions.getVAL(MasterTable.Rows[0]["X_ChequeNo"].ToString())+"'", connection, transaction);
-                         if(count==null)
-                         {
-                            count=0;
-                         }
-                         int N_Count = myFunctions.getIntVAL(count.ToString());
-                         if (N_Count > 0)
-                         {
-                             object paymentNo= dLayer.ExecuteScalar("Select TOP 1 X_VoucherNo from Inv_PayReceipt Where  N_CompanyID= " + nCompanyId + " and  N_PayReceiptID <> "+myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayReceiptID"].ToString())+" and  N_DefLedgerID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_DefLedgerID"].ToString())+" and X_ChequeNo='"+myFunctions.getVAL(MasterTable.Rows[0]["X_ChequeNo"].ToString())+"'", connection, transaction);
-                             transaction.Rollback();
-                             return Ok(api.Error(User, "Chque Number already used for Payment "+paymentNo.ToString()+""));
-                         }
-                         object countVoucher =dLayer.ExecuteScalar("Select count(*) from Acc_VoucherMaster Where  N_CompanyID= " + nCompanyId + " and X_TransType ='PV' and  N_DefLedgerID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_DefLedgerID"].ToString())+" and X_ChequeNo='"+myFunctions.getVAL(MasterTable.Rows[0]["X_ChequeNo"].ToString())+"'", connection, transaction);
-                         if(countVoucher==null)
-                         {
-                            countVoucher=0;
-                         }
-                         int n_countVoucher = myFunctions.getIntVAL(countVoucher.ToString());
-                         if (n_countVoucher > 0)
-                         {
-                             object VoucherNo =dLayer.ExecuteScalar("Select TOP 1 X_VoucherNo from Acc_VoucherMaster Where  N_CompanyID= " + nCompanyId + " and X_TransType ='PV' and  N_DefLedgerID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_DefLedgerID"].ToString())+" and X_ChequeNo='"+myFunctions.getVAL(MasterTable.Rows[0]["X_ChequeNo"].ToString())+"'", connection, transaction);
-                             transaction.Rollback();
-                             return Ok(api.Error(User, "Chque Number already used for Payment Voucher "+VoucherNo.ToString()+""));
-                         }
+                        object count = dLayer.ExecuteScalar("Select count(*) from Inv_PayReceipt Where  N_CompanyID= " + nCompanyId + " and  N_PayReceiptID <> " + myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayReceiptID"].ToString()) + " and  N_DefLedgerID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_DefLedgerID"].ToString()) + " and X_ChequeNo='" + myFunctions.getVAL(MasterTable.Rows[0]["X_ChequeNo"].ToString()) + "'", connection, transaction);
+                        if (count == null)
+                        {
+                            count = 0;
+                        }
+                        int N_Count = myFunctions.getIntVAL(count.ToString());
+                        if (N_Count > 0)
+                        {
+                            object paymentNo = dLayer.ExecuteScalar("Select TOP 1 X_VoucherNo from Inv_PayReceipt Where  N_CompanyID= " + nCompanyId + " and  N_PayReceiptID <> " + myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayReceiptID"].ToString()) + " and  N_DefLedgerID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_DefLedgerID"].ToString()) + " and X_ChequeNo='" + myFunctions.getVAL(MasterTable.Rows[0]["X_ChequeNo"].ToString()) + "'", connection, transaction);
+                            transaction.Rollback();
+                            return Ok(api.Error(User, "Chque Number already used for Payment " + paymentNo.ToString() + ""));
+                        }
+                        object countVoucher = dLayer.ExecuteScalar("Select count(*) from Acc_VoucherMaster Where  N_CompanyID= " + nCompanyId + " and X_TransType ='PV' and  N_DefLedgerID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_DefLedgerID"].ToString()) + " and X_ChequeNo='" + myFunctions.getVAL(MasterTable.Rows[0]["X_ChequeNo"].ToString()) + "'", connection, transaction);
+                        if (countVoucher == null)
+                        {
+                            countVoucher = 0;
+                        }
+                        int n_countVoucher = myFunctions.getIntVAL(countVoucher.ToString());
+                        if (n_countVoucher > 0)
+                        {
+                            object VoucherNo = dLayer.ExecuteScalar("Select TOP 1 X_VoucherNo from Acc_VoucherMaster Where  N_CompanyID= " + nCompanyId + " and X_TransType ='PV' and  N_DefLedgerID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_DefLedgerID"].ToString()) + " and X_ChequeNo='" + myFunctions.getVAL(MasterTable.Rows[0]["X_ChequeNo"].ToString()) + "'", connection, transaction);
+                            transaction.Rollback();
+                            return Ok(api.Error(User, "Chque Number already used for Payment Voucher " + VoucherNo.ToString() + ""));
+                        }
 
 
 
@@ -508,16 +508,16 @@ namespace SmartxAPI.Controllers
                     VendParams.Add("@nCompanyID", nCompanyId);
                     VendParams.Add("@n_PartyID", n_PartyID);
                     VendParams.Add("@nFnYearID", nFnYearID);
-                    object objVendName = dLayer.ExecuteScalar("Select X_VendorName From Inv_Vendor where N_VendorID=@n_PartyID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", VendParams, connection, transaction);                   
+                    object objVendName = dLayer.ExecuteScalar("Select X_VendorName From Inv_Vendor where N_VendorID=@n_PartyID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", VendParams, connection, transaction);
 
                     if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && n_PayReceiptID > 0)
                     {
                         int N_PkeyID = n_PayReceiptID;
                         string X_Criteria = "N_PayReceiptId=" + n_PayReceiptID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Inv_PayReceipt", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearID.ToString()), "PURCHASE PAYMENT", N_PkeyID, x_VoucherNo, 1, "", 0, "",0, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, myFunctions.getIntVAL(nFnYearID.ToString()), "PURCHASE PAYMENT", N_PkeyID, x_VoucherNo, 1, "", 0, "", 0, User, dLayer, connection, transaction);
 
-                        myAttachments.SaveAttachment(dLayer, Attachment,PayReceiptNo, n_PayReceiptID,objVendName.ToString().Trim(),PayReceiptNo, n_PayReceiptID, "VendorPayment Document", User, connection, transaction);
+                        myAttachments.SaveAttachment(dLayer, Attachment, PayReceiptNo, n_PayReceiptID, objVendName.ToString().Trim(), PayReceiptNo, n_PayReceiptID, "VendorPayment Document", User, connection, transaction);
 
                         N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_PayReceipt where N_PayReceiptId=" + n_PayReceiptID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
                         if (N_SaveDraft == 0)
@@ -536,7 +536,21 @@ namespace SmartxAPI.Controllers
                         transaction.Commit();
                         return Ok(api.Success("Vendor Payment Approved " + "-" + x_VoucherNo));
                     }
-
+                   if (n_PayReceiptID == 0 && x_VoucherNo != "@Auto")
+                    {
+                    object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_PayReceipt Where x_VoucherNo ='" + x_VoucherNo + "' and N_CompanyID= " + nCompanyId + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                    if (N_DocNumber == null)
+                    {
+                        N_DocNumber = 0;
+                    }
+                    if (myFunctions.getVAL(N_DocNumber.ToString()) >= 1)
+                    {
+                        // transaction.Rollback();
+                        // return Ok(_api.Error(User, "Invoice number already in use"));
+                       transaction.Rollback();
+                        return Ok(api.Error(User, "Voucher Number Already exist"));
+                    }
+                   }
 
                     if (x_VoucherNo == "@Auto")
                     {
@@ -546,13 +560,13 @@ namespace SmartxAPI.Controllers
                         // Params.Add("N_BranchID", Master["n_BranchID"].ToString());
 
                         PayReceiptNo = dLayer.GetAutoNumber("Inv_PayReceipt", "x_VoucherNo", Params, connection, transaction);
-                       xButtonAction="Insert"; 
+                        xButtonAction = "Insert";
                         if (PayReceiptNo == "") { transaction.Rollback(); return Ok(api.Warning("Unable to generate Receipt Number")); }
                         MasterTable.Rows[0]["x_VoucherNo"] = PayReceiptNo;
                     }
                     else
 
-                    
+
                     {
                         PayReceiptNo = MasterTable.Rows[0]["x_VoucherNo"].ToString();
 
@@ -564,7 +578,7 @@ namespace SmartxAPI.Controllers
                                 {"X_TransType",x_Type},
                                 {"N_VoucherID",n_PayReceiptID}};
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
-                             xButtonAction="Update";
+                            xButtonAction = "Update";
 
                             // if (myFunctions.CheckPermission(nCompanyId, 576, "Administrator", dLayer, connection, transaction))
                             // {
@@ -587,8 +601,6 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-            
-
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
 
                     n_PayReceiptID = dLayer.SaveData("Inv_PayReceipt", "n_PayReceiptID", MasterTable, connection, transaction);
@@ -598,7 +610,7 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Error(User, "Error"));
                     }
 
-                    N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearID.ToString()), "PURCHASE PAYMENT", n_PayReceiptID, PayReceiptNo, 1, "", 0, "",0, User, dLayer, connection, transaction);
+                    N_NextApproverID = myFunctions.LogApprovals(Approvals, myFunctions.getIntVAL(nFnYearID.ToString()), "PURCHASE PAYMENT", n_PayReceiptID, PayReceiptNo, 1, "", 0, "", 0, User, dLayer, connection, transaction);
                     N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_PayReceipt where N_PayReceiptId=" + n_PayReceiptID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
 
                     if (x_Type == "PA")
@@ -670,11 +682,11 @@ namespace SmartxAPI.Controllers
 
                         if (DetailTable.Columns.Contains("N_ProjectID"))
                             row["N_ProjectID"] = myFunctions.getIntVAL(Master["N_ProjectID"].ToString());
-                        else if(MasterTable.Columns.Contains("N_ProjectID"))
+                        else if (MasterTable.Columns.Contains("N_ProjectID"))
                             myFunctions.AddNewColumnToDataTable(DetailTable, "N_ProjectID", typeof(int), myFunctions.getIntVAL(Master["N_ProjectID"].ToString()));
-                        else 
-                           myFunctions.AddNewColumnToDataTable(DetailTable, "N_ProjectID", typeof(int), 0);
-                            
+                        else
+                            myFunctions.AddNewColumnToDataTable(DetailTable, "N_ProjectID", typeof(int), 0);
+
                         // row["N_CompanyID"] = myFunctions.getIntVAL(Master["n_CompanyID"].ToString());
                         // row["N_PayReceiptId"] = n_PayReceiptID;
                         // row["N_InventoryId"] = n_PayReceiptID;
@@ -717,25 +729,25 @@ namespace SmartxAPI.Controllers
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         dLayer.ExecuteNonQuery("Update Inv_Purchase SET D_ScheduleDate=NULL,N_ScheduledAmtF=NULL WHERE N_PurchaseID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_InventoryID"].ToString()) + " and N_CompanyID=" + nCompanyId + "", Params, connection, transaction);
-                       
+
                     }
-                  //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(nFnYearID,n_PayReceiptID,PayReceiptNo,67,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-                          
-                        
+                    //Activity Log
+                    string ipAddress = "";
+                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    myFunctions.LogScreenActivitys(nFnYearID, n_PayReceiptID, PayReceiptNo, 67, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
+
+
 
                     transaction.Commit();
-           
+
                     if (Attachment.Rows.Count > 0)
                     {
                         try
                         {
-                            myAttachments.SaveAttachment(dLayer, Attachment,PayReceiptNo, n_PayReceiptID,objVendName.ToString().Trim(),PayReceiptNo, n_PayReceiptID, "VendorPayment Document", User, connection, transaction);
+                            myAttachments.SaveAttachment(dLayer, Attachment, PayReceiptNo, n_PayReceiptID, objVendName.ToString().Trim(), PayReceiptNo, n_PayReceiptID, "VendorPayment Document", User, connection, transaction);
                         }
                         catch (Exception ex)
                         {
@@ -745,7 +757,7 @@ namespace SmartxAPI.Controllers
                     }
                 }
 
-                 
+
                 SortedList Result = new SortedList();
                 Result.Add("n_VendorReceiptID", n_PayReceiptID);
                 Result.Add("x_VendorReceiptNo", PayReceiptNo);
@@ -757,7 +769,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpDelete]
-        public ActionResult DeleteData(int nPayReceiptId, string xTransType, int nFnyearID,int nCompanyID,string comments,int nFnYearID)
+        public ActionResult DeleteData(int nPayReceiptId, string xTransType, int nFnyearID, int nCompanyID, string comments, int nFnYearID)
         {
             try
             {
@@ -766,16 +778,16 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     DataTable TransData = new DataTable();
                     DataTable VendorData = new DataTable();
-                    SortedList ParamList = new SortedList(); 
+                    SortedList ParamList = new SortedList();
                     ParamList.Add("@nTransID", nPayReceiptId);
                     ParamList.Add("@nFnYearID", nFnyearID);
                     ParamList.Add("@nCompanyID", nCompanyID);
                     string xButtonAction = "Delete";
                     string PayReceiptNo = "";
 
-                     string invoiceSql = "select * from Inv_PayReceiptDetails where  N_CompanyId=@nCompanyID and N_PayReceiptId="+nPayReceiptId; 
-                     VendorData = dLayer.ExecuteDataTable(invoiceSql, ParamList, connection);
-                                   
+                    string invoiceSql = "select * from Inv_PayReceiptDetails where  N_CompanyId=@nCompanyID and N_PayReceiptId=" + nPayReceiptId;
+                    VendorData = dLayer.ExecuteDataTable(invoiceSql, ParamList, connection);
+
 
 
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,X_VoucherNo,N_PayReceiptId from Inv_PayReceipt where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_PayReceiptId=@nTransID";
@@ -785,7 +797,7 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Error(User, "Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
-                  
+
                     DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.N_FormID, nPayReceiptId, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnyearID, 0, 0, User, dLayer, connection));
                     Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
                     SqlTransaction transaction = connection.BeginTransaction();
@@ -827,13 +839,13 @@ namespace SmartxAPI.Controllers
                     //     }
                     // }
 
-                     //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nPayReceiptId,TransRow["X_VoucherNo"].ToString(),67,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                    //Activity Log
+                    string ipAddress = "";
+                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    myFunctions.LogScreenActivitys(myFunctions.getIntVAL(nFnYearID.ToString()), nPayReceiptId, TransRow["X_VoucherNo"].ToString(), 67, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
 
 
 
@@ -849,29 +861,29 @@ namespace SmartxAPI.Controllers
                                         {"X_TransType",xTransType},
                                         {"N_VoucherID",nPayReceiptId}};
 
-                                int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection,transaction);
+                                int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
                                 if (result > 0)
                                 {
-                                    myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnyearID,67, User, transaction, connection);
-                                    
-                                      if (VendorData.Rows.Count >0)
-                                     for (int j = 0; j < VendorData.Rows.Count; j++)
-                                       {
+                                    myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnyearID, 67, User, transaction, connection);
 
-                                        int nInventoryID = myFunctions.getIntVAL(VendorData.Rows[j]["N_InventoryID"].ToString());
-                                        if (nInventoryID > 0 && VendorData.Rows[j]["D_ScheduleDate"].ToString()!="")  
+                                    if (VendorData.Rows.Count > 0)
+                                        for (int j = 0; j < VendorData.Rows.Count; j++)
                                         {
-                                            dLayer.ExecuteNonQuery("Update Inv_Purchase SET D_ScheduleDate='" + VendorData.Rows[j]["D_ScheduleDate"].ToString() + "',N_ScheduledAmtF=" + myFunctions.getVAL(VendorData.Rows[j]["N_ScheduledAmtF"].ToString()) + " WHERE N_PurchaseID=" + myFunctions.getIntVAL(VendorData.Rows[j]["N_InventoryID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", ParamList, connection, transaction);
-                                        
-                                        }
-                                    
 
-                                    }   
+                                            int nInventoryID = myFunctions.getIntVAL(VendorData.Rows[j]["N_InventoryID"].ToString());
+                                            if (nInventoryID > 0 && VendorData.Rows[j]["D_ScheduleDate"].ToString() != "")
+                                            {
+                                                dLayer.ExecuteNonQuery("Update Inv_Purchase SET D_ScheduleDate='" + VendorData.Rows[j]["D_ScheduleDate"].ToString() + "',N_ScheduledAmtF=" + myFunctions.getVAL(VendorData.Rows[j]["N_ScheduledAmtF"].ToString()) + " WHERE N_PurchaseID=" + myFunctions.getIntVAL(VendorData.Rows[j]["N_InventoryID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", ParamList, connection, transaction);
+
+                                            }
+
+
+                                        }
                                     transaction.Commit();
                                     return Ok(api.Success("Vendor Payment Deleted"));
                                 }
-                   
-                             
+
+
                             }
                         }
                         transaction.Commit();

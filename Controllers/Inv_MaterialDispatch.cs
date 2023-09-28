@@ -429,23 +429,23 @@ namespace SmartxAPI.Controllers
                          return Ok(_api.Success("Material Request saved"));
                     }
 
-                     if (ButtonTag == "6" || ButtonTag == "0"){
-                              SortedList DeleteParams = new SortedList(){
-                                {"N_CompanyID",nCompanyID},
-                                {"N_UserID",nUserID},
-                                {"X_TransType","MATERIAL DISPATCH"},
-                                {"X_SystemName","WebRequest"},
-                                {"N_VoucherID",nDispatchID}};
+                    //  if (ButtonTag == "6" || ButtonTag == "0"){
+                    //           SortedList DeleteParams = new SortedList(){
+                    //             {"N_CompanyID",nCompanyID},
+                    //             {"N_UserID",nUserID},
+                    //             {"X_TransType","MATERIAL DISPATCH"},
+                    //             {"X_SystemName","WebRequest"},
+                    //             {"N_VoucherID",nDispatchID}};
 
-                    Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
-                    if (Results <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to delete Material Dispatch."));
-                    }
-                      transaction.Commit();
-                    return Ok(_api.Success("Material Dispatch deleted"));
-                     }
+                    // Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                    // if (Results <= 0)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(_api.Error(User, "Unable to delete Material Dispatch."));
+                    // }
+                    //   transaction.Commit();
+                    // return Ok(_api.Success("Material Dispatch deleted"));
+                    //  }
 
                      else{
                         transaction.Commit();
