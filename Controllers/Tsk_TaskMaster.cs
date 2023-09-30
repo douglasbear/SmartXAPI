@@ -9,6 +9,7 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
+using CrystalDecisions.Windows.Forms;
 
 namespace SmartxAPI.Controllers
 {
@@ -131,19 +132,21 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("parentTaskList")]
-        public ActionResult ParentTaskList( int nProjectID)
+        public ActionResult ParentTaskList(int nProjectID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string sqlCommandText="";
+            string sqlCommandText = "";
 
-            if(nProjectID >0){
-                 sqlCommandText = "select  * from [vw_TaskCurrentStatus] where N_CompanyID=@p1 and N_ProjectID=@p2";
+            if (nProjectID > 0)
+            {
+                sqlCommandText = "select  * from [vw_TaskCurrentStatus] where N_CompanyID=@p1 and N_ProjectID=@p2";
             }
-            else{
-               sqlCommandText = "select  * from [vw_TaskCurrentStatus] where N_CompanyID=@p1";
+            else
+            {
+                sqlCommandText = "select  * from [vw_TaskCurrentStatus] where N_CompanyID=@p1";
             }
             Params.Add("@p1", nCompanyId);
             Params.Add("@nUserID", nUserID);
@@ -249,14 +252,14 @@ namespace SmartxAPI.Controllers
                     DateTime entryDateHold = new DateTime();
                     DateTime entryDateStart = new DateTime();
                     DateTime entryDateComplete = new DateTime();
-                    int timeflag=0;
+                    int timeflag = 0;
                     foreach (DataRow row in TimeTable.Rows)
                     {
 
-                
+
                         if (row["N_Status"].ToString() == "7" && row["N_CreaterID"].ToString() == loginUserID.ToString())
-                        { 
-                            timeflag=1;
+                        {
+                            timeflag = 1;
                             entryDateStart = Convert.ToDateTime(row["d_EntryDate"].ToString());
 
                         }
@@ -468,6 +471,21 @@ namespace SmartxAPI.Controllers
                     int nProjectID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ProjectID"].ToString());
                     int nOpportunityID = myFunctions.ContainColumn("n_OpportunityID", MasterTable) ? myFunctions.getIntVAL(MasterTable.Rows[0]["n_OpportunityID"].ToString()) : 0;
                     int nParentyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ParentID"].ToString());
+                    int nTemplateID = 0;
+                    if (MasterTable.Columns.Contains("N_TemplateID"))
+                        nTemplateID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TemplateID"].ToString());
+                    int nAssigneeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_AssigneeID"].ToString());
+
+
+
+
+                    // int nsndMail = myFunctions.getIntVAL(MasterTable.Rows[0]["Senttasktomail"].ToString());
+                    bool nsndMail = false;
+                    if (MasterTable.Columns.Contains("Senttasktomail"))
+                        nsndMail = myFunctions.getBoolVAL(MasterTable.Rows[0]["Senttasktomail"].ToString());
+                    string xBodyText = "";
+                    string xSubject = "";
+
                     DataTable SavedData;
 
 
@@ -596,7 +614,7 @@ namespace SmartxAPI.Controllers
                         }
 
                     }
-
+                    MasterTable.Columns.Remove("Senttasktomail");
                     nTaskId = dLayer.SaveData("Tsk_TaskMaster", "N_TaskID", MasterTable, connection, transaction);
                     if (nTaskId <= 0)
                     {
@@ -619,6 +637,8 @@ namespace SmartxAPI.Controllers
                         row["N_TaskID"] = nTaskId;
                         row["n_TaskStatusID"] = 0;
                         row["n_CompanyId"] = nCompanyID;
+                        //  row["N_TemplateID"] = nTemplateID;
+
                         row["n_AssigneeID"] = 0;
                         row["n_CreaterID"] = myFunctions.GetUserID(User);
                         row["n_SubmitterID"] = 0;
@@ -654,6 +674,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         }
                     }
+
 
                     if (nParentyID > 0)
                     {
@@ -694,9 +715,38 @@ namespace SmartxAPI.Controllers
 
 
                     }
+                    DataTable Snddata = new DataTable();
+                   
+                    string SndMaildata = "select X_Creator ,X_Assignee , D_TaskDate,D_DueDate,X_taskSummery from vw_Tsk_TaskStatus  where N_CompanyId=" + nCompanyID + " and n_TaskID=" + nTaskId;
+                     Snddata = dLayer.ExecuteDataTable(SndMaildata, Params, connection,transaction);
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@nTaskId", nTaskId);
+                 
+            
+            
+
+                    if (nsndMail == true)
+                    {
+                        xSubject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyId=" + nCompanyID + " and N_TemplateID=" + nTemplateID, connection, transaction).ToString();
+                        xBodyText = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyId=" + nCompanyID + " and N_TemplateID=" + nTemplateID, connection, transaction).ToString();
+                        string xEmailData = dLayer.ExecuteScalar("select X_UserID from sec_user where N_CompanyId=" + nCompanyID + " and N_UserID=" + nAssigneeID, connection, transaction).ToString();
+
+                        xSubject = xSubject.Replace("@StartDate", Snddata.Rows[0]["D_TaskDate"].ToString());
+                        xSubject = xSubject.Replace("@ToDate", Snddata.Rows[0]["D_DueDate"].ToString());
+
+                        xBodyText = xBodyText.Replace("@PartyName", Snddata.Rows[0]["X_Assignee"].ToString());
+                        xBodyText = xBodyText.Replace("@Creator", Snddata.Rows[0]["X_Creator"].ToString());
+                        xBodyText = xBodyText.Replace("@StartDate", Snddata.Rows[0]["D_TaskDate"].ToString());
+                        xBodyText = xBodyText.Replace("@ToDate", Snddata.Rows[0]["D_DueDate"].ToString());
+                        xBodyText = xBodyText.Replace("@TaskName", Snddata.Rows[0]["X_taskSummery"].ToString());
+
+                        myFunctions.SendMail(xEmailData, xBodyText, xSubject, dLayer, 1, 1, 1, false);
+                    }
 
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
+
+
                 }
             }
             catch (Exception ex)
@@ -733,16 +783,16 @@ namespace SmartxAPI.Controllers
                     double ParentTaskPercentage = 0.00;
                     // DateTime dStartDate=DetailTable.Rows[0]["d_TaskStartDate"].ToString();
                     // DateTime dEndDate=DetailTable.Rows[0]["d_TaskEndDate"].ToString();
-                   
+
                     if (DetailTable.Columns.Contains("x_WorkPercentage"))
                     {
                         DetailTable.Columns.Remove("x_WorkPercentage");
                     }
-                      if (DetailTable.Columns.Contains("n_UsedWorkHours"))
+                    if (DetailTable.Columns.Contains("n_UsedWorkHours"))
                     {
                         DetailTable.Columns.Remove("n_UsedWorkHours");
                     }
-                  
+
                     //Percentage Calculation
 
 
@@ -827,23 +877,23 @@ namespace SmartxAPI.Controllers
                     }
                     else if (nStatus == "4" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() != DetailTable.Rows[0]["N_SubmitterID"].ToString()))
                     {
-                        if (n_UsedWorkHours>0)
+                        if (n_UsedWorkHours > 0)
                         {
-                          DetailTable.Rows[0]["N_UsedTime"] = n_UsedWorkHours;
+                            DetailTable.Rows[0]["N_UsedTime"] = n_UsedWorkHours;
                         }
-                      
+
                         DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_SubmitterID"].ToString();
 
                     }
                     if (nStatus == "4" && (DetailTable.Rows[0]["N_SubmitterID"].ToString() == DetailTable.Rows[0]["N_ClosedUserID"].ToString()))
                     {
-                        if (n_UsedWorkHours>0)
+                        if (n_UsedWorkHours > 0)
                         {
-                          DetailTable.Rows[0]["N_UsedTime"] = n_UsedWorkHours;
+                            DetailTable.Rows[0]["N_UsedTime"] = n_UsedWorkHours;
                         }
                         masterStatus = 9;
                     }
-                   
+
 
                     if (nStatus == "9" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_ClosedUserID"].ToString()))
                     {
@@ -854,9 +904,9 @@ namespace SmartxAPI.Controllers
 
                         // dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID= 5  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection,transaction);
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed= 1  where N_CompanyID=" + nCompanyID + " and N_TaskID=" + nTaskID, Params, connection, transaction);
-                           
+
                     }
-                    else if ((nStatus == "9"|| nStatus=="14")  && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_SubmitterID"].ToString()))
+                    else if ((nStatus == "9" || nStatus == "14") && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_SubmitterID"].ToString()))
                     {
                         DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
                     }
@@ -890,12 +940,12 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=1 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                         if (myFunctions.getVAL(MasterTable.Rows[0]["n_StageID"].ToString()) > 0)
                         {
-                        if (myFunctions.getVAL(MasterTable.Rows[0]["n_OpportunityID"].ToString()) > 0)
-                            dLayer.ExecuteNonQuery("Update CRM_Opportunity SET N_StageID=" + MasterTable.Rows[0]["n_StageID"].ToString()  + " where N_OpportunityID=" + MasterTable.Rows[0]["n_OpportunityID"].ToString()  + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                        else
-                         dLayer.ExecuteNonQuery("Update inv_customerprojects SET N_StageID=" + MasterTable.Rows[0]["n_StageID"].ToString()  + " where N_ProjectID=" + MasterTable.Rows[0]["n_ProjectID"].ToString()  + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                            if (myFunctions.getVAL(MasterTable.Rows[0]["n_OpportunityID"].ToString()) > 0)
+                                dLayer.ExecuteNonQuery("Update CRM_Opportunity SET N_StageID=" + MasterTable.Rows[0]["n_StageID"].ToString() + " where N_OpportunityID=" + MasterTable.Rows[0]["n_OpportunityID"].ToString() + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                            else
+                                dLayer.ExecuteNonQuery("Update inv_customerprojects SET N_StageID=" + MasterTable.Rows[0]["n_StageID"].ToString() + " where N_ProjectID=" + MasterTable.Rows[0]["n_ProjectID"].ToString() + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                         }
-                            
+
                     }
                     if (masterStatus == 8)
                     {
@@ -903,35 +953,35 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=0 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     }
 
-                   if (MasterTable.Columns.Contains("d_TaskStartDate"))
-                     {
-
-                //    if (MasterTable.Columns.Contains("d_TaskStartDate"))
-                //     {
-                //         var dStartDate = MasterTable.Rows[0]["d_TaskStartDate"].ToString();
-                    
-                //       if (MasterTable.Columns.Contains("d_TaskEndDate"))
-                //     {
-                //         var dEndDate=MasterTable.Rows[0]["d_TaskEndDate"].ToString();
-                      
-                //     }
-                  
                     if (MasterTable.Columns.Contains("d_TaskStartDate"))
                     {
-                       if(nStatus == "4" && MasterTable.Columns.Contains("d_TaskEndDate"))
-                       {
-                        dLayer.ExecuteNonQuery("Update Tsk_TaskStatus SET D_EntryDate= '" + MasterTable.Rows[0]["d_TaskEndDate"].ToString() + "'  where N_CompanyID=" + nCompanyID + " and N_TaskStatusID ="+nTaskStatusID+" and N_TaskID=" + nTaskID, Params, connection, transaction);
-                        dLayer.ExecuteNonQuery("Update Tsk_TaskStatus SET D_EntryDate= '" + MasterTable.Rows[0]["d_TaskStartDate"].ToString() + "'  where N_CompanyID=" + nCompanyID + " and N_Status =7 and N_TaskID=" + nTaskID, Params, connection, transaction);
- 
-                       }
-                       else if(nStatus == "7")
-                       {
-                        dLayer.ExecuteNonQuery("Update Tsk_TaskStatus SET D_EntryDate= '" + MasterTable.Rows[0]["d_TaskStartDate"].ToString() + "'  where N_CompanyID=" + nCompanyID + " and N_Status =7 and N_TaskStatusID ="+nTaskStatusID+" and N_TaskID=" + nTaskID, Params, connection, transaction);
- 
-                       }
-                       
+
+                        //    if (MasterTable.Columns.Contains("d_TaskStartDate"))
+                        //     {
+                        //         var dStartDate = MasterTable.Rows[0]["d_TaskStartDate"].ToString();
+
+                        //       if (MasterTable.Columns.Contains("d_TaskEndDate"))
+                        //     {
+                        //         var dEndDate=MasterTable.Rows[0]["d_TaskEndDate"].ToString();
+
+                        //     }
+
+                        if (MasterTable.Columns.Contains("d_TaskStartDate"))
+                        {
+                            if (nStatus == "4" && MasterTable.Columns.Contains("d_TaskEndDate"))
+                            {
+                                dLayer.ExecuteNonQuery("Update Tsk_TaskStatus SET D_EntryDate= '" + MasterTable.Rows[0]["d_TaskEndDate"].ToString() + "'  where N_CompanyID=" + nCompanyID + " and N_TaskStatusID =" + nTaskStatusID + " and N_TaskID=" + nTaskID, Params, connection, transaction);
+                                dLayer.ExecuteNonQuery("Update Tsk_TaskStatus SET D_EntryDate= '" + MasterTable.Rows[0]["d_TaskStartDate"].ToString() + "'  where N_CompanyID=" + nCompanyID + " and N_Status =7 and N_TaskID=" + nTaskID, Params, connection, transaction);
+
+                            }
+                            else if (nStatus == "7")
+                            {
+                                dLayer.ExecuteNonQuery("Update Tsk_TaskStatus SET D_EntryDate= '" + MasterTable.Rows[0]["d_TaskStartDate"].ToString() + "'  where N_CompanyID=" + nCompanyID + " and N_Status =7 and N_TaskStatusID =" + nTaskStatusID + " and N_TaskID=" + nTaskID, Params, connection, transaction);
+
+                            }
+
+                        }
                     }
-                     }
 
 
                     //   if (masterStatus == 11)
@@ -949,11 +999,11 @@ namespace SmartxAPI.Controllers
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_ClosedUserID='" + DetailTable.Rows[0]["n_ClosedUserID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET D_EntryDate='" + DetailTable.Rows[0]["D_EntryDate"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET x_SolutionNotes='" + MasterTable.Rows[0]["x_SolutionNotes"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                    
-                    
-                    
-                    
-                    
+
+
+
+
+
                     if (MasterTable.Columns.Contains("N_WorkHours"))
                     {
                         if (myFunctions.getVAL(MasterTable.Rows[0]["N_WorkHours"].ToString()) > 0)
@@ -963,89 +1013,89 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                    object b_Closed=  dLayer.ExecuteScalar("select B_Closed from Tsk_TaskMaster where  N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                    object RecuredDays=  dLayer.ExecuteScalar("select N_RecuringDays from Tsk_TaskMaster where  N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                    if(b_Closed.ToString()=="True")
+                    object b_Closed = dLayer.ExecuteScalar("select B_Closed from Tsk_TaskMaster where  N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    object RecuredDays = dLayer.ExecuteScalar("select N_RecuringDays from Tsk_TaskMaster where  N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    if (b_Closed.ToString() == "True")
                     {
 
                         if (myFunctions.getVAL(MasterTable.Rows[0]["n_StageID"].ToString()) > 0)
                         {
-                        if (myFunctions.getVAL(MasterTable.Rows[0]["n_OpportunityID"].ToString()) > 0)
-                            dLayer.ExecuteNonQuery("Update CRM_Opportunity SET N_StageID=" + MasterTable.Rows[0]["n_StageID"].ToString()  + " where N_OpportunityID=" + MasterTable.Rows[0]["n_OpportunityID"].ToString()  + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                        else
-                         dLayer.ExecuteNonQuery("Update inv_customerprojects SET N_StageID=" + MasterTable.Rows[0]["n_StageID"].ToString()  + " where N_ProjectID=" + MasterTable.Rows[0]["n_ProjectID"].ToString()  + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                            if (myFunctions.getVAL(MasterTable.Rows[0]["n_OpportunityID"].ToString()) > 0)
+                                dLayer.ExecuteNonQuery("Update CRM_Opportunity SET N_StageID=" + MasterTable.Rows[0]["n_StageID"].ToString() + " where N_OpportunityID=" + MasterTable.Rows[0]["n_OpportunityID"].ToString() + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                            else
+                                dLayer.ExecuteNonQuery("Update inv_customerprojects SET N_StageID=" + MasterTable.Rows[0]["n_StageID"].ToString() + " where N_ProjectID=" + MasterTable.Rows[0]["n_ProjectID"].ToString() + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                         }
-                        if(RecuredDays!=null)
+                        if (RecuredDays != null)
                         {
-                        if(myFunctions.getIntVAL(RecuredDays.ToString())>0)
-                        {
-                             int N_AssigneeID=  myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_AssigneeID from Tsk_TaskMaster where  N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction).ToString());
-                             int N_SubmitterID=  myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_SubmitterID from Tsk_TaskMaster where  N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction).ToString());
-                             int n_ClosedUserID=  myFunctions.getIntVAL(dLayer.ExecuteScalar("select n_ClosedUserID from Tsk_TaskMaster where  N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction).ToString());
+                            if (myFunctions.getIntVAL(RecuredDays.ToString()) > 0)
+                            {
+                                int N_AssigneeID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_AssigneeID from Tsk_TaskMaster where  N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction).ToString());
+                                int N_SubmitterID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_SubmitterID from Tsk_TaskMaster where  N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction).ToString());
+                                int n_ClosedUserID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select n_ClosedUserID from Tsk_TaskMaster where  N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction).ToString());
 
-                           string DueDate= MasterTable.Rows[0]["d_DueDate"].ToString();
-                           DateTime Due = new DateTime(
-                                           Convert.ToDateTime(DueDate.ToString()).Year,
-                                            Convert.ToDateTime(DueDate.ToString()).Month,
-                                           Convert.ToDateTime(DueDate.ToString()).Day,
-                                          Convert.ToDateTime(DueDate.ToString()).Hour,
-                                           Convert.ToDateTime(DueDate.ToString()).Minute,
-                                           Convert.ToDateTime(DueDate.ToString()).Second
-                                         );
+                                string DueDate = MasterTable.Rows[0]["d_DueDate"].ToString();
+                                DateTime Due = new DateTime(
+                                                Convert.ToDateTime(DueDate.ToString()).Year,
+                                                 Convert.ToDateTime(DueDate.ToString()).Month,
+                                                Convert.ToDateTime(DueDate.ToString()).Day,
+                                               Convert.ToDateTime(DueDate.ToString()).Hour,
+                                                Convert.ToDateTime(DueDate.ToString()).Minute,
+                                                Convert.ToDateTime(DueDate.ToString()).Second
+                                              );
 
-                             DateTime DuePlusOneDay = Due.AddDays(myFunctions.getIntVAL(RecuredDays.ToString()));
-                            string StartDate= MasterTable.Rows[0]["d_TaskDate"].ToString();
-                           DateTime start = new DateTime(
-                                           Convert.ToDateTime(DueDate.ToString()).Year,
-                                            Convert.ToDateTime(DueDate.ToString()).Month,
-                                           Convert.ToDateTime(DueDate.ToString()).Day,
-                                          Convert.ToDateTime(DueDate.ToString()).Hour,
-                                           Convert.ToDateTime(DueDate.ToString()).Minute,
-                                           Convert.ToDateTime(DueDate.ToString()).Second
-                                         );
+                                DateTime DuePlusOneDay = Due.AddDays(myFunctions.getIntVAL(RecuredDays.ToString()));
+                                string StartDate = MasterTable.Rows[0]["d_TaskDate"].ToString();
+                                DateTime start = new DateTime(
+                                                Convert.ToDateTime(DueDate.ToString()).Year,
+                                                 Convert.ToDateTime(DueDate.ToString()).Month,
+                                                Convert.ToDateTime(DueDate.ToString()).Day,
+                                               Convert.ToDateTime(DueDate.ToString()).Hour,
+                                                Convert.ToDateTime(DueDate.ToString()).Minute,
+                                                Convert.ToDateTime(DueDate.ToString()).Second
+                                              );
 
-                             DateTime startPlusOneDay = start.AddDays(myFunctions.getIntVAL(RecuredDays.ToString()));
-                               dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET d_DueDate='" + DuePlusOneDay.ToString() +"' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                               dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET d_TaskDate='" + startPlusOneDay.ToString() +"' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                               dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CurrentAssigneeID='" + N_AssigneeID + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                              dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CurrentAssignerID='" + DetailTable.Rows[0]["n_CreaterID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                             dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_SubmitterID='" + N_SubmitterID + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                            dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_ClosedUserID='" +n_ClosedUserID + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                           dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET D_EntryDate='" + DetailTable.Rows[0]["D_EntryDate"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                           dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID=2  where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                           dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=0  where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                           dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_RecuringDays="+RecuredDays+"  where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                                DateTime startPlusOneDay = start.AddDays(myFunctions.getIntVAL(RecuredDays.ToString()));
+                                dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET d_DueDate='" + DuePlusOneDay.ToString() + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                                dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET d_TaskDate='" + startPlusOneDay.ToString() + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                                dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CurrentAssigneeID='" + N_AssigneeID + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                                dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CurrentAssignerID='" + DetailTable.Rows[0]["n_CreaterID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                                dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_SubmitterID='" + N_SubmitterID + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                                dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_ClosedUserID='" + n_ClosedUserID + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                                dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET D_EntryDate='" + DetailTable.Rows[0]["D_EntryDate"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                                dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_StatusID=2  where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                                dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=0  where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                                dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_RecuringDays=" + RecuredDays + "  where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
 
-                        DataTable dt = new DataTable();
-                        dt.Clear();
-                        dt.Columns.Add("N_TaskID");
-                        dt.Columns.Add("n_TaskStatusID");
-                        dt.Columns.Add("n_CompanyId");
-                        dt.Columns.Add("n_AssigneeID");
-                        dt.Columns.Add("n_CreaterID");
-                        dt.Columns.Add("n_SubmitterID");
-                        dt.Columns.Add("n_ClosedUserID");
-                        dt.Columns.Add("n_Status");
-                        dt.Columns.Add("d_EntryDate");
-                        DataRow row = dt.NewRow();
-                        row["N_TaskID"] = nTaskID;
-                        row["n_TaskStatusID"] = 0;
-                        row["n_CompanyId"] = nCompanyID;
-                        row["n_AssigneeID"] =N_AssigneeID;
-                        row["n_CreaterID"] = DetailTable.Rows[0]["n_CreaterID"];
-                        row["n_SubmitterID"] =N_SubmitterID;
-                        row["n_ClosedUserID"] = n_ClosedUserID;
-                        row["n_Status"] = 2;
-                        row["d_EntryDate"] = DetailTable.Rows[0]["d_EntryDate"];
-                          dt.Rows.Add(row);
-                       int nTaskStatusNewID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", dt, connection, transaction);
-                    if (nTaskStatusNewID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable To Save"));
-                    }
-                            
-                        }
+                                DataTable dt = new DataTable();
+                                dt.Clear();
+                                dt.Columns.Add("N_TaskID");
+                                dt.Columns.Add("n_TaskStatusID");
+                                dt.Columns.Add("n_CompanyId");
+                                dt.Columns.Add("n_AssigneeID");
+                                dt.Columns.Add("n_CreaterID");
+                                dt.Columns.Add("n_SubmitterID");
+                                dt.Columns.Add("n_ClosedUserID");
+                                dt.Columns.Add("n_Status");
+                                dt.Columns.Add("d_EntryDate");
+                                DataRow row = dt.NewRow();
+                                row["N_TaskID"] = nTaskID;
+                                row["n_TaskStatusID"] = 0;
+                                row["n_CompanyId"] = nCompanyID;
+                                row["n_AssigneeID"] = N_AssigneeID;
+                                row["n_CreaterID"] = DetailTable.Rows[0]["n_CreaterID"];
+                                row["n_SubmitterID"] = N_SubmitterID;
+                                row["n_ClosedUserID"] = n_ClosedUserID;
+                                row["n_Status"] = 2;
+                                row["d_EntryDate"] = DetailTable.Rows[0]["d_EntryDate"];
+                                dt.Rows.Add(row);
+                                int nTaskStatusNewID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", dt, connection, transaction);
+                                if (nTaskStatusNewID <= 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, "Unable To Save"));
+                                }
+
+                            }
                         }
 
                     }
@@ -1243,18 +1293,18 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("taskview")]
-        public ActionResult GetTaskview(int nUserID,int nTeamID,int nType,int N_CategoryID,int N_ProjectID,int nProjectID, int nEmpID,int nFnYearID)
+        public ActionResult GetTaskview(int nUserID, int nTeamID, int nType, int N_CategoryID, int N_ProjectID, int nProjectID, int nEmpID, int nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nloginUserID = myFunctions.GetUserID(User);
-            string sqlCommandText="";
-             string critiria="";
-            if(N_CategoryID>0)
-                critiria=" and N_CategoryID = "+N_CategoryID;
-             if(N_ProjectID>0)
-                critiria=critiria +" and N_ProjectID = "+N_ProjectID;
+            string sqlCommandText = "";
+            string critiria = "";
+            if (N_CategoryID > 0)
+                critiria = " and N_CategoryID = " + N_CategoryID;
+            if (N_ProjectID > 0)
+                critiria = critiria + " and N_ProjectID = " + N_ProjectID;
 
 
             try
@@ -1262,41 +1312,41 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-             string UsersIDs="";
-            UsersIDs=Convert.ToString(nUserID);
-            object Users = dLayer.ExecuteScalar("SELECT STRING_AGG(n_usersid, ', ') AS concatenated_values FROM tsk_usermappingdetails WHERE  n_usermappingid="+nTeamID, connection);
-            if(nTeamID>0&&nUserID==0)
-                UsersIDs=Users.ToString();
-            else
-                UsersIDs=nUserID.ToString();
+                    string UsersIDs = "";
+                    UsersIDs = Convert.ToString(nUserID);
+                    object Users = dLayer.ExecuteScalar("SELECT STRING_AGG(n_usersid, ', ') AS concatenated_values FROM tsk_usermappingdetails WHERE  n_usermappingid=" + nTeamID, connection);
+                    if (nTeamID > 0 && nUserID == 0)
+                        UsersIDs = Users.ToString();
+                    else
+                        UsersIDs = nUserID.ToString();
 
-            if(UsersIDs!="0")
-                critiria=critiria+" and n_assigneeID in ("+UsersIDs+")";
+                    if (UsersIDs != "0")
+                        critiria = critiria + " and n_assigneeID in (" + UsersIDs + ")";
 
 
-            if((nUserID==0&&nTeamID==0))
-                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID="+nCompanyID+critiria;
+                    if ((nUserID == 0 && nTeamID == 0))
+                        sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID=" + nCompanyID + critiria;
 
-             if((nProjectID>0))
-                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + "  and n_ProjectID="+nProjectID;
-            else if(nEmpID>0)
-                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_ProjectID in (select n_ProjectID from Vw_InvCustomerProjects"+
-               " where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "  and X_ProjectCode is not null and x_EmpsID like '%"+nEmpID+"%' or n_ProjectCoordinator =" + nEmpID + " or n_ProjectManager=" + nEmpID + ")"+
-               " or n_ProjectID in (select n_ProjectID from Tsk_ProjectSettingsDetails where n_UserID="+nUserID+" and n_CompanyID=" + nCompanyID + " and b_View=1)";  
-           
-            else if(nType==0)
-                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_assigneeID="+nUserID;    
-                
-            else if(nTeamID>0 && nType==1 && nUserID>0)
-                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID +critiria;
-            else if(nTeamID>0 && nType==1 && nUserID==0)
-                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID +critiria;
-            else if((nUserID>0&&nType==1&&nUserID!=nloginUserID))
-                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID +critiria;
-            else if((nType==1))
-                sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= -1 "+critiria;
-             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                   
+                    if ((nProjectID > 0))
+                        sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + "  and n_ProjectID=" + nProjectID;
+                    else if (nEmpID > 0)
+                        sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_ProjectID in (select n_ProjectID from Vw_InvCustomerProjects" +
+                       " where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "  and X_ProjectCode is not null and x_EmpsID like '%" + nEmpID + "%' or n_ProjectCoordinator =" + nEmpID + " or n_ProjectManager=" + nEmpID + ")" +
+                       " or n_ProjectID in (select n_ProjectID from Tsk_ProjectSettingsDetails where n_UserID=" + nUserID + " and n_CompanyID=" + nCompanyID + " and b_View=1)";
+
+                    else if (nType == 0)
+                        sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " and n_assigneeID=" + nUserID;
+
+                    else if (nTeamID > 0 && nType == 1 && nUserID > 0)
+                        sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + critiria;
+                    else if (nTeamID > 0 && nType == 1 && nUserID == 0)
+                        sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + critiria;
+                    else if ((nUserID > 0 && nType == 1 && nUserID != nloginUserID))
+                        sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + critiria;
+                    else if ((nType == 1))
+                        sqlCommandText = "Select *  from vw_TaskCurrentStatus Where N_CompanyID= -1 " + critiria;
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
                 }
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -1346,7 +1396,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-        
+
 
         [HttpGet("updateDashboard")]
         public ActionResult UpdateDashboard(int nTaskID, int nStatus, int nProjectID, int nStageID, bool b_Closed)
@@ -1428,8 +1478,8 @@ namespace SmartxAPI.Controllers
             int N_UserID = myFunctions.GetUserID(User);
             int nCompanyId = myFunctions.GetCompanyID(User);
             DateTime datetime = DateTime.Now;
-            string X_Body="";
-            int N_StatusID=0;
+            string X_Body = "";
+            int N_StatusID = 0;
             string sqlCommandText = "select * from vw_TaskDetailsRPT where N_CompanyID=" + nCompanyId + " and N_AssigneeID=" + N_UserID + " and Cast(D_EntryDate as DATE) =  Cast('" + datetime + "' as DATE) and N_CompletedPercentage>0";
             string sqlmailData = "select * from Gen_MailTemplates where N_CompanyID=" + nCompanyId + " and x_templatename='Daily Task'";
 
@@ -1445,23 +1495,23 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        double TotalWorkHrs=0;
+                        double TotalWorkHrs = 0;
                         MailData = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                        foreach(DataRow dr in MailData.Rows)
+                        foreach (DataRow dr in MailData.Rows)
                         {
-                           
-                                X_Body=X_Body+"*"+dr["X_TaskSummery"] + "- "+dr["N_CompletedPercentage"]+"%<br>";
-                                X_Body=X_Body + dr["N_WorkedTime"] + " Hrs ("+dr["N_WorkHours"]+" Hrs)<br>";
-                                TotalWorkHrs=TotalWorkHrs+ myFunctions.getVAL(dr["N_WorkedTime"].ToString());
+
+                            X_Body = X_Body + "*" + dr["X_TaskSummery"] + "- " + dr["N_CompletedPercentage"] + "%<br>";
+                            X_Body = X_Body + dr["N_WorkedTime"] + " Hrs (" + dr["N_WorkHours"] + " Hrs)<br>";
+                            TotalWorkHrs = TotalWorkHrs + myFunctions.getVAL(dr["N_WorkedTime"].ToString());
                         }
-                        X_Body=X_Body + "<br>Total hours Worked : " + TotalWorkHrs + " Hrs";
-                        string x_body=(MasterTable.Rows[0]["x_body"]).ToString();
-                        x_body= x_body.Replace("@Body",X_Body);                      
-                        x_body= x_body.Replace("@Date",datetime.ToString("dd-MM-yyyy"));                      
-                        MasterTable.Rows[0]["x_body"]=x_body;
-                        string x_Subject=(MasterTable.Rows[0]["x_Subject"]).ToString();
-                        x_Subject=x_Subject.Replace("@Month",datetime.ToString("MMM").ToUpper());
-                        MasterTable.Rows[0]["x_Subject"]=x_Subject;
+                        X_Body = X_Body + "<br>Total hours Worked : " + TotalWorkHrs + " Hrs";
+                        string x_body = (MasterTable.Rows[0]["x_body"]).ToString();
+                        x_body = x_body.Replace("@Body", X_Body);
+                        x_body = x_body.Replace("@Date", datetime.ToString("dd-MM-yyyy"));
+                        MasterTable.Rows[0]["x_body"] = x_body;
+                        string x_Subject = (MasterTable.Rows[0]["x_Subject"]).ToString();
+                        x_Subject = x_Subject.Replace("@Month", datetime.ToString("MMM").ToUpper());
+                        MasterTable.Rows[0]["x_Subject"] = x_Subject;
 
 
                     }
@@ -1481,6 +1531,6 @@ namespace SmartxAPI.Controllers
             }
         }
     }
-    }
-    
+}
+
 

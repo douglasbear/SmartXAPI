@@ -1555,9 +1555,24 @@ namespace SmartxAPI.Controllers
                                 tempPOrderID = n_POrderID;
                             };
                         }
+                        else if (ButtonTag == "4")
+                        {
+                            dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails_Segments where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='PURCHASE' AND N_AccTransID  in (select N_AccTransID from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='PURCHASE' AND X_VoucherNo='"+TransRow["X_InvoiceNo"].ToString()+"')", ParamList, connection, transaction);
+                            dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='PURCHASE' AND X_VoucherNo='"+TransRow["X_InvoiceNo"].ToString()+"'", ParamList, connection, transaction);
+                        }
+
                         transaction.Commit();
-                        return Ok(_api.Success("Purchase Invoice " + status + " Successfully"));
+                        if (myFunctions.getIntVAL(TransRow["n_FormID"].ToString()) == 1605)
+                        {
+                             return Ok(_api.Success("Rental Purchase Invoice " + status + " Successfully"));
+                        }
+                        else
+                        {
+                             return Ok(_api.Success("Purchase Invoice " + status + " Successfully"));
+
+                        }
                     }
+                   
                     else
                     {
                         transaction.Rollback();

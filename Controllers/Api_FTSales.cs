@@ -56,15 +56,22 @@ namespace SmartxAPI.Controllers
                     if (dt.Rows.Count > 0)
                     {
                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_CompanyID", typeof(int), dt.Rows[0]["N_CompanyID"]);
-                        // dLayer.ExecuteNonQuery("delete from Mig_SalesInvoice", Params, connection, transaction);
+                        
+                        Params.Add("N_CompanyID", MasterTable.Rows[0]["N_CompanyID"]);
+                        Params.Add("N_FnyearID", MasterTable.Rows[0]["N_FnyearID"]);
+                        Params.Add("N_UserID", MasterTable.Rows[0]["N_UserID"]);
+                        Params.Add("N_BranchID", MasterTable.Rows[0]["N_BranchID"]);
+                        Params.Add("N_LocationID", MasterTable.Rows[0]["N_LocationID"]);
+                        Params.Add("X_Transtype", "FTSALES");
+                        MasterTable.Columns.Remove("N_FnyearID");
+                        MasterTable.Columns.Remove("N_BranchID");
+                        MasterTable.Columns.Remove("N_UserID");
+                        MasterTable.Columns.Remove("N_LocationID");
+                        
+
+                        dLayer.ExecuteNonQuery("delete from Mig_SalesInvoice", Params, connection, transaction);
                         nSalesID = dLayer.SaveData("Mig_SalesInvoice", "pkey_code", MasterTable, connection, transaction);
-                        // object N_FnyearID = dLayer.ExecuteScalar("select MAX(N_FnyearID) from Acc_Fnyear where N_CompanyID=" + dt.Rows[0]["N_CompanyID"], connection, transaction);
-                        // Params.Add("N_CompanyID", dt.Rows[0]["N_CompanyID"]);
-                        // Params.Add("N_FnyearID", myFunctions.getIntVAL(N_FnyearID.ToString()));
-                        // Params.Add("N_UserID", dt.Rows[0]["N_UserID"]);
-                        // Params.Add("N_BranchID", dt.Rows[0]["N_BranchID"]);
-                        // Params.Add("N_LocationID", dt.Rows[0]["N_LocationID"]);
-                        // dLayer.ExecuteNonQueryPro("SP_SalesInvoiceImport", Params, connection, transaction);
+                        dLayer.ExecuteNonQueryPro("SP_SalesInvoiceImport", Params, connection, transaction);
                         dLayer.ExecuteNonQuery("Update sec_user Set X_Token= '' where N_UserID = " + dt.Rows[0]["N_UserID"], Params, connection, transaction);
 
                     }
