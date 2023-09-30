@@ -10,6 +10,7 @@ using Microsoft.Data.SqlClient;
 using System.ComponentModel;
 using System.Collections.Generic;
 using System.Net;
+using ZXing;
 
 namespace SmartxAPI.Controllers
 {
@@ -161,7 +162,6 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nCompanyID, string X_ShippingCode, int nFnYearID, int nShippingID)
         {
             int Results = 0;
-            int Results1 = 0;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -215,48 +215,48 @@ namespace SmartxAPI.Controllers
 
 
 
-                    for (int i = DetailTable.Rows.Count - 1; i >= 0; i--)
-                    {
+                    // for (int i = DetailTable.Rows.Count - 1; i >= 0; i--)
+                    // {
 
 
-                        if (myFunctions.getIntVAL(DetailTable.Rows[0]["n_Entryfrom"].ToString()) == 212)
-                        {
+                    //     if (myFunctions.getIntVAL(DetailTable.Rows[0]["n_Entryfrom"].ToString()) == 212)
+                    //     {
 
 
 
-                            try
-                            {
-                                Results = dLayer.ExecuteNonQueryPro("Inv_Shipping", PostingDelParam, connection, transaction);
-                            }
-                            catch (Exception ex)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, ex));
-                            }
-                        }
+                    //         try
+                    //         {
+                    //             Results = dLayer.ExecuteNonQueryPro("Inv_Shipping", PostingDelParam, connection, transaction);
+                    //         }
+                    //         catch (Exception ex)
+                    //         {
+                    //             transaction.Rollback();
+                    //             return Ok(_api.Error(User, ex));
+                    //         }
+                    //     }
 
-                        else
-                        {
+                    //     else
+                    //     {
 
 
-                            try
-                            {
-                                Results = dLayer.ExecuteNonQueryPro("Inv_Shipping", PostingDelParam1, connection, transaction);
-                            }
-                            catch (Exception ex)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, ex));
-                            }
+                    //         try
+                    //         {
+                    //             Results = dLayer.ExecuteNonQueryPro("Inv_Shipping", PostingDelParam1, connection, transaction);
+                    //         }
+                    //         catch (Exception ex)
+                    //         {
+                    //             transaction.Rollback();
+                    //             return Ok(_api.Error(User, ex));
+                    //         }
 
-                        }
-                    }
-                    Results1 = dLayer.DeleteData("Inv_ShippingDetails", "N_ShippingID", nShippingID, "", connection, transaction);
-                    if (Results1 > 0)
+                    //     }
+                    // }
+                    Results = dLayer.DeleteData("Inv_ShippingDetails", "N_ShippingID", nShippingID, "", connection, transaction);
+                    if (Results > 0)
                     {
                         dLayer.DeleteData("Inv_Shipping", "N_ShippingID", nShippingID, "", connection, transaction);
                         transaction.Commit();
-                        return Ok(_api.Success(" Shipping Invoice Deleted"));
+                        return Ok(_api.Success( " Shipping Invoice Deleted"));
                     }
                     else
                     {
@@ -369,17 +369,17 @@ namespace SmartxAPI.Controllers
                                     DeliveryNoteAppend = DeliveryNoteAppend + "," + Avar["N_DeliveryNoteID"].ToString();
                             }
                             if (xDeliveryNoteID == "" || xDeliveryNoteID == null)
-                                DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") order by N_SOdetailsID ASC ";
+                                DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId="+ nCompanyId +" and N_SalesOrderID =" + N_salesOrderID + " and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") order by N_SOdetailsID ASC ";
                             else
-                                DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") order by N_SOdetailsID ASC ";
+                                DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId="+ nCompanyId +" and N_DeliveryNoteID IN (" + xDeliveryNoteID + ") order by N_SOdetailsID ASC ";
 
                         }
                         else
                         {
                             if ((xDeliveryNoteID == "" || xDeliveryNoteID == null) && N_salesOrderID > 0)
-                                DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " order by N_SOdetailsID ASC ";
+                                DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId="+ nCompanyId +" and N_SalesOrderID =" + N_salesOrderID + " order by N_SOdetailsID ASC ";
                             else
-                                DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  order by N_SOdetailsID ASC ";
+                                DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId=" + nCompanyId + "  and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  order by N_SOdetailsID ASC ";
 
                         }
                         SortedList mParamsList = new SortedList()
@@ -397,47 +397,47 @@ namespace SmartxAPI.Controllers
                         {
                             mParamsList.Add("N_BranchId", 0);
                         }
-                        DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvSales_Disp", mParamsList, connection);
-                        masterTable = _api.Format(masterTable, "Master");
-                        if (masterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
-                        DataRow MasterRow = masterTable.Rows[0];
-                        int nSalesID = myFunctions.getIntVAL(MasterRow["N_SalesID"].ToString());
-                        QueryParamsList.Add("@nSalesID", nSalesID);
+                        // DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvSales_Disp", mParamsList, connection);
+                        // masterTable = _api.Format(masterTable, "Master");
+                        // if (masterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
+                        // DataRow MasterRow = masterTable.Rows[0];
+                        // int nSalesID = myFunctions.getIntVAL(MasterRow["N_SalesID"].ToString());
+                        // QueryParamsList.Add("@nSalesID", nSalesID);
 
 
 
 
 
 
-                        DetailGetSql = "select X_ReceiptNo from Inv_DeliveryNote where N_DeliveryNoteID in ( select N_DeliveryNoteID from Inv_SalesDetails where  N_SalesID=@nSalesID)";
-                        DelDetails = dLayer.ExecuteDataTable(DetailGetSql, QueryParamsList, connection);
-                        if (DelDetails.Rows.Count > 0)
-                        {
-                            x_DeliveryNoteNo = DelDetails.Rows[0]["X_ReceiptNo"].ToString();
-                            for (int j = 1; j < DelDetails.Rows.Count; j++)
-                            {
-                                x_DeliveryNoteNo = x_DeliveryNoteNo + "," + DelDetails.Rows[j]["X_ReceiptNo"].ToString();
-                            }
-                        }
-                        myFunctions.AddNewColumnToDataTable(masterTable, "X_DeliveryNoteNo", typeof(string), x_DeliveryNoteNo);
-                        masterTable.AcceptChanges();
+                        // DetailGetSql = "select X_ReceiptNo from Inv_DeliveryNote where N_DeliveryNoteID in ( select N_DeliveryNoteID from Inv_SalesDetails where  N_SalesID=@nSalesID)";
+                        // DelDetails = dLayer.ExecuteDataTable(DetailGetSql, QueryParamsList, connection);
+                        // if (DelDetails.Rows.Count > 0)
+                        // {
+                        //     x_DeliveryNoteNo = DelDetails.Rows[0]["X_ReceiptNo"].ToString();
+                        //     for (int j = 1; j < DelDetails.Rows.Count; j++)
+                        //     {
+                        //         x_DeliveryNoteNo = x_DeliveryNoteNo + "," + DelDetails.Rows[j]["X_ReceiptNo"].ToString();
+                        //     }
+                        // }
+                        // myFunctions.AddNewColumnToDataTable(MasterTable, "X_DeliveryNoteNo", typeof(string), x_DeliveryNoteNo);
+                        // MasterTable.AcceptChanges();
 
 
-                        if (myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()) > 0)
-                        {
-                            QueryParamsList.Add("@n_DeliveryNoteId", myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()));
-                            myFunctions.AddNewColumnToDataTable(masterTable, "X_FileNo", typeof(string), "");
-                            SortedList ProParamList = new SortedList()
-                        {
-                            {"N_CompanyID",nCompanyId},
-                            {"N_FnYearID",nFnYearID},
-                            {"N_PkID",myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString())},
-                            {"Type","DN"}
-                        };
-                            object objFileNo = dLayer.ExecuteScalarPro("SP_GetSalesOrder", ProParamList, connection);
-                            if (objFileNo != null)
-                                masterTable.Rows[0]["X_FileNo"] = objFileNo.ToString();
-                        }
+                        // if (myFunctions.getIntVAL(MasterTable.Rows[0]["N_DeliveryNoteId"].ToString()) > 0)
+                        // {
+                        //     QueryParamsList.Add("@n_DeliveryNoteId", myFunctions.getIntVAL(MasterTable.Rows[0]["N_DeliveryNoteId"].ToString()));
+                        //     myFunctions.AddNewColumnToDataTable(MasterTable, "X_FileNo", typeof(string), "");
+                        //     SortedList ProParamList = new SortedList()
+                        // {
+                        //     {"N_CompanyID",nCompanyId},
+                        //     {"N_FnYearID",nFnYearID},
+                        //     {"N_PkID",myFunctions.getIntVAL(MasterTable.Rows[0]["N_DeliveryNoteId"].ToString())},
+                        //     {"Type","DN"}
+                        // };
+                        //     object objFileNo = dLayer.ExecuteScalarPro("SP_GetSalesOrder", ProParamList, connection);
+                        //     if (objFileNo != null)
+                        //         MasterTable.Rows[0]["X_FileNo"] = objFileNo.ToString();
+                        // }
 
 
 
@@ -467,7 +467,7 @@ namespace SmartxAPI.Controllers
                     N_ShippingID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ShippingID"].ToString());
                     Params.Add("@p3", N_ShippingID);
 
-                    string DetailSql = "select * from VW_Inv_Shipping_details where N_CompanyID=@p1 and N_ShippingID=@p3";
+                    string DetailSql = "select * from VW_Inv_Shipping_details where N_CompanyID= "+ nCompanyId + " and N_ShippingID="+N_ShippingID+"";
 
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
