@@ -19,8 +19,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-
-
+        private readonly int FormID;
 
         public Inv_MainCategory(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
@@ -28,6 +27,7 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            FormID = 1809;
         }
 
 
@@ -36,62 +36,57 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable;
-                MasterTable = ds.Tables["master"];
-                string xButtonAction = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    MasterTable = ds.Tables["master"];
+                    SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
                     int N_MainCategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_MainCategoryID"].ToString());
-                    
-                    SortedList Params = new SortedList();
                     //  Auto Gen;
-                    string MainCategoryCode = "";
-                    var values = MasterTable.Rows[0]["X_MainCategoryCode"].ToString();
-                    if (values == "@Auto")
+                    string X_MainCategoryCode = MasterTable.Rows[0]["X_MainCategoryCode"].ToString();
+                    String xButtonAction="";
+                    if (X_MainCategoryCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", MasterTable.Rows[0]["N_CompanyID"].ToString());
-                        Params.Add("N_FnYearID", N_FnYearID);
-                        // Params.Add("N_FormID", 73);
-                        MainCategoryCode = dLayer.GetAutoNumber("Inv_MainCategory", "X_MainCategoryCode", Params, connection, transaction);
-                        xButtonAction = "update";
-
-
-                        if (MainCategoryCode == "")
+                        Params.Add("N_YearID", N_FnYearID);
+                        Params.Add("N_FormID", 1809);
+                        X_MainCategoryCode = dLayer.GetAutoNumber("Inv_MainCategory", "X_MainCategoryCode", Params, connection, transaction);
+                        xButtonAction = "Update";
+                        if (X_MainCategoryCode == "")
                         {
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Unable to generate Main Category Code"));
                         }
-                        MasterTable.Rows[0]["X_MainCategoryCode"] = MainCategoryCode;
+                        MasterTable.Rows[0]["X_MainCategoryCode"] = X_MainCategoryCode;
                     }
+
                     MasterTable.Columns.Remove("N_FnYearID");
-                    string X_MainCategory = MasterTable.Rows[0]["X_MainCategory"].ToString();
+
+                    N_MainCategoryID = dLayer.SaveData("Inv_MainCategory", "N_MainCategoryID", MasterTable, connection, transaction);
+
                     if (N_MainCategoryID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to save...Main Category Name Exists"));
                     }
-
                     else
-
                     {
                         xButtonAction = "Insert";
+                        // Activity Log
                         string ipAddress = "";
-                        if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                        if (  Request.Headers.ContainsKey("X-Forwarded-For"))
                             ipAddress = Request.Headers["X-Forwarded-For"];
                         else
                             ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                        myFunctions.LogScreenActivitys(N_FnYearID, N_MainCategoryID, X_MainCategory, 73, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
+                            myFunctions.LogScreenActivitys(N_FnYearID, N_MainCategoryID, X_MainCategoryCode, 1809, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
+                        
                         transaction.Commit();
-                        SortedList Result = new SortedList();
-                        Result.Add("N_MainCategoryID", N_MainCategoryID);
-                        Result.Add("X_MainCategory", X_MainCategory);
                         return Ok(_api.Success("Main Category Saved"));
                     }
-
                 }
             }
             catch (Exception ex)
