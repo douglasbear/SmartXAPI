@@ -203,6 +203,8 @@ namespace SmartxAPI.Data
                                     object userTypeID = dLayer.ExecuteScalar("select isnull(N_TypeID,0) from Sec_User where N_UserID=@nUserID", Params, connection);
                                     object numberOfCompanies = dLayer.ExecuteScalar("select count(1)   from Acc_Company where N_ClientID="+myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString())+"", Params, connection);
                                     object companyLimit = dLayer.ExecuteScalar("select isnull(N_Value,0) from GenSettings where N_ClientID="+myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString())+" and X_Description='COMPANY LIMIT'", Params, cnn2);
+                                    //object B_isDisable= dLayer.ExecuteScalar("select B_isDisable  from ClientApps where N_ClientID="+myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString())+" and N_AppID="+AppID, Params, cnn2);
+                                   
                                     if(companyLimit==null){companyLimit="0";}
                                      if(myFunctions.getIntVAL(companyLimit.ToString())<=myFunctions.getIntVAL(numberOfCompanies.ToString()))
                                      {
@@ -225,8 +227,9 @@ namespace SmartxAPI.Data
                                     globalInfo = myFunctions.AddNewColumnToDataTable(globalInfo, "B_AllowMultipleCom", typeof(bool), AllowMultipleCompany == null ? 0 : AllowMultipleCompany);
                                     loginRes.GlobalUserInfo = globalInfo;
                                     xGlobalUserID = globalInfo.Rows[0]["X_UserID"].ToString();
-
-
+                                    // globalInfo = myFunctions.AddNewColumnToDataTable(globalInfo, "B_isDisable", typeof(bool), B_isDisable == null ? 0 : B_isDisable);
+                                    // loginRes.GlobalUserInfo = globalInfo;
+                                   
                                     if(globalInfo.Rows[0]["N_LanguageID"].ToString()==null||globalInfo.Rows[0]["N_LanguageID"].ToString()==""){
                                         globalInfo.Rows[0]["N_LanguageID"]=loginRes.N_LanguageID;
                                          globalInfo.AcceptChanges();
