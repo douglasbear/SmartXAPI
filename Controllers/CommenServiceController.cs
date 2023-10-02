@@ -219,7 +219,7 @@ namespace SmartxAPI.Controllers
                                 }
 
                           
-                                int rows = dLayer.ExecuteNonQuery("insert into ClientApps select @nClientID,@nAppID,@xAppUrl,@xDBUri,@nUserLimit,0,'Service',max(N_RefID)+1,@dExpDate,0,null,@isAttachment,null,null,null,@dStartDate,@dCreatedDate,"+companyid+" from ClientApps", paramList, olivCnn);
+                                int rows = dLayer.ExecuteNonQuery("insert into ClientApps select @nClientID,@nAppID,@xAppUrl,@xDBUri,@nUserLimit,0,'Service',max(N_RefID)+1,@dExpDate,0,null,@isAttachment,null,null,null,@dStartDate,@dCreatedDate,"+companyid+",0 from ClientApps", paramList, olivCnn);
                                   if (rows> 0)
                                 {
                                   string settingsUpdate = "Update GenSettings set N_Value= (SELECT N_Value + (select isnull(N_FreeUsers,0) from AppMaster where N_AppID=@nAppID) as N_Value FROM GenSettings where N_ClientID=@nClientID and X_Description='USER LIMIT') WHERE N_ClientID=@nClientID and X_Description='USER LIMIT'";

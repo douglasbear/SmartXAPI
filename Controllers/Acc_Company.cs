@@ -419,6 +419,18 @@ namespace SmartxAPI.Controllers
                             SortedList companyParams = new SortedList(){
                             {"N_ClientID",n_ClientID}};
 
+                            //
+                            // inserting new app to this coompany
+
+                        
+
+
+
+
+
+
+
+
                             string companyAppUpdate = "Update ClientApps set N_CompanyID= "+N_CompanyId+"where N_ClientID="+n_ClientID+" and N_AppID="+appID+"";
                             dLayer.ExecuteScalar(companyAppUpdate, companyParams, cnn4);
                             //client company creation
@@ -438,6 +450,8 @@ namespace SmartxAPI.Controllers
                             clientCompany.Rows.InsertAt(row1, 0);
                             int ClientCompanyID = dLayer.SaveData("ClientCompany", "N_ClientCompanyID", clientCompany, cnn4, clienttransaction);
                             clienttransaction.Commit();
+
+                            //
                             
                       
 
