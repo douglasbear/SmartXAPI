@@ -1562,7 +1562,15 @@ namespace SmartxAPI.Controllers
                         }
 
                         transaction.Commit();
-                        return Ok(_api.Success("Purchase Invoice " + status + " Successfully"));
+                        if (myFunctions.getIntVAL(TransRow["n_FormID"].ToString()) == 1605)
+                        {
+                             return Ok(_api.Success("Rental Purchase Invoice " + status + " Successfully"));
+                        }
+                        else
+                        {
+                             return Ok(_api.Success("Purchase Invoice " + status + " Successfully"));
+
+                        }
                     }
                    
                     else
