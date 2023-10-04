@@ -315,7 +315,7 @@ namespace SmartxAPI.Controllers
                     var values = MasterTable.Rows[0]["x_CompanyCode"].ToString();
                     if (values == "@Auto")
                     {
-                        CompanyCode = dLayer.ExecuteScalar("Select ISNULL(MAX(N_CompanyID),0) + 100 from Acc_Company", connection, transaction);//Need Auto Genetaion here
+                        CompanyCode = dLayer.ExecuteScalar("Select ISNULL((N_CompanyID),0) + 100 from Acc_Company", connection, transaction);//Need Auto Genetaion here
                         if (CompanyCode.ToString() == "") { return Ok(api.Warning("Unable to generate Company Code")); }
                         MasterTable.Rows[0]["x_CompanyCode"] = CompanyCode;
                     }

@@ -321,6 +321,18 @@ namespace SmartxAPI.Controllers
                         Mastersql = "select * from vw_OpportunitytoSalesOrderMaster where N_CompanyId=@nCompanyID and N_OpportunityID=@nOpportunityID";
                         MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+
+                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_CRMCustID", typeof(string), 0);
+                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_InvCustID", typeof(string), 0);
+                        object nCRMCustID =dLayer.ExecuteScalar("select isNull(N_CrmCompanyID, 0) from Inv_Customer where N_CompanyId=@nCompanyID and N_CrmCompanyID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_CRMCompanyID"].ToString()), Params, connection);
+                        object nInvCustID =dLayer.ExecuteScalar("select isNull(N_CrmCompanyID, 0) from Inv_Customer where N_CompanyId=@nCompanyID and N_CrmCompanyID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_InvoiceToID"].ToString()), Params, connection);
+
+                        if (nCRMCustID != null)
+                            MasterTable.Rows[0]["n_CRMCustID"] = myFunctions.getIntVAL(nCRMCustID.ToString());
+
+                        if (nInvCustID != null)
+                            MasterTable.Rows[0]["n_InvCustID"] = myFunctions.getIntVAL(nInvCustID.ToString());
+
                         MasterTable = _api.Format(MasterTable, "Master");
                         DetailSql = "";
                         DetailSql = "select * from vw_OpportunitytoSalesOrderDetails where N_CompanyId=@nCompanyID and N_OpportunityID=@nOpportunityID";
@@ -1248,6 +1260,7 @@ namespace SmartxAPI.Controllers
                                         }
                                     }
                                     dLayer.ExecuteScalar("delete from Inv_Prescription where N_SalesOrderID=" + nSalesOrderID.ToString() + "  and  N_CompanyID=" + nCompanyID, connection, transaction);                                       
+                                
                                 }
                             }
                             else if(nFormID==1740)

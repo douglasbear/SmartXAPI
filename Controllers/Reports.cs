@@ -668,7 +668,7 @@ namespace SmartxAPI.Controllers
                             foreach (DataRow var in ApprovalSig.Rows)
                             {
                                 SqlCommand cmd = new SqlCommand("Select isnull(i_sign,'') as  i_sign from vw_ApprovalLog where N_ActionID=" + var["N_ActionID"].ToString(), connection, transaction);
-                                if ((cmd.ExecuteScalar().ToString()) != "" && cmd.ExecuteScalar().ToString() != "0x" && cmd.ExecuteScalar().ToString() != "System.Byte[]")
+                                if ((cmd.ExecuteScalar().ToString()) != "" && cmd.ExecuteScalar().ToString() != "0x")
                                 {
                                     byte[] content = (byte[])cmd.ExecuteScalar();
                                     MemoryStream stream = new MemoryStream(content);
@@ -1304,7 +1304,7 @@ namespace SmartxAPI.Controllers
                     }
                     else if (CompanyData != "")
                     {
-                        // bool Consolidated = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_Isdefault,0) as B_Isdefault from acc_company where N_CompanyID=" + nCompanyID, Params, connection).ToString()); ;
+                        // bool Consolidated = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_IsConsolidated,0) as B_IsConsolidated from acc_company where N_CompanyID=" + nCompanyID, Params, connection).ToString()); ;
 
                         // if (MenuID == 859 && Consolidated == false)
                         // {
@@ -1343,7 +1343,7 @@ namespace SmartxAPI.Controllers
                     if (xProCode != "")
                     {
                         bool mainBranch = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_ShowallData,0) as B_ShowallData from Acc_BranchMaster where N_CompanyID=" + nCompanyID + " and N_BranchID=" + BranchID, Params, connection).ToString());
-                        bool Consolidated = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_Isdefault,0) as B_Isdefault from acc_company where N_CompanyID=" + nCompanyID, Params, connection).ToString()); ;
+                        bool Consolidated = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isnull(B_IsConsolidated,0) as B_IsConsolidated from acc_company where N_CompanyID=" + nCompanyID, Params, connection).ToString()); ;
                         dLayer.ExecuteNonQuery("delete from Acc_LedgerBalForReporting", connection);
                         dLayer.ExecuteNonQuery("delete from Acc_AccountStatement", connection);
 

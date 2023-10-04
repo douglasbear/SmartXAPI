@@ -2298,6 +2298,10 @@ namespace SmartxAPI.Controllers
                             {
                                 return Ok(_api.Success("Optical Invoice " + status + " Successfully"));
                             }
+                            else if(nFormID ==1601) 
+                            {
+                               return Ok(_api.Success("Rental Sales Invoice " + status + " Successfully")); 
+                            }
                             else
                                 return Ok(_api.Success("Sales Invoice " + status + " Successfully"));
                         }
