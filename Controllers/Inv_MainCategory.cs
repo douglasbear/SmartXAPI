@@ -55,7 +55,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", N_FnYearID);
                         Params.Add("N_FormID", 1809);
                         X_MainCategoryCode = dLayer.GetAutoNumber("Inv_MainCategory", "X_MainCategoryCode", Params, connection, transaction);
-                        xButtonAction = "Update";
+                        xButtonAction = "Insert";
                         if (X_MainCategoryCode == "")
                         {
                             transaction.Rollback();
@@ -63,11 +63,12 @@ namespace SmartxAPI.Controllers
                         }
                         MasterTable.Rows[0]["X_MainCategoryCode"] = X_MainCategoryCode;
                     }
-
+                    else{
+                        xButtonAction = "Update";
+                    }
                     MasterTable.Columns.Remove("N_FnYearID");
 
                     N_MainCategoryID = dLayer.SaveData("Inv_MainCategory", "N_MainCategoryID", MasterTable, connection, transaction);
-
                     if (N_MainCategoryID <= 0)
                     {
                         transaction.Rollback();
@@ -75,7 +76,6 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        xButtonAction = "Insert";
                         // Activity Log
                         string ipAddress = "";
                         if (  Request.Headers.ContainsKey("X-Forwarded-For"))
@@ -108,39 +108,32 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     DataTable TransData = new DataTable();
                     SortedList ParamList = new SortedList();
+                    
                     ParamList.Add("@nMainCategoryID", nMainCategoryID);
                     ParamList.Add("@nCompanyID", nCompanyID);
 
                     string Sql = "select X_MainCategoryCode,X_MainCategory from Inv_MainCategory where N_MainCategoryID=@nMainCategoryID and N_CompanyID=@nCompanyID";
                     object xMainCategory = dLayer.ExecuteScalar("Select X_MainCategory From Inv_MainCategory Where N_MainCategoryID=" + nMainCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User), connection);
-                    // object Objcount = dLayer.ExecuteScalar("Select count(1) From Inv_ItemMaster where N_MainCategoryID=" + nMainCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User), connection);
-                    // int Obcount = myFunctions.getIntVAL(Objcount.ToString());
+                    
                     string xButtonAction = "Delete";
-                    string N_MainCategoryID = "";
-                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                    string X_MainCategoryCode = "";
 
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     SqlTransaction transaction = connection.BeginTransaction();
 
+                    //Activity Log
                     string ipAddress = "";
                     if (Request.Headers.ContainsKey("X-Forwarded-For"))
                         ipAddress = Request.Headers["X-Forwarded-For"];
                     else
                         ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                    myFunctions.LogScreenActivitys(myFunctions.getIntVAL(nFnYearID.ToString()), nMainCategoryID, TransData.Rows[0]["X_MainCategoryCode"].ToString(), 73, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
-                    // if (Obcount != 0)
-                    // {
-                    //     transaction.Commit();
-                    //     return Ok(_api.Error(User, "Unable to Delete.. Main Category Already Used"));
-                    // }
-                    TransData.Columns.Remove("N_FnYearID");
+                        myFunctions.LogScreenActivitys(myFunctions.getIntVAL(nFnYearID.ToString()), nMainCategoryID, TransData.Rows[0]["X_MainCategoryCode"].ToString(), 1809, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
+                    
                     DataRow TransRow = TransData.Rows[0];
                     Results = dLayer.DeleteData("Inv_MainCategory", "N_MainCategoryID", nMainCategoryID, "", connection, transaction);
 
-
                     if (Results > 0)
                     {
-
-                        // dLayer.ExecuteNonQuery("Update  Gen_Settings SET  X_Value='' Where X_Group ='Inventory' and X_Description='Default Item Category' and X_Value='" + xMainCategory.ToString() + "'", connection, transaction);
                         transaction.Commit();
                         return Ok(_api.Success("Main category deleted"));
                     }
@@ -155,8 +148,6 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(_api.Error(User, ex));
             }
-
-
         }
 
         [HttpGet("details")]
@@ -166,7 +157,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID= myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from Inv_MainCategory Where N_CompanyID=@p1 and N_MainCategoryID=@p2";
+            string sqlCommandText = "select * from VW_MainCategory_List_Cloud Where N_CompanyID=@p1 and N_MainCategoryID=@p2";
 
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nMainCategoryID);
