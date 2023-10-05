@@ -991,15 +991,14 @@ namespace SmartxAPI.Controllers
                     //     }
 
                     SortedList Result = new SortedList();
-                    Result.Add("n_AssigneeID", DetailTable.Rows[0]["N_AssigneeID"]);
+                   Result.Add("n_AssigneeID", DetailTable.Rows[0]["N_AssigneeID"]);
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET d_DueDate='" + MasterTable.Rows[0]["d_DueDate"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CurrentAssigneeID='" + DetailTable.Rows[0]["N_AssigneeID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CurrentAssignerID='" + DetailTable.Rows[0]["n_CreaterID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_SubmitterID='" + DetailTable.Rows[0]["n_SubmitterID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_ClosedUserID='" + DetailTable.Rows[0]["n_ClosedUserID"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CurrentAssigneeID=" + DetailTable.Rows[0]["N_AssigneeID"] + " where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET N_CurrentAssignerID=" + DetailTable.Rows[0]["n_CreaterID"] + " where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_SubmitterID=" + DetailTable.Rows[0]["n_SubmitterID"] + " where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET n_ClosedUserID=" + DetailTable.Rows[0]["n_ClosedUserID"] + " where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET D_EntryDate='" + DetailTable.Rows[0]["D_EntryDate"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET x_SolutionNotes='" + MasterTable.Rows[0]["x_SolutionNotes"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-
 
 
 
