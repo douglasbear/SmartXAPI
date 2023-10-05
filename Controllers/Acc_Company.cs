@@ -43,6 +43,7 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly string masterDBConnectionString;
         private readonly string TempFilesPath;
+         private string AppURL;
 
         public Acc_Company(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf,IMyAttachments myAtt)
         {
@@ -53,6 +54,7 @@ namespace SmartxAPI.Controllers
             TempFilesPath = conf.GetConnectionString("TempFilesPath");
             connectionString = conf.GetConnectionString("SmartxConnection");
             masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
+            AppURL = conf.GetConnectionString("AppURL");
         }
 
         //GET api/Company/list5
@@ -302,6 +304,7 @@ namespace SmartxAPI.Controllers
                 int n_ClientID=0;
                 int appID=0;
                  DataTable clientCompany = new DataTable();
+                 DataTable clientApps = new DataTable();
 
 
                 string x_DisplayName = myFunctions.ContainColumn("x_DisplayName", GeneralTable) ? GeneralTable.Rows[0]["x_DisplayName"].ToString() : "";
@@ -422,21 +425,71 @@ namespace SmartxAPI.Controllers
                             //
                             // inserting new app to this coompany
 
-                        
-
-
-
-
-
-
-
-
-                            string companyAppUpdate = "Update ClientApps set N_CompanyID= "+N_CompanyId+"where N_ClientID="+n_ClientID+" and N_AppID="+appID+"";
-                            dLayer.ExecuteScalar(companyAppUpdate, companyParams, cnn4);
-                            //client company creation
-                             
+                           object count = dLayer.ExecuteScalar("select count(1) as N_Count from ClientApps where  N_ClientID=" +n_ClientID + " and N_CompanyID="+N_CompanyId+"",  cnn4);
+                           object MaxRefID = dLayer.ExecuteScalar("select Max(N_RefID)+1  from ClientApps ",  cnn4);
                            SqlTransaction clienttransaction = cnn4.BeginTransaction();
+                           if(myFunctions.getIntVAL(count.ToString())==0)
+                           {
+                            clientApps.Clear();
+                            clientApps.Columns.Add("N_ClientID");
+                            clientApps.Columns.Add("N_AppID");
+                            clientApps.Columns.Add("X_AppUrl");
+                            clientApps.Columns.Add("X_DbUri");
 
+                            clientApps.Columns.Add("N_UserLimit");
+                            clientApps.Columns.Add("B_InActive");
+                            clientApps.Columns.Add("X_Sector");
+                            clientApps.Columns.Add("N_RefID");
+
+                            clientApps.Columns.Add("D_ExpiryDate");
+                            clientApps.Columns.Add("B_Licensed");
+                            clientApps.Columns.Add("B_EnableAttachment");
+                            clientApps.Columns.Add("B_EnableApproval");
+
+                            clientApps.Columns.Add("N_SubscriptionAmount");
+                            clientApps.Columns.Add("N_DiscountAmount");
+                            clientApps.Columns.Add("D_StartDate");
+                            clientApps.Columns.Add("D_CreatedDate");
+
+                            clientApps.Columns.Add("N_CompanyID");
+                            clientApps.Columns.Add("B_IsDisable");
+
+                            DataRow row2 = clientApps.NewRow();
+                            row2["N_ClientID"] = n_ClientID;
+                            row2["N_AppID"] = appID;
+                            row2["X_AppUrl"] =AppURL;
+                            row2["X_DbUri"] ="SmartxConnection";
+
+                            row2["N_UserLimit"] = 1;
+                            row2["B_InActive"] = 0;
+                            row2["X_Sector"] ="Service";
+                            row2["N_RefID"] =myFunctions.getIntVAL(MaxRefID.ToString());
+
+                            row2["D_ExpiryDate"] = DateTime.Today.AddDays(14);;
+                            row2["B_Licensed"] = 0;
+                            row2["B_EnableAttachment"] =0;
+                            row2["B_EnableApproval"] =0.ToString();
+
+                            row2["N_SubscriptionAmount"] = 0;
+                            row2["N_DiscountAmount"] = 0;
+                            row2["D_StartDate"] =DateTime.Today;
+                            row2["D_CreatedDate"] =DateTime.Today;
+
+                            row2["N_CompanyID"] =N_CompanyId;
+                            row2["B_IsDisable"] = 0;
+                            clientApps.Rows.InsertAt(row2, 0);
+                          
+
+                            int clientppID = dLayer.SaveData("ClientApps", "N_RefID", clientApps, cnn4, clienttransaction);
+                           
+                           }
+                           else
+                           {
+                             string companyAppUpdate = "Update ClientApps set N_CompanyID= "+N_CompanyId+"where N_ClientID="+n_ClientID+" and N_AppID="+appID+"";
+                            dLayer.ExecuteScalar(companyAppUpdate, companyParams, cnn4);
+                            
+                           }
+                            //client company creation
                             clientCompany.Clear();
                             clientCompany.Columns.Add("N_ClientCompanyID");
                             clientCompany.Columns.Add("N_ClientID");
@@ -451,14 +504,12 @@ namespace SmartxAPI.Controllers
                             int ClientCompanyID = dLayer.SaveData("ClientCompany", "N_ClientCompanyID", clientCompany, cnn4, clienttransaction);
                             clienttransaction.Commit();
 
-                            //
-                            
-                      
-
-
-
-
                              }
+
+
+
+
+                             
 
                             SortedList proParams2 = new SortedList(){
                                         {"N_CompanyID",N_CompanyId},

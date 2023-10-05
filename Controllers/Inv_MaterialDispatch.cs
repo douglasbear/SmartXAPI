@@ -379,7 +379,7 @@ namespace SmartxAPI.Controllers
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nDispatchID, int nCompanyID, int nFormID,int nFnYearID, int nBranchID, string comments)
         {
-             if (comments == null)
+            if (comments == null)
             {
                 comments = "";
             }
@@ -401,9 +401,9 @@ namespace SmartxAPI.Controllers
                     else
                      xTransType = "purchase Request";
 
-            Params.Add("@nCompanyID", nCompanyID);
-            Params.Add("@nFnYearID", nFnYearID);
-            Params.Add("@nDispatchID", nDispatchID);
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@nFnYearID", nFnYearID);
+                    Params.Add("@nDispatchID", nDispatchID);
 
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,X_DispatchNo,N_DispatchID from Inv_MaterialDispatch where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_DispatchId=@nDispatchID";
                     TransData = dLayer.ExecuteDataTable(Sql,Params,connection);
@@ -414,20 +414,27 @@ namespace SmartxAPI.Controllers
                     DataRow TransRow = TransData.Rows[0];
                     string X_Criteria = "N_DispatchID=" + nDispatchID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) ;
 
-                DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, nFormID, nDispatchID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID,0, 0, User, dLayer, connection));
-                 Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
-                  SqlTransaction transaction = connection.BeginTransaction();
-                   string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, nFormID, nDispatchID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID,0, 0, User, dLayer, connection));
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
                   
                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, xTransType, nDispatchID, TransRow["X_DispatchNo"].ToString(), ProcStatus, "Inv_MaterialDispatch", X_Criteria, "", User, dLayer, connection, transaction);
                    
-                   if (status != "Error"){
-                    if(ButtonTag=="3"){
-                        dLayer.ExecuteNonQuery("update Inv_MaterialDispatch set N_LastActionID=4 where N_CompanyID=" + nCompanyID + " and N_DispatchID=" + nDispatchID, Params, connection, transaction);
-                         transaction.Commit();
-                         return Ok(_api.Success("Material Request saved"));
-                    }
+                   if (status != "Error")
+                   {
+                        if(ButtonTag=="3")
+                        {
+                            dLayer.ExecuteNonQuery("update Inv_MaterialDispatch set N_LastActionID=4 where N_CompanyID=" + nCompanyID + " and N_DispatchID=" + nDispatchID, Params, connection, transaction);
+                            // transaction.Commit();
+                            // return Ok(_api.Success("Material Request saved"));
+                        }
+                        else if(ButtonTag=="4")
+                        {
+                            dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails_Segments where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='MATERIAL DISPATCH' AND N_AccTransID  in (select N_AccTransID from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='MATERIAL DISPATCH' AND X_VoucherNo='"+TransRow["X_DispatchNo"].ToString()+"')", Params, connection, transaction);
+                            dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='MATERIAL DISPATCH' AND X_VoucherNo='"+TransRow["X_DispatchNo"].ToString()+"'", Params, connection, transaction);
+                        }
 
                     //  if (ButtonTag == "6" || ButtonTag == "0"){
                     //           SortedList DeleteParams = new SortedList(){
@@ -447,10 +454,10 @@ namespace SmartxAPI.Controllers
                     // return Ok(_api.Success("Material Dispatch deleted"));
                     //  }
 
-                     else{
+                    // else{
                         transaction.Commit();
-                            return Ok(_api.Success("Material " + status + " Successfully"));
-                     }
+                        return Ok(_api.Success("Material " + status + " Successfully"));
+                     //}
                 
                     // else
                     // {

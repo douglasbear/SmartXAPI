@@ -9,6 +9,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Collections.Generic;
 
 namespace SmartxAPI.Controllers
 {
@@ -40,6 +41,7 @@ namespace SmartxAPI.Controllers
         public ActionResult GetAllApps(bool showAll, string AppName,int companyID)
         {
             DataTable dt = new DataTable();
+             DataTable uniqueDataTable =new DataTable();
             int ClientID = myFunctions.GetClientID(User);
             int GUserID = myFunctions.GetGlobalUserID(User);
       
@@ -96,16 +98,31 @@ namespace SmartxAPI.Controllers
                     }
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, connection);
+                     uniqueDataTable = dt.Clone();
+                    HashSet<object> seenAppIDs = new HashSet<object>();
+                     foreach (DataRow row in dt.Rows)
+                     {
+                        object app_ID = row["N_AppID"];
+                        if (!seenAppIDs.Contains(app_ID))
+                            {
+                                seenAppIDs.Add(app_ID);
+                                uniqueDataTable.ImportRow(row);
+
+                            }
+
+                     }
+
+                     uniqueDataTable.AcceptChanges();
 
                 
                 }
-                if (dt.Rows.Count == 0)
-                {
+                if (uniqueDataTable.Rows.Count == 0)
+                { 
                     return Ok(_api.Notice("No Results Found"));
                 }
                 else
                 {
-                    return Ok(_api.Success(dt));
+                    return Ok(_api.Success(uniqueDataTable));
                 }
 
             }
