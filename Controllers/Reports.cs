@@ -668,7 +668,7 @@ namespace SmartxAPI.Controllers
                             foreach (DataRow var in ApprovalSig.Rows)
                             {
                                 SqlCommand cmd = new SqlCommand("Select isnull(i_sign,'') as  i_sign from vw_ApprovalLog where N_ActionID=" + var["N_ActionID"].ToString(), connection, transaction);
-                                if ((cmd.ExecuteScalar().ToString()) != "" && cmd.ExecuteScalar().ToString() != "0x" && cmd.ExecuteScalar().ToString() != "System.Byte[]")
+                                if ((cmd.ExecuteScalar().ToString()) != "" && cmd.ExecuteScalar().ToString() != "0x")
                                 {
                                     byte[] content = (byte[])cmd.ExecuteScalar();
                                     MemoryStream stream = new MemoryStream(content);

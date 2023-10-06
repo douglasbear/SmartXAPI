@@ -164,12 +164,12 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            int nCompanyID= myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select X_MainCategoryCode from vw_InvItemCategory Where N_CompanyID=@p1 and n_MainCategoryID=@p2 Order By N_MainCategoryID";
+            string sqlCommandText = "select * from Inv_MainCategory Where N_CompanyID=@p1 and N_MainCategoryID=@p2";
 
-            Params.Add("@p1", myFunctions.GetCompanyID(User));
+            Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nMainCategoryID);
-
 
             try
             {
@@ -194,12 +194,12 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetAllMainCategory(int? nCompanyID)
+        public ActionResult GetAllMainCategory()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-
-
+            int nCompanyID= myFunctions.GetCompanyID(User);
+          
             string sqlCommandText = "select * from VW_MainCategory_List_Cloud where N_CompanyID=@p1";
 
             if(nCompanyID==-1){
@@ -218,13 +218,11 @@ namespace SmartxAPI.Controllers
                 if (dt.Rows.Count == 0)
                 {
                     return Ok(_api.Success(_api.Format(dt)));
-                    //return Ok(_api.Warning("No Results Found"));
                 }
                 else
                 {
                     return Ok(_api.Success(_api.Format(dt)));
                 }
-
             }
             catch (Exception e)
             {

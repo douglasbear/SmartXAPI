@@ -40,7 +40,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             Params.Add("@p1", nCompanyId);
             
-            sqlCommandText="Select N_CompanyID, N_PkeyId, X_PkeyCode, X_GroupName from vw_EmpGrp_Disp where N_CompanyID=@p1 order by X_PkeyCode";
+            sqlCommandText="Select N_CompanyID, N_PkeyId, X_PkeyCode, X_GroupName , b_isDefault from vw_EmpGrp_Disp where N_CompanyID=@p1 order by X_PkeyCode";
                 
             try{
                     using (SqlConnection connection = new SqlConnection(connectionString))
