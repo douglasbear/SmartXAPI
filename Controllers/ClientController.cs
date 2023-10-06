@@ -477,7 +477,7 @@ namespace SmartxAPI.Controllers
 
         }
        [HttpGet("clientApps")]
-        public ActionResult AppDetails(int nClientID)
+        public ActionResult AppListDetails(int nClientID, int nCompanyID)
         {
             try
             {
@@ -486,9 +486,15 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SortedList Params = new SortedList();
                     Params.Add("@nClientID", nClientID);
+                    string companyCriteria="";
+                    if(nCompanyID>0)
+                    {
+                        companyCriteria= " and ClientApps.N_CompanyID="+nCompanyID+"";
+
+                    }
                    // string AppListSql=" SELECT  * from  ClientApps where N_ClientID=@nClientID";
                     string AppListSql="SELECT     ClientApps.N_ClientID, ClientApps.N_AppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, ClientApps.N_UserLimit, ClientApps.B_Inactive, ClientApps.X_Sector, ClientApps.N_RefID, ClientApps.D_ExpiryDate, ClientApps.B_Licensed, ClientApps.D_LastExpiryReminder, ClientApps.B_EnableAttachment,ClientApps.N_SubscriptionAmount, AppMaster.X_AppName,AppMaster.N_FreeUsers,AppMaster.N_FreeEmployees,ClientApps.D_StartDate FROM "+
-                    " ClientApps LEFT OUTER JOIN  AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID where N_ClientID=@nClientID";
+                    " ClientApps LEFT OUTER JOIN  AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID where N_ClientID=@nClientID "+ companyCriteria+" ";
                     DataTable AppList = dLayer.ExecuteDataTable(AppListSql,Params, connection);
                     return Ok(_api.Success(AppList));
                 }

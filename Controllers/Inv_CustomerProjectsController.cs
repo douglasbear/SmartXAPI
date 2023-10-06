@@ -384,8 +384,8 @@ namespace SmartxAPI.Controllers
                     {
                        return Ok(api.Error(User, "Unable to delete! transaction processed"));     
                     }
-                    
-                    dLayer.DeleteData("Tsk_TaskMaster", "N_ProjectID", nProjectID, "", connection, transaction);
+                    dLayer.ExecuteScalar("delete from Tsk_TaskStatus where N_TaskID in (select N_TaskID from tsk_TaskMaster where N_ProjectID="+nProjectID+" and N_CompanyID=" + nCompanyID + ")", connection,transaction);
+                    dLayer.DeleteData("Tsk_TaskMaster", "N_ProjectID", nProjectID, "", connection, transaction);                    
                     Results = dLayer.DeleteData("inv_CustomerProjects", "N_ProjectID", nProjectID, "", connection, transaction);
                      myAttachments.DeleteAttachment(dLayer, 1, nProjectID, nProjectID,nFnyearID,74, User, transaction, connection);
                        
