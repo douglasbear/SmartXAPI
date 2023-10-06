@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
             if (nTaskID > 0)
                 sqlCommandTasksList = "select * from vw_TaskCurrentStatus where N_CompanyID=@p1  and  N_ParentID=@nTaskID order by N_Order";
             else
-                sqlCommandTasksList = "select * from vw_Tsk_TaskMaster where N_CompanyID=@p1 and X_ProjectCode=@p2  and isnull(N_ParentID,0)=0 order by N_Order";
+                sqlCommandTasksList = "select * from vw_TaskCurrentStatus where N_CompanyID=@p1 and X_ProjectCode=@p2  and isnull(N_ParentID,0)=0 order by N_Order";
 
             string sqlCommandContactList = "Select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and X_ProjectCode=@p2";
             string sqlCommandMailLogList = "Select CONVERT(VARCHAR(10), d_Date, 103) + ' '  + convert(VARCHAR(8), d_Date, 14) as d_Entry,* from Gen_MailLog where N_CompanyID=@p1 and N_ProjectID=@p3 order by N_maillogid desc";

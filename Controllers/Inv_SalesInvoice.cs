@@ -864,7 +864,7 @@ namespace SmartxAPI.Controllers
 
 
 
-                    DetailGetSql = "select X_ReceiptNo from Inv_DeliveryNote where N_DeliveryNoteID in ( select N_DeliveryNoteID from Inv_SalesDetails where  N_SalesID=@nSalesID)";
+                    DetailGetSql = "select X_ReceiptNo from Inv_DeliveryNote where N_CompanyID=@nCompanyID and N_DeliveryNoteID in ( select N_DeliveryNoteID from Inv_SalesDetails where N_CompanyID=@nCompanyID and  N_SalesID=@nSalesID)";
                     DelDetails = dLayer.ExecuteDataTable(DetailGetSql, QueryParamsList, Con);
                     if (DelDetails.Rows.Count > 0)
                     {
