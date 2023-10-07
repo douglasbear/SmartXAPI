@@ -88,7 +88,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult TaskList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nTableViewID, int nMenuID, int n_UserID, DateTime d_Date, bool isMyTeam)
+        public ActionResult TaskList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nTableViewID, int nMenuID, int n_UserID, DateTime d_Date, bool isMyTeam,string xScreen)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID;
@@ -113,6 +113,7 @@ namespace SmartxAPI.Controllers
             object TotalCount = 0;
             string Header = "[]";
             string UserPattern = "";
+            string Criteria3 = "";
             // if (byUser == true)
             // {
             //     Criteria = " and N_AssigneeID=@nUserID ";
@@ -184,12 +185,16 @@ namespace SmartxAPI.Controllers
                             Pattern = "";
                         }
 
+                        if(xScreen=="crmMyTask"){
+                          Criteria3=" and ISNULL(n_opportunityID,0)<>0";
+                        }
+
 
 
                         if (Count == 0)
-                            sqlCommandText = "select top(" + nSizeperpage + ") * from " + Table + " where " + DefaultCriteria + Pattern + " " + Searchkey + Criteria + Criteria2 + xSortBy;
+                            sqlCommandText = "select top(" + nSizeperpage + ") * from " + Table + " where " + DefaultCriteria + Criteria3 + Pattern + " " + Searchkey + Criteria + Criteria2 + xSortBy;
                         else
-                            sqlCommandText = "select top(" + nSizeperpage + ") * from " + Table + " where " + DefaultCriteria + Pattern + " " + Searchkey + Criteria + Criteria2 + " and " + PKey + " not in (select top(" + Count + ") N_TaskID from " + Table + " where " + DefaultCriteria + " " + Criteria + Criteria2 + xSortBy + " ) " + xSortBy;
+                            sqlCommandText = "select top(" + nSizeperpage + ") * from " + Table + " where " + DefaultCriteria + Criteria3 + Pattern + " " + Searchkey + Criteria + Criteria2 + " and " + PKey + " not in (select top(" + Count + ") N_TaskID from " + Table + " where " + DefaultCriteria + Criteria3 +" " + Criteria + Criteria2 + xSortBy + " ) " + xSortBy;
 
                         SortedList Params = new SortedList();
                         if (DefaultCriteria.Contains("@cVal"))
