@@ -388,10 +388,12 @@ namespace SmartxAPI.Controllers
                                 Object InvQty = dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseDetails where n_porderid=" + N_POrderID + " and N_POrderDetailsID=" + myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString()) + " and N_CompanyID=" + nCompanyId, Params, connection);
                                 if (POQty != null && InvQty != null)
                                 {
+                                    InvoiceNotProcessed=true;
                                     if (myFunctions.getVAL(POQty.ToString()) != myFunctions.getVAL(InvQty.ToString()))
                                     {
                                         // InvoiceNotProcessed = true;
                                         MasterTable.Rows[0]["N_Processed"] = 0;
+                                        MasterTable.Rows[0]["X_InvoiceNo"] ="@Auto";
                                         InvoiceProcessed = false;
                                         break;
                                     }

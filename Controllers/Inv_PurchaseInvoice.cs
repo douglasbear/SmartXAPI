@@ -412,7 +412,7 @@ namespace SmartxAPI.Controllers
                     }
                     else if (xPOrderNo != null)
                     {
-                        X_DetailsSql = "select * from vw_Inv_PurchaseOrderAsInvoiceDetails where N_CompanyID=@CompanyID and N_POrderID=" + N_POrderID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                        X_DetailsSql = "select * from vw_POInvoice_PendingDetail where  N_POrderID=" + N_POrderID + " AND N_CompanyID = @CompanyID ORDER BY N_POrderDetailsID";
                     }
                     else if (xGrnNo != null && xGrnNo != "")
                     {
