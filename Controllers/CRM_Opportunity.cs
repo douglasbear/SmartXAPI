@@ -510,6 +510,7 @@ namespace SmartxAPI.Controllers
                     dLayer.DeleteData("Crm_Products", "N_OpportunityID", nOpportunityID, "", connection, transaction);
                     dLayer.DeleteData("CRM_Activity", "N_ReffID", nOpportunityID, "", connection, transaction);
                     dLayer.ExecuteScalar("delete from Tsk_TaskStatus where N_TaskID in (select N_TaskID from tsk_TaskMaster where N_OpportunityID="+nOpportunityID+" and N_CompanyID=" + nCompanyId + ")", connection,transaction);
+                    dLayer.ExecuteScalar("delete from Tsk_TaskComments where  N_ActionID in (select N_TaskID from Tsk_TaskMaster where  N_OpportunityID="+nOpportunityID+" and N_CompanyID=" + nCompanyId + ")", connection, transaction);
                     dLayer.DeleteData("TSK_TaskMaster", "N_OpportunityID", nOpportunityID, "", connection, transaction);
                     transaction.Commit();
                 }
