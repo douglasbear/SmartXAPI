@@ -470,22 +470,14 @@ namespace SmartxAPI.Controllers
                             //     masterTable.Rows[0]["isProformaDone"] = true;
                             // }
                         }
-                        DataTable returnData = dLayer.ExecuteDataTable("select N_DeliveryNoteId from vw_DeliveryNoteToDeliveryReturn where N_DeliveryNoteId=@nDeliveryNoteId and N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_BalanceQty=0", QueryParamsList, Con);
+                        DataTable returnData = dLayer.ExecuteDataTable("select N_DeliveryNoteId from vw_DeliveryNoteToDeliveryReturn where N_DeliveryNoteId=@nDeliveryNoteId and N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID group by N_DeliveryNoteId having SUM(N_BalanceQty)=0", QueryParamsList, Con);
                         if (returnData.Rows.Count > 0)
                         {
-                            masterTable.Rows[0]["isDeliveryReturnDone"] = false;
-                            foreach (DataRow Kvar in returnData.Rows)
-                            {
-                                if (myFunctions.getVAL(Kvar["N_QtyDisplay"].ToString()) == 0)
-                                {
-                                    Kvar.Delete();
-                                    continue;
-                                }
-                            }
+                            masterTable.Rows[0]["isDeliveryReturnDone"] = true;
                         }
                         else
                         {
-                            masterTable.Rows[0]["isDeliveryReturnDone"] = true;
+                            masterTable.Rows[0]["isDeliveryReturnDone"] = false;
                         }
                     }
 
