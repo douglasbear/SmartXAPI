@@ -1320,6 +1320,7 @@ namespace SmartxAPI.Controllers
 
                     }
                     // Auto Gen
+                    xButtonAction="Insert";
                     if (xEmpCode == "@Auto")
                     {
 
@@ -1330,7 +1331,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.FormID);
                         Params.Add("X_Type", X_Type);
                         xEmpCode = dLayer.GetAutoNumber("pay_Employee", "x_EmpCode", Params, connection, transaction);
-                        xButtonAction="Insert"; 
+                        // xButtonAction="Insert"; 
                         if (xEmpCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Employee Code")); }
                         dtMasterTable.Rows[0]["x_EmpCode"] = xEmpCode;
                         //X_BtnAction = "INSERT";
