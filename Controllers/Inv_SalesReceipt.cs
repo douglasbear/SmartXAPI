@@ -985,42 +985,7 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    // SortedList deleteParams = new SortedList()
-                    //             {
-                    //                 {"N_CompanyID",nCompanyId},
-                    //                 {"X_TransType",xType},
-                    //                 {"N_VoucherID",nPayReceiptId}
-                    //             };
-                    // int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
-
-                    // if (result > 0)
-                    // {
-                    //     myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnYearID, 66, User, transaction, connection);
-
-                    //     transaction.Commit();
-                    //     return Ok(api.Success("Sales Receipt Deleted"));
-                    // }
-                    // else
-                    // {
-
-                    // }
-                    // }
-                    //     else
-                    // {
-                    //     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "SALES RECEIPT", nPayReceiptId, TransRow["X_VoucherNo"].ToString(), ProcStatus, "Inv_PayReceipt", X_Criteria, "", User, dLayer, connection, transaction);
-                    //     if (status != "Error")
-                    //     {
-                    //         transaction.Commit();
-                    //         return Ok(api.Success("Sales Receipt " + status + " Successfully"));
-                    //     }
-                    //     else
-                    //     {
-                    //         transaction.Rollback();
-                    //         return Ok(api.Error(User, "Unable to delete Sales Receipt"));
-                    //     }
-                    // }
-
-                           //Activity Log
+                //Activity Log
                 string ipAddress = "";
                 if (  Request.Headers.ContainsKey("X-Forwarded-For"))
                     ipAddress = Request.Headers["X-Forwarded-For"];
@@ -1046,6 +1011,11 @@ namespace SmartxAPI.Controllers
                             {
                                 myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnYearID, 66, User, transaction, connection);
                             }
+                        }
+                        else if (ButtonTag == "4")
+                        {
+                            dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails_Segments where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='"+xType+"' AND N_AccTransID  in (select N_AccTransID from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='"+xType+"' AND X_VoucherNo='"+TransRow["X_VoucherNo"].ToString()+"')", ParamList, connection, transaction);
+                            dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='"+xType+"' AND X_VoucherNo='"+TransRow["X_VoucherNo"].ToString()+"'", ParamList, connection, transaction);
                         }
                
                         transaction.Commit();

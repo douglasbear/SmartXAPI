@@ -321,6 +321,18 @@ namespace SmartxAPI.Controllers
                         Mastersql = "select * from vw_OpportunitytoSalesOrderMaster where N_CompanyId=@nCompanyID and N_OpportunityID=@nOpportunityID";
                         MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+
+                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_CRMCustID", typeof(string), 0);
+                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_InvCustID", typeof(string), 0);
+                        object nCRMCustID =dLayer.ExecuteScalar("select isNull(N_CrmCompanyID, 0) from Inv_Customer where N_CompanyId=@nCompanyID and N_CrmCompanyID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_CRMCompanyID"].ToString()), Params, connection);
+                        object nInvCustID =dLayer.ExecuteScalar("select isNull(N_CrmCompanyID, 0) from Inv_Customer where N_CompanyId=@nCompanyID and N_CrmCompanyID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_InvoiceToID"].ToString()), Params, connection);
+
+                        if (nCRMCustID != null)
+                            MasterTable.Rows[0]["n_CRMCustID"] = myFunctions.getIntVAL(nCRMCustID.ToString());
+
+                        if (nInvCustID != null)
+                            MasterTable.Rows[0]["n_InvCustID"] = myFunctions.getIntVAL(nInvCustID.ToString());
+
                         MasterTable = _api.Format(MasterTable, "Master");
                         DetailSql = "";
                         DetailSql = "select * from vw_OpportunitytoSalesOrderDetails where N_CompanyId=@nCompanyID and N_OpportunityID=@nOpportunityID";
@@ -1001,8 +1013,16 @@ namespace SmartxAPI.Controllers
                                 N_CreatorID = myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring, Params, connection, transaction).ToString());
                                 N_ClosedUserID = myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring, Params, connection, transaction).ToString());
                                 N_SubmitterID = myFunctions.getIntVAL(dLayer.ExecuteScalar(creatorstring, Params, connection, transaction).ToString());
-                                X_TaskDescription = (dLayer.ExecuteScalar(X_TaskDescriptionSql, Params, connection, transaction).ToString());
-                                X_TaskSummary = (dLayer.ExecuteScalar(X_TaskSummarySql, Params, connection, transaction).ToString());
+                                X_TaskDescription = dLayer.ExecuteScalar(X_TaskDescriptionSql, Params, connection, transaction).ToString();
+                                X_TaskSummary = dLayer.ExecuteScalar(X_TaskSummarySql, Params, connection, transaction).ToString();
+                                
+                                if(X_TaskSummary==""){
+                                string itemName="select X_Itemname from Inv_ItemMaster where N_ItemID=" + myFunctions.getIntVAL(var["N_ItemID"].ToString()) + " and N_CompanyID=" + N_CompanyID+"";
+                                X_TaskSummary = dLayer.ExecuteScalar(itemName, Params, connection, transaction).ToString();
+
+                                 dLayer.ExecuteNonQuery("Update Inv_ServiceInfo Set  X_ServiceItem='" + X_TaskSummary + "' Where N_ServiceInfoID =" + myFunctions.getIntVAL(var["N_ServiceID"].ToString()) + " and N_CompanyID=" + N_CompanyID+"", connection, transaction);
+
+                                }
                                 D_DueDate = Convert.ToDateTime(dLayer.ExecuteScalar(dueDateSql, Params, connection, transaction).ToString());
                                 D_StartDate = Convert.ToDateTime(dLayer.ExecuteScalar(startDateSql, Params, connection, transaction).ToString());
                                 D_EntryDate = Convert.ToDateTime(MasterTable.Rows[0]["D_EntryDate"].ToString());
@@ -1240,6 +1260,7 @@ namespace SmartxAPI.Controllers
                                         }
                                     }
                                     dLayer.ExecuteScalar("delete from Inv_Prescription where N_SalesOrderID=" + nSalesOrderID.ToString() + "  and  N_CompanyID=" + nCompanyID, connection, transaction);                                       
+                                
                                 }
                             }
                             else if(nFormID==1740)

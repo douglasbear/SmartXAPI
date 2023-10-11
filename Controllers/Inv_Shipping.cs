@@ -358,9 +358,10 @@ namespace SmartxAPI.Controllers
 
                             //  MasterTable = dLayer.ExecuteDataTable(xDeliveryNo, QueryParamsList, Con);
 
-                            Mastersql = "select * from vw_DeliveryNoteToShippingMaster where N_CompanyId=@nCompanyID and N_DeliveryNoteId=" + N_DeliveryNote + "";
+                            Mastersql = "select * from vw_DeliveryNoteToShippingMaster where N_CompanyId=" + nCompanyId + " and N_DeliveryNoteId=" + N_DeliveryNote + "";
                             MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, connection);
-                            if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                            if (MasterTable.Rows.Count == 0) 
+                            { return Ok(_api.Warning("No data found")); }
                             MasterTable = _api.Format(MasterTable, "Master");
 
 
