@@ -1113,7 +1113,7 @@ namespace SmartxAPI.Controllers
                 DetailTable = ds.Tables["details"];
                 AddOrDedTable = ds.Tables["AddOrDed"];
                 AddOrDedDetailTable = ds.Tables["AddOrDedDetails"];
-
+                String xButtonAction="";
                 bool bSavePaycode = false;
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
@@ -1144,6 +1144,7 @@ namespace SmartxAPI.Controllers
                     var values = MasterTable.Rows[0]["X_BatchCode"].ToString();
                     if (values == "@Auto")
                     {
+                        xButtonAction="Insert"; 
                         bool OK = true;
                         int NewNo = 0, loop = 1;
                         string X_TmpBatchCode = "";
@@ -1156,6 +1157,9 @@ namespace SmartxAPI.Controllers
                             loop += 1;
                         }
                         MasterTable.Rows[0]["X_BatchCode"] = X_TmpBatchCode;
+                    }
+                    else{
+                        xButtonAction="Update"; 
                     }
 
                     if (N_TimeSheetApproveID > 0)
@@ -1247,7 +1251,13 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to save"));
                     }
 
-
+                    // Activity Log
+                        string ipAddress = "";
+                        if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                            ipAddress = Request.Headers["X-Forwarded-For"];
+                        else
+                            ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                            myFunctions.LogScreenActivitys(nFnYearId,N_TimeSheetApproveID,X_BatchCode,216,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
                     transaction.Commit();
                     return Ok(_api.Success("Saved Successfully"));
@@ -1344,8 +1354,8 @@ namespace SmartxAPI.Controllers
         }
 
 
-         [HttpDelete("delete")]
-            public ActionResult DeleteData(int nTransID,int nCompanyID,int nTimeSheetApproveID,string X_PayrunText,DateTime dFromDate,DateTime dToDate,int nBatchID,int nFnYearID)
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nTransID,int nCompanyID,int nTimeSheetApproveID,string X_PayrunText,DateTime dFromDate,DateTime dToDate,int nBatchID,int nFnYearID)
         {
             int Results = 0;
             string criteria = "";
@@ -1353,36 +1363,46 @@ namespace SmartxAPI.Controllers
             {
                 SortedList QueryParams = new SortedList();
                 // DataTable MasterTable;
-                 DataTable TransData = new DataTable();
+                DataTable TransData = new DataTable();
                 //  MasterTable = ds.Tables["master"];
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nTimeSheetApproveID", nTimeSheetApproveID);
                 QueryParams.Add("@nTransID", nTransID);
                 QueryParams.Add("@X_PayrunText", X_PayrunText);
                 QueryParams.Add("@nBatchID", nBatchID);
-                 QueryParams.Add("@nFnYearID", nFnYearID);
+                QueryParams.Add("@nFnYearID", nFnYearID);
                 // dFromDate = Convert.ToDateTime(MasterTable.Rows[0]["D_DateFrom"].ToString());
                 // dToDate = Convert.ToDateTime(MasterTable.Rows[0]["D_DateTo"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
 
                     connection.Open();
-                     SqlTransaction transaction = connection.BeginTransaction();
-                 criteria = "select n_EmpID from Pay_TimesheetMaster where n_TimeSheetApproveID="+nTimeSheetApproveID+" and n_CompanyID="+nCompanyID;
-
-                 object Count = dLayer.ExecuteScalar("select count(1) from vw_PayProcessingDetails where n_EmpID in ("+criteria+") and X_PayrunText=@X_PayrunText", QueryParams, connection,transaction);               
-                   if (myFunctions.getIntVAL(Count.ToString()) >0)
+                    string xButtonAction = "Delete";
+                    criteria = "select X_BatchCode from Pay_TimesheetMaster where n_TimeSheetApproveID="+nTimeSheetApproveID+" and n_CompanyID="+nCompanyID;
+                    string X_BatchCode = "";
+                    TransData = dLayer.ExecuteDataTable(criteria, QueryParams, connection);
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    object Count = dLayer.ExecuteScalar("select count(1) from vw_PayProcessingDetails where n_EmpID in ("+criteria+") and X_PayrunText=@X_PayrunText", QueryParams, connection,transaction);               
+                    if (myFunctions.getIntVAL(Count.ToString()) >0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable To Delete"));
                     }
 
-                   object DedID = dLayer.ExecuteScalar("select Top(1) N_TransID from Pay_MonthlyAddOrDedDetails where N_CompanyID="+nCompanyID+ " and B_TimeSheetEntry=1 and N_FormID=216 and N_RefID="+nTimeSheetApproveID, QueryParams, connection,transaction);               
+                    object DedID = dLayer.ExecuteScalar("select Top(1) N_TransID from Pay_MonthlyAddOrDedDetails where N_CompanyID="+nCompanyID+ " and B_TimeSheetEntry=1 and N_FormID=216 and N_RefID="+nTimeSheetApproveID, QueryParams, connection,transaction);               
                    
                     if(DedID==null)
                     DedID=0;
 
-                     Results = dLayer.DeleteData("Pay_TimeSheetApproveMaster", "N_TimeSheetApproveID", nTimeSheetApproveID,"N_CompanyID="+nCompanyID+ "", connection,transaction);
+                    //Activity Log
+                        string ipAddress = "";
+                        if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                            ipAddress = Request.Headers["X-Forwarded-For"];
+                        else
+                            ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                        myFunctions.LogScreenActivitys(nFnYearID, nTimeSheetApproveID, TransData.Rows[0]["X_BatchCode"].ToString(), 216, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
+
+                    Results = dLayer.DeleteData("Pay_TimeSheetApproveMaster", "N_TimeSheetApproveID", nTimeSheetApproveID,"N_CompanyID="+nCompanyID+ "", connection,transaction);
 
                     if (Results > 0)
                     {
