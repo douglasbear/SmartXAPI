@@ -473,8 +473,15 @@ namespace SmartxAPI.Controllers
                         DataTable returnData = dLayer.ExecuteDataTable("select N_DeliveryNoteId from vw_DeliveryNoteToDeliveryReturn where N_DeliveryNoteId=@nDeliveryNoteId and N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_BalanceQty=0", QueryParamsList, Con);
                         if (returnData.Rows.Count > 0)
                         {
-
                             masterTable.Rows[0]["isDeliveryReturnDone"] = false;
+                            foreach (DataRow Kvar in returnData.Rows)
+                            {
+                                if (myFunctions.getVAL(Kvar["N_QtyDisplay"].ToString()) == 0)
+                                {
+                                    Kvar.Delete();
+                                    continue;
+                                }
+                            }
                         }
                         else
                         {
