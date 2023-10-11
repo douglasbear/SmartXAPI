@@ -278,7 +278,9 @@ namespace SmartxAPI.Controllers
                                     //dLayer.DeleteData("Tsk_TaskMaster", "N_ProjectID", nProjectID, "", connection, transaction);
 
                                 //    dLayer.DeleteData("Tsk_TaskStatus", "N_ProjectID", nProjectID, "", connection, transaction);
-
+                    dLayer.ExecuteScalar("delete from Tsk_TaskStatus where N_TaskID in (select N_TaskID from tsk_TaskMaster where N_OpportunityID="+nOpportunityID+" and N_CompanyID=" + nCompanyID + ")", connection,transaction);
+                    dLayer.ExecuteScalar("delete from Tsk_TaskComments where  N_ActionID in (select N_TaskID from Tsk_TaskMaster where  N_OpportunityID="+nOpportunityID+" and N_CompanyID=" + nCompanyID + ")", connection, transaction);
+                    dLayer.DeleteData("TSK_TaskMaster", "N_OpportunityID", nOpportunityID, "", connection, transaction);
                                     TaskMaster = dLayer.ExecuteDataTable("select N_CompanyID,2 as N_StatusID,N_StageID,x_tasksummery,x_taskdescription,'"+DateTime.Today+"'  as D_TaskDate,'"+DateTime.Today+"' as D_DueDate, "+myFunctions.GetUserID(User)+" as N_CreatorID, "+myFunctions.GetUserID(User)+" as N_CurrentAssigneeID, "+myFunctions.GetUserID(User)+"  as n_ClosedUserID ,"+myFunctions.GetUserID(User)+"  as n_SubmitterID,"+myFunctions.GetUserID(User)+" as N_CurrentAssignerID,'" + DateTime.Today + "' as D_EntryDate, "+myFunctions.GetUserID(User)+" as N_AssigneeID, N_StartDateBefore,N_StartDateUnitID,N_EndDateBefore,N_EndUnitID,N_WTaskDetailID,N_Order,N_TemplateID,N_PriorityID,N_CategoryID from vw_Prj_WorkflowDetails where N_CompanyID=" + nCompanyID + " and N_WTaskID=" + nWActivityID + " order by N_Order", Params, connection, transaction);
                                     if (TaskMaster.Rows.Count > 0)
                                     {
