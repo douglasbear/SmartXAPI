@@ -670,6 +670,7 @@ namespace SmartxAPI.Controllers
                                 SqlCommand cmd = new SqlCommand("Select isnull(i_sign,'') as  i_sign from vw_ApprovalLog where N_ActionID=" + var["N_ActionID"].ToString(), connection, transaction);
                                 if ((cmd.ExecuteScalar().ToString()) != "" && cmd.ExecuteScalar().ToString() != "0x")
                                 {
+                                    try{
                                     byte[] content = (byte[])cmd.ExecuteScalar();
                                     MemoryStream stream = new MemoryStream(content);
                                     Image Sign = Image.FromStream(stream);
@@ -684,6 +685,8 @@ namespace SmartxAPI.Controllers
                                         }
                                         b.Save("C://OLIVOSERVER2020/Images/" + var["N_ActionID"].ToString() + ".png");
                                     }
+                                    }
+                                    catch{}
                                 }
                             }
                         }

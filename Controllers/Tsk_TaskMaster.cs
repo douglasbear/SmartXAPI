@@ -1478,7 +1478,6 @@ namespace SmartxAPI.Controllers
         public ActionResult MailDetails()
         {
             DataSet dt = new DataSet();
-            DataTable MailData = new DataTable();
             DataTable MasterTable = new DataTable();
             MasterTable = _api.Format(MasterTable, "Master");
             SortedList Params = new SortedList();
@@ -1486,9 +1485,8 @@ namespace SmartxAPI.Controllers
             int nCompanyId = myFunctions.GetCompanyID(User);
             DateTime datetime = DateTime.Now;
             string X_Body = "";
-            int N_StatusID = 0;
-            string sqlCommandText = "select * from vw_TaskDetailsRPT where N_CompanyID=" + nCompanyId + " and N_AssigneeID=" + N_UserID + " and Cast(D_EntryDate as DATE) =  Cast('" + datetime + "' as DATE) and N_CompletedPercentage>0";
-            string sqlmailData = "select * from Gen_MailTemplates where N_CompanyID=" + nCompanyId + " and x_templatename='Daily Task'";
+            string X_Subject = "";
+           string sqlmailData = "select * from Gen_MailTemplates where N_CompanyID=" + nCompanyId + " and x_templatename='DAILYTASK'";
 
             try
             {
@@ -1502,23 +1500,17 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        double TotalWorkHrs = 0;
-                        MailData = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                        foreach (DataRow dr in MailData.Rows)
-                        {
+                        X_Body = MasterTable.Rows[0]["x_body"].ToString();
+                        X_Subject = MasterTable.Rows[0]["x_Subject"].ToString();
+                        
+                        X_Body = X_Body.Replace("@Month", datetime.ToString("MMM-yyyy").ToUpper());
+                        X_Body = X_Body.Replace("@Date", datetime.ToString("dd-MM-yyyy"));
 
-                            X_Body = X_Body + "*" + dr["X_TaskSummery"] + "- " + dr["N_CompletedPercentage"] + "%<br>";
-                            X_Body = X_Body + dr["N_WorkedTime"] + " Hrs (" + dr["N_WorkHours"] + " Hrs)<br>";
-                            TotalWorkHrs = TotalWorkHrs + myFunctions.getVAL(dr["N_WorkedTime"].ToString());
-                        }
-                        X_Body = X_Body + "<br>Total hours Worked : " + TotalWorkHrs + " Hrs";
-                        string x_body = (MasterTable.Rows[0]["x_body"]).ToString();
-                        x_body = x_body.Replace("@Body", X_Body);
-                        x_body = x_body.Replace("@Date", datetime.ToString("dd-MM-yyyy"));
-                        MasterTable.Rows[0]["x_body"] = x_body;
-                        string x_Subject = (MasterTable.Rows[0]["x_Subject"]).ToString();
-                        x_Subject = x_Subject.Replace("@Month", datetime.ToString("MMM").ToUpper());
-                        MasterTable.Rows[0]["x_Subject"] = x_Subject;
+                        X_Subject = X_Subject.Replace("@Month", datetime.ToString("MMM-yyyy").ToUpper());
+                        X_Subject = X_Subject.Replace("@Date", datetime.ToString("dd-MM-yyyy"));
+
+                        MasterTable.Rows[0]["x_Subject"] = X_Subject;
+                        MasterTable.Rows[0]["x_body"] = X_Body;
 
 
                     }
