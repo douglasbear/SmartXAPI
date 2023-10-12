@@ -60,21 +60,21 @@ namespace SmartxAPI.Controllers
                     string xButtonAction = "";
 
 
-                    if ( X_ShippingCode != "@Auto")
-                    {
-                    object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_Shipping Where X_ShippingCode ='" + X_ShippingCode + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
-                    if(N_DocNumber == null)
-                    {
-                        N_DocNumber = 0;
-                    }
-                    if (myFunctions.getVAL(N_DocNumber.ToString()) >= 1)
-                    {
-                        // transaction.Rollback();
-                        return Ok(_api.Error(User, "Invoice number already in use"));
-                    //    transaction.Rollback();
-                    //     return Ok(_api.Error(User, "Invoice No is Already exist"));
-                    }
-                    }
+                    // if ( X_ShippingCode != "@Auto")
+                    // {
+                    // object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_Shipping Where X_ShippingCode ='" + X_ShippingCode + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                    // if(N_DocNumber == null)
+                    // {
+                    //     N_DocNumber = 0;
+                    // }
+                    // if (myFunctions.getVAL(N_DocNumber.ToString()) >= 1)
+                    // {
+                    //     // transaction.Rollback();
+                    //     return Ok(_api.Error(User, "Invoice number already in use"));
+                    // //    transaction.Rollback();
+                    // //     return Ok(_api.Error(User, "Invoice No is Already exist"));
+                    // }
+                    // }
                     if (nShippingID > 0)
                     {
                         dLayer.DeleteData("Inv_ShippingDetails", "N_ShippingID", nShippingID, "N_CompanyID = " + nCompanyID, connection, transaction);
@@ -303,6 +303,7 @@ namespace SmartxAPI.Controllers
             // Params.Add("@nFnYearID", nFnYearID);
             // // Params.Add("@nClassID", nClassID);
             // Params.Add("@nCompanyID", nCompanyId);
+            SortedList OutPut = new SortedList();
 
             // Params.Add("@nFormID", nFormID);
             object N_SalesOrderID = 0;
@@ -369,8 +370,6 @@ namespace SmartxAPI.Controllers
 
                          string DetailSql = "";
                         //  DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID=@n_DeliveryNoteId ";
-
-
 
                         string DeliveryNoteAppend = "0";
                         DataTable DeliveryNoteID = new DataTable();

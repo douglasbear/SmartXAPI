@@ -1203,6 +1203,12 @@ namespace SmartxAPI.Controllers
                         }
 
                     }
+
+                     if (DetailTable.Columns.Contains("x_WorkPercentage"))
+                    {
+                        DetailTable.Columns.Remove("x_WorkPercentage");
+                    }
+
                     if (DetailTable.Rows.Count > 0)
                     {
                         int nTaskStatusID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", DetailTable, connection, transaction);
