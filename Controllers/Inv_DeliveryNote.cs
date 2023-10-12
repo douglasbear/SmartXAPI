@@ -670,15 +670,15 @@ namespace SmartxAPI.Controllers
 
 
 
-                    // DataTable count = new DataTable();
-                    // SortedList Paramss = new SortedList();
-                    // string sql = "select * from Inv_DeliveryNote where x_ReceiptNo='" + values + "' and N_CompanyID=" + N_CompanyID + "";
-                    // count = dLayer.ExecuteDataTable(sql, Paramss, connection, transaction);
-                    // if (count.Rows.Count > 0)
-                    // {
-                    //     transaction.Rollback();
-                    //     return Ok(_api.Error(User, "Voucher Number Already in Use"));
-                    // }
+                    DataTable count = new DataTable();
+                    SortedList Paramss = new SortedList();
+                    string sql = "select * from Inv_DeliveryNote where x_ReceiptNo='" + values + "' and N_CompanyID=" + N_CompanyID + "";
+                    count = dLayer.ExecuteDataTable(sql, Paramss, connection, transaction);
+                    if (count.Rows.Count > 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Reciept Number Already in Use"));
+                    }
 
 
 
@@ -1160,9 +1160,16 @@ namespace SmartxAPI.Controllers
                     transaction.Commit();
                     if (myFunctions.getIntVAL(TransRow["N_FormID"].ToString()) == 1758)
                     {
-                        return Ok(_api.Success("Book Delivery deleted"));
+                        return Ok(_api.Success("Book Delivery deleted successfully"));
                     }
-                    return Ok(_api.Success("Delivery note deleted"));
+                    else if (myFunctions.getIntVAL(TransRow["N_FormID"].ToString()) == 1572)
+                    {
+                         return Ok(_api.Success("Rental Delivery deleted successfully"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success("Delivery note deleted successfully"));
+                    }
                 }
             }
             catch (Exception ex)

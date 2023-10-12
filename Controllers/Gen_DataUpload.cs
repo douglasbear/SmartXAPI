@@ -83,11 +83,21 @@ namespace SmartxAPI.Controllers
                             case "customers":
                             case "customer":
                                 xTableName = "Mig_Customers";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
                                 break;
                             case "vendor list":
                             case "vendors":
                             case "vendor":
                                 xTableName = "Mig_Vendors";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
                                 break;
                             case "lead list":
                                 xTableName = "Mig_Leads";

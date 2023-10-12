@@ -911,7 +911,7 @@ namespace SmartxAPI.Controllers
                             xBodyText = xBodyText.Replace("@CompanyName", myFunctions.GetCompanyName(User));
                             string seperator = "$$";
                             xURL = myFunctions.EncryptStringForUrl(myFunctions.GetCompanyID(User).ToString() + seperator + row["N_PartyID"].ToString() + seperator + "HOME" + seperator + "0", System.Text.Encoding.Unicode);
-                            xURL = AppURL + "/client/customer/13/" + xURL + "/home/new";
+                            xURL = AppURL + "/client/customer/13/" + xURL + "/clientCRMDashboard";
                             xBodyText = xBodyText.Replace("@URL", xURL);
                             xSubject = xSubject.Replace("@CompanyName", myFunctions.GetCompanyName(User));
 

@@ -279,6 +279,13 @@ namespace SmartxAPI.Controllers
                             MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), "Invoice Processed");
                     }
 
+                    bool Invoice2Enable = false;
+                    object Invoice2Enableobj = dLayer.ExecuteScalar("select 1 from gen_printtemplates where N_CompanyID =" + nCompanyId + " and N_FormID=1793 and X_RptName<>'' and N_UsercategoryID=" + myFunctions.GetUserCategory(User), connection);
+                    if (Invoice2Enableobj != null)
+                        Invoice2Enable = true;
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "Invoice2Enable", typeof(bool), Invoice2Enable);
+
+
                     MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
 
@@ -390,10 +397,12 @@ namespace SmartxAPI.Controllers
                                 Object InvQty = dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseDetails where n_porderid=" + N_POrderID + " and N_POrderDetailsID=" + myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString()) + " and N_CompanyID=" + nCompanyId, Params, connection);
                                 if (POQty != null && InvQty != null)
                                 {
+                                    InvoiceNotProcessed=true;
                                     if (myFunctions.getVAL(POQty.ToString()) != myFunctions.getVAL(InvQty.ToString()))
                                     {
                                         // InvoiceNotProcessed = true;
                                         MasterTable.Rows[0]["N_Processed"] = 0;
+                                        MasterTable.Rows[0]["X_InvoiceNo"] ="@Auto";
                                         InvoiceProcessed = false;
                                         break;
                                     }
