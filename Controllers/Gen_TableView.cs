@@ -159,7 +159,6 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-
                     string SortListSql = "SELECT isnull(Gen_TableViewDetails.X_FieldName,'') as X_FieldName,isnull(Gen_TableViewDetails.X_DataType,'text') as X_DataType,isnull(Gen_TableViewDetails.B_Search,0) as B_Search FROM Gen_TableViewDetails INNER JOIN Gen_TableView ON Gen_TableViewDetails.N_CompanyID = Gen_TableView.N_CompanyID AND Gen_TableViewDetails.N_TableViewID = Gen_TableView.N_TableViewID WHERE (Gen_TableViewDetails.N_TableViewID=@tbvVal) AND (Gen_TableView.N_MenuID=@mnuVal)";
                     DataTable SortList = dLayer.ExecuteDataTable(SortListSql, Params, connection);
                     foreach (DataRow cRow in SortList.Rows)

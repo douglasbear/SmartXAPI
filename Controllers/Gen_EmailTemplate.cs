@@ -653,6 +653,7 @@ namespace SmartxAPI.Controllers
                      x_Body = x_Body.ToString().Replace("@CompanyName", company);
                      x_Body = x_Body.ToString().Replace("@PartyName", party.ToString());
                      x_Body = x_Body.ToString().Replace("@Date", Date.ToString());
+                     x_Body = x_Body.ToString().Replace("@Date", Date.ToString());
 
                      x_Subject = x_Subject.ToString().Replace("@CompanyName", company);
                      x_Subject = x_Subject.ToString().Replace("@PartyName", party.ToString());

@@ -282,6 +282,8 @@ namespace SmartxAPI.Controllers
                     MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
 
+                    
+
                     //PurchaseOrder Details
 
 
