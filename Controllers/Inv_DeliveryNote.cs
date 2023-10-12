@@ -425,8 +425,13 @@ namespace SmartxAPI.Controllers
                     QueryParamsList.Add("@nDelID", N_DelID);
                     QueryParamsList.Add("@nSaleOrderID", N_SalesOrderID);
                     object InSales = "";
-                    string code = Convert.ToString(dLayer.ExecuteScalar("select x_ShippingCode from Inv_Shipping where N_CompanyID=@nCompanyID and N_deliverynoteid=@nDelID", DetailParams, Con));
-                    masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "x_ShippingCode", typeof(string), code);
+                    object InShipping = "";
+                    object DelID = dLayer.ExecuteScalar("select N_deliverynoteid from inv_shippingdetails where N_CompanyID=@nCompanyID and N_deliverynoteid=@nDelID", DetailParams, Con);
+                    masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "xDelID", typeof(string), DelID);
+                    if(DelID != null && DelID != "")
+                        InShipping = dLayer.ExecuteScalar("select x_ShippingCode from Inv_Shipping where N_CompanyID=@nCompanyID and N_deliverynoteid="+ myFunctions.getIntVAL(DelID.ToString()) +"",DetailParams , Con);
+                    masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "x_ShippingCode", typeof(string), InShipping);
+                    
                     object inSaleID = dLayer.ExecuteScalar("select N_SalesID from Inv_SalesDetails where N_CompanyID=@nCompanyID and N_deliverynoteid=@nDelID ", QueryParamsList, Con);
                     if (inSaleID != null && inSaleID != "")
                         InSales = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_Sales where N_CompanyID=@nCompanyID and  N_SalesID=" + myFunctions.getIntVAL(inSaleID.ToString()) + " and N_FnYearID=@nFnYearID", QueryParamsList, Con);
