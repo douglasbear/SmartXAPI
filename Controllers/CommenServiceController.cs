@@ -185,6 +185,10 @@ namespace SmartxAPI.Controllers
                             {
                                 checkAppExistingCompany = dLayer.ExecuteScalar("SELECT Count(N_AppID) as Count FROM ClientApps where N_ClientID=@nClientID and N_AppID=@nAppID and N_CompanyID="+companyid+"", paramList, olivCnn);
                             }
+                            if(companyid==-1)
+                            {
+                                checkAppExistingCompany=1;
+                            }
                            
                            
                             if (myFunctions.getIntVAL(checkAppExisting.ToString()) == 0 || myFunctions.getIntVAL(checkAppExistingCompany.ToString())==0)
@@ -242,20 +246,20 @@ namespace SmartxAPI.Controllers
                             }
                             else
                             {
-                                if(companyid>0)
-                                {
+                                // if(companyid>0)
+                                // {
                                     
-                                int rows1 = dLayer.ExecuteNonQuery("insert into ClientApps select @nClientID,@nAppID,@xAppUrl,@xDBUri,@nUserLimit,0,'Service',max(N_RefID)+1,@dExpDate,0,null,@isAttachment,null,null,null,@dStartDate,@dCreatedDate,"+companyid+",0 from ClientApps", paramList, olivCnn);
-                                  if (rows1> 0)
-                                {
-                                  string settingsUpdate = "Update GenSettings set N_Value= (SELECT N_Value + (select isnull(N_FreeUsers,0) from AppMaster where N_AppID=@nAppID) as N_Value FROM GenSettings where N_ClientID=@nClientID and X_Description='USER LIMIT') WHERE N_ClientID=@nClientID and X_Description='USER LIMIT'";
-                                  dLayer.ExecuteScalar(settingsUpdate, paramList, olivCnn);
-                                  string settingsempUpdate = "Update GenSettings set N_Value= (SELECT N_Value + (select isnull(N_FreeEmployees,0) from AppMaster where N_AppID=@nAppID) as N_Value FROM GenSettings where N_ClientID=@nClientID and X_Description='EMPLOYEE LIMIT') WHERE N_ClientID=@nClientID and X_Description='EMPLOYEE LIMIT'";
-                                  dLayer.ExecuteScalar(settingsempUpdate, paramList, olivCnn);
-                                }
+                                // int rows1 = dLayer.ExecuteNonQuery("insert into ClientApps select @nClientID,@nAppID,@xAppUrl,@xDBUri,@nUserLimit,0,'Service',max(N_RefID)+1,@dExpDate,0,null,@isAttachment,null,null,null,@dStartDate,@dCreatedDate,"+companyid+",0 from ClientApps", paramList, olivCnn);
+                                //   if (rows1> 0)
+                                // {
+                                //   string settingsUpdate = "Update GenSettings set N_Value= (SELECT N_Value + (select isnull(N_FreeUsers,0) from AppMaster where N_AppID=@nAppID) as N_Value FROM GenSettings where N_ClientID=@nClientID and X_Description='USER LIMIT') WHERE N_ClientID=@nClientID and X_Description='USER LIMIT'";
+                                //   dLayer.ExecuteScalar(settingsUpdate, paramList, olivCnn);
+                                //   string settingsempUpdate = "Update GenSettings set N_Value= (SELECT N_Value + (select isnull(N_FreeEmployees,0) from AppMaster where N_AppID=@nAppID) as N_Value FROM GenSettings where N_ClientID=@nClientID and X_Description='EMPLOYEE LIMIT') WHERE N_ClientID=@nClientID and X_Description='EMPLOYEE LIMIT'";
+                                //   dLayer.ExecuteScalar(settingsempUpdate, paramList, olivCnn);
+                                // }
 
 
-                                }
+                                // }
 
                             }
                             connectionString = cofig.GetConnectionString(activeDbUri);
