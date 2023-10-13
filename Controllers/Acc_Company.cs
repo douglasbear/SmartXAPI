@@ -427,8 +427,13 @@ namespace SmartxAPI.Controllers
 
                            object count = dLayer.ExecuteScalar("select count(1) as N_Count from ClientApps where  N_ClientID=" +n_ClientID + " and N_CompanyID="+N_CompanyId+"",  cnn4);
                            object MaxRefID = dLayer.ExecuteScalar("select Max(N_RefID)+1  from ClientApps ",  cnn4);
+                           object Negcount = dLayer.ExecuteScalar("select count(1) as N_Count from ClientApps where  N_ClientID=" +n_ClientID + " and N_CompanyID=-1",  cnn4);
+
+                           
+
+
                            SqlTransaction clienttransaction = cnn4.BeginTransaction();
-                           if(myFunctions.getIntVAL(count.ToString())==0)
+                           if(myFunctions.getIntVAL(count.ToString())==0 && myFunctions.getIntVAL(Negcount.ToString())==0)
                            {
                             clientApps.Clear();
                             clientApps.Columns.Add("N_ClientID");
@@ -486,7 +491,7 @@ namespace SmartxAPI.Controllers
                            else
                            {
                              string companyAppUpdate = "Update ClientApps set N_CompanyID= "+N_CompanyId+"where N_ClientID="+n_ClientID+" and N_AppID="+appID+"";
-                            dLayer.ExecuteScalar(companyAppUpdate, companyParams, cnn4);
+                            dLayer.ExecuteScalar(companyAppUpdate, companyParams, cnn4,clienttransaction);
                             
                            }
                             //client company creation

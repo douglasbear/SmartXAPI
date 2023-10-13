@@ -146,79 +146,79 @@ namespace SmartxAPI.Controllers
                         node = myFunctions.AddNewColumnToDataTable(node, "TotalHrs", typeof(int), 0);
 
                         foreach (DataRow dtVar in dt.Rows)
-                        {
-                            DataTable dtNode = new DataTable();
-                            foreach (DataRow nodeVar in node.Rows)
-                            {
-                                if (dtVar["N_EmpID"].ToString() != nodeVar["N_EmpID"].ToString()) continue;
-                                bool B_PostedAccount = false;
-                                if (myFunctions.getIntVAL(nodeVar["N_Processed"].ToString()) > 0)
-                                    B_PostedAccount = true;
-                                if (myFunctions.getIntVAL(nodeVar["N_PayMethod"].ToString()) == 4)
-                                {
-                                    object objRate = null;
-                                    SortedList param = new SortedList();
-                                    param.Add("@nCompanyID", nCompanyID);
-                                    param.Add("@nEmpID", nodeVar["N_EmpID"].ToString());
-                                    param.Add("@nFnYearId", nFnYearID);
-                                    param.Add("@nPayID", nodeVar["N_PayID"].ToString());
-                                    param.Add("@dDate", dtStartDate);
-                                    objRate = dLayer.ExecuteScalar("Select isnull(N_Value,0) as N_Amount from vw_EmpPayInformation Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId and N_EmpID=@nEmpID and N_PayID=@nPayID and D_EffectiveDate=(select MAX(D_EffectiveDate) from vw_EmpPayInformation where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId and N_EmpID=@nEmpID and N_PayID=@nPayID and D_EffectiveDate<=@dDate)", param, connection);
-                                    if (objRate != null)
-                                    {
-                                        nodeVar["N_Percentage"] = myFunctions.getFloatVAL(objRate.ToString()).ToString();
-                                    }
-                                }
+                        // {
+                        //     DataTable dtNode = new DataTable();
+                        //     foreach (DataRow nodeVar in node.Rows)
+                        //     {
+                        //         if (dtVar["N_EmpID"].ToString() != nodeVar["N_EmpID"].ToString()) continue;
+                        //         bool B_PostedAccount = false;
+                        //         if (myFunctions.getIntVAL(nodeVar["N_Processed"].ToString()) > 0)
+                        //             B_PostedAccount = true;
+                        //         if (myFunctions.getIntVAL(nodeVar["N_PayMethod"].ToString()) == 4)
+                        //         {
+                        //             object objRate = null;
+                        //             SortedList param = new SortedList();
+                        //             param.Add("@nCompanyID", nCompanyID);
+                        //             param.Add("@nEmpID", nodeVar["N_EmpID"].ToString());
+                        //             param.Add("@nFnYearId", nFnYearID);
+                        //             param.Add("@nPayID", nodeVar["N_PayID"].ToString());
+                        //             param.Add("@dDate", dtStartDate);
+                        //             objRate = dLayer.ExecuteScalar("Select isnull(N_Value,0) as N_Amount from vw_EmpPayInformation Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId and N_EmpID=@nEmpID and N_PayID=@nPayID and D_EffectiveDate=(select MAX(D_EffectiveDate) from vw_EmpPayInformation where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId and N_EmpID=@nEmpID and N_PayID=@nPayID and D_EffectiveDate<=@dDate)", param, connection);
+                        //             if (objRate != null)
+                        //             {
+                        //                 nodeVar["N_Percentage"] = myFunctions.getFloatVAL(objRate.ToString()).ToString();
+                        //             }
+                        //         }
 
 
-                                if (myFunctions.getIntVAL(nodeVar["N_PayTypeID"].ToString()) != 17)
-                                {
-                                    object obj = dLayer.ExecuteScalar("SELECT  [dbo].[SP_TimeSheetCalc_TotalHours](" + nCompanyID + ",'" + myFunctions.getDateVAL(dt1) + "','" + myFunctions.getDateVAL(dt2) + "'," + myFunctions.getIntVAL(dtVar["N_EmpID"].ToString()) + ")", connection);
-                                    if (obj != null)
-                                        TotalHrs = myFunctions.getVAL(obj.ToString());
-                                    else
-                                        TotalHrs = 240;
-                                    nodeVar["TotalHrs"] = TotalHrs;
+                        //         if (myFunctions.getIntVAL(nodeVar["N_PayTypeID"].ToString()) != 17)
+                        //         {
+                        //             object obj = dLayer.ExecuteScalar("SELECT  [dbo].[SP_TimeSheetCalc_TotalHours](" + nCompanyID + ",'" + myFunctions.getDateVAL(dt1) + "','" + myFunctions.getDateVAL(dt2) + "'," + myFunctions.getIntVAL(dtVar["N_EmpID"].ToString()) + ")", connection);
+                        //             if (obj != null)
+                        //                 TotalHrs = myFunctions.getVAL(obj.ToString());
+                        //             else
+                        //                 TotalHrs = 240;
+                        //             nodeVar["TotalHrs"] = TotalHrs;
 
-                                }
+                        //         }
 
-                                if (B_PostedAccount)
-                                {
-                                    nodeVar["N_Amount"] = nodeVar["N_PayRate"].ToString();
+                        //         if (B_PostedAccount)
+                        //         {
+                        //             nodeVar["N_Amount"] = nodeVar["N_PayRate"].ToString();
 
-                                }
-                                else
-                                {
-                                    if (myFunctions.getVAL(nodeVar["N_PayRate"].ToString()) == 0)
-                                    {
-                                        nodeVar["N_Amount"] = nodeVar["N_Value"].ToString();
-                                    }
-                                    else
-                                    {
-                                        nodeVar["N_Amount"] = nodeVar["N_PayRate"].ToString();
-                                    }
-                                }
+                        //         }
+                        //         else
+                        //         {
+                        //             if (myFunctions.getVAL(nodeVar["N_PayRate"].ToString()) == 0)
+                        //             {
+                        //                 nodeVar["N_Amount"] = nodeVar["N_Value"].ToString();
+                        //             }
+                        //             else
+                        //             {
+                        //                 nodeVar["N_Amount"] = nodeVar["N_PayRate"].ToString();
+                        //             }
+                        //         }
 
-                                DataRow[] payTypeRow = payType.Select("N_PayTypeID = " + nodeVar["N_PayTypeID"].ToString());
-                                if (payTypeRow.Length > 0)
-                                {
-                                    if (myFunctions.getIntVAL(payTypeRow[0]["N_Type"].ToString()) == 1)
-                                    {
-                                        nodeVar["N_Amount"] = -1 * myFunctions.getVAL(nodeVar["N_Amount"].ToString());
-                                        nodeVar["N_Type"] = payTypeRow[0]["N_Type"];
-                                    }
-                                }
-                            }
-                            dt.AcceptChanges();
+                        //         DataRow[] payTypeRow = payType.Select("N_PayTypeID = " + nodeVar["N_PayTypeID"].ToString());
+                        //         if (payTypeRow.Length > 0)
+                        //         {
+                        //             if (myFunctions.getIntVAL(payTypeRow[0]["N_Type"].ToString()) == 1)
+                        //             {
+                        //                 nodeVar["N_Amount"] = -1 * myFunctions.getVAL(nodeVar["N_Amount"].ToString());
+                        //                 nodeVar["N_Type"] = payTypeRow[0]["N_Type"];
+                        //             }
+                        //         }
+                        //     }
+                        //     dt.AcceptChanges();
 
-                            DataRow[] drEmpDetails = node.Select("N_EmpID = " + dtVar["N_EmpID"].ToString());
-                            if (drEmpDetails.Length > 0)
-                            {
-                                dtNode = drEmpDetails.CopyToDataTable();
-                                dtNode.AcceptChanges();
-                                dtVar["details"] = dtNode;
-                            }
-                        }
+                        //     DataRow[] drEmpDetails = node.Select("N_EmpID = " + dtVar["N_EmpID"].ToString());
+                        //     if (drEmpDetails.Length > 0)
+                        //     {
+                        //         dtNode = drEmpDetails.CopyToDataTable();
+                        //         dtNode.AcceptChanges();
+                        //         dtVar["details"] = dtNode;
+                        //     }
+                        // }
                      foreach (DataRow Kvar in dt.Rows)
                     {
                         if (myFunctions.getBoolVAL(Kvar["B_ExcludeInSalary"].ToString()) == true && Kvar["details"] == null)
