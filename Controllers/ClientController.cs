@@ -493,8 +493,12 @@ namespace SmartxAPI.Controllers
 
                     }
                    // string AppListSql=" SELECT  * from  ClientApps where N_ClientID=@nClientID";
-                    string AppListSql="SELECT     ClientApps.N_ClientID, ClientApps.N_AppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, ClientApps.N_UserLimit, ClientApps.B_Inactive, ClientApps.X_Sector, ClientApps.N_RefID, ClientApps.D_ExpiryDate, ClientApps.B_Licensed, ClientApps.D_LastExpiryReminder, ClientApps.B_EnableAttachment,ClientApps.N_SubscriptionAmount, AppMaster.X_AppName,AppMaster.N_FreeUsers,AppMaster.N_FreeEmployees,ClientApps.D_StartDate FROM "+
-                    " ClientApps LEFT OUTER JOIN  AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID where N_ClientID=@nClientID "+ companyCriteria+" ";
+                    string AppListSql="SELECT     ClientApps.N_ClientID, ClientApps.N_AppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, ClientApps.N_UserLimit, ClientApps.B_Inactive, ClientApps.X_Sector, ClientApps.N_RefID, "+
+                      "ClientApps.D_ExpiryDate, ClientApps.B_Licensed, ClientApps.D_LastExpiryReminder, ClientApps.B_EnableAttachment, ClientApps.N_SubscriptionAmount, AppMaster.X_AppName,"+
+                     "AppMaster.N_FreeUsers, AppMaster.N_FreeEmployees, ClientApps.D_StartDate, ClientCompany.X_CompanyName FROM   ClientApps LEFT OUTER JOIN   ClientCompany ON ClientApps.N_CompanyID = ClientCompany.N_CompanyID AND ClientApps.N_ClientID = ClientCompany.N_ClientID LEFT OUTER JOIN "+
+                    "AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID  where ClientApps.N_ClientID=@nClientID "+ companyCriteria+" ";
+                    //  string AppListSql="SELECT     ClientApps.N_ClientID, ClientApps.N_AppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, ClientApps.N_UserLimit, ClientApps.B_Inactive, ClientApps.X_Sector, ClientApps.N_RefID, ClientApps.D_ExpiryDate, ClientApps.B_Licensed, ClientApps.D_LastExpiryReminder, ClientApps.B_EnableAttachment,ClientApps.N_SubscriptionAmount, AppMaster.X_AppName,AppMaster.N_FreeUsers,AppMaster.N_FreeEmployees,ClientApps.D_StartDate FROM "+
+                    // " ClientApps LEFT OUTER JOIN  AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID where N_ClientID=@nClientID "+ companyCriteria+" ";
                     DataTable AppList = dLayer.ExecuteDataTable(AppListSql,Params, connection);
                     return Ok(_api.Success(AppList));
                 }
