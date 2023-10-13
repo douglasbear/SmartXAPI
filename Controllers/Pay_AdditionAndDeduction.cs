@@ -274,6 +274,8 @@ namespace SmartxAPI.Controllers
                     ProParam2.Add("N_FnYearID", nFnYearID);
                     ProParam2.Add("N_BatchID", nTransID);
                     dt = dLayer.ExecuteDataTablePro("SP_Pay_SelAddOrDed", ProParam2, connection);
+                    // ProParam2.Add("N_EmpID", nEmpID);
+                    // dt = dLayer.ExecuteDataTablePro("SP_Pay_SelAddOrDed_EmpWise", ProParam2, connection);
                     if (dt.Rows.Count > 0)
                     {
                         dt.Columns.Add("N_SaveChanges");
@@ -513,7 +515,7 @@ namespace SmartxAPI.Controllers
                         }
                         else{
 
-// Activity Log
+                        // Activity Log
                         string ipAddress = "";
                         if (  Request.Headers.ContainsKey("X-Forwarded-For"))
                             ipAddress = Request.Headers["X-Forwarded-For"];
@@ -646,27 +648,27 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, Params, connection);
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataRow TransRow = TransData.Rows[0];
-                    // Results = dLayer.DeleteData("Pay_MonthlyAddOrDed", "N_TransID", nTransID, "N_CompanyID=" + myFunctions.GetCompanyID(User), connection, transaction);
 
-                    // if (Results <= 0)
-                    // {
-                    //     transaction.Rollback();
-                    //     return Ok(_api.Error(User, "Unable to delete batch"));
-                    //}
-                    Results = dLayer.DeleteData("Pay_MonthlyAddOrDedDetails", "N_TransID", nTransID, "N_CompanyID=" + myFunctions.GetCompanyID(User), connection, transaction);
-
-                    if (Results <= 0)
+                    // Activity Log
+                    string ipAddress = "";
+                    if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nTransID,TransRow["X_Batch"].ToString(),208,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                                                            
+                    Results = dLayer.DeleteData("Pay_MonthlyAddOrDed", "N_TransID", nTransID, "N_CompanyID=" + myFunctions.GetCompanyID(User), connection, transaction);
+                    if (Results > 0)
+                    {   
+                        dLayer.DeleteData("Pay_MonthlyAddOrDedDetails", "N_TransID", nTransID, "N_CompanyID=" + myFunctions.GetCompanyID(User), connection, transaction);                                           
+                    }
+                    else
                     {
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to delete batch"));
                     }
-                    // Activity Log
-                            string ipAddress = "";
-                            if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                                ipAddress = Request.Headers["X-Forwarded-For"];
-                            else
-                                ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                            myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nTransID,TransRow["X_Batch"].ToString(),208,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
+                    
                     transaction.Commit();
                     return Ok(_api.Success("Batch deleted"));
                 }
