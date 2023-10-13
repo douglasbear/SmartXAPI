@@ -9,6 +9,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Collections.Generic;
 
 namespace SmartxAPI.Controllers
 {
@@ -37,9 +38,10 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetAllApps(bool showAll, string AppName)
+        public ActionResult GetAllApps(bool showAll, string AppName,int companyID)
         {
             DataTable dt = new DataTable();
+             DataTable uniqueDataTable =new DataTable();
             int ClientID = myFunctions.GetClientID(User);
             int GUserID = myFunctions.GetGlobalUserID(User);
       
@@ -89,23 +91,38 @@ namespace SmartxAPI.Controllers
                                            +",isnull(DATEDIFF(day, GETDATE(),min(D_ExpiryDate)),0) as expiry"
                                           +" FROM AppMaster "
                                            +"INNER JOIN ClientApps ON AppMaster.N_AppID = ClientApps.N_AppID "
-                                          +"  where ClientApps.N_ClientID=" + ClientID + " and AppMaster.B_Inactive =0 " + xCritreria + " "
+                                          +"  where ClientApps.N_ClientID=" + ClientID + " and  ClientApps.N_CompanyID=" + myFunctions.GetCompanyID(User) + " and AppMaster.B_Inactive =0 " + xCritreria + " "
                                            +"Group By AppMaster.N_AppID ,AppMaster.X_AppName,AppMaster.X_AppDescription,AppMaster.X_Version, "
                                           +" AppMaster.B_Inactive,AppMaster.N_Order,AppMaster.N_TrialPeriod,AppMaster.X_HelpUrl,AppMaster.X_InitialDataUrl, "
                                          +"  AppMaster.B_EnableAttachment,ClientApps.N_ClientID,ClientApps.D_ExpiryDate  order by AppMaster.N_Order";
                     }
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, connection);
+                     uniqueDataTable = dt.Clone();
+                    HashSet<object> seenAppIDs = new HashSet<object>();
+                     foreach (DataRow row in dt.Rows)
+                     {
+                        object app_ID = row["N_AppID"];
+                        if (!seenAppIDs.Contains(app_ID))
+                            {
+                                seenAppIDs.Add(app_ID);
+                                uniqueDataTable.ImportRow(row);
+
+                            }
+
+                     }
+
+                     uniqueDataTable.AcceptChanges();
 
                 
                 }
-                if (dt.Rows.Count == 0)
-                {
+                if (uniqueDataTable.Rows.Count == 0)
+                { 
                     return Ok(_api.Notice("No Results Found"));
                 }
                 else
                 {
-                    return Ok(_api.Success(dt));
+                    return Ok(_api.Success(uniqueDataTable));
                 }
 
             }
