@@ -193,6 +193,7 @@ namespace SmartxAPI.Controllers
                     DataTable options = new DataTable();
                     DataTable TasksList = new DataTable();
                     DataTable Materials = new DataTable();
+                    DataTable Mentions = new DataTable();
                     int loginUserID = myFunctions.GetUserID(User);
 
 
@@ -203,6 +204,7 @@ namespace SmartxAPI.Controllers
                     string ActionSql = "";
                     string nextAction = "";
                     string timeSql = "";
+                    string mentionSql = "";
 
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
@@ -221,6 +223,7 @@ namespace SmartxAPI.Controllers
 
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_Comments", typeof(string), "");
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_CommentID", typeof(string), "");
 
 
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -231,6 +234,7 @@ namespace SmartxAPI.Controllers
                     {
                         object x_Comments = dLayer.ExecuteScalar("select  X_Comments from Tsk_TaskComments where N_CommentsID=" + myFunctions.getIntVAL(comments.ToString()), Params, connection);
                         MasterTable.Rows[0]["x_Comments"] = x_Comments.ToString();
+                        MasterTable.Rows[0]["n_CommentID"] = myFunctions.getIntVAL(comments.ToString());
                     }
                     MasterTable.AcceptChanges();
                     Params.Add("@nTaskID", TaskID);
@@ -404,6 +408,11 @@ namespace SmartxAPI.Controllers
                     CommentsTable = dLayer.ExecuteDataTable(CommentsSql, Params, connection);
                     CommentsTable = _api.Format(CommentsTable, "Comments");
 
+                    //mention
+                    mentionSql = "select * from Vw_tskMentionList where N_TransID=@nTaskID and N_CompanyId=@nCompanyID and N_CommentsID="+myFunctions.getIntVAL(comments.ToString())+"";
+                    Mentions = dLayer.ExecuteDataTable(mentionSql, Params, connection);
+                    Mentions = _api.Format(Mentions, "mentions");
+
                     //ActionTable
                     if (nextAction == "")
                     {
@@ -430,6 +439,7 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(options);
                     dt.Tables.Add(TasksList);
                     dt.Tables.Add(Materials);
+                    dt.Tables.Add(Mentions);
 
                     return Ok(_api.Success(dt));
 
@@ -1181,8 +1191,10 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
                     DataTable DetailTable;
+                    DataTable MentionsTable;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
+                    MentionsTable = ds.Tables["mentions"];
                     DataTable Comments = ds.Tables["comments"];
                     SortedList Params = new SortedList();
                     DataRow MasterRow = MasterTable.Rows[0];
@@ -1217,11 +1229,29 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Unable To Save"));
                         }
-
-
-
-
                     }
+
+                      if (MentionsTable.Rows.Count > 0)
+                    {
+
+                    //    dLayer.DeleteData("Gen_Mentions", "N_TaskID", nTaskID, "", connection);
+
+                          for (int j = 0; j < MentionsTable.Rows.Count; j++)
+                    {
+                        MentionsTable.Rows[j]["N_CommentsID"] = nCommentsID;
+                    }
+
+                        int nMentionID = dLayer.SaveData("Gen_Mentions", "N_MentionID", MentionsTable, connection, transaction);
+                        if (nMentionID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable To Save"));
+                        }
+                    }
+
+
+
+
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
                 }
@@ -1243,7 +1273,10 @@ namespace SmartxAPI.Controllers
 
                     connection.Open();
                     dLayer.DeleteData("Tsk_TaskStatus", "N_TaskID", nTaskID, "", connection);
+                    Results = dLayer.DeleteData("Tsk_TaskComments", "N_ActionID", nTaskID, "", connection);
+                    Results = dLayer.DeleteData("Gen_Mentions", "N_TransID", nTaskID, "", connection);
                     Results = dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskID, "", connection);
+                    
                     if (Results > 0)
                     {
                         SqlTransaction transaction = connection.BeginTransaction();
