@@ -47,7 +47,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial, int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID, bool b_Asn, int nPriceListID, bool isSalesItems, bool isRentalItem, bool rentalItems, bool purchaseRentalItems,bool showStockInlist,int nitemType,bool isAssetItem,bool ShowCostinList,int nItemID)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem, bool isCustomerMaterial, int nItemUsedFor, bool isServiceItem, bool b_whGrn, bool b_PickList, int n_CustomerID, bool b_Asn, int nPriceListID, bool isSalesItems, bool isRentalItem, bool rentalItems, bool purchaseRentalItems,bool showStockInlist,int nitemType,bool isAssetItem,bool ShowCostinList,int nItemID,int nDivisionID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -71,7 +71,7 @@ namespace SmartxAPI.Controllers
               string sqlComandText ="";
               string ShowCost="";
               string itemwiseqry="";
-
+            string divisionCategory="";
             if (showStockInlist)
             {
                 showStock = "dbo.SP_GenGetStock(vw_InvItem_Search_cloud.N_ItemID," + nLocationID + ",'', 'location') As N_AvlStock,";
@@ -210,9 +210,27 @@ namespace SmartxAPI.Controllers
                         xOrderNew = "ORDER BY Description asc";
                     }
 
+                     if(nDivisionID>0)
+                        {
+                        object divisionsql = "";
+                        object xLevelsql = "";
+                        object xLevelPattern = "";
+                        xLevelsql = dLayer.ExecuteScalar("select X_LevelPattern from Inv_DivisionMaster where N_CompanyID=" + nCompanyID + " and N_DivisionID=" + nDivisionID + " and N_GroupID=0", Params, connection);
+                       if (xLevelsql != null && xLevelsql.ToString() != "")
+                        {
+                         divisionsql = "select N_DivisionID from Inv_DivisionMaster where N_CompanyID=" + nCompanyID + " and  X_LevelPattern like '" + xLevelsql.ToString()  + "%'";
+                    
+                        }                       
+            
+                        if (divisionsql != null && divisionsql.ToString() != "")
+                        {
+                        divisionCategory=" and  [vw_InvItem_Search_cloud].N_DivisionID in (" + divisionsql.ToString() + ")";
+                        }
+                     }
+
                     string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(" + xOrder + ") RowNo,";
                     string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) " + xOrderNew + " ";
-                    string sql = pageQry + sqlComandText + pageQryEnd;
+                    string sql = pageQry + sqlComandText + divisionCategory + pageQryEnd;
                     dt = dLayer.ExecuteDataTable(sql, Params, connection);
 
 

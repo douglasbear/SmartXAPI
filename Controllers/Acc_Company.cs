@@ -593,11 +593,11 @@ namespace SmartxAPI.Controllers
                                         {"X_Value",x_DisplayName},};
                         dLayer.ExecuteNonQueryPro("SP_GeneralDefaults_ins", proParams4, connection, transaction);
 
-                        SortedList proParams5 = new SortedList(){
-                                  {"N_CompanyID",N_CompanyId}};
+                        // SortedList proParams5 = new SortedList(){
+                        //           {"N_CompanyID",N_CompanyId}};
 
                         
-                         dLayer.ExecuteNonQueryPro("UTL_UpdateGenSettings", proParams5, connection, transaction);
+                        //  dLayer.ExecuteNonQueryPro("UTL_UpdateGenSettings", proParams5, connection, transaction);
                       
 
 
