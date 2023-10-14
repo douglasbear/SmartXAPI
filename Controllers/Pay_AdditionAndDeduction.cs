@@ -273,9 +273,9 @@ namespace SmartxAPI.Controllers
                     ProParam2.Add("N_PayrunID", payRunID);
                     ProParam2.Add("N_FnYearID", nFnYearID);
                     ProParam2.Add("N_BatchID", nTransID);
-                    dt = dLayer.ExecuteDataTablePro("SP_Pay_SelAddOrDed", ProParam2, connection);
-                    // ProParam2.Add("N_EmpID", nEmpID);
-                    // dt = dLayer.ExecuteDataTablePro("SP_Pay_SelAddOrDed_EmpWise", ProParam2, connection);
+                    // dt = dLayer.ExecuteDataTablePro("SP_Pay_SelAddOrDed", ProParam2, connection);
+                    ProParam2.Add("N_EmpID", nEmpID);
+                    dt = dLayer.ExecuteDataTablePro("SP_Pay_SelAddOrDed_EmpWise", ProParam2, connection);
                     if (dt.Rows.Count > 0)
                     {
                         dt.Columns.Add("N_SaveChanges");
