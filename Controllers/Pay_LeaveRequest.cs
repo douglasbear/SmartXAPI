@@ -902,14 +902,14 @@ namespace SmartxAPI.Controllers
             foreach (DataRow var in Details.Rows)
             {
                 if (myFunctions.getVAL(var["b_IsAdjustEntry"].ToString()) != 0) { continue; }
-                if (myFunctions.getVAL(var["n_VacationGroupID"].ToString()) != 0) { continue; }
+                // if (myFunctions.getVAL(var["n_VacationGroupID"].ToString()) != 0) { continue; }
                 SortedList Params = new SortedList();
                 Params.Add("N_CompanyID", myFunctions.getVAL(var["n_CompanyID"].ToString()));
                 Params.Add("N_FnYearID", myFunctions.getVAL(var["n_FnYearID"].ToString()));
                 Params.Add("N_EmpID", myFunctions.getVAL(var["n_EmpID"].ToString()));
                 Params.Add("D_VacDateFrom", var["d_VacDateFrom"].ToString());
                 Params.Add("D_VacDateTo", var["d_VacDateTo"].ToString());
-                Params.Add("N_VacationID", myFunctions.getVAL(var["n_VacationGroupID"].ToString()));
+                Params.Add("N_VacationID", myFunctions.getVAL(var["n_VacationID"].ToString()));
 
                 DataTable Validation = dLayer.ExecuteDataTablePro("SP_Pay_VacationEntryDateValidation", Params, connection, transaction);
                 if (Validation.Rows.Count > 0)
