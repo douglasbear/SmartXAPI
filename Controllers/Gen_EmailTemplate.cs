@@ -246,7 +246,7 @@ namespace SmartxAPI.Controllers
                              {
                             SmtpClient client = new SmtpClient
                             {
-                                Host = "smtp.office365.com",
+                                Host = "smtp.gmail.com",
                                 Port = 587,
                                 EnableSsl = true,
                                 DeliveryMethod = SmtpDeliveryMethod.Network,
