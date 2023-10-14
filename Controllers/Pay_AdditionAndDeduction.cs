@@ -485,11 +485,11 @@ namespace SmartxAPI.Controllers
                             }
                             else if (myFunctions.getIntVAL(mstVar["n_TransDetailsID"].ToString()) != 0 && mstVar["n_FormID"].ToString().Trim() != "")
                             {
-                                N_TransDetailsID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select N_TransDetailsID from Pay_MonthlyAddOrDedDetails Where N_PayID=" + myFunctions.getVAL(mstVar["n_PayID"].ToString()) + " and N_TransID=" + N_OldTransID.ToString() + " and n_EmpID=" + mstVar["n_EmpID"].ToString() + " and N_FormID=" + mstVar["n_FormID"].ToString() + " and N_CompanyID= " + nCompanyID, connection, transaction).ToString());
-                                FormID = myFunctions.getIntVAL(mstVar["N_FormID"].ToString());
+                                N_TransDetailsID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select N_TransDetailsID from Pay_MonthlyAddOrDedDetails Where N_PayID=" + myFunctions.getVAL(mstVar["n_PayID"].ToString()) + " and N_TransID=" + N_OldTransID.ToString() + " and n_EmpID=" + mstVar["n_EmpID"].ToString() + "  and N_CompanyID= " + nCompanyID, connection, transaction).ToString());//and N_FormID=" + mstVar["n_FormID"].ToString() + "
+                                //FormID = myFunctions.getIntVAL(mstVar["N_FormID"].ToString());
                             }
                             else if (mstVar["n_FormID"].ToString().Trim() == "" || myFunctions.getIntVAL(mstVar["n_FormID"].ToString()) == 0)
-                                FormID = this.FormID;
+                                DetailsTable.Rows[i]["n_FormID"]  = this.FormID;
 
 
                             if (Amount < 0)
@@ -504,7 +504,7 @@ namespace SmartxAPI.Controllers
                             DetailsTable.Rows[i]["n_TransID"] = N_TransID;
                             DetailsTable.Rows[i]["n_PayRate"] = Amount;
                             DetailsTable.Rows[i]["b_TimeSheetEntry"] = N_IsAuto;
-                            DetailsTable.Rows[i]["n_FormID"] = FormID == 0 ? 208 : FormID;
+                            //DetailsTable.Rows[i]["n_FormID"] = FormID == 0 ? 208 : FormID;
                         }
                         DetailsTable.AcceptChanges();
                         N_TransDetailsID = myFunctions.getIntVAL(dLayer.SaveData("Pay_MonthlyAddOrDedDetails", "N_TransDetailsID", DetailsTable, connection, transaction).ToString());
