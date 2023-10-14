@@ -570,7 +570,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("rfqList")]
-        public ActionResult GetRFQList(bool bAllBranchData, int nBranchID, int nFnYearID)
+        public ActionResult GetRFQList(bool bAllBranchData, int nBranchID, int nFnYearID, int nVendorID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -579,17 +579,35 @@ namespace SmartxAPI.Controllers
             Params.Add("@nBranchID", nBranchID);
             Params.Add("@nFnYearID", nFnYearID);
             string sqlCommandText = "";
-            if (bAllBranchData == true)
-                sqlCommandText = "Select *  from vw_Vendor_Request where N_CompanyID=@nCompanyID and N_FnYearId=@nFnYearID";
-            else
-                sqlCommandText = "Select *  from vw_Vendor_Request where N_CompanyID=@nCompanyID and N_BranchID=@nBranchID and N_FnYearId=@nFnYearID";
-
+            string _sql = "";
+            
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    
+
+            if(nVendorID>0){
+            DataTable quotationData = dLayer.ExecuteDataTable("select N_QuotationID from Inv_RFQVendorList where  N_vendorID= " + nVendorID +"and N_CompanyID=" + nCompanyID,Params,connection);
+                      var listIDs = quotationData.AsEnumerable().Select(r => r["N_QuotationID"].ToString());
+                             string value = string.Join(",", listIDs);
+
+                     string details="SELECT * FROM  vw_Vendor_Request where N_CompanyID=@nCompanyID and N_FnYearId=@nFnYearID and N_QuotationId in ("+value+")";
+
+                     dt = dLayer.ExecuteDataTable(details, Params, connection);
+            }
+
+            else{
+                     if (bAllBranchData == true)
+                    sqlCommandText = "Select *  from vw_Vendor_Request where N_CompanyID=@nCompanyID and N_FnYearId=@nFnYearID";
+                   else
+                  sqlCommandText = "Select *  from vw_Vendor_Request where N_CompanyID=@nCompanyID and N_BranchID=@nBranchID and N_FnYearId=@nFnYearID";
+
+                  dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+            }
+               
+
                 }
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)

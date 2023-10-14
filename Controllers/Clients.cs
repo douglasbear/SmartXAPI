@@ -62,6 +62,7 @@ namespace SmartxAPI.Controllers
                 int ClientID = 0;
                 int projectID = 0;
                 int custID = 0;
+                string X_DbName="";
                 using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
                 {
                     connection.Open();
@@ -88,6 +89,14 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Something went wrong"));
                     }
+
+                    string uri = "SmartxConnection";
+                    using (SqlConnection cnn1 = new SqlConnection(config.GetConnectionString(uri)))
+                    {
+                          X_DbName=cnn1.Database.ToString();
+                          
+                    }
+                     dLayer.ExecuteScalar("Update ClientMaster set X_DBName='"+X_DbName+"'  where N_ClientID=" + ClientID+"", connection,transaction); 
 
 
                     // AppTable.Rows[0]["N_ClientID"] = ClientID;

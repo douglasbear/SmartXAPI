@@ -228,6 +228,7 @@ namespace SmartxAPI.Controllers
                     string X_DefaultAbsentCode = "";
                     int N_TimeSheetID = 0;
                     int N_BatchID = 0;
+                     int count=0;
 
                     SortedList Master = new SortedList();
 
@@ -951,6 +952,12 @@ namespace SmartxAPI.Controllers
                                     N_deductionTime = myFunctions.getVAL(row["Deduction"].ToString());
                                     N_CompsateDed = myFunctions.getVAL(row["CompMinutes"].ToString());
                                     N_ActualWorkHours = myFunctions.getVAL(row["N_ActWorkHours"].ToString());
+                                   
+                                    if(N_ActualWorkHours!=0)
+                                    {
+                                        count=count+1;
+
+                                    }
                               
                                     
                                     if (N_additionTime > 0)

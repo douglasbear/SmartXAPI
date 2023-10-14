@@ -412,7 +412,7 @@ namespace SmartxAPI.Controllers
                     }
                     else if (xPOrderNo != null)
                     {
-                        X_DetailsSql = "select * from vw_Inv_PurchaseOrderAsInvoiceDetails where N_CompanyID=@CompanyID and N_POrderID=" + N_POrderID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                        X_DetailsSql = "select * from vw_POInvoice_PendingDetail where  N_POrderID=" + N_POrderID + " AND N_CompanyID = @CompanyID ORDER BY N_POrderDetailsID";
                     }
                     else if (xGrnNo != null && xGrnNo != "")
                     {
@@ -1555,6 +1555,12 @@ namespace SmartxAPI.Controllers
                                 tempPOrderID = n_POrderID;
                             };
                         }
+                        else if (ButtonTag == "4")
+                        {
+                            dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails_Segments where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='PURCHASE' AND N_AccTransID  in (select N_AccTransID from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='PURCHASE' AND X_VoucherNo='"+TransRow["X_InvoiceNo"].ToString()+"')", ParamList, connection, transaction);
+                            dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='PURCHASE' AND X_VoucherNo='"+TransRow["X_InvoiceNo"].ToString()+"'", ParamList, connection, transaction);
+                        }
+
                         transaction.Commit();
                         if (myFunctions.getIntVAL(TransRow["n_FormID"].ToString()) == 1605)
                         {
@@ -1566,6 +1572,7 @@ namespace SmartxAPI.Controllers
 
                         }
                     }
+                   
                     else
                     {
                         transaction.Rollback();

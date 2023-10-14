@@ -57,6 +57,23 @@ namespace SmartxAPI.Controllers
                     string X_ShippingCode = MasterTable.Rows[0]["x_ShippingCode"].ToString();
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                     string xButtonAction = "";
+
+
+                    // if ( X_ShippingCode != "@Auto")
+                    // {
+                    // object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_Shipping Where X_ShippingCode ='" + X_ShippingCode + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                    // if(N_DocNumber == null)
+                    // {
+                    //     N_DocNumber = 0;
+                    // }
+                    // if (myFunctions.getVAL(N_DocNumber.ToString()) >= 1)
+                    // {
+                    //     // transaction.Rollback();
+                    //     return Ok(_api.Error(User, "Invoice number already in use"));
+                    // //    transaction.Rollback();
+                    // //     return Ok(_api.Error(User, "Invoice No is Already exist"));
+                    // }
+                    // }
                     if (nShippingID > 0)
                     {
                         dLayer.DeleteData("Inv_ShippingDetails", "N_ShippingID", nShippingID, "N_CompanyID = " + nCompanyID, connection, transaction);
@@ -95,6 +112,7 @@ namespace SmartxAPI.Controllers
 
 
                     nShippingID = dLayer.SaveData("Inv_Shipping", "N_ShippingID", MasterTable, connection, transaction);
+                    
                     if (nShippingID <= 0)
                     {
                         transaction.Rollback();
@@ -285,6 +303,7 @@ namespace SmartxAPI.Controllers
             // Params.Add("@nFnYearID", nFnYearID);
             // // Params.Add("@nClassID", nClassID);
             // Params.Add("@nCompanyID", nCompanyId);
+            SortedList OutPut = new SortedList();
 
             // Params.Add("@nFormID", nFormID);
             object N_SalesOrderID = 0;
@@ -323,6 +342,7 @@ namespace SmartxAPI.Controllers
                             MasterTable = _api.Format(MasterTable, "Master");
                             N_salesOrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_salesOrderID"].ToString());
                             xDeliveryNoteID = n_DeliveryNoteId.ToString();
+                           
 
                             if (xDeliveryNoteID != null)
                             {
@@ -339,9 +359,10 @@ namespace SmartxAPI.Controllers
 
                             //  MasterTable = dLayer.ExecuteDataTable(xDeliveryNo, QueryParamsList, Con);
 
-                            Mastersql = "select * from vw_DeliveryNoteToShippingMaster where N_CompanyId=@nCompanyID and N_DeliveryNoteId=" + N_DeliveryNote + "";
+                            Mastersql = "select * from vw_DeliveryNoteToShippingMaster where N_CompanyId=" + nCompanyId + " and N_DeliveryNoteId=" + N_DeliveryNote + "";
                             MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, connection);
-                            if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                            if (MasterTable.Rows.Count == 0) 
+                            { return Ok(_api.Warning("No data found")); }
                             MasterTable = _api.Format(MasterTable, "Master");
 
 
@@ -349,8 +370,6 @@ namespace SmartxAPI.Controllers
 
                          string DetailSql = "";
                         //  DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID=@n_DeliveryNoteId ";
-
-
 
                         string DeliveryNoteAppend = "0";
                         DataTable DeliveryNoteID = new DataTable();
@@ -445,6 +464,9 @@ namespace SmartxAPI.Controllers
                         DetailTable = _api.Format(DetailTable, "Details");
                         dsSalesInvoice.Tables.Add(MasterTable);
                         dsSalesInvoice.Tables.Add(DetailTable);
+                        // object shippingDone = null;
+                        // shippingDone = dLayer.ExecuteScalar("select n_DeliveryNoteId from Inv_Shipping where N_CompanyID=@nCompanyID and N_ShippingID="+N_ShippingID+"",  connection);
+
 
 
                         return Ok(_api.Success(dsSalesInvoice));

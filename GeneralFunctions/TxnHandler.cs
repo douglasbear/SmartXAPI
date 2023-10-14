@@ -758,6 +758,8 @@ namespace SmartxAPI.GeneralFunctions
                                 Result.Add("x_Msg", "Wrong Txn Date");
                             else if (ex.Message.Contains("55"))
                                 Result.Add("x_Msg", "Transaction Started");
+                                 else if (ex.Message.Contains("1801"))
+                                Result.Add("x_Msg", "Transaction Started");
                             else
                             {
                                 transaction.Rollback();
@@ -1552,6 +1554,8 @@ namespace SmartxAPI.GeneralFunctions
                                 Result.Add("x_Msg", "Txn Date");
                             else if (ex.Message == "55")
                                 Result.Add("x_Msg", "Quantity exceeds!");
+                                  else if (ex.Message == "1801")
+                                Result.Add("x_Msg", "Quantity exceeds!");
                             else
                             {
                                 transaction.Rollback();
@@ -1644,6 +1648,8 @@ namespace SmartxAPI.GeneralFunctions
                         else if (ex.Message.Contains("54"))
                             Result.Add("x_Msg", "Wrong Txn Date");
                         else if (ex.Message.Contains("55"))
+                            Result.Add("x_Msg", "Transaction Started");
+                             else if (ex.Message.Contains("1801"))
                             Result.Add("x_Msg", "Transaction Started");
                         else
                         {
@@ -1814,7 +1820,7 @@ namespace SmartxAPI.GeneralFunctions
             int N_CompanyID = myFunctions.GetCompanyID(User);
             int N_InvoiceId = 0;
             int nFnYearID = myFunctions.getIntVAL(masterRow["N_fnYearId"].ToString());;
-
+            int nFormID = myFunctions.getIntVAL(masterRow["N_FormID"].ToString());
             int N_DebitNoteId = myFunctions.getIntVAL(masterRow["N_DebitNoteId"].ToString());
             int N_CustomerID = myFunctions.getIntVAL(masterRow["n_CustomerID"].ToString());
             int N_SalesId = myFunctions.getIntVAL(masterRow["N_SalesId"].ToString());
@@ -1854,7 +1860,7 @@ namespace SmartxAPI.GeneralFunctions
             {
                 Params.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
                 Params.Add("N_YearID", nFnYearID);
-                Params.Add("N_FormID", 55);
+                Params.Add("N_FormID", nFormID);
                 Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
 
 
@@ -1971,7 +1977,7 @@ namespace SmartxAPI.GeneralFunctions
 
             dLayer.ExecuteNonQueryPro("SP_SalesReturn_Ins_New", InsParams, connection, transaction);
 
-             myFunctions.LogScreenActivitys(nFnYearID,N_InvoiceId,InvoiceNo,55,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+             myFunctions.LogScreenActivitys(nFnYearID,N_InvoiceId,InvoiceNo,nFormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
            
 
             SortedList StockPostingParams = new SortedList();
@@ -1987,7 +1993,36 @@ namespace SmartxAPI.GeneralFunctions
 
             dLayer.ExecuteNonQueryPro("SP_StockOutUpdate", StockOutParam, connection, transaction);
 
-            
+            if(nDivisionID>0)
+                    {
+                    if (DetailTable.Rows.Count > 0)
+                    {
+                     object xLevelsql = dLayer.ExecuteScalar("select X_LevelPattern from Inv_DivisionMaster where N_CompanyID=" + N_CompanyID + " and N_DivisionID=" + nDivisionID + " and N_GroupID=0", Params, connection,transaction);
+                      
+                       if (xLevelsql != null && xLevelsql.ToString() != "")
+                        {
+                        for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        {
+
+                            //  detailTable.Rows[j]["N_SalesId"] = N_SalesID;
+                            object xLevelPattern = dLayer.ExecuteScalar("SELECT  Inv_DivisionMaster.X_LevelPattern FROM         Inv_DivisionMaster LEFT OUTER JOIN    Inv_ItemCategory ON Inv_DivisionMaster.N_DivisionID = Inv_ItemCategory.N_DivisionID AND Inv_DivisionMaster.N_CompanyID = Inv_ItemCategory.N_CompanyID RIGHT OUTER JOIN "+
+                            "Inv_ItemMaster ON Inv_ItemCategory.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemCategory.N_CategoryID = Inv_ItemMaster.N_CategoryID  where Inv_ItemMaster.N_ItemID="+ DetailTable.Rows[j]["N_ItemID"]+" and Inv_ItemMaster.N_CompanyID="+N_CompanyID+" ", Params, connection,transaction);
+                           // object xLevelPattern = dLayer.ExecuteScalar("select X_LevelPattern from Acc_CostCentreMaster where N_CompanyID=" + N_CompanyID + " and N_CostCentreID=" + nDivisionID + " and N_GroupID=0", Params, connection);
+                             if (xLevelsql.ToString() != xLevelPattern.ToString().Substring(0, 3))
+                             {
+                                 Result.Add("b_IsCompleted", 0);
+                                 Result.Add("x_Msg", "Unable To save!...Division Mismatch");
+                                 return Result;
+                             }
+                           
+                        }
+                        }
+                     
+
+
+
+                    }
+                    }
           
 
             //transaction.Commit();
@@ -1996,7 +2031,11 @@ namespace SmartxAPI.GeneralFunctions
             Result.Add("x_SalesReturnNo", InvoiceNo);
             // return Ok(_api.Success(Result, "Sales Return Saved"));
             Result.Add("b_IsCompleted", 1);
-            Result.Add("x_Msg", "Sales Return Saved");
+            if (myFunctions.getIntVAL(masterRow["n_FormID"].ToString()) == 55)
+                        Result.Add("x_Msg", "Sales Return Saved Successfully");
+                    else 
+                        Result.Add("x_Msg", "Rental Sales Return Saved Successfully");  
+            // Result.Add("x_Msg", "Sales Return Saved");
             return Result;
         }
 
@@ -2156,6 +2195,8 @@ namespace SmartxAPI.GeneralFunctions
                 else if (ex.Message.Contains("54"))
                     Result.Add("x_Msg", "Wrong Txn Date");
                 else if (ex.Message.Contains("55"))
+                    Result.Add("x_Msg", "Transaction Started");
+                     else if (ex.Message.Contains("1801"))
                     Result.Add("x_Msg", "Transaction Started");
                 else
                 {

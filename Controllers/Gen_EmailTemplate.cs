@@ -99,9 +99,13 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     int companyid = myFunctions.GetCompanyID(User);
                     DataTable Master = ds.Tables["master"];
+                    DataTable Attachments = ds.Tables["attachments"];
                     DataRow MasterRow = Master.Rows[0];
                     SortedList Params = new SortedList();
+                    int N_FormID=0;
                     string Toemail = "";
+                    string CC = "";
+                    string BCC = "";
                     string xRecruitmentCode = "";
                     string x_PartyName = "";
                     string Email = MasterRow["X_ContactEmail"].ToString();
@@ -113,11 +117,20 @@ namespace SmartxAPI.Controllers
                         xRecruitmentCode = MasterRow["x_RecruitmentCode"].ToString();
                     if (Master.Columns.Contains("x_TemplateName"))
                         x_PartyName = MasterRow["x_TemplateName"].ToString();
+                    if (Master.Columns.Contains("n_FormID"))
+                        N_FormID = myFunctions.getIntVAL(MasterRow["n_FormID"].ToString());
+                    if (Master.Columns.Contains("x_CC"))
+                        CC = MasterRow["x_CC"].ToString();
+                    if (Master.Columns.Contains("x_BCC"))
+                        BCC = MasterRow["x_BCC"].ToString();
                     Toemail = Email.ToString();
+                    string[] ccAddresses = CC.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                    string[] BccAddresses = BCC.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                     object companyemail = "";
                     object companypassword = "";
                     object Company, Oppportunity, Contact, CustomerID;
                     int nCompanyId = myFunctions.GetCompanyID(User);
+                    string base64Data ="";
 
                     companyemail = dLayer.ExecuteScalar("select X_Email from vw_MailGeneralScreenSettings where n_companyid="+companyid, Params, connection, transaction);
                     companypassword = dLayer.ExecuteScalar("select X_Password from vw_MailGeneralScreenSettings where n_companyid="+companyid, Params, connection, transaction);
@@ -171,6 +184,57 @@ namespace SmartxAPI.Controllers
 
 
                             }
+                            if(N_FormID==1345)
+                            {
+                           
+                            DateTime currentTime=DateTime.UtcNow;
+                            string url=reportpdf(0,"TaskAnalysis_byEmployee","{vw_taskperformance.D_TaskDate} >= Date('"+currentTime.ToString("yyyy,MM,dd")+"') And {vw_taskperformance.D_TaskDate} <= Date('"+currentTime.ToString("yyyy,MM,dd")+"')  and {vw_taskperformance.X_username} = '"+myFunctions.GetUserName(User)+"'  and {Acc_Company.N_CompanyID}="+nCompanyId);
+
+                            string Sender = companyemail.ToString();
+                            Subject = Subjectval;
+                            MailBody = Body.ToString();
+                            using (WebClient webClient = new WebClient())
+                             {
+                            SmtpClient client = new SmtpClient
+                            {
+                                Host = "smtp.gmail.com",
+                                Port = 587,
+                                EnableSsl = true,
+                                DeliveryMethod = SmtpDeliveryMethod.Network,
+                                Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString()),
+                                Timeout = 30000,
+                            };
+
+
+                            MailMessage message = new MailMessage();
+                            message.To.Add(Toemail.ToString()); // Add Receiver mail Address  
+                            foreach (string ccAddress in ccAddresses)
+                                message.CC.Add(ccAddress.Trim());
+                            foreach (string BccAddress in BccAddresses)
+                                message.Bcc.Add(BccAddress.Trim());
+                            message.From = new MailAddress(Sender, myFunctions.GetUserLoginName(User));
+                            message.Subject = Subject;
+                            message.Body = MailBody;
+                            message.IsBodyHtml = true; //HTML email  
+                            byte[] pdfBytes = webClient.DownloadData(url);
+                             message.Attachments.Add(new Attachment(new System.IO.MemoryStream(pdfBytes), "TaskAnalysis_byEmployee.pdf"));
+
+                             foreach (DataRow var in Attachments.Rows)
+                                 {
+                                    base64Data = var["FileData"].ToString();
+                                    base64Data = base64Data.Substring(var["FileData"].ToString().IndexOf(',') + 1);
+                                    byte[] fileData = Convert.FromBase64String(base64Data);
+                                    MemoryStream stream = new MemoryStream(fileData);
+                                    Attachment attachment = new Attachment(stream, var["x_File"].ToString());
+                                    message.Attachments.Add(attachment);
+                                 }
+                            client.Send(message);
+
+                        }
+
+                            }
+                            else
+                            {
                             object n_POID = dLayer.ExecuteScalar("select N_POrderID from vw_InvPurchaseOrder where OrderNo='"+MasterRow["n_PkeyID"].ToString()+"' and N_CompanyID="+nCompanyId, Params, connection, transaction);
                       
                             string url=invoicepdf(1793,myFunctions.getIntVAL(n_POID.ToString()), myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString()), 0,  "", "", "",false, false, 1);
@@ -192,7 +256,11 @@ namespace SmartxAPI.Controllers
 
 
                             MailMessage message = new MailMessage();
-                            message.To.Add(Toemail.ToString()); // Add Receiver mail Address  
+                            message.To.Add(Toemail.ToString()); // Add Receiver mail Address 
+                            foreach (string ccAddress in ccAddresses)
+                                message.CC.Add(ccAddress.Trim());
+                            foreach (string BccAddress in BccAddresses)
+                                message.Bcc.Add(BccAddress.Trim()); 
                             message.From = new MailAddress(Sender);
                             message.Subject = Subject;
                             message.Body = MailBody;
@@ -200,27 +268,38 @@ namespace SmartxAPI.Controllers
                             byte[] pdfBytes = webClient.DownloadData(url);
                             if(myFunctions.getBoolVAL(MasterRow["b_AttachPdf"].ToString()))
                                 message.Attachments.Add(new Attachment(new System.IO.MemoryStream(pdfBytes), "PurchaseOrder.pdf"));
+
+                             foreach (DataRow var in Attachments.Rows)
+                                 {
+                                    base64Data = var["FileData"].ToString();
+                                    base64Data = base64Data.Substring(var["FileData"].ToString().IndexOf(',') + 1);
+                                    byte[] fileData = Convert.FromBase64String(base64Data);
+                                    MemoryStream stream = new MemoryStream(fileData);
+                                    Attachment attachment = new Attachment(stream, var["x_File"].ToString());
+                                    message.Attachments.Add(attachment);
+                                 }
                             client.Send(message);
 
                         }
+                            }
                         }
                     }
-                    Master.Columns.Remove("x_TemplateCode");
-                    Master.Columns.Remove("x_TemplateName");
-                    if (Master.Columns.Contains("b_AttachPdf"))
-                        Master.Columns.Remove("b_AttachPdf");
-                    Master.Columns.Remove("x_TempSubject");
-                    if (Master.Columns.Contains("n_PkeyId"))
-                        Master.Columns.Remove("n_PkeyId");
-                    if (Master.Columns.Contains("n_PkeyIdSub"))
-                        Master.Columns.Remove("n_PkeyIdSub");
-                    if (Master.Columns.Contains("x_RecruitmentCode"))
-                        Master.Columns.Remove("x_RecruitmentCode");
-                    Master = myFunctions.AddNewColumnToDataTable(Master, "N_MailLogID", typeof(int), 0);
-                    Master = myFunctions.AddNewColumnToDataTable(Master, "X_Subject", typeof(string), Subject);
-                    Master.Columns.Remove("X_Body");
+                    // Master.Columns.Remove("x_TemplateCode");
+                    // Master.Columns.Remove("x_TemplateName");
+                    // if (Master.Columns.Contains("b_AttachPdf"))
+                    //     Master.Columns.Remove("b_AttachPdf");
+                    // Master.Columns.Remove("x_TempSubject");
+                    // if (Master.Columns.Contains("n_PkeyId"))
+                    //     Master.Columns.Remove("n_PkeyId");
+                    // if (Master.Columns.Contains("n_PkeyIdSub"))
+                    //     Master.Columns.Remove("n_PkeyIdSub");
+                    // if (Master.Columns.Contains("x_RecruitmentCode"))
+                    //     Master.Columns.Remove("x_RecruitmentCode");
+                    // Master = myFunctions.AddNewColumnToDataTable(Master, "N_MailLogID", typeof(int), 0);
+                    // Master = myFunctions.AddNewColumnToDataTable(Master, "X_Subject", typeof(string), Subject);
+                    // Master.Columns.Remove("X_Body");
 
-                    int N_LogID = dLayer.SaveData("Gen_MailLog", "N_MailLogID", Master, connection, transaction);
+                    // int N_LogID = dLayer.SaveData("Gen_MailLog", "N_MailLogID", Master, connection, transaction);
                     transaction.Commit();
 
                     return Ok(api.Success("Email Send"));
@@ -477,6 +556,58 @@ namespace SmartxAPI.Controllers
             }
 
         }
+        public string  reportpdf(int nPkeyID,string xReportname,string critiria)
+        {
+            SortedList QueryParams = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string xUserCategoryList = myFunctions.GetUserCategoryList(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction;
+                    transaction = connection.BeginTransaction();
+
+                        var dbName = connection.Database;
+                        var random = RandomString();
+
+                        DateTime currentTime;
+                        string x_comments = "";
+
+                        object TimezoneID = dLayer.ExecuteScalar("select isnull(n_timezoneid,82) from acc_company where N_CompanyID= " + nCompanyId, connection, transaction);
+                        object Timezone = dLayer.ExecuteScalar("select X_ZoneName from Gen_TimeZone where n_timezoneid=" + TimezoneID, connection, transaction);
+                        if (Timezone != null && Timezone.ToString() != "")
+                        {
+
+                            currentTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(Timezone.ToString()));
+                            x_comments = currentTime.ToString();
+                        }
+
+                        var handler1 = new HttpClientHandler
+                         {
+                          ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
+                         };
+                         RPTLocation = reportLocation.Remove(reportLocation.Length - 2, 2)  + "1/";
+
+                        var client = new HttpClient(handler1);
+                        string URL = reportApi + "api/report?reportName=" + xReportname + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=0&QRUrl=&N_PkeyID=0&partyName=&docNumber=&formName=";
+                        var path = client.GetAsync(URL);
+
+                        ReportName = xReportname + random + ".pdf";
+                        path.Wait();
+
+                        return AppURL +"/temp/"+ ReportName;
+                           
+
+                }
+            }
+            catch (Exception e)
+            {
+                return "";
+            }
+
+        }
 
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
@@ -647,16 +778,19 @@ namespace SmartxAPI.Controllers
                       object party = dLayer.ExecuteScalar("select X_VendorName from vw_InvPurchaseOrder where OrderNo='"+pKeyID+"' and N_CompanyID="+nCompanyId, Params, connection, transaction);
                       object Date = dLayer.ExecuteScalar("select cast(D_POrderDate as Date) from vw_InvPurchaseOrder where OrderNo='"+pKeyID+"' and N_CompanyID="+nCompanyId, Params, connection, transaction);
                       object Email = dLayer.ExecuteScalar("select X_Email from vw_InvPurchaseOrder where OrderNo='"+pKeyID+"' and N_CompanyID="+nCompanyId, Params, connection, transaction);
+                      object OrderNO = dLayer.ExecuteScalar("select orderno from vw_InvPurchaseOrder where OrderNo='"+pKeyID+"' and N_CompanyID="+nCompanyId, Params, connection, transaction);
                                
                      string x_Body = dt.Rows[0]["x_Body"].ToString();
                      string x_Subject = dt.Rows[0]["x_Subject"].ToString();
                      x_Body = x_Body.ToString().Replace("@CompanyName", company);
                      x_Body = x_Body.ToString().Replace("@PartyName", party.ToString());
                      x_Body = x_Body.ToString().Replace("@Date", Date.ToString());
+                     x_Body = x_Body.ToString().Replace("@Refno", OrderNO.ToString());
 
                      x_Subject = x_Subject.ToString().Replace("@CompanyName", company);
                      x_Subject = x_Subject.ToString().Replace("@PartyName", party.ToString());
                      x_Subject = x_Subject.ToString().Replace("@Date", Date.ToString());
+                     x_Subject = x_Subject.ToString().Replace("@Refno", OrderNO.ToString());
 
                      dt.Rows[0]["x_Body"]=x_Body;
                      dt.Rows[0]["x_Subject"]=x_Subject;
@@ -910,7 +1044,7 @@ namespace SmartxAPI.Controllers
                             xBodyText = xBodyText.Replace("@CompanyName", myFunctions.GetCompanyName(User));
                             string seperator = "$$";
                             xURL = myFunctions.EncryptStringForUrl(myFunctions.GetCompanyID(User).ToString() + seperator + row["N_PartyID"].ToString() + seperator + "HOME" + seperator + "0", System.Text.Encoding.Unicode);
-                            xURL = AppURL + "/client/customer/13/" + xURL + "/home/new";
+                            xURL = AppURL + "/client/customer/13/" + xURL + "/clientCRMDashboard";
                             xBodyText = xBodyText.Replace("@URL", xURL);
                             xSubject = xSubject.Replace("@CompanyName", myFunctions.GetCompanyName(User));
 

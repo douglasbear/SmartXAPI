@@ -63,20 +63,12 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by N_CustomerID desc";
             else
                 xSortBy = " order by " + xSortBy;
-            if (nCustomerID > 0)
-            {
-                if(Count==0)
-                    sqlCommandText = "select top("+ nSizeperpage +") * from vw_ClientCRMCustomer where N_CompanyID=@p1 and N_CustID="+ nCustomerID +" and N_CustFnYearID="+ nFnYearId + Pattern + Searchkey + " " + xSortBy;
-                else
-                    sqlCommandText = "select top("+ nSizeperpage +") * from vw_ClientCRMCustomer where N_CompanyID=@p1 and N_CustID="+ nCustomerID +" and N_CustFnYearID="+ nFnYearId + Pattern + Searchkey + " and N_CustomerID not in (select top("+ Count +") N_CustomerID from vw_ClientCRMCustomer where N_CompanyID=@p1 and N_CustID="+ nCustomerID +" and N_CustFnYearID="+ nFnYearId + xSortBy + " ) " + xSortBy;
-            }
+
+            if(Count==0)
+                sqlCommandText = "select * from vw_CRMCustomer where N_CompanyID=@p1" + Pattern + Searchkey + " " + xSortBy;
             else
-            {
-                if(Count==0)
-                    sqlCommandText = "select * from vw_CRMCustomer where N_CompanyID=@p1" + Pattern + Searchkey + " " + xSortBy;
-                else
-                    sqlCommandText = "select * from vw_CRMCustomer where N_CompanyID=@p1  " + Pattern + Searchkey + " and N_CustomerID not in (select top("+ Count +") N_CustomerID from vw_CRMCustomer where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
-            }
+                sqlCommandText = "select * from vw_CRMCustomer where N_CompanyID=@p1  " + Pattern + Searchkey + " and N_CustomerID not in (select top("+ Count +") N_CustomerID from vw_CRMCustomer where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", nFnYearId);
