@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
 
              sqlTerminationTrend = "SELECT  DATEADD(month, DATEDIFF(month, 0, D_EndDate), 0) AS D_MonthStart, YEAR(D_EndDate) [Year], MONTH(D_EndDate) [Month],  DATENAME(MONTH,D_EndDate) [Month Name], COUNT(1) [N_Count] FROM pay_EndOFService where N_CompanyID =  "+nCompanyID+" and N_FnYearId= "+nFnYearId+" GROUP BY DATEADD(month, DATEDIFF(month, 0, D_EndDate), 0) ,YEAR(D_EndDate), MONTH(D_EndDate),  DATENAME(MONTH, D_EndDate),N_FnYearID,N_CompanyID ORDER BY 1,2";
 
-              sqlEmpOnProbation = "select count(1) as N_Count from Pay_Employee where D_ProbationEndDate> GETDATE() and  D_ProbationEndDate < (GETDATE()+14) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
+              sqlEmpOnProbation = "select count(1) as N_Count from Pay_Employee where D_ProbationEndDate< GETDATE() and  N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
             
             sqlReminderCount = "select count(1) as N_Count from vw_Gen_ReminderDashboard where N_CompanyID = "+nCompanyID+" and N_LanguageID= "+nLanguageID+ "";
             }
@@ -60,7 +60,7 @@ namespace SmartxAPI.Controllers
 
                  sqlTerminationTrend = "SELECT  DATEADD(month, DATEDIFF(month, 0, D_EndDate), 0) AS D_MonthStart, YEAR(D_EndDate) [Year], MONTH(D_EndDate) [Month],  DATENAME(MONTH,D_EndDate) [Month Name], COUNT(1) [N_Count] FROM pay_EndOFService where N_CompanyID =  "+nCompanyID+" and N_FnYearId= "+nFnYearId+" and N_BranchID="+nBranchId+"  GROUP BY DATEADD(month, DATEDIFF(month, 0, D_EndDate), 0) ,YEAR(D_EndDate), MONTH(D_EndDate),  DATENAME(MONTH, D_EndDate),N_FnYearID,N_CompanyID ORDER BY 1,2";
 
-                  sqlEmpOnProbation = "select count(1) as N_Count from Pay_Employee where D_ProbationEndDate> GETDATE() and  D_ProbationEndDate < (GETDATE()+14) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+" and N_BranchID="+nBranchId+"";
+                  sqlEmpOnProbation = "select count(1) as N_Count from Pay_Employee where D_ProbationEndDate < GETDATE() and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+" and N_BranchID="+nBranchId+"";
 
                   sqlReminderCount = "select count(1) as N_Count from vw_Gen_ReminderDashboard where N_CompanyID = "+nCompanyID+"  and N_LanguageID= " +nLanguageID+ "";
             }
