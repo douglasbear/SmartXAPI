@@ -683,6 +683,17 @@ namespace SmartxAPI.Controllers
                             }
                         }
 
+                     DataTable count = new DataTable();
+                    SortedList Paramss = new SortedList();
+                    string sql = "select * from Inv_PurchaseOrder where x_POrderNo='" + X_POrderNo + "' and N_CompanyID=" + nCompanyId + "";
+                    count = dLayer.ExecuteDataTable(sql, Paramss, connection, transaction);
+                    if (count.Rows.Count > 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error(User, "Document Number Already in Use"));
+                    }
+
+
 
                         if (N_POrderID > 0)
                         {
