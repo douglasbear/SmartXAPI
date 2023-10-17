@@ -566,6 +566,7 @@ namespace SmartxAPI.Controllers
                 int n_AppID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_AppID"].ToString());
                 int n_ClientID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ClientID"].ToString());
                 int n_RefID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_RefID"].ToString());
+                int n_CompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                 //MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_AppUrl", typeof(string), null);
                 MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_DbUri", typeof(string), "SmartxConnection");
                 MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_UserLimit", typeof(int), 1);
@@ -596,7 +597,7 @@ namespace SmartxAPI.Controllers
                     dLayer.ExecuteNonQuery("Update GenSettings Set N_Value =  "+sumValue+" where  N_ClientID="+n_ClientID+" and X_Description='USER LIMIT'" , connection, transaction);
                     }
 
-                    dLayer.DeleteData("ClientApps", "n_AppID", n_AppID, "n_ClientID="+n_ClientID+"",connection, transaction);
+                    dLayer.DeleteData("ClientApps", "n_AppID", n_AppID, "n_ClientID="+n_ClientID+" and  n_CompanyID="+n_CompanyID+"",connection, transaction);
                     int refID = dLayer.SaveData("ClientApps", "N_RefID", MasterTable,connection, transaction);
                     if (refID <= 0)
                     {
