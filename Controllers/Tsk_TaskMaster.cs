@@ -346,7 +346,7 @@ namespace SmartxAPI.Controllers
                     //History
                     HistorySql = "select * from (select N_TaskID,N_CreaterID, D_EntryDate,X_HistoryText,X_Assignee,D_DueDate,D_TaskDate,X_Creator,N_Status from vw_Tsk_TaskStatus  where N_CompanyId=@nCompanyID and N_TaskID=" + TaskID + " " +
                      "union all " +
-                     "select N_ActionID as N_TaskID ,N_Creator as N_CreaterID,D_EntryDate,'Commented by #CREATOR on #TIME - ' + X_Comments as X_HistoryText,'' as x_Assignee,GETDATE() as D_DueDate,GETDATE() as D_TaskDate,X_UserName as X_Creator,'' as N_Status  from vw_Tsk_TaskComments  where N_ActionID=" + TaskID + "  ) as temptable order by D_EntryDate";
+                     "select N_ActionID as N_TaskID ,N_Creator as N_CreaterID,D_EntryDate,'Commented by #CREATOR on #TIME - ' + X_Comments as X_HistoryText,'' as x_Assignee,GETDATE() as D_DueDate,GETDATE() as D_TaskDate,X_UserName as X_Creator,'' as N_Status  from vw_Tsk_TaskComments  where N_ActionID=" + TaskID + "  ) as temptable order by D_TaskDate";
                     HistoryTable = dLayer.ExecuteDataTable(HistorySql, Params, connection);
 
 
@@ -1270,13 +1270,13 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-
+                    
                     connection.Open();
                     dLayer.DeleteData("Tsk_TaskStatus", "N_TaskID", nTaskID, "", connection);
                     Results = dLayer.DeleteData("Tsk_TaskComments", "N_ActionID", nTaskID, "", connection);
                     Results = dLayer.DeleteData("Gen_Mentions", "N_TransID", nTaskID, "", connection);
                     Results = dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskID, "", connection);
-                    
+
                     if (Results > 0)
                     {
                         SqlTransaction transaction = connection.BeginTransaction();

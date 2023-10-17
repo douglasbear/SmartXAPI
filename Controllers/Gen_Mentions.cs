@@ -44,9 +44,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
 
             string sqlCommandText = "";
-
-          
-            sqlCommandText = "select count(1) from Gen_Mentions where N_CompanyID=@nCompanyID and N_UserID=@nUserID";
+            sqlCommandText = "select count(1) from Gen_Mentions where N_CompanyID=@nCompanyID and N_UserID=@nUserID and B_HideNotification=0";
           
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nUserID", nUserID);
@@ -71,16 +69,24 @@ namespace SmartxAPI.Controllers
         }
 
             [HttpGet("mentionList")]
-        public ActionResult GetMentionList()
+        public ActionResult GetMentionList(int nMentionType)
         {
             SortedList Params = new SortedList();
             DataTable dt = new DataTable();
+            string sqlCommandText = "";
+
+            if(nMentionType==1)
+            {
+                sqlCommandText = "select * from Vw_genMentionList where b_HideNotification=0 and N_CompanyID=@nCompanyID and N_UserID=@nUserID"; 
+            }
+            else if(nMentionType==2)
+            {
+                sqlCommandText = "select * from Vw_genMentionList where b_HideNotification=1 and N_CompanyID=@nCompanyID and N_UserID=@nUserID";  
+            }        
 
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "";
-
-            sqlCommandText = "select * from Vw_genMentionList where N_CompanyID=@nCompanyID and N_UserID=@nUserID";
+            
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nUserID", nUserID);
 
@@ -93,12 +99,52 @@ namespace SmartxAPI.Controllers
                     
                     SortedList res = new SortedList();
                     res.Add("Details", api.Format(dt));
-                    return Ok(api.Success(res));
+                    // if (dt.Rows.Count == 0)
+                    // {
+                    //     return Ok(api.Warning("No Results Found"));
+                    // }
+                    // else
+                    // {
+                        return Ok(api.Success(res));
+                    // }
                 }
             }
             catch (Exception e)
             {
                 return Ok(api.Error(User,e));
+            }
+        }
+
+        [HttpGet("update")]
+        public ActionResult ChangeData(string xDocCode)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+
+                    string sqlCommandText = "";
+                    sqlCommandText = "update Gen_Mentions set b_HideNotification=1 where N_CompanyID=@nCompanyID and N_UserID=@nUserID and X_DocCode=@xDocCode";     
+
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    int nUserID = myFunctions.GetUserID(User);
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@nUserID", nUserID);
+                    Params.Add("@xDocCode", xDocCode);
+                    
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
+
+                    transaction.Commit();
+                    return Ok(dt);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(User, ex));
             }
         }
 
