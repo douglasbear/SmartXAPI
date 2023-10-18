@@ -820,7 +820,7 @@ namespace SmartxAPI.Controllers
                     if (n_SalesOrderId <= 0)
                     {
                         transaction.Rollback();
-                        return Ok("Unable to save sales order");
+                        return Ok(_api.Error("Unable To Save!.. Order No Already Exists"));
                     }
                     else
                     {
