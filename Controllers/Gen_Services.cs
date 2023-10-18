@@ -103,7 +103,11 @@ namespace SmartxAPI.Controllers
                         masterTable = "Inv_PayReceipt";
                         column = "X_VoucherNo";
                     }
-
+                     if (formID == 80)
+                    {
+                        masterTable = "Inv_SalesQuotation";
+                        column = "x_QuotationNo";
+                    }
 
 
 
