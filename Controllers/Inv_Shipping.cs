@@ -163,7 +163,10 @@ namespace SmartxAPI.Controllers
                     }
 
                     transaction.Commit();
-                    return Ok(_api.Success("Saved"));
+                    SortedList Result = new SortedList();
+                    Result.Add("n_ShippingID",nShippingID);
+                    Result.Add("invoiceNo",X_ShippingCode);
+                    return Ok(_api.Success(Result,"Saved" ));
                 }
             }
             catch (Exception ex)

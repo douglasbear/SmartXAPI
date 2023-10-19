@@ -1993,7 +1993,36 @@ namespace SmartxAPI.GeneralFunctions
 
             dLayer.ExecuteNonQueryPro("SP_StockOutUpdate", StockOutParam, connection, transaction);
 
-            
+            if(nDivisionID>0)
+                    {
+                    if (DetailTable.Rows.Count > 0)
+                    {
+                     object xLevelsql = dLayer.ExecuteScalar("select X_LevelPattern from Inv_DivisionMaster where N_CompanyID=" + N_CompanyID + " and N_DivisionID=" + nDivisionID + " and N_GroupID=0", Params, connection,transaction);
+                      
+                       if (xLevelsql != null && xLevelsql.ToString() != "")
+                        {
+                        for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        {
+
+                            //  detailTable.Rows[j]["N_SalesId"] = N_SalesID;
+                            object xLevelPattern = dLayer.ExecuteScalar("SELECT  Inv_DivisionMaster.X_LevelPattern FROM         Inv_DivisionMaster LEFT OUTER JOIN    Inv_ItemCategory ON Inv_DivisionMaster.N_DivisionID = Inv_ItemCategory.N_DivisionID AND Inv_DivisionMaster.N_CompanyID = Inv_ItemCategory.N_CompanyID RIGHT OUTER JOIN "+
+                            "Inv_ItemMaster ON Inv_ItemCategory.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemCategory.N_CategoryID = Inv_ItemMaster.N_CategoryID  where Inv_ItemMaster.N_ItemID="+ DetailTable.Rows[j]["N_ItemID"]+" and Inv_ItemMaster.N_CompanyID="+N_CompanyID+" ", Params, connection,transaction);
+                           // object xLevelPattern = dLayer.ExecuteScalar("select X_LevelPattern from Acc_CostCentreMaster where N_CompanyID=" + N_CompanyID + " and N_CostCentreID=" + nDivisionID + " and N_GroupID=0", Params, connection);
+                             if (xLevelsql.ToString() != xLevelPattern.ToString().Substring(0, 3))
+                             {
+                                 Result.Add("b_IsCompleted", 0);
+                                 Result.Add("x_Msg", "Unable To save!...Division Mismatch");
+                                 return Result;
+                             }
+                           
+                        }
+                        }
+                     
+
+
+
+                    }
+                    }
           
 
             //transaction.Commit();

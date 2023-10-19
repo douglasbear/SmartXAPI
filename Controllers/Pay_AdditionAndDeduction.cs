@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("empList")]
-        public ActionResult GetJobTitle(string xBatch, int nFnYearID, string payRunID, string xDepartment, string xPosition, bool bAllBranchData, int nBranchID)
+        public ActionResult GetEmpList(string xBatch, int nFnYearID, string payRunID, string xDepartment, string xPosition, bool bAllBranchData, int nBranchID)
         {
             DataTable mst = new DataTable();
             DataTable dt = new DataTable();

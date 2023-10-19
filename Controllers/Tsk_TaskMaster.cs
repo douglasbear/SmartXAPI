@@ -193,6 +193,7 @@ namespace SmartxAPI.Controllers
                     DataTable options = new DataTable();
                     DataTable TasksList = new DataTable();
                     DataTable Materials = new DataTable();
+                    DataTable Mentions = new DataTable();
                     int loginUserID = myFunctions.GetUserID(User);
 
 
@@ -203,6 +204,7 @@ namespace SmartxAPI.Controllers
                     string ActionSql = "";
                     string nextAction = "";
                     string timeSql = "";
+                    string mentionSql = "";
 
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
@@ -221,6 +223,7 @@ namespace SmartxAPI.Controllers
 
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_Comments", typeof(string), "");
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_CommentID", typeof(string), "");
 
 
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -231,6 +234,7 @@ namespace SmartxAPI.Controllers
                     {
                         object x_Comments = dLayer.ExecuteScalar("select  X_Comments from Tsk_TaskComments where N_CommentsID=" + myFunctions.getIntVAL(comments.ToString()), Params, connection);
                         MasterTable.Rows[0]["x_Comments"] = x_Comments.ToString();
+                        MasterTable.Rows[0]["n_CommentID"] = myFunctions.getIntVAL(comments.ToString());
                     }
                     MasterTable.AcceptChanges();
                     Params.Add("@nTaskID", TaskID);
@@ -404,6 +408,11 @@ namespace SmartxAPI.Controllers
                     CommentsTable = dLayer.ExecuteDataTable(CommentsSql, Params, connection);
                     CommentsTable = _api.Format(CommentsTable, "Comments");
 
+                    //mention
+                    mentionSql = "select * from Vw_tskMentionList where N_TransID=@nTaskID and N_CompanyId=@nCompanyID and N_CommentsID="+myFunctions.getIntVAL(comments.ToString())+"";
+                    Mentions = dLayer.ExecuteDataTable(mentionSql, Params, connection);
+                    Mentions = _api.Format(Mentions, "mentions");
+
                     //ActionTable
                     if (nextAction == "")
                     {
@@ -430,6 +439,7 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(options);
                     dt.Tables.Add(TasksList);
                     dt.Tables.Add(Materials);
+                    dt.Tables.Add(Mentions);
 
                     return Ok(_api.Success(dt));
 
@@ -1181,8 +1191,10 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
                     DataTable DetailTable;
+                    DataTable MentionsTable;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
+                    MentionsTable = ds.Tables["mentions"];
                     DataTable Comments = ds.Tables["comments"];
                     SortedList Params = new SortedList();
                     DataRow MasterRow = MasterTable.Rows[0];
@@ -1217,11 +1229,29 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Unable To Save"));
                         }
-
-
-
-
                     }
+
+                      if (MentionsTable.Rows.Count > 0)
+                    {
+
+                    //    dLayer.DeleteData("Gen_Mentions", "N_TaskID", nTaskID, "", connection);
+
+                          for (int j = 0; j < MentionsTable.Rows.Count; j++)
+                    {
+                        MentionsTable.Rows[j]["N_CommentsID"] = nCommentsID;
+                    }
+
+                        int nMentionID = dLayer.SaveData("Gen_Mentions", "N_MentionID", MentionsTable, connection, transaction);
+                        if (nMentionID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable To Save"));
+                        }
+                    }
+
+
+
+
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
                 }
@@ -1243,7 +1273,10 @@ namespace SmartxAPI.Controllers
 
                     connection.Open();
                     dLayer.DeleteData("Tsk_TaskStatus", "N_TaskID", nTaskID, "", connection);
+                    Results = dLayer.DeleteData("Tsk_TaskComments", "N_ActionID", nTaskID, "", connection);
+                    Results = dLayer.DeleteData("Gen_Mentions", "N_TransID", nTaskID, "", connection);
                     Results = dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskID, "", connection);
+                    
                     if (Results > 0)
                     {
                         SqlTransaction transaction = connection.BeginTransaction();
@@ -1484,7 +1517,6 @@ namespace SmartxAPI.Controllers
         public ActionResult MailDetails()
         {
             DataSet dt = new DataSet();
-            DataTable MailData = new DataTable();
             DataTable MasterTable = new DataTable();
             MasterTable = _api.Format(MasterTable, "Master");
             SortedList Params = new SortedList();
@@ -1492,10 +1524,8 @@ namespace SmartxAPI.Controllers
             int nCompanyId = myFunctions.GetCompanyID(User);
             DateTime datetime = DateTime.Now;
             string X_Body = "";
-            int N_StatusID = 0;
-            string sqlCommandText = "select * from vw_TaskDetailsRPT where N_CompanyID=" + nCompanyId + " and N_AssigneeID=" + N_UserID + " and Cast(D_EntryDate as DATE) =  Cast('" + datetime + "' as DATE) and N_CompletedPercentage>0";
-            string sqlmailData = "select * from Gen_MailTemplates where N_CompanyID=" + nCompanyId + " and x_templatename='Daily Task'";
-
+            string X_Subject = "";
+           string sqlmailData = "select * from Gen_MailTemplates where N_CompanyID=" + nCompanyId + " and x_templatename='DAILYTASK'";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -1508,34 +1538,19 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        double TotalWorkHrs = 0;
-                        MailData = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                        foreach (DataRow dr in MailData.Rows)
-                        {
-
-                            X_Body = X_Body + "*" + dr["X_TaskSummery"] + "- " + dr["N_CompletedPercentage"] + "%<br>";
-                            X_Body = X_Body + dr["N_WorkedTime"] + " Hrs (" + dr["N_WorkHours"] + " Hrs)<br>";
-                            TotalWorkHrs = TotalWorkHrs + myFunctions.getVAL(dr["N_WorkedTime"].ToString());
-                        }
-                        X_Body = X_Body + "<br>Total hours Worked : " + TotalWorkHrs + " Hrs";
-                        string x_body = (MasterTable.Rows[0]["x_body"]).ToString();
-                        x_body = x_body.Replace("@Body", X_Body);
-                        x_body = x_body.Replace("@Date", datetime.ToString("dd-MM-yyyy"));
-                        MasterTable.Rows[0]["x_body"] = x_body;
-                        string x_Subject = (MasterTable.Rows[0]["x_Subject"]).ToString();
-                        x_Subject = x_Subject.Replace("@Month", datetime.ToString("MMM").ToUpper());
-                        MasterTable.Rows[0]["x_Subject"] = x_Subject;
-
-
+                        X_Body = MasterTable.Rows[0]["x_body"].ToString();
+                        X_Subject = MasterTable.Rows[0]["x_Subject"].ToString();
+                        X_Body = X_Body.Replace("@Month", datetime.ToString("MMM-yyyy").ToUpper());
+                        X_Body = X_Body.Replace("@Date", datetime.ToString("dd-MM-yyyy"));
+                        X_Subject = X_Subject.Replace("@Month", datetime.ToString("MMM-yyyy").ToUpper());
+                        X_Subject = X_Subject.Replace("@Date", datetime.ToString("dd-MM-yyyy"));
+                        MasterTable.Rows[0]["x_Subject"] = X_Subject;
+                        MasterTable.Rows[0]["x_body"] = X_Body;
                     }
                     MasterTable.AcceptChanges();
-
-
                     MasterTable = _api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
-
                 }
-
                 return Ok(_api.Success(dt));
             }
             catch (Exception e)
