@@ -45,22 +45,22 @@ namespace SmartxAPI.Controllers
             if(AllBranchesData==true){
             sqlEmpCount = "select (select  count(1) from pay_employee where N_Status not in (2,3) and N_CompanyID = "+nCompanyID+" and N_FnYearId= "+nFnYearId+") as N_ActEmp ,(select  count(1) from pay_employee where N_Status  in (2,3) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+") as N_SepEmp";
 
-             sqlEmpOnLeave = "select count(1) as N_Count from Pay_Employee where N_CompanyID ="+nCompanyID+" and N_FnYearID ="+nFnYearId+" and N_EmpID in ( select N_EmpID from Pay_VacationDetails where N_VacDays < 0 and B_IsAdjustEntry =0 and (Cast(D_VacDateFrom as DATE)<=Cast(GETDATE() as DATE) and Cast(D_VacDateTo as DATE)>=cast(GETDATE() as DATE)) and N_CompanyID ="+nCompanyID+" and N_FnYearId="+nFnYearId+" group by N_EmpID)";
+             sqlEmpOnLeave = "select count(1) as N_Count from Pay_Employee where N_CompanyID ="+nCompanyID+" and N_FnYearID ="+nFnYearId+" and N_EmpID in ( select N_EmpID from Pay_VacationDetails where N_VacDays < 0 and B_IsAdjustEntry =0 and B_IsSaveDraft=0 and (Cast(D_VacDateFrom as DATE)<=Cast(GETDATE() as DATE) and Cast(D_VacDateTo as DATE)>=cast(GETDATE() as DATE)) and N_CompanyID ="+nCompanyID+" and N_FnYearId="+nFnYearId+" group by N_EmpID)";
 
              sqlTerminationTrend = "SELECT  DATEADD(month, DATEDIFF(month, 0, D_EndDate), 0) AS D_MonthStart, YEAR(D_EndDate) [Year], MONTH(D_EndDate) [Month],  DATENAME(MONTH,D_EndDate) [Month Name], COUNT(1) [N_Count] FROM pay_EndOFService where N_CompanyID =  "+nCompanyID+" and N_FnYearId= "+nFnYearId+" GROUP BY DATEADD(month, DATEDIFF(month, 0, D_EndDate), 0) ,YEAR(D_EndDate), MONTH(D_EndDate),  DATENAME(MONTH, D_EndDate),N_FnYearID,N_CompanyID ORDER BY 1,2";
 
-              sqlEmpOnProbation = "select count(1) as N_Count from Pay_Employee where D_ProbationEndDate> GETDATE() and  D_ProbationEndDate < (GETDATE()+14) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
+              sqlEmpOnProbation = "select count(1) as N_Count from vw_payEmployee where D_ProbationEndDate< GETDATE() and  N_CompanyID ="+nCompanyID+" and  N_MainTypeID =134 and N_FnYearId= "+nFnYearId+"";
             
             sqlReminderCount = "select count(1) as N_Count from vw_Gen_ReminderDashboard where N_CompanyID = "+nCompanyID+" and N_LanguageID= "+nLanguageID+ "";
             }
             else{
                  sqlEmpCount = "select (select  count(1) from pay_employee where N_Status not in (2,3) and N_CompanyID = "+nCompanyID+" and N_FnYearId= "+nFnYearId+" and N_BranchID="+nBranchId+") as N_ActEmp ,(select  count(1) from pay_employee where N_Status  in (2,3) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+" and N_BranchID="+nBranchId+") as N_SepEmp";
 
-                  sqlEmpOnLeave = "select count(1) as N_Count from Pay_VacationDetails where N_VacDays < 0 and B_IsAdjustEntry =0 and (Cast(D_VacDateFrom as DATE)<=Cast(GETDATE() as DATE) and Cast(D_VacDateTo as DATE)>=cast(GETDATE() as DATE)) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+" and N_BranchID="+nBranchId+"";
+                  sqlEmpOnLeave = "select count(1) as N_Count from Pay_VacationDetails where N_VacDays < 0 and B_IsAdjustEntry =0 and B_IsSaveDraft=0 and (Cast(D_VacDateFrom as DATE)<=Cast(GETDATE() as DATE) and Cast(D_VacDateTo as DATE)>=cast(GETDATE() as DATE)) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+" and N_BranchID="+nBranchId+"";
 
                  sqlTerminationTrend = "SELECT  DATEADD(month, DATEDIFF(month, 0, D_EndDate), 0) AS D_MonthStart, YEAR(D_EndDate) [Year], MONTH(D_EndDate) [Month],  DATENAME(MONTH,D_EndDate) [Month Name], COUNT(1) [N_Count] FROM pay_EndOFService where N_CompanyID =  "+nCompanyID+" and N_FnYearId= "+nFnYearId+" and N_BranchID="+nBranchId+"  GROUP BY DATEADD(month, DATEDIFF(month, 0, D_EndDate), 0) ,YEAR(D_EndDate), MONTH(D_EndDate),  DATENAME(MONTH, D_EndDate),N_FnYearID,N_CompanyID ORDER BY 1,2";
 
-                  sqlEmpOnProbation = "select count(1) as N_Count from Pay_Employee where D_ProbationEndDate> GETDATE() and  D_ProbationEndDate < (GETDATE()+14) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+" and N_BranchID="+nBranchId+"";
+                  sqlEmpOnProbation = "select count(1) as N_Count from vw_payEmployee where D_ProbationEndDate < GETDATE() and N_CompanyID ="+nCompanyID+" and  N_MainTypeID =134 and N_FnYearId= "+nFnYearId+" and N_BranchID="+nBranchId+"";
 
                   sqlReminderCount = "select count(1) as N_Count from vw_Gen_ReminderDashboard where N_CompanyID = "+nCompanyID+"  and N_LanguageID= " +nLanguageID+ "";
             }

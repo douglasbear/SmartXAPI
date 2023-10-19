@@ -651,8 +651,18 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Error(User, "Year Closed"));
                     }
 
-
-
+                    if (N_POrderID == 0 && X_POrderNo != "@Auto"){
+                               DataTable count = new DataTable();
+                    SortedList Paramss = new SortedList();
+                    string sql = "select * from Inv_PurchaseOrder where x_POrderNo='" + X_POrderNo + "' and N_CompanyID=" + nCompanyId + "";
+                    count = dLayer.ExecuteDataTable(sql, Paramss, connection, transaction);
+                    if (count.Rows.Count > 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error(User, "Document Number Already in Use"));
+                    }
+                    }
+                
 
 
                     if (X_POrderNo == "@Auto")
@@ -666,6 +676,8 @@ namespace SmartxAPI.Controllers
                         xButtonAction = "Insert";
                         if (X_POrderNo == "") { transaction.Rollback(); return Ok(api.Warning("Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["x_POrderNo"] = X_POrderNo;
+
+                  
                     }
                     else
                         X_POrderNo = MasterTable.Rows[0]["x_POrderNo"].ToString();
@@ -682,6 +694,8 @@ namespace SmartxAPI.Controllers
                                 return Ok(api.Success("Payment Request Processed"));
                             }
                         }
+
+               
 
 
                         if (N_POrderID > 0)

@@ -349,7 +349,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Already In Use !!"));
                         }
                     }
-                       if ( nApprovalID > 0)
+                    if ( nApprovalID > 0)
                     {
                         object appCount = dLayer.ExecuteScalar("select count(1) From Sec_ApprovalSettings_General where N_ApprovalID =" + nApprovalID + " and N_CompanyID =" + nCompanyID, connection, transaction);
                         appCount = appCount == null ? 0 : appCount;
@@ -359,13 +359,14 @@ namespace SmartxAPI.Controllers
                     }
                     Results = dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID,"N_CompanyID =" + nCompanyID , connection,transaction);
                     if (Results > 0)
-                    {
-                      transaction.Commit();
+                    {                      
                         dLayer.DeleteData("Gen_ApprovalCodesDetails", "N_ApprovalID", nApprovalID, "N_CompanyID =" + nCompanyID , connection,transaction);
+                        transaction.Commit();
                         return Ok(_api.Success("Approval Code deleted"));
                     }
                     else
                     {
+                        transaction.Rollback();
                         return Ok(_api.Error(User,"Unable to delete"));
                     }
                 }

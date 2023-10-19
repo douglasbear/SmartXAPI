@@ -228,6 +228,7 @@ namespace SmartxAPI.Controllers
                     string X_DefaultAbsentCode = "";
                     int N_TimeSheetID = 0;
                     int N_BatchID = 0;
+                     int count=0;
 
                     SortedList Master = new SortedList();
 
@@ -951,6 +952,12 @@ namespace SmartxAPI.Controllers
                                     N_deductionTime = myFunctions.getVAL(row["Deduction"].ToString());
                                     N_CompsateDed = myFunctions.getVAL(row["CompMinutes"].ToString());
                                     N_ActualWorkHours = myFunctions.getVAL(row["N_ActWorkHours"].ToString());
+                                   
+                                    if(N_ActualWorkHours!=0)
+                                    {
+                                        count=count+1;
+
+                                    }
                               
                                     
                                     if (N_additionTime > 0)
@@ -1377,17 +1384,25 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable To Delete"));
                     }
 
-                   object DedID = dLayer.ExecuteScalar("select Top(1) N_TransID from Pay_MonthlyAddOrDedDetails where N_CompanyID="+nCompanyID+ " and B_TimeSheetEntry=1 and N_FormID=216 and N_RefID="+nTimeSheetApproveID, QueryParams, connection,transaction);               
+                   object DedID = dLayer.ExecuteScalar("select Top(1) N_TransID from Pay_MonthlyAddOrDedDetails where N_CompanyID="+nCompanyID+ " and B_TimeSheetEntry=1 and N_FormID=216 and N_RefID="+nTimeSheetApproveID, QueryParams, connection,transaction);                                  
+                   object CountDedID=0;
                    
                     if(DedID==null)
-                    DedID=0;
+                        DedID=0;
+                    else
+                    {
+                        CountDedID = dLayer.ExecuteScalar("select COUNT(1) from Pay_MonthlyAddOrDedDetails where N_CompanyID="+nCompanyID+ " and ISNULL(N_FormID,0)<>216 and N_TransID="+DedID, QueryParams, connection,transaction);               
+                        if(CountDedID==null)
+                            CountDedID=0;
+                    }
 
                      Results = dLayer.DeleteData("Pay_TimeSheetApproveMaster", "N_TimeSheetApproveID", nTimeSheetApproveID,"N_CompanyID="+nCompanyID+ "", connection,transaction);
 
                     if (Results > 0)
                     {
                         dLayer.DeleteData("Pay_MonthlyAddOrDedDetails ", "N_RefID", nTimeSheetApproveID,"N_CompanyID="+nCompanyID+ " and B_TimeSheetEntry=1 and N_FormID=216", connection,transaction);
-                        dLayer.DeleteData("Pay_MonthlyAddOrDed", "N_TransID", myFunctions.getIntVAL(DedID.ToString()),"N_CompanyID="+nCompanyID+ "", connection,transaction);
+                        if(myFunctions.getIntVAL(CountDedID.ToString())==0)
+                            dLayer.DeleteData("Pay_MonthlyAddOrDed", "N_TransID", myFunctions.getIntVAL(DedID.ToString()),"N_CompanyID="+nCompanyID+ "", connection,transaction);
                         // dLayer.DeleteData("Pay_VacationDetails", "N_TransID", nTransID,"N_CompanyID="+nCompanyID+" and N_EmpID in("+criteria+") and N_FormID=" + this.FormID+" and d_VacDateFrom>='"+Convert.ToDateTime(dFromDate.ToString()) + "' and D_VacDateTo<='"+Convert.ToDateTime(dToDate.ToString()) + "'", connection,transaction);
                         dLayer.DeleteData("Pay_TimeSheet", "N_batchID", nBatchID,"N_CompanyID="+nCompanyID+ " and N_timeSheetApproveID="+nTimeSheetApproveID+" and N_FnYearID="+nFnYearID+ "", connection,transaction);
                         dLayer.DeleteData("Pay_TimeSheetMaster", "N_batchID", nBatchID,"N_CompanyID="+nCompanyID+ " and N_TimeSheetApproveID="+nTimeSheetApproveID+" and N_FnYearID="+nFnYearID+ "", connection,transaction);
