@@ -90,10 +90,11 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText="select * from Log_ScreenActivity where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID";
+            string sqlCommandText="select * from Log_ScreenActivity where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID ORDER BY D_ActionDate";
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nFormID",nFormID);
             Params.Add("@nTransID",nTransID);
+            
             try{
                 using (SqlConnection connection = new SqlConnection(connectionString))
                     {
