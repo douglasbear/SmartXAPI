@@ -367,8 +367,8 @@ namespace SmartxAPI.Controllers
                                 {
                                     dr.Delete();
                                 }
-                                
-                              else if (dr["X_Type"].ToString() != "OP")
+
+                                else if (dr["X_Type"].ToString() != "OP")
                                 {
                                     if (N_InvoiceDueAmt == 0)
                                     {
@@ -376,14 +376,14 @@ namespace SmartxAPI.Controllers
                                     }
                                     else if (n_PayReceiptId > 0)
                                     {
-                                     if (dr["N_PayreceiptID"].ToString() == "")
-                                    {
-                                        dr.Delete();
+                                        if (dr["N_PayreceiptID"].ToString() == "")
+                                        {
+                                            dr.Delete();
+                                        }
                                     }
-                                    }
-                                    
+
                                 }
-                             
+
 
 
 
@@ -586,11 +586,11 @@ namespace SmartxAPI.Controllers
                     int N_SaveDraft = myFunctions.getIntVAL(Master["b_IssaveDraft"].ToString());
                     int nUserID = myFunctions.GetUserID(User);
                     int N_NextApproverID = 0;
-                    String xButtonAction="";
+                    String xButtonAction = "";
 
-                              
+
                     int N_FormID = 0;
-                   if (MasterTable.Columns.Contains("N_FormID"))
+                    if (MasterTable.Columns.Contains("N_FormID"))
                     {
                         N_FormID = myFunctions.getIntVAL(MasterRow["N_FormID"].ToString());
                     }
@@ -699,23 +699,23 @@ namespace SmartxAPI.Controllers
                                 {"N_VoucherID",PayReceiptId}
                             };
                         dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
-                           xButtonAction="Update"; 
+                        xButtonAction = "Update";
                     }
-                   if (PayReceiptId == 0 && xVoucherNo != "@Auto")
+                    if (PayReceiptId == 0 && xVoucherNo != "@Auto")
                     {
-                    object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_PayReceipt Where X_VoucherNo ='" + xVoucherNo + "' and N_CompanyID= " + nCompanyId + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
-                    if (N_DocNumber == null)
-                    {
-                        N_DocNumber = 0;
+                        object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_PayReceipt Where X_VoucherNo ='" + xVoucherNo + "' and N_CompanyID= " + nCompanyId + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                        if (N_DocNumber == null)
+                        {
+                            N_DocNumber = 0;
+                        }
+                        if (myFunctions.getVAL(N_DocNumber.ToString()) >= 1)
+                        {
+                            // transaction.Rollback();
+                            // return Ok(_api.Error(User, "Invoice number already in use"));
+                            transaction.Rollback();
+                            return Ok(api.Error(User, "Voucher Number Already exist"));
+                        }
                     }
-                    if (myFunctions.getVAL(N_DocNumber.ToString()) >= 1)
-                    {
-                        // transaction.Rollback();
-                        // return Ok(_api.Error(User, "Invoice number already in use"));
-                       transaction.Rollback();
-                        return Ok(api.Error(User, "Voucher Number Already exist"));
-                    }
-                   }
 
                     if (xVoucherNo == "@Auto")
                     {
@@ -726,8 +726,8 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_BranchID", nBranchID);
 
                         xVoucherNo = dLayer.GetAutoNumber("Inv_PayReceipt", "x_VoucherNo", Params, connection, transaction);
-                         xButtonAction="Insert"; 
-                        
+                        xButtonAction = "Insert";
+
                         if (xVoucherNo == "") { transaction.Rollback(); return Ok(api.Warning("Unable to generate Receipt Number")); }
 
                         MasterTable.Rows[0]["x_VoucherNo"] = xVoucherNo;
@@ -737,16 +737,16 @@ namespace SmartxAPI.Controllers
                         // DetailTable.Columns.Remove("n_PayReceiptDetailsId");
                         // DetailTable.AcceptChanges();
                     }
-                      xVoucherNo = MasterTable.Rows[0]["x_VoucherNo"].ToString();
+                    xVoucherNo = MasterTable.Rows[0]["x_VoucherNo"].ToString();
 
-             
 
-               
+
+
                     MasterTable.Rows[0]["n_UserID"] = myFunctions.GetUserID(User);
                     MasterTable.AcceptChanges();
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
-                      if (MasterTable.Columns.Contains("N_FormID"))
+                    if (MasterTable.Columns.Contains("N_FormID"))
                         MasterTable.Columns.Remove("N_FormID");
 
                     PayReceiptId = dLayer.SaveData("Inv_PayReceipt", "n_PayReceiptId", MasterTable, connection, transaction);
@@ -759,9 +759,9 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                  
-            
-                          
+
+
+
 
                     N_NextApproverID = myFunctions.LogApprovals(Approvals, myFunctions.getIntVAL(nFnYearID.ToString()), "SALES RECEIPT", PayReceiptId, xVoucherNo, 1, "", 0, "", 0, User, dLayer, connection, transaction);
                     N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_PayReceipt where N_PayReceiptId=" + PayReceiptId + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
@@ -852,7 +852,7 @@ namespace SmartxAPI.Controllers
                         PostingParams.Add("X_SystemName", "ERP Cloud");
                         try
                         {
-                        object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
+                            object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
                         }
                         catch (Exception ex)
                         {
@@ -874,13 +874,13 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                                    //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(nFnYearID,PayReceiptId,xVoucherNo,66,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                    //Activity Log
+                    string ipAddress = "";
+                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    myFunctions.LogScreenActivitys(nFnYearID, PayReceiptId, xVoucherNo, 66, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
 
 
 
@@ -908,21 +908,23 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                        SortedList Result = new SortedList();
-                        Result.Add("n_SalesReceiptID", PayReceiptId);
-                        Result.Add("x_SalesReceiptNo", xVoucherNo);
-                        
-                     if (N_FormID == 66)
-                            {
-                          return Ok(api.Success(Result, "Customer Payment Saved"));
-                            }
+                    SortedList Result = new SortedList();
+                    Result.Add("n_SalesReceiptID", PayReceiptId);
+                    Result.Add("x_SalesReceiptNo", xVoucherNo);
 
-                       else if (N_FormID == 1492) 
-                        {
-                            return Ok(api.Success(Result,"Fee Payment Saved Successfully"));
-                        }
-                    else {
-                         return Ok(api.Error(User, "Unable To Save Customer Payment")); }
+                    if (N_FormID == 66)
+                    {
+                        return Ok(api.Success(Result, "Customer Payment Saved"));
+                    }
+
+                    else if (N_FormID == 1492)
+                    {
+                        return Ok(api.Success(Result, "Fee Payment Saved Successfully"));
+                    }
+                    else
+                    {
+                        return Ok(api.Error(User, "Unable To Save Customer Payment"));
+                    }
                 }
 
             }
@@ -950,10 +952,10 @@ namespace SmartxAPI.Controllers
                     string xButtonAction = "Delete";
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,X_VoucherNo,N_PayReceiptId from Inv_PayReceipt where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_PayReceiptId=@nTransID";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
-                  //  string xButtonAction="Delete";
-                    String xVoucherNo="";
+                    //  string xButtonAction="Delete";
+                    String xVoucherNo = "";
 
-             
+
                     if (TransData.Rows.Count == 0)
                     {
                         return Ok(api.Error(User, "Transaction not Found"));
@@ -985,14 +987,14 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nPayReceiptId,TransRow["X_VoucherNo"].ToString(),66,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-                   
+                    //Activity Log
+                    string ipAddress = "";
+                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    myFunctions.LogScreenActivitys(myFunctions.getIntVAL(nFnYearID.ToString()), nPayReceiptId, TransRow["X_VoucherNo"].ToString(), 66, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
+
 
                     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "SALES RECEIPT", nPayReceiptId, TransRow["X_VoucherNo"].ToString(), ProcStatus, "Inv_PayReceipt", X_Criteria, "", User, dLayer, connection, transaction);
                     if (status != "Error")
@@ -1014,20 +1016,20 @@ namespace SmartxAPI.Controllers
                         }
                         else if (ButtonTag == "4")
                         {
-                            dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails_Segments where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='"+xType+"' AND N_AccTransID  in (select N_AccTransID from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='"+xType+"' AND X_VoucherNo='"+TransRow["X_VoucherNo"].ToString()+"')", ParamList, connection, transaction);
-                            dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='"+xType+"' AND X_VoucherNo='"+TransRow["X_VoucherNo"].ToString()+"'", ParamList, connection, transaction);
+                            dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails_Segments where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='" + xType + "' AND N_AccTransID  in (select N_AccTransID from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='" + xType + "' AND X_VoucherNo='" + TransRow["X_VoucherNo"].ToString() + "')", ParamList, connection, transaction);
+                            dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='" + xType + "' AND X_VoucherNo='" + TransRow["X_VoucherNo"].ToString() + "'", ParamList, connection, transaction);
                         }
-               
+
                         transaction.Commit();
                         if (nFormID == 66)
                         {
                             return Ok(api.Success("Sales Receipt " + status + " Successfully"));
                         }
-                        else if(nFormID == 1740) 
-                            {
+                        else if (nFormID == 1740)
+                        {
                             return Ok(api.Success("Sales Receipt " + status + " Successfully"));
-                            }
-                
+                        }
+
                         else
                             return Ok(api.Success("Fee Payment " + status + " Successfully"));
                     }

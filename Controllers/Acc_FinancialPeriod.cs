@@ -118,16 +118,22 @@ namespace SmartxAPI.Controllers
                     int nPeriodID = myFunctions.getIntVAL(MasterRow["N_PeriodID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterRow["N_FnYearID"].ToString());
                     int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
-                    string xPeriodCode = MasterRow["x_PeriodCode"].ToString();
-                     var dDateFrom = MasterRow["d_Start"].ToString();
+                    string xPeriodCode =  MasterRow["x_PeriodCode"].ToString();
+                     var dDateFrom =MasterRow["d_Start"].ToString();
                       var dDateTo = MasterRow["d_End"].ToString();
                     string x_PeriodCode = "";
+                    string xButtonAction="";
+
+
+                    
                     if (xPeriodCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", nFormID);
                         x_PeriodCode = dLayer.GetAutoNumber("Acc_Period", "x_PeriodCode", Params, connection, transaction);
+
+
                         if (x_PeriodCode == "")
                         {
                             transaction.Rollback();
@@ -140,6 +146,15 @@ namespace SmartxAPI.Controllers
                          dLayer.DeleteData("Acc_Period", "N_PeriodID", nPeriodID, "", connection,transaction);
            
                     }
+
+                    //                            //Activity Log 
+                    //    xButtonAction="Created";
+                    //     string ipAddress = "";
+                    //     if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                    //         ipAddress = Request.Headers["X-Forwarded-For"];
+                    //     else
+                    //         ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    //     myFunctions.LogScreenActivitys(nFnYearID, nPeriodID, xPeriodCode, 519, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
                       DataTable count = new DataTable();
                         string sql = "select * from Acc_Period where d_Start='"+dDateFrom+"' and  d_End='"+dDateTo+"' and N_CompanyID="+nCompanyID+"" ;
                         count = dLayer.ExecuteDataTable(sql, Params, connection, transaction);
@@ -148,7 +163,9 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Period Range  already exists"));
                         }
-                   
+
+                        
+                 
                     int n_PeriodID = dLayer.SaveData("Acc_Period", "N_PeriodID", "", "", MasterTable, connection, transaction);
                     if (n_PeriodID <= 0)
                     {
