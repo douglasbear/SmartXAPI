@@ -31,6 +31,7 @@ namespace SmartxAPI.Controllers
             FormID = 208;
         }
 
+
         [HttpGet("empList")]
         public ActionResult GetJobTitle(string xBatch, int nFnYearID, string payRunID, string xDepartment, string xPosition, bool bAllBranchData, int nBranchID)
         {
@@ -219,19 +220,19 @@ namespace SmartxAPI.Controllers
                                 dtVar["details"] = dtNode;
                             }
                         }
-                     foreach (DataRow Kvar in dt.Rows)
-                    {
-                        if (myFunctions.getBoolVAL(Kvar["B_ExcludeInSalary"].ToString()) == true && Kvar["details"] == null)
+                        foreach (DataRow Kvar in dt.Rows)
                         {
-                            Kvar.Delete();
-                            continue;
+                            if (myFunctions.getBoolVAL(Kvar["B_ExcludeInSalary"].ToString()) == true && Kvar["details"] == null)
+                            {
+                                Kvar.Delete();
+                                continue;
+                            }
                         }
-                    }
 
                     }
                     mst.AcceptChanges();
 
-              
+
                     dt.AcceptChanges();
                     dt = _api.Format(dt);
                     mst = _api.Format(mst);
@@ -402,7 +403,7 @@ namespace SmartxAPI.Controllers
                 int nPayRunID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayrunID"].ToString());
                 string x_Batch = MasterTable.Rows[0]["x_Batch"].ToString();
                 int N_OldTransID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TransID"].ToString());
-                String xButtonAction="";
+                String xButtonAction = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
 
@@ -412,7 +413,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@nPayRunID", nPayRunID);
                     Params.Add("@N_TransID", N_OldTransID);
-                    
+
                     if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearId, DateTime.ParseExact(MasterTable.Rows[0]["d_TransDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
                     {
                         object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=" + nCompanyID + " and convert(date ,'" + MasterTable.Rows[0]["d_TransDate"].ToString() + "') between D_Start and D_End", connection, transaction);
@@ -446,7 +447,7 @@ namespace SmartxAPI.Controllers
                             }
                             loop += 1;
                         }
-                        xButtonAction="Insert"; 
+                        xButtonAction = "Insert";
                         if (x_Batch == "")
                         {
                             transaction.Rollback();
@@ -456,7 +457,7 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_Batch"] = x_Batch;
                     }
                     else
-                    xButtonAction="Update";
+                        xButtonAction = "Update";
                     int N_TransID = dLayer.SaveData("Pay_MonthlyAddOrDed", "N_TransID", MasterTable, connection, transaction);
                     if (N_TransID <= 0)
                     {
@@ -511,23 +512,24 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Unable to save"));
                         }
-                        else{
-
-// Activity Log
-                        string ipAddress = "";
-                        if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                            ipAddress = Request.Headers["X-Forwarded-For"];
                         else
-                            ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                              myFunctions.LogScreenActivitys(nFnYearId,N_TransID,x_Batch,208,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-                    
-                    transaction.Commit();
-                    return Ok(_api.Success("Saved"));
+                        {
+
+                            // Activity Log
+                            string ipAddress = "";
+                            if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                                ipAddress = Request.Headers["X-Forwarded-For"];
+                            else
+                                ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                            myFunctions.LogScreenActivitys(nFnYearId, N_TransID, x_Batch, 208, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
+
+                            transaction.Commit();
+                            return Ok(_api.Success("Saved"));
                         }
-                        
+
                     }
-                    
-                
+
+
                 }
             }
             catch (Exception ex)
@@ -537,7 +539,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult PayyAddDedList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nFnYearID,bool bAllBranchData,int nBranchID)
+        public ActionResult PayyAddDedList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nFnYearID, bool bAllBranchData, int nBranchID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -572,22 +574,22 @@ namespace SmartxAPI.Controllers
             }
 
 
-               if (bAllBranchData == true)
-                        {
-                            Searchkey = Searchkey + " ";
-                        }
-                        else
-                        {
-                            Searchkey = Searchkey + " and N_BranchID=" + nBranchID + " ";
-                        }    
+            if (bAllBranchData == true)
+            {
+                Searchkey = Searchkey + " ";
+            }
+            else
+            {
+                Searchkey = Searchkey + " and N_BranchID=" + nBranchID + " ";
+            }
 
             if (Count == 0)
-                        {
-                            sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,x_Batch,right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) as x_PayrunText,D_TransDate,X_Notes from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID " + Searchkey + " " + xSortBy;
-                        }
-                        else
-                            sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,x_Batch,right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) as x_PayrunText,D_TransDate,X_Notes from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID " + Searchkey + " and N_PayRunID not in (select top(" + Count + ") N_PayRunID from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId  and N_FnYearID=@nFnYearID " +Searchkey + xSortBy + " ) " + xSortBy;
-                   
+            {
+                sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,x_Batch,right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) as x_PayrunText,D_TransDate,X_Notes from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID " + Searchkey + " " + xSortBy;
+            }
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,x_Batch,right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) as x_PayrunText,D_TransDate,X_Notes from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearID " + Searchkey + " and N_PayRunID not in (select top(" + Count + ") N_PayRunID from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId  and N_FnYearID=@nFnYearID " + Searchkey + xSortBy + " ) " + xSortBy;
+
 
             // if (Count == 0)
             //     sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,x_Batch,right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) as x_PayrunText,D_TransDate,X_Notes from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId " + Searchkey + xSortBy;
@@ -629,7 +631,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nTransID,int nFnYearID)
+        public ActionResult DeleteData(int nTransID, int nFnYearID)
         {
             int Results = 0;
             try
@@ -641,8 +643,8 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     Params.Add("@N_TransID", nTransID);
                     string Sql = "select N_TransID,X_Batch from Pay_MonthlyAddOrDed where N_TransID=@N_TransID and N_CompanyID=N_CompanyID";
-                    string xButtonAction="Delete";
-                    String X_Batch="";
+                    string xButtonAction = "Delete";
+                    String X_Batch = "";
                     TransData = dLayer.ExecuteDataTable(Sql, Params, connection);
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataRow TransRow = TransData.Rows[0];
@@ -661,12 +663,12 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to delete batch"));
                     }
                     // Activity Log
-                            string ipAddress = "";
-                            if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                                ipAddress = Request.Headers["X-Forwarded-For"];
-                            else
-                                ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                            myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nTransID,TransRow["X_Batch"].ToString(),208,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                    string ipAddress = "";
+                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    myFunctions.LogScreenActivitys(myFunctions.getIntVAL(nFnYearID.ToString()), nTransID, TransRow["X_Batch"].ToString(), 208, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
                     transaction.Commit();
                     return Ok(_api.Success("Batch deleted"));
                 }
