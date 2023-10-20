@@ -56,7 +56,8 @@ namespace SmartxAPI.Controllers
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                     string X_ShippingCode = MasterTable.Rows[0]["x_ShippingCode"].ToString();
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
-                    string xButtonAction = "";
+                    string xButtonAction = ""; 
+
 
 
                     // if ( X_ShippingCode != "@Auto")
@@ -160,6 +161,19 @@ namespace SmartxAPI.Controllers
                         //     }
 
                     }
+                     for (int j = 0; j < DetailTable.Rows.Count; j++){
+                        int nDeliveryNoteId = myFunctions.getIntVAL(DetailTable.Rows[j]["n_DeliveryNoteId"].ToString());
+                     if (nDeliveryNoteId > 0)
+                                {
+                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,nDeliveryNoteId,884,false,dLayer,connection,transaction))
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                    }
+                                }
+                     }
+
+                   
 
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
@@ -233,53 +247,71 @@ namespace SmartxAPI.Controllers
 
 
 
-                    for (int i = DetailTable.Rows.Count - 1; i >= 0; i--)
-                    {
+                    // for (int i = DetailTable.Rows.Count - 1; i >= 0; i--)
+                    // {
 
 
-                        if (myFunctions.getIntVAL(DetailTable.Rows[0]["n_Entryfrom"].ToString()) == 212)
-                        {
+                    //     if (myFunctions.getIntVAL(DetailTable.Rows[0]["n_Entryfrom"].ToString()) == 212)
+                    //     {
 
 
 
-                            try
-                            {
-                                Results = dLayer.ExecuteNonQueryPro("Inv_Shipping", PostingDelParam, connection, transaction);
-                            }
-                            catch (Exception ex)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, ex));
-                            }
-                        }
+                    //         try
+                    //         {
+                    //             Results = dLayer.ExecuteNonQueryPro("Inv_Shipping", PostingDelParam, connection, transaction);
+                    //         }
+                    //         catch (Exception ex)
+                    //         {
+                    //             transaction.Rollback();
+                    //             return Ok(_api.Error(User, ex));
+                    //         }
+                    //     }
 
-                        else
-                        {
+                    //     else
+                    //     {
 
 
-                            try
-                            {
-                                Results = dLayer.ExecuteNonQueryPro("Inv_Shipping", PostingDelParam1, connection, transaction);
-                            }
-                            catch (Exception ex)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, ex));
-                            }
+                    //         try
+                    //         {
+                    //             Results = dLayer.ExecuteNonQueryPro("Inv_Shipping", PostingDelParam1, connection, transaction);
+                    //         }
+                    //         catch (Exception ex)
+                    //         {
+                    //             transaction.Rollback();
+                    //             return Ok(_api.Error(User, ex));
+                    //         }
 
-                        }
-                    }
+                    //     }
+                    // }
+
+
                     Results1 = dLayer.DeleteData("Inv_ShippingDetails", "N_ShippingID", nShippingID, "", connection, transaction);
-                    if (Results1 > 0)
-                    {
-                        dLayer.DeleteData("Inv_Shipping", "N_ShippingID", nShippingID, "", connection, transaction);
-                        transaction.Commit();
-                        return Ok(_api.Success(" Shipping Invoice Deleted"));
-                    }
-                    else
-                    {
+                    if (Results1 <= 0)
+                   {
                         return Ok(_api.Error(User, "Unable to delete"));
                     }
+                    else
+                     {
+                     dLayer.DeleteData("Inv_Shipping", "N_ShippingID", nShippingID, "", connection, transaction);
+
+                        for (int j = 0; j < DetailTable.Rows.Count; j++){
+                        int nDeliveryNoteId = myFunctions.getIntVAL(DetailTable.Rows[j]["n_DeliveryNoteId"].ToString());
+                        if (nDeliveryNoteId > 0)
+                                {
+                                    if(!myFunctions.UpdateTxnStatus(nCompanyID,nDeliveryNoteId,884,true,dLayer,connection,transaction))
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                    }
+                                }
+                     }
+                       
+                        transaction.Commit();
+                        return Ok(_api.Success(" Shipping Invoice Deleted"));
+               
+                    }
+                 
+                    
 
                 }
 
@@ -398,7 +430,7 @@ namespace SmartxAPI.Controllers
                             if ((xDeliveryNoteID == "" || xDeliveryNoteID == null) && N_salesOrderID > 0)
                                 DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " order by N_SOdetailsID ASC ";
                             else
-                                DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  order by N_SOdetailsID ASC ";
+                                DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId="+nCompanyId+" and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  order by N_SOdetailsID ASC ";
 
                         }
                         SortedList mParamsList = new SortedList()
@@ -412,51 +444,51 @@ namespace SmartxAPI.Controllers
                         {
                             mParamsList.Add("N_BranchId", nBranchId);
                         }
-                        else
-                        {
-                            mParamsList.Add("N_BranchId", 0);
-                        }
-                        DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvSales_Disp", mParamsList, connection);
-                        masterTable = _api.Format(masterTable, "Master");
-                        if (masterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
-                        DataRow MasterRow = masterTable.Rows[0];
-                        int nSalesID = myFunctions.getIntVAL(MasterRow["N_SalesID"].ToString());
-                        QueryParamsList.Add("@nSalesID", nSalesID);
+                        // else
+                        // {
+                        //     mParamsList.Add("N_BranchId", 0);
+                        // }
+                        // DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvSales_Disp", mParamsList, connection);
+                        // masterTable = _api.Format(masterTable, "Master");
+                        // if (masterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
+                        // DataRow MasterRow = masterTable.Rows[0];
+                        // int nSalesID = myFunctions.getIntVAL(MasterRow["N_SalesID"].ToString());
+                        // QueryParamsList.Add("@nSalesID", nSalesID);
 
 
 
 
 
 
-                        DetailGetSql = "select X_ReceiptNo from Inv_DeliveryNote where N_DeliveryNoteID in ( select N_DeliveryNoteID from Inv_SalesDetails where  N_SalesID=@nSalesID)";
-                        DelDetails = dLayer.ExecuteDataTable(DetailGetSql, QueryParamsList, connection);
-                        if (DelDetails.Rows.Count > 0)
-                        {
-                            x_DeliveryNoteNo = DelDetails.Rows[0]["X_ReceiptNo"].ToString();
-                            for (int j = 1; j < DelDetails.Rows.Count; j++)
-                            {
-                                x_DeliveryNoteNo = x_DeliveryNoteNo + "," + DelDetails.Rows[j]["X_ReceiptNo"].ToString();
-                            }
-                        }
-                        myFunctions.AddNewColumnToDataTable(masterTable, "X_DeliveryNoteNo", typeof(string), x_DeliveryNoteNo);
-                        masterTable.AcceptChanges();
+                        // DetailGetSql = "select X_ReceiptNo from Inv_DeliveryNote where N_DeliveryNoteID in ( select N_DeliveryNoteID from Inv_SalesDetails where  N_SalesID=@nSalesID)";
+                        // DelDetails = dLayer.ExecuteDataTable(DetailGetSql, QueryParamsList, connection);
+                        // if (DelDetails.Rows.Count > 0)
+                        // {
+                        //     x_DeliveryNoteNo = DelDetails.Rows[0]["X_ReceiptNo"].ToString();
+                        //     for (int j = 1; j < DelDetails.Rows.Count; j++)
+                        //     {
+                        //         x_DeliveryNoteNo = x_DeliveryNoteNo + "," + DelDetails.Rows[j]["X_ReceiptNo"].ToString();
+                        //     }
+                        // }
+                        // myFunctions.AddNewColumnToDataTable(masterTable, "X_DeliveryNoteNo", typeof(string), x_DeliveryNoteNo);
+                        // masterTable.AcceptChanges();
 
 
-                        if (myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()) > 0)
-                        {
-                            QueryParamsList.Add("@n_DeliveryNoteId", myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()));
-                            myFunctions.AddNewColumnToDataTable(masterTable, "X_FileNo", typeof(string), "");
-                            SortedList ProParamList = new SortedList()
-                        {
-                            {"N_CompanyID",nCompanyId},
-                            {"N_FnYearID",nFnYearID},
-                            {"N_PkID",myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString())},
-                            {"Type","DN"}
-                        };
-                            object objFileNo = dLayer.ExecuteScalarPro("SP_GetSalesOrder", ProParamList, connection);
-                            if (objFileNo != null)
-                                masterTable.Rows[0]["X_FileNo"] = objFileNo.ToString();
-                        }
+                        // if (myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()) > 0)
+                        // {
+                        //     QueryParamsList.Add("@n_DeliveryNoteId", myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()));
+                        //     myFunctions.AddNewColumnToDataTable(masterTable, "X_FileNo", typeof(string), "");
+                        //     SortedList ProParamList = new SortedList()
+                        // {
+                        //     {"N_CompanyID",nCompanyId},
+                        //     {"N_FnYearID",nFnYearID},
+                        //     {"N_PkID",myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString())},
+                        //     {"Type","DN"}
+                        // };
+                        //     object objFileNo = dLayer.ExecuteScalarPro("SP_GetSalesOrder", ProParamList, connection);
+                        //     if (objFileNo != null)
+                        //         masterTable.Rows[0]["X_FileNo"] = objFileNo.ToString();
+                        // }
 
 
 
