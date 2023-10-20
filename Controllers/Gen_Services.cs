@@ -116,6 +116,11 @@ namespace SmartxAPI.Controllers
                         column = "x_PorderNo";
                     }
 
+                     if (formID == 80)
+                    {
+                        masterTable = "Inv_SalesQuotation";
+                        column = "x_QuotationNo";
+                    }
 
 
 

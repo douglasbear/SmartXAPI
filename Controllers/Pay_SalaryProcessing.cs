@@ -1450,13 +1450,7 @@ namespace SmartxAPI.Controllers
 
                         }
 
-                        //Activity Log
-                        string ipAddress = "";
-                        if (Request.Headers.ContainsKey("X-Forwarded-For"))
-                            ipAddress = Request.Headers["X-Forwarded-For"];
-                        else
-                            ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                        myFunctions.LogScreenActivitys(nFnYearId, nTransID, x_Batch, 190, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
+                       
 
 
 
@@ -1485,7 +1479,13 @@ namespace SmartxAPI.Controllers
 
 
                         }
-
+ //Activity Log
+                        string ipAddress = "";
+                        if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                            ipAddress = Request.Headers["X-Forwarded-For"];
+                        else
+                            ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                        myFunctions.LogScreenActivitys(nFnYearId, nTransID, x_Batch, 190, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
                         transaction.Commit();
                         GenerateCSVFiles(nBankID, nCompanyID, x_Batch, nFnYearId, N_TotalSalary.ToString(), Convert.ToDateTime(dCreatedDate.ToString()), Convert.ToDateTime(d_SalFromDate), Convert.ToDateTime(d_SalToDate));
                         return Ok(_api.Success("Saved"));
