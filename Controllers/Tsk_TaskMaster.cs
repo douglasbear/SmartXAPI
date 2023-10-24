@@ -1540,12 +1540,17 @@ namespace SmartxAPI.Controllers
                     {
                         X_Body = MasterTable.Rows[0]["x_body"].ToString();
                         X_Subject = MasterTable.Rows[0]["x_Subject"].ToString();
+                        
                         X_Body = X_Body.Replace("@Month", datetime.ToString("MMM-yyyy").ToUpper());
                         X_Body = X_Body.Replace("@Date", datetime.ToString("dd-MM-yyyy"));
+
                         X_Subject = X_Subject.Replace("@Month", datetime.ToString("MMM-yyyy").ToUpper());
                         X_Subject = X_Subject.Replace("@Date", datetime.ToString("dd-MM-yyyy"));
+
                         MasterTable.Rows[0]["x_Subject"] = X_Subject;
                         MasterTable.Rows[0]["x_body"] = X_Body;
+
+
                     }
                     MasterTable.AcceptChanges();
                     MasterTable = _api.Format(MasterTable, "Master");
