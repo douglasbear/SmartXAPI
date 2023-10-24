@@ -669,18 +669,7 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to delete batch"));
                     }
-<<<<<<< HEAD
 
-                    
-=======
-                    // Activity Log
-                    string ipAddress = "";
-                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
-                        ipAddress = Request.Headers["X-Forwarded-For"];
-                    else
-                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                    myFunctions.LogScreenActivitys(myFunctions.getIntVAL(nFnYearID.ToString()), nTransID, TransRow["X_Batch"].ToString(), 208, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
->>>>>>> c4d63d7b710bd760075e6694dc049d26659ed29c
                     transaction.Commit();
                     return Ok(_api.Success("Batch deleted"));
                 }
@@ -699,6 +688,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
             Params.Add("@nPayRunID", nPayRunID);
+             
 
             string sqlCommandText = "select X_Batch,X_PayrunText,N_CompanyID,N_TransID,N_PayRunID,B_IsSaveDraft from vw_AddOrDedBatchDetails where N_CompanyID=@nCompanyID and N_PayRunID=@nPayRunID and (B_IsSaveDraft<>1 or B_IsSaveDraft is null)";
 
