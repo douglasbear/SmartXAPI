@@ -1526,7 +1526,6 @@ namespace SmartxAPI.Controllers
             string X_Body = "";
             string X_Subject = "";
            string sqlmailData = "select * from Gen_MailTemplates where N_CompanyID=" + nCompanyId + " and x_templatename='DAILYTASK'";
-
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -1554,13 +1553,9 @@ namespace SmartxAPI.Controllers
 
                     }
                     MasterTable.AcceptChanges();
-
-
                     MasterTable = _api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
-
                 }
-
                 return Ok(_api.Success(dt));
             }
             catch (Exception e)

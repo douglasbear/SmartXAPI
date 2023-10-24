@@ -227,9 +227,23 @@ namespace SmartxAPI.Controllers
                 int nBranchId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchId"].ToString());
                 int nWActivityID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_WActivityID"].ToString());
                 int nTaskOwner = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesmanID"].ToString());
-                string X_ContactEmail = MasterTable.Rows[0]["X_Email"].ToString();
-                string X_ContactNumber = MasterTable.Rows[0]["X_Mobile"].ToString();
-                int nContactID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ContactID"].ToString());
+                string X_ContactEmail ="";
+                string X_ContactNumber ="";
+                int nContactID =0;
+                 if(MasterTable.Columns.Contains("X_Email"))
+                 {
+                    X_ContactEmail= MasterTable.Rows[0]["X_Email"].ToString();
+                 }
+                 if(MasterTable.Columns.Contains("X_Mobile"))
+                 {
+                    X_ContactNumber= MasterTable.Rows[0]["X_Mobile"].ToString();
+                 }
+                 if(MasterTable.Columns.Contains("N_ContactID"))
+                 {
+                    nContactID= myFunctions.getIntVAL(MasterTable.Rows[0]["N_ContactID"].ToString());
+                 }
+
+
                 object N_WorkFlowID = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -278,7 +292,9 @@ namespace SmartxAPI.Controllers
                                     //dLayer.DeleteData("Tsk_TaskMaster", "N_ProjectID", nProjectID, "", connection, transaction);
 
                                 //    dLayer.DeleteData("Tsk_TaskStatus", "N_ProjectID", nProjectID, "", connection, transaction);
-
+                    dLayer.ExecuteScalar("delete from Tsk_TaskStatus where N_TaskID in (select N_TaskID from tsk_TaskMaster where N_OpportunityID="+nOpportunityID+" and N_CompanyID=" + nCompanyID + ")", connection,transaction);
+                    dLayer.ExecuteScalar("delete from Tsk_TaskComments where  N_ActionID in (select N_TaskID from Tsk_TaskMaster where  N_OpportunityID="+nOpportunityID+" and N_CompanyID=" + nCompanyID + ")", connection, transaction);
+                    dLayer.DeleteData("TSK_TaskMaster", "N_OpportunityID", nOpportunityID, "", connection, transaction);
                                     TaskMaster = dLayer.ExecuteDataTable("select N_CompanyID,2 as N_StatusID,N_StageID,x_tasksummery,x_taskdescription,'"+DateTime.Today+"'  as D_TaskDate,'"+DateTime.Today+"' as D_DueDate, "+myFunctions.GetUserID(User)+" as N_CreatorID, "+myFunctions.GetUserID(User)+" as N_CurrentAssigneeID, "+myFunctions.GetUserID(User)+"  as n_ClosedUserID ,"+myFunctions.GetUserID(User)+"  as n_SubmitterID,"+myFunctions.GetUserID(User)+" as N_CurrentAssignerID,'" + DateTime.Today + "' as D_EntryDate, "+myFunctions.GetUserID(User)+" as N_AssigneeID, N_StartDateBefore,N_StartDateUnitID,N_EndDateBefore,N_EndUnitID,N_WTaskDetailID,N_Order,N_TemplateID,N_PriorityID,N_CategoryID from vw_Prj_WorkflowDetails where N_CompanyID=" + nCompanyID + " and N_WTaskID=" + nWActivityID + " order by N_Order", Params, connection, transaction);
                                     if (TaskMaster.Rows.Count > 0)
                                     {
@@ -504,11 +520,13 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-
+                    int nCompanyId = myFunctions.GetCompanyID(User);
                     Results = dLayer.DeleteData("CRM_Opportunity", "N_OpportunityID", nOpportunityID, "", connection, transaction);
                     dLayer.DeleteData("Crm_Materials", "N_OpportunityID", nOpportunityID, "", connection, transaction);
                     dLayer.DeleteData("Crm_Products", "N_OpportunityID", nOpportunityID, "", connection, transaction);
                     dLayer.DeleteData("CRM_Activity", "N_ReffID", nOpportunityID, "", connection, transaction);
+                    dLayer.ExecuteScalar("delete from Tsk_TaskStatus where N_TaskID in (select N_TaskID from tsk_TaskMaster where N_OpportunityID="+nOpportunityID+" and N_CompanyID=" + nCompanyId + ")", connection,transaction);
+                    dLayer.ExecuteScalar("delete from Tsk_TaskComments where  N_ActionID in (select N_TaskID from Tsk_TaskMaster where  N_OpportunityID="+nOpportunityID+" and N_CompanyID=" + nCompanyId + ")", connection, transaction);
                     dLayer.DeleteData("TSK_TaskMaster", "N_OpportunityID", nOpportunityID, "", connection, transaction);
                     transaction.Commit();
                 }

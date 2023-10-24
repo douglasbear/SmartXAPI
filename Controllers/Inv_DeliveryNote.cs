@@ -410,17 +410,28 @@ namespace SmartxAPI.Controllers
                         QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);
                     }
                     DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvDeliveryNote_Disp", mParamsList, Con);
-
+                    DataRow MasterRow = masterTable.Rows[0];
 
                     masterTable = _api.Format(masterTable, "Master");
                     if (masterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
-                    DataRow MasterRow = masterTable.Rows[0];
+                    SortedList DetailParams = new SortedList();
+                    DetailParams.Add("@nCompanyID", MasterRow["N_companyId"]);
+                    DetailParams.Add("@nDelID", MasterRow["N_deliverynoteid"]);
+
+
                     var nFormID = this.FormID;
                     int N_DelID = myFunctions.getIntVAL(MasterRow["N_deliverynoteid"].ToString());
                     int N_SalesOrderID = myFunctions.getIntVAL(MasterRow["n_SalesOrderID"].ToString());
                     QueryParamsList.Add("@nDelID", N_DelID);
                     QueryParamsList.Add("@nSaleOrderID", N_SalesOrderID);
                     object InSales = "";
+                    object InShipping = "";
+                    object DelID = dLayer.ExecuteScalar("select N_deliverynoteid from inv_shippingdetails where N_CompanyID=@nCompanyID and N_deliverynoteid=@nDelID", DetailParams, Con);
+                    masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "xDelID", typeof(string), DelID);
+                    if(DelID != null && DelID != "")
+                        InShipping = dLayer.ExecuteScalar("select x_ShippingCode from Inv_Shipping where N_CompanyID=@nCompanyID and N_deliverynoteid="+ myFunctions.getIntVAL(DelID.ToString()) +"",DetailParams , Con);
+                    masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "x_ShippingCode", typeof(string), InShipping);
+                    
                     object inSaleID = dLayer.ExecuteScalar("select N_SalesID from Inv_SalesDetails where N_CompanyID=@nCompanyID and N_deliverynoteid=@nDelID ", QueryParamsList, Con);
                     if (inSaleID != null && inSaleID != "")
                         InSales = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_Sales where N_CompanyID=@nCompanyID and  N_SalesID=" + myFunctions.getIntVAL(inSaleID.ToString()) + " and N_FnYearID=@nFnYearID", QueryParamsList, Con);
@@ -506,7 +517,7 @@ namespace SmartxAPI.Controllers
 
         //Save....
         [HttpPost("Save")]
-        public ActionResult SaveData([FromBody] DataSet ds)
+        public ActionResult SaveData( [FromBody] DataSet ds)
         {
             try
             {
@@ -524,9 +535,9 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction;
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable TransData = new DataTable();
                     DataRow MasterRow = MasterTable.Rows[0];
-                    transaction = connection.BeginTransaction();
 
 
                     int N_DeliveryNoteID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteId"].ToString());
@@ -551,7 +562,6 @@ namespace SmartxAPI.Controllers
                     string i_signature2 = "";
                     bool SigEnable = false;
                     String xButtonAction = "";
-
 
                     if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_DeliveryDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
                     {
@@ -600,7 +610,17 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
                         }
                     }
+                    SortedList ParamList = new SortedList();
+                    ParamList.Add("@nDeliveryNoteID", N_DNoteID);
+                    ParamList.Add("@nCompanyID",N_CompanyID);
+                    string DeliveryNoteID = "select * from Inv_Shipping where N_CompanyID=@nCompanyID and N_deliverynoteid=@nDeliveryNoteID ";
+                    TransData = dLayer.ExecuteDataTable(DeliveryNoteID, ParamList, connection, transaction);
 
+                    if (TransData.Rows.Count > 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Please delete Shipping Invoice for Updating this Delivery Note"));
+                    }
 
 
                     QueryParams.Add("@nCompanyID", N_CompanyID);
@@ -734,6 +754,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         }
                     }
+                    // if(MasterTable.x_ShippingCode > 0)
 
                     if (SigEnable)
                     {
@@ -1031,7 +1052,7 @@ namespace SmartxAPI.Controllers
         // }
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nDeliveryNoteID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID)
+        public ActionResult DeleteData(int nDeliveryNoteID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID, int NShippingID)
         {
             int Results = 0;
             try
@@ -1087,9 +1108,21 @@ namespace SmartxAPI.Controllers
                                 {"@nDeliveryNoteID",nDeliveryNoteID},
                                 {"@nPartyID",nCustomerID},
                                 {"@nBranchID",nBranchID}};
+
+                    ParamList.Add("@NShippingID", NShippingID);
+                    ParamList.Add("@nDeliveryNoteID", nDeliveryNoteID);
                     DataTable DetailTable = dLayer.ExecuteDataTable("select n_SalesOrderID,n_SalesQuotationID from Inv_DeliveryNoteDetails where N_CompanyID=@nCompanyID and N_DeliveryNoteID=@nDeliveryNoteID group by n_SalesOrderID,n_SalesQuotationID order by n_SalesOrderID,n_SalesQuotationID", QueryParams, connection, transaction);
                     DataTable rentalItem = dLayer.ExecuteDataTable("select * from Inv_RentalSchedule where N_CompanyID=@nCompanyID and N_FormID=1572 and N_TransID=@nDeliveryNoteID ", QueryParams, connection, transaction);
                     Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                    string DeliveryNoteID = "select * from Inv_Shipping where N_CompanyID=@nCompanyID and N_deliverynoteid=@nDeliveryNoteID ";
+                    TransData = dLayer.ExecuteDataTable(DeliveryNoteID, ParamList, connection, transaction);
+                    if (TransData.Rows.Count > 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Please delete Shipping Invoice for deleting this Delivery Note"));
+                    }
+
+
                     if (Results <= 0)
                     {
                         transaction.Rollback();
@@ -1164,7 +1197,7 @@ namespace SmartxAPI.Controllers
                     }
                     else if (myFunctions.getIntVAL(TransRow["N_FormID"].ToString()) == 1572)
                     {
-                         return Ok(_api.Success("Rental Delivery deleted successfully"));
+                        return Ok(_api.Success("Rental Delivery deleted successfully"));
                     }
                     else
                     {

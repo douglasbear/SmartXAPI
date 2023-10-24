@@ -62,6 +62,7 @@ namespace SmartxAPI.Controllers
                 int ClientID = 0;
                 int projectID = 0;
                 int custID = 0;
+                string X_DbName="";
                 using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
                 {
                     connection.Open();
@@ -88,6 +89,14 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Something went wrong"));
                     }
+
+                    string uri = "SmartxConnection";
+                    using (SqlConnection cnn1 = new SqlConnection(config.GetConnectionString(uri)))
+                    {
+                          X_DbName=cnn1.Database.ToString();
+                          
+                    }
+                     dLayer.ExecuteScalar("Update ClientMaster set X_DBName='"+X_DbName+"'  where N_ClientID=" + ClientID+"", connection,transaction); 
 
 
                     // AppTable.Rows[0]["N_ClientID"] = ClientID;
@@ -818,7 +827,7 @@ namespace SmartxAPI.Controllers
 
 
  [HttpGet("subscriptionList")]
-        public ActionResult clientSubscriptionList(int nUserID)
+        public ActionResult clientSubscriptionList(int nUserID,int nCompanyID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -836,22 +845,22 @@ namespace SmartxAPI.Controllers
                         //DataTable  userAppID = dLayer.ExecuteScalar("select N_AppID from sec_userApps where N_GlobalUserID =" + nUserID + "", Params, con).ToString();
                         //userAppID=userAppID+","+userAppID;
                         // dt = dLayer.ExecuteDataTable(sqlCmd, Params, con);
-                         string sqlCmd="select N_AppID from sec_userApps where N_GlobalUserID =" + nUserID + "";
-                         DataTable userAppID = dLayer.ExecuteDataTable(sqlCmd, Params, con);
-                         if (userAppID.Rows.Count != 0)
-                         {
-                            string x_userAppID="";
-                             for(int i=0;i<userAppID.Rows.Count;i++)
-                            {
-                                if(x_userAppID=="")
-                                    x_userAppID=userAppID.Rows[i]["n_AppID"].ToString();                               
-                                else
-                               x_userAppID=x_userAppID+","+ userAppID.Rows[i]["n_AppID"];
-                            }
+                        //  string sqlCmd="select N_AppID from sec_userApps where N_GlobalUserID =" + nUserID + "";
+                        //  DataTable userAppID = dLayer.ExecuteDataTable(sqlCmd, Params, con);
+                        //  if (userAppID.Rows.Count != 0)
+                        //  {
+                        //     string x_userAppID="";
+                        //      for(int i=0;i<userAppID.Rows.Count;i++)
+                        //     {
+                        //         if(x_userAppID=="")
+                        //             x_userAppID=userAppID.Rows[i]["n_AppID"].ToString();                               
+                        //         else
+                        //        x_userAppID=x_userAppID+","+ userAppID.Rows[i]["n_AppID"];
+                        //     }
 
-                         sqlCommandText = "Select * from AppMaster where N_AppID in (" +x_userAppID+ ")";
-                         }
-                         Params.Add("@nUserID", nUserID);
+                        //  sqlCommandText = "Select * from AppMaster where N_AppID in (" +x_userAppID+ ")";
+                        //  }
+                        //  Params.Add("@nUserID", nUserID);
                     
            
             try
@@ -859,14 +868,31 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
                 {
                     olivoCon.Open();
+                    object nClientID= dLayer.ExecuteScalar("select N_CLientID from Users where N_UserID="+ nUserID+"", Params, olivoCon);
+                    sqlCommandText = "SELECT     ClientApps.N_ClientID, ClientApps.N_AppID, REPLACE(CONVERT(varchar(11), ClientApps.D_ExpiryDate, 106), ' ', '-') AS D_ExpiryDate, ClientApps.B_Licensed,"+
+                    "AppMaster.N_SubscriptionAmount, REPLACE(CONVERT(varchar(11), ClientApps.D_StartDate, 106), ' ', '-') AS D_StartDate,ClientApps.D_CreatedDate, AppMaster.X_AppName, AppMaster.N_FreeUsers,CASE WHEN ClientApps.B_Licensed = 0 THEN 'Trial' ELSE 'Subscribed' END AS x_Status"+
+                    " FROM         ClientApps LEFT OUTER JOIN  AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID  where ClientApps.N_ClientID="+nClientID+" and ClientApps.n_CompanyID ="+nCompanyID+" ";
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, olivoCon);
+                    object nUserLimit = dLayer.ExecuteScalar("select isnull(N_Value,0) from GenSettings where N_ClientID=" + nClientID + " and X_Description='USER LIMIT' ",Params,olivoCon);
+                        if (nUserLimit == null) { nUserLimit = "0"; }
+                        else{
+                      dt = myFunctions.AddNewColumnToDataTable(dt, "N_UserLimit", typeof(int), myFunctions.getIntVAL(nUserLimit.ToString()));
+                        }
+                     object nUserCount = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Users where N_ClientID=" + nClientID + " and N_UserType=1", Params, olivoCon);
+                     if (nUserCount == null) { nUserCount = "0"; }
+                        else{
+                      dt = myFunctions.AddNewColumnToDataTable(dt, "N_UserCount", typeof(int), myFunctions.getIntVAL(nUserCount.ToString()));
+                        }
+                       
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(_api.Notice("No Results Found"));
+                    return Ok(_api.Success(dt));
+                    // return Ok(_api.Notice("No Results Found"));
                 }
                 else
                 {
+
                     return Ok(_api.Success(dt));
                 }
             }
