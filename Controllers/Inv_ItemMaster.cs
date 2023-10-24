@@ -527,7 +527,7 @@ namespace SmartxAPI.Controllers
 
                         // Define the right text position
                         float rightTextX = actualPageWidth - 135;  // X-coordinate for right text
-                        float rightTextY = actualPageHeight - topMargin;  // Y-coordinate for right text
+                        float rightTextY = actualPageHeight - topMargin-spacing - 8;  // Y-coordinate for right text
 
                         // Write the product name and price to the PDF
                         contentByte.BeginText();
