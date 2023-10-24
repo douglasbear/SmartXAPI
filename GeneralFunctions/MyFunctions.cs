@@ -502,6 +502,7 @@ namespace SmartxAPI.GeneralFunctions
             Response.Add("addButton", false);
             Response.Add("allowPrint", false);
             Response.Add("attachmentCount", false);
+            Response.Add("printStatus", false);
 
             /* Approval Param Set */
             SortedList ApprovalParams = new SortedList();
@@ -784,6 +785,21 @@ namespace SmartxAPI.GeneralFunctions
                     Response["attachmentCount"] = 0;
                 else
                     Response["attachmentCount"] = this.getIntVAL(nAttachmentCount.ToString());
+
+                object bPrintStatus=false;
+                 if (nTransID == 0)
+                        bPrintStatus = dLayer.ExecuteScalar("SELECT Isnull (B_PrintStatus,0) from Gen_ApprovalCodesDetails where N_CompanyID=@nCompanyID and N_level=1 and N_ApprovalID=@nApprovalID", ApprovalParams, connection);
+                else
+                      bPrintStatus = dLayer.ExecuteScalar("Select Isnull (B_PrintStatus,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID", ApprovalParams, connection);
+
+                    if (this.getBoolVAL(bPrintStatus.ToString()))
+                {
+                    Response["printStatus"] = true;
+                }
+                else
+                {
+                    Response["printStatus"] = false;
+                }
 
                 if (nTransID > 0)
                 {
