@@ -233,7 +233,7 @@ namespace SmartxAPI.Controllers
                     object TaskID = dLayer.ExecuteScalar("select N_TaskID from Tsk_TaskMaster where N_CompanyID=@nCompanyID and N_OpportunityID=@nOpportunityID order by N_TaskID desc", Params, connection);
 
                     //Comments
-                    CommentsSql = "select top(5) X_Comments from Tsk_TaskComments where N_ActionID="+TaskID+" order by N_ActionID desc";
+                    CommentsSql = "select top(5) X_Comments from Tsk_TaskComments where N_ActionID="+TaskID+" order by D_Date desc";
                     CommentsTable = dLayer.ExecuteDataTable(CommentsSql, Params, connection);
 
                     
