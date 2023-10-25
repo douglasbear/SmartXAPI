@@ -788,17 +788,16 @@ namespace SmartxAPI.GeneralFunctions
 
                 object bPrintStatus=false;
                  if (nTransID == 0)
-                        bPrintStatus = dLayer.ExecuteScalar("SELECT Isnull (B_PrintStatus,0) from Gen_ApprovalCodesDetails where N_CompanyID=@nCompanyID and N_level=1 and N_ApprovalID=@nApprovalID", ApprovalParams, connection);
+                        bPrintStatus = dLayer.ExecuteScalar("SELECT Isnull(B_PrintStatus,0) from Gen_ApprovalCodesDetails where N_CompanyID=@nCompanyID and N_level=1 and N_ApprovalID=@nApprovalID", ApprovalParams, connection);
                 else
-                      bPrintStatus = dLayer.ExecuteScalar("Select Isnull (B_PrintStatus,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID", ApprovalParams, connection);
+                      bPrintStatus = dLayer.ExecuteScalar("Select Isnull(B_PrintStatus,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID", ApprovalParams, connection);
 
-                    if (this.getBoolVAL(bPrintStatus.ToString()))
-                {
-                    Response["printStatus"] = true;
-                }
+                if (bPrintStatus == null)
+                    Response["printStatus"] = 0;
+ 
                 else
                 {
-                    Response["printStatus"] = false;
+                    Response["printStatus"] =this.getIntVAL(bPrintStatus.ToString());
                 }
 
                 if (nTransID > 0)
