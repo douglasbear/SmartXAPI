@@ -213,6 +213,44 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("comments")]
+        public ActionResult GetComments(int nOpportunityID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataSet dt = new DataSet();
+                    SortedList Params = new SortedList();
+                    // DataTable MasterTable = new DataTable();
+                    DataTable CommentsTable = new DataTable();
+                    string CommentsSql = "";
+
+                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    Params.Add("@nOpportunityID", nOpportunityID);
+
+                    object TaskID = dLayer.ExecuteScalar("select N_TaskID from Tsk_TaskMaster where N_CompanyID=@nCompanyID and N_OpportunityID=@nOpportunityID order by N_TaskID desc", Params, connection);
+
+                    //Comments
+                    CommentsSql = "select top(5) X_Comments from Tsk_TaskComments where N_ActionID="+TaskID+" order by N_ActionID desc";
+                    CommentsTable = dLayer.ExecuteDataTable(CommentsSql, Params, connection);
+
+                    
+                    CommentsTable.AcceptChanges();
+                    CommentsTable = api.Format(CommentsTable, "Comments");
+
+                    dt.Tables.Add(CommentsTable);
+
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+
 
     }
 }
