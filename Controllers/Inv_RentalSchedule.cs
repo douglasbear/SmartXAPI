@@ -73,8 +73,6 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
-
        
         [HttpGet("list") ]
         public ActionResult RentalScheduleList(int nCompanyID,int nItemID)
@@ -113,6 +111,41 @@ namespace SmartxAPI.Controllers
             }   
         } 
 
+        [HttpGet("rentalscheduleitemslist") ]
+        public ActionResult RentalScheduleItemsList(int nCompanyID, int nItemID)
+        {    
+            SortedList param = new SortedList();           
+            DataTable dt=new DataTable();
+            
+            string sqlCommandText="";
+
+            sqlCommandText="select * from vw_RentalScheduleItems_New where N_CompanyID=@p1 and N_RentalItemID=@p2";
+
+            param.Add("@p1", nCompanyID);  
+            param.Add("@p2",nItemID);                
+                
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                }
+                if(dt.Rows.Count==0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch(Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }   
+        } 
     }
 } 
    
