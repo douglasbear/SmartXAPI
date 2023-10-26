@@ -475,10 +475,9 @@ namespace SmartxAPI.Controllers
                             //     masterTable.Rows[0]["isProformaDone"] = true;
                             // }
                         }
-                        DataTable returnData = dLayer.ExecuteDataTable("select N_DeliveryNoteId from Inv_DeliveryNoteReturn where N_DeliveryNoteId=@nDeliveryNoteId and N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
+                        DataTable returnData = dLayer.ExecuteDataTable("select N_DeliveryNoteId from vw_DeliveryNoteToDeliveryReturn where N_DeliveryNoteId=@nDeliveryNoteId and N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID group by N_DeliveryNoteId having SUM(N_BalanceQty)=0", QueryParamsList, Con);
                         if (returnData.Rows.Count > 0)
                         {
-
                             masterTable.Rows[0]["isDeliveryReturnDone"] = true;
                         }
                         else
