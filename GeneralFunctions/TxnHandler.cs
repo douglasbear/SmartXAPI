@@ -1070,6 +1070,8 @@ namespace SmartxAPI.GeneralFunctions
                 Result.Add("x_Msg", "Sales Approved " + "-" + InvoiceNo);
                 Result.Add("n_SalesID", N_SalesID);
                 Result.Add("x_SalesNo", InvoiceNo);
+                Result.Add("b_IsSaveDraft", N_SaveDraft);
+                
                 return Result;
             }
 
@@ -1798,6 +1800,7 @@ namespace SmartxAPI.GeneralFunctions
 
             Result.Add("n_SalesID", N_SalesID);
             Result.Add("x_SalesNo", InvoiceNo);
+            Result.Add("b_IsSaveDraft", N_SaveDraft);
 
             return Result;
 
