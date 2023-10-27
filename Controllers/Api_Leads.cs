@@ -97,6 +97,7 @@ namespace SmartxAPI.Controllers
                             string body = Maildata.Rows[0]["x_body"].ToString().Replace("@message", Data);
 
                             myFunctions.SendMail("sales@olivotech.com", body, Maildata.Rows[0]["x_subject"].ToString(), dLayer, 0, 0, 0, false);
+                            myFunctions.SendMail("manzoor@upgrodigital.com", body, Maildata.Rows[0]["x_subject"].ToString(), dLayer, 0, 0, 0, false);
                             //Whatsapp
                             string Company = myFunctions.GetCompanyName(User);
                             object WhatsappAPI = dLayer.ExecuteScalar("select X_Value from Gen_Settings where N_CompanyID=1 and X_Group='1334' and X_Description='Whatsapp Message'", Params, connection, transaction);
