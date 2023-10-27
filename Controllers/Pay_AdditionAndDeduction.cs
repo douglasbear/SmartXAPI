@@ -689,6 +689,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
             Params.Add("@nPayRunID", nPayRunID);
+             
 
             string sqlCommandText = "select X_Batch,X_PayrunText,N_CompanyID,N_TransID,N_PayRunID,B_IsSaveDraft from vw_AddOrDedBatchDetails where N_CompanyID=@nCompanyID and N_PayRunID=@nPayRunID and (B_IsSaveDraft<>1 or B_IsSaveDraft is null)";
 

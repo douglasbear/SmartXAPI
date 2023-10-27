@@ -224,12 +224,13 @@ namespace SmartxAPI.Controllers
                     if (dtGoodReceive.Columns.Contains("N_MRNID")) 
                      {
                     int nGRNID = myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_MRNID"].ToString());
-                    object objReturnProcessed = dLayer.ExecuteScalar("Select Isnull(N_MRNReturnID,0) from Inv_MRNReturn where N_CompanyID=" + nCompanyId + " and N_MRNID=" + nGRNID , connection, transaction);
+                    object objReturnProcessed = dLayer.ExecuteScalar("select ISNULL(N_MRNID,0) AS N_MRNID from vw_MRNToMRNReturn where N_MRNID="+nGRNID+" and N_CompanyID="+nCompanyId+" and N_FnYearID="+nFnYearId+" group by N_MRNID having SUM(N_BalanceQty)=0" , connection, transaction);
                     if (objReturnProcessed == null)
                         objReturnProcessed = 0;
 
+                    dtGoodReceive = myFunctions.AddNewColumnToDataTable(dtGoodReceive, "N_ReturnProcessed", typeof(int), 0);
+
                     if (myFunctions.getIntVAL(objReturnProcessed.ToString()) != 0) {
-                        dtGoodReceive = myFunctions.AddNewColumnToDataTable(dtGoodReceive, "N_ReturnProcessed", typeof(int), 0);
                         dtGoodReceive.Rows[0]["N_ReturnProcessed"] = 1;
                     };
                    }

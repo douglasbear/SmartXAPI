@@ -213,6 +213,66 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("comments")]
+        public ActionResult GetComments(int nOpportunityID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataSet dt = new DataSet();
+                    SortedList Params = new SortedList();
+                    // DataTable MasterTable = new DataTable();
+                    DataTable CommentsTable = new DataTable();
+                    string CommentsSql = "";
+
+                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    Params.Add("@nOpportunityID", nOpportunityID);
+
+                    // object TaskID = dLayer.ExecuteScalar("select N_TaskID from Tsk_TaskMaster where N_CompanyID=@nCompanyID and N_OpportunityID=@nOpportunityID order by N_TaskID desc", Params, connection);
+
+                    //TaskComments
+                    CommentsSql = "select top(5) X_UserName,D_Date,X_Comments,'Commented by #CREATOR on #TIME - ' + X_Comments as X_TaskComments from VW_Task_Comments where N_ActionID in (select N_TaskID from Tsk_TaskMaster where N_CompanyID=@nCompanyID and N_OpportunityID=@nOpportunityID) order by D_Date desc";
+                    CommentsTable = dLayer.ExecuteDataTable(CommentsSql, Params, connection);
+
+                    foreach (DataRow row in CommentsTable.Rows)
+                    {
+                        object creator = row["X_UserName"];
+
+                        string time = row["D_Date"].ToString();
+                        DateTime _date1;
+                        string day1 = "";
+                        if (time != null && time != "")
+                        {
+                            _date1 = DateTime.Parse(time.ToString());
+                            day1 = _date1.ToString("dd-MMM-yyyy  HH:mm tt");
+                        }
+                        
+                        if (row["X_TaskComments"].ToString().Contains("#CREATOR"))
+                        {
+                            row["X_TaskComments"] = row["X_TaskComments"].ToString().Replace("#CREATOR", creator.ToString());
+                        }
+                        if (row["X_TaskComments"].ToString().Contains("#TIME"))
+                        {
+                            row["X_TaskComments"] = row["X_TaskComments"].ToString().Replace("#TIME", day1);
+                        }
+                    }
+                    
+                    CommentsTable.AcceptChanges();
+                    CommentsTable = api.Format(CommentsTable, "Comments");
+
+                    dt.Tables.Add(CommentsTable);
+
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+
 
     }
 }
