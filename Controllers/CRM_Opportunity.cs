@@ -478,6 +478,7 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, ex));
             }
         }
+
         [HttpGet("stageupdate")]
         public ActionResult StageUpdate(string xstage, int nOpportunityID)
         {
@@ -580,6 +581,39 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, ex));
             }
         }
+
+                 [HttpGet("opportunityupdate")]
+        public ActionResult UpdateData(int nOpportunityID , int nClosingStatusID)
+        {
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            Params.Add("@p1", nCompanyId);
+            try
+            {
+          
+            using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    object n_Status = dLayer.ExecuteScalar("select N_StatusID from Inv_QuotationclosingStatus where n_companyid=1 and N_TypeID=308" , Params, connection);
+                    object nStatus=dLayer.ExecuteScalar("select N_StatusID from Inv_QuotationclosingStatus where n_companyid=1 and N_TypeID=309" , Params, connection);
+                    
+                    if(nClosingStatusID!=1){
+                dLayer.ExecuteNonQuery("Update CRM_Opportunity set X_ClosingDescription='Lose', N_ClosingStatusID="+ nStatus +" where N_OpportunityID="+nOpportunityID+" and n_CompanyId="+nCompanyId, Params, connection);
+                    }
+                   else dLayer.ExecuteNonQuery("Update CRM_Opportunity set X_ClosingDescription='WIN', N_ClosingStatusID="+ n_Status +" where N_OpportunityID="+nOpportunityID+" and n_CompanyId="+nCompanyId, Params, connection);
+                    }
+                        return Ok(api.Success("Successfully saved"));
+
+
+            }
+            
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+
+            }
+        }
+        
       
     }
 }
