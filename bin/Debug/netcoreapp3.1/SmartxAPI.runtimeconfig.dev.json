@@ -1,58 +1,8 @@
 {
   "runtimeOptions": {
     "additionalProbingPaths": [
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
       "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\aswin\\.nuget\\packages"
-=======
-<<<<<<< HEAD
-      "C:\\Users\\SANJAY\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\SANJAY\\.nuget\\packages"
-=======
-      "C:\\Users\\Administrator\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Administrator\\.nuget\\packages"
->>>>>>> 44d03b64b74238d3ec924f66203db678f367a55e
->>>>>>> 0b942458a92bf40543d3f8d26a30a6394df6d6b5
-=======
-      "C:\\Users\\Dell\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Dell\\.nuget\\packages"
->>>>>>> c115e9b4432013d99f2b8c6347b6175a90f850d2
-=======
-      "C:\\Users\\hp\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\hp\\.nuget\\packages"
->>>>>>> d9801ed8c0350fb66d29f0b8b2a68c5652c4b0c3
-=======
-      "C:\\Users\\navya\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\navya\\.nuget\\packages"
->>>>>>> e83362f13ddbb434a00e01422d0138a260d170f1
-=======
-      "C:\\Users\\sivadath\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\sivadath\\.nuget\\packages"
->>>>>>> adf0183dcb2a744a34256055ec03179ae3319d20
-=======
-      "C:\\Users\\Dell\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Dell\\.nuget\\packages"
->>>>>>> 1baf3e323fb18691af1f90e944d0a9cc20cf2eb1
-=======
-      "C:\\Users\\Administrator\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Administrator\\.nuget\\packages"
->>>>>>> 255c99a9b1c06d40014b7b1d710bca8f598851c2
-=======
-      "C:\\Users\\Administrator\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Administrator\\.nuget\\packages"
->>>>>>> ab942b2c73a4d770f7215065780ab081cd24b107
-=======
-      "C:\\Users\\navya\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\navya\\.nuget\\packages"
->>>>>>> eafcb6b58ebf356fb621df9b35873ac2e787c1dd
     ]
   }
 }
