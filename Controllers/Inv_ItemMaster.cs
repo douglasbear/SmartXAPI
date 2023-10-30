@@ -404,54 +404,10 @@ namespace SmartxAPI.Controllers
             DataTable products = new DataTable();
             // Datatable products = new Datatable();
             products = ds.Tables["details"];
+            if(products.Rows.Count>0)
+                GeneratePDFWithContent1(products);
 
-            string path = this.TempFilesPath + "//barcode.pdf";
-
-            string leftText = myFunctions.GetCompanyName(User);
-            string barcodeImagePath = "C://Olivoserver2020/Barcode/100001.png"; // Replace with the actual barcode image file path
-            string productName = "Sleek steel VC eye glass";
-            string price = "QAR 19.99";
-
-            GeneratePDFWithContent1(products);
-
-            //GeneratePDFWithContent(products);
-            // Document doc = new Document(PageSize.A4);
-            // var output = new FileStream(path, FileMode.Create);
-            // var writer = PdfWriter.GetInstance(doc, output);
-            // doc.Open();
-            // for (int k = 0; k < products.Rows.Count; k++)
-            // {
-            //     string xItemName = products.Rows[k]["x_ItemName"].ToString();
-            //     string xBarcode = products.Rows[k]["x_ItemCode"].ToString();
-            //     string nPrice = products.Rows[k]["n_Cost"].ToString();
-
-            //     if (CreateBarcode(xBarcode))
-            //     {
-            //         //string bimageloc = "C://Olivoserver2020/Barcode/";
-
-            //         //Font
-            //         // BaseFont bf = BaseFont.CreateFont(BaseFont.TIMES_ROMAN, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
-            //         // iTextSharp.text.Font font = new iTextSharp.text.Font(bf, 15, iTextSharp.text.Font.NORMAL);
-            //         // Paragraph p1 = new Paragraph(new Chunk(xItemName, font));
-            //         // p1.IndentationRight = 100;
-            //         // p1.IndentationLeft = 100;
-            //         // doc.Add(p1);
-
-            //         // bimageloc = bimageloc + xBarcode + ".png";
-            //         // var logo = iTextSharp.text.Image.GetInstance(bimageloc);
-            //         // logo.ScaleAbsoluteHeight(100);
-            //         // logo.ScaleAbsoluteWidth(280);
-            //         // doc.Add(logo);
-
-            //         // Paragraph p2 = new Paragraph(new Chunk(xBarcode, font));
-            //         // p2.IndentationRight = 100;
-            //         // p2.IndentationLeft = 100;
-            //         // doc.Add(p2);
-            //         // doc.NewPage();
-
-            //     }
-            // }
-            // doc.Close();
+           
             return Ok(_api.Success(new SortedList() { { "FileName", "barcode.pdf" } }));
 
         }
@@ -487,6 +443,8 @@ namespace SmartxAPI.Controllers
 
                     string xItemName = products.Rows[k]["x_ItemName"].ToString();
                     string xBarcode = products.Rows[k]["x_ItemCode"].ToString();
+                    if(xBarcode=="")
+                    xBarcode="Barcode Missing";
                     string nPrice =products.Rows[k]["n_Cost"].ToString();
                     if (decimal.TryParse(nPrice, out decimal value))
                     {
