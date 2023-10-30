@@ -780,7 +780,7 @@ namespace SmartxAPI.Controllers
                     SortedList Result = new SortedList();
                     Result.Add("n_QuotationID", N_QuotationID);
                     Result.Add("x_QuotationNo", QuotationNo);
-                    return Ok(_api.Success(Result, "Sales quotation saved"));
+                    return Ok(_api.Success(Result, "Quotation saved"));
                 }
                 
 
@@ -1061,12 +1061,12 @@ namespace SmartxAPI.Controllers
                
                  
                             transaction.Commit();
-                            return Ok(_api.Success("Sales Quotation " + status + " Successfully"));
+                            return Ok(_api.Success("Quotation " + status + " Successfully"));
                         }
                         else
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User, "Unable to delete Sales Quotation"));
+                            return Ok(_api.Error(User, "Unable to delete  Quotation"));
                         }
                         // SortedList DeleteParams = new SortedList(){
                         //         {"N_CompanyID",nCompanyID},
