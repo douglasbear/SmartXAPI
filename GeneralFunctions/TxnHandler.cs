@@ -924,9 +924,11 @@ namespace SmartxAPI.GeneralFunctions
             bool B_AllBranchData = false, B_AllowCashPay = false, B_DirectPosting = false;
             int N_NextApproverID = 0;
             int AdvanceSettlementID = 0;
-            int N_ProcStatus = myFunctions.getIntVAL(MasterRow["n_ProcStatus"].ToString());
+            int N_ProcStatus=0;
+            if(MasterTable.Columns.Contains("n_ProcStatus")){
+               N_ProcStatus = myFunctions.getIntVAL(MasterRow["n_ProcStatus"].ToString());
 
-
+            }
             QueryParams.Add("@nCompanyID", N_CompanyID);
             QueryParams.Add("@nFnYearID", N_FnYearID);
             QueryParams.Add("@nSalesID", N_SalesID);
