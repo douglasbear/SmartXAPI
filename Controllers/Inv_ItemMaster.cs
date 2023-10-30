@@ -20,6 +20,7 @@ using ZXing.Common;
 using System.Drawing;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
+using System.Linq;
 
 namespace SmartxAPI.Controllers
 {
@@ -402,18 +403,27 @@ namespace SmartxAPI.Controllers
         public ActionResult GenerateBarcode([FromBody] DataSet ds)
         {
             DataTable products = new DataTable();
+            var random = RandomString();
             // Datatable products = new Datatable();
             products = ds.Tables["details"];
             if(products.Rows.Count>0)
-                GeneratePDFWithContent1(products);
+                GeneratePDFWithContent1(products,random);
 
            
-            return Ok(_api.Success(new SortedList() { { "FileName", "barcode.pdf" } }));
+            return Ok(_api.Success(new SortedList() { { "FileName", "barcode"+random+".pdf" } }));
 
         }
-        public void GeneratePDFWithContent1(DataTable products)
+        private static Random random = new Random();
+        public string RandomString(int length = 6)
         {
-            string path = this.TempFilesPath + "//barcode.pdf";
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+        public void GeneratePDFWithContent1(DataTable products,string random)
+        {
+
+            string path = this.TempFilesPath + "//barcode"+random+".pdf";
             // Define the page width and height in points (1 inch = 72 points)
             float pageWidth = Utilities.MillimetersToPoints(115);    // 6.5 cm to points
             float pageHeight = Utilities.MillimetersToPoints(30);   // 1.5 cm to points
@@ -453,7 +463,7 @@ namespace SmartxAPI.Controllers
                     nPrice=X_CurrencyName + " " + nPrice;
 
                     string xCompanyname = myFunctions.GetCompanyName(User);
-                    if (CreateBarcode(xBarcode))
+                    if (CreateBarcode(xBarcode,random))
                     {
 
                         // Define the left text position
@@ -472,7 +482,7 @@ namespace SmartxAPI.Controllers
                         float barcodeY = actualPageHeight - topMargin - spacing - 30;  // Y-coordinate for barcode
 
                         // Load the barcode image from the file path
-                        Bitmap barcodeImage = new Bitmap(bimageloc + xBarcode + ".png");
+                        Bitmap barcodeImage = new Bitmap(bimageloc + xBarcode +random+ ".png");
 
                         // Convert the barcode image to iTextSharp Image
                         iTextSharp.text.Image itextImage = iTextSharp.text.Image.GetInstance(barcodeImage, System.Drawing.Imaging.ImageFormat.Png);
@@ -495,79 +505,6 @@ namespace SmartxAPI.Controllers
 
                         document.NewPage();
                     }
-                }
-            }
-
-            // Close the PDF document
-            document.Close();
-        }
-
-        public void GeneratePDFWithContent(DataTable products)
-        {
-            string filePath = this.TempFilesPath + "//barcode.pdf";
-            // Create a new PDF document
-            Document document = new Document(PageSize.A4);
-            PdfWriter writer = PdfWriter.GetInstance(document, new FileStream(filePath, FileMode.Create));
-
-            // Open the PDF document
-            document.Open();
-            for (int k = 0; k < products.Rows.Count; k++)
-            {
-                string bimageloc = "C://Olivoserver2020/Barcode/";
-                string xItemName = products.Rows[k]["x_ItemName"].ToString();
-                string xBarcode = products.Rows[k]["x_ItemCode"].ToString();
-                string nPrice = products.Rows[k]["n_Cost"].ToString();
-
-                if (CreateBarcode(xBarcode))
-                {
-                    // Create a new instance of PdfContentByte to write content
-                    PdfContentByte contentByte = writer.DirectContent;
-
-                    // Set the font and font size for the text
-                    BaseFont baseFont = BaseFont.CreateFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
-                    contentByte.SetFontAndSize(baseFont, 12);
-
-                    // Calculate the width and height of the page
-                    float pageWidth = document.PageSize.Width;
-                    float pageHeight = document.PageSize.Height;
-
-                    // Define the left text position
-                    float leftTextX = 50;  // X-coordinate for left text
-                    float leftTextY = pageHeight - 50;  // Y-coordinate for left text
-
-                    // Write the left text to the PDF
-                    contentByte.BeginText();
-                    contentByte.ShowTextAligned(Element.ALIGN_LEFT, myFunctions.GetCompanyName(User), leftTextX, leftTextY, 0);
-                    contentByte.EndText();
-
-                    // bimageloc = bimageloc + xBarcode + ".png";
-                    // var logo = iTextSharp.text.Image.GetInstance(bimageloc);
-                    // logo.ScaleAbsoluteHeight(100);
-                    // logo.ScaleAbsoluteWidth(280);
-                    // document.Add(logo);
-                    Bitmap barcodeImage = new Bitmap(bimageloc + xBarcode + ".png");
-                    iTextSharp.text.Image itextImage = iTextSharp.text.Image.GetInstance(barcodeImage, System.Drawing.Imaging.ImageFormat.Bmp);
-                    itextImage.Alignment = Element.ALIGN_LEFT;
-                    itextImage.ScaleToFit(150, 150);
-
-                    // Define the barcode position
-                    float barcodeX = 50;  // X-coordinate for barcode
-                    float barcodeY = pageHeight - 100;  // Y-coordinate for barcode
-
-                    // Add the barcode to the PDF document
-                    itextImage.SetAbsolutePosition(barcodeX, barcodeY);
-                    document.Add(itextImage);
-
-
-                    // Define the right text position
-                    float rightTextX = pageWidth - 200;  // X-coordinate for right text
-                    float rightTextY = pageHeight - 50;  // Y-coordinate for right text
-
-                    // Write the product name and price to the PDF
-                    contentByte.BeginText();
-                    contentByte.ShowTextAligned(Element.ALIGN_RIGHT, xItemName, rightTextX, rightTextY, 0);
-                    contentByte.ShowTextAligned(Element.ALIGN_RIGHT, nPrice, rightTextX, rightTextY - 20, 0);
-                    contentByte.EndText();
                 }
             }
 
@@ -598,13 +535,13 @@ namespace SmartxAPI.Controllers
         }
 
 
-        public bool CreateBarcode(string Data)
+        public bool CreateBarcode(string Data,string random)
         {
             if (Data != "")
             {
                 Zen.Barcode.Code128BarcodeDraw barcode = Zen.Barcode.BarcodeDrawFactory.Code128WithChecksum;
                 System.Drawing.Image img = barcode.Draw(Data, 50);
-                img.Save("C://OLIVOSERVER2020/Barcode/" + Data + ".png", ImageFormat.Png);
+                img.Save("C://OLIVOSERVER2020/Barcode/" + Data+random + ".png", ImageFormat.Png);
             }
             return true;
         }
