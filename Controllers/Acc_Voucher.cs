@@ -386,6 +386,8 @@ namespace SmartxAPI.Controllers
                          
                        Result.Add("b_IsSaveDraft", N_SaveDraft);
                        Result.Add("N_ProcStatus", N_ProcStatus);
+                       Result.Add("n_VoucherID", N_VoucherID);
+                       Result.Add("x_POrderNo", xVoucherNo);
                        return Ok(api.Success(Result, "Voucher Approved " + "-" + xVoucherNo));
                     }
 
