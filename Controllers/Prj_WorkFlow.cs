@@ -144,6 +144,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nWTaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_WTaskID"].ToString());
+                bool isDefault = myFunctions.getBoolVAL(MasterTable.Rows[0]["B_IsDefault"].ToString());
                 int N_CreatorID = myFunctions.GetUserID(User);
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -162,6 +163,10 @@ namespace SmartxAPI.Controllers
                         TaskCode = dLayer.GetAutoNumber("Prj_WorkflowMaster", "X_WTaskCode", Params, connection, transaction);
                         if (TaskCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Task Code")); }
                         MasterTable.Rows[0]["X_WTaskCode"] = TaskCode;
+                    }
+                    if(isDefault == true)
+                    {
+                    dLayer.ExecuteNonQuery("update Prj_WorkflowMaster set B_IsDefault=0 where N_CompanyID=" + nCompanyID + " and B_IsDefault=1", Params, connection, transaction);
                     }
                     nWTaskID = dLayer.SaveData("Prj_WorkflowMaster", "N_WTaskID", MasterTable, connection, transaction);
                     if (nWTaskID <= 0)

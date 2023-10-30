@@ -176,7 +176,10 @@ namespace SmartxAPI.Controllers
                    
 
                     transaction.Commit();
-                    return Ok(_api.Success("Saved"));
+                    SortedList Result = new SortedList();
+                    Result.Add("n_ShippingID",nShippingID);
+                    Result.Add("invoiceNo",X_ShippingCode);
+                    return Ok(_api.Success(Result,"Saved" ));
                 }
             }
             catch (Exception ex)
@@ -420,15 +423,15 @@ namespace SmartxAPI.Controllers
                                     DeliveryNoteAppend = DeliveryNoteAppend + "," + Avar["N_DeliveryNoteID"].ToString();
                             }
                             if (xDeliveryNoteID == "" || xDeliveryNoteID == null)
-                                DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") order by N_SOdetailsID ASC ";
+                                DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId="+nCompanyId+" and N_SalesOrderID =" + N_salesOrderID + " and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") order by N_SOdetailsID ASC ";
                             else
-                                DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") order by N_SOdetailsID ASC ";
+                                DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId="+nCompanyId+" and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") order by N_SOdetailsID ASC ";
 
                         }
                         else
                         {
                             if ((xDeliveryNoteID == "" || xDeliveryNoteID == null) && N_salesOrderID > 0)
-                                DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " order by N_SOdetailsID ASC ";
+                                DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId="+nCompanyId+" and N_SalesOrderID =" + N_salesOrderID + " order by N_SOdetailsID ASC ";
                             else
                                 DetailSql = "select * from vw_DeliveryNoteToShippingDetails where N_CompanyId="+nCompanyId+" and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  order by N_SOdetailsID ASC ";
 

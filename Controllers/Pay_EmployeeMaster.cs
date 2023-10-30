@@ -1249,7 +1249,7 @@ namespace SmartxAPI.Controllers
                 int nPositionID = myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_PositionID"].ToString());
                 int nEmpTypeID = myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_EmpTypeID"].ToString());
                 int nUserID = myFunctions.GetUserID(User);
-                //string X_BtnAction = "";
+                // string X_BtnAction = "";
                 string xButtonAction="";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -1320,6 +1320,7 @@ namespace SmartxAPI.Controllers
 
                     }
                     // Auto Gen
+                    xButtonAction="Insert";
                     if (xEmpCode == "@Auto")
                     {
 
@@ -1330,17 +1331,16 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.FormID);
                         Params.Add("X_Type", X_Type);
                         xEmpCode = dLayer.GetAutoNumber("pay_Employee", "x_EmpCode", Params, connection, transaction);
-                        xButtonAction="Insert"; 
                         if (xEmpCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Employee Code")); }
                         dtMasterTable.Rows[0]["x_EmpCode"] = xEmpCode;
-                        //X_BtnAction = "INSERT";
+                        // X_BtnAction = "INSERT";
                     }
                     else if (nEmpID != 0)
                     {
                         xButtonAction="Update"; 
                         xEmpCode = dtMasterTable.Rows[0]["x_EmpCode"].ToString();
                         //dLayer.DeleteData("pay_Employee", "n_EmpID", nEmpID, "", connection, transaction);
-                        //X_BtnAction = "UPDATE";
+                        // X_BtnAction = "UPDATE";
 
                     }
                     if (dtMasterTable.Rows[0]["N_LedgerID"].ToString() == "0")
@@ -1422,20 +1422,20 @@ namespace SmartxAPI.Controllers
                             ipAddress = Request.Headers["X-Forwarded-For"];
                         else
                             ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                          myFunctions.LogScreenActivitys(nFnYearID,nEmpID,xEmpCode,188,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                          myFunctions.LogScreenActivitys(nFnYearID,nEmpID,xEmpCode,this.FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
                        
-                        SortedList LogParams = new SortedList();
-                        LogParams.Add("N_CompanyID", nCompanyID);
-                        LogParams.Add("N_FnYearID", nFnYearID);
-                        LogParams.Add("N_TransID", nEmpID);
-                        LogParams.Add("N_FormID", this.FormID);
-                        LogParams.Add("N_UserId", nUserID);
-                        LogParams.Add("X_Action", xButtonAction);
-                        LogParams.Add("X_SystemName", "ERP Cloud");
-                        LogParams.Add("X_IP", ipAddress);
-                        LogParams.Add("X_TransCode", xEmpCode);
-                        LogParams.Add("X_Remark", " ");
-                        dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);
+                        // SortedList LogParams = new SortedList();
+                        // LogParams.Add("N_CompanyID", nCompanyID);
+                        // LogParams.Add("N_FnYearID", nFnYearID);
+                        // LogParams.Add("N_TransID", nEmpID);
+                        // LogParams.Add("N_FormID", this.FormID);
+                        // LogParams.Add("N_UserId", nUserID);
+                        // LogParams.Add("X_Action", X_BtnAction);
+                        // LogParams.Add("X_SystemName", "ERP Cloud");
+                        // LogParams.Add("X_IP", ipAddress);
+                        // LogParams.Add("X_TransCode", xEmpCode);
+                        // LogParams.Add("X_Remark", " ");
+                        // dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);
 
                         int pay_EmpAddlInfoRes = 0;
                         if (dtPay_EmpAddlInfo.Rows.Count > 0)
@@ -2036,7 +2036,7 @@ namespace SmartxAPI.Controllers
                         ipAddress = Request.Headers["X-Forwarded-For"];
                     else
                         ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnyearID.ToString()),nEmpID,TransRow["X_EmpCode"].ToString(),188,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnyearID.ToString()),nEmpID,TransRow["X_EmpCode"].ToString(),this.FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
              
 
                     object EmployeeLedger = dLayer.ExecuteScalar("Select 1 from vw_Pay_EmployeeLedger Where  N_CompanyID= @nCompanyID and (LedgerID=" + Employee.Rows[0]["n_ledgerID"] + " OR LedgerID=" + Employee.Rows[0]["n_loanledgerid"] + ")", Params, connection, transaction);

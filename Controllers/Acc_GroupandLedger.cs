@@ -421,7 +421,7 @@ namespace SmartxAPI.Controllers
                     if (Result <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User, "Unable to save"));
+                        return Ok(api.Error(User, "Group Name Already In Use !!"));
                     }
                     else
                     {
