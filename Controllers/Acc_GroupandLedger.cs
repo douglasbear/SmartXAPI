@@ -105,7 +105,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = ""; 
-            sqlCommandText = "Select N_LedgerID,N_GroupID,N_CompanyID,N_Reserved,B_InActive,N_UserID,X_Level,X_CashTypeBehaviour,X_Type,B_CostCenterEnabled,N_FnYearID,N_PostingBahavID,X_LedgerName_Ar,X_GroupCode,X_GroupName,N_CashBahavID,B_CostCentreRequired,N_TaxCategoryID1,X_TransactionType,X_TaxType,N_Amount,B_IsAmtEdit,N_TaxTypeID,X_TaxTypeName,N_CurrencyID,[Account Code] as X_LedgerCode,[Account] as X_LedgerName ,N_LedgerBehaviourID as n_LedgerBehavID,N_TransactionTypeID from vw_AccMastLedger Where N_CompanyID= @p1 and N_FnYearID=@p2 Order By [Account Code]";
+            sqlCommandText = "Select N_LedgerID,N_GroupID,N_CompanyID,N_Reserved,B_InActive,N_UserID,X_Level,X_CashTypeBehaviour,X_Type,B_CostCenterEnabled,N_FnYearID,N_PostingBahavID,X_LedgerName_Ar,X_GroupCode,X_GroupName,N_CashBahavID,B_CostCentreRequired,N_TaxCategoryID1,X_TransactionType,X_TaxType,N_Amount,B_IsAmtEdit,N_TaxTypeID,X_TaxTypeName,N_CurrencyID,[Account Code] as X_LedgerCode,[Account] as X_LedgerName ,N_LedgerBehaviourID as n_LedgerBehavID,N_TransactionTypeID,N_CashFlowTypeID,X_CashFlowType from vw_AccMastLedger Where N_CompanyID= @p1 and N_FnYearID=@p2 Order By [Account Code]";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
 
@@ -314,7 +314,7 @@ namespace SmartxAPI.Controllers
                     if (Result <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User, "Unable to save"));
+                        return Ok(api.Error(User, "Account Name Already In Use !!"));
                     }
                     else
                     {
