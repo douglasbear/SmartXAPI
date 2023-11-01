@@ -10,7 +10,6 @@ using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
-using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace SmartxAPI.Controllers
 {
@@ -210,12 +209,9 @@ namespace SmartxAPI.Controllers
                 DataTable DetailTable;
                 DetailTable = ds.Tables["details"];
                int nCompanyId = myFunctions.GetCompanyID(User);;
-                int nFnYearId = myFunctions.getIntVAL(DetailTable.Rows[0]["n_FnYearId"].ToString());
+                //int nFnYearId = myFunctions.getIntVAL(DetailTable.Rows[0]["n_FnYearId"].ToString());
                 int nLoanTransID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_LoanTransID"].ToString());
-                   string xLoanTrasDetailsID = DetailTable.Rows[0]["N_LoanTransDetailsID"].ToString();
                  DetailTable.Columns.Remove("n_CalculatedAmt");
-                 String xButtonAction="";
-                   DetailTable.Columns.Remove("n_FnYearId");
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -228,30 +224,12 @@ namespace SmartxAPI.Controllers
                     {
                         foreach (DataRow var in DetailTable.Rows)
                         {
-
-                          
-                          
                             int nLoanTransDetailsID = dLayer.SaveData("Pay_LoanIssueDetails", "N_LoanTransDetailsID", DetailTable, connection, transaction);
                             if (nLoanTransDetailsID <= 0)
                             {
                                 transaction.Rollback();
                                 return Ok(api.Error(User,"Unable to save"));
                             }
-                        }
-
-                          xButtonAction = "Adjusted";
-                        string ipAddress = "";
-
-                        if (Request.Headers.ContainsKey("X-Forwarded-For"))
-                            ipAddress = Request.Headers["X-Forwarded-For"];
-                        else
-                            ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-
-                        List<int> formIds = new List<int> { 470 , 212 }; // List of formid values
-                        foreach (int formId in formIds)
-                        {  
-                            DateTime currentTime = DateTime.Now; 
-                            myFunctions.LogScreenActivitys(nFnYearId,nLoanTransID,xLoanTrasDetailsID,formId,xButtonAction,ipAddress, "",User,dLayer,connection,transaction);
                         }
 
                         transaction.Commit();

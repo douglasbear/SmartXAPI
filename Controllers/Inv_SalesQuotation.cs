@@ -645,23 +645,6 @@ namespace SmartxAPI.Controllers
                         //myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_PkeyID, "Sales Quotation", QuotationNo, dLayer, connection, transaction, User);
                         return Ok(_api.Success("Sales Quotation Approval updated" + "-" + QuotationNo));
                     }
-                     
-                     
-                     if (N_QuotationID == 0 && QuotationNo != "@Auto")
-                    {
-                    object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_SalesQuotation Where X_QuotationNo ='" + QuotationNo + "' and N_CompanyID= " + N_CompanyID +  "", connection, transaction);
-                    if (N_DocNumber == null)
-                    {
-                        N_DocNumber = 0;
-                    }
-                    if (myFunctions.getVAL(N_DocNumber.ToString()) >= 1)
-                    {
-                        // transaction.Rollback();
-                        // return Ok(_api.Error(User, "Invoice number already in use"));
-                       transaction.Rollback();
-                        return Ok(_api.Error(User, "Quotation Number Already exist"));
-                    }
-                   }
 
                     if (QuotationNo == "@Auto")
                     {
@@ -691,7 +674,6 @@ namespace SmartxAPI.Controllers
                           xButtonAction = "Update";
 
                     }
-
                     string DupCriteria = "N_CompanyID=" + N_CompanyID + " and X_QuotationNo='" + QuotationNo + "'";
                     MasterTable.Rows[0]["n_UserID"] = myFunctions.GetUserID(User);
                    
@@ -789,8 +771,6 @@ namespace SmartxAPI.Controllers
                     Result.Add("x_QuotationNo", QuotationNo);
                     return Ok(_api.Success(Result, "Quotation saved"));
                 }
-                
-
             }
             catch (Exception ex)
             {
