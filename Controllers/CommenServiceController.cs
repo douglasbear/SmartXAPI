@@ -74,7 +74,7 @@ namespace SmartxAPI.Controllers
         // }
 
         [HttpGet("auth-user")]
-        public ActionResult AuthenticateUser(string reqType, int appID, int nCompanyID, string xCompanyName, string customerKey, string xVersion, int nBranchID)
+        public ActionResult AuthenticateUser(string reqType, int appID, int nCompanyID, string xCompanyName, string customerKey, string xVersion)
         {
             try
             {
