@@ -350,7 +350,14 @@ namespace SmartxAPI.Controllers
                         {
                             Master.Rows[0]["N_OrderFormID"] = myFunctions.getIntVAL(objSalesOrderFormID.ToString());
                         }
+                        if(nFormID==81)
+                        {
                         Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Sales Order Processed");
+                        }
+                        else
+                        {
+                            Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Job Order Processed");
+                        }
                     }
                     // object objxDeliveryNoteNo = myFunctions.checkProcessed("Inv_DeliveryNote", "X_ReceiptNo", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
                     // if (objxDeliveryNoteNo.ToString() != "")
