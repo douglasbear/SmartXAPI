@@ -660,6 +660,50 @@ namespace SmartxAPI.Controllers
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
 
+                         DataTable dtTermsDetails = dLayer.ExecuteDataTable("Select * from vw_Termsdetails where N_CompanyId=" + nCompanyId + " and N_ReferanceID=" + nSalesOrderID+" order by n_termsid", QueryParamsList, Con);
+
+                    if (dtTermsDetails.Rows.Count > 0)
+                    {
+                        string Termstype = "";
+                        int TermsID = 0;
+                        object SeqID ="";
+                        foreach (DataRow dr in dtTermsDetails.Rows)
+                        {
+                            Termstype = dr["x_typename"].ToString();
+                            TermsID = myFunctions.getIntVAL(dr["N_TermsID"].ToString());
+                            object ProcTermsID = dLayer.ExecuteScalar("Select n_termsid from inv_salesdetails where N_CompanyId=" + nCompanyId + " and N_SalesOrderId=" + nSalesOrderID + " and N_termsID=" + TermsID, QueryParamsList, Con);
+                            if (ProcTermsID == null)
+                                break;
+                        }
+
+                       
+                        if (Termstype == "SO Items")
+                        {
+                            SeqID = dLayer.ExecuteScalar("Select n_sequenceID from vw_Termsdetails where N_CompanyId=" + nCompanyId + " and N_ReferanceID=" + nSalesOrderID + " and X_TypeName='" + Termstype + "' and N_TermsID="+TermsID, QueryParamsList, Con);
+                            DetailSql = "select *,'SO Items' as x_typename,0 as n_sequenceid,0 as N_TermsID  from vw_SalesOrderDetailsToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID union select * from vw_TermsSalesOrderDetailsToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID and n_sequenceid='" + SeqID + "' order by n_sequenceid";
+                        }
+                        else
+                            DetailSql = "select * from vw_TermsSalesOrderDetailsToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID and x_typename='" + Termstype + "'";
+                        DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+                        foreach (DataRow dr in DetailTable.Rows)
+                        {
+                            object obj = dLayer.ExecuteScalar("select N_Percentage from vw_Termsdetails where N_CompanyID=@nCompanyID and N_ReferanceID=@nOrderID and n_sequenceid="+SeqID + " and x_typename='SO Items'", QueryParamsList, Con);
+                            object Terms = dLayer.ExecuteScalar("select X_Terms from vw_Termsdetails where N_CompanyID=@nCompanyID and N_ReferanceID=@nOrderID and  n_sequenceid="+SeqID+ " and x_typename='SO Items'", QueryParamsList, Con);
+                            object ID = dLayer.ExecuteScalar("select N_TermsID from vw_Termsdetails where N_CompanyID=@nCompanyID and N_ReferanceID=@nOrderID and  n_sequenceid="+SeqID+ " and x_typename='SO Items'", QueryParamsList, Con);
+                            if (obj != null && dr["x_typename"].ToString() == "SO Items")
+                            {
+                                dr["n_SpriceF"] = (myFunctions.getVAL(dr["n_SpriceF"].ToString()) * myFunctions.getVAL(obj.ToString()) / 100).ToString();
+                                if (Terms != null)
+                                {
+                                    dr["x_FreeDescription"] = Terms.ToString();
+                                    dr["N_TermsID"] = ID.ToString();
+                                }
+                            }
+
+                        }
+                        DetailTable = _api.Format(DetailTable, "Details");
+                    }
+                      
                         //Eye Optics
                         string sqlPrescription1 = "select * from Inv_Prescription where N_SalesOrderID=@nOrderID";
                         DataTable Prescription = dLayer.ExecuteDataTable(sqlPrescription1, QueryParamsList, Con);
