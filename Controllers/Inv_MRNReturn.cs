@@ -182,13 +182,15 @@ namespace SmartxAPI.Controllers
 
                     rentalItem.AcceptChanges();
 
-                    if (nMRNReturnID > 0)
+                    if(rentalItem.Rows.Count >0)
                     {
-                        int N_FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
-                        dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + nMRNReturnID.ToString() + " and N_FormID=" + N_FormID + " and N_CompanyID=" + nCompanyID, connection, transaction);
-
-                    }
-                    dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
+                        if (nMRNReturnID > 0)
+                        {
+                            int N_FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
+                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + nMRNReturnID.ToString() + " and N_FormID=" + N_FormID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                        }
+                        dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
+                    };
 
                     if (nMRNReturnDetailsID <= 0)
                     {
