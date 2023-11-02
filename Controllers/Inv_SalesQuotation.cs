@@ -397,7 +397,12 @@ namespace SmartxAPI.Controllers
 
 
                     }
-                  
+                    bool Invoice2Enable = false;
+                    object Invoice2Enableobj = dLayer.ExecuteScalar("select 1 from gen_printtemplates where N_CompanyID =" + nCompanyId + " and N_FormID=1818 and X_RptName<>'' and N_UsercategoryID=" + myFunctions.GetUserCategory(User),connection);
+                    if (Invoice2Enableobj != null)
+                        Invoice2Enable = true;
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "Invoice2Enable", typeof(bool), Invoice2Enable);
+
 
                     var UserCategoryID = User.FindFirst(ClaimTypes.GroupSid)?.Value;
                     DateTime quotationDate = myFunctions.GetFormatedDate(Master.Rows[0]["D_QuotationDate"].ToString());
