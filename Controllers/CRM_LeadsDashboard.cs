@@ -152,34 +152,34 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,e));
             }
         }
-        [HttpGet("notesupdate")]
-        public ActionResult NotesUpdate(string xOpportunityCode, string xnotes)
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "";
-            sqlCommandText = "update crm_opportunity set X_Notes=@p3 where N_CompanyID=@p1 and X_OpportunityCode=@p2";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", xOpportunityCode);
-            Params.Add("@p3", xnotes);
+        // [HttpGet("notesupdate")]
+        // public ActionResult NotesUpdate(string xOpportunityCode, string xnotes)
+        // {
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
+        //     int nCompanyId = myFunctions.GetCompanyID(User);
+        //     string sqlCommandText = "";
+        //     sqlCommandText = "update crm_opportunity set X_Notes=@p3 where N_CompanyID=@p1 and X_OpportunityCode=@p2";
+        //     Params.Add("@p1", nCompanyId);
+        //     Params.Add("@p2", xOpportunityCode);
+        //     Params.Add("@p3", xnotes);
 
 
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dLayer.ExecuteNonQuery(sqlCommandText, Params, connection);
-                }
-                return Ok(api.Warning("Notes Updated"));
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dLayer.ExecuteNonQuery(sqlCommandText, Params, connection);
+        //         }
+        //         return Ok(api.Warning("Notes Updated"));
 
-            }
-            catch (Exception e)
-            {
-                return Ok(api.Error(User,e));
-            }
-        }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(api.Error(User,e));
+        //     }
+        // }
 
         [HttpPost("orderupdate")]
         public ActionResult OrderUpdate([FromBody] DataSet ds)
@@ -272,8 +272,58 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, e));
             }
         }
+        [HttpPost("savenotes")]
+        public ActionResult SaveNotes([FromBody] DataSet ds)
+        {
 
+            DataTable MasterTable;
+            MasterTable = ds.Tables["master"];
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    int nCommentID = dLayer.SaveData("CRM_Notes", "N_CommentID", MasterTable, connection, transaction);
+                    transaction.Commit();
+                    return Ok(api.Success("Saved"));
 
-    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+        [HttpGet("notesDetails")]
+        public ActionResult GetNotesDetails(int nTransID, int nFormID)
+        {
+            DataSet dt = new DataSet();
+            SortedList Params = new SortedList();
+            DataTable NotesTable = new DataTable();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+
+            string sqlCommand = "select * from vw_CRM_Notes where N_CompanyID=@p1 and n_TransID=@p2 and n_MenuID =@p3 order by (d_EntryDate)desc"; 
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nTransID);
+            Params.Add("@p3", nFormID);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    NotesTable = dLayer.ExecuteDataTable(sqlCommand, Params, connection);
+                    NotesTable.AcceptChanges();
+                    NotesTable = api.Format(NotesTable, "Notes");
+                    dt.Tables.Add(NotesTable);
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+}
 }
 

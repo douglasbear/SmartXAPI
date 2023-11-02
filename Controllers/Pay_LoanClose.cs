@@ -138,9 +138,6 @@ namespace SmartxAPI.Controllers
                 DateTime dStartDate = Convert.ToDateTime(MasterTable.Rows[0]["D_PaidDate"].ToString());
                 MasterTable.Columns.Remove("n_BalanceAmount");
 
-                
-                string xLoanCloseID = MasterTable.Rows[0]["N_LoanCloseID"].ToString();
-string xButtonAction="";
 
                 QueryParams.Add("N_CompanyID", nCompanyID);
 
@@ -365,22 +362,6 @@ string xButtonAction="";
                     dLayer.ExecuteNonQueryPro("SP_Pay_LoanClosingVoucher_Del", DeleteParams, connection, transaction);
                     dLayer.ExecuteNonQueryPro("SP_Pay_LoanClosing", ClosingParams, connection, transaction);
 
-                     xButtonAction = "Closed";
-                        string ipAddress = "";
-
-                        if (Request.Headers.ContainsKey("X-Forwarded-For"))
-                            ipAddress = Request.Headers["X-Forwarded-For"];
-                        else
-                            ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-
-                        List<int> formIds = new List<int> { 553 , 212 }; // List of formid values
-                        foreach (int formId in formIds)
-                        {
-
-                             DateTime currentTime = DateTime.Now; 
-                            myFunctions.LogScreenActivitys(nFnYearId,nLoanTransID,xLoanCloseID,formId,xButtonAction,ipAddress, "",User,dLayer,connection,transaction);
-                        }
-
                     transaction.Commit();
 
 
@@ -395,7 +376,7 @@ string xButtonAction="";
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(string xLoanClose, int nFnYearId, int nLoanTransID)
+        public ActionResult DeleteData(string xLoanClose, int nFnYearId)
         {
 
             int Results = 0;
@@ -407,54 +388,22 @@ string xButtonAction="";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                       
-                    DataTable TransData = new DataTable();
-                         SortedList DeleteParams = new SortedList(){
+                    N_LoanCloseID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select N_LoanCloseID from Pay_LoanClose where N_CompanyID="+nCompanyId+" and X_LoanClosingCode='"+xLoanClose+"'", Params, connection).ToString());
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyId},
                                 {"n_FnyearID", nFnYearId},
                                 {"X_TransType","ELC"},
                                 {"X_ReferenceNo",xLoanClose},
                                 };
                     
- N_LoanCloseID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select N_LoanCloseID from Pay_LoanClose where N_CompanyID="+nCompanyId+" and X_LoanClosingCode='"+xLoanClose+"'", Params, connection).ToString());
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    //    SortedList ParamList = new SortedList();
-                    
-                         string Sql = "select X_LoanClosingCode from Pay_Loanclose where N_CompanyId="+nCompanyId+" and N_FnYearID="+nFnYearId+" and N_LoanCloseID="+N_LoanCloseID;
-                       TransData = dLayer.ExecuteDataTable(Sql, DeleteParams, connection,transaction);
-                     
-                    //   DataRow TransRow = TransData.Rows[0];
-                        //  string xLoanClose="";
-                         string xButtonAction="deleted";
-                       string ipAddress = "";
-                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
-                        ipAddress = Request.Headers["X-Forwarded-For"];
-                    else
-                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                            List<int> formIds = new List<int> { 553 , 212 }; // List of formid values
-                        foreach (int formId in formIds)
-                        {  
-                    myFunctions.LogScreenActivitys(myFunctions.getIntVAL(nFnYearId.ToString()), N_LoanCloseID,TransData.Rows[0]["X_LoanClosingCode"].ToString(),formId,xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
-                        }
-                   
-                    // SortedList DeleteParams = new SortedList(){
-                    //             {"N_CompanyID",nCompanyId},
-                    //             {"n_FnyearID", nFnYearId},
-                    //             {"X_TransType","ELC"},
-                    //             {"X_ReferenceNo",xLoanClose},
-                    //             };
-                    
                     dLayer.ExecuteNonQueryPro("SP_Pay_LoanClosingVoucher_Del", DeleteParams, connection, transaction);
                     dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails set N_RefundAmount =Null,D_RefundDate =Null,N_PayRunID =Null,N_TransDetailsID =Null,B_IsLoanClose =Null  where N_LoanTransID= N_LoanTransID and N_CompanyID=N_CompanyID and B_IsLoanClose=1 and N_TransDetailsID="+N_LoanCloseID+"", Params, connection, transaction);
                     Results = dLayer.DeleteData("Pay_LoanIssueDetails", "N_LoanTransID", N_LoanCloseID, "", connection, transaction);
-                 
-
                     transaction.Commit();
                 }
                 if (Results > 0)
                 {
-
-                    
                     Dictionary<string, string> res = new Dictionary<string, string>();
                     res.Add("N_LoanCloseID", N_LoanCloseID.ToString());
                     return Ok(api.Success(res, "Loan Close deleted"));
