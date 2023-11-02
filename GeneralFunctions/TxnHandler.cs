@@ -924,8 +924,11 @@ namespace SmartxAPI.GeneralFunctions
             bool B_AllBranchData = false, B_AllowCashPay = false, B_DirectPosting = false;
             int N_NextApproverID = 0;
             int AdvanceSettlementID = 0;
+            int N_ProcStatus=0;
+            if(MasterTable.Columns.Contains("n_ProcStatus")){
+               N_ProcStatus = myFunctions.getIntVAL(MasterRow["n_ProcStatus"].ToString());
 
-
+            }
             QueryParams.Add("@nCompanyID", N_CompanyID);
             QueryParams.Add("@nFnYearID", N_FnYearID);
             QueryParams.Add("@nSalesID", N_SalesID);
@@ -1012,8 +1015,52 @@ namespace SmartxAPI.GeneralFunctions
                 myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_SalesID, objCustName.ToString().Trim(), objCustCode.ToString(), N_CustomerID, "Customer Document", User, connection, transaction);
 
                 N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Sales where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
+                N_ProcStatus = myFunctions.getIntVAL(dLayer.ExecuteScalar("select n_ProcStatus from Inv_Sales where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
                 if (N_SaveDraft == 0)
                 {
+                    if (dtsaleamountdetails.Columns.Contains("N_CommissionAmtF"))
+                        dtsaleamountdetails.Columns.Remove("N_CommissionAmtF");
+                    if (dtsaleamountdetails.Columns.Contains("N_CommissionAmt"))
+                        dtsaleamountdetails.Columns.Remove("N_CommissionAmt");
+
+                    dtsaleamountdetails = myFunctions.AddNewColumnToDataTable(dtsaleamountdetails, "N_CommissionAmtF", typeof(double), 0);
+                    dtsaleamountdetails = myFunctions.AddNewColumnToDataTable(dtsaleamountdetails, "N_CommissionAmt", typeof(double), 0);
+                           
+                    for (int i = 0; i < dtsaleamountdetails.Rows.Count; i++)
+                    {
+                        double N_SChrgAmt = 0;
+                        double N_SChrgAmtMax = 0;
+                        object N_ServiceCharge = dLayer.ExecuteScalar("Select ISNULL(N_ServiceCharge , 0) from Inv_Customer where N_CustomerID=" + myFunctions.getVAL(dtsaleamountdetails.Rows[i]["N_CustomerID"].ToString()) + " and N_CompanyID=" + N_CompanyID + "and N_FnYearID=" +N_FnYearID, QueryParams, connection, transaction);
+                        object N_ServiceChargeMax = dLayer.ExecuteScalar("Select ISNULL(N_ServiceChargeLimit , 0) from Inv_Customer where N_CustomerID=" +  myFunctions.getVAL(dtsaleamountdetails.Rows[i]["N_CustomerID"].ToString()) + " and N_CompanyID=" + N_CompanyID + "and N_FnYearID=" + N_FnYearID,  QueryParams, connection, transaction);
+                        object N_TaxID = dLayer.ExecuteScalar("Select ISNULL(N_TaxCategoryID , 0) from Inv_Customer where N_CustomerID=" +  myFunctions.getVAL(dtsaleamountdetails.Rows[i]["N_CustomerID"].ToString()) + " and N_CompanyID=" + N_CompanyID + "and N_FnYearID=" + N_FnYearID,  QueryParams, connection, transaction);
+                        if (myFunctions.getVAL(N_ServiceCharge.ToString()) > 0)
+                        {
+                            N_SChrgAmt = (myFunctions.getVAL(dtsaleamountdetails.Rows[i]["N_AmountF"].ToString()) * myFunctions.getVAL((N_ServiceCharge.ToString())) / 100);
+                            N_SChrgAmtMax = myFunctions.getVAL(N_ServiceChargeMax.ToString());
+                            if (N_SChrgAmtMax > 0)
+                            {
+                                if (N_SChrgAmt > N_SChrgAmtMax)
+                                    N_SChrgAmt = myFunctions.getVAL(N_ServiceChargeMax.ToString());
+                            }
+                        }                                    
+                        double CommissionAmtH = N_SChrgAmt * (myFunctions.getVAL(MasterRow["n_ExchangeRate"].ToString()));
+                        if(myFunctions.getVAL(N_SChrgAmt.ToString())>0)
+                        {
+                            dtsaleamountdetails.Rows[i]["N_CommissionAmtF"]=myFunctions.getVAL(N_SChrgAmt.ToString());
+                            dtsaleamountdetails.Rows[i]["N_CommissionAmt"]=myFunctions.getVAL(CommissionAmtH.ToString());
+                            dtsaleamountdetails.Rows[i]["N_CommissionPer"]=N_ServiceCharge;
+                            dtsaleamountdetails.Rows[i]["N_TaxID"]=N_TaxID;
+                        }
+                    }           
+
+                    int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID", dtsaleamountdetails, connection, transaction);
+                    if (N_SalesAmountID <= 0)
+                    {
+                        Result.Add("b_IsCompleted", 0);
+                        Result.Add("x_Msg", "Unable to save Sales Invoice!");
+                        return Result;
+                    }
+
                     SortedList PostingParam = new SortedList();
                     PostingParam.Add("N_CompanyID", N_CompanyID);
                     PostingParam.Add("X_InventoryMode", "SALES");
@@ -1027,10 +1074,6 @@ namespace SmartxAPI.GeneralFunctions
                     catch (Exception ex)
                     {
                         transaction.Rollback();
-                        // return Ok(_api.Error(User, ex));
-                        // Result.Add("b_IsCompleted", 0);
-                        // Result.Add("x_Msg", ex);
-                        // return Result;
                         throw ex;
                     }
                     bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
@@ -1070,6 +1113,9 @@ namespace SmartxAPI.GeneralFunctions
                 Result.Add("x_Msg", "Sales Approved " + "-" + InvoiceNo);
                 Result.Add("n_SalesID", N_SalesID);
                 Result.Add("x_SalesNo", InvoiceNo);
+                Result.Add("b_IsSaveDraft", N_SaveDraft);
+                Result.Add("N_ProcStatus", N_ProcStatus);
+                
                 return Result;
             }
 
@@ -1246,6 +1292,7 @@ namespace SmartxAPI.GeneralFunctions
 
                 N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "SALES", N_SalesID, InvoiceNo, 1, objCustName.ToString(), 0, "",0, User, dLayer, connection, transaction);
                 N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Sales where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
+                N_ProcStatus = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ProcStatus from Inv_Sales where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
 
                 DataTable dtloyalitypoints = ds.Tables["loyalitypoints"];
                 int N_IsSave = 1;
@@ -1373,15 +1420,15 @@ namespace SmartxAPI.GeneralFunctions
                     //service charge
             
 
-                int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID", dtsaleamountdetails, connection, transaction);
-                if (N_SalesAmountID <= 0)
-                {
-                    // transaction.Rollback();
-                    // return Ok(_api.Error(User, "Unable to save Sales Invoice!"));
-                    Result.Add("b_IsCompleted", 0);
-                    Result.Add("x_Msg", "Unable to save Sales Invoice!");
-                    return Result;
-                }
+                        int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID", dtsaleamountdetails, connection, transaction);
+                        if (N_SalesAmountID <= 0)
+                        {
+                            // transaction.Rollback();
+                            // return Ok(_api.Error(User, "Unable to save Sales Invoice!"));
+                            Result.Add("b_IsCompleted", 0);
+                            Result.Add("x_Msg", "Unable to save Sales Invoice!");
+                            return Result;
+                        }
                     }
                 }
 
@@ -1798,6 +1845,9 @@ namespace SmartxAPI.GeneralFunctions
 
             Result.Add("n_SalesID", N_SalesID);
             Result.Add("x_SalesNo", InvoiceNo);
+            Result.Add("b_IsSaveDraft", N_SaveDraft);
+            Result.Add("N_ProcStatus", N_ProcStatus);
+            
 
             return Result;
 

@@ -668,6 +668,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to delete batch"));
                     }
 
+                    
                     transaction.Commit();
                     return Ok(_api.Success("Batch deleted"));
                 }

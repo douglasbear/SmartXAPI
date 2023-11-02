@@ -118,8 +118,8 @@ namespace SmartxAPI.Controllers
 
                     if (myFunctions.getIntVAL(VoucherID) <= 0)
                     {
-                        transaction.Rollback();
-                        return Ok(api.Error(User, "Unable to save"));
+                        transaction.Commit();
+                        return Ok(api.Success("Journal Voucher Saved"));
                     }
                     else
                     {

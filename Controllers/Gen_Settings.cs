@@ -423,8 +423,8 @@ namespace SmartxAPI.Controllers
                     else
                     {
 
-
-                        foreach (DataRow Kvar in InvoiceCounter.Rows)
+                       if(InvoiceCounter!=null){
+                          foreach (DataRow Kvar in InvoiceCounter.Rows)
                         {
                             int Enabled = 0, Reset = 0;
                             if (Convert.ToBoolean(Kvar["Enabled"].ToString()))
@@ -438,6 +438,8 @@ namespace SmartxAPI.Controllers
                                 dLayer.ExecuteNonQuery("update Inv_InvoiceyCounter set X_Prefix='" + Kvar["Prefix"].ToString() + "',X_Suffix='" + Kvar["Suffix"].ToString() + "',N_MinimumLen='" + Kvar["MinLength"].ToString() + "',B_AutoInvoiceEnabled=" + Enabled.ToString() + ",B_ResetYearly=" + Reset.ToString() + ",N_LastUsedNo=" + myFunctions.getVAL(Kvar["lastUsedNo"].ToString()) + " Where N_FormID= " + Kvar["N_FormID"].ToString() + " and N_CompanyId=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_BranchID=" + nBranchID, connection, transaction);
 
                         }
+                       }
+                        
                     }
 
                     foreach (DataRow var in GenSettinngs.Rows)
@@ -445,8 +447,9 @@ namespace SmartxAPI.Controllers
                         string settingsSql = "SP_GeneralDefaults_ins_cloud " + nCompanyID + ",'" + var["x_Group"].ToString() + "','" + var["x_Description"].ToString() + "' ," + myFunctions.getIntVAL(var["n_Value"].ToString()) + ",'" + var["x_Value"].ToString() + "'," + var["n_UserCategoryID"].ToString();
                         dLayer.ExecuteNonQuery(settingsSql, connection, transaction);
                     }
-
-                    foreach (DataRow var in AccountMaps.Rows)
+                    
+                    if(AccountMaps!=null){
+                           foreach (DataRow var in AccountMaps.Rows)
                     {
                         int b_IsDefault = AccountMaps.Columns.Contains("b_IsDefault") ? myFunctions.getIntVAL(AccountMaps.Rows[0]["b_IsDefault"].ToString()) : 0;
                         int nType = 0;
@@ -467,6 +470,8 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQuery("update Acc_PaymentMethodMaster set B_IsDefault=1 where N_CompanyID=" + nCompanyID + " and N_TypeID= " + var["n_TypeID"].ToString() + "and N_PaymentMethodID=" + var["n_PaymentMethodID"].ToString() + "", connection, transaction);
                         }
                     }
+                    }
+                 
                     if (OffDays != null)
                     {
                         object N_OffID = 0;

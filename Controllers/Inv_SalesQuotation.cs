@@ -350,7 +350,14 @@ namespace SmartxAPI.Controllers
                         {
                             Master.Rows[0]["N_OrderFormID"] = myFunctions.getIntVAL(objSalesOrderFormID.ToString());
                         }
+                        if(nFormID==81)
+                        {
                         Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Sales Order Processed");
+                        }
+                        else
+                        {
+                            Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Job Order Processed");
+                        }
                     }
                     // object objxDeliveryNoteNo = myFunctions.checkProcessed("Inv_DeliveryNote", "X_ReceiptNo", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
                     // if (objxDeliveryNoteNo.ToString() != "")
@@ -390,7 +397,12 @@ namespace SmartxAPI.Controllers
 
 
                     }
-                  
+                    bool Invoice2Enable = false;
+                    object Invoice2Enableobj = dLayer.ExecuteScalar("select 1 from gen_printtemplates where N_CompanyID =" + nCompanyId + " and N_FormID=1818 and X_RptName<>'' and N_UsercategoryID=" + myFunctions.GetUserCategory(User),connection);
+                    if (Invoice2Enableobj != null)
+                        Invoice2Enable = true;
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "Invoice2Enable", typeof(bool), Invoice2Enable);
+
 
                     var UserCategoryID = User.FindFirst(ClaimTypes.GroupSid)?.Value;
                     DateTime quotationDate = myFunctions.GetFormatedDate(Master.Rows[0]["D_QuotationDate"].ToString());
@@ -762,7 +774,7 @@ namespace SmartxAPI.Controllers
                     SortedList Result = new SortedList();
                     Result.Add("n_QuotationID", N_QuotationID);
                     Result.Add("x_QuotationNo", QuotationNo);
-                    return Ok(_api.Success(Result, "Sales quotation saved"));
+                    return Ok(_api.Success(Result, "Quotation saved"));
                 }
             }
             catch (Exception ex)
@@ -1041,12 +1053,12 @@ namespace SmartxAPI.Controllers
                
                  
                             transaction.Commit();
-                            return Ok(_api.Success("Sales Quotation " + status + " Successfully"));
+                            return Ok(_api.Success("Quotation " + status + " Successfully"));
                         }
                         else
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User, "Unable to delete Sales Quotation"));
+                            return Ok(_api.Error(User, "Unable to delete  Quotation"));
                         }
                         // SortedList DeleteParams = new SortedList(){
                         //         {"N_CompanyID",nCompanyID},
