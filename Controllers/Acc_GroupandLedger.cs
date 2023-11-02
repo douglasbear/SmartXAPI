@@ -297,6 +297,18 @@ namespace SmartxAPI.Controllers
                         }
 
                         MasterTable.Rows[0]["X_LedgerCode"] = X_LedgerCode;
+
+                         if (MasterTable.Columns.Contains("n_CashFlowTypeID") && myFunctions.getIntVAL(MasterTable.Rows[0]["n_CashFlowTypeID"].ToString())==0)
+                         {
+
+                        object N_ResultID = dLayer.ExecuteScalar("Select isnull(n_CashFlowTypeID,0) from Acc_MastGroup Where N_CompanyID= " + nCompanyID + " and N_FnYearID =" + nFnYearId+" and N_GroupID =" + N_GroupID , connection, transaction);
+                         if (N_ResultID != null || myFunctions.getIntVAL(N_ResultID.ToString())!=0  )
+                         {
+                        MasterTable.Rows[0]["n_CashFlowTypeID"] = N_ResultID;
+
+                         }
+                        
+                         }
                     }
                     MasterTable.AcceptChanges();
 
@@ -413,7 +425,20 @@ namespace SmartxAPI.Controllers
                         LedgerCount = LedgerCount == null ? 0 : LedgerCount;
                         if (myFunctions.getIntVAL(LedgerCount.ToString()) > 0)
                             return Ok(api.Error(User, "Group Code Already In Use !!"));
+
+                   if (MasterTable.Columns.Contains("n_CashFlowTypeID") && myFunctions.getIntVAL(MasterTable.Rows[0]["n_CashFlowTypeID"].ToString())>0)
+                   {
+                       object N_ResultCount = dLayer.ExecuteScalar("Select Count(*) from Acc_MastLedger Where N_CompanyID= " + nCompanyID + " and N_FnYearID =" + nFnYearId+" and N_GroupID =" + N_GroupID +" and isNUll(n_CashFlowTypeID,0) = 0" , connection, transaction);
+                         if (N_ResultCount != null || myFunctions.getIntVAL(N_ResultCount.ToString())!=0 )
+                         {
+                        dLayer.ExecuteNonQuery("Update Acc_MastLedger Set n_CashFlowTypeID = " + MasterTable.Rows[0]["n_CashFlowTypeID"] +" where N_CompanyID= " + nCompanyID + " and N_FnYearID =" + nFnYearId+" and N_GroupID =" + N_GroupID +" and isNUll(n_CashFlowTypeID,0) = 0", connection, transaction);
+                         }
+
+                   }
+
                     }
+
+
 
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and (X_GroupCode='" + X_GroupCode + "' OR X_GroupName='" + X_GroupName + "')";
                     string Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
