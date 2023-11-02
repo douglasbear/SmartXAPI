@@ -409,7 +409,7 @@ namespace SmartxAPI.Controllers
 
                     if (N_GroupID > 0)
                     {
-                        object LedgerCount = dLayer.ExecuteScalar("select COUNT(convert(nvarchar(100),x_GroupCode)) From Acc_MastGroup where N_GroupID <>" + N_GroupID + " and N_CompanyID =" + nCompanyID + " and N_FnYearID=" + nFnYearId +" and X_GroupCode="+X_GroupCode, connection, transaction);
+                        object LedgerCount = dLayer.ExecuteScalar("select COUNT(convert(nvarchar(100),x_GroupCode)) From Acc_MastGroup where N_GroupID <>" + N_GroupID + " and N_CompanyID =" + nCompanyID + " and N_FnYearID=" + nFnYearId +" and X_GroupCode='"+X_GroupCode +"'", connection, transaction);
                         LedgerCount = LedgerCount == null ? 0 : LedgerCount;
                         if (myFunctions.getIntVAL(LedgerCount.ToString()) > 0)
                             return Ok(api.Error(User, "Group Code Already In Use !!"));
