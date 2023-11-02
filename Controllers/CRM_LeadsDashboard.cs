@@ -152,34 +152,34 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,e));
             }
         }
-        [HttpGet("notesupdate")]
-        public ActionResult NotesUpdate(string xOpportunityCode, string xnotes)
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "";
-            sqlCommandText = "update crm_opportunity set X_Notes=@p3 where N_CompanyID=@p1 and X_OpportunityCode=@p2";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", xOpportunityCode);
-            Params.Add("@p3", xnotes);
+        // [HttpGet("notesupdate")]
+        // public ActionResult NotesUpdate(string xOpportunityCode, string xnotes)
+        // {
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
+        //     int nCompanyId = myFunctions.GetCompanyID(User);
+        //     string sqlCommandText = "";
+        //     sqlCommandText = "update crm_opportunity set X_Notes=@p3 where N_CompanyID=@p1 and X_OpportunityCode=@p2";
+        //     Params.Add("@p1", nCompanyId);
+        //     Params.Add("@p2", xOpportunityCode);
+        //     Params.Add("@p3", xnotes);
 
 
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dLayer.ExecuteNonQuery(sqlCommandText, Params, connection);
-                }
-                return Ok(api.Warning("Notes Updated"));
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dLayer.ExecuteNonQuery(sqlCommandText, Params, connection);
+        //         }
+        //         return Ok(api.Warning("Notes Updated"));
 
-            }
-            catch (Exception e)
-            {
-                return Ok(api.Error(User,e));
-            }
-        }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(api.Error(User,e));
+        //     }
+        // }
 
         [HttpPost("orderupdate")]
         public ActionResult OrderUpdate([FromBody] DataSet ds)
@@ -213,7 +213,117 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("comments")]
+        public ActionResult GetComments(int nOpportunityID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataSet dt = new DataSet();
+                    SortedList Params = new SortedList();
+                    // DataTable MasterTable = new DataTable();
+                    DataTable CommentsTable = new DataTable();
+                    string CommentsSql = "";
 
-    }
+                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    Params.Add("@nOpportunityID", nOpportunityID);
+
+                    // object TaskID = dLayer.ExecuteScalar("select N_TaskID from Tsk_TaskMaster where N_CompanyID=@nCompanyID and N_OpportunityID=@nOpportunityID order by N_TaskID desc", Params, connection);
+
+                    //TaskComments
+                    CommentsSql = "select top(5) X_UserName,D_Date,X_Comments,'Commented by #CREATOR on #TIME - ' + X_Comments as X_TaskComments from VW_Task_Comments where N_ActionID in (select N_TaskID from Tsk_TaskMaster where N_CompanyID=@nCompanyID and N_OpportunityID=@nOpportunityID) order by D_Date desc";
+                    CommentsTable = dLayer.ExecuteDataTable(CommentsSql, Params, connection);
+
+                    foreach (DataRow row in CommentsTable.Rows)
+                    {
+                        object creator = row["X_UserName"];
+
+                        string time = row["D_Date"].ToString();
+                        DateTime _date1;
+                        string day1 = "";
+                        if (time != null && time != "")
+                        {
+                            _date1 = DateTime.Parse(time.ToString());
+                            day1 = _date1.ToString("dd-MMM-yyyy  HH:mm tt");
+                        }
+                        
+                        if (row["X_TaskComments"].ToString().Contains("#CREATOR"))
+                        {
+                            row["X_TaskComments"] = row["X_TaskComments"].ToString().Replace("#CREATOR", creator.ToString());
+                        }
+                        if (row["X_TaskComments"].ToString().Contains("#TIME"))
+                        {
+                            row["X_TaskComments"] = row["X_TaskComments"].ToString().Replace("#TIME", day1);
+                        }
+                    }
+                    
+                    CommentsTable.AcceptChanges();
+                    CommentsTable = api.Format(CommentsTable, "Comments");
+
+                    dt.Tables.Add(CommentsTable);
+
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+        [HttpPost("savenotes")]
+        public ActionResult SaveNotes([FromBody] DataSet ds)
+        {
+
+            DataTable MasterTable;
+            MasterTable = ds.Tables["master"];
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    int nCommentID = dLayer.SaveData("CRM_Notes", "N_CommentID", MasterTable, connection, transaction);
+                    transaction.Commit();
+                    return Ok(api.Success("Saved"));
+
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+        [HttpGet("notesDetails")]
+        public ActionResult GetNotesDetails(int nTransID, int nFormID)
+        {
+            DataSet dt = new DataSet();
+            SortedList Params = new SortedList();
+            DataTable NotesTable = new DataTable();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+
+            string sqlCommand = "select * from vw_CRM_Notes where N_CompanyID=@p1 and n_TransID=@p2 and n_MenuID =@p3 order by (d_EntryDate)desc"; 
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nTransID);
+            Params.Add("@p3", nFormID);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    NotesTable = dLayer.ExecuteDataTable(sqlCommand, Params, connection);
+                    NotesTable.AcceptChanges();
+                    NotesTable = api.Format(NotesTable, "Notes");
+                    dt.Tables.Add(NotesTable);
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+}
 }
 
