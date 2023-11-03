@@ -924,8 +924,11 @@ namespace SmartxAPI.GeneralFunctions
             bool B_AllBranchData = false, B_AllowCashPay = false, B_DirectPosting = false;
             int N_NextApproverID = 0;
             int AdvanceSettlementID = 0;
+            int N_ProcStatus=0;
+            if(MasterTable.Columns.Contains("n_ProcStatus")){
+               N_ProcStatus = myFunctions.getIntVAL(MasterRow["n_ProcStatus"].ToString());
 
-
+            }
             QueryParams.Add("@nCompanyID", N_CompanyID);
             QueryParams.Add("@nFnYearID", N_FnYearID);
             QueryParams.Add("@nSalesID", N_SalesID);
@@ -1012,6 +1015,7 @@ namespace SmartxAPI.GeneralFunctions
                 myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_SalesID, objCustName.ToString().Trim(), objCustCode.ToString(), N_CustomerID, "Customer Document", User, connection, transaction);
 
                 N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Sales where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
+                N_ProcStatus = myFunctions.getIntVAL(dLayer.ExecuteScalar("select n_ProcStatus from Inv_Sales where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
                 if (N_SaveDraft == 0)
                 {
                     if (dtsaleamountdetails.Columns.Contains("N_CommissionAmtF"))
@@ -1109,6 +1113,9 @@ namespace SmartxAPI.GeneralFunctions
                 Result.Add("x_Msg", "Sales Approved " + "-" + InvoiceNo);
                 Result.Add("n_SalesID", N_SalesID);
                 Result.Add("x_SalesNo", InvoiceNo);
+                Result.Add("b_IsSaveDraft", N_SaveDraft);
+                Result.Add("N_ProcStatus", N_ProcStatus);
+                
                 return Result;
             }
 
@@ -1285,6 +1292,7 @@ namespace SmartxAPI.GeneralFunctions
 
                 N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "SALES", N_SalesID, InvoiceNo, 1, objCustName.ToString(), 0, "",0, User, dLayer, connection, transaction);
                 N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Sales where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
+                N_ProcStatus = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ProcStatus from Inv_Sales where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
 
                 DataTable dtloyalitypoints = ds.Tables["loyalitypoints"];
                 int N_IsSave = 1;
@@ -1837,6 +1845,9 @@ namespace SmartxAPI.GeneralFunctions
 
             Result.Add("n_SalesID", N_SalesID);
             Result.Add("x_SalesNo", InvoiceNo);
+            Result.Add("b_IsSaveDraft", N_SaveDraft);
+            Result.Add("N_ProcStatus", N_ProcStatus);
+            
 
             return Result;
 

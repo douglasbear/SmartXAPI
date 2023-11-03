@@ -218,6 +218,8 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable, Items, TaskMaster,TaskStatus,Activity, Participants,Materials;
                 MasterTable = ds.Tables["master"];
+                SortedList Result = new SortedList();
+                string x_OpportunityCode = MasterTable.Rows[0]["x_OpportunityCode"].ToString();
                 Items = ds.Tables["Items"];
                 Materials = ds.Tables["Materials"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
@@ -378,7 +380,7 @@ namespace SmartxAPI.Controllers
                                             }
                                             if (j == 0)
                                             {
-                                                string qry = "Select " + nCompanyID + " as N_CompanyID," + 0 + " as N_TaskStatusID," + N_TaskID + " as N_TaskID,"+myFunctions.GetUserID(User)+" as N_AssigneeID,"+myFunctions.GetUserID(User)+" as N_SubmitterID ,"+myFunctions.GetUserID(User)+" as  N_CreaterID,'" + DateTime.Today + "' as D_EntryDate,'" + "" + "' as X_Notes ," + 4 + " as N_Status ," + 100 + " as N_WorkPercentage";
+                                                string qry = "Select " + nCompanyID + " as N_CompanyID," + 0 + " as N_TaskStatusID," + N_TaskID + " as N_TaskID,"+myFunctions.GetUserID(User)+" as N_AssigneeID,"+myFunctions.GetUserID(User)+" as N_SubmitterID ,"+myFunctions.GetUserID(User)+" as  N_CreaterID,'" + DateTime.Today + "' as D_EntryDate,'" + "" + "' as X_Notes ," + 1 + " as N_Status";
                                                 DataTable DetailTable = dLayer.ExecuteDataTable(qry, Params, connection, transaction);
                                                 int nID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", DetailTable, connection, transaction);
                                             }
@@ -469,7 +471,10 @@ namespace SmartxAPI.Controllers
                         int N_CrmMaterialID = dLayer.SaveData("Crm_Materials", "N_CrmMaterialID", Materials, connection, transaction);
 
                         transaction.Commit();
-                        return Ok(api.Success("Oppurtunity Created"));
+                        Result.Add("x_OpportunityCode", MasterTable.Rows[0]["x_OpportunityCode"]);
+
+                        return Ok(api.Success(Result,"Oppurtunity Created"));
+                        
                     }
                 }
             }

@@ -485,6 +485,11 @@ namespace SmartxAPI.Controllers
                             masterTable.Rows[0]["isDeliveryReturnDone"] = false;
                         }
                     }
+                      bool Invoice2Enable = false;
+                    object Invoice2Enableobj = dLayer.ExecuteScalar("select 1 from gen_printtemplates where N_CompanyID =" + nCompanyId + " and N_FormID=1819 and X_RptName<>'' and N_UsercategoryID=" + myFunctions.GetUserCategory(User),Con);
+                    if (Invoice2Enableobj != null)
+                        Invoice2Enable = true;
+                    masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "Invoice2Enable", typeof(bool), Invoice2Enable);
 
                     //Details
                     SortedList dParamList = new SortedList()
