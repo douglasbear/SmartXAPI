@@ -1628,7 +1628,7 @@ namespace SmartxAPI.GeneralFunctions
                     PostingParam.Add("X_SystemName", "ERP Cloud");
                     try
                     {
-                         dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
+                          dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
                     }
                     catch (Exception ex)
                     {
