@@ -234,7 +234,7 @@ namespace SmartxAPI.Controllers
         [HttpGet("details")]
         public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID, int nQuotationID, int n_OpportunityID, int nClaimID, string x_WarrantyNo,int nFormID)
         {
-            if (xOrderNo != null)
+        
                 xOrderNo = xOrderNo.Replace("%2F", "/");
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
@@ -471,7 +471,10 @@ namespace SmartxAPI.Controllers
                    }
 
                    object countOfOrder =  dLayer.ExecuteScalar("Select count(1) from vw_pendingSO Where N_CompanyID = " + nCompanyID + "  and N_SalesOrderId=" + myFunctions.getIntVAL(N_SOrderID.ToString()), DetailParams, connection);
-                   if(countOfOrder!=null)
+                   
+                   
+
+                   
                    {
                     if(myFunctions.getIntVAL(countOfOrder.ToString())>0)
                     {
@@ -1039,6 +1042,7 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                         }
+                        
                         //StatusUpdate
                         int tempQuotationID = 0;
                         for (int j = 0; j < DetailTable.Rows.Count; j++)
