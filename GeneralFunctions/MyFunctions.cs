@@ -1614,8 +1614,8 @@ namespace SmartxAPI.GeneralFunctions
                 {
                     for (int i = 0; i < dtNext.Rows.Count; i++)
                     {
-                        int N_ActionType = this.getIntVAL(dtNext.Rows[0]["N_ActionTypeID"].ToString());
-                        int N_NextUser = this.getIntVAL(dtNext.Rows[0]["N_UserID"].ToString());
+                        int N_ActionType = this.getIntVAL(dtNext.Rows[i]["N_ActionTypeID"].ToString());
+                        int N_NextUser = this.getIntVAL(dtNext.Rows[i]["N_UserID"].ToString());
 
                         if (N_ActionType == 109 || N_ActionType == 111)
                             Type = "approve";
