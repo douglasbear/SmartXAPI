@@ -61,6 +61,7 @@ namespace SmartxAPI.GeneralFunctions
             var values = masterRow["x_InvoiceNo"].ToString();
             int N_PurchaseID = 0;
             int N_SaveDraft = 0;
+            int N_ProcStatus =0;
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nFnYearID = myFunctions.getIntVAL(masterRow["n_FnYearId"].ToString());
@@ -102,6 +103,8 @@ namespace SmartxAPI.GeneralFunctions
             //         SqlTransaction transaction;
             //         transaction = connection.BeginTransaction();
                     N_PurchaseID = myFunctions.getIntVAL(masterRow["n_PurchaseID"].ToString());
+                     //N_SaveDraft = myFunctions.getIntVAL(masterRow["b_IsSaveDraft"].ToString());
+                    //N_ProcStatus = myFunctions.getIntVAL(masterRow["N_ProcStatus"].ToString());
                     int N_VendorID = myFunctions.getIntVAL(masterRow["n_VendorID"].ToString());
                     int N_NextApproverID = 0;
 
@@ -189,6 +192,7 @@ namespace SmartxAPI.GeneralFunctions
                         myAttachments.SaveAttachment(dLayer, Attachment, values, N_PurchaseID, objVendorName.ToString().Trim(), objVendorCode.ToString(), N_VendorID, "Vendor Document", User, connection, transaction);
 
                         N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
+                        N_ProcStatus = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ProcStatus from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
                         if (N_SaveDraft == 0)
                         {
                             try
@@ -258,6 +262,8 @@ namespace SmartxAPI.GeneralFunctions
                         Result.Add("x_Msg", "Purchase Approved " + "-" + values);
                         Result.Add("n_InvoiceID", N_PurchaseID);
                         Result.Add("x_InvoiceNo", MasterTable.Rows[0]["x_InvoiceNo"].ToString());
+                        Result.Add("b_IsSaveDraft", N_SaveDraft);
+                        Result.Add("N_ProcStatus", N_ProcStatus);
                         return Result;
                     }
 
@@ -526,7 +532,7 @@ namespace SmartxAPI.GeneralFunctions
 
                     N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "PURCHASE", N_PurchaseID, InvoiceNo, 1, objVendorName.ToString(), 0, "", 0, User, dLayer, connection, transaction);
                     N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
-                  
+                    N_ProcStatus = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ProcStatus from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
 
                           //   Activity Log
                     //  string ipAddress = "";
@@ -837,10 +843,14 @@ namespace SmartxAPI.GeneralFunctions
                     Result.Add("b_IsCompleted", 1);
                     if (myFunctions.getIntVAL(masterRow["n_FormID"].ToString()) == 1605)
                         Result.Add("x_Msg", "Rental Purchase Invoice Saved Successfully");
-                    else 
-                        Result.Add("x_Msg", "Purchase Invoice Successfully Created");      
+                    else {
+                     Result.Add("x_Msg", "Purchase Invoice Successfully Created");
                     Result.Add("n_InvoiceID", N_PurchaseID);
+                    Result.Add("b_IsSaveDraft", N_SaveDraft);         
+                    Result.Add("N_ProcStatus", N_ProcStatus);
                     Result.Add("x_InvoiceNo", InvoiceNo);
+                    }
+                   
                     return Result;
                     //myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PurchaseID, "PURCHASE", InvoiceNo, dLayer, connection, transaction, User);
 
