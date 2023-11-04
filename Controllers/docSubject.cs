@@ -81,7 +81,7 @@ namespace SmartxAPI.Controllers
 
         
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nModuleID)
+        public ActionResult DeleteData(int nFormID,int nCompanyID)
         {
             int Results = 0;
             try
@@ -90,7 +90,7 @@ namespace SmartxAPI.Controllers
                 {
                     
                     connection.Open();
-                    Results = dLayer.DeleteData("Dms_ScreenDefaults", "N_ModuleID", nModuleID, "", connection);
+                    Results = dLayer.DeleteData("Dms_ScreenDefaults", "N_FormID", nFormID, "N_CompanyID =" + nCompanyID,  connection);
                     if (Results > 0)
                     {
                     

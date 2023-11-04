@@ -587,6 +587,7 @@ namespace SmartxAPI.GeneralFunctions
                 paramList.Add("X_FieldValue", FieldValues);
                 paramList.Add("X_DupCritieria", X_DupCritieria);
                 paramList.Add("X_Critieria", X_Critieria);
+                
 
                 Result = (int)ExecuteScalarPro("SAVE_DATA", paramList, connection, transaction);
                 FieldValues = "";
