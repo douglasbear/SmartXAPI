@@ -425,7 +425,9 @@ namespace SmartxAPI.Controllers
                     Params.Add("@N_FormID", nFormID);
                     
                     if (nFormID == 1145)
-                        Itemsql = "select * from vw_SOItemsForTimesheet where N_CompanyID=@N_CompanyId and N_SalesOrderId=@N_TransID and ((D_DeliveryDate<=@D_DateFrom) or (D_DeliveryDate>=@D_DateFrom AND D_DeliveryDate<=@D_DateTo)) AND ISNULL(D_ReturnDate,@D_DateFrom)>=@D_DateFrom";
+                        Itemsql = "select * from vw_SOItemsForTimesheet where N_CompanyID=@N_CompanyId and N_SalesOrderId=@N_TransID and ((D_DeliveryDate<=@D_DateFrom) or (D_DeliveryDate>=@D_DateFrom AND D_DeliveryDate<=@D_DateTo)) AND ISNULL(D_ReturnDate,@D_DateFrom)>=@D_DateFrom "+
+                        "GROUP BY N_CompanyID, N_ItemID, N_MainItemID, X_ItemCode, X_ItemName,N_DeliverNoteID,X_ReceiptNo,D_DeliveryDate,N_SalesOrderId,X_OrderNo,D_OrderDate,N_CustomerID,X_CustomerCode,X_CustomerName,N_ProjectID,X_ProjectName,N_DeliveryNoteRtnID,X_ReturnNo,D_ReturnDate,N_DeliverNoteDetailsID,"+
+		                "N_SOdetailsID,N_RentalUnitID,X_RentalUnit,N_Duration,N_Price,X_FreeDescription,N_Qty";
                     else {
                         if (xType == "SO")
                             Itemsql = "select * from vw_POItemsForTimesheet where N_CompanyID=@N_CompanyId and N_SOId=@N_TransID and ((D_MRNDate<=@D_DateFrom) or (D_MRNDate>=@D_DateFrom AND D_MRNDate<=@D_DateTo)) AND ISNULL(D_ReturnDate,@D_DateFrom)>=@D_DateFrom";
