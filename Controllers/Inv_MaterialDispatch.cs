@@ -495,16 +495,23 @@ namespace SmartxAPI.Controllers
 
                 SortedList Params = new SortedList();
                  int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
-                 int N_DispatchID = myFunctions.getIntVAL(MasterRow["N_DispatchID"].ToString());
+                 int N_TransID =0;
+                 if(MasterTable.Columns.Contains("N_DispatchID")){
+                    N_TransID=myFunctions.getIntVAL(MasterRow["N_DispatchID"].ToString());
+                 }
+                   if(MasterTable.Columns.Contains("N_POrderID")){
+                    N_TransID=myFunctions.getIntVAL(MasterRow["N_POrderID"].ToString());
+                 }
                  int N_ActionID = myFunctions.getIntVAL(MasterRow["N_LastActionID"].ToString());
+                 int N_FormID = myFunctions.getIntVAL(MasterRow["n_FormID"].ToString());
 
                
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                        SortedList statusParams = new SortedList();
                              statusParams.Add("@N_CompanyID", N_CompanyID);
-                             statusParams.Add("@N_TransID", N_DispatchID);
-                             statusParams.Add("@N_FormID", 1309);
+                             statusParams.Add("@N_TransID", N_TransID);
+                             statusParams.Add("@N_FormID", N_FormID);
                              statusParams.Add("@N_ForceUpdate", 1);  
                               statusParams.Add("@N_ActionID", N_ActionID);  
                             try
