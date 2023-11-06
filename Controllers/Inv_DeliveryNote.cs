@@ -227,7 +227,7 @@ namespace SmartxAPI.Controllers
                             DetailSql = "select * from vw_SalesOrdertoDeliveryNoteDetails where N_CompanyId=@nCompanyID and N_SalesOrderId=@nSalesorderID";
                             DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
 
-                            RentalSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nSalesorderID and N_FormID=1571";
+                            RentalSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nSalesorderID and N_FormID=1571 and B_Select=1";
                             RentalScheduleData = dLayer.ExecuteDataTable(RentalSql, QueryParamsList, Con);
                             RentalScheduleData = _api.Format(RentalScheduleData, "RentalSchedule");
 
@@ -450,6 +450,7 @@ namespace SmartxAPI.Controllers
                     masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "isSalesDone", typeof(bool), false);
                     masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "isProformaDone", typeof(bool), false);
                     masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "isDeliveryReturnDone", typeof(bool), false);
+                    masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "isTimesheetDone", typeof(bool), false);
 
                     if (myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()) > 0)
                     {
@@ -475,14 +476,24 @@ namespace SmartxAPI.Controllers
                             //     masterTable.Rows[0]["isProformaDone"] = true;
                             // }
                         }
-                        DataTable returnData = dLayer.ExecuteDataTable("select N_DeliveryNoteId from vw_DeliveryNoteToDeliveryReturn where N_DeliveryNoteId=@nDeliveryNoteId and N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID group by N_DeliveryNoteId having SUM(N_BalanceQty)=0", QueryParamsList, Con);
+
+                        if (myFunctions.getIntVAL(masterTable.Rows[0]["N_FormID"].ToString()) == 1572)
+                        {
+                            string dataSql = "SELECT Inv_ServiceTimesheet.N_ServiceSheetID FROM Inv_DeliveryNote INNER JOIN Inv_ServiceTimesheet ON Inv_DeliveryNote.N_CompanyId = Inv_ServiceTimesheet.N_CompanyID AND "+
+                                "Inv_DeliveryNote.N_FnYearId = Inv_ServiceTimesheet.N_FnYearID AND Inv_DeliveryNote.N_SalesOrderID = Inv_ServiceTimesheet.N_SOID "+
+                                "WHERE Inv_DeliveryNote.N_CompanyId="+nCompanyId+" AND Inv_DeliveryNote.N_FnYearId="+nFnYearId+" AND Inv_DeliveryNote.N_SalesOrderID="+myFunctions.getIntVAL(masterTable.Rows[0]["N_SalesOrderID"].ToString())+" AND Inv_DeliveryNote.N_FormID=1572";
+
+                            DataTable timesheetData = dLayer.ExecuteDataTable(dataSql, QueryParamsList, Con);
+                            if (timesheetData.Rows.Count > 0)
+                            {
+                                masterTable.Rows[0]["isTimesheetDone"] = true;
+                            }
+                        }
+
+                        DataTable returnData = dLayer.ExecuteDataTable("select N_DeliveryNoteId from vw_DeliveryNoteToDeliveryReturn where N_DeliveryNoteId="+myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString())+" and N_CompanyId="+nCompanyId+" and N_FnYearID="+nFnYearId+" group by N_DeliveryNoteId having SUM(N_BalanceQty)=0", QueryParamsList, Con);
                         if (returnData.Rows.Count > 0)
                         {
                             masterTable.Rows[0]["isDeliveryReturnDone"] = true;
-                        }
-                        else
-                        {
-                            masterTable.Rows[0]["isDeliveryReturnDone"] = false;
                         }
                     }
                       bool Invoice2Enable = false;
