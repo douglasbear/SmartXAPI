@@ -353,8 +353,8 @@ namespace SmartxAPI.Controllers
                         object SalesDate = "";
                         if (nFormID == 64 || nFormID == 894 || nFormID == 372 || nFormID == 1601 || nFormID == 1651)
                         {
-                            Total = dLayer.ExecuteScalar("select n_BillAmt+N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
-                            TaxAmount = dLayer.ExecuteScalar("select N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
+                            Total = dLayer.ExecuteScalar("select n_BillAmt + ISNULL(N_taxamtF,0) + isnull(N_Cessamtf,0) from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
+                            TaxAmount = dLayer.ExecuteScalar("select ISNULL(N_taxamtF,0) from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
                             SalesDate = dLayer.ExecuteScalar("select D_SalesDate from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
                         }
                         else if (nFormID == 504)
