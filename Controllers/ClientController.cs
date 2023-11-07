@@ -600,6 +600,8 @@ namespace SmartxAPI.Controllers
                     }
 
                     dLayer.DeleteData("ClientApps", "n_AppID", n_AppID, "n_ClientID="+n_ClientID+" and  n_CompanyID="+n_CompanyID+"",connection, transaction);
+                    object NrefID = dLayer.ExecuteScalar("SELECT max(N_RefID)  FROM clientApps",paramList, connection,transaction);
+                    MasterTable.Rows[0]["N_RefID"]=myFunctions.getIntVAL(NrefID.ToString());
                     int refID = dLayer.SaveData("ClientApps", "N_RefID", MasterTable,connection, transaction);
                     if (refID <= 0)
                     {
