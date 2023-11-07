@@ -508,7 +508,7 @@ namespace SmartxAPI.Controllers
                         }
                         DetailsTable.AcceptChanges();
                         N_TransDetailsID = myFunctions.getIntVAL(dLayer.SaveData("Pay_MonthlyAddOrDedDetails", "N_TransDetailsID", DetailsTable, connection, transaction).ToString());
-                        if (myFunctions.getIntVAL(N_TransDetailsID.ToString()) <= 0)
+                        if (myFunctions.getIntVAL(N_TransDetailsID.ToString()) <= 0 && DetailsTable.Rows.Count>0)
                         {
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Unable to save"));
@@ -687,6 +687,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
             Params.Add("@nPayRunID", nPayRunID);
+             
 
             string sqlCommandText = "select X_Batch,X_PayrunText,N_CompanyID,N_TransID,N_PayRunID,B_IsSaveDraft from vw_AddOrDedBatchDetails where N_CompanyID=@nCompanyID and N_PayRunID=@nPayRunID and (B_IsSaveDraft<>1 or B_IsSaveDraft is null)";
 
