@@ -128,12 +128,17 @@ namespace SmartxAPI.Controllers
                     string[] BccAddresses = BCC.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                     object companyemail = "";
                     object companypassword = "";
+                    object X_SMTP = "";
                     object Company, Oppportunity, Contact, CustomerID;
                     int nCompanyId = myFunctions.GetCompanyID(User);
                     string base64Data ="";
+                    string SMTP="smtp.gmail.com";
 
                     companyemail = dLayer.ExecuteScalar("select X_Email from vw_MailGeneralScreenSettings where n_companyid="+companyid, Params, connection, transaction);
                     companypassword = dLayer.ExecuteScalar("select X_Password from vw_MailGeneralScreenSettings where n_companyid="+companyid, Params, connection, transaction);
+                    X_SMTP = dLayer.ExecuteScalar("select isnull(X_SMTP,'') from vw_MailGeneralScreenSettings where n_companyid="+companyid, Params, connection, transaction);
+                    if(X_SMTP!="")
+                        SMTP=X_SMTP.ToString();
 
                     string Subject = "";
                     if (Toemail.ToString() != "")
@@ -235,10 +240,14 @@ namespace SmartxAPI.Controllers
                             }
                             else
                             {
-                            object n_POID = dLayer.ExecuteScalar("select N_POrderID from vw_InvPurchaseOrder where OrderNo='"+MasterRow["n_PkeyID"].ToString()+"' and N_CompanyID="+nCompanyId, Params, connection, transaction);
-                      
-                            string url=invoicepdf(1793,myFunctions.getIntVAL(n_POID.ToString()), myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString()), 0,  "", "", "",false, false, 1);
-
+                                string url="";
+                                object n_POID = dLayer.ExecuteScalar("select N_POrderID from vw_InvPurchaseOrder where OrderNo='"+MasterRow["n_PkeyID"].ToString()+"' and N_CompanyID="+nCompanyId, Params, connection, transaction);
+                                try{url=invoicepdf(1793,myFunctions.getIntVAL(n_POID.ToString()), myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString()), 0,  "", "", "",false, false, 1);
+                                if(url=="")
+                                    url=invoicepdf(82,myFunctions.getIntVAL(n_POID.ToString()), myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString()), 0,  "", "", "",false, false, 1);
+                                
+                                }
+                                catch{}
                             string Sender = companyemail.ToString();
                             Subject = Subjectval;
                             MailBody = Body.ToString();
@@ -246,7 +255,8 @@ namespace SmartxAPI.Controllers
                              {
                             SmtpClient client = new SmtpClient
                             {
-                                Host = "smtp.office365.com",
+                                
+                                Host = SMTP,
                                 Port = 587,
                                 EnableSsl = true,
                                 DeliveryMethod = SmtpDeliveryMethod.Network,
@@ -265,9 +275,12 @@ namespace SmartxAPI.Controllers
                             message.Subject = Subject;
                             message.Body = MailBody;
                             message.IsBodyHtml = true; //HTML email  
+                            if(url!="")
+                            {
                             byte[] pdfBytes = webClient.DownloadData(url);
                             if(myFunctions.getBoolVAL(MasterRow["b_AttachPdf"].ToString()))
                                 message.Attachments.Add(new Attachment(new System.IO.MemoryStream(pdfBytes), "PurchaseOrder.pdf"));
+                            }
 
                              foreach (DataRow var in Attachments.Rows)
                                  {
