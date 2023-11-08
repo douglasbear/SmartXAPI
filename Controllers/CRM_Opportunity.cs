@@ -460,8 +460,6 @@ namespace SmartxAPI.Controllers
 
                         // }   
 
-                        SortedList Result = new SortedList();                
-
                         dLayer.SaveData("Crm_Products", "N_CrmItemID", Items, connection, transaction);
 
                         for (int j = 0; j < Materials.Rows.Count; j++)
@@ -469,6 +467,7 @@ namespace SmartxAPI.Controllers
                             Materials.Rows[j]["N_OpportunityID"] = nOpportunityID;
                         }
                         int N_CrmMaterialID = dLayer.SaveData("Crm_Materials", "N_CrmMaterialID", Materials, connection, transaction);
+                        SortedList Result = new SortedList();
 
                         transaction.Commit();
                              Result.Add("x_OpportunityCode",  MasterTable.Rows[0]["x_OpportunityCode"] );
