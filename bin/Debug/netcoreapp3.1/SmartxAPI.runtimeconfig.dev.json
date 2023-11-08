@@ -5,6 +5,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       "C:\\Users\\Dell\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Dell\\.nuget\\packages"
 =======
@@ -23,6 +24,10 @@
       "C:\\Users\\navya\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\navya\\.nuget\\packages"
 >>>>>>> 88816682b967bde63ef06d333d5cf483e04bfb79
+=======
+      "C:\\Users\\sivadath\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\sivadath\\.nuget\\packages"
+>>>>>>> b4ec169a432b31203d7cb01e9515157a38561872
     ]
   }
 }
