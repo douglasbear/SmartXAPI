@@ -1,4 +1,4 @@
-sing AutoMapper;
+using AutoMapper;
 using SmartxAPI.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -14,7 +14,7 @@ namespace SmartxAPI.Controllers
 
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("documentSubjectCategory")]
+    [Route("documentsubjectcategory")]
     [ApiController]
     public class DocSubjectCategory: ControllerBase
     {
@@ -50,14 +50,14 @@ namespace SmartxAPI.Controllers
                   
                     int n_CategoryID = myFunctions.getIntVAL(MasterRow["N_CategoryID"].ToString());
                     int nCategoryID=0;
-                      if (N_CategoryID>0)
+                      if (n_CategoryID>0)
                     {
                         
                          dLayer.DeleteData("Inv_AttachmentCategory","N_CategoryID", n_CategoryID, "", connection,transaction);
 
                     }
 
-                    nCategoryID = dLayer.SaveData("Inv_AttachmentCategory", "N_CategoryID", DetailTable, connection, transaction);
+                    nCategoryID = dLayer.SaveData("Inv_AttachmentCategory", "N_CategoryID", MasterTable, connection, transaction);
                     if (nCategoryID <= 0)
                     {
                         transaction.Rollback();
@@ -107,7 +107,7 @@ namespace SmartxAPI.Controllers
         }
 
            [HttpGet("details")]
-        public ActionResult docSubjectCategory(int nFormID)
+        public ActionResult docSubjectCategory(int nCategoryID)
         {
 
 
