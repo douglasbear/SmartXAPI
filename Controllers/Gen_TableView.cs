@@ -50,12 +50,12 @@ namespace SmartxAPI.Controllers
 
                     string menus = "select * from " +
                     "(select X_TableViewCode,N_TableViewID,N_MenuID as formID,X_TitleLanControlNo as titleLbl,X_MenuLanControlNo as menuLbl, " +
-                    "B_IsDefault as isDefault,B_SearchEnabled as searchEnabled,B_AttachementSearch as attachementSearch,X_PKey,N_Type,N_Order,X_PCode,N_UserID,X_TotalField,isnull(B_IsCustomList,0) as B_IsCustomList,isnull(X_DefaultSearchField,'') as defaultsearch from " +
+                    "B_IsDefault as isDefault,B_SearchEnabled as searchEnabled,B_AttachementSearch as attachementSearch,X_PKey,N_Type,N_Order,X_PCode,N_UserID,X_TotalField,isnull(B_IsCustomList,0) as B_IsCustomList,isnull(X_DefaultSearchField,'') as defaultsearch,X_RouteName from " +
                     "Gen_TableView where N_MenuID=@nMenuID and N_CompanyID=-1  " +
                     "and N_Type not in(select N_Type from Gen_TableView where N_MenuID=@nMenuID and N_CompanyID=@nCompanyID and N_UserID=@nUserID) " +
                     "union all " +
                     "select X_TableViewCode,N_TableViewID,N_MenuID as formID,X_TitleLanControlNo as titleLbl,X_MenuLanControlNo as menuLbl, " +
-                    "B_IsDefault as isDefault,B_SearchEnabled as searchEnabled,B_AttachementSearch as attachementSearch,X_PKey,N_Type,N_Order,X_PCode,N_UserID,X_TotalField,isnull(B_IsCustomList,0) as B_IsCustomList,isnull(X_DefaultSearchField,'') as defaultsearch from " +
+                    "B_IsDefault as isDefault,B_SearchEnabled as searchEnabled,B_AttachementSearch as attachementSearch,X_PKey,N_Type,N_Order,X_PCode,N_UserID,X_TotalField,isnull(B_IsCustomList,0) as B_IsCustomList,isnull(X_DefaultSearchField,'') as defaultsearch,X_RouteName from " +
                     "Gen_TableView where N_MenuID=@nMenuID  and N_CompanyID=@nCompanyID and N_UserID=@nUserID ) as Tbl_Gen_TableView " +
                     "order by N_Order ";
 

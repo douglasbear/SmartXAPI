@@ -508,7 +508,7 @@ namespace SmartxAPI.Controllers
                         }
                         DetailsTable.AcceptChanges();
                         N_TransDetailsID = myFunctions.getIntVAL(dLayer.SaveData("Pay_MonthlyAddOrDedDetails", "N_TransDetailsID", DetailsTable, connection, transaction).ToString());
-                        if (myFunctions.getIntVAL(N_TransDetailsID.ToString()) <= 0)
+                        if (myFunctions.getIntVAL(N_TransDetailsID.ToString()) <= 0 && DetailsTable.Rows.Count>0)
                         {
                             transaction.Rollback();
                             return Ok(_api.Error(User, "Unable to save"));
