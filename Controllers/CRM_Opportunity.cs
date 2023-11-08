@@ -458,7 +458,9 @@ namespace SmartxAPI.Controllers
 
                         //     }
 
-                        // }                   
+                        // }   
+
+                        SortedList Result = new SortedList();                
 
                         dLayer.SaveData("Crm_Products", "N_CrmItemID", Items, connection, transaction);
 
@@ -469,7 +471,11 @@ namespace SmartxAPI.Controllers
                         int N_CrmMaterialID = dLayer.SaveData("Crm_Materials", "N_CrmMaterialID", Materials, connection, transaction);
 
                         transaction.Commit();
-                        return Ok(api.Success("Oppurtunity Created"));
+                             Result.Add("x_OpportunityCode",  MasterTable.Rows[0]["x_OpportunityCode"] );
+                        //    Result.Add("x_Msg", "Oppurtunity Created");
+                           return Ok(api.Success(Result, "Oppurtunity Created"));
+                        //   return Result;
+                        // return Ok(api.Success("Oppurtunity Created"));
                     }
                 }
             }
