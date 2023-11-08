@@ -14,7 +14,7 @@ namespace SmartxAPI.Controllers
 
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("documentSubjectCategory")]
+    [Route("documentsubjectcategory")]
     [ApiController]
     public class DocSubjectCategory: ControllerBase
     {
