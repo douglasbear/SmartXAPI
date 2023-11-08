@@ -291,7 +291,7 @@ namespace SmartxAPI.Controllers
                     Result.Add("N_AssemblyID", N_AssemblyID);
                     Result.Add("X_ReferenceNo", X_ReferenceNo);
                     transaction.Commit();
-                    return Ok(_api.Success(Result, "Product Unbilded"));
+                    return Ok(_api.Success(Result, "Product Unbuilt"));
                 }
             }
             catch (Exception ex)
