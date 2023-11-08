@@ -24,13 +24,16 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly int FormID;
+        private readonly IMyAttachments myAttachments;
 
 
-        public Inv_BalanceAdjustment(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Inv_BalanceAdjustment(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf,IMyAttachments myAtt)
         {
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
+            myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
@@ -223,9 +226,12 @@ namespace SmartxAPI.Controllers
 
                     Acc_CostCentreTrans = dLayer.ExecuteDataTable(CostcenterSql, Params, connection);
 
-
                     Acc_CostCentreTrans = _api.Format(Acc_CostCentreTrans, "costCenterTrans");
                     dt.Tables.Add(Acc_CostCentreTrans);
+
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_AdjustmentId"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_AdjustmentId"].ToString()), this.FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                    Attachments = _api.Format(Attachments, "attachments");
+                    dt.Tables.Add(Attachments);
                 }
                 return Ok(_api.Success(dt));
             }
@@ -255,7 +261,7 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     transaction = connection.BeginTransaction();
 
-
+                    DataTable Attachment = ds.Tables["attachments"];
                     int N_AdjustmentID = myFunctions.getIntVAL(MasterRow["n_AdjustmentId"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
@@ -474,6 +480,22 @@ namespace SmartxAPI.Controllers
                           
                     // int N_AdjustmentDetailsId = dLayer.SaveData("Inv_BalanceAdjustmentMasterDetails", "N_AdjustmentDetailsId", DetailTable, connection, transaction);
                     int N_SegmentId = dLayer.SaveData("Inv_CostCentreTransactions", "N_CostCenterTransID", "", "", costcenter, connection, transaction);
+                    SortedList BalanceAdjParams = new SortedList();
+                           BalanceAdjParams.Add("@N_AdjustmentId", N_AdjustmentID);
+
+                     DataTable InvBalanceAdjInfo = dLayer.ExecuteDataTable("Select X_VoucherNo,N_TransType from Inv_BalanceAdjustmentMaster where N_AdjustmentID=@N_AdjustmentID", BalanceAdjParams, connection, transaction);
+                        if (InvBalanceAdjInfo.Rows.Count > 0)
+                        {
+                            try
+                            {
+                                myAttachments.SaveAttachment(dLayer, Attachment, AdjustmentNo, N_AdjustmentID, InvBalanceAdjInfo.Rows[0]["N_TransType"].ToString().Trim(), InvBalanceAdjInfo.Rows[0]["X_VoucherNo"].ToString(), N_AdjustmentID, "Balance Adjustment Document", User, connection, transaction);
+                            }
+                             catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
+                        }
                     if (N_AdjustmentDetailsId <= 0)
                     {
                         transaction.Rollback();
