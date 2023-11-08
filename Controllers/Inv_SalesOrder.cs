@@ -235,6 +235,7 @@ namespace SmartxAPI.Controllers
         public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID, int nQuotationID, int n_OpportunityID, int nClaimID, string x_WarrantyNo,int nFormID)
         {
         
+                if (xOrderNo != null)
                 xOrderNo = xOrderNo.Replace("%2F", "/");
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
