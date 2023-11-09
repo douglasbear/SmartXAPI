@@ -142,7 +142,7 @@ namespace SmartxAPI.Controllers
                                     " union SELECT SUM(Inv_PayReceiptDetails.N_AmountF-Inv_PayReceiptDetails.N_DiscountAmtF)as N_ReceivedAmount,Inv_PayReceiptDetails.N_CompanyID  FROM Inv_PayReceiptDetails INNER JOIN Inv_PayReceipt ON Inv_PayReceiptDetails.N_PayReceiptId = Inv_PayReceipt.N_PayReceiptId AND Inv_PayReceiptDetails.N_CompanyID = Inv_PayReceipt.N_CompanyID "+
                                         " where Inv_PayReceipt.X_Type in ('SR','SA') and Cast(Inv_PayReceipt.D_Date as DATE)=cast(GETDATE() as DATE) and Inv_PayReceiptDetails.N_CompanyID = " + nCompanyID  + " and Inv_PayReceipt.N_FnyearID="+nFnYearID + revCriteria+" group by Inv_PayReceiptDetails.N_CompanyID) as temp where N_CompanyID="+nCompanyID+" group by N_CompanyID";
 
-                      RevenueToday="select SUM(N_BillAmt+N_TaxAmt) as N_ReceivedAmount,count(1) as N_Count from inv_sales where n_CompanyId= " + nCompanyID  + " and Cast(Inv_Sales.D_SalesDate as DATE)>=cast(GETDATE() as DATE)";
+                      RevenueToday="select SUM(N_BillAmt) as N_ReceivedAmount,count(1) as N_Count from inv_sales where n_CompanyId= " + nCompanyID  + " and Cast(Inv_Sales.D_SalesDate as DATE)>=cast(GETDATE() as DATE) and isnull(Inv_Sales.B_IsSaveDraft,0)=0";
                       BranchWiseToday="select sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount,X_BranchName from vw_BranchWiseSales where Cast(D_SalesDate as DATE) >=cast(GETDATE() as DATE) and N_CompanyID = " + nCompanyID  + " Group BY X_BranchName,N_CompanyID";
 
                      bool B_customer = myFunctions.CheckPermission(nCompanyID, 1302, "Administrator", "X_UserCategory", dLayer, connection);
