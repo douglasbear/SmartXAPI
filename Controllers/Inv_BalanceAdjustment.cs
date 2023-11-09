@@ -164,7 +164,7 @@ namespace SmartxAPI.Controllers
             {
                 if(nSalesOrderId>0)
                 {
-                    Mastersql = "Select * from vw_SalesOrderToCustomerDebitNote where N_CompanyID=4 and n_SalesOrderId=8467";
+                    Mastersql = "Select * from vw_SalesOrderToCustomerDebitNote where N_CompanyID=@p1 and n_SalesOrderId=@p8";
                
                 }
                  else {
