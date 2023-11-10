@@ -596,7 +596,24 @@ namespace SmartxAPI.Controllers
 
                     string TermsSql = "select * from vw_Termsdetails Where N_CompanyID=@nCompanyID and N_ReferanceID=" + N_SOrderID + " and X_Type='SO'";
                     DataTable Terms = dLayer.ExecuteDataTable(TermsSql, Params, connection);
+                    foreach (DataRow dr in Terms.Rows)
+                        {
+                            object TermsIN = dLayer.ExecuteScalar("select N_TermsID from Inv_salesdetails where N_CompanyID=@nCompanyID and n_salesorderid="+N_SOrderID+ " and N_TermsID="+dr["N_TermsID"].ToString(), Params, connection);
+                            if(TermsIN!=null)
+                            {
+                               if(myFunctions.getIntVAL(TermsIN.ToString())>0) 
+                               {
+                                 dr["N_Paidamt"] = myFunctions.getVAL(dr["N_Amount"].ToString());
+                                 dr["N_Amount"] = "0";
+
+                               }
+                            }
+
+                        }
+
+
                     Terms = _api.Format(Terms, "Terms");
+
                     string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=" + N_SOrderID +crieteria;
                     DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
                     RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
@@ -1083,10 +1100,18 @@ namespace SmartxAPI.Controllers
                     }
                     if (Terms.Rows.Count > 0)
                     {
+                        object ItemID = dLayer.ExecuteScalar("Select N_ItemID from Inv_ItemMaster where N_CompanyID=" + N_CompanyID + " and X_ItemCode='005'", connection, transaction);
+                        object TaxCatID = dLayer.ExecuteScalar("select n_pkeyid from Acc_TaxCategory where X_CategoryName='Exempt' and N_CompanyID="+N_CompanyID, connection,transaction);
+                        Terms.Columns.Add("N_TaxCategoryID");
                         for (int j = 0; j < Terms.Rows.Count; j++)
                         {
+                            if(Terms.Rows[j]["x_Type"].ToString()=="Retention" || Terms.Rows[j]["x_Type"].ToString()=="Retention Reversal")
+                            {
+                                Terms.Rows[j]["n_ItemID"] = ItemID;
+                            }
                             Terms.Rows[j]["n_ReferanceID"] = n_SalesOrderId;
                             Terms.Rows[j]["x_Type"] = "SO";
+                            Terms.Rows[j]["N_TaxCategoryID"] = TaxCatID;
 
 
                         }
