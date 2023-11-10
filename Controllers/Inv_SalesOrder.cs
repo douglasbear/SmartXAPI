@@ -598,10 +598,20 @@ namespace SmartxAPI.Controllers
                     DataTable Terms = dLayer.ExecuteDataTable(TermsSql, Params, connection);
                     foreach (DataRow dr in Terms.Rows)
                         {
-                            object TermsIN = dLayer.ExecuteScalar("select N_TermsID from Inv_salesdetails where N_CompanyID=@nCompanyID and n_salesorderid="+N_SOrderID+ " and N_TermsID="+dr["N_TermsID"].ToString(), Params, connection);
-                            if(TermsIN!=null)
+                            object TermsSales = dLayer.ExecuteScalar("select N_TermsID from Inv_salesdetails where N_CompanyID=@nCompanyID and n_salesorderid="+N_SOrderID+ " and N_TermsID="+dr["N_TermsID"].ToString(), Params, connection);
+                            object TermsDebit = dLayer.ExecuteScalar("select N_TermsID from Inv_BalanceAdjustmentMasterDetails where N_CompanyID=@nCompanyID and N_TermsID="+dr["N_TermsID"].ToString(), Params, connection);
+                            if(TermsSales!=null)
                             {
-                               if(myFunctions.getIntVAL(TermsIN.ToString())>0) 
+                               if(myFunctions.getIntVAL(TermsSales.ToString())>0) 
+                               {
+                                 dr["N_Paidamt"] = myFunctions.getVAL(dr["N_Amount"].ToString());
+                                 dr["N_Amount"] = "0";
+
+                               }
+                            }
+                            if(TermsDebit!=null)
+                            {
+                               if(myFunctions.getIntVAL(TermsDebit.ToString())>0) 
                                {
                                  dr["N_Paidamt"] = myFunctions.getVAL(dr["N_Amount"].ToString());
                                  dr["N_Amount"] = "0";
