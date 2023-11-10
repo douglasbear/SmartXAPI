@@ -8,6 +8,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       "C:\\Users\\Dell\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Dell\\.nuget\\packages"
 =======
@@ -38,6 +39,10 @@
       "C:\\Users\\muham\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\muham\\.nuget\\packages"
 >>>>>>> 877c305ace5a8d428eb6def7f8391150aacdaf5b
+=======
+      "C:\\Users\\Dell\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\Dell\\.nuget\\packages"
+>>>>>>> a7b99fd243f08c31c6639ecca8f5ff6f02e65739
     ]
   }
 }

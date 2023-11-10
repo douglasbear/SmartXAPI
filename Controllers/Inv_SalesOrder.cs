@@ -594,9 +594,34 @@ namespace SmartxAPI.Controllers
                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesOrderId"].ToString()), this.FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
                     Attachments = _api.Format(Attachments, "attachments");
 
-                    string TermsSql = "SELECT     Inv_Terms.N_CompanyId, Inv_Terms.N_TermsID, Inv_Terms.N_ReferanceID, Inv_Terms.X_Terms, Inv_Terms.N_Percentage, Inv_Terms.N_Duration, Inv_Terms.X_Type, Inv_Terms.N_Amount, isnull(Inv_Sales.N_BillAmt,0)+isnull(Inv_Sales.N_TaxAmtF,0) as N_Paidamt FROM  Inv_Terms LEFT OUTER JOIN Inv_Sales ON Inv_Terms.N_CompanyId = Inv_Sales.N_CompanyId AND Inv_Terms.N_TermsID = Inv_Sales.N_TermsID Where Inv_Terms.N_CompanyID=@nCompanyID and Inv_Terms.N_ReferanceID=" + N_SOrderID + " and Inv_Terms.X_Type='SO'";
+                    string TermsSql = "select * from vw_Termsdetails Where N_CompanyID=@nCompanyID and N_ReferanceID=" + N_SOrderID + " and X_Type='SO'";
                     DataTable Terms = dLayer.ExecuteDataTable(TermsSql, Params, connection);
+                    foreach (DataRow dr in Terms.Rows)
+                        {
+                            object TermsSales = dLayer.ExecuteScalar("select N_TermsID from Inv_salesdetails where N_CompanyID=@nCompanyID and n_salesorderid="+N_SOrderID+ " and N_TermsID="+dr["N_TermsID"].ToString(), Params, connection);
+                            object TermsDebit = dLayer.ExecuteScalar("select N_TermsID from Inv_BalanceAdjustmentMasterDetails where N_CompanyID=@nCompanyID and N_TermsID="+dr["N_TermsID"].ToString(), Params, connection);
+                            if(TermsSales!=null)
+                            {
+                               if(myFunctions.getIntVAL(TermsSales.ToString())>0) 
+                               {
+                                 dr["N_Paidamt"] = myFunctions.getVAL(dr["N_Amount"].ToString());
+
+                               }
+                            }
+                            if(TermsDebit!=null)
+                            {
+                               if(myFunctions.getIntVAL(TermsDebit.ToString())>0) 
+                               {
+                                 dr["N_Paidamt"] = myFunctions.getVAL(dr["N_Amount"].ToString());
+
+                               }
+                            }
+
+                        }
+
+
                     Terms = _api.Format(Terms, "Terms");
+
                     string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=" + N_SOrderID +crieteria;
                     DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
                     RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
@@ -1083,13 +1108,22 @@ namespace SmartxAPI.Controllers
                     }
                     if (Terms.Rows.Count > 0)
                     {
+                        object ItemID = dLayer.ExecuteScalar("Select N_ItemID from Inv_ItemMaster where N_CompanyID=" + N_CompanyID + " and X_ItemCode='005'", connection, transaction);
+                        object TaxCatID = dLayer.ExecuteScalar("select n_pkeyid from Acc_TaxCategory where X_CategoryName='Exempt' and N_CompanyID="+N_CompanyID, connection,transaction);
+                        Terms.Columns.Add("N_TaxCategoryID");
                         for (int j = 0; j < Terms.Rows.Count; j++)
                         {
+                            if(Terms.Rows[j]["x_Type"].ToString()=="Retention" || Terms.Rows[j]["x_Type"].ToString()=="Retention Reversal")
+                            {
+                                Terms.Rows[j]["n_ItemID"] = ItemID;
+                            }
                             Terms.Rows[j]["n_ReferanceID"] = n_SalesOrderId;
                             Terms.Rows[j]["x_Type"] = "SO";
+                            Terms.Rows[j]["N_TaxCategoryID"] = TaxCatID;
 
 
                         }
+                        dLayer.DeleteData("Inv_Terms", "N_ReferanceID", n_SalesOrderId, "", connection, transaction);
                         dLayer.SaveData("Inv_Terms", "N_TermsID", Terms, connection, transaction);
 
 
