@@ -77,7 +77,7 @@ namespace SmartxAPI.Controllers
             int nCompanyId = myFunctions.GetCompanyID(User);
 
             string sqlCommandText = "";
-            sqlCommandText = "select * from vw_Inv_CustomerContact where N_CompanyID=@p1 and N_FnYearId=@p3 and ( N_CustomerID=@p2 OR (N_CustomerID Is NUlL or N_CustomerID=0))";
+            sqlCommandText = "select * from vw_Inv_CustomerContact where N_CompanyID=@p1 and ( N_CustomerID=@p2 OR (N_CustomerID Is NUlL or N_CustomerID=0))";
             if (nContactID > 0)
                 sqlCommandText = "select * from vw_Inv_CustomerContact where N_CompanyID=@p1 and N_ContactID="+nContactID+"";
 
