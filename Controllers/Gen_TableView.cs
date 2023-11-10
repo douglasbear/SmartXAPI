@@ -360,7 +360,7 @@ namespace SmartxAPI.Controllers
                         sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + SortBy + xSortBy;
                     else
                     {
-                        //sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + " and " + PKey + " not in " + "(select top(" + Count + ") " + PKey + " from " + DataSource2 + Criterea + SortBy + xSortBy + " ) " + SortBy + xSortBy;
+                         //sqlCommandText = "select top(" + nSizeperpage + ") " + FieldList + " from " + DataSource + Criterea + " and " + PKey + " not in " + "(select top(" + Count + ") " + PKey + " from " + DataSource2 + Criterea + SortBy + xSortBy + " ) " + SortBy + xSortBy;
                         sqlCommandText="select  * from " + DataSource + Criterea + SortBy  + xSortBy +" OFFSET " + Count + " ROWS FETCH NEXT " + nSizeperpage + " ROWS ONLY";
                     }
                     // if (Count == 0)

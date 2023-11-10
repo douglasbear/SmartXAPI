@@ -229,9 +229,9 @@ namespace SmartxAPI.Controllers
                     Acc_CostCentreTrans = _api.Format(Acc_CostCentreTrans, "costCenterTrans");
                     dt.Tables.Add(Acc_CostCentreTrans);
 
-                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_AdjustmentId"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_AdjustmentId"].ToString()), this.FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
-                    Attachments = _api.Format(Attachments, "attachments");
-                    dt.Tables.Add(Attachments);
+                    // DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_AdjustmentId"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_AdjustmentId"].ToString()), this.FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                    // Attachments = _api.Format(Attachments, "attachments");
+                    // dt.Tables.Add(Attachments);
                 }
                 return Ok(_api.Success(dt));
             }
@@ -261,7 +261,7 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     transaction = connection.BeginTransaction();
 
-                    DataTable Attachment = ds.Tables["attachments"];
+                    // DataTable Attachment = ds.Tables["attachments"];
                     int N_AdjustmentID = myFunctions.getIntVAL(MasterRow["n_AdjustmentId"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
@@ -486,15 +486,15 @@ namespace SmartxAPI.Controllers
                      DataTable InvBalanceAdjInfo = dLayer.ExecuteDataTable("Select X_VoucherNo,N_TransType from Inv_BalanceAdjustmentMaster where N_AdjustmentID=@N_AdjustmentID", BalanceAdjParams, connection, transaction);
                         if (InvBalanceAdjInfo.Rows.Count > 0)
                         {
-                            try
-                            {
-                                myAttachments.SaveAttachment(dLayer, Attachment, AdjustmentNo, N_AdjustmentID, InvBalanceAdjInfo.Rows[0]["N_TransType"].ToString().Trim(), InvBalanceAdjInfo.Rows[0]["X_VoucherNo"].ToString(), N_AdjustmentID, "Balance Adjustment Document", User, connection, transaction);
-                            }
-                             catch (Exception ex)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, ex));
-                            }
+                            // try
+                            // {
+                            //     myAttachments.SaveAttachment(dLayer, Attachment, AdjustmentNo, N_AdjustmentID, InvBalanceAdjInfo.Rows[0]["N_TransType"].ToString().Trim(), InvBalanceAdjInfo.Rows[0]["X_VoucherNo"].ToString(), N_AdjustmentID, "Balance Adjustment Document", User, connection, transaction);
+                            // }
+                            //  catch (Exception ex)
+                            // {
+                            //     transaction.Rollback();
+                            //     return Ok(_api.Error(User, ex));
+                            // }
                         }
                     if (N_AdjustmentDetailsId <= 0)
                     {
