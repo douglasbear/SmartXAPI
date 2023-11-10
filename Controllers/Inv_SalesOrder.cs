@@ -605,7 +605,6 @@ namespace SmartxAPI.Controllers
                                if(myFunctions.getIntVAL(TermsSales.ToString())>0) 
                                {
                                  dr["N_Paidamt"] = myFunctions.getVAL(dr["N_Amount"].ToString());
-                                 dr["N_Amount"] = "0";
 
                                }
                             }
@@ -614,7 +613,6 @@ namespace SmartxAPI.Controllers
                                if(myFunctions.getIntVAL(TermsDebit.ToString())>0) 
                                {
                                  dr["N_Paidamt"] = myFunctions.getVAL(dr["N_Amount"].ToString());
-                                 dr["N_Amount"] = "0";
 
                                }
                             }
