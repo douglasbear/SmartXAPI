@@ -191,9 +191,6 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-
-
-
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
@@ -205,15 +202,19 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nAmendID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_AmendID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                    int nActionTypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ActionTypeID"].ToString());
                     string X_AmendCode = MasterTable.Rows[0]["X_AmendCode"].ToString();
                     string xType = MasterTable.Rows[0]["x_TransType"].ToString();
                     string x_AmendCode = "";
                     string xButtonAction = "";
+
                     if (nAmendID > 0)
                     {
                         dLayer.DeleteData("Gen_ApprovalAmendDetails", "N_AmendID", nAmendID, "N_CompanyID = " + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Gen_ApprovalAmend", "N_AmendID", nAmendID, "N_CompanyID = " + nCompanyID, connection, transaction);
                         xButtonAction = "Update";
                     }
+
                     if (X_AmendCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", MasterTable.Rows[0]["N_CompanyID"].ToString());
@@ -222,18 +223,16 @@ namespace SmartxAPI.Controllers
                         x_AmendCode = dLayer.GetAutoNumber("Gen_ApprovalAmend", "X_AmendCode", Params, connection, transaction);
                         xButtonAction = "update";
 
-
                         if (x_AmendCode == "")
                         {
                             transaction.Rollback();
                             return Ok(api.Error(User, "Unable to generate Amend Code"));
                         }
+
                         MasterTable.Rows[0]["X_AmendCode"] = x_AmendCode;
                     }
-                    // MasterTable.Columns.Remove("N_FnYearID");
                     X_AmendCode = MasterTable.Rows[0]["x_AmendCode"].ToString();
                     MasterTable.Columns.Remove("N_FnYearID");
-
 
                     nAmendID = dLayer.SaveData("Gen_ApprovalAmend", "N_AmendID", MasterTable, connection, transaction);
                     if (nAmendID <= 0)
@@ -241,22 +240,26 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(api.Error(User, "Unable To Save"));
                     }
+
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["N_AmendID"] = nAmendID;
                         DetailTable.Rows[j]["X_TransType"] = xType;
                     }
+
                     if (DetailTable.Rows.Count > 0)
                     {
                         int nAmendDetailsID = dLayer.SaveData("Gen_ApprovalAmendDetails", "N_AmendDetailsID", DetailTable, connection, transaction);
-
                         if (nAmendDetailsID <= 0)
                         {
-
-
                             transaction.Rollback();
                             return Ok("Unable To Save");
+                        }
 
+                        for (int i = 0; i < DetailTable.Rows.Count; i++)
+                        {
+                            DetailTable.Rows[i]["N_AmendID"] = nAmendID;
+                            DetailTable.Rows[i]["X_TransType"] = xType;
                         }
 
                         string ipAddress = "";
@@ -265,7 +268,6 @@ namespace SmartxAPI.Controllers
                         else
                             ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
                         myFunctions.LogScreenActivitys(nFnYearID, nAmendID, X_AmendCode, 1811, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
-
                     }
 
                     transaction.Commit();
