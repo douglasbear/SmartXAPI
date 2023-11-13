@@ -218,6 +218,8 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable, Items, TaskMaster,TaskStatus,Activity, Participants,Materials;
                 MasterTable = ds.Tables["master"];
+                SortedList Result = new SortedList();
+                string x_OpportunityCode = MasterTable.Rows[0]["x_OpportunityCode"].ToString();
                 Items = ds.Tables["Items"];
                 Materials = ds.Tables["Materials"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
@@ -467,7 +469,7 @@ namespace SmartxAPI.Controllers
                             Materials.Rows[j]["N_OpportunityID"] = nOpportunityID;
                         }
                         int N_CrmMaterialID = dLayer.SaveData("Crm_Materials", "N_CrmMaterialID", Materials, connection, transaction);
-                        SortedList Result = new SortedList();
+                        
 
                         transaction.Commit();
                              Result.Add("x_OpportunityCode",  MasterTable.Rows[0]["x_OpportunityCode"] );
