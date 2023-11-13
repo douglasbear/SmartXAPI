@@ -149,7 +149,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listDetails")]
-        public ActionResult GetBalanceListDetails(int N_PartyType, string N_TransType, int nFnYearId, string X_ReceiptNo, bool bAllBranchData, int nBranchID, int nFormID)
+        public ActionResult GetBalanceListDetails(int N_PartyType, string N_TransType, int nFnYearId, string X_ReceiptNo, bool bAllBranchData, int nBranchID, int nFormID, int nSalesOrderId)
         {
               if (X_ReceiptNo != null)
                 X_ReceiptNo = X_ReceiptNo.Replace("%2F", "/");
@@ -162,17 +162,27 @@ namespace SmartxAPI.Controllers
             DataTable Acc_CostCentreTrans = new DataTable();
             int N_AdjustmentID = 0;
             string Mastersql = "";
-
+            
             if (bAllBranchData == true)
             {
+                if(nSalesOrderId>0)
+                {
+                    Mastersql = "Select * from vw_SalesOrderToCustomerDebitNote where N_CompanyID=@p1 and n_SalesOrderId=@p8";
+               
+                }
+                 else {
+              
                 if (N_PartyType == 1)
                     Mastersql = "Select Inv_Customer.*,Inv_BalanceAdjustmentMaster.*,Inv_CustomerProjects.X_ProjectName,Inv_CustomerProjects.X_ProjectCode from Inv_BalanceAdjustmentMaster Inner Join  Inv_Customer ON Inv_BalanceAdjustmentMaster.N_PartyID = Inv_Customer.N_CustomerID And Inv_BalanceAdjustmentMaster.N_CompanyID = Inv_Customer.N_CompanyID and Inv_BalanceAdjustmentMaster.N_FnYearID=Inv_Customer.N_FnYearID  Left Outer Join Inv_CustomerProjects ON Inv_BalanceAdjustmentMaster.N_ProjectID = Inv_CustomerProjects.N_ProjectID And Inv_BalanceAdjustmentMaster.N_CompanyID = Inv_CustomerProjects.N_CompanyID Where  Inv_BalanceAdjustmentMaster.N_CompanyID=@p1 and Inv_BalanceAdjustmentMaster.N_TransType =@p2 and Inv_BalanceAdjustmentMaster.N_FnYearID=@p3 and Inv_BalanceAdjustmentMaster.X_VoucherNo=@p4 and Inv_BalanceAdjustmentMaster.N_PartyType=@p5";
                 else if (N_PartyType == 0)
                     Mastersql = "SELECT     Inv_BalanceAdjustmentMaster.N_CompanyID, Inv_BalanceAdjustmentMaster.N_FnYearID, Inv_BalanceAdjustmentMaster.X_VoucherNo, Inv_BalanceAdjustmentMaster.D_AdjustmentDate, Inv_BalanceAdjustmentMaster.D_EntryDate, Inv_BalanceAdjustmentMaster.N_Amount, Inv_BalanceAdjustmentMaster.N_UserID, Inv_BalanceAdjustmentMaster.N_BranchID, Inv_BalanceAdjustmentMaster.N_TransType, Inv_BalanceAdjustmentMaster.X_notes, Inv_BalanceAdjustmentMaster.N_PartyType, Inv_BalanceAdjustmentMaster.N_PartyID, Inv_BalanceAdjustmentMaster.N_AdjustmentId, Inv_BalanceAdjustmentMaster.N_AmountF, Inv_BalanceAdjustmentMaster.N_CurExchRate, Inv_BalanceAdjustmentMaster.N_WOID,Inv_BalanceAdjustmentMaster.N_ProjectID, Inv_Vendor.N_CompanyID AS Expr1, Inv_Vendor.N_VendorID, Inv_Vendor.X_VendorCode, Inv_Vendor.X_VendorName, Inv_Vendor.X_ContactName, Inv_Vendor.X_Address, Inv_Vendor.X_ZipCode, Inv_Vendor.X_PhoneNo1, Inv_Vendor.X_PhoneNo2, Inv_Vendor.X_FaxNo, Inv_Vendor.X_Email, Inv_Vendor.X_WebSite, Inv_Vendor.N_CreditLimit, Inv_Vendor.B_Inactive, Inv_Vendor.N_LedgerID, Inv_Vendor.N_InvDueDays, Inv_Vendor.N_FnYearID AS Expr2, Inv_Vendor.D_Entrydate AS Expr3, Inv_Vendor.N_CountryID, Inv_Vendor.N_TypeID, Inv_Vendor.B_DirPosting, Inv_Vendor.N_CurrencyID, Inv_Vendor.X_ReminderMsg, Inv_Vendor.X_VendorName_Ar, Inv_Vendor.N_CountryID, Inv_Vendor.X_TaxRegistrationNo, Inv_Vendor.N_TaxCategoryID, Inv_Vendor.B_AllowCashPay, Inv_Vendor.N_PartnerTypeID, Inv_Vendor.N_VendorTypeID, Inv_Vendor.N_GoodsDeliveryIn, Inv_Vendor.X_TandC, Acc_CurrencyMaster.N_CompanyID AS Expr4, Acc_CurrencyMaster.N_CurrencyID AS Expr5, Acc_CurrencyMaster.X_CurrencyCode, Acc_CurrencyMaster.X_CurrencyName, Acc_CurrencyMaster.X_ShortName, Acc_CurrencyMaster.N_ExchangeRate, Acc_CurrencyMaster.B_default, Acc_CurrencyMaster.N_Decimal, Prj_WorkOrder.N_WorkOrderId, Prj_WorkOrder.X_WorkOrderNo,Inv_CustomerProjects.X_ProjectName,Inv_CustomerProjects.X_ProjectCode FROM         Inv_BalanceAdjustmentMaster INNER JOIN Inv_Vendor ON Inv_BalanceAdjustmentMaster.N_PartyID = Inv_Vendor.N_VendorID AND Inv_BalanceAdjustmentMaster.N_CompanyID = Inv_Vendor.N_CompanyID AND  Inv_BalanceAdjustmentMaster.N_FnYearID = Inv_Vendor.N_FnYearID INNER JOIN Acc_CurrencyMaster ON Inv_Vendor.N_CurrencyID = Acc_CurrencyMaster.N_CurrencyID LEFT OUTER JOIN Prj_WorkOrder ON Inv_BalanceAdjustmentMaster.N_CompanyID = Prj_WorkOrder.N_CompanyId AND Inv_BalanceAdjustmentMaster.N_WOID = Prj_WorkOrder.N_WorkOrderId Left Outer Join Inv_CustomerProjects ON Inv_BalanceAdjustmentMaster.N_ProjectID = Inv_CustomerProjects.N_ProjectID And Inv_BalanceAdjustmentMaster.N_CompanyID = Inv_CustomerProjects.N_CompanyID Where  Inv_BalanceAdjustmentMaster.N_CompanyID=@p1 and Inv_BalanceAdjustmentMaster.N_FnYearID=@p3 and Inv_BalanceAdjustmentMaster.N_TransType=@p2 and Inv_BalanceAdjustmentMaster.X_VoucherNo=@p4 and Inv_BalanceAdjustmentMaster.N_PartyType=@p5";
 
+                 }
+
             }
             else
             {
+               
                 if (N_PartyType == 1)
                     Mastersql = "Select Inv_Customer.*,Inv_BalanceAdjustmentMaster.*,Inv_CustomerProjects.X_ProjectName,Inv_CustomerProjects.X_ProjectCode from Inv_BalanceAdjustmentMaster Inner Join  Inv_Customer ON Inv_BalanceAdjustmentMaster.N_PartyID = Inv_Customer.N_CustomerID And Inv_BalanceAdjustmentMaster.N_CompanyID = Inv_Customer.N_CompanyID and Inv_BalanceAdjustmentMaster.N_FnYearID=Inv_Customer.N_FnYearID  Left Outer Join Inv_CustomerProjects ON Inv_BalanceAdjustmentMaster.N_ProjectID = Inv_CustomerProjects.N_ProjectID And Inv_BalanceAdjustmentMaster.N_CompanyID = Inv_CustomerProjects.N_CompanyID Where  Inv_BalanceAdjustmentMaster.N_CompanyID=@p1 and Inv_BalanceAdjustmentMaster.N_TransType =@p2 and Inv_BalanceAdjustmentMaster.N_FnYearID=@p3 and Inv_BalanceAdjustmentMaster.X_VoucherNo=@p4 and Inv_BalanceAdjustmentMaster.N_PartyType=@p5 and Inv_BalanceAdjustmentMaster.N_BranchID=@p6";
                 else if (N_PartyType == 0)
@@ -185,6 +195,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p4", X_ReceiptNo);
             Params.Add("@p5", N_PartyType);
             Params.Add("@p7", nFormID);
+            Params.Add("@p8", nSalesOrderId);
             
 
             try
@@ -209,10 +220,17 @@ namespace SmartxAPI.Controllers
 
                     string DetailSql = "";
 
+                   
+
                     //             DetailSql = "Select Inv_BalanceAdjustmentMasterDetails.*,Acc_MastLedger.* from Inv_BalanceAdjustmentMasterDetails " +
                     // " Left Outer JOIN Acc_MastLedger On Inv_BalanceAdjustmentMasterDetails.N_LedgerID= Acc_MastLedger.N_LedgerID and Inv_BalanceAdjustmentMasterDetails.N_CompanyID = Acc_MastLedger.N_CompanyID" +
                     // " Where Inv_BalanceAdjustmentMasterDetails.N_CompanyID=@p1 and  Acc_MastLedger.N_FnYearID=@p3 and Inv_BalanceAdjustmentMasterDetails.N_AdjustmentId=" + N_AdjustmentId;
                     DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p1 and  N_FnYearID=@p3 and N_AdjustmentId=" + N_AdjustmentId;
+                   if(nSalesOrderId>0)
+                     {
+                          DetailSql = "Select * from vw_SalesOrderToDebitNoteDetails  Where N_CompanyID=@p1 and N_FnYearID=@p3 and  N_ReferanceID=" + nSalesOrderId + " and N_PaidAmt=0 and n_TypeID=468";
+                  
+                     }
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(DetailTable);
