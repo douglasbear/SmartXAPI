@@ -256,10 +256,19 @@ namespace SmartxAPI.Controllers
                             return Ok("Unable To Save");
                         }
 
+                        
                         for (int i = 0; i < DetailTable.Rows.Count; i++)
                         {
+                            int N_Status=1;
                             DetailTable.Rows[i]["N_AmendID"] = nAmendID;
                             DetailTable.Rows[i]["X_TransType"] = xType;
+
+                            if(nActionTypeID==198)
+                            {
+                                object objStatus = dLayer.ExecuteScalar("SELECT N_Status FROM Gen_ApprovalCodesTrans WHERE N_CompanyID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_CompanyID"].ToString())+" AND N_FormID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_FormID"].ToString())+" AND N_HierarchyID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_HierarchyID"].ToString())+" AND N_TransID="+myFunctions.getIntVAL(DetailTable.Rows[i]["N_TransID"].ToString()), Params, connection,transaction);
+                                if (objStatus != null)
+                                    N_Status=myFunctions.getIntVAL(objStatus.ToString());
+                            }
                         }
 
                         string ipAddress = "";
