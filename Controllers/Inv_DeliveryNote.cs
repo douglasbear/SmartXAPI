@@ -475,10 +475,9 @@ namespace SmartxAPI.Controllers
                             //     masterTable.Rows[0]["isProformaDone"] = true;
                             // }
                         }
-                        DataTable returnData = dLayer.ExecuteDataTable("select N_DeliveryNoteId from Inv_DeliveryNoteReturn where N_DeliveryNoteId=@nDeliveryNoteId and N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
+                        DataTable returnData = dLayer.ExecuteDataTable("select N_DeliveryNoteId from vw_DeliveryNoteToDeliveryReturn where N_DeliveryNoteId=@nDeliveryNoteId and N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID group by N_DeliveryNoteId having SUM(N_BalanceQty)=0", QueryParamsList, Con);
                         if (returnData.Rows.Count > 0)
                         {
-
                             masterTable.Rows[0]["isDeliveryReturnDone"] = true;
                         }
                         else
@@ -486,6 +485,11 @@ namespace SmartxAPI.Controllers
                             masterTable.Rows[0]["isDeliveryReturnDone"] = false;
                         }
                     }
+                      bool Invoice2Enable = false;
+                    object Invoice2Enableobj = dLayer.ExecuteScalar("select 1 from gen_printtemplates where N_CompanyID =" + nCompanyId + " and N_FormID=1819 and X_RptName<>'' and N_UsercategoryID=" + myFunctions.GetUserCategory(User),Con);
+                    if (Invoice2Enableobj != null)
+                        Invoice2Enable = true;
+                    masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "Invoice2Enable", typeof(bool), Invoice2Enable);
 
                     //Details
                     SortedList dParamList = new SortedList()

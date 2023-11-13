@@ -344,17 +344,17 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    if (nFormID == 64 || nFormID == 894 || nFormID == 372 || nFormID == 55 || nFormID == 504 || nFormID == 1601)
+                    if (nFormID == 64 || nFormID == 894 || nFormID == 372 || nFormID == 55 || nFormID == 504 || nFormID == 1601||nFormID == 1651)
                     {
                         //QR Code Generate For Invoice
                         object Total = "";
                         object TaxAmount = "";
                         object VatNumber = dLayer.ExecuteScalar("select x_taxregistrationNo from acc_company where N_CompanyID=@nCompanyId", QueryParams, connection, transaction);
                         object SalesDate = "";
-                        if (nFormID == 64 || nFormID == 894 || nFormID == 372 || nFormID == 1601)
+                        if (nFormID == 64 || nFormID == 894 || nFormID == 372 || nFormID == 1601 || nFormID == 1651)
                         {
-                            Total = dLayer.ExecuteScalar("select n_BillAmt+N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
-                            TaxAmount = dLayer.ExecuteScalar("select N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
+                            Total = dLayer.ExecuteScalar("select n_BillAmt + ISNULL(N_taxamtF,0) + isnull(N_Cessamtf,0) from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
+                            TaxAmount = dLayer.ExecuteScalar("select ISNULL(N_taxamtF,0) from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
                             SalesDate = dLayer.ExecuteScalar("select D_SalesDate from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
                         }
                         else if (nFormID == 504)
@@ -439,27 +439,7 @@ namespace SmartxAPI.Controllers
                         }
 
                     }
-
-                    // object nValue= dLayer.ExecuteScalar("Select count(N_Value) from Gen_Settings Where X_Description ='PrintOnlyAfterApprove' and N_CompanyID= " + nCompanyId + " and X_Group='" + nFormID.ToString() + "'"+ "and  N_UsercategoryID in (" + xUserCategoryList + ")"+"and N_Value=1", connection,transaction);
-                    // if(nValue==null){
-                    //    nValue=0;
-                    // }
-                    // if(myFunctions.getIntVAL(nValue.ToString())> 0){
-                    //    object dataSource = dLayer.ExecuteScalar("SELECT X_DataSource FROM Gen_PrintTemplates WHERE N_CompanyID =" + nCompanyId + " and N_FormID=" + nFormID + " and  N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
-                    //    object XSearchField1 = dLayer.ExecuteScalar("SELECT X_SearchField1 FROM Gen_PrintTemplates WHERE N_CompanyID =" + nCompanyId + " and N_FormID=" + nFormID + " and  N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
-                    //    object XSearchField2 = dLayer.ExecuteScalar("SELECT X_SearchField2 FROM Gen_PrintTemplates WHERE N_CompanyID =" + nCompanyId + " and N_FormID=" + nFormID + " and  N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
-
-                    //    string sql="select "+XSearchField1+","+XSearchField2+" from "+dataSource+" where N_CompanyID =" + nCompanyId +" and X_ReceiptNo='"+docNumber+"'";
-                    //    DataTable TransData = dLayer.ExecuteDataTable(sql, QueryParams, connection,transaction);
-                    //    DataRow TransRow = TransData.Rows[0];
-                    //    if((bool)TransRow["B_IsSaveDraft"] && TransRow["N_ProcStatus"] != null){
-                    //     return Ok(_api.Error(User, "approve"));
-                    //    }
-                    // }
-
-
-
-                       if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, nPreview, xrptname, n_LanguageID))
+                    if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, nPreview, xrptname, n_LanguageID))
                     {
 
                         var client = new HttpClient(handler);
@@ -816,12 +796,10 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Success(new SortedList() { { "FileName", ReportName } }));
 
                     }
-                
                     else
                     {
                         return Ok(_api.Error(User, "Report Generation Failed"));
                     }
-                 
                 }
             }
             catch (Exception e)

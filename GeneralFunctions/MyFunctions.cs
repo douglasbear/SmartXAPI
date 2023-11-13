@@ -1501,6 +1501,11 @@ namespace SmartxAPI.GeneralFunctions
                 NxtUser = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=0 and N_ActionTypeID<>110", LogParams, connection, transaction);if (NxtUser != null)
                 N_NxtUserID = this.getIntVAL(NxtUser.ToString());
 
+                string TableName = dLayer.ExecuteScalar("select X_ScreenTable from vw_ScreenTables where N_FormID=@nFormID", LogParams, connection, transaction).ToString();
+                string TableID = dLayer.ExecuteScalar("select X_IDName from vw_ScreenTables where N_FormID=@nFormID", LogParams, connection, transaction).ToString();
+                
+                object Branch = dLayer.ExecuteScalar("select N_BranchID from "+TableName+" where N_CompanyID=@nCompanyID and "+TableID+"=@nTransID", LogParams, connection, transaction);
+
                 LogParams.Add("@xTransType", X_TransType);
                 LogParams.Add("@nApprovalUserCatID", N_ApprovalUserCatID);
                 LogParams.Add("@xSystemName", "WebRequest");
@@ -1509,8 +1514,9 @@ namespace SmartxAPI.GeneralFunctions
                 LogParams.Add("@xPartyName", PartyName);
                 LogParams.Add("@nNxtUserID", N_NxtUserID);
                 LogParams.Add("@N_GetUserSign", N_GetSignFromUser);
+                LogParams.Add("@N_BranchID", this.getIntVAL(Branch.ToString()));
                 // LogParams.Add("@I_Sign", I_Sign);
-                dLayer.ExecuteNonQuery("SP_Log_Approval_Status @nCompanyID,@nFnYearID,@xTransType,@nTransID,@nFormID,@nApprovalUserID,@nApprovalUserCatID,@xAction,@xSystemName,@xTransCode,@dTransDate,@nApprovalLevelID,@nApprovalUserID,@nProcStatusID,@xComments,@xPartyName,@nNxtUserID,@N_GetUserSign", LogParams, connection, transaction);//,@I_Sign
+                dLayer.ExecuteNonQuery("SP_Log_Approval_Status @nCompanyID,@nFnYearID,@xTransType,@nTransID,@nFormID,@nApprovalUserID,@nApprovalUserCatID,@xAction,@xSystemName,@xTransCode,@dTransDate,@nApprovalLevelID,@nApprovalUserID,@nProcStatusID,@xComments,@xPartyName,@nNxtUserID,@N_BranchID,@N_GetUserSign", LogParams, connection, transaction);//,@I_Sign
 
                 int MaxActionID = this.getIntVAL(dLayer.ExecuteScalar("SELECT MAX(N_ActionID) as N_MaxActionID from Log_ApprovalProcess where N_CompanyID=@nCompanyID ", LogParams, connection, transaction).ToString());
 
@@ -1563,8 +1569,8 @@ namespace SmartxAPI.GeneralFunctions
                 {
                     if (this.getIntVAL(Count.ToString()) == 0)
                     {
-                        string TableName = dLayer.ExecuteScalar("select X_ScreenTable from vw_ScreenTables where N_FormID=@nFormID", NewParam, connection, transaction).ToString();
-                        string TableID = dLayer.ExecuteScalar("select X_IDName from vw_ScreenTables where N_FormID=@nFormID", NewParam, connection, transaction).ToString();
+                        // string TableName = dLayer.ExecuteScalar("select X_ScreenTable from vw_ScreenTables where N_FormID=@nFormID", NewParam, connection, transaction).ToString();
+                        // string TableID = dLayer.ExecuteScalar("select X_IDName from vw_ScreenTables where N_FormID=@nFormID", NewParam, connection, transaction).ToString();
 
                         dLayer.ExecuteScalar("update " + TableName + " set B_IssaveDraft=0 where " + TableID + "=@nTransID and N_CompanyID=@nCompanyID", NewParam, connection, transaction);
                         if(N_FormID==1309)
@@ -3169,4 +3175,4 @@ namespace SmartxAPI.GeneralFunctions
         public bool LogScreenActivitys(int nFnYearID, int nTransID, string xTransCode, int nFormID, string xAction, string ipAddress,string X_Description, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
 public bool QryToExcel(ClaimsPrincipal User, string _fillquery, string _filename,SortedList _params, IDataAccessLayer dLayer, SqlConnection connection);
     }
-}
+} 

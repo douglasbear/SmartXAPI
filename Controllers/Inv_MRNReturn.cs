@@ -114,6 +114,7 @@ namespace SmartxAPI.Controllers
                     DataTable DetailTable;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
+                    DataTable rentalItem = ds.Tables["segmentTable"];
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
 
@@ -144,16 +145,53 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok("Unable to save MRN Return");
                     }
-                    if (nMRNID > 0)
-                    {
-                        dLayer.ExecuteNonQuery("Update Inv_MRN Set N_Processed=1 Where N_MRNID=" + nMRNID + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID, connection, transaction);
-                    }
+                    // if (nMRNID > 0)
+                    // {
+                    //     dLayer.ExecuteNonQuery("Update Inv_MRN Set N_Processed=1 Where N_MRNID=" + nMRNID + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                    // }
                     dLayer.DeleteData("Inv_MRNReturnDetails", "N_MRNReturnID", nMRNReturnID, "", connection, transaction);
+                    int nMRNReturnDetailsID = 0;
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["N_MRNReturnID"] = nMRNReturnID;
+
+                        nMRNReturnDetailsID = dLayer.SaveDataWithIndex("Inv_MRNReturnDetails", "N_MRNReturnDetailsID", "", "", j, DetailTable, connection, transaction);
+
+                        if (nMRNReturnDetailsID > 0)
+                        {
+                            for (int k = 0; k < rentalItem.Rows.Count; k++)
+                            {
+
+                                if (myFunctions.getIntVAL(rentalItem.Rows[k]["rowID"].ToString()) == j)
+                                {
+
+                                    rentalItem.Rows[k]["n_TransID"] = nMRNReturnID;
+                                    rentalItem.Rows[k]["n_TransDetailsID"] = nMRNReturnDetailsID;
+
+                                    rentalItem.AcceptChanges();
+                                }
+                                rentalItem.AcceptChanges();
+                            }
+                            rentalItem.AcceptChanges();
+                        }
+                        DetailTable.AcceptChanges();
                     }
-                    int nMRNReturnDetailsID = dLayer.SaveData("Inv_MRNReturnDetails", "N_MRNReturnDetailsID", DetailTable, connection, transaction);
+
+                    if (rentalItem.Columns.Contains("rowID"))
+                        rentalItem.Columns.Remove("rowID");
+
+                    rentalItem.AcceptChanges();
+
+                    if(rentalItem.Rows.Count >0)
+                    {
+                        if (nMRNReturnID > 0)
+                        {
+                            int N_FormID = myFunctions.getIntVAL(rentalItem.Rows[0]["n_FormID"].ToString());
+                            dLayer.ExecuteScalar("delete from Inv_RentalSchedule where N_TransID=" + nMRNReturnID.ToString() + " and N_FormID=" + N_FormID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                        }
+                        dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
+                    };
+
                     if (nMRNReturnDetailsID <= 0)
                     {
                         transaction.Rollback();
@@ -175,7 +213,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult MRNReturnDetails(string xReturnNo, int nMRNID)
+        public ActionResult MRNReturnDetails(string xReturnNo, int nMRNID, int nFormID)
         {
             try
             {
@@ -190,8 +228,13 @@ namespace SmartxAPI.Controllers
 
                     string Mastersql = "";
                     string DetailSql = "";
-
+                    string crieteria = "";
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    Params.Add("@nFormID", nFormID);
+                    if (nFormID > 0)
+                    {
+                        crieteria = " and N_FormID = @nFormID ";
+                    }
 
                     if (nMRNID > 0)
                     {
@@ -203,8 +246,12 @@ namespace SmartxAPI.Controllers
                         DetailSql = "select * from vw_MRNtoReturnDetails where N_CompanyId=@nCompanyID and N_MRNID=@nMRNID";
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                         DetailTable = _api.Format(DetailTable, "Details");
+                        string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nMRNID " + crieteria;
+                        DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
+                        RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
                         dt.Tables.Add(MasterTable);
                         dt.Tables.Add(DetailTable);
+                        dt.Tables.Add(RentalSchedule);
                         return Ok(_api.Success(dt));
                     } else {
                         Params.Add("@xReturnNo", xReturnNo);
@@ -219,8 +266,12 @@ namespace SmartxAPI.Controllers
                         DetailSql = "select * from vw_Inv_MRNReturnDetails where N_CompanyID=@nCompanyID and N_MRNReturnID=@nMRNReturnID ";
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                         DetailTable = _api.Format(DetailTable, "Details");
+                        string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=" + nMRNReturnID + crieteria;
+                        DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
+                        RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
                         dt.Tables.Add(MasterTable);
                         dt.Tables.Add(DetailTable);
+                        dt.Tables.Add(RentalSchedule);
                         return Ok(_api.Success(dt));
                     };
                 }
