@@ -417,6 +417,7 @@ namespace SmartxAPI.Controllers
                            using (SqlConnection cnn4 = new SqlConnection(masterDBConnectionString))
                            {
                             cnn4.Open();
+                            
                             appID = myFunctions.getIntVAL(dLayer.ExecuteScalar( "SELECT Top(1) N_AppID FROM ClientApps where N_ClientID='" +n_ClientID + "'", cnn4).ToString());
                             //insert companywise apps in clientapps //26-09
                             SortedList companyParams = new SortedList(){
