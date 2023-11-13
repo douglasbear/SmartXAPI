@@ -417,7 +417,7 @@ namespace SmartxAPI.Controllers
                     if (myFunctions.getIntVAL(N_SalesOrderTypeID.ToString()) != 175)
                     {
                         DispatchNo = dLayer.ExecuteScalar("select x_dispatchNo from inv_materialDispatch where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
-                        if (Convert.ToBoolean(MasterRow["N_Processed"]))
+                       if (Convert.ToBoolean(MasterRow["N_Processed"]))
                         {
                             InSales = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
                             isProforma = dLayer.ExecuteScalar("select isnull(B_IsProforma,0) from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
@@ -450,6 +450,8 @@ namespace SmartxAPI.Controllers
                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), InSales != null ? "Invoice Processed" : "");
                     }
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "salesDone", typeof(int), InSales != null ? 1 : 0);
+                      
+
                     object DNQty = dLayer.ExecuteScalar("SELECT SUM(Inv_DeliveryNoteDetails.N_Qty * Inv_ItemUnit.N_Qty) FROM Inv_DeliveryNoteDetails INNER JOIN Inv_ItemUnit ON Inv_DeliveryNoteDetails.N_ItemUnitID = Inv_ItemUnit.N_ItemUnitID AND Inv_DeliveryNoteDetails.N_CompanyID = Inv_ItemUnit.N_CompanyID AND Inv_DeliveryNoteDetails.N_ItemID = Inv_ItemUnit.N_ItemID where Inv_DeliveryNoteDetails.N_CompanyID=" + nCompanyID + " and Inv_DeliveryNoteDetails.N_SalesOrderID=" + myFunctions.getIntVAL(N_SOrderID.ToString()), DetailParams, connection);
                     object OrderQty1 = dLayer.ExecuteScalar("select SUM(Inv_SalesOrderDetails.N_Qty) from Inv_SalesOrderDetails where N_CompanyID=" + nCompanyID + " and N_SalesOrderId=" + myFunctions.getIntVAL(N_SOrderID.ToString()), DetailParams, connection);
                     if (DNQty != null && OrderQty1 != null)
@@ -606,6 +608,16 @@ namespace SmartxAPI.Controllers
                                {
                                  dr["N_Paidamt"] = myFunctions.getVAL(dr["N_Amount"].ToString());
 
+
+                        object termamount=  dLayer.ExecuteScalar("select SUM(N_Amount) from Inv_Terms where N_CompanyID=@nCompanyID and N_ReferanceId=@nSOrderID", DetailParams, connection);
+                        object orderamount= dLayer.ExecuteScalar("select SUM(N_TaxAmt + N_BillAmt)  from Inv_Sales where  N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
+                        object retamount=  dLayer.ExecuteScalar("select N_Amount from Inv_Terms where N_CompanyID=@nCompanyID and N_ReferanceId=@nSOrderID and N_TypeID=468", DetailParams, connection);
+                        
+                      if (myFunctions.getVAL(termamount.ToString())- myFunctions.getVAL(retamount.ToString()) != myFunctions.getVAL(orderamount.ToString()))
+                        {
+                            MasterTable.Rows[0]["salesDone"] = 0;
+                        }
+
                                }
                             }
                             if(TermsDebit!=null)
@@ -618,6 +630,10 @@ namespace SmartxAPI.Controllers
                             }
 
                         }
+                       
+                       
+                       
+                       
 
 
                     Terms = _api.Format(Terms, "Terms");
