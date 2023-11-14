@@ -488,7 +488,7 @@ namespace SmartxAPI.Controllers
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "ChkCancelOrderEnabled", typeof(bool), true);
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "isProformaDone", typeof(bool), isProforma);
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_DispatchNo", typeof(string), DispatchNo);
-
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "debitNoteDone", typeof(bool), false);                           
 
                     if (InSales != null)
                     {
@@ -625,7 +625,7 @@ namespace SmartxAPI.Controllers
                                if(myFunctions.getIntVAL(TermsDebit.ToString())>0) 
                                {
                                  dr["N_Paidamt"] = myFunctions.getVAL(dr["N_Amount"].ToString());
-
+                                 MasterTable.Rows[0]["debitNoteDone"] = true;
                                }
                             }
 
