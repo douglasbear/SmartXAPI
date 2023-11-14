@@ -325,7 +325,7 @@ namespace SmartxAPI.Controllers
                     {
                         if( myFunctions.getIntVAL(MasterTable.Rows[0]["N_Type"].ToString())==1)
                         {
-                            object Count = dLayer.ExecuteScalar("select count(1) from Pay_Appraisal where N_CompanyID="+nCompanyID+" and N_BranchID"+ myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString())+" N_EmpID="+ myFunctions.getIntVAL(MasterTable.Rows[0]["N_EmpID"].ToString())+" and N_EntryUserID="+ myFunctions.getIntVAL(MasterTable.Rows[0]["N_EntryUserID"].ToString())+" and N_Type=1 and N_EvalSettingsID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_EvalSettingsID"].ToString()), connection, transaction);
+                            object Count = dLayer.ExecuteScalar("select count(1) from Pay_Appraisal where N_CompanyID="+nCompanyID+" and N_BranchID = "+ myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString())+" and  N_EmpID="+ myFunctions.getIntVAL(MasterTable.Rows[0]["N_EmpID"].ToString())+" and N_EntryUserID="+ myFunctions.getIntVAL(MasterTable.Rows[0]["N_EntryUserID"].ToString())+" and N_Type=1 and N_EvalSettingsID="+myFunctions.getIntVAL(MasterTable.Rows[0]["N_EvalSettingsID"].ToString()), connection, transaction);
                             if(myFunctions.getIntVAL(Count.ToString())>0)
                             {
                                 transaction.Rollback();
