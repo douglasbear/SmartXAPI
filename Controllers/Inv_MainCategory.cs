@@ -170,7 +170,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select X_MainCategoryCode from vw_InvItemCategory Where N_CompanyID=@p1 and n_MainCategoryID=@p2 Order By N_MainCategoryID";
+            string sqlCommandText = "select * from VW_MainCategory_List_Cloud Where N_CompanyID=@p1 and N_MainCategoryID=@p2";
 
             Params.Add("@p1", myFunctions.GetCompanyID(User));
             Params.Add("@p2", nMainCategoryID);
