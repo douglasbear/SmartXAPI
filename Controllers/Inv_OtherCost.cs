@@ -10,9 +10,9 @@ using Microsoft.Data.SqlClient;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("productionCostType")]
+    [Route("otherCost")]
     [ApiController]
-    public class Inv_ProductionCostType : ControllerBase
+    public class Inv_OtherCost : ControllerBase
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
@@ -21,14 +21,14 @@ namespace SmartxAPI.Controllers
         private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
 
-        public Inv_ProductionCostType(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
+        public Inv_OtherCost(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             _api = api;
             dLayer = dl;
             myFunctions = myFun;
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 1831;
+            FormID = 1832;
         }
 
         [HttpPost("save")]
@@ -44,28 +44,28 @@ namespace SmartxAPI.Controllers
                     MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-                    int nCostTypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CostTypeID"].ToString());
-                    // int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-                    string xCostTypeCode = MasterTable.Rows[0]["x_CostTypeCode"].ToString();      
+                    int nOtherCostID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_OtherCostID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                    string xOtherCostCode = MasterTable.Rows[0]["x_otherCostCode"].ToString();      
 
-                    if (xCostTypeCode == "@Auto")
+                    if (xOtherCostCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
-                        // Params.Add("N_YearID", nFnYearID);
+                        Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
  
-                        xCostTypeCode = dLayer.GetAutoNumber("Inv_ProductionCostType", "x_CostTypeCode", Params, connection, transaction);
-                        if (xCostTypeCode == "")
+                        xOtherCostCode = dLayer.GetAutoNumber("Inv_OtherCost", "x_otherCostCode", Params, connection, transaction);
+                        if (xOtherCostCode == "")
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User, "Unable to generate CostType Code"));
+                            return Ok(_api.Error(User, "Unable to generate OtherCost"));
                         }
-                        MasterTable.Rows[0]["x_CostTypeCode"] = xCostTypeCode;
+                        MasterTable.Rows[0]["x_otherCostCode"] = xOtherCostCode;
                     }
                     
-                    nCostTypeID = dLayer.SaveData("Inv_ProductionCostType", "N_CostTypeID", MasterTable, connection, transaction);
+                    nOtherCostID = dLayer.SaveData("Inv_OtherCost", "N_OtherCostID", MasterTable, connection, transaction);
 
-                    if (nCostTypeID <= 0)
+                    if (nOtherCostID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Warning("Unable to save"));
@@ -84,7 +84,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCostTypeID,int nfnYearID)
+        public ActionResult DeleteData(int nOtherCostID)
         {
             int Results = 0;
             SortedList Params = new SortedList();
@@ -93,30 +93,15 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    
-                    // DataTable TransData = new DataTable();
-                    Params.Add("@N_CostTypeID", nCostTypeID);
-
-                    // string Sql = "select N_CostTypeID,X_CostTypeCode from Inv_ProductionCostType where N_CostTypeID=@N_CostTypeID and N_CompanyID=N_CompanyID";
-                    // string xButtonAction="Delete";
-                    // string xCostTypeCode = "";
-                    // TransData = dLayer.ExecuteDataTable(Sql, Params, connection);
                     SqlTransaction transaction = connection.BeginTransaction();
 
-                    Results = dLayer.DeleteData("Inv_ProductionCostType", "N_CostTypeID", nCostTypeID, "", connection, transaction);
-                    
-                    // // Activity Log
-                    // string ipAddress = "";
-                    // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    //     ipAddress = Request.Headers["X-Forwarded-For"];
-                    // else
-                    //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                    //     myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nfnYearID.ToString()),nCostTypeID,TransData.Rows[0]["X_CostTypeCode"].ToString(),1831,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                    Params.Add("@n_OtherCostID", nOtherCostID);
+                    Results = dLayer.DeleteData("Inv_OtherCost", "n_OtherCostID", nOtherCostID, "", connection, transaction);
                     
                     if (Results > 0)
                     {
                         transaction.Commit();
-                        return Ok(_api.Success("Production CostType Deleted"));
+                        return Ok(_api.Success("OtherCost Deleted"));
                     }
                     else
                     {
@@ -131,49 +116,16 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("list")]
-        public ActionResult CostTypeList()
-        {
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    DataTable dt = new DataTable();
-                    SortedList Params = new SortedList();
-                    int nCompanyID = myFunctions.GetCompanyID(User);
-                    Params.Add("@p1", nCompanyID);
-
-                    string sqlCommandText = "select * from Inv_ProductionCostType where N_CompanyID=@p1";
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-
-                    dt = _api.Format(dt);
-                    if (dt.Rows.Count == 0)
-                    {
-                        return Ok(_api.Warning("No Results Found"));
-                    }
-                    else
-                    {
-                        return Ok(_api.Success(dt));
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                return BadRequest(_api.Error(User, e));
-            }
-        }
-
         [HttpGet("details")]
-        public ActionResult GetData(int nCostTypeID)
+        public ActionResult GetData(int nOtherCostID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from Inv_ProductionCostType where N_CompanyID=@p1 and N_CostTypeID=@p2";
+            string sqlCommandText = "select * from Inv_OtherCost where N_CompanyID=@p1 and N_OtherCostID=@p2";
             Params.Add("@p1", nCompanyID);
-            Params.Add("@p2", nCostTypeID);
+            Params.Add("@p2", nOtherCostID);
 
             try
             {
@@ -197,6 +149,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+
 
     }
 
