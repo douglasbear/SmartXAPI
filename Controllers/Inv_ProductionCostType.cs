@@ -45,13 +45,13 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nCostTypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CostTypeID"].ToString());
-                    // int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                     string xCostTypeCode = MasterTable.Rows[0]["x_CostTypeCode"].ToString();      
 
                     if (xCostTypeCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
-                        // Params.Add("N_YearID", nFnYearID);
+                        Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
  
                         xCostTypeCode = dLayer.GetAutoNumber("Inv_ProductionCostType", "x_CostTypeCode", Params, connection, transaction);
@@ -62,7 +62,7 @@ namespace SmartxAPI.Controllers
                         }
                         MasterTable.Rows[0]["x_CostTypeCode"] = xCostTypeCode;
                     }
-                    
+                    MasterTable.Columns.Remove("n_FnYearID");
                     nCostTypeID = dLayer.SaveData("Inv_ProductionCostType", "N_CostTypeID", MasterTable, connection, transaction);
 
                     if (nCostTypeID <= 0)
@@ -71,8 +71,8 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Warning("Unable to save"));
                     }
                     else
-                    {
                         transaction.Commit();
+                    {
                         return Ok(_api.Success("Save Successfully"));
                     }
                 }
