@@ -1,4 +1,4 @@
-sing AutoMapper;
+using AutoMapper;
 using SmartxAPI.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -14,26 +14,26 @@ namespace SmartxAPI.Controllers
 
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("documentSubjectCategory")]
+    [Route("documentsubjectcategory")]
     [ApiController]
-    public class DocSubjectCategory: ControllerBase
+    public class DocSubjectCategory : ControllerBase
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
         private readonly int FormID;
         private readonly IMyFunctions myFunctions;
-          public DocSubjectCategory(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public DocSubjectCategory(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             _api = api;
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID =1825 ;
+            FormID = 1825;
         }
         private readonly string connectionString;
 
-              
-  [HttpPost("save")]
+
+        [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
@@ -47,17 +47,35 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
-                  
+
                     int n_CategoryID = myFunctions.getIntVAL(MasterRow["N_CategoryID"].ToString());
-                    int nCategoryID=0;
-                      if (N_CategoryID>0)
+                    int nCategoryID = 0;
+                    string CityCode = "";
+                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                    var values = MasterTable.Rows[0]["x_CategoryCode"].ToString();
+                    if (values == "@Auto")
                     {
-                        
-                         dLayer.DeleteData("Inv_AttachmentCategory","N_CategoryID", n_CategoryID, "", connection,transaction);
+                        Params.Add("N_CompanyID", nCompanyID);
+                        Params.Add("N_YearID", nFnYearID);
+                        Params.Add("N_FormID", this.FormID);
+
+                        CityCode = dLayer.GetAutoNumber("Inv_AttachmentCategory", "x_CategoryCode", Params, connection, transaction);
+                        if (CityCode == "")
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to generate City Code"));
+                        }
+                        MasterTable.Rows[0]["x_CategoryCode"] = CityCode;
+                    }
+                    MasterTable.Columns.Remove("n_FnYearID");
+                    if (n_CategoryID > 0)
+                    {
+
+                        dLayer.DeleteData("Inv_AttachmentCategory", "N_CategoryID", n_CategoryID, "", connection, transaction);
 
                     }
 
-                    nCategoryID = dLayer.SaveData("Inv_AttachmentCategory", "N_CategoryID", DetailTable, connection, transaction);
+                    nCategoryID = dLayer.SaveData("Inv_AttachmentCategory", "N_CategoryID", MasterTable, connection, transaction);
                     if (nCategoryID <= 0)
                     {
                         transaction.Rollback();
@@ -76,38 +94,38 @@ namespace SmartxAPI.Controllers
             }
         }
 
-         
+
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCategoryID,int nCompanyID)
+        public ActionResult DeleteData(int nCategoryID, int nCompanyID)
         {
             int Results = 0;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    
+
                     connection.Open();
-                    Results = dLayer.DeleteData("Inv_AttachmentCategory", "N_CategoryID", nCategoryID, "N_CompanyID =" + nCompanyID,  connection);
+                    Results = dLayer.DeleteData("Inv_AttachmentCategory", "N_CategoryID", nCategoryID, "N_CompanyID =" + nCompanyID, connection);
                     if (Results > 0)
                     {
-                    
-                        
+
+
                         return Ok(_api.Success("Catogry deleted"));
                     }
                     else
                     {
-                        return Ok(_api.Error(User,"Unable to delete"));
+                        return Ok(_api.Error(User, "Unable to delete"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
-           [HttpGet("details")]
-        public ActionResult docSubjectCategory(int nFormID)
+        [HttpGet("details")]
+        public ActionResult docSubjectCategory(int nCategoryID)
         {
 
 
@@ -120,12 +138,12 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     DataTable MasterTable = new DataTable();
                     DataTable DataTable = new DataTable();
-                
+
                     string DetailSql = "";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    Params.Add("@nCategoryID",nCategoryID);
-                   
+                    Params.Add("@nCategoryID", nCategoryID);
+
 
                     DetailSql = "select * from Inv_AttachmentCategory where N_CompanyId=@nCompanyID and N_CategoryID=@nCategoryID ";
                     MasterTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
@@ -139,7 +157,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
