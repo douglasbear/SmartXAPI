@@ -1310,6 +1310,7 @@ namespace SmartxAPI.Controllers
                                         }
                                     }
                                     dLayer.ExecuteScalar("delete from Inv_Prescription where N_SalesOrderID=" + nSalesOrderID.ToString() + "  and  N_CompanyID=" + nCompanyID, connection, transaction);                                       
+                                    dLayer.ExecuteScalar("delete from Inv_Terms where N_ReferanceID=" + nSalesOrderID.ToString() + "  and  N_CompanyID=" + nCompanyID, connection, transaction);                                       
                                 
                                 }
                             }
