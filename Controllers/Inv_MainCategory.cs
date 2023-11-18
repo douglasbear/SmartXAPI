@@ -69,6 +69,7 @@ namespace SmartxAPI.Controllers
                     }
                     MasterTable.Columns.Remove("N_FnYearID");
                     string X_MainCategory = MasterTable.Rows[0]["X_MainCategory"].ToString();
+                     N_MainCategoryID = dLayer.SaveData("Inv_MainCategory", "N_MainCategoryID", MasterTable, connection, transaction);
                     if (N_MainCategoryID <= 0)
                     {
                         transaction.Rollback();
