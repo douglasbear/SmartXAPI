@@ -1875,6 +1875,10 @@ namespace SmartxAPI.GeneralFunctions
             // Auto Gen
             string InvoiceNo = "";
             DataRow masterRow = MasterTable.Rows[0];
+            DataTable Approvals;
+            Approvals = ds.Tables["approval"];
+            DataRow ApprovalRow = Approvals.Rows[0];
+
             var values = masterRow["X_DebitNoteNo"].ToString();
             int UserID = myFunctions.GetUserID(User);
             int N_CompanyID = myFunctions.GetCompanyID(User);
@@ -1891,11 +1895,23 @@ namespace SmartxAPI.GeneralFunctions
             MasterTable.Rows[0]["n_TotalPaidAmountF"] = N_TotalPaidF;
             string xButtonAction="";
              int nDivisionID = 0;
+             int N_NextApproverID = 0;
+             int N_SaveDraft = myFunctions.getIntVAL(MasterTable.Rows[0]["b_IsSaveDraft"].ToString());
             if (MasterTable.Columns.Contains("n_DivisionID"))
             {
                nDivisionID=myFunctions.getIntVAL(MasterTable.Rows[0]["n_DivisionID"].ToString());
 
             }
+
+            SortedList CustParams = new SortedList();
+            CustParams.Add("@nCompanyID", N_CompanyID);
+            CustParams.Add("@N_CustomerID", N_CustomerID);
+            CustParams.Add("@nFnYearID", nFnYearID);
+
+            object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
+            object objCustCode = dLayer.ExecuteScalar("Select X_CustomerCode From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
+
+
 
             if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_ReturnDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
             {
@@ -1915,6 +1931,48 @@ namespace SmartxAPI.GeneralFunctions
                     return Result;
                 }
             }
+
+                     if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_DebitNoteId > 0)
+                    {
+                        int N_PkeyID = N_DebitNoteId;
+                        string X_Criteria = "N_DebitNoteId=" + N_PkeyID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + nFnYearID;
+                        myFunctions.UpdateApproverEntry(Approvals, "Inv_SalesReturnMaster", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "SALES RETURN", N_PkeyID, values, 1, objCustName.ToString(), 0, "", 0, User, dLayer, connection, transaction);
+                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_SalesReturnMaster where N_DebitNoteId=" + N_DebitNoteId + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
+                        xButtonAction="Approve"; 
+                        if (N_SaveDraft == 0){
+                                        SortedList InsParams = new SortedList();
+                                        InsParams.Add("N_CompanyID", N_CompanyID);
+                                        InsParams.Add("N_DebitNoteId", N_DebitNoteId);
+                                        InsParams.Add("N_DeliveryNote", N_DeliveryNote);
+
+                                        dLayer.ExecuteNonQueryPro("SP_SalesReturn_Ins_New", InsParams, connection, transaction);
+
+                                        myFunctions.LogScreenActivitys(nFnYearID,N_DebitNoteId,values,nFormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+           
+
+                                         SortedList StockPostingParams = new SortedList();
+                                         StockPostingParams.Add("N_CompanyID", N_CompanyID);
+                                         StockPostingParams.Add("X_InventoryMode", "SALES RETURN");
+                                         StockPostingParams.Add("N_InternalID", N_DebitNoteId);
+                                         StockPostingParams.Add("N_UserID", UserID);
+
+                                         dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", StockPostingParams, connection, transaction);
+
+                                            SortedList StockOutParam = new SortedList();
+                                            StockOutParam.Add("N_CompanyID", N_CompanyID);
+
+                                             dLayer.ExecuteNonQueryPro("SP_StockOutUpdate", StockOutParam, connection, transaction);
+                        }
+                            // transaction.Commit();
+                                Result.Add("n_SalesReturnID", N_DebitNoteId);
+                                Result.Add("x_SalesReturnNo", values);
+                                Result.Add("b_IsCompleted", 1);
+                               Result.Add("x_Msg", "Sales return Approved " + "-" + values);
+                               return Result;
+                        
+                    }
+                
 
             if (values == "@Auto")
             {
@@ -1990,6 +2048,8 @@ namespace SmartxAPI.GeneralFunctions
             // dLayer.setTransaction();
            
             MasterTable.Columns.Remove("n_ProjectID");
+            MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+            MasterTable.Rows[0]["N_UserId"] = myFunctions.GetUserID(User);
             N_InvoiceId = dLayer.SaveData("Inv_SalesReturnMaster", "N_DebitNoteId", MasterTable, connection, transaction);
             if (N_InvoiceId <= 0)
             {
@@ -2026,10 +2086,13 @@ namespace SmartxAPI.GeneralFunctions
                     throw ex;
                 }
             }
+               
+            N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "SALES RETURN", N_InvoiceId, InvoiceNo, 1,objCustName.ToString(), 0, "",0, User, dLayer, connection, transaction);
+            N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_SalesReturnMaster where N_DebitNoteId=" + N_InvoiceId + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
 
        
-           
-
+           if(N_SaveDraft==0){
+             
             SortedList InsParams = new SortedList();
             InsParams.Add("N_CompanyID", N_CompanyID);
             InsParams.Add("N_DebitNoteId", N_InvoiceId);
@@ -2052,6 +2115,10 @@ namespace SmartxAPI.GeneralFunctions
             StockOutParam.Add("N_CompanyID", N_CompanyID);
 
             dLayer.ExecuteNonQueryPro("SP_StockOutUpdate", StockOutParam, connection, transaction);
+
+           }
+
+
 
             if(nDivisionID>0)
                     {
@@ -2086,7 +2153,7 @@ namespace SmartxAPI.GeneralFunctions
           
 
             //transaction.Commit();
-
+         
             Result.Add("n_SalesReturnID", N_InvoiceId);
             Result.Add("x_SalesReturnNo", InvoiceNo);
             // return Ok(_api.Success(Result, "Sales Return Saved"));
@@ -2109,7 +2176,9 @@ namespace SmartxAPI.GeneralFunctions
             DataRow masterRow = MasterTable.Rows[0];
             SortedList Params = new SortedList();
             SortedList Result = new SortedList();
-
+            DataTable Approvals;
+            Approvals = ds.Tables["approval"];
+            DataRow ApprovalRow = Approvals.Rows[0];
             string ReturnNo = "";
             int N_CreditNoteID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CreditNoteId"].ToString());
             int N_UserID = myFunctions.GetUserID(User);
@@ -2123,11 +2192,22 @@ namespace SmartxAPI.GeneralFunctions
              int nFnYearID = myFunctions.getIntVAL(masterRow["N_fnYearId"].ToString());;
             string xButtonAction="";
                   int nDivisionID = 0;
+                  int N_NextApproverID = 0;
+                  int N_SaveDraft = myFunctions.getIntVAL(MasterTable.Rows[0]["B_IssaveDraft"].ToString());
             if (MasterTable.Columns.Contains("n_DivisionID"))
             {
                nDivisionID=myFunctions.getIntVAL(MasterTable.Rows[0]["n_DivisionID"].ToString());
 
             }
+
+             SortedList VendParams = new SortedList();
+                    VendParams.Add("@nCompanyID", nCompanyID);
+                    VendParams.Add("@N_VendorID", N_VendorID);
+                    VendParams.Add("@nFnYearID", nFnYearID);
+
+            object objVendorName = dLayer.ExecuteScalar("Select X_VendorName From Inv_Vendor where N_VendorID=@N_VendorID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", VendParams, connection, transaction);
+            object objVendorCode = dLayer.ExecuteScalar("Select X_VendorCode From Inv_Vendor where N_VendorID=@N_VendorID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", VendParams, connection, transaction);
+                        
 
 
             if (!myFunctions.CheckActiveYearTransaction(myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString()), Convert.ToDateTime(MasterTable.Rows[0]["D_RetDate"].ToString()), dLayer, connection, transaction))
@@ -2147,6 +2227,66 @@ namespace SmartxAPI.GeneralFunctions
                     return Result;
                 }
             }
+
+              if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_CreditNoteID > 0)
+            {
+                int N_PkeyID = N_CreditNoteID;
+                        string X_Criteria = "N_CreditNoteID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                        myFunctions.UpdateApproverEntry(Approvals, "Inv_PurchaseReturnMaster", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "PURCHASE RETURN", N_PkeyID, values, 1, objVendorName.ToString(), 0, "", 0, User, dLayer, connection, transaction);
+                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_PurchaseReturnMaster where N_CreditNoteID=" + N_CreditNoteID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
+                        xButtonAction="Approve"; 
+                        if (N_SaveDraft == 0)
+                        {              
+                        try
+                    { 
+                                SortedList InsParams = new SortedList(){ 
+                            {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
+                            {"N_CreditNoteID",N_CreditNoteID}};
+                             dLayer.ExecuteNonQueryPro("[SP_PurchaseReturn_Ins]", InsParams, connection, transaction);
+
+                             SortedList PostParams = new SortedList(){
+                            {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
+                            {"X_InventoryMode","PURCHASE RETURN"},
+                            {"N_InternalID",N_CreditNoteID},
+                            {"N_UserID",N_UserID}};
+                            dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostParams, connection, transaction);
+                    }
+               catch (Exception ex)
+              {
+                Result.Add("b_IsCompleted", 0);
+                if (ex.Message.Contains("50"))
+                    Result.Add("x_Msg", "Day Closed");
+                else if (ex.Message.Contains("51"))
+                    Result.Add("x_Msg", "Year Closed");
+                else if (ex.Message.Contains("52"))
+                    Result.Add("x_Msg", "Year Exists");
+                else if (ex.Message.Contains("53"))
+                    Result.Add("x_Msg", "Period Closed");
+                else if (ex.Message.Contains("54"))
+                    Result.Add("x_Msg", "Wrong Txn Date");
+                else if (ex.Message.Contains("55"))
+                    Result.Add("x_Msg", "Transaction Started");
+                     else if (ex.Message.Contains("1801"))
+                    Result.Add("x_Msg", "Transaction Started");
+                else
+                {
+                    transaction.Rollback();
+                    throw ex;
+                }
+                return Result;
+            }
+
+         }
+
+              Result.Add("n_PurchaseReturnID", N_CreditNoteID);
+              Result.Add("x_PurchaseReturnNo", values);
+              Result.Add("b_IsCompleted", 1);
+               Result.Add("x_Msg", "Purchase return Approved " + "-" + values);
+              return Result;
+
+            }
+                       
 
             if (values == "@Auto")
             {
@@ -2193,6 +2333,8 @@ namespace SmartxAPI.GeneralFunctions
                 }
             }
 
+            MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+            MasterTable.Rows[0]["N_UserId"] = myFunctions.GetUserID(User);
             N_CreditNoteID = dLayer.SaveData("Inv_PurchaseReturnMaster", "N_CreditNoteID", MasterTable, connection, transaction);
             if (N_CreditNoteID <= 0)
             {
@@ -2247,16 +2389,16 @@ namespace SmartxAPI.GeneralFunctions
                            
                         }
                         }
-                     
-
-
 
                     }
                     }
 
+                    N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "PURCHASE RETURN", N_CreditNoteID, ReturnNo, 1,objVendorName.ToString(), 0, "",0, User, dLayer, connection, transaction);
+                       N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_PurchaseReturnMaster where N_CreditNoteID=" + N_CreditNoteID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
 
-
-            try
+       
+           if(N_SaveDraft==0){
+                 try
             { 
                 SortedList InsParams = new SortedList(){ 
                             {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
@@ -2295,6 +2437,9 @@ namespace SmartxAPI.GeneralFunctions
                 return Result;
             }
 
+           }
+
+          
             Result.Add("n_PurchaseReturnID", N_CreditNoteID);
             Result.Add("x_PurchaseReturnNo", ReturnNo);
             // transaction.Commit();
