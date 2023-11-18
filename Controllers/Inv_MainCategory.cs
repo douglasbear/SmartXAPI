@@ -54,8 +54,8 @@ namespace SmartxAPI.Controllers
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", MasterTable.Rows[0]["N_CompanyID"].ToString());
-                        Params.Add("N_FnYearID", N_FnYearID);
-                        // Params.Add("N_FormID", 73);
+                        Params.Add("N_YearID", N_FnYearID);
+                        Params.Add("N_FormID", 1809);
                         MainCategoryCode = dLayer.GetAutoNumber("Inv_MainCategory", "X_MainCategoryCode", Params, connection, transaction);
                         xButtonAction = "update";
 
