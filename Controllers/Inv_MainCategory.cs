@@ -53,7 +53,7 @@ namespace SmartxAPI.Controllers
                     var values = MasterTable.Rows[0]["X_MainCategoryCode"].ToString();
                     if (values == "@Auto")
                     {
-                        Params.Add("N_CompanyID", MasterTable.Rows[0]["N_CompanyID"].ToString());
+                        Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", N_FnYearID);
                         Params.Add("N_FormID", 1809);
                         MainCategoryCode = dLayer.GetAutoNumber("Inv_MainCategory", "X_MainCategoryCode", Params, connection, transaction);
