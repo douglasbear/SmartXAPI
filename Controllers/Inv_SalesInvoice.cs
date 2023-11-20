@@ -693,6 +693,8 @@ namespace SmartxAPI.Controllers
                             if (obj != null && dr["x_typename"].ToString() == "Invoice")
                             {
                                 dr["n_SpriceF"] = (myFunctions.getVAL(dr["n_SpriceF"].ToString()) * myFunctions.getVAL(obj.ToString()) / 100).ToString();
+                                dr["n_ItemDiscAmtF"] = (myFunctions.getVAL(dr["n_ItemDiscAmtF"].ToString()) * myFunctions.getVAL(obj.ToString()) / 100).ToString();
+                                
                                 if (Terms != null)
                                 {
                                     dr["x_FreeDescription"] = Terms.ToString();
