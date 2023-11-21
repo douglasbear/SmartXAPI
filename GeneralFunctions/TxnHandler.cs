@@ -2354,14 +2354,21 @@ namespace SmartxAPI.GeneralFunctions
                 }
                 return Result;
             }
-
-         }
-
               Result.Add("n_PurchaseReturnID", N_CreditNoteID);
               Result.Add("x_PurchaseReturnNo", values);
               Result.Add("b_IsCompleted", 1);
                Result.Add("x_Msg", "Purchase return Approved " + "-" + values);
               return Result;
+
+         }
+
+             Result.Add("n_PurchaseReturnID", N_CreditNoteID);
+              Result.Add("x_PurchaseReturnNo", values);
+              Result.Add("b_IsCompleted", 1);
+               Result.Add("x_Msg", "Purchase return saved");
+              return Result;
+
+            
 
             }
                        
