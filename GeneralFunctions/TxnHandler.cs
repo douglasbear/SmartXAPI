@@ -254,6 +254,38 @@ namespace SmartxAPI.GeneralFunctions
                                 //return Result;
                             }
                         }
+                               int tempPOrderID=0;
+                            for (int j = 0; j < DetailTable.Rows.Count; j++)
+                            {
+
+                                if (myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString())> 0 && tempPOrderID!=myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString()))
+                                {
+                                    if (myFunctions.getIntVAL(masterRow["n_FormID"].ToString()) == 1605)
+                                    {
+                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString()),1586,false,dLayer,connection,transaction))
+                                        {
+                                            // xturn Ok(_api.Error(User, "Unable To Update Txn Status"));
+
+                                            Result.Add("b_IsCompleted", 0);
+                                            Result.Add("x_Msg", "Unable To Update Txn Status");
+                                            return Result;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if(!myFunctions.UpdateTxnStatus(nCompanyID,myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString()),82,false,dLayer,connection,transaction))
+                                        {
+                                            // xturn Ok(_api.Error(User, "Unable To Update Txn Status"));
+
+                                            Result.Add("b_IsCompleted", 0);
+                                            Result.Add("x_Msg", "Unable To Update Txn Status");
+                                            return Result;
+                                        }
+                                    }
+                                }
+                                tempPOrderID=myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString());
+                            }
+                                    
 
                         // myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "PURCHASE", values, dLayer, connection, transaction, User);
                         // transaction.Commit();
@@ -1115,6 +1147,52 @@ namespace SmartxAPI.GeneralFunctions
 
                     }
                 }
+
+                          int tempQtn=0,tempSO=0,tempDevnote=0;
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        int nSalesOrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
+                        int nQuotationID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesQuotationID"].ToString());
+                        int nDeliveryNoteID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_DeliveryNoteID"].ToString());
+                        if (nSalesOrderID > 0 && tempSO!=nSalesOrderID)
+                        {
+                            if(!myFunctions.UpdateTxnStatus(N_CompanyID,nSalesOrderID,81,false,dLayer,connection,transaction))
+                            {
+                                // transaction.Rollback();
+                                // return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                Result.Add("b_IsCompleted", 0);
+                                Result.Add("x_Msg", "Unable To Update Txn Status");
+                                return Result;
+                            }
+                        }
+                        tempSO = nSalesOrderID;
+
+                        if (nQuotationID > 0 && tempQtn!=nQuotationID)
+                        {
+                            if(!myFunctions.UpdateTxnStatus(N_CompanyID,nQuotationID,80,false,dLayer,connection,transaction))
+                            {
+                                // transaction.Rollback();
+                                // return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                Result.Add("b_IsCompleted", 0);
+                                Result.Add("x_Msg", "Unable To Update Txn Status");
+                                return Result;
+                            }
+                        }
+                        tempQtn=nQuotationID;
+
+                         if (nDeliveryNoteID > 0 && tempDevnote!=nDeliveryNoteID )
+                        {
+                            if(!myFunctions.UpdateTxnStatus(N_CompanyID,nDeliveryNoteID,884,false,dLayer,connection,transaction))
+                            {
+                                // transaction.Rollback();
+                                // return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                Result.Add("b_IsCompleted", 0);
+                                Result.Add("x_Msg", "Unable To Update Txn Status");
+                                return Result;
+                            }
+                        }
+                        tempDevnote=nDeliveryNoteID;
+                    };
 
                 //myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "SALES", InvoiceNo, dLayer, connection, transaction, User);
                 // transaction.Commit();

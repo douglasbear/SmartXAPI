@@ -308,7 +308,7 @@ namespace SmartxAPI.Controllers
                     dt1 = dtStartDate.AddDays(-lastdays);
                     //////////////////                           
 
-                    dt = myFunctions.AddNewColumnToDataTable(dt, "TotalHrs", typeof(int), 0);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "TotalHrs", typeof(double), 0.0);
                     DataTable dtNode = new DataTable();
                     foreach (DataRow dtVar in dt.Rows)
                     {
