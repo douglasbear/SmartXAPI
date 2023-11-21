@@ -260,8 +260,6 @@ namespace SmartxAPI.Controllers
                         for (int i = 0; i < DetailTable.Rows.Count; i++)
                         {
                             int N_Status=1;
-                            DetailTable.Rows[i]["N_AmendID"] = nAmendID;
-                            DetailTable.Rows[i]["X_TransType"] = xType;
 
                             if(nActionTypeID==198)
                             {

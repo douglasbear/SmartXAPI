@@ -208,17 +208,17 @@ namespace SmartxAPI.Controllers
                     mst.AcceptChanges();
 
 
-                    if (mst.Rows.Count == 0)
-                    {
-                        return Ok(_api.Notice("No Results Found"));
-                    }
-                    else
-                    {
+                    // if (mst.Rows.Count == 0)
+                    // {
+                    //     return Ok(_api.Notice("No Results Found"));
+                    // }
+                    // else
+                    // {
                         SortedList Output = new SortedList();
                         Output.Add("master", MainMst);
                         Output.Add("details", mst);
                         return Ok(_api.Success(Output));
-                    }
+                    // }
                 }
             }
             catch (Exception e)
