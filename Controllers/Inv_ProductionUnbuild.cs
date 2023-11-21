@@ -196,6 +196,7 @@ namespace SmartxAPI.Controllers
 
             DataTable MasterTable;
             DataTable DetailTable;
+            DataTable OtherCost = ds.Tables["otherCost"];
             // DataTable ProductCostTable;
             // DataTable MachineCostTable;
             DataTable OtherCostTable;
@@ -238,7 +239,7 @@ namespace SmartxAPI.Controllers
                                 {"N_LocationID",N_LocationID}//,
                                 //{"X_TransType",N_CreditNoteID}
                                 };
-
+                        dLayer.ExecuteNonQuery("delete from Inv_OtherCost where  N_CompanyID=" +N_CompanyID+ "and N_TransID=" + N_AssemblyID, Params, connection, transaction);
                         try
                         {
                             dLayer.ExecuteNonQueryPro("SP_BuildorUnbuild", DeleteParams, connection, transaction);
@@ -306,6 +307,25 @@ namespace SmartxAPI.Controllers
                     {"N_LocationID",N_LocationID},
                     //{"X_TransType",N_CreditNoteID}
                     };
+                    //////////////////  Saving to Other Cost
+                    if (OtherCost.Rows.Count > 0)
+                    {
+                        if (!OtherCost.Columns.Contains("N_TransID"))
+                        {
+                            OtherCost.Columns.Add("N_TransID");
+                        }
+                        if (!OtherCost.Columns.Contains("X_TransType"))
+                        {
+                            OtherCost.Columns.Add("X_TransType");
+                        }
+                        foreach (DataRow var in OtherCost.Rows)
+                        {
+                            var["N_TransID"] = N_AssemblyID;
+                            var["X_TransType"] = MasterTable.Rows[0]["x_Action"].ToString();;
+                        }
+                        int nOtherCostID = myFunctions.getIntVAL(OtherCost.Rows[0]["n_OtherCostID"].ToString());
+                        dLayer.SaveData("Inv_OtherCost", "N_OtherCostID", OtherCost, connection, transaction);
+                    }
                     try
                     {
                         dLayer.ExecuteNonQueryPro("SP_BuildorUnbuild", InsertParams, connection, transaction);
@@ -391,35 +411,34 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int N_AssemblyID, int N_LocationID)
         {
             int Results = 0;
-            try
-            {
+            int N_CompanyID = myFunctions.GetCompanyID(User);
+            SortedList DeleteParams = new SortedList(){
+                                   {"X_Task","delete"},
+                                   {"N_AssemblyID",N_AssemblyID},
+                                   {"N_LocationID",N_LocationID}};
                 using (SqlConnection connection = new SqlConnection(connectionString))
+            try
+            {   
+                connection.Open();
+                SqlTransaction transaction = connection.BeginTransaction();
+                if (N_AssemblyID > 0)
                 {
-                    connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    if (N_AssemblyID > 0)
+    
+                    try
                     {
-                        SortedList DeleteParams = new SortedList(){
-                                {"X_Task","delete"},
-                                {"N_AssemblyID",N_AssemblyID},
-                                {"N_LocationID",N_LocationID}};
-                        try
-                        {
-                            Results = dLayer.ExecuteNonQueryPro("SP_BuildorUnbuild", DeleteParams, connection, transaction);
-                        }
-                        catch (Exception ex)
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, ex));
-                        }
-                        transaction.Commit();
-
+                        Results=dLayer.ExecuteNonQueryPro("SP_BuildorUnbuild", DeleteParams, connection, transaction);
                     }
-                }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User,ex));
+                    }
+                    transaction.Commit();
+                }                
                 if (Results > 0)
                 {
-
-                    return Ok(_api.Success("Production Unbuild deleted"));
+                    dLayer.ExecuteNonQuery("delete from Inv_OtherCost where  N_CompanyID=" +N_CompanyID+ "and N_TransID=" + N_AssemblyID, DeleteParams, connection, transaction);
+                    return Ok(_api.Success( "Production Unbuild deleted"));
                 }
                 else
                 {
