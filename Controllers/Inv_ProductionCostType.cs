@@ -165,15 +165,18 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetData(int nCostTypeID)
+        public ActionResult GetData(int nCostTypeID, int nFnYearId)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from Inv_ProductionCostType where N_CompanyID=@p1 and N_CostTypeID=@p2";
+            string sqlCommandText = "select * from VW_OtherCostType where N_CompanyID=@p1 and X_CostTypeCode=@p2 and n_fnyearID=@p3";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nCostTypeID);
+            Params.Add("@p3", nFnYearId);
+            
+
 
             try
             {
