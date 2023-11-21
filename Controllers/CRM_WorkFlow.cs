@@ -274,7 +274,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("taskworkflow")]
-        public ActionResult TaskWorkFlowList(bool isOpp)
+        public ActionResult TaskWorkFlowList(bool isOpp,bool isTask)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -282,12 +282,17 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyID);
             string sqlCommandText = "";
   
-            if(isOpp)
+            if(isTask)
+            {
+                  sqlCommandText = "select * from Prj_WorkflowMaster where N_CompanyID=@p1 and x_Type ='task'";
+           
+            }
+            else if(isOpp)
             {
                   sqlCommandText = "select * from Prj_WorkflowMaster where N_CompanyID=@p1 and x_Type ='opportunity'";
            
             }
-            else
+            else 
             sqlCommandText = "select * from Prj_WorkflowMaster where N_CompanyID=@p1 order by N_WTaskID";
 
             try
