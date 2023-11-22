@@ -444,6 +444,7 @@ namespace SmartxAPI.Controllers
 
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+                    // MasterTable.Rows[0]["N_userID"] = myFunctions.GetUserID(User);
 
                     N_VoucherID = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId", DupCriteria, "", MasterTable, connection, transaction);
                     if (N_VoucherID > 0)
