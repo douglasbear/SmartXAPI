@@ -467,7 +467,7 @@ namespace SmartxAPI.Controllers
                         foreach (DataRow var in OtherCost.Rows)
                         {
                             var["N_TransID"] = nAssemblyID;
-                            var["X_TransType"] = MasterTable.Rows[0]["x_Action"].ToString();;
+                            var["X_TransType"] = MasterTable.Rows[0]["x_Action"].ToString();
                         }
                         int nOtherCostID = myFunctions.getIntVAL(OtherCost.Rows[0]["n_OtherCostID"].ToString());
                         dLayer.SaveData("Inv_OtherCost", "N_OtherCostID", OtherCost, connection, transaction);
