@@ -423,8 +423,8 @@ namespace SmartxAPI.Controllers
                             object GRNNotProcessed = false;
                             for (int i = 0; i < DetailTable.Rows.Count; i++)
                             {
-                                Object POQty = dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseOrderdetails where n_porderid=" + N_POrderID + " and N_PorderDetailsID=" + myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString()) + " and N_CompanyID=" + nCompanyId, Params, connection);
-                                Object GRNQty = dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_MRNDetails where N_PONo=" + N_POrderID + " and N_PorderDetailsID=" + myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString()) + " and N_CompanyID=" + nCompanyId, Params, connection);
+                                object POQty = dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseOrderdetails where n_porderid=" + N_POrderID + " and N_PorderDetailsID=" + myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString()) + " and N_CompanyID=" + nCompanyId, Params, connection);
+                                object GRNQty = dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_MRNDetails where N_PONo=" + N_POrderID + " and N_PorderDetailsID=" + myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString()) + " and N_CompanyID=" + nCompanyId, Params, connection);
                                 if (POQty != null && GRNQty != null)
                                 {
                                     if (myFunctions.getVAL(POQty.ToString()) != myFunctions.getVAL(GRNQty.ToString()))

@@ -199,12 +199,13 @@ namespace SmartxAPI.Controllers
             DataTable OtherCost = ds.Tables["otherCost"];
             // DataTable ProductCostTable;
             // DataTable MachineCostTable;
-            DataTable OtherCostTable;
+           // DataTable OtherCostTable;
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
             // ProductCostTable = ds.Tables["productCost"];
             // MachineCostTable = ds.Tables["machineCost"];
-            OtherCostTable = ds.Tables[" OtherCost"];
+            DataTable OtherCostTable = ds.Tables["OtherCost"];
+           
             SortedList Params = new SortedList();
             // Auto Gen
             try
@@ -298,7 +299,7 @@ namespace SmartxAPI.Controllers
                     //     OtherCostTable.Rows[j]["X_TransType"] = X_Action;
                     // }
                     int N_OtherCostID = dLayer.SaveData("Inv_OtherCost", "N_OtherCostID", OtherCostTable, connection, transaction);
-                    dLayer.ExecuteNonQuery("delete from Inv_OtherCost Where N_TransID=@N_AssemblyID and N_CompanyID=@nCompanyID", Params, connection, transaction);
+                    dLayer.ExecuteNonQuery("delete from Inv_OtherCost Where N_TransID="+N_AssemblyID+" and N_CompanyID="+N_CompanyID, Params, connection, transaction);
 
 
                     SortedList InsertParams = new SortedList(){
