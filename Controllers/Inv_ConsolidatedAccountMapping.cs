@@ -43,6 +43,7 @@ namespace SmartxAPI.Controllers
                     DataTable MasterTable;
                     MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
+                    int nLedgerID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ConsolidatedLedgerID"].ToString());
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nConsolidatedID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ConsolidatedID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SubCompanyFnYearID"].ToString());
@@ -62,10 +63,10 @@ namespace SmartxAPI.Controllers
                     //     }
                     //     MasterTable.Rows[0]["x_ConsolidatedCode"] = xConsolidatedCode;
                     // }
-                    // MasterTable.Columns.Remove("n_FnYearID");
-                    MasterTable.Columns.Remove("x_LedgerCode");
+                    MasterTable.Columns.Remove("n_FnYearID");
+                    // MasterTable.Columns.Remove("x_LedgerCode");
                     MasterTable.Columns.Remove("x_LedgerName");
-                    
+                    dLayer.ExecuteDataTable("DELETE FROM Inv_ConsolidatedAccountMapping WHERE N_ConsolidatedLedgerID = "+nLedgerID+" AND N_CompanyID = "+nCompanyID+"",Params, connection, transaction);
                     nConsolidatedID = dLayer.SaveData("Inv_ConsolidatedAccountMapping", "n_ConsolidatedID", MasterTable, connection, transaction);
 
                     if (nConsolidatedID <= 0)
@@ -75,6 +76,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+
                         transaction.Commit();
                         return Ok(_api.Success("Save Successfully"));
                     }
@@ -160,6 +162,39 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
 
             string sqlCommandText = "select * from vw_Consolidated_AccountMapping where N_CompanyID=@p1 and N_ConsolidatedID=@p2";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nLedgedID);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt =_api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+         [HttpGet("viewdetails")]
+        public ActionResult GetledgerData(int nLedgedID , int nCompanyID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            string sqlCommandText = "SELECT * FROM vw_Consolidated_AccountMapping WHERE N_CompanyID="+nCompanyID+" and N_ConsolidatedLedgerID="+nLedgedID+"";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nLedgedID);
 
