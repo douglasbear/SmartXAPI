@@ -199,12 +199,13 @@ namespace SmartxAPI.Controllers
             DataTable OtherCost = ds.Tables["otherCost"];
             // DataTable ProductCostTable;
             // DataTable MachineCostTable;
-            DataTable OtherCostTable;
+            // DataTable OtherCostTable;
+            DataTable OtherCostTable = ds.Tables["otherCost"];
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
             // ProductCostTable = ds.Tables["productCost"];
             // MachineCostTable = ds.Tables["machineCost"];
-            OtherCostTable = ds.Tables[" OtherCost"];
+            // OtherCostTable = ds.Tables[" OtherCost"];
             SortedList Params = new SortedList();
             // Auto Gen
             try
@@ -215,7 +216,8 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     string X_ReferenceNo = "";
                     string X_Action = "";
-                    int N_AssemblyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AssemblyID"].ToString());
+            //int n_AssemblyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_AssemblyID"].ToString());
+                    int N_AssemblyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_AssemblyID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
                     int N_LocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationID"].ToString());
@@ -298,7 +300,8 @@ namespace SmartxAPI.Controllers
                     //     OtherCostTable.Rows[j]["X_TransType"] = X_Action;
                     // }
                     int N_OtherCostID = dLayer.SaveData("Inv_OtherCost", "N_OtherCostID", OtherCostTable, connection, transaction);
-                    dLayer.ExecuteNonQuery("delete from Inv_OtherCost Where N_TransID=@N_AssemblyID and N_CompanyID=@nCompanyID", Params, connection, transaction);
+                    //dLayer.ExecuteNonQuery("delete from Inv_OtherCost Where N_TransID=@N_AssemblyID and N_CompanyID=@nCompanyID", Params, connection, transaction);
+                    dLayer.ExecuteNonQuery("delete from Inv_OtherCost where  N_CompanyID=" +N_CompanyID+ "and N_TransID=" + N_AssemblyID, Params, connection, transaction);
 
 
                     SortedList InsertParams = new SortedList(){
