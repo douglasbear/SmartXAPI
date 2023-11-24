@@ -75,7 +75,7 @@ namespace SmartxAPI.Controllers
 
                     PostingParam.Add("@nCompanyID", nCompanyID);
                     PostingParam.Add("@nType", nTypeID);
-                    PostingParam.Add("@xUserCategory", permUserCategory);
+                    //PostingParam.Add("@xUserCategory", permUserCategory);
                     PostingParam.Add("@nMenuID", N_MenuID);
                     string SecUsersql = "select * from vw_GeneralScreenSettings where N_CompanyID=@nCompanyID and N_Type=@nType";
                     SecScreensettings = dLayer.ExecuteDataTable(SecUsersql, PostingParam, connection);
