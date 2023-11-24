@@ -277,30 +277,7 @@ namespace SmartxAPI.Controllers
                     // int N_PMachineCostID = dLayer.SaveData("Inv_ProductionCost", "N_TransID", MachineCostTable, connection, transaction);
 
                     ///////////save to othercost
-                    if (OtherCostTable.Rows.Count > 0)
-                    {
-                        if (!OtherCostTable.Columns.Contains("N_TransID"))
-                        {
-                            OtherCostTable.Columns.Add("N_TransID");
-                        }
-                        if (!OtherCostTable.Columns.Contains("X_TransType"))
-                        {
-                            OtherCostTable.Columns.Add("X_TransType");
-                        }
-                    }
-                    foreach (DataRow var in OtherCostTable.Rows)
-                    {
-                        var["N_TransID"] = N_AssemblyID.ToString();
-                         var["X_TransType"] =MasterTable.Rows[0]["x_Action"].ToString();
-                    }
-                    // for (int j = 0; j < OtherCostTable.Rows.Count; j++)
-                    // {
-                    //     OtherCostTable.Rows[j]["X_TransType"] = X_Action;
-                    // }
-                    int N_OtherCostID = dLayer.SaveData("Inv_OtherCost", "N_OtherCostID", OtherCostTable, connection, transaction);
-                    dLayer.ExecuteNonQuery("delete from Inv_OtherCost Where N_TransID=@N_AssemblyID and N_CompanyID=@nCompanyID", Params, connection, transaction);
-
-
+                   
                     SortedList InsertParams = new SortedList(){
                     {"X_Task","insert"},
                     {"N_AssemblyID",N_AssemblyID},
