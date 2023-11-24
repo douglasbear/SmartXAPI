@@ -163,6 +163,7 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 JobTable = ds.Tables["jobMaster"];
                 DataTable Attachment = ds.Tables["attachments"];
+                DataTable OtherCost = ds.Tables["otherCost"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nProjectID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ProjectID"].ToString());
@@ -215,7 +216,19 @@ namespace SmartxAPI.Controllers
                     //Check for Existing Workflow
                     if (nProjectID > 0)
                         N_WorkFlowID = dLayer.ExecuteScalar("select N_WTaskID from inv_customerprojects where N_CompanyID=" + nCompanyID + " and N_ProjectID=" + nProjectID, Params, connection, transaction);
-
+                        dLayer.ExecuteNonQuery("delete from Inv_OtherCost where  N_CompanyID=" + nCompanyID + "and N_TransID=" + nProjectID + "and X_TransType='Job File'", Params, connection, transaction);// add menuid
+                        if (OtherCost.Rows.Count > 0)
+                        {
+                            foreach (DataRow var in OtherCost.Rows)
+                            {
+                                var["N_TransID"] = nProjectID;
+                                var["X_TransType"] = MasterTable.Rows[0]["x_Action"].ToString();
+                                var["N_FormID"] = N_FormID;
+                            }
+                        int nOtherCostID = myFunctions.getIntVAL(OtherCost.Rows[0]["n_OtherCostID"].ToString());
+                        dLayer.SaveData("Inv_OtherCost", "N_OtherCostID", OtherCost, connection, transaction);
+                        }
+                    MasterTable.Columns.Remove("x_Action");
                     nProjectID = dLayer.SaveData("inv_CustomerProjects", "N_ProjectID", MasterTable, connection, transaction);
                     if (nProjectID <= 0)
                     {
@@ -238,7 +251,7 @@ namespace SmartxAPI.Controllers
                                 if (nWTaskID > 0)
                                 {
                                     dLayer.ExecuteScalar("delete from Tsk_TaskStatus where N_TaskID in (select N_TaskID from tsk_TaskMaster where N_ProjectID="+nProjectID+" and N_CompanyID=" + nCompanyID + ")", connection,transaction);
-                                    dLayer.ExecuteScalar("delete from Tsk_TaskComments where  N_ActionID in (select N_TaskID from Tsk_TaskMaster where N_ProjectID="+nProjectID+" and N_CompanyID=" + nCompanyID + ")", connection, transaction);
+                                    dLayer.ExecuteScalar("delete from Tsk_TaskComments where  N_ActionID in (select N_TaskID from Tsk_TaskMaster where N_ProjectID="+nProjectID+"and X_TransType='Job File' and N_CompanyID=" + nCompanyID + ")", connection, transaction);
                                     dLayer.DeleteData("TSK_TaskMaster", "N_ProjectID", nProjectID, "", connection, transaction);
                        
                                     TaskMaster = dLayer.ExecuteDataTable("select N_CompanyID,2 as N_StatusID,N_StageID,x_tasksummery,x_taskdescription,'' as D_TaskDate,'' as D_DueDate, "+myFunctions.GetUserID(User)+" as N_CreatorID, "+myFunctions.GetUserID(User)+" as N_CurrentAssigneeID, "+myFunctions.GetUserID(User)+"  as n_ClosedUserID ,"+myFunctions.GetUserID(User)+"  as n_SubmitterID,"+myFunctions.GetUserID(User)+" as N_CurrentAssignerID,'" + DateTime.Today + "' as D_EntryDate, "+myFunctions.GetUserID(User)+" as N_AssigneeID, N_StartDateBefore,N_StartDateUnitID,N_EndDateBefore,N_EndUnitID,N_WTaskDetailID,N_Order,N_TemplateID,N_PriorityID,N_CategoryID from vw_Prj_WorkflowDetails where N_CompanyID=" + nCompanyID + " and N_WTaskID=" + nWTaskID + " order by N_Order", Params, connection, transaction);
@@ -384,6 +397,7 @@ namespace SmartxAPI.Controllers
                     {
                        return Ok(api.Error(User, "Unable to delete! transaction processed"));     
                     }
+                    dLayer.ExecuteNonQuery("delete from Inv_OtherCost where  N_CompanyID=" +nCompanyID+ "and N_TransID=" + nProjectID +" and X_TransType= 'Job File'", connection, transaction);//add type and menuid
                     dLayer.ExecuteScalar("delete from Tsk_TaskStatus where N_TaskID in (select N_TaskID from tsk_TaskMaster where N_ProjectID="+nProjectID+" and N_CompanyID=" + nCompanyID + ")", connection,transaction);
                     dLayer.ExecuteScalar("delete from Tsk_TaskComments where  N_ActionID in (select N_TaskID from Tsk_TaskMaster where  N_ProjectID="+nProjectID+" and N_CompanyID=" + nCompanyID + ")", connection, transaction);
                     dLayer.DeleteData("Tsk_TaskMaster", "N_ProjectID", nProjectID, "", connection, transaction);                    
