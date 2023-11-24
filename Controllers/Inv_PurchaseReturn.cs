@@ -340,6 +340,18 @@ namespace SmartxAPI.Controllers
                             }
                         }
                         DetailTable.AcceptChanges();
+
+                        //remove row if (N_PQTY<=0)
+                        if(DetailTable.Rows.Count>0){
+                            foreach(DataRow dr in DetailTable.Rows){
+                                if(myFunctions.getIntVAL(dr["N_PQty"].ToString())<=0){
+                                    dr.Delete();
+                                    continue;
+                                }
+                            }
+                        }
+                        DetailTable.AcceptChanges();
+
                     }
 
                     DetailTable = _api.Format(DetailTable, "Details");
