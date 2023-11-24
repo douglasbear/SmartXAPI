@@ -261,6 +261,7 @@ namespace SmartxAPI.Controllers
 
                     SalesReturn = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SalesReturn = _api.Format(SalesReturn, "Master");
+                    if (SalesReturn.Rows.Count == 0) { return Ok(_api.Warning("No Data Found"));}
 
                     if (xReceiptNo != "" && xReceiptNo != null)
                     {
@@ -602,14 +603,19 @@ namespace SmartxAPI.Controllers
 
         //Delete....
         [HttpDelete()]
-        public ActionResult DeleteData(int? nCompanyId, int nDebitNoteId, int nFnYearID, int nFormID)
+        public ActionResult DeleteData(int? nCompanyId, int nDebitNoteId, int nFnYearID, int nFormID,string comments)
         {
+            if (comments == null)
+            {
+                comments = "";
+            }
             try
             {
                 string sqlCommandText = "";
                 DataTable TransData = new DataTable();
                 SortedList ParamList = new SortedList();
                 SortedList Params = new SortedList();
+                string status="";
                 sqlCommandText = "SP_Delete_Trans_With_SaleAccounts  @N_CompanyId,'SALES RETURN',@N_DebitNoteId";
                 Params.Add("@N_CompanyId", nCompanyId);
                 Params.Add("@N_DebitNoteId", nDebitNoteId);
@@ -625,11 +631,13 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    string Sql = "select N_DebitNoteId,X_DebitNoteNo,N_FormID from Inv_SalesReturnMaster where N_DebitNoteId=@nTransID and N_CompanyId=@nCompanyId and N_FnYearID=@nFnYearID and N_FormID=@nFormID";
+                    
+                    string Sql = "select N_DebitNoteId,X_DebitNoteNo,N_FormID,isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_CustomerId,0) as N_CustomerId from Inv_SalesReturnMaster where N_DebitNoteId=@nTransID and N_CompanyId=@nCompanyId and N_FnYearID=@nFnYearID and N_FormID=@nFormID";
+
+                  
                     string xButtonAction = "Delete";
                     string X_DebitNoteNo = "";
-                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection, transaction);
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
 
 
                     if (TransData.Rows.Count == 0)
@@ -637,6 +645,24 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
+                    int N_CustomerId = myFunctions.getIntVAL(TransRow["N_CustomerId"].ToString());
+                    int N_DebitNoteId = myFunctions.getIntVAL(TransRow["N_DebitNoteId"].ToString());
+                    
+
+                    SortedList CustParams = new SortedList();
+                    CustParams.Add("@nCompanyID", nCompanyId);
+                    CustParams.Add("@N_CustomerID", N_CustomerId);
+                    CustParams.Add("@nFnYearID", nFnYearID);
+
+
+                     object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection);
+                     object objCustCode = dLayer.ExecuteScalar("Select X_CustomerCode From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection);
+                       
+
+                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, nFormID, nDebitNoteId, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
+                    SqlTransaction transaction = connection.BeginTransaction();
+
                     object objPaymentProcessed = dLayer.ExecuteScalar("Select Isnull(N_PayReceiptId,0) from Inv_PayReceiptDetails where N_InventoryId=" + nDebitNoteId + " and X_TransType='SALES RETURN'", connection, transaction);
                     if (objPaymentProcessed == null)
                         objPaymentProcessed = 0;
@@ -655,6 +681,16 @@ namespace SmartxAPI.Controllers
 
                     if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) == 0)
                     {
+                        string X_Criteria = "N_DebitNoteId=" + nDebitNoteId + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
+                        string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                        int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
+
+                         status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "SALES RETURN", nDebitNoteId, TransRow["X_DebitNoteNo"].ToString(), ProcStatus, "Inv_SalesReturnMaster", X_Criteria, objCustName.ToString(), User, dLayer, connection, transaction);
+                         if (status != "Error")
+                        {
+                            if (ButtonTag == "6" || ButtonTag == "0")
+                            {
+
                         SortedList StockUpdateParams = new SortedList(){
                                 {"N_CompanyID",nCompanyId},
                                 {"N_TransID",nDebitNoteId},
@@ -668,6 +704,8 @@ namespace SmartxAPI.Controllers
                         StockOutParam.Add("N_CompanyID", nCompanyId);
 
                         dLayer.ExecuteNonQueryPro("SP_StockOutUpdate", StockOutParam, connection, transaction);
+                            }
+                        }
                     }
                     else
                         return Ok(_api.Error(User, "Payment processed! Unable to delete"));
@@ -675,7 +713,8 @@ namespace SmartxAPI.Controllers
                     //  return Ok(_api.Success("Sales Return deleted"));
                     if (myFunctions.getIntVAL(TransRow["N_FormID"].ToString()) == 55)
                     {
-                        return Ok(_api.Success("Sales Return deleted"));
+                        // return Ok(_api.Success("Sales Return deleted"));
+                        return Ok(_api.Success("Sales Return " + status + " Successfully"));
                     }
                     return Ok(_api.Success("Rental Sales Return deleted"));
 

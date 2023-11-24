@@ -161,12 +161,12 @@ namespace SmartxAPI.Controllers
                     if (n_PriceTypeID.ToString() != "" && n_PriceTypeID!=0)
                     {
                         Params.Add("@nPriceTypeID", n_PriceTypeID);
-                        string pricelistAll = "Select  CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID =@nPriceTypeID and N_ItemID=@nItemID and N_ItemUnitID=@nItemUnitID and  D_Startdate <=@dSalesDate and  D_Enddate>=@dSalesDate" + Condition + "";
+                        string pricelistAll = "Select  CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID  and  N_DiscID =@nPriceTypeID and N_ItemID=@nItemID and N_ItemUnitID=@nItemUnitID and  D_Startdate <=@dSalesDate and  D_Enddate>=@dSalesDate" + Condition + "";
 
-                        string pricelistItem = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemID=@nItemID and D_Startdate <= @dSalesDate and  D_Enddate>=@dSalesDate " + Condition + " ";
-                        string pricelistCategory = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_CategoryID=@nCategoryID and D_Startdate <= @dSalesDate and  D_Enddate>=@dSalesDate " + Condition + "";
-                        string pricelistUnit = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemUnitID=@nItemUnitID and D_Startdate <= @dSalesDate and  D_Enddate>=@dSalesDate" + Condition + "";
-                        string pricelistBrand = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_BrandID=@nBrandID and N_BrandID<>0 and D_Startdate <= @dSalesDate and  D_Enddate>=@dSalesDate" + Condition + "";
+                        string pricelistItem = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID   and N_DiscID = @nPriceTypeID and N_ItemID=@nItemID and D_Startdate <= @dSalesDate and  D_Enddate>=@dSalesDate " + Condition + " ";
+                        string pricelistCategory = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID  and  N_DiscID = @nPriceTypeID and N_CategoryID=@nCategoryID and D_Startdate <= @dSalesDate and  D_Enddate>=@dSalesDate " + Condition + "";
+                        string pricelistUnit = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID and   N_DiscID = @nPriceTypeID and N_ItemUnitID=@nItemUnitID and D_Startdate <= @dSalesDate and  D_Enddate>=@dSalesDate" + Condition + "";
+                        string pricelistBrand = "Select CAST(N_Price as  varchar )as X_Price,* from vw_Discount Where N_CompanyID = @nCompanyID  and N_DiscID = @nPriceTypeID and N_BrandID=@nBrandID and N_BrandID<>0 and D_Startdate <= @dSalesDate and  D_Enddate>=@dSalesDate" + Condition + "";
 
                         dtPriceList = dLayer.ExecuteDataTable(pricelistAll, Params, connection);
                         if (dtPriceList.Rows.Count == 0)
@@ -206,9 +206,9 @@ namespace SmartxAPI.Controllers
                         if(myFunctions.getVAL(row["N_MarginPerc"].ToString()) >0)
                         {
                             
-                                object LPrice= dLayer.ExecuteScalar("select dbo.SP_Cost_Loc("+nItemID+","+nCompanyId+",'"+unitName.ToString()+"'," + nLocationID + ")", Params, connection);  
+                                object LPrice= dLayer.ExecuteScalar("select dbo.Fn_LastCost("+nItemID+","+nCompanyId+",'')", Params, connection);  
                                 double lastcost=myFunctions.getVAL(LPrice.ToString());
-                                double percentageCost =((lastcost*myFunctions.getVAL(row["N_MarginPerc"].ToString()))/100);
+                                double percentageCost =(lastcost*myFunctions.getVAL(row["N_MarginPerc"].ToString()))/100;
                                 lastcost=lastcost+percentageCost;
                                 
                                 row["X_Price"]=lastcost;
@@ -444,6 +444,5 @@ namespace SmartxAPI.Controllers
 
     }
 }
-
 
 

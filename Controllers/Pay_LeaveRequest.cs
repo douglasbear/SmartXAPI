@@ -671,8 +671,15 @@ namespace SmartxAPI.Controllers
                         string X_Criteria = "N_VacationGroupID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_VacationMaster", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "LEAVE REQUEST", N_PkeyID, x_VacationGroupCode, 1, objEmpName.ToString(), 0, "",0, User, dLayer, connection, transaction);
+                        object saveDraft = dLayer.ExecuteScalar("select ISNULL(B_isSaveDraft,0) from Pay_VacationMaster where N_VacationGroupID="+n_VacationGroupID+" and N_CompanyID="+nCompanyID+"", Params, connection, transaction);
+                        int isSaveDraft = 0;
+                        if (saveDraft != null && myFunctions.getBoolVAL(saveDraft.ToString()))
+                            isSaveDraft = 1;
+
+                        dLayer.ExecuteNonQuery("update Pay_VacationDetails set B_isSaveDraft="+isSaveDraft+" where N_CompanyID=" + nCompanyID + " and n_VacationGroupID=" + n_VacationGroupID, Params, connection, transaction);
                         // SaveDocs(Attachment, objEmpCode.ToString(), objEmpName.ToString(), nEmpID, x_VacationGroupCode, n_VacationGroupID,User, connection, transaction);
                         myAttachments.SaveAttachment(dLayer, Attachment, x_VacationGroupCode, n_VacationGroupID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
+
                         transaction.Commit();
                         //myFunctions.SendApprovalMail(N_NextApproverID, FormID, n_VacationGroupID, "LEAVE REQUEST", x_VacationGroupCode, dLayer, connection, transaction, User);
                         return Ok(api.Success("Leave Request Approved " + "-" + x_VacationGroupCode));
@@ -736,8 +743,8 @@ namespace SmartxAPI.Controllers
                     { 
                         if(Approvals.Rows.Count > 0){
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "LEAVE REQUEST", n_VacationGroupID, x_VacationGroupCode, 1, objEmpName.ToString(), nEmpID, "",0, User, dLayer, connection, transaction);
-
-                        }
+                        
+                    }
                         SortedList draftParam = new SortedList();
                         draftParam.Add("@nCompanyID", nCompanyID);
                         draftParam.Add("@nVacationGroupID", n_VacationGroupID);

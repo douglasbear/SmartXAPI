@@ -86,6 +86,66 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("subcompany/list")]
+        public ActionResult SubCompanyList(int nCompanyId, string xType, int nCashBahavID,int nGroupID)
+        {
+            string sqlCommandText = "";
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            Params.Add("@p1", nCompanyId);
+            if (nCashBahavID > 0)
+            {
+                Params.Add("@nCashBahavID", nCashBahavID);
+
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,X_LedgerName_Ar as account_Ar,N_TransBehavID from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and N_CashBahavID =@nCashBahavID and B_Inactive = 0  order by [Account Code]";
+            }
+            else if(nGroupID > 0)
+            {
+               Params.Add("@nGroupID", nGroupID);
+
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,X_LedgerName_Ar as account_Ar,N_TransBehavID from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and N_GroupID =@nGroupID and B_Inactive = 0  order by [Account Code]";  
+            }
+            else
+            if (xType.ToLower() != "all")
+            {
+                Params.Add("@p3", xType);
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,X_LedgerName_Ar as account_Ar,N_TransBehavID from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type =@p3 and B_Inactive = 0  order by [Account Code]";
+            }
+            else
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,X_LedgerName_Ar as account_Ar,N_TransBehavID from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and B_Inactive = 0  order by [Account Code]";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+
+                    object date = dLayer.ExecuteScalar("SELECT MAX(D_Start) from Acc_Fnyear where N_CompanyID =" +nCompanyId+"", connection, transaction);
+                    Params.Add("@p3", date);
+                    object N_FnyearID = dLayer.ExecuteScalar("SELECT N_FnYearID from Acc_FnYear where D_start ='"+date+"' and N_CompanyID = " +nCompanyId+"", connection, transaction);
+                    
+                    Params.Add("@p2", N_FnyearID);
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
+
         [HttpGet("list") ]
         public ActionResult GetAccountList (int nFnYearId, string type,int vendorTypeID)
         {

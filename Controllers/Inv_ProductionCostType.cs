@@ -84,7 +84,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCostTypeID,int nfnYearID)
+        public ActionResult DeleteData(int nCostTypeID,int nCompanyID)
         {
             int Results = 0;
             SortedList Params = new SortedList();
@@ -93,17 +93,26 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    // DataTable MasterTable;
+                    // MasterTable = ds.Tables["master"];
+                    SqlTransaction transaction = connection.BeginTransaction();  
+                   // int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+              
+
                     
                     // DataTable TransData = new DataTable();
                     Params.Add("@N_CostTypeID", nCostTypeID);
-
+                    Params.Add("N_CompanyID", nCompanyID);
+                   object CostTypeId = dLayer.ExecuteScalar("select count(N_CostTypeID) from inv_othercost where N_CompanyID=@N_CompanyID",Params,connection, transaction);
+            
                     // string Sql = "select N_CostTypeID,X_CostTypeCode from Inv_ProductionCostType where N_CostTypeID=@N_CostTypeID and N_CompanyID=N_CompanyID";
                     // string xButtonAction="Delete";
                     // string xCostTypeCode = "";
                     // TransData = dLayer.ExecuteDataTable(Sql, Params, connection);
-                    SqlTransaction transaction = connection.BeginTransaction();
+                 
 
                     Results = dLayer.DeleteData("Inv_ProductionCostType", "N_CostTypeID", nCostTypeID, "", connection, transaction);
+                    
                     
                     // // Activity Log
                     // string ipAddress = "";
@@ -115,6 +124,11 @@ namespace SmartxAPI.Controllers
                     
                     if (Results > 0)
                     {
+                        if ( myFunctions.getIntVAL(CostTypeId.ToString()) == 0) {
+                             transaction.Commit();
+                             return Ok(_api.Error(User, "N_CostTypeID Exist"));
+
+                        }
                         transaction.Commit();
                         return Ok(_api.Success("Production CostType Deleted"));
                     }
@@ -165,15 +179,18 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetData(int nCostTypeID)
+        public ActionResult GetData(int nCostTypeID, int nFnYearId)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from Inv_ProductionCostType where N_CompanyID=@p1 and N_CostTypeID=@p2";
+            string sqlCommandText = "select * from VW_OtherCostType where N_CompanyID=@p1 and X_CostTypeCode=@p2 and n_fnyearID=@p3";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nCostTypeID);
+            Params.Add("@p3", nFnYearId);
+            
+
 
             try
             {

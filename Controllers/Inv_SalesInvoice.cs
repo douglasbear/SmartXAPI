@@ -693,6 +693,8 @@ namespace SmartxAPI.Controllers
                             if (obj != null && dr["x_typename"].ToString() == "Invoice")
                             {
                                 dr["n_SpriceF"] = (myFunctions.getVAL(dr["n_SpriceF"].ToString()) * myFunctions.getVAL(obj.ToString()) / 100).ToString();
+                                dr["n_ItemDiscAmtF"] = (myFunctions.getVAL(dr["n_ItemDiscAmtF"].ToString()) * myFunctions.getVAL(obj.ToString()) / 100).ToString();
+                                
                                 if (Terms != null)
                                 {
                                     dr["x_FreeDescription"] = Terms.ToString();
@@ -842,7 +844,7 @@ namespace SmartxAPI.Controllers
                         if (enableDayWise)
                             DetailSql = "select * from vw_ServiceTimesheetDetailsToSalesDaywise where N_CompanyId=@nCompanyID and N_ServiceSheetID in ( " + xServiceSheetID + " )";
                         else
-                            DetailSql = "select * from vw_ServiceTimesheetDetailsToSales where N_CompanyId=@nCompanyID and N_ServiceSheetID in ( " + xServiceSheetID + " )";
+                            DetailSql = "select * from vw_ServiceTimesheetDetailsToSales where N_CompanyId=@nCompanyID and N_ServiceSheetID in ( " + xServiceSheetID + " ) order by N_SalesOrderDetailsID desc";
 
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");

@@ -41,12 +41,12 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
-                    MasterTable = ds.Tables["master"];
+                    MasterTable = ds.Tables["details"];
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nOtherCostID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_OtherCostID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-                    string xOtherCostCode = MasterTable.Rows[0]["x_otherCostCode"].ToString();      
+                    string xOtherCostCode = MasterTable.Rows[0]["x_OtherCostCode"].ToString();      
 
                     if (xOtherCostCode == "@Auto")
                     {
@@ -54,13 +54,13 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
  
-                        xOtherCostCode = dLayer.GetAutoNumber("Inv_OtherCost", "x_otherCostCode", Params, connection, transaction);
+                        xOtherCostCode = dLayer.GetAutoNumber("Inv_OtherCost", "x_OtherCostCode", Params, connection, transaction);
                         if (xOtherCostCode == "")
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User, "Unable to generate OtherCost"));
+                            return Ok(_api.Error(User, "Unable to generate Other cost code"));
                         }
-                        MasterTable.Rows[0]["x_otherCostCode"] = xOtherCostCode;
+                        MasterTable.Rows[0]["x_OtherCostCode"] = xOtherCostCode;
                     }
                     
                     nOtherCostID = dLayer.SaveData("Inv_OtherCost", "N_OtherCostID", MasterTable, connection, transaction);
@@ -73,7 +73,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(_api.Success("Save Successfully"));
+                        return Ok(_api.Success("Saved Successfully"));
                     }
                 }
             }
@@ -117,15 +117,15 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetData(int nOtherCostID)
+        public ActionResult GetData(int nTransID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from Inv_OtherCost where N_CompanyID=@p1 and N_OtherCostID=@p2";
+            string sqlCommandText = "select * from vw_Inv_OtherCost where N_CompanyID=@p1 and N_TransID=@p2";
             Params.Add("@p1", nCompanyID);
-            Params.Add("@p2", nOtherCostID);
+            Params.Add("@p2", nTransID);
 
             try
             {
