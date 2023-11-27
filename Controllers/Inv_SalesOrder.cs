@@ -642,7 +642,7 @@ namespace SmartxAPI.Controllers
 
                     Terms = _api.Format(Terms, "Terms");
 
-                    string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=" + N_SOrderID +crieteria;
+                    string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID="+N_SOrderID+crieteria+" order by N_ScheduleID asc";
                     DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
                     RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
 
