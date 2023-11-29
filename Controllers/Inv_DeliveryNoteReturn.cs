@@ -325,23 +325,35 @@ namespace SmartxAPI.Controllers
                             {
                                 if (myFunctions.getIntVAL(Avar["N_DeliveryNoteDetailsID"].ToString()) == myFunctions.getIntVAL(Kvar["N_DeliveryNoteDetailsID"].ToString()))
                                 {
-                                    if (myFunctions.getVAL(Avar["N_RetQty"].ToString()) == myFunctions.getVAL(Kvar["N_QtyDisplay"].ToString()))
-                                    {
-                                        Kvar.Delete();
-                                        continue;
-                                    }
-                                    else
-                                    {
-                                        Kvar["N_QtyDisplay"] = myFunctions.getVAL(Kvar["N_QtyDisplay"].ToString()) - myFunctions.getVAL(Avar["N_RetQty"].ToString());
-                                    }
+                                    Kvar["N_QtyDisplay"] = myFunctions.getVAL(Kvar["N_QtyDisplay"].ToString()) - myFunctions.getVAL(Avar["N_RetQty"].ToString());
+                                    // if (myFunctions.getVAL(Avar["N_RetQty"].ToString()) == myFunctions.getVAL(Kvar["N_QtyDisplay"].ToString()))
+                                    // {
+                                        
+                                    //     Kvar.Delete();
+                                    //     continue;
+                                    // }
+                                    // else
+                                    // {
+                                      
+                                    // }
                                 }
                             }
                         }
 
                         DetailTable.AcceptChanges();
 
+                        if(DetailTable.Rows.Count>0){
+                            foreach(DataRow Kvar1 in DetailTable.Rows){
+                                if(myFunctions.getIntVAL(Kvar1["N_QtyDisplay"].ToString())<=0){
+                                    Kvar1.Delete();
+                                    continue;
+                                }
+                            }
+                        }
+                        DetailTable.AcceptChanges();
+
                         DetailTable = _api.Format(DetailTable, "Details");
-                        string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nDeliveryNoteId " + crieteria;
+                        string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nDeliveryNoteId " + crieteria +" order by N_TransDetailsID asc";
                         DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
                         RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
                         dt.Tables.Add(MasterTable);
@@ -363,7 +375,7 @@ namespace SmartxAPI.Controllers
                         DetailSql = "select * from vw_Inv_DeliveryNoteReturnDetails where N_CompanyID=@nCompanyID and N_DeliveryNoteRtnID=@nDeliveryNoteRtnID ";
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                         DetailTable = _api.Format(DetailTable, "Details");
-                        string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=" + nDeliveryNoteRtnID + crieteria;
+                        string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=" + nDeliveryNoteRtnID + crieteria +" order by N_TransDetailsID asc";
                         DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
                         RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
 
