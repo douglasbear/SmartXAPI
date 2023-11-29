@@ -227,7 +227,7 @@ namespace SmartxAPI.Controllers
                             DetailSql = "select * from vw_SalesOrdertoDeliveryNoteDetails where N_CompanyId=@nCompanyID and N_SalesOrderId=@nSalesorderID";
                             DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
 
-                            RentalSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nSalesorderID and N_FormID=1571 and B_Select=1";
+                            RentalSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nSalesorderID and N_FormID=1571 and B_Select=1 order by N_ScheduleID asc";
                             RentalScheduleData = dLayer.ExecuteDataTable(RentalSql, QueryParamsList, Con);
                             RentalScheduleData = _api.Format(RentalScheduleData, "RentalSchedule");
 
