@@ -54,7 +54,7 @@ namespace SmartxAPI.Controllers
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_TimeSheetMaster where N_FnYearID=@p3 and N_UserID=@userID  " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_TimeSheetMaster where  N_FnYearID=@p3 and N_UserID=@userID " + Searchkey + " and N_PrjTimeSheetID not in (select top(" + Count + ") N_PrjTimeSheetID from vw_Prj_TimeSheetMaster where N_CompanyID=@p1 and N_FnYearID=@p3 and N_UserID=@userID  " + xSearchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_TimeSheetMaster where  N_FnYearID=@p3 and N_UserID=@userID " + Searchkey + " and N_PrjTimeSheetID not in (select top(" + Count + ") N_PrjTimeSheetID from vw_Prj_TimeSheetMaster where N_FnYearID=@p3 and N_UserID=@userID  " + xSearchkey + xSortBy + " ) " + xSortBy;
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", nFnYearId);
