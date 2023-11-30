@@ -228,7 +228,10 @@ namespace SmartxAPI.Controllers
                         int nOtherCostID = myFunctions.getIntVAL(OtherCost.Rows[0]["n_OtherCostID"].ToString());
                         dLayer.SaveData("Inv_OtherCost", "N_OtherCostID", OtherCost, connection, transaction);
                         }
-                    MasterTable.Columns.Remove("x_Action");
+                    if(MasterTable.Columns.Contains("x_Action"))
+                        MasterTable.Columns.Remove("x_Action");
+
+                    
                     nProjectID = dLayer.SaveData("inv_CustomerProjects", "N_ProjectID", MasterTable, connection, transaction);
                     if (nProjectID <= 0)
                     {
