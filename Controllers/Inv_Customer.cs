@@ -893,15 +893,15 @@ namespace SmartxAPI.Controllers
                         //  myFunctions.AddNewColumnToDataTable(dt, "b_CustomerCount", typeof(bool), customerCount);
                          dt.AcceptChanges();
 
-                        if(crmcustomerID>0)
-                        {
-                            object crmCustomerCountSQ = dLayer.ExecuteScalar("select Isnull(Count(N_QuotationId),0) from Inv_SalesQuotation where N_CrmCompanyID="+crmcustomerID+" and N_CompanyID=@p1", Params, connection);
-                            if ( myFunctions.getIntVAL(crmCustomerCountSQ.ToString()) > 0 )
-                            {
-                                myFunctions.AddNewColumnToDataTable(dt, "b_CustomerCount", typeof(bool), true);
-                            }
-                        }
-                        dt.AcceptChanges();
+                        // if(crmcustomerID>0)
+                        // {
+                        //     object crmCustomerCountSQ = dLayer.ExecuteScalar("select Isnull(Count(N_QuotationId),0) from Inv_SalesQuotation where N_CrmCompanyID="+crmcustomerID+" and N_CompanyID=@p1", Params, connection);
+                        //     if ( myFunctions.getIntVAL(crmCustomerCountSQ.ToString()) > 0 )
+                        //     {
+                        //         myFunctions.AddNewColumnToDataTable(dt, "b_CustomerCount", typeof(bool), true);
+                        //     }
+                        // }
+                        // dt.AcceptChanges();
 
                         dt = api.Format(dt, "master");
                         ds.Tables.Add(dt);
