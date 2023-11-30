@@ -53,7 +53,7 @@ namespace SmartxAPI.Controllers
             string qryCriteria = "";
             if (qry != "" && qry != null)
             {
-                qryCriteria = " and (X_CustomerCode like @qry or X_CustomerName like @qry or X_PhoneNo1 like @qry ) ";
+                qryCriteria = " and (X_CustomerCode like @qry or X_CustomerName like @qry or X_PhoneNo1 = CAST("+qry+" as VARCHAR) or X_TaxRegistrationNo = CAST("+qry+" as VARCHAR)) ";
                
                 Params.Add("@qry", "%" + qry + "%");
             }
@@ -807,6 +807,10 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             object customerCount = null;
             object customerCounts = null;
+            object customerCountSQ = null;
+            object customerCountSO = null;
+            object customerCountDN = null;
+
             if (crmcustomerID > 0)
             {
                 sqlCommandText = "select   X_Customer as X_CustomerName,X_Phone as X_PhoneNo1,X_Address,* from vw_CRMCustomer where N_CompanyID=@nCompanyID and N_CustomerID=" + crmcustomerID + "";
@@ -872,8 +876,11 @@ namespace SmartxAPI.Controllers
                           {
                          customerCount = dLayer.ExecuteScalar("select Isnull(Count(N_SalesId),0) from inv_sales where N_CustomerID=@nCustomerID and N_CompanyID=@nCompanyID", Params, connection);
                          customerCounts = dLayer.ExecuteScalar("select Isnull(Count(N_PayReceiptId),0) from Inv_PayReceipt where N_PartyID=@nCustomerID and N_CompanyID=@nCompanyID", Params, connection);
+                         customerCountSQ = dLayer.ExecuteScalar("select Isnull(Count(N_QuotationId),0) from Inv_SalesQuotation where N_CustomerId=@nCustomerID and N_CompanyID=@nCompanyID", Params, connection);
+                         customerCountSO = dLayer.ExecuteScalar("select Isnull(Count(N_SalesOrderID),0) from Inv_SalesOrder where N_CustomerId=@nCustomerID and N_CompanyID=@nCompanyID", Params, connection);
+                         customerCountDN = dLayer.ExecuteScalar("select Isnull(Count(N_DeliveryNoteId),0) from Inv_DeliveryNote where N_CustomerId=@nCustomerID and N_CompanyID=@nCompanyID", Params, connection);
 
-                         if (myFunctions.getIntVAL(customerCount.ToString()) > 0 || myFunctions.getIntVAL(customerCounts.ToString()) > 0)
+                         if (myFunctions.getIntVAL(customerCount.ToString()) > 0 || myFunctions.getIntVAL(customerCounts.ToString()) > 0 || myFunctions.getIntVAL(customerCountSQ.ToString()) > 0 || myFunctions.getIntVAL(customerCountSO.ToString()) > 0 || myFunctions.getIntVAL(customerCountDN.ToString()) > 0 )
                          {
                                 myFunctions.AddNewColumnToDataTable(dt, "b_CustomerCount", typeof(bool), true);
                          }
@@ -885,14 +892,16 @@ namespace SmartxAPI.Controllers
                           }
                         //  myFunctions.AddNewColumnToDataTable(dt, "b_CustomerCount", typeof(bool), customerCount);
                          dt.AcceptChanges();
-                    
-                       
-                         
-                     
 
-
-
-
+                        // if(crmcustomerID>0)
+                        // {
+                        //     object crmCustomerCountSQ = dLayer.ExecuteScalar("select Isnull(Count(N_QuotationId),0) from Inv_SalesQuotation where N_CrmCompanyID="+crmcustomerID+" and N_CompanyID=@p1", Params, connection);
+                        //     if ( myFunctions.getIntVAL(crmCustomerCountSQ.ToString()) > 0 )
+                        //     {
+                        //         myFunctions.AddNewColumnToDataTable(dt, "b_CustomerCount", typeof(bool), true);
+                        //     }
+                        // }
+                        // dt.AcceptChanges();
 
                         dt = api.Format(dt, "master");
                         ds.Tables.Add(dt);

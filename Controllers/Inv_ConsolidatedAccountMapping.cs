@@ -161,7 +161,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from vw_Consolidated_AccountMapping where N_CompanyID=@p1 and N_ConsolidatedID=@p2";
+            string sqlCommandText = "select * from vw_Consolidated_AccountMapping where N_ConsolidatedCompanyID=@p1 and N_ConsolidatedLedgerID=@p2";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nLedgedID);
 
@@ -206,11 +206,11 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt =_api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Warning("No Results Found"));
-                }
-                else
+                // if (dt.Rows.Count == 0)
+                // {
+                //     return Ok(_api.Warning("No Results Found"));
+                // }
+                // else
                 {
                     return Ok(_api.Success(dt));
                 }
