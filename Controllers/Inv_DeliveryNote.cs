@@ -227,7 +227,7 @@ namespace SmartxAPI.Controllers
                             DetailSql = "select * from vw_SalesOrdertoDeliveryNoteDetails where N_CompanyId=@nCompanyID and N_SalesOrderId=@nSalesorderID";
                             DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
 
-                            RentalSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nSalesorderID and N_FormID=1571 and B_Select=1";
+                            RentalSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=@nSalesorderID and N_FormID=1571 and B_Select=1 order by N_TransDetailsID asc";
                             RentalScheduleData = dLayer.ExecuteDataTable(RentalSql, QueryParamsList, Con);
                             RentalScheduleData = _api.Format(RentalScheduleData, "RentalSchedule");
 
@@ -512,7 +512,7 @@ namespace SmartxAPI.Controllers
                     detailTable = _api.Format(detailTable, "Details");
                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(masterTable.Rows[0]["n_DeliveryNoteId"].ToString()), this.FormID, myFunctions.getIntVAL(masterTable.Rows[0]["N_FnYearID"].ToString()), User, Con);
                     Attachments = _api.Format(Attachments, "attachments");
-                    string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=N_CompanyID and N_TransID=" + masterTable.Rows[0]["N_DeliveryNoteId"].ToString();
+                    string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=N_CompanyID and N_TransID=" + masterTable.Rows[0]["N_DeliveryNoteId"].ToString()+" order by N_TransDetailsID asc";
                     DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, QueryParamsList, Con);
                     RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
                     if (detailTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
