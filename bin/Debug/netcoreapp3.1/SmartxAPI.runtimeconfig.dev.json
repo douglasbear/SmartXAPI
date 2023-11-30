@@ -4,6 +4,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -42,6 +43,10 @@
       "C:\\Users\\muham\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\muham\\.nuget\\packages"
 >>>>>>> 4e1c0fc37c8069e023f5a9d264887a7877cca6c0
+=======
+      "C:\\Users\\Administrator\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\Administrator\\.nuget\\packages"
+>>>>>>> 9a1b1638cecb5ea252e3cb2685f879884d418fe3
     ]
   }
 }
