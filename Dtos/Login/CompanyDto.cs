@@ -24,6 +24,7 @@ namespace SmartxAPI.Dtos.Login
         public int N_TypeID { get; set; }
         public string X_UtcOffSet { get; set; }
         public string X_ZoneName { get; set; }
+        public bool B_IsConsolidated { get; set; }
 
 
         
