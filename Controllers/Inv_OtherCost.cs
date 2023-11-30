@@ -117,15 +117,16 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetData(int nTransID)
+        public ActionResult GetData(int nTransID,int nFormID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from vw_Inv_OtherCost where N_CompanyID=@p1 and N_TransID=@p2";
+            string sqlCommandText = "select * from vw_Inv_OtherCost where N_CompanyID=@p1 and N_TransID=@p2 and N_FormID=@p3";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nTransID);
+            Params.Add("@p3", nFormID);
 
             try
             {
