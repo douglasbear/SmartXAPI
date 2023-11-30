@@ -752,7 +752,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult TemplateList()
+        public ActionResult TemplateList(int n_FnYearID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
@@ -776,6 +776,8 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     object N_YearID = dLayer.ExecuteScalar("select  max(N_fnyearID) from acc_fnyear where N_CompanyID=@p1", Params, connection);
+                    if (n_FnYearID>0)
+                        N_YearID=n_FnYearID.ToString();
                     Params.Add("@p2", N_YearID);
             
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);

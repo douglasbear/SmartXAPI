@@ -596,7 +596,11 @@ namespace SmartxAPI.Controllers
                     
                           object vendorCounts = dLayer.ExecuteScalar("select Isnull(Count(N_PayReceiptId),0) from Inv_PayReceipt where N_PartyID=@nVendorID and N_CompanyID=@p1", Params, connection);
 
-                         if (myFunctions.getIntVAL(VendorCount.ToString()) > 0 || myFunctions.getIntVAL(vendorCounts.ToString()) > 0)
+                          object VendorCountPO = dLayer.ExecuteScalar("select Isnull(Count(n_POrderID),0) from Inv_PurchaseOrder where N_VendorID=@nVendorID and N_CompanyID=@p1", Params, connection);
+
+                          object VendorCountMRN = dLayer.ExecuteScalar("select Isnull(Count(N_MRNID),0) from Inv_MRN where N_VendorID=@nVendorID and N_CompanyID=@p1", Params, connection);
+
+                         if (myFunctions.getIntVAL(VendorCount.ToString()) > 0 || myFunctions.getIntVAL(vendorCounts.ToString()) > 0 || myFunctions.getIntVAL(VendorCountPO.ToString()) > 0 || myFunctions.getIntVAL(VendorCountMRN.ToString()) > 0 )
                          {
                                 myFunctions.AddNewColumnToDataTable(dt, "b_VendorCount", typeof(bool), true);
                          }
