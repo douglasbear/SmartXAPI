@@ -328,13 +328,12 @@ namespace SmartxAPI.Controllers
                                     Kvar["N_QtyDisplay"] = myFunctions.getVAL(Kvar["N_QtyDisplay"].ToString()) - myFunctions.getVAL(Avar["N_RetQty"].ToString());
                                     // if (myFunctions.getVAL(Avar["N_RetQty"].ToString()) == myFunctions.getVAL(Kvar["N_QtyDisplay"].ToString()))
                                     // {
-                                        
                                     //     Kvar.Delete();
                                     //     continue;
                                     // }
                                     // else
                                     // {
-                                      
+                                    //     Kvar["N_QtyDisplay"] = myFunctions.getVAL(Kvar["N_QtyDisplay"].ToString()) - myFunctions.getVAL(Avar["N_RetQty"].ToString());
                                     // }
                                 }
                             }
