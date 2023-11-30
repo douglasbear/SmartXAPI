@@ -218,7 +218,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Company Created"));
+                        return Ok(api.Success("Customer Created"));
                     }
                 }
             }

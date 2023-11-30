@@ -295,7 +295,7 @@ namespace SmartxAPI.Controllers
                     ScrapDetails = ds.Tables["scrapDetails"];
                     ProductionLabourCost = ds.Tables["ProductionLabourCost"];
                     ProductionMachineCost = ds.Tables["ProductionMachineCost"];
-                    DataTable OtherCost = ds.Tables["otherCost"];
+                    DataTable OtherCost = ds.Tables["otherCostDetails"];
 
 
 
@@ -309,6 +309,7 @@ namespace SmartxAPI.Controllers
                     int N_ItemID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ItemID"].ToString());
                     int N_BOMUnitId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BOMUnitId"].ToString());
                     int N_ReqId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ReqId"].ToString());
+                    string xAction = MasterTable.Rows[0]["x_Action"].ToString();
                     int N_LabourCostID = 0;
                     int N_MachineCostID = 0;
                     if (MasterTable.Columns.Contains("N_LabourCostID"))
@@ -372,7 +373,7 @@ namespace SmartxAPI.Controllers
                     if (nAssemblyID > 0)
                     {
                         object result = dLayer.ExecuteScalar("[SP_BuildorUnbuild] 'delete'," + nAssemblyID.ToString() + "," + N_LocationID.ToString() + ",'PRODUCTION ORDER'", connection, transaction);
-                        dLayer.ExecuteNonQuery("delete from Inv_OtherCost where  N_CompanyID=" +nCompanyID+ "and N_TransID=" + nAssemblyID, Params, connection, transaction);
+                        dLayer.ExecuteNonQuery("delete from Inv_OtherCost where  N_CompanyID=" +nCompanyID+ "and N_TransID=" + nAssemblyID + "and X_TransType='Build'", Params, connection, transaction);
 
                         if (result == null || myFunctions.getIntVAL(result.ToString()) < 0)
                         {
@@ -454,21 +455,14 @@ namespace SmartxAPI.Controllers
                         return Ok("Unable to save");
                     }
                     //////////////////  Saving to Other Cost
-                    if (OtherCost.Rows.Count > 0)
-                    {
-                        if (!OtherCost.Columns.Contains("N_TransID"))
+                     if (OtherCost.Rows.Count > 0)
                         {
-                            OtherCost.Columns.Add("N_TransID");
-                        }
-                        if (!OtherCost.Columns.Contains("X_TransType"))
-                        {
-                            OtherCost.Columns.Add("X_TransType");
-                        }
-                        foreach (DataRow var in OtherCost.Rows)
-                        {
-                            var["N_TransID"] = nAssemblyID;
-                            var["X_TransType"] = MasterTable.Rows[0]["x_Action"].ToString();;
-                        }
+                            foreach (DataRow var in OtherCost.Rows)
+                            {
+                                var["N_TransID"] = nAssemblyID;
+                                var["X_TransType"] = xAction;
+                              
+                            }
                         int nOtherCostID = myFunctions.getIntVAL(OtherCost.Rows[0]["n_OtherCostID"].ToString());
                         dLayer.SaveData("Inv_OtherCost", "N_OtherCostID", OtherCost, connection, transaction);
                     }
@@ -612,6 +606,7 @@ namespace SmartxAPI.Controllers
                     DataTable Master = new DataTable();
                     DataTable Details = new DataTable();
                     DataTable ScrapDetails = new DataTable();
+                    DataTable otherCostDetails = new DataTable();
                     DataTable ProducionLabourCost = new DataTable();
                     DataTable ProductionMachineCost = new DataTable();
                     DataTable ItemStockUnit = new DataTable();
@@ -667,6 +662,9 @@ namespace SmartxAPI.Controllers
                     string sql4 = "Select * from vw_InvAssemblyDetails Where N_CompanyID=" + nCompanyID + " and N_AssemblyID=" + N_AssemblyID + " and N_Type=2";
                     ScrapDetails = dLayer.ExecuteDataTable(sql4, QueryParamsList, connection);
 
+                    string sqlOtherCost = "select * from vw_Inv_OtherCost where N_CompanyID=" + nCompanyID + " and N_TransID=" + N_AssemblyID + " and X_TransType='Build'";
+                    otherCostDetails = dLayer.ExecuteDataTable(sqlOtherCost, QueryParamsList, connection);
+
                     string LabourCost = "Select * from Inv_ProductionCost where N_AssembleID=" + N_AssemblyID + " and N_FormTypeID=" + 1 + "";
                     ProducionLabourCost = dLayer.ExecuteDataTable(LabourCost, QueryParamsList, connection);
                     ProducionLabourCost.AcceptChanges();
@@ -682,6 +680,7 @@ namespace SmartxAPI.Controllers
                     ProducionLabourCost = _api.Format(ProducionLabourCost, "ProducionLabourCost");
                     ProductionMachineCost = _api.Format(ProductionMachineCost, "ProductionMachineCost");
                     ItemStockUnit = _api.Format(ItemStockUnit, "ItemStockUnit");
+                    otherCostDetails = _api.Format(otherCostDetails, "otherCostDetails");
 
                     dt.Tables.Add(Details);
                     dt.Tables.Add(Master);
@@ -689,6 +688,7 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(ProductionMachineCost);
                     dt.Tables.Add(ProducionLabourCost);
                     dt.Tables.Add(ItemStockUnit);
+                    dt.Tables.Add(otherCostDetails);
                     return Ok(_api.Success(dt));
                 }
             }
@@ -708,7 +708,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     DataTable MasterTable;
                     DataTable DetailTable;
-                    DataTable OtherCost = ds.Tables["otherCost"];
+                    DataTable OtherCost = ds.Tables["otherCostDetails"];
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
                     bool B_IsProcess = myFunctions.getBoolVAL(MasterTable.Rows[0]["B_IsProcess"].ToString());
@@ -717,6 +717,8 @@ namespace SmartxAPI.Controllers
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                     int N_ReqId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ReqId"].ToString());
                     double nOtherCharges = myFunctions.getVAL(MasterTable.Rows[0]["N_OtherCharges"].ToString());
+                    int n_FormID = 772;
+                    string xAction = MasterTable.Rows[0]["x_Action"].ToString();
                     var ReleaseDate = MasterTable.Rows[0]["d_ReleaseDate"].ToString();
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
@@ -794,23 +796,15 @@ namespace SmartxAPI.Controllers
 
                     //if(B_IsProcess)
                     dLayer.ExecuteNonQuery("[SP_BuildorUnbuild] 'insertAdd'," + n_AssemblyID.ToString() + "," + N_locationID, Params, connection, transaction);
-                    dLayer.ExecuteNonQuery("delete from Inv_OtherCost where  N_CompanyID=" +nCompanyID+ "and N_TransID=" + n_AssemblyID, Params, connection, transaction);
+                    dLayer.ExecuteNonQuery("delete from Inv_OtherCost where  N_CompanyID=" +nCompanyID+ "and N_TransID=" + n_AssemblyID + "and X_TransType='Build'", Params, connection, transaction);
                     dLayer.ExecuteNonQuery("SP_Acc_InventoryPosting " + nCompanyID.ToString() + ",'PRODUCTION RELEASE'," + n_AssemblyID.ToString() + "," + myFunctions.GetUserID(User).ToString() + ",'" + System.Environment.MachineName + "'", Params, connection, transaction);
-                    if (OtherCost.Rows.Count > 0)
-                    {
-                        if (!OtherCost.Columns.Contains("N_TransID"))
+                     if (OtherCost.Rows.Count > 0)
                         {
-                            OtherCost.Columns.Add("N_TransID");
-                        }
-                        if (!OtherCost.Columns.Contains("X_TransType"))
-                        {
-                            OtherCost.Columns.Add("X_TransType");
-                        }
-                        foreach (DataRow var in OtherCost.Rows)
-                        {
-                            var["N_TransID"] = n_AssemblyID;
-                            var["X_TransType"] = MasterTable.Rows[0]["x_Action"].ToString();;
-                        }
+                            foreach (DataRow var in OtherCost.Rows)
+                            {
+                                var["N_TransID"] = n_AssemblyID;
+                                var["X_TransType"] = xAction;
+                            }
                         int nOtherCostID = myFunctions.getIntVAL(OtherCost.Rows[0]["n_OtherCostID"].ToString());
                         dLayer.SaveData("Inv_OtherCost", "N_OtherCostID", OtherCost, connection, transaction);
                     }
@@ -846,7 +840,7 @@ namespace SmartxAPI.Controllers
                     { "N_LocationID",nLocationID}
 
                     };  
-                        dLayer.ExecuteNonQuery("delete from Inv_OtherCost where  N_CompanyID=" +nCompanyID+ "and N_TransID=" + nAssemblyID, DeleteParams, connection, transaction);
+                        dLayer.ExecuteNonQuery("delete from Inv_OtherCost where  N_CompanyID=" +nCompanyID+ "and N_TransID=" + nAssemblyID + "and N_FormID="+N_FormID, DeleteParams, connection, transaction);
                         int Results = dLayer.ExecuteNonQueryPro("SP_BuildorUnbuild", DeleteParams, connection, transaction);
 
                         if (Results <= 0)
@@ -882,6 +876,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     int nCompanyID = myFunctions.GetCompanyID(User);
+                    int n_FormID = 772;
                     SortedList Params = new SortedList();
                     Params.Add("@nCompanyID", nCompanyID);
 
@@ -904,7 +899,7 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQuery(qry, Params, connection, transaction);
                         string qry1 = "update Inv_AssemblyDetails set B_IsProcess=1  where N_AssemblyID=" + nAssemblyID + " and N_CompanyID=" + nCompanyID;
                         dLayer.ExecuteNonQuery(qry1, Params, connection, transaction);
-                        // dLayer.ExecuteNonQuery("delete from Inv_OtherCost where  N_CompanyID=" +nCompanyID+ "and N_TransID=" + nAssemblyID, DeleteParams, connection, transaction);
+                        dLayer.ExecuteNonQuery("update Inv_OtherCost set N_FormID=54 where N_CompanyID=" +nCompanyID+ "and N_TransID=" + nAssemblyID + "and N_FormID="+n_FormID, DeleteParams, connection, transaction);
 
 
                         transaction.Commit();

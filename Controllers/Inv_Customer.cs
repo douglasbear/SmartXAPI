@@ -880,9 +880,13 @@ namespace SmartxAPI.Controllers
                          customerCountSO = dLayer.ExecuteScalar("select Isnull(Count(N_SalesOrderID),0) from Inv_SalesOrder where N_CustomerId=@nCustomerID and N_CompanyID=@nCompanyID", Params, connection);
                          customerCountDN = dLayer.ExecuteScalar("select Isnull(Count(N_DeliveryNoteId),0) from Inv_DeliveryNote where N_CustomerId=@nCustomerID and N_CompanyID=@nCompanyID", Params, connection);
 
-                         if (myFunctions.getIntVAL(customerCount.ToString()) > 0 || myFunctions.getIntVAL(customerCounts.ToString()) > 0 || myFunctions.getIntVAL(customerCountSQ.ToString()) > 0 || myFunctions.getIntVAL(customerCountSO.ToString()) > 0 || myFunctions.getIntVAL(customerCountDN.ToString()) > 0 )
+                         object crmCompany = dLayer.ExecuteScalar("select N_CrmCompanyID from Inv_Customer where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID", Params, connection);
+                         int NCrmCompanyID = myFunctions.getIntVAL(crmCompany.ToString());   
+                         object customerCountSQCRM = dLayer.ExecuteScalar("select Isnull(Count(N_QuotationId),0) from Inv_SalesQuotation where N_CrmCompanyID="+NCrmCompanyID+" and N_CompanyID=@nCompanyID", Params, connection);
+
+                         if (myFunctions.getIntVAL(customerCount.ToString()) > 0 || myFunctions.getIntVAL(customerCounts.ToString()) > 0 || myFunctions.getIntVAL(customerCountSQ.ToString()) > 0 || myFunctions.getIntVAL(customerCountSO.ToString()) > 0 || myFunctions.getIntVAL(customerCountDN.ToString()) > 0 || myFunctions.getIntVAL(customerCountSQCRM.ToString()) > 0 )
                          {
-                                myFunctions.AddNewColumnToDataTable(dt, "b_CustomerCount", typeof(bool), true);
+                            myFunctions.AddNewColumnToDataTable(dt, "b_CustomerCount", typeof(bool), true);
                          }
                           DataTable Attachments = myAttachments.ViewAttachment(dLayer, nCustomerID, 0, 51, nFnYearID, User, connection);
                           Attachments = api.Format(Attachments, "attachments");
@@ -892,16 +896,16 @@ namespace SmartxAPI.Controllers
                           }
                         //  myFunctions.AddNewColumnToDataTable(dt, "b_CustomerCount", typeof(bool), customerCount);
                          dt.AcceptChanges();
-
-                        // if(crmcustomerID>0)
-                        // {
-                        //     object crmCustomerCountSQ = dLayer.ExecuteScalar("select Isnull(Count(N_QuotationId),0) from Inv_SalesQuotation where N_CrmCompanyID="+crmcustomerID+" and N_CompanyID=@p1", Params, connection);
-                        //     if ( myFunctions.getIntVAL(crmCustomerCountSQ.ToString()) > 0 )
-                        //     {
-                        //         myFunctions.AddNewColumnToDataTable(dt, "b_CustomerCount", typeof(bool), true);
-                        //     }
-                        // }
-                        // dt.AcceptChanges();
+                         
+                        if(crmcustomerID>0)
+                        {
+                            object crmCustomerCountSQ = dLayer.ExecuteScalar("select Isnull(Count(N_QuotationId),0) from Inv_SalesQuotation where N_CrmCompanyID="+crmcustomerID+" and N_CompanyID=@nCompanyID", Params, connection);
+                            if ( myFunctions.getIntVAL(crmCustomerCountSQ.ToString()) > 0 )
+                            {
+                                myFunctions.AddNewColumnToDataTable(dt, "b_CustomerCount", typeof(bool), true);
+                            }
+                        }
+                        dt.AcceptChanges();
 
                         dt = api.Format(dt, "master");
                         ds.Tables.Add(dt);

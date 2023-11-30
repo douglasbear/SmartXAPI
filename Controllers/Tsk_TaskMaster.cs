@@ -741,23 +741,23 @@ namespace SmartxAPI.Controllers
             
             
 
-                    if (nsndMail == true)
-                    {
-                        xSubject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyId=" + nCompanyID + " and N_TemplateID=" + nTemplateID, connection, transaction).ToString();
-                        xBodyText = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyId=" + nCompanyID + " and N_TemplateID=" + nTemplateID, connection, transaction).ToString();
-                        string xEmailData = dLayer.ExecuteScalar("select X_UserID from sec_user where N_CompanyId=" + nCompanyID + " and N_UserID=" + nAssigneeID, connection, transaction).ToString();
+                    // if (nsndMail == true)
+                    // {
+                    //     xSubject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyId=" + nCompanyID + " and N_TemplateID=" + nTemplateID, connection, transaction).ToString();
+                    //     xBodyText = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyId=" + nCompanyID + " and N_TemplateID=" + nTemplateID, connection, transaction).ToString();
+                    //     string xEmailData = dLayer.ExecuteScalar("select X_UserID from sec_user where N_CompanyId=" + nCompanyID + " and N_UserID=" + nAssigneeID, connection, transaction).ToString();
 
-                        xSubject = xSubject.Replace("@StartDate", Snddata.Rows[0]["D_TaskDate"].ToString());
-                        xSubject = xSubject.Replace("@ToDate", Snddata.Rows[0]["D_DueDate"].ToString());
+                    //     xSubject = xSubject.Replace("@StartDate", Snddata.Rows[0]["D_TaskDate"].ToString());
+                    //     xSubject = xSubject.Replace("@ToDate", Snddata.Rows[0]["D_DueDate"].ToString());
 
-                        xBodyText = xBodyText.Replace("@PartyName", Snddata.Rows[0]["X_Assignee"].ToString());
-                        xBodyText = xBodyText.Replace("@Creator", Snddata.Rows[0]["X_Creator"].ToString());
-                        xBodyText = xBodyText.Replace("@StartDate", Snddata.Rows[0]["D_TaskDate"].ToString());
-                        xBodyText = xBodyText.Replace("@ToDate", Snddata.Rows[0]["D_DueDate"].ToString());
-                        xBodyText = xBodyText.Replace("@TaskName", Snddata.Rows[0]["X_taskSummery"].ToString());
+                    //     xBodyText = xBodyText.Replace("@Assignee", Snddata.Rows[0]["X_Assignee"].ToString());
+                    //     xBodyText = xBodyText.Replace("@Creator", Snddata.Rows[0]["X_Creator"].ToString());
+                    //     xBodyText = xBodyText.Replace("@StartDate", Snddata.Rows[0]["D_TaskDate"].ToString());
+                    //     xBodyText = xBodyText.Replace("@ToDate", Snddata.Rows[0]["D_DueDate"].ToString());
+                    //     xBodyText = xBodyText.Replace("@TaskName", Snddata.Rows[0]["X_taskSummery"].ToString());
 
-                        myFunctions.SendMail(xEmailData, xBodyText, xSubject, dLayer, 1, 1, 1, false);
-                    }
+                    //     myFunctions.SendMail(xEmailData, xBodyText, xSubject, dLayer, 1, 1, 1, false);
+                    // }
                     if (nWTaskID > 0)
                     {
                   
