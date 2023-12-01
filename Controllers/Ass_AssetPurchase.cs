@@ -421,6 +421,7 @@ namespace SmartxAPI.Controllers
                     AssMasterTable = myFunctions.AddNewColumnToDataTable(AssMasterTable, "n_Qty", typeof(float), 0.0);
                     AssMasterTable = myFunctions.AddNewColumnToDataTable(AssMasterTable, "x_Author",  typeof(string), "");
                     AssMasterTable = myFunctions.AddNewColumnToDataTable(AssMasterTable, "n_FormID", typeof(int), 0);
+                     AssMasterTable = myFunctions.AddNewColumnToDataTable(AssMasterTable, "x_Notes",  typeof(string), "");
                     for (int j = 0; j < AssMasterTable.Rows.Count; j++)
                     {
                         AssMasterTable.Rows[j]["n_AssItemName"] = AssMasterTable.Rows[j]["x_AssItemName"];
@@ -619,6 +620,7 @@ namespace SmartxAPI.Controllers
                                 AssMasterTableNew.Rows[j]["X_ItemCode"] = X_ItemCode;
                                 AssMasterTableNew.Rows[j]["N_ItemCodeId"] = N_ItemCodeId;
                                 AssMasterTableNew.Rows[j]["X_Author"] = DetailTableNew.Rows[j]["X_Author"];
+                                AssMasterTableNew.Rows[j]["X_Notes"] = DetailTableNew.Rows[j]["X_Description"];
                                 if(FormID==1755){
                                   AssMasterTableNew.Rows[j]["N_FormID"]=1761;
                                 }
