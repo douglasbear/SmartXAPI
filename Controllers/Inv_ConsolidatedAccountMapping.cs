@@ -47,8 +47,8 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nConsolidatedID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ConsolidatedID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SubCompanyFnYearID"].ToString());
+                    int nConsolidatedCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ConsolidatedCompanyID"].ToString());
                     string xConsolidatedCode = MasterTable.Rows[0]["x_ConsolidatedCode"].ToString();      
-
                     // if (xConsolidatedCode == "@Auto")
                     // {
                     //     Params.Add("N_CompanyID", nCompanyID);
@@ -64,9 +64,9 @@ namespace SmartxAPI.Controllers
                     //     MasterTable.Rows[0]["x_ConsolidatedCode"] = xConsolidatedCode;
                     // }
                     MasterTable.Columns.Remove("n_FnYearID");
-                    // MasterTable.Columns.Remove("x_LedgerCode");
+                    MasterTable.Columns.Remove("x_CompanyName");
                     MasterTable.Columns.Remove("x_LedgerName");
-                    dLayer.ExecuteDataTable("DELETE FROM Inv_ConsolidatedAccountMapping WHERE N_ConsolidatedLedgerID = "+nLedgerID+" AND N_CompanyID = "+nCompanyID+"",Params, connection, transaction);
+                    dLayer.ExecuteDataTable("DELETE FROM Inv_ConsolidatedAccountMapping WHERE N_ConsolidatedLedgerID = "+nLedgerID+" AND N_ConsolidatedCompanyID = "+nConsolidatedCompanyID+"",Params, connection, transaction);
                     nConsolidatedID = dLayer.SaveData("Inv_ConsolidatedAccountMapping", "n_ConsolidatedID", MasterTable, connection, transaction);
 
                     if (nConsolidatedID <= 0)
@@ -97,7 +97,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nClientID", myFunctions.GetClientID(User));
-            string sqlCommandText = "SELECT * FROM Acc_Company WHERE ISNULL( B_IsConsolidated,0)<>1 AND N_ClientID = @nClientID ";
+            string sqlCommandText = "SELECT X_CompanyName , X_CompanyCode, n_CompanyID FROM Acc_Company WHERE ISNULL( B_IsConsolidated,0)<>1 AND N_ClientID = @nClientID ";
              try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -194,7 +194,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "SELECT * FROM vw_Consolidated_AccountMapping WHERE N_CompanyID="+nCompanyID+" and N_ConsolidatedLedgerID="+nLedgedID+"";
+            string sqlCommandText = "SELECT * FROM vw_Consolidated_AccountMapping WHERE N_ConsolidatedCompanyID="+nCompanyID+" and N_ConsolidatedLedgerID="+nLedgedID+"";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nLedgedID);
 

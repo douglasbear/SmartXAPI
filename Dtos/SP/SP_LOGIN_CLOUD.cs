@@ -99,6 +99,7 @@ namespace SmartxAPI.Dtos.SP
         public int N_LoginID { get; set; }
         [NotMapped]
         public string Warning { get; set; }
+        public bool B_IsConsolidated { get; set; }
 
 
 
