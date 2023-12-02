@@ -138,7 +138,8 @@ namespace SmartxAPI.Data
                                         X_UtcOffSet = dr["X_UtcOffSet"].ToString(),
                                         X_ZoneName = dr["X_ZoneName"].ToString(),
                                         N_TimeZoneID = Convert.ToInt32(dr["N_TimeZoneID"]),
-                                        B_IsConsolidated = (bool)dr["B_IsConsolidated"],
+                                        // B_IsConsolidated = (bool)dr["B_IsConsolidated"],
+                                        B_IsConsolidated = (bool)(dr["B_IsConsolidated"] == System.DBNull.Value ? false : dr["B_IsConsolidated"]),
 
                                     }).ToList()
                             .FirstOrDefault();
