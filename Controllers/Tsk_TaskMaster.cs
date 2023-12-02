@@ -476,6 +476,7 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
                     SortedList Paramsforstatus = new SortedList();
+                    SortedList Result = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     int nTaskId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
                     int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
@@ -810,7 +811,8 @@ namespace SmartxAPI.Controllers
                     }
 
                     transaction.Commit();
-                    return Ok(_api.Success("Saved"));
+                     Result.Add("x_TaskCode",  MasterTable.Rows[0]["x_TaskCode"] );
+                    return Ok(_api.Success(Result,"Saved"));
 
 
                 }
