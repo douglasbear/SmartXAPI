@@ -669,7 +669,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
                         Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
-                        Params.Add("N_FormID", N_FormID);
+                        Params.Add("N_FormID", 729);
                         Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
                         InvoiceNo = dLayer.GetAutoNumber("Inv_DeliveryNote", "x_ReceiptNo", Params, connection, transaction);
                         xButtonAction = "Insert";
