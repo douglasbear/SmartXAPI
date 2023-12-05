@@ -7,6 +7,7 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
+using ZXing;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -43,17 +44,34 @@ namespace SmartxAPI.Controllers
                     DataTable DetailTable;
                     DetailTable = ds.Tables["details"];
                     SortedList Params = new SortedList();
-                    int nConsolidatedGroupID = myFunctions.getIntVAL(DetailTable.Rows[0]["n_ConsolidatedGroupID"].ToString());
+                    int nConsolidatedGroupID = 0;
                     int nCompanyID = myFunctions.getIntVAL(DetailTable.Rows[0]["n_CompanyID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(DetailTable.Rows[0]["n_FnYearID"].ToString());
+                    string xGroupCode = DetailTable.Rows[0]["x_ConsolidatedGroupCode"].ToString();
+                    string xGroupName = DetailTable.Rows[0]["x_GroupName"].ToString();
+                    string sql = "select * from Acc_ConsolidatedGroup where x_GroupName='"+xGroupName+"'and N_CompanyID="+nCompanyID;
+                    DataTable count = new DataTable();
+                    Params.Add("N_CompanyID", nCompanyID);
+                    Params.Add("N_YearID", nFnYearID);
+                    Params.Add("N_FormID", this.FormID);
+                    if(xGroupCode ==  "@Auto")
+                    { xGroupCode = dLayer.GetAutoNumber("Acc_ConsolidatedGroup", "x_ConsolidatedGroupCode", Params, connection, transaction); }
+                    if (xGroupCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Group Code")); }
+                    int code = myFunctions.getIntVAL(xGroupCode.ToString());
                     int nSubCompanyID = myFunctions.getIntVAL(DetailTable.Rows[0]["n_SubCompanyID"].ToString());
-                    // int nFnYearID = myFunctions.getIntVAL(DetailTable.Rows[0]["n_FnYearID"].ToString());
-
-                    // Params.Add("N_CompanyID", nCompanyID);
-                    // Params.Add("N_YearID", nFnYearID);
-                    // Params.Add("N_FormID", this.FormID);
-                    
+                    dLayer.DeleteData("Acc_ConsolidatedGroup", "x_ConsolidatedGroupCode", code, "", connection, transaction);
+                    for (int i = 0; i < DetailTable.Rows.Count; i++)
+                    {
+                        DetailTable.Rows[i]["x_ConsolidatedGroupCode"] = xGroupCode;
+                    }
+                    DetailTable.Columns.Remove("n_FnYearID");
+                    count = dLayer.ExecuteDataTable(sql, Params, connection, transaction);
+                    if(count.Rows.Count > 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Group name already exists"));
+                    }
                     nConsolidatedGroupID = dLayer.SaveData("Acc_ConsolidatedGroup", "n_ConsolidatedGroupID", DetailTable, connection, transaction);
-
                     if (nConsolidatedGroupID <= 0)
                     {
                         transaction.Rollback();
@@ -73,9 +91,8 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nConsolidatedGroupID,string xGroupName)
+        public ActionResult DeleteData(string xGroupCode)
         {
-            int Results = 0;
             SortedList Params = new SortedList();
             try
             {
@@ -84,21 +101,11 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
 
-                    Params.Add("@n_ConsolidatedGroupID", nConsolidatedGroupID);
-                    Params.Add("@x_GroupName", xGroupName);
+                    Params.Add("@p1", xGroupCode);
+                    dLayer.ExecuteNonQuery("delete from Acc_ConsolidatedGroup where X_ConsolidatedGroupCode=@p1", Params, connection, transaction);
+                    transaction.Commit();
+                    return Ok(_api.Success("Group Successfully Deleted"));
 
-                    Results = dLayer.DeleteData("Acc_ConsolidatedGroup", "n_ConsolidatedGroupID", nConsolidatedGroupID, "x_GroupName="+xGroupName, connection, transaction);
-                    
-                    if (Results > 0)
-                    {
-                        transaction.Commit();
-                        return Ok(_api.Success("OtherCost Deleted"));
-                    }
-                    else
-                    {
-                       transaction.Rollback();
-                       return Ok(_api.Error(User, "Unable to delete"));
-                    }
                 }
             }
             catch (Exception ex)
@@ -108,15 +115,15 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetData(int nConsolidatedGroupID)
+        public ActionResult GetData(string xGroupCode)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from vw_Acc_ConsolidatedGroup where N_CompanyID=@p1 and N_ConsolidatedGroupID=@p2 ";
+            string sqlCommandText = "select * from vw_Acc_ConsolidatedGroup where N_CompanyID=@p1 and X_ConsolidatedGroupCode=@p2 ";
             Params.Add("@p1", nCompanyID);
-            Params.Add("@p2", nConsolidatedGroupID);
+            Params.Add("@p2", xGroupCode);
 
             try
             {
