@@ -73,7 +73,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nConsolidatedGroupID)
+        public ActionResult DeleteData(int nConsolidatedGroupID,string xGroupName)
         {
             int Results = 0;
             SortedList Params = new SortedList();
@@ -85,7 +85,9 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
                     Params.Add("@n_ConsolidatedGroupID", nConsolidatedGroupID);
-                    Results = dLayer.DeleteData("Acc_ConsolidatedGroup", "n_ConsolidatedGroupID", nConsolidatedGroupID, "", connection, transaction);
+                    Params.Add("@x_GroupName", xGroupName);
+
+                    Results = dLayer.DeleteData("Acc_ConsolidatedGroup", "n_ConsolidatedGroupID", nConsolidatedGroupID, "x_GroupName="+xGroupName, connection, transaction);
                     
                     if (Results > 0)
                     {
