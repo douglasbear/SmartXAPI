@@ -2297,6 +2297,7 @@ namespace SmartxAPI.Controllers
                             {
                                 dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails_Segments where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='SALES' AND N_AccTransID  in (select N_AccTransID from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='SALES' AND X_VoucherNo='"+InvoiceNO+"')", QueryParams, connection, transaction);
                                 dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='SALES' AND X_VoucherNo='"+InvoiceNO+"'", QueryParams, connection, transaction);
+                                result.Add("InvoiceNO",InvoiceNO);
                             }
 
                             if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator", "X_UserCategory", dLayer, connection, transaction))
@@ -2352,7 +2353,8 @@ namespace SmartxAPI.Controllers
                                return Ok(_api.Success("Rental Sales Invoice " + status + " Successfully")); 
                             }
                             else
-                                return Ok(_api.Success("Sales Invoice " + status + " Successfully"));
+                                result.Add("ButtonTag",ButtonTag);
+                                return Ok(_api.Success(result,"Sales Invoice " + status + " Successfully"));
                         }
                         else
                         {
