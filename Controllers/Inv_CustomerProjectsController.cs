@@ -53,11 +53,12 @@ namespace SmartxAPI.Controllers
                       
             }
             else{
-                     sqlCommandText = "select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p2 and X_ProjectCode is not null  order by N_ProjectID desc";
+                     sqlCommandText = "select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p2  and X_ProjectCode is not null  order by N_ProjectID desc";
             }
       
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearID);
+           // Params.Add("@p3", nCustomerID);
             
 
             try

@@ -483,16 +483,22 @@ namespace SmartxAPI.Controllers
                         // Add the barcode to the PDF document
                         itextImage.SetAbsolutePosition(barcodeX, barcodeY);
                         document.Add(itextImage);
+                        // Set font and size for the Phrase elements
+                        BaseFont baseFont = BaseFont.CreateFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+                        float fontSize = 9;  // Adjust the size as needed
                         // Define the right text position
-                        float rightTextX = actualPageWidth - 135;  // X-coordinate for right text
-                        float rightTextY = actualPageHeight - topMargin-spacing - 8;  // Y-coordinate for right text
-                        // Write the product name and price to the PDF
-                        contentByte.BeginText();
-                        contentByte.ShowTextAligned(Element.ALIGN_LEFT, x_ItemCode, rightTextX, rightTextY , 0);
-                        contentByte.ShowTextAligned(Element.ALIGN_LEFT, xItemName, rightTextX, rightTextY- spacing - 15, 0);
-                        contentByte.ShowTextAligned(Element.ALIGN_LEFT, physicalLocation, leftTextX, rightTextY - spacing - 30, 0);
-                        contentByte.EndText();
-                        document.NewPage();
+                        float rightTextX = actualPageWidth - 180;  // X-coordinate for right text
+                        float rightTextY = actualPageHeight - topMargin - spacing - 8;  // Y-coordinate for right text
+                        // Create a ColumnText object
+                        ColumnText columnText = new ColumnText(contentByte);
+                        columnText.SetSimpleColumn(new iTextSharp.text.Rectangle(rightTextX-10, rightTextY+15, actualPageWidth - 5, 0));
+                        // Add the product name and price to the column
+                        columnText.AddElement(new Phrase(x_ItemCode + " - " +xItemName, new iTextSharp.text.Font(baseFont, fontSize)));
+                        columnText.AddElement(new Phrase(physicalLocation, new iTextSharp.text.Font(baseFont, fontSize)));
+                      // Go to the next line (you can adjust the spacing as needed)
+                     columnText.AddText(new Phrase("\n"));
+                     columnText.Go();
+                     document.NewPage();
                     }
                 }
             }
@@ -510,6 +516,7 @@ namespace SmartxAPI.Controllers
 
             // Create a new PDF document with the custom page size
             iTextSharp.text.Document document = new iTextSharp.text.Document(new iTextSharp.text.Rectangle(pageWidth, pageHeight));
+            
             PdfWriter writer = PdfWriter.GetInstance(document, new FileStream(path, FileMode.Create));
 
             // Open the PDF document
