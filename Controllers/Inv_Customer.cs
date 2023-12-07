@@ -53,7 +53,7 @@ namespace SmartxAPI.Controllers
             string qryCriteria = "";
             if (qry != "" && qry != null)
             {
-                qryCriteria = " and (X_CustomerCode like @qry or X_CustomerName like @qry or X_PhoneNo1 = CAST("+qry+" as VARCHAR) or X_TaxRegistrationNo = CAST("+qry+" as VARCHAR)) ";
+                qryCriteria = " and (X_CustomerCode like @qry or X_CustomerName like @qry or X_PhoneNo1 = CAST('"+qry+"' as VARCHAR) or X_TaxRegistrationNo = CAST('"+qry+"' as VARCHAR)) ";
                
                 Params.Add("@qry", "%" + qry + "%");
             }
