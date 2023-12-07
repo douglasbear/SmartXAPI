@@ -790,21 +790,18 @@ namespace SmartxAPI.Controllers
                             {
 
                                 N_TaskID = dLayer.SaveDataWithIndex("Tsk_TaskMaster", "N_TaskID", "", "", j, TaskMaster, connection, transaction);
-                                TaskStatus = dLayer.ExecuteDataTable("select N_CompanyID,N_AssigneeID,N_SubmitterID,N_CreaterID,N_ClosedUserID,'" + DateTime.Today + "' as D_EntryDate,1 as N_Status from Prj_WorkflowTasks where N_CompanyID=" + nCompanyID + " and N_WTaskDetailID=" + TaskMaster.Rows[j]["N_WTaskDetailID"] + " order by N_Order", Params, connection, transaction);
+                                TaskStatus = dLayer.ExecuteDataTable("select N_CompanyID,'" + DateTime.Today + "' as D_EntryDate,1 as N_Status from Prj_WorkflowTasks where N_CompanyID=" + nCompanyID + " and N_WTaskDetailID=" + TaskMaster.Rows[j]["N_WTaskDetailID"] + " order by N_Order", Params, connection, transaction);
                                 if (TaskStatus.Rows.Count > 0)
                                 {
                                     TaskStatus = myFunctions.AddNewColumnToDataTable(TaskStatus, "n_TaskID", typeof(int), N_TaskID);
                                     TaskStatus = myFunctions.AddNewColumnToDataTable(TaskStatus, "n_TaskStatusID", typeof(int), 0);
+                                    TaskStatus = myFunctions.AddNewColumnToDataTable(TaskStatus, "n_AssigneeID", typeof(int), nAssigneeID);
+                                    TaskStatus = myFunctions.AddNewColumnToDataTable(TaskStatus, "n_CreaterID", typeof(int), N_CreatorID);
                                     dLayer.SaveData("Tsk_TaskStatus", "n_TaskStatusID", TaskStatus, connection, transaction);
                                     TaskStatus.Clear();
 
                                 }
-                                if (j == 0)
-                                {
-                                    string qry = "Select " + nCompanyID + " as N_CompanyID," + 0 + " as N_TaskStatusID," + N_TaskID + " as N_TaskID,"+myFunctions.GetUserID(User)+" as N_AssigneeID,"+myFunctions.GetUserID(User)+" as N_SubmitterID ,"+myFunctions.GetUserID(User)+" as  N_CreaterID,'" + DateTime.Today + "' as D_EntryDate,'" + "" + "' as X_Notes ," + 4 + " as N_Status ," + 100 + " as N_WorkPercentage";
-                                    DataTable Detailtable = dLayer.ExecuteDataTable(qry, Params, connection, transaction);
-                                    int nID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", Detailtable, connection, transaction);
-                                }
+                               
                                
                             }
                         }
@@ -1338,6 +1335,7 @@ namespace SmartxAPI.Controllers
                     if (Results > 0)
                     {
                         SqlTransaction transaction = connection.BeginTransaction();
+                        dLayer.ExecuteNonQuery("delete from Tsk_TaskStatus where N_TaskID in (select N_TaskID from Tsk_TaskMaster where N_ParentID="+nTaskID+")", connection, transaction);
                         dLayer.DeleteData("Tsk_TaskMaster", "N_ParentID", nTaskID, "", connection, transaction);
                         myAttachments.DeleteAttachment(dLayer, 1, nTaskID, nTaskID, nFnyearID, 1324, User, transaction, connection);
                         transaction.Commit();
