@@ -188,6 +188,51 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("filldetails")]
+       public ActionResult Autofill( string xledgercode ,int xFnyearID)
+        {
+            string sqlCommandText = "";
+            string subcompany = "";
+            DataTable dt = new DataTable();
+            DataTable Client = new DataTable();
+            SortedList Params = new SortedList();
+            int nconsolidatedCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nClientID", myFunctions.GetClientID(User));
+            Params.Add("@p1", nconsolidatedCompanyID);
+            Params.Add("@ledgercode", xledgercode);
+                sqlCommandText = "select X_CompanyName, X_LedgerName,n_ledgerid,x_ledgercode,n_CompanyID from vw_Autofill_Consolidated_AccountMapping where N_CompanyID in (SELECT n_CompanyID FROM Acc_Company WHERE ISNULL( B_IsConsolidated,0)<>1 AND N_ClientID = @nClientID) and x_ledgercode =@ledgercode GROUP BY X_LedgerName ,n_ledgerid , X_LedgerCode, n_CompanyID, X_CompanyName;";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+
+                    object date = dLayer.ExecuteScalar("SELECT MAX(D_Start) from Acc_Fnyear where N_CompanyID in (SELECT n_CompanyID FROM Acc_Company WHERE ISNULL( B_IsConsolidated,0)<>1 AND N_ClientID =@nClientID)", Params,connection, transaction);
+                    Params.Add("@p3", date);
+                    object N_FnyearID = dLayer.ExecuteScalar("SELECT N_FnYearID from Acc_FnYear where D_start ='"+date+"' and N_CompanyID in (SELECT n_CompanyID FROM Acc_Company WHERE ISNULL( B_IsConsolidated,0)<>1 AND N_ClientID = @nClientID)",Params, connection, transaction);
+                    
+                    Params.Add("@p2", N_FnyearID);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                } 
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
+
          [HttpGet("viewdetails")]
         public ActionResult GetledgerData(int nLedgedID , int nCompanyID)
         {
