@@ -955,7 +955,7 @@ namespace SmartxAPI.GeneralFunctions
             }
 
             int N_DeliveryNoteID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteId"].ToString());
-                int N_ServiceID = MasterTable.Columns.Contains("N_ServiceID")? myFunctions.getIntVAL(MasterRow["N_ServiceID"].ToString()):0;
+            int N_ServiceID = MasterTable.Columns.Contains("N_ServiceID")? myFunctions.getIntVAL(MasterRow["N_ServiceID"].ToString()):0;
             int N_CreatedUser = myFunctions.getIntVAL(MasterRow["n_CreatedUser"].ToString());
             int N_UserID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             int UserCategoryID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
@@ -1060,6 +1060,12 @@ namespace SmartxAPI.GeneralFunctions
                 N_ProcStatus = myFunctions.getIntVAL(dLayer.ExecuteScalar("select n_ProcStatus from Inv_Sales where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
                 if (N_SaveDraft == 0)
                 {
+
+                    dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails_Segments where N_CompanyID=" + N_CompanyID + " AND N_FnYearID="+N_FnYearID+" and X_TransType='SALES' AND N_AccTransID  in (select N_AccTransID from Acc_VoucherDetails where N_CompanyID=" + N_CompanyID + " AND N_FnYearID="+N_FnYearID+"  and X_TransType='SALES' AND X_VoucherNo='"+InvoiceNo+"')", QueryParams, connection, transaction);
+                    dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails where N_CompanyID=" + N_CompanyID + " AND N_FnYearID="+N_FnYearID+"  and X_TransType='SALES' AND X_VoucherNo='"+InvoiceNo+"'", QueryParams, connection, transaction);
+
+                    dLayer.ExecuteNonQuery("delete from Inv_SaleAmountDetails where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_BranchID=" + N_BranchID, connection, transaction);
+
                     if (dtsaleamountdetails.Columns.Contains("N_CommissionAmtF"))
                         dtsaleamountdetails.Columns.Remove("N_CommissionAmtF");
                     if (dtsaleamountdetails.Columns.Contains("N_CommissionAmt"))
