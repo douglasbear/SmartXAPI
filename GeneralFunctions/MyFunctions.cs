@@ -476,10 +476,10 @@ namespace SmartxAPI.GeneralFunctions
             string xLastUserName = "", xEntryTime = "";
             int nTempStatusID = 0;
             object nActiveID = 0;
-
             int loggedInUserID = this.GetUserID(User);
-
             int GUserID = this.GetGlobalUserID(User);
+            int N_IsAdminUser = 0;
+            int N_EntryStatus = nTransStatus;
 
             /* Approval Response Set */
             SortedList Response = new SortedList();
@@ -523,6 +523,8 @@ namespace SmartxAPI.GeneralFunctions
 
             objUserCategory = objUserCategory != null ? objUserCategory : 0;
 
+            string[] categoryArray = objUserCategory.ToString().Split(',');
+
             using (SqlConnection olivCnn = new SqlConnection(masterDBConnectionString))
             {
                 olivCnn.Open();
@@ -530,6 +532,30 @@ namespace SmartxAPI.GeneralFunctions
 
             }
 
+            object objAdminUserCategoryID = dLayer.ExecuteScalar("select N_UserCategoryID from Sec_UserCategory where N_companyid=" + nCompanyID + "  and X_UserCategory='Admin Approval'", ApprovalParams, connection);
+            if(objAdminUserCategoryID!=null)
+            {
+                if(categoryArray.Select(int.Parse).Contains(this.getIntVAL(objAdminUserCategoryID.ToString())))
+                    N_IsAdminUser=1;
+            }
+
+            if(N_IsAdminUser==1 && nTransID==0)
+            {
+                Response["btnSaveText"] = "Save";
+                Response["btnDeleteText"] = "Delete";
+                Response["saveEnabled"] = true;
+                if (nTransID == 0)
+                { Response["deleteEnabled"] = false; }
+                else
+                { Response["deleteEnabled"] = true; }
+
+                Response["saveTag"] = 0;
+                Response["deleteTag"] = 0;
+                Response["isApprovalSystem"] = 0;
+                Response["ApprovalID"] = nApprovalID;
+                Response["isEditable"] = true;
+                return Response;
+            }
 
             if (nApprovalID == 0)
             {
@@ -969,6 +995,18 @@ namespace SmartxAPI.GeneralFunctions
                             }
                         }
                     }
+                    if(N_IsAdminUser==1 && N_EntryStatus != 3 && N_EntryStatus != 4)
+                    {
+                        nTransStatus = 932;
+                        ApprovalParams["@nTransStatus"] = nTransStatus;
+                        ApprovalParams["@isEditable"] = 1;
+
+                        if(nNextApprovalLevel==0 || nNextApprovalLevel==null)
+                        {
+                            nNextApprovalLevel = nTransApprovalLevel+1;
+                            Response["nextApprovalLevel"] = nNextApprovalLevel;
+                        }
+                    }
                 }
                 else if (nTransID == 0)
                 {
@@ -1033,9 +1071,9 @@ namespace SmartxAPI.GeneralFunctions
                     }
                     else if ((nMaxLevel == nTransApprovalLevel || nSubmitter == nTransApprovalLevel) && nTransUserID != loggedInUserID)
                     {
-                        if (nTransStatus != 918 && nTransStatus != 919 && nTransStatus != 920)//&& nTransStatus != 929)
+                        if (nTransStatus != 918 && nTransStatus != 919 && nTransStatus != 920 )//&& nTransStatus != 929)
                         {
-                            if (nTransStatus == 913 || nTransStatus == 7 || nTransStatus == 929)
+                            if (nTransStatus == 913 || nTransStatus == 7 || nTransStatus == 929 || nTransStatus == 932) 
                             {
                                 nTransStatus = 916;
                                 ApprovalParams["@nTransStatus"] = nTransStatus;
@@ -1441,6 +1479,7 @@ namespace SmartxAPI.GeneralFunctions
             string Comments = "";
             int N_GetSignFromUser = 0;
             string body = "", Subject = "", Type = "";
+            int N_IsAdminUser=0;
             DataColumnCollection columns = Approvals.Columns;
             if (columns.Contains("comments"))
             {
@@ -1490,7 +1529,24 @@ namespace SmartxAPI.GeneralFunctions
 
             if (N_IsApprovalSystem == 1)
             {
-                dLayer.ExecuteNonQuery("SP_Gen_ApprovalCodesTrans @nCompanyID,@nFormID,@nApprovalUserID,@nTransID,@nApprovalLevelID,@nProcStatusID,@nApprovalID,@nGroupID,@nFnYearID,@xAction,@nEmpID,@xDepLevel,@dTransDate,0,0,@nTransOwnUserID", LogParams, connection, transaction);
+                object objUserCategory = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User where N_CompanyID=" + N_CompanyID + " and N_UserID=" + N_ApprovalUserID, LogParams, connection,transaction);
+
+                objUserCategory = objUserCategory != null ? objUserCategory : 0;
+
+                string[] categoryArray = objUserCategory.ToString().Split(',');
+
+                object objAdminUserCategoryID = dLayer.ExecuteScalar("select N_UserCategoryID from Sec_UserCategory where N_companyid=" + N_CompanyID + "  and X_UserCategory='Admin Approval'", LogParams, connection,transaction);
+                if(objAdminUserCategoryID!=null)
+                {
+                    if(categoryArray.Select(int.Parse).Contains(this.getIntVAL(objAdminUserCategoryID.ToString())))
+                        N_IsAdminUser=1;
+                }
+
+                if(N_IsAdminUser==1 && N_ApprovalLevelID==1)return 0;
+
+                LogParams.Add("@N_IsAdminUser", N_IsAdminUser);
+
+                dLayer.ExecuteNonQuery("SP_Gen_ApprovalCodesTrans @nCompanyID,@nFormID,@nApprovalUserID,@nTransID,@nApprovalLevelID,@nProcStatusID,@nApprovalID,@nGroupID,@nFnYearID,@xAction,@nEmpID,@xDepLevel,@dTransDate,0,0,@nTransOwnUserID,@N_IsAdminUser", LogParams, connection, transaction);
 
                 if (N_ProcStatusID == 0 || N_ProcStatusID == 6)
                 {
