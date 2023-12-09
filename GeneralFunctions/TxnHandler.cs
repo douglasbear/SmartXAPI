@@ -159,14 +159,14 @@ namespace SmartxAPI.GeneralFunctions
 
                     if (N_PurchaseID > 0)
                     {
-                        if (myFunctions.CheckPRProcessed(N_PurchaseID,User,dLayer,connection,transaction))
-                        {
-                            //  transaction.Rollback();
-                            //  return Ok(_api.Error(User, "Transaction Started!"));
-                            Result.Add("b_IsCompleted", 0);
-                            Result.Add("x_Msg", "Transaction Started!");
-                            return Result;
-                        }
+                        // if (myFunctions.CheckPRProcessed(N_PurchaseID,User,dLayer,connection,transaction))
+                        // {
+                        //     //  transaction.Rollback();
+                        //     //  return Ok(_api.Error(User, "Transaction Started!"));
+                        //     Result.Add("b_IsCompleted", 0);
+                        //     Result.Add("x_Msg", "Transaction Started!");
+                        //     return Result;
+                        // }
                             
 
                         object Dir_PurchaseCount = dLayer.ExecuteScalar("SELECT COUNT(Inv_Purchase.N_PurchaseID) FROM Inv_Purchase INNER JOIN Inv_MRN ON Inv_Purchase.N_CompanyID = Inv_MRN.N_CompanyID AND Inv_Purchase.N_RsID = Inv_MRN.N_MRNID AND Inv_Purchase.N_FnYearID = Inv_MRN.N_FnYearID " +
@@ -1470,8 +1470,8 @@ namespace SmartxAPI.GeneralFunctions
                 }
                 else
                 {
-                        if (N_SaveDraft == 0)
-                        {
+                        // if (N_SaveDraft == 0)
+                        // {
                             if (dtsaleamountdetails.Columns.Contains("N_CommissionAmtF"))
                                 dtsaleamountdetails.Columns.Remove("N_CommissionAmtF");
                             if (dtsaleamountdetails.Columns.Contains("N_CommissionAmt"))
@@ -1523,7 +1523,7 @@ namespace SmartxAPI.GeneralFunctions
                             Result.Add("x_Msg", "Unable to save Sales Invoice!");
                             return Result;
                         }
-                    }
+                    //}
                 }
 
 
