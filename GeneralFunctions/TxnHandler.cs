@@ -873,14 +873,19 @@ namespace SmartxAPI.GeneralFunctions
                         }
                     }
                     Result.Add("b_IsCompleted", 1);
-                    if (myFunctions.getIntVAL(masterRow["n_FormID"].ToString()) == 1605)
+                    if (myFunctions.getIntVAL(masterRow["n_FormID"].ToString()) == 1605) {
                         Result.Add("x_Msg", "Rental Purchase Invoice Saved Successfully");
+                        Result.Add("n_InvoiceID", N_PurchaseID);
+                        Result.Add("b_IsSaveDraft", N_SaveDraft);         
+                        Result.Add("N_ProcStatus", N_ProcStatus);
+                        Result.Add("x_InvoiceNo", InvoiceNo);
+                    }
                     else {
-                     Result.Add("x_Msg", "Purchase Invoice Successfully Created");
-                    Result.Add("n_InvoiceID", N_PurchaseID);
-                    Result.Add("b_IsSaveDraft", N_SaveDraft);         
-                    Result.Add("N_ProcStatus", N_ProcStatus);
-                    Result.Add("x_InvoiceNo", InvoiceNo);
+                        Result.Add("x_Msg", "Purchase Invoice Successfully Created");
+                        Result.Add("n_InvoiceID", N_PurchaseID);
+                        Result.Add("b_IsSaveDraft", N_SaveDraft);         
+                        Result.Add("N_ProcStatus", N_ProcStatus);
+                        Result.Add("x_InvoiceNo", InvoiceNo);
                     }
                    
                     return Result;

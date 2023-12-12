@@ -6,13 +6,13 @@
       "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\aswin\\.nuget\\packages"
 =======
+      "C:\\Users\\sivadath\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\sivadath\\.nuget\\packages"
+>>>>>>> 94b365ef37a009c34458a7c68e5baeb3773a06f4
+=======
       "C:\\Users\\Dell\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Dell\\.nuget\\packages"
->>>>>>> 356bf398179f72a5d9fa4b3ab66b8c0b841f2b15
-=======
-      "C:\\Users\\Administrator\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Administrator\\.nuget\\packages"
->>>>>>> 5652dcd05e0624a28ef2ab526e4aeb6f9cc8ea90
+>>>>>>> e5c40a617f374072d7f3b1d0eecd7720803abd21
     ]
   }
 }
