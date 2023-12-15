@@ -462,7 +462,7 @@ namespace SmartxAPI.Controllers
 
                     if (MasterTable.Columns.Contains("x_ChequeNo"))
                     {
-                        object count = dLayer.ExecuteScalar("Select count(*) from Inv_PayReceipt Where  N_CompanyID= " + nCompanyId + " and  N_PayReceiptID <> " + myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayReceiptID"].ToString()) + " and  N_DefLedgerID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_DefLedgerID"].ToString()) + " and X_ChequeNo='" + myFunctions.getVAL(MasterTable.Rows[0]["X_ChequeNo"].ToString()) + "'", connection, transaction);
+                        object count = dLayer.ExecuteScalar("Select count(*) from Inv_PayReceipt Where  N_CompanyID= " + nCompanyId + " and (X_Type='PA' OR  X_Type='PP') and  N_PayReceiptID <> " + myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayReceiptID"].ToString()) + " and  N_DefLedgerID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_DefLedgerID"].ToString()) + " and X_ChequeNo='" + myFunctions.getVAL(MasterTable.Rows[0]["X_ChequeNo"].ToString()) + "'", connection, transaction);
                         if (count == null)
                         {
                             count = 0;
@@ -470,7 +470,7 @@ namespace SmartxAPI.Controllers
                         int N_Count = myFunctions.getIntVAL(count.ToString());
                         if (N_Count > 0)
                         {
-                            object paymentNo = dLayer.ExecuteScalar("Select TOP 1 X_VoucherNo from Inv_PayReceipt Where  N_CompanyID= " + nCompanyId + " and  N_PayReceiptID <> " + myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayReceiptID"].ToString()) + " and  N_DefLedgerID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_DefLedgerID"].ToString()) + " and X_ChequeNo='" + myFunctions.getVAL(MasterTable.Rows[0]["X_ChequeNo"].ToString()) + "'", connection, transaction);
+                            object paymentNo = dLayer.ExecuteScalar("Select TOP 1 X_VoucherNo from Inv_PayReceipt Where  N_CompanyID= " + nCompanyId + " and (X_Type='PA' OR  X_Type='PP') and  N_PayReceiptID <> " + myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayReceiptID"].ToString()) + " and  N_DefLedgerID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_DefLedgerID"].ToString()) + " and X_ChequeNo='" + myFunctions.getVAL(MasterTable.Rows[0]["X_ChequeNo"].ToString()) + "'", connection, transaction);
                             transaction.Rollback();
                             return Ok(api.Error(User, "Chque Number already used for Payment " + paymentNo.ToString() + ""));
                         }

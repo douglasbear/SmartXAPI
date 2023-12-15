@@ -338,7 +338,7 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                     object countPayment = dLayer.ExecuteScalar("Select count(*) from Inv_PayReceipt Where  N_CompanyID= " + nCompanyId + "  and  N_DefLedgerID="+myFunctions.getIntVAL(masterRow["N_DefLedgerID"].ToString())+" and X_ChequeNo='"+myFunctions.getVAL(masterRow["X_ChequeNo"].ToString())+"'", connection, transaction);
+                     object countPayment = dLayer.ExecuteScalar("Select count(*) from Inv_PayReceipt Where  N_CompanyID= " + nCompanyId + " and (X_Type='PA' OR  X_Type='PP')  and  N_DefLedgerID="+myFunctions.getIntVAL(masterRow["N_DefLedgerID"].ToString())+" and X_ChequeNo='"+myFunctions.getVAL(masterRow["X_ChequeNo"].ToString())+"'", connection, transaction);
                          if(countPayment==null)
                          {
                             countPayment=0;
@@ -346,7 +346,7 @@ namespace SmartxAPI.Controllers
                          int N_countPayment = myFunctions.getIntVAL(countPayment.ToString());
                          if (N_countPayment > 0)
                          {
-                             object paymentNo= dLayer.ExecuteScalar("Select TOP 1 X_VoucherNo from Inv_PayReceipt Where  N_CompanyID= " + nCompanyId + " and    N_DefLedgerID="+myFunctions.getIntVAL(masterRow["N_DefLedgerID"].ToString())+" and X_ChequeNo='"+myFunctions.getVAL(masterRow["X_ChequeNo"].ToString())+"'", connection, transaction);
+                             object paymentNo= dLayer.ExecuteScalar("Select TOP 1 X_VoucherNo from Inv_PayReceipt Where  N_CompanyID= " + nCompanyId + " and (X_Type='PA' OR  X_Type='PP') and   N_DefLedgerID="+myFunctions.getIntVAL(masterRow["N_DefLedgerID"].ToString())+" and X_ChequeNo='"+myFunctions.getVAL(masterRow["X_ChequeNo"].ToString())+"'", connection, transaction);
                              transaction.Rollback();
                              return Ok(api.Error(User, "Chque Number already used for Payment "+paymentNo.ToString()+""));
                          }
