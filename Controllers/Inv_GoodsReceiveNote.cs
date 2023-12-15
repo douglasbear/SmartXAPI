@@ -179,7 +179,7 @@ namespace SmartxAPI.Controllers
             if (nMRNNo != null)
             {
                 Params.Add("@GRNNo", nMRNNo);
-                X_MasterSql = "select N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS x_MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,N_FreightAmt,N_CreatedUser,D_CreatedDate,N_ExchangeRate,N_CurrencyID,X_CurrencyName,OrderDate,isnull(N_Processed,0) as N_Processed,N_PurchaseID,X_InvoiceNo,X_ProjectCode,X_ProjectName,N_ProjectID,N_FormID,N_Decimal,X_VendorName_Ar from vw_InvMRNNo_Search where N_CompanyID=@CompanyID and [MRN No]=@GRNNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                X_MasterSql = "select N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS x_MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,N_FreightAmt,N_CreatedUser,D_CreatedDate,N_ExchangeRate,N_CurrencyID,X_CurrencyName,OrderDate,isnull(N_Processed,0) as N_Processed,N_PurchaseID,X_InvoiceNo,X_ProjectCode,X_ProjectName,N_ProjectID,N_FormID,N_Decimal,X_VendorName_Ar,N_POrderid from vw_InvMRNNo_Search where N_CompanyID=@CompanyID and [MRN No]=@GRNNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
             }
             if (poNo != null)
             {
@@ -221,17 +221,33 @@ namespace SmartxAPI.Controllers
                     }
 
                     SqlTransaction transaction = connection.BeginTransaction();
-                    if (dtGoodReceive.Columns.Contains("N_MRNID")) 
-                     {
-                    int nGRNID = myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_MRNID"].ToString());
-                    object objReturnProcessed = dLayer.ExecuteScalar("Select Isnull(N_MRNReturnID,0) from Inv_MRNReturn where N_CompanyID=" + nCompanyId + " and N_MRNID=" + nGRNID , connection, transaction);
-                    if (objReturnProcessed == null)
-                        objReturnProcessed = 0;
+                    if (dtGoodReceive.Columns.Contains("N_MRNID") && myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_MRNID"].ToString()) > 0) 
+                    {
+                        int nGRNID = myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_MRNID"].ToString());
+                        dtGoodReceive = myFunctions.AddNewColumnToDataTable(dtGoodReceive, "isTimesheetDone", typeof(bool), false);
 
-                    if (myFunctions.getIntVAL(objReturnProcessed.ToString()) != 0) {
+                        if (myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_FormID"].ToString()) == 1593)
+                        {
+                            string dataSql = "SELECT Inv_ServiceTimesheet.N_ServiceSheetID FROM Inv_MRN INNER JOIN Inv_ServiceTimesheet ON Inv_MRN.N_CompanyID = Inv_ServiceTimesheet.N_CompanyID AND "+
+                                "Inv_MRN.N_FnYearID = Inv_ServiceTimesheet.N_FnYearID AND Inv_MRN.N_POrderid = Inv_ServiceTimesheet.N_POID "+
+                                "WHERE Inv_MRN.N_CompanyID="+nCompanyId+" AND Inv_MRN.N_FnYearID="+nFnYearId+" AND Inv_MRN.N_POrderid="+myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_POrderid"].ToString())+" AND Inv_MRN.N_FormID=1593";
+
+                            DataTable timesheetData = dLayer.ExecuteDataTable(dataSql, Params, connection, transaction);
+                            if (timesheetData.Rows.Count > 0)
+                            {
+                                dtGoodReceive.Rows[0]["isTimesheetDone"] = true;
+                            }
+                        }
+
+                        object objReturnProcessed = dLayer.ExecuteScalar("select ISNULL(N_MRNID,0) AS N_MRNID from vw_MRNToMRNReturn where N_MRNID="+nGRNID+" and N_CompanyID="+nCompanyId+" and N_FnYearID="+nFnYearId+" group by N_MRNID having SUM(N_BalanceQty)=0" , connection, transaction);
+                        if (objReturnProcessed == null)
+                            objReturnProcessed = 0;
+
                         dtGoodReceive = myFunctions.AddNewColumnToDataTable(dtGoodReceive, "N_ReturnProcessed", typeof(int), 0);
-                        dtGoodReceive.Rows[0]["N_ReturnProcessed"] = 1;
-                    };
+
+                        if (myFunctions.getIntVAL(objReturnProcessed.ToString()) != 0) {
+                            dtGoodReceive.Rows[0]["N_ReturnProcessed"] = 1;
+                        };
                    }
                     transaction.Commit();
 

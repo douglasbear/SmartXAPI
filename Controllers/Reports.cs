@@ -67,14 +67,14 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
 
             string sqlCommandText = "select N_CompanyID,N_MenuID,X_MenuName,X_Caption,N_ParentMenuID,N_Order,N_HasChild ,B_Visible,B_Edit,B_Delete,B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,N_IsStartup,B_Show,B_ShowOnline,X_RouteName,B_WShow,X_Text from ("
-            + "Select vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild ,CAST(MAX(1 * vwUserMenus.B_Visible) AS BIT) as B_Visible, CAST(MAX(1 * vwUserMenus.B_Edit) AS BIT) as B_Edit, CAST(MAX(1 * vwUserMenus.B_Delete) AS BIT) as B_Delete,CAST(MAX(1 * vwUserMenus.B_Save) AS BIT) as B_Save, CAST(MAX(1 * vwUserMenus.B_View) AS BIT) as B_View, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID in ( " + myFunctions.GetUserCategoryList(User) + " ) and vwUserMenus.B_Show=1 inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId and vwUserMenus.N_CountryID is null group by vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text,vwUserMenus.N_CountryID "
+            + "Select vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild ,CAST(MAX(1 * vwUserMenus.B_Visible) AS BIT) as B_Visible, CAST(MAX(1 * vwUserMenus.B_Edit) AS BIT) as B_Edit, CAST(MAX(1 * vwUserMenus.B_Delete) AS BIT) as B_Delete,CAST(MAX(1 * vwUserMenus.B_Save) AS BIT) as B_Save, CAST(MAX(1 * vwUserMenus.B_View) AS BIT) as B_View, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID in ( " + myFunctions.GetUserCategoryList(User) + " ) and Sec_UserPrevileges.B_Visible=1 and vwUserMenus.B_Show=1 inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId and vwUserMenus.N_CountryID is null group by vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text,vwUserMenus.N_CountryID "
             + " union all "
-            + "Select vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild ,CAST(MAX(1 * vwUserMenus.B_Visible) AS BIT) as B_Visible, CAST(MAX(1 * vwUserMenus.B_Edit) AS BIT) as B_Edit, CAST(MAX(1 * vwUserMenus.B_Delete) AS BIT) as B_Delete,CAST(MAX(1 * vwUserMenus.B_Save) AS BIT) as B_Save, CAST(MAX(1 * vwUserMenus.B_View) AS BIT) as B_View, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID in ( " + myFunctions.GetUserCategoryList(User) + " ) and vwUserMenus.B_Show=1 inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId and isnull(vwUserMenus.N_CountryID,0)=@nCountryID group by vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text,vwUserMenus.N_CountryID "
+            + "Select vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild ,CAST(MAX(1 * vwUserMenus.B_Visible) AS BIT) as B_Visible, CAST(MAX(1 * vwUserMenus.B_Edit) AS BIT) as B_Edit, CAST(MAX(1 * vwUserMenus.B_Delete) AS BIT) as B_Delete,CAST(MAX(1 * vwUserMenus.B_Save) AS BIT) as B_Save, CAST(MAX(1 * vwUserMenus.B_View) AS BIT) as B_View, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID in ( " + myFunctions.GetUserCategoryList(User) + " ) and Sec_UserPrevileges.B_Visible=1 and vwUserMenus.B_Show=1 inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId and isnull(vwUserMenus.N_CountryID,0)=@nCountryID group by vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text,vwUserMenus.N_CountryID "
             + ") as Menus order by N_Order";
-
+            
             if (nMenuId == 1680)
                 sqlCommandText = "select N_CompanyID,N_MenuID,X_MenuName,X_Caption,N_ParentMenuID,N_Order,N_HasChild ,B_Visible,B_Edit,B_Delete,B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,N_IsStartup,B_Show,B_ShowOnline,X_RouteName,B_WShow,X_Text from ("
-                + "Select vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild ,CAST(MAX(1 * vwUserMenus.B_Visible) AS BIT) as B_Visible, CAST(MAX(1 * vwUserMenus.B_Edit) AS BIT) as B_Edit, CAST(MAX(1 * vwUserMenus.B_Delete) AS BIT) as B_Delete,CAST(MAX(1 * vwUserMenus.B_Save) AS BIT) as B_Save, CAST(MAX(1 * vwUserMenus.B_View) AS BIT) as B_View, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID in ( " + myFunctions.GetUserCategoryList(User) + " ) and vwUserMenus.B_Show=1 inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId and vwUserMenus.N_CountryID is null group by vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text,vwUserMenus.N_CountryID "
+                + "Select vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild ,CAST(MAX(1 * vwUserMenus.B_Visible) AS BIT) as B_Visible, CAST(MAX(1 * vwUserMenus.B_Edit) AS BIT) as B_Edit, CAST(MAX(1 * vwUserMenus.B_Delete) AS BIT) as B_Delete,CAST(MAX(1 * vwUserMenus.B_Save) AS BIT) as B_Save, CAST(MAX(1 * vwUserMenus.B_View) AS BIT) as B_View, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID in ( " + myFunctions.GetUserCategoryList(User) + " ) and Sec_UserPrevileges.B_Visible=1 and vwUserMenus.B_Show=1 inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId and vwUserMenus.N_CountryID is null group by vwUserMenus.N_CompanyID, vwUserMenus.N_MenuID, vwUserMenus.X_MenuName, vwUserMenus.X_Caption, vwUserMenus.N_ParentMenuID, vwUserMenus.N_Order, vwUserMenus.N_HasChild, vwUserMenus.X_ShortcutKey, vwUserMenus.X_CaptionAr, vwUserMenus.X_FormNameWithTag, vwUserMenus.N_IsStartup, vwUserMenus.B_Show, vwUserMenus.B_ShowOnline, vwUserMenus.X_RouteName, vwUserMenus.B_WShow,Lan_MultiLingual.X_Text,vwUserMenus.N_CountryID "
                + ") as Menus order by N_Order";
 
             Params.Add("@nMenuId", nMenuId == 0 ? 318 : nMenuId);
@@ -344,17 +344,17 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    if (nFormID == 64 || nFormID == 894 || nFormID == 372 || nFormID == 55 || nFormID == 504 || nFormID == 1601)
+                    if (nFormID == 64 || nFormID == 894 || nFormID == 372 || nFormID == 55 || nFormID == 504 || nFormID == 1601||nFormID == 1651)
                     {
                         //QR Code Generate For Invoice
                         object Total = "";
                         object TaxAmount = "";
                         object VatNumber = dLayer.ExecuteScalar("select x_taxregistrationNo from acc_company where N_CompanyID=@nCompanyId", QueryParams, connection, transaction);
                         object SalesDate = "";
-                        if (nFormID == 64 || nFormID == 894 || nFormID == 372 || nFormID == 1601)
+                        if (nFormID == 64 || nFormID == 894 || nFormID == 372 || nFormID == 1601 || nFormID == 1651)
                         {
-                            Total = dLayer.ExecuteScalar("select n_BillAmt+N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
-                            TaxAmount = dLayer.ExecuteScalar("select N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
+                            Total = dLayer.ExecuteScalar("select n_BillAmt + ISNULL(N_taxamtF,0) + isnull(N_Cessamtf,0) from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
+                            TaxAmount = dLayer.ExecuteScalar("select ISNULL(N_taxamtF,0) from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
                             SalesDate = dLayer.ExecuteScalar("select D_SalesDate from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
                         }
                         else if (nFormID == 504)
@@ -439,27 +439,7 @@ namespace SmartxAPI.Controllers
                         }
 
                     }
-
-                    // object nValue= dLayer.ExecuteScalar("Select count(N_Value) from Gen_Settings Where X_Description ='PrintOnlyAfterApprove' and N_CompanyID= " + nCompanyId + " and X_Group='" + nFormID.ToString() + "'"+ "and  N_UsercategoryID in (" + xUserCategoryList + ")"+"and N_Value=1", connection,transaction);
-                    // if(nValue==null){
-                    //    nValue=0;
-                    // }
-                    // if(myFunctions.getIntVAL(nValue.ToString())> 0){
-                    //    object dataSource = dLayer.ExecuteScalar("SELECT X_DataSource FROM Gen_PrintTemplates WHERE N_CompanyID =" + nCompanyId + " and N_FormID=" + nFormID + " and  N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
-                    //    object XSearchField1 = dLayer.ExecuteScalar("SELECT X_SearchField1 FROM Gen_PrintTemplates WHERE N_CompanyID =" + nCompanyId + " and N_FormID=" + nFormID + " and  N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
-                    //    object XSearchField2 = dLayer.ExecuteScalar("SELECT X_SearchField2 FROM Gen_PrintTemplates WHERE N_CompanyID =" + nCompanyId + " and N_FormID=" + nFormID + " and  N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
-
-                    //    string sql="select "+XSearchField1+","+XSearchField2+" from "+dataSource+" where N_CompanyID =" + nCompanyId +" and X_ReceiptNo='"+docNumber+"'";
-                    //    DataTable TransData = dLayer.ExecuteDataTable(sql, QueryParams, connection,transaction);
-                    //    DataRow TransRow = TransData.Rows[0];
-                    //    if((bool)TransRow["B_IsSaveDraft"] && TransRow["N_ProcStatus"] != null){
-                    //     return Ok(_api.Error(User, "approve"));
-                    //    }
-                    // }
-
-
-
-                       if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, nPreview, xrptname, n_LanguageID))
+                    if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, nPreview, xrptname, n_LanguageID))
                     {
 
                         var client = new HttpClient(handler);
@@ -816,12 +796,10 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Success(new SortedList() { { "FileName", ReportName } }));
 
                     }
-                
                     else
                     {
                         return Ok(_api.Error(User, "Report Generation Failed"));
                     }
-                 
                 }
             }
             catch (Exception e)

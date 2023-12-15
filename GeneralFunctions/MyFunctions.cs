@@ -476,10 +476,10 @@ namespace SmartxAPI.GeneralFunctions
             string xLastUserName = "", xEntryTime = "";
             int nTempStatusID = 0;
             object nActiveID = 0;
-
             int loggedInUserID = this.GetUserID(User);
-
             int GUserID = this.GetGlobalUserID(User);
+            int N_IsAdminUser = 0;
+            int N_EntryStatus = nTransStatus;
 
             /* Approval Response Set */
             SortedList Response = new SortedList();
@@ -523,6 +523,8 @@ namespace SmartxAPI.GeneralFunctions
 
             objUserCategory = objUserCategory != null ? objUserCategory : 0;
 
+            string[] categoryArray = objUserCategory.ToString().Split(',');
+
             using (SqlConnection olivCnn = new SqlConnection(masterDBConnectionString))
             {
                 olivCnn.Open();
@@ -530,6 +532,30 @@ namespace SmartxAPI.GeneralFunctions
 
             }
 
+            object objAdminUserCategoryID = dLayer.ExecuteScalar("select N_UserCategoryID from Sec_UserCategory where N_companyid=" + nCompanyID + "  and X_UserCategory='Admin Approval'", ApprovalParams, connection);
+            if(objAdminUserCategoryID!=null)
+            {
+                if(categoryArray.Select(int.Parse).Contains(this.getIntVAL(objAdminUserCategoryID.ToString())))
+                    N_IsAdminUser=1;
+            }
+
+            if(N_IsAdminUser==1 && nTransID==0)
+            {
+                Response["btnSaveText"] = "Save";
+                Response["btnDeleteText"] = "Delete";
+                Response["saveEnabled"] = true;
+                if (nTransID == 0)
+                { Response["deleteEnabled"] = false; }
+                else
+                { Response["deleteEnabled"] = true; }
+
+                Response["saveTag"] = 0;
+                Response["deleteTag"] = 0;
+                Response["isApprovalSystem"] = 0;
+                Response["ApprovalID"] = nApprovalID;
+                Response["isEditable"] = true;
+                return Response;
+            }
 
             if (nApprovalID == 0)
             {
@@ -788,16 +814,21 @@ namespace SmartxAPI.GeneralFunctions
 
                 object bPrintStatus=false;
                  if (nTransID == 0)
-                        bPrintStatus = dLayer.ExecuteScalar("SELECT Isnull(B_PrintStatus,0) from Gen_ApprovalCodesDetails where N_CompanyID=@nCompanyID and N_level=1 and N_ApprovalID=@nApprovalID", ApprovalParams, connection);
+                        bPrintStatus = dLayer.ExecuteScalar("SELECT B_PrintStatus from Gen_ApprovalCodesDetails where N_CompanyID=@nCompanyID and N_level=1 and N_ApprovalID=@nApprovalID", ApprovalParams, connection);
                 else
-                      bPrintStatus = dLayer.ExecuteScalar("Select Isnull(B_PrintStatus,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID", ApprovalParams, connection);
+                      bPrintStatus = dLayer.ExecuteScalar("Select B_PrintStatus from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID", ApprovalParams, connection);
 
                 if (bPrintStatus == null)
                     Response["printStatus"] = 0;
- 
+                
                 else
                 {
-                    Response["printStatus"] =this.getIntVAL(bPrintStatus.ToString());
+                    if(this.getBoolVAL(bPrintStatus.ToString())==true){
+                        Response["printStatus"]=true;
+                    }
+                    else{
+                      Response["printStatus"]=false;  
+                    }
                 }
 
                 if (nTransID > 0)
@@ -964,6 +995,18 @@ namespace SmartxAPI.GeneralFunctions
                             }
                         }
                     }
+                    if(N_IsAdminUser==1 && N_EntryStatus != 3 && N_EntryStatus != 4)
+                    {
+                        nTransStatus = 932;
+                        ApprovalParams["@nTransStatus"] = nTransStatus;
+                        ApprovalParams["@isEditable"] = 1;
+
+                        if(nNextApprovalLevel==0 || nNextApprovalLevel==null)
+                        {
+                            nNextApprovalLevel = nTransApprovalLevel+1;
+                            Response["nextApprovalLevel"] = nNextApprovalLevel;
+                        }
+                    }
                 }
                 else if (nTransID == 0)
                 {
@@ -1028,9 +1071,9 @@ namespace SmartxAPI.GeneralFunctions
                     }
                     else if ((nMaxLevel == nTransApprovalLevel || nSubmitter == nTransApprovalLevel) && nTransUserID != loggedInUserID)
                     {
-                        if (nTransStatus != 918 && nTransStatus != 919 && nTransStatus != 920)//&& nTransStatus != 929)
+                        if (nTransStatus != 918 && nTransStatus != 919 && nTransStatus != 920 )//&& nTransStatus != 929)
                         {
-                            if (nTransStatus == 913 || nTransStatus == 7 || nTransStatus == 929)
+                            if (nTransStatus == 913 || nTransStatus == 7 || nTransStatus == 929 || nTransStatus == 932) 
                             {
                                 nTransStatus = 916;
                                 ApprovalParams["@nTransStatus"] = nTransStatus;
@@ -1436,6 +1479,7 @@ namespace SmartxAPI.GeneralFunctions
             string Comments = "";
             int N_GetSignFromUser = 0;
             string body = "", Subject = "", Type = "";
+            int N_IsAdminUser=0;
             DataColumnCollection columns = Approvals.Columns;
             if (columns.Contains("comments"))
             {
@@ -1485,7 +1529,24 @@ namespace SmartxAPI.GeneralFunctions
 
             if (N_IsApprovalSystem == 1)
             {
-                dLayer.ExecuteNonQuery("SP_Gen_ApprovalCodesTrans @nCompanyID,@nFormID,@nApprovalUserID,@nTransID,@nApprovalLevelID,@nProcStatusID,@nApprovalID,@nGroupID,@nFnYearID,@xAction,@nEmpID,@xDepLevel,@dTransDate,0,0,@nTransOwnUserID", LogParams, connection, transaction);
+                object objUserCategory = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User where N_CompanyID=" + N_CompanyID + " and N_UserID=" + N_ApprovalUserID, LogParams, connection,transaction);
+
+                objUserCategory = objUserCategory != null ? objUserCategory : 0;
+
+                string[] categoryArray = objUserCategory.ToString().Split(',');
+
+                object objAdminUserCategoryID = dLayer.ExecuteScalar("select N_UserCategoryID from Sec_UserCategory where N_companyid=" + N_CompanyID + "  and X_UserCategory='Admin Approval'", LogParams, connection,transaction);
+                if(objAdminUserCategoryID!=null)
+                {
+                    if(categoryArray.Select(int.Parse).Contains(this.getIntVAL(objAdminUserCategoryID.ToString())))
+                        N_IsAdminUser=1;
+                }
+
+                if(N_IsAdminUser==1 && N_ApprovalLevelID==1)return 0;
+
+                LogParams.Add("@N_IsAdminUser", N_IsAdminUser);
+
+                dLayer.ExecuteNonQuery("SP_Gen_ApprovalCodesTrans @nCompanyID,@nFormID,@nApprovalUserID,@nTransID,@nApprovalLevelID,@nProcStatusID,@nApprovalID,@nGroupID,@nFnYearID,@xAction,@nEmpID,@xDepLevel,@dTransDate,0,0,@nTransOwnUserID,@N_IsAdminUser", LogParams, connection, transaction);
 
                 if (N_ProcStatusID == 0 || N_ProcStatusID == 6)
                 {
@@ -1496,6 +1557,11 @@ namespace SmartxAPI.GeneralFunctions
                 NxtUser = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=0 and N_ActionTypeID<>110", LogParams, connection, transaction);if (NxtUser != null)
                 N_NxtUserID = this.getIntVAL(NxtUser.ToString());
 
+                string TableName = dLayer.ExecuteScalar("select X_ScreenTable from vw_ScreenTables where N_FormID=@nFormID", LogParams, connection, transaction).ToString();
+                string TableID = dLayer.ExecuteScalar("select X_IDName from vw_ScreenTables where N_FormID=@nFormID", LogParams, connection, transaction).ToString();
+                
+                object Branch = dLayer.ExecuteScalar("select N_BranchID from "+TableName+" where N_CompanyID=@nCompanyID and "+TableID+"=@nTransID", LogParams, connection, transaction);
+
                 LogParams.Add("@xTransType", X_TransType);
                 LogParams.Add("@nApprovalUserCatID", N_ApprovalUserCatID);
                 LogParams.Add("@xSystemName", "WebRequest");
@@ -1504,8 +1570,9 @@ namespace SmartxAPI.GeneralFunctions
                 LogParams.Add("@xPartyName", PartyName);
                 LogParams.Add("@nNxtUserID", N_NxtUserID);
                 LogParams.Add("@N_GetUserSign", N_GetSignFromUser);
+                LogParams.Add("@N_BranchID", this.getIntVAL(Branch.ToString()));
                 // LogParams.Add("@I_Sign", I_Sign);
-                dLayer.ExecuteNonQuery("SP_Log_Approval_Status @nCompanyID,@nFnYearID,@xTransType,@nTransID,@nFormID,@nApprovalUserID,@nApprovalUserCatID,@xAction,@xSystemName,@xTransCode,@dTransDate,@nApprovalLevelID,@nApprovalUserID,@nProcStatusID,@xComments,@xPartyName,@nNxtUserID,@N_GetUserSign", LogParams, connection, transaction);//,@I_Sign
+                dLayer.ExecuteNonQuery("SP_Log_Approval_Status @nCompanyID,@nFnYearID,@xTransType,@nTransID,@nFormID,@nApprovalUserID,@nApprovalUserCatID,@xAction,@xSystemName,@xTransCode,@dTransDate,@nApprovalLevelID,@nApprovalUserID,@nProcStatusID,@xComments,@xPartyName,@nNxtUserID,@N_BranchID,@N_GetUserSign", LogParams, connection, transaction);//,@I_Sign
 
                 int MaxActionID = this.getIntVAL(dLayer.ExecuteScalar("SELECT MAX(N_ActionID) as N_MaxActionID from Log_ApprovalProcess where N_CompanyID=@nCompanyID ", LogParams, connection, transaction).ToString());
 
@@ -1558,8 +1625,8 @@ namespace SmartxAPI.GeneralFunctions
                 {
                     if (this.getIntVAL(Count.ToString()) == 0)
                     {
-                        string TableName = dLayer.ExecuteScalar("select X_ScreenTable from vw_ScreenTables where N_FormID=@nFormID", NewParam, connection, transaction).ToString();
-                        string TableID = dLayer.ExecuteScalar("select X_IDName from vw_ScreenTables where N_FormID=@nFormID", NewParam, connection, transaction).ToString();
+                        // string TableName = dLayer.ExecuteScalar("select X_ScreenTable from vw_ScreenTables where N_FormID=@nFormID", NewParam, connection, transaction).ToString();
+                        // string TableID = dLayer.ExecuteScalar("select X_IDName from vw_ScreenTables where N_FormID=@nFormID", NewParam, connection, transaction).ToString();
 
                         dLayer.ExecuteScalar("update " + TableName + " set B_IssaveDraft=0 where " + TableID + "=@nTransID and N_CompanyID=@nCompanyID", NewParam, connection, transaction);
                         if(N_FormID==1309)
@@ -1609,8 +1676,8 @@ namespace SmartxAPI.GeneralFunctions
                 {
                     for (int i = 0; i < dtNext.Rows.Count; i++)
                     {
-                        int N_ActionType = this.getIntVAL(dtNext.Rows[0]["N_ActionTypeID"].ToString());
-                        int N_NextUser = this.getIntVAL(dtNext.Rows[0]["N_UserID"].ToString());
+                        int N_ActionType = this.getIntVAL(dtNext.Rows[i]["N_ActionTypeID"].ToString());
+                        int N_NextUser = this.getIntVAL(dtNext.Rows[i]["N_UserID"].ToString());
 
                         if (N_ActionType == 109 || N_ActionType == 111)
                             Type = "approve";
@@ -3164,4 +3231,4 @@ namespace SmartxAPI.GeneralFunctions
         public bool LogScreenActivitys(int nFnYearID, int nTransID, string xTransCode, int nFormID, string xAction, string ipAddress,string X_Description, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
 public bool QryToExcel(ClaimsPrincipal User, string _fillquery, string _filename,SortedList _params, IDataAccessLayer dLayer, SqlConnection connection);
     }
-}
+} 

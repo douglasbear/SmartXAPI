@@ -628,7 +628,10 @@ namespace SmartxAPI.Controllers
                         }
 
                         string DetailSql = "";
-                        DetailSql = "select *,0 as N_MaterialID,0 as N_DisplayQty,0 as N_TaskID  from vw_SalesOrderDetailsToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID union select * from vw_ServiceDetailsItems_Sales where N_CompanyId=@nCompanyID and N_ServiceID in (select N_ServiceID from Inv_SalesOrderDetails where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID )";
+                        DetailSql = "select X_ItemName, X_ItemName_a, 0 AS n_SalesId, d_SalesDate, N_BillAmt, N_DiscountAmt, N_FreightAmt, N_CashReceived, N_UserID, 0 AS n_SalesDetailsID, N_Qty, N_Sprice, X_ItemCode, N_CompanyId,N_CustomerID, X_CustomerName, X_Address, N_MainQty, N_MainSPrice, N_ItemID, X_CustomerCode, X_PhoneNo1, X_PhoneNo2, N_SalesOrderId, N_ItemUnitID, X_ItemUnit, X_BaseUnit, N_UnitQty, N_MinimumMargin,N_QtyDisplay, X_ItemRemarks,"+
+                        "+N_ClassID, B_IsIMEI, X_FreeDescription, N_Cost,  unitCost, N_LocationID, N_BranchID,  d_ExpiryDate, N_QuotationID, N_SPriceTypeID, X_QuotationNo,N_TaxCategoryID1, N_TaxPercentage1, N_TaxAmt1, N_TaxCategoryID2, N_TaxPercentage2, N_TaxAmt2, X_DisplayName, N_PkeyID, X_DisplayName2, Expr1, n_TaxPerc1,N_TaxPercentage2 AS n_TaxPerc2, N_SalesOrderDetailsID, X_CustomerName_Ar, X_OrderNo,  n_Stock, n_StockOnHand, n_LPrice,"+
+                        "+dbo.SP_SellingPrice(N_ItemID, N_CompanyId) AS n_UnitSPrice, X_PartNo, n_ItemDiscAmt, N_ItemDiscAmtF, N_CashReceivedF, N_MainDiscountF, N_OthTaxAmtF, N_TaxAmtF, N_TaxAmt1F, N_SPriceF AS N_SpriceF, N_TaxAmt2F, N_CostF, N_BillAmtF, N_MainDiscount, N_DiscountAmtF, N_MainSpriceF, N_UnitAddlAmtF, N_AddlAmtF,N_FreightAmtF, N_MainProjectID, X_ProjectName, N_ProjectID, N_Amount, N_Amount2, N_CategoryID, X_Category, N_AWTSPrice,"+
+                        "+ N_AWTSPriceF, N_AWTDisc, N_AWTDiscF,N_SalesUnitQty ,N_MainItemID,B_HideInPrint,N_ServiceID,0 as N_MaterialID,0 as N_DisplayQty,0 as N_TaskID  from vw_SalesOrderDetailsToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID union select * from vw_ServiceDetailsItems_Sales where N_CompanyId=@nCompanyID and N_ServiceID in (select N_ServiceID from Inv_SalesOrderDetails where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID )";
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
                         dsSalesInvoice.Tables.Add(MasterTable);
@@ -660,6 +663,52 @@ namespace SmartxAPI.Controllers
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
 
+                         DataTable dtTermsDetails = dLayer.ExecuteDataTable("Select * from vw_Termsdetails where N_CompanyId=" + nCompanyId + " and N_ReferanceID=" + nSalesOrderID+" order by n_termsid", QueryParamsList, Con);
+
+                    if (dtTermsDetails.Rows.Count > 0)
+                    {
+                        string Termstype = "";
+                        int TermsID = 0;
+                        object SeqID ="";
+                        foreach (DataRow dr in dtTermsDetails.Rows)
+                        {
+                            Termstype = dr["x_typename"].ToString();
+                            TermsID = myFunctions.getIntVAL(dr["N_TermsID"].ToString());
+                            object ProcTermsID = dLayer.ExecuteScalar("Select n_termsid from inv_salesdetails where N_CompanyId=" + nCompanyId + " and N_SalesOrderId=" + nSalesOrderID + " and N_termsID=" + TermsID, QueryParamsList, Con);
+                            if (ProcTermsID == null)
+                                break;
+                        }
+
+                       
+                        if (Termstype == "Invoice")
+                        {
+                            SeqID = dLayer.ExecuteScalar("Select n_sequenceID from vw_Termsdetails where N_CompanyId=" + nCompanyId + " and N_ReferanceID=" + nSalesOrderID + " and X_TypeName='" + Termstype + "' and N_TermsID="+TermsID, QueryParamsList, Con);
+                            DetailSql = "select *,'Invoice' as x_typename,0 as n_sequenceid,0 as N_TermsID  from vw_SalesOrderDetailsToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID union select * from vw_TermsSalesOrderDetailsToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID and n_sequenceid='" + SeqID + "' order by n_sequenceid";
+                        }
+                        else
+                            DetailSql = "select * from vw_TermsSalesOrderDetailsToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID and x_typename='" + Termstype + "'";
+                        DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+                        foreach (DataRow dr in DetailTable.Rows)
+                        {
+                            object obj = dLayer.ExecuteScalar("select N_Percentage from vw_Termsdetails where N_CompanyID=@nCompanyID and N_ReferanceID=@nOrderID and n_sequenceid="+SeqID + " and x_typename='Invoice'", QueryParamsList, Con);
+                            object Terms = dLayer.ExecuteScalar("select X_Terms from vw_Termsdetails where N_CompanyID=@nCompanyID and N_ReferanceID=@nOrderID and  n_sequenceid="+SeqID+ " and x_typename='Invoice'", QueryParamsList, Con);
+                            object ID = dLayer.ExecuteScalar("select N_TermsID from vw_Termsdetails where N_CompanyID=@nCompanyID and N_ReferanceID=@nOrderID and  n_sequenceid="+SeqID+ " and x_typename='Invoice'", QueryParamsList, Con);
+                            if (obj != null && dr["x_typename"].ToString() == "Invoice")
+                            {
+                                dr["n_SpriceF"] = (myFunctions.getVAL(dr["n_SpriceF"].ToString()) * myFunctions.getVAL(obj.ToString()) / 100).ToString();
+                                dr["n_ItemDiscAmtF"] = (myFunctions.getVAL(dr["n_ItemDiscAmtF"].ToString()) * myFunctions.getVAL(obj.ToString()) / 100).ToString();
+                                
+                                if (Terms != null)
+                                {
+                                    dr["x_FreeDescription"] = Terms.ToString();
+                                    dr["N_TermsID"] = ID.ToString();
+                                }
+                            }
+
+                        }
+                        DetailTable = _api.Format(DetailTable, "Details");
+                    }
+                      
                         //Eye Optics
                         string sqlPrescription1 = "select * from Inv_Prescription where N_SalesOrderID=@nOrderID";
                         DataTable Prescription = dLayer.ExecuteDataTable(sqlPrescription1, QueryParamsList, Con);
@@ -798,7 +847,7 @@ namespace SmartxAPI.Controllers
                         if (enableDayWise)
                             DetailSql = "select * from vw_ServiceTimesheetDetailsToSalesDaywise where N_CompanyId=@nCompanyID and N_ServiceSheetID in ( " + xServiceSheetID + " )";
                         else
-                            DetailSql = "select * from vw_ServiceTimesheetDetailsToSales where N_CompanyId=@nCompanyID and N_ServiceSheetID in ( " + xServiceSheetID + " )";
+                            DetailSql = "select * from vw_ServiceTimesheetDetailsToSales where N_CompanyId=@nCompanyID and N_ServiceSheetID in ( " + xServiceSheetID + " ) order by N_SalesOrderDetailsID desc";
 
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
@@ -2248,6 +2297,7 @@ namespace SmartxAPI.Controllers
                             {
                                 dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails_Segments where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='SALES' AND N_AccTransID  in (select N_AccTransID from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='SALES' AND X_VoucherNo='"+InvoiceNO+"')", QueryParams, connection, transaction);
                                 dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='SALES' AND X_VoucherNo='"+InvoiceNO+"'", QueryParams, connection, transaction);
+                                result.Add("InvoiceNO",InvoiceNO);
                             }
 
                             if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator", "X_UserCategory", dLayer, connection, transaction))
@@ -2303,7 +2353,8 @@ namespace SmartxAPI.Controllers
                                return Ok(_api.Success("Rental Sales Invoice " + status + " Successfully")); 
                             }
                             else
-                                return Ok(_api.Success("Sales Invoice " + status + " Successfully"));
+                                result.Add("ButtonTag",ButtonTag);
+                                return Ok(_api.Success(result,"Sales Invoice " + status + " Successfully"));
                         }
                         else
                         {

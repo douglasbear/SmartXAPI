@@ -53,9 +53,9 @@ namespace SmartxAPI.Controllers
                     var values = MasterTable.Rows[0]["X_MainCategoryCode"].ToString();
                     if (values == "@Auto")
                     {
-                        Params.Add("N_CompanyID", MasterTable.Rows[0]["N_CompanyID"].ToString());
-                        Params.Add("N_FnYearID", N_FnYearID);
-                        // Params.Add("N_FormID", 73);
+                        Params.Add("N_CompanyID", nCompanyID);
+                        Params.Add("N_YearID", N_FnYearID);
+                        Params.Add("N_FormID", 1809);
                         MainCategoryCode = dLayer.GetAutoNumber("Inv_MainCategory", "X_MainCategoryCode", Params, connection, transaction);
                         xButtonAction = "update";
 
@@ -69,6 +69,7 @@ namespace SmartxAPI.Controllers
                     }
                     MasterTable.Columns.Remove("N_FnYearID");
                     string X_MainCategory = MasterTable.Rows[0]["X_MainCategory"].ToString();
+                     N_MainCategoryID = dLayer.SaveData("Inv_MainCategory", "N_MainCategoryID", MasterTable, connection, transaction);
                     if (N_MainCategoryID <= 0)
                     {
                         transaction.Rollback();
@@ -170,7 +171,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select X_MainCategoryCode from vw_InvItemCategory Where N_CompanyID=@p1 and n_MainCategoryID=@p2 Order By N_MainCategoryID";
+            string sqlCommandText = "select * from VW_MainCategory_List_Cloud Where N_CompanyID=@p1 and N_MainCategoryID=@p2";
 
             Params.Add("@p1", myFunctions.GetCompanyID(User));
             Params.Add("@p2", nMainCategoryID);

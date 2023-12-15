@@ -390,7 +390,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         }
                     }
-                    TransactionTable = myFunctions.AddNewColumnToDataTable(TransactionTable, "n_Qty", typeof(int), 0);
+                    TransactionTable = myFunctions.AddNewColumnToDataTable(TransactionTable, "n_Qty", typeof(float), 0.0);
 
                     N_AssetInventoryID = dLayer.SaveData("Ass_PurchaseMaster", "N_AssetInventoryID", MasterTable, connection, transaction);
                     if (N_AssetInventoryID <= 0)
@@ -418,9 +418,10 @@ namespace SmartxAPI.Controllers
                     }
 
                     AssMasterTable = myFunctions.AddNewColumnToDataTable(AssMasterTable, "n_AssItemName", typeof(string), "");
-                    AssMasterTable = myFunctions.AddNewColumnToDataTable(AssMasterTable, "n_Qty", typeof(int), 0);
+                    AssMasterTable = myFunctions.AddNewColumnToDataTable(AssMasterTable, "n_Qty", typeof(float), 0.0);
                     AssMasterTable = myFunctions.AddNewColumnToDataTable(AssMasterTable, "x_Author",  typeof(string), "");
                     AssMasterTable = myFunctions.AddNewColumnToDataTable(AssMasterTable, "n_FormID", typeof(int), 0);
+                     AssMasterTable = myFunctions.AddNewColumnToDataTable(AssMasterTable, "x_Notes",  typeof(string), "");
                     for (int j = 0; j < AssMasterTable.Rows.Count; j++)
                     {
                         AssMasterTable.Rows[j]["n_AssItemName"] = AssMasterTable.Rows[j]["x_AssItemName"];
@@ -482,7 +483,7 @@ namespace SmartxAPI.Controllers
                             int nCount = DetailTable.Rows.Count;
                             for (int j = 0; j < nCount; j++)
                             {
-                                int Qty = myFunctions.getIntVAL(DetailTable.Rows[j]["N_PurchaseQty"].ToString());
+                                float Qty = myFunctions.getFloatVAL(DetailTable.Rows[j]["N_PurchaseQty"].ToString());
                                  nAssetType = myFunctions.getIntVAL(DetailTable.Rows[j]["n_AssetType"].ToString());
                                 
 
@@ -619,6 +620,7 @@ namespace SmartxAPI.Controllers
                                 AssMasterTableNew.Rows[j]["X_ItemCode"] = X_ItemCode;
                                 AssMasterTableNew.Rows[j]["N_ItemCodeId"] = N_ItemCodeId;
                                 AssMasterTableNew.Rows[j]["X_Author"] = DetailTableNew.Rows[j]["X_Author"];
+                                AssMasterTableNew.Rows[j]["X_Notes"] = DetailTableNew.Rows[j]["X_Description"];
                                 if(FormID==1755){
                                   AssMasterTableNew.Rows[j]["N_FormID"]=1761;
                                 }

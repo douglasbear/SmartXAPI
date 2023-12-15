@@ -218,6 +218,8 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable, Items, TaskMaster,TaskStatus,Activity, Participants,Materials;
                 MasterTable = ds.Tables["master"];
+                SortedList Result = new SortedList();
+                string x_OpportunityCode = MasterTable.Rows[0]["x_OpportunityCode"].ToString();
                 Items = ds.Tables["Items"];
                 Materials = ds.Tables["Materials"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
@@ -378,7 +380,7 @@ namespace SmartxAPI.Controllers
                                             }
                                             if (j == 0)
                                             {
-                                                string qry = "Select " + nCompanyID + " as N_CompanyID," + 0 + " as N_TaskStatusID," + N_TaskID + " as N_TaskID,"+myFunctions.GetUserID(User)+" as N_AssigneeID,"+myFunctions.GetUserID(User)+" as N_SubmitterID ,"+myFunctions.GetUserID(User)+" as  N_CreaterID,'" + DateTime.Today + "' as D_EntryDate,'" + "" + "' as X_Notes ," + 4 + " as N_Status ," + 100 + " as N_WorkPercentage";
+                                                string qry = "Select " + nCompanyID + " as N_CompanyID," + 0 + " as N_TaskStatusID," + N_TaskID + " as N_TaskID,"+myFunctions.GetUserID(User)+" as N_AssigneeID,"+myFunctions.GetUserID(User)+" as N_SubmitterID ,"+myFunctions.GetUserID(User)+" as  N_CreaterID,'" + DateTime.Today + "' as D_EntryDate,'" + "" + "' as X_Notes ," + 1 + " as N_Status";
                                                 DataTable DetailTable = dLayer.ExecuteDataTable(qry, Params, connection, transaction);
                                                 int nID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", DetailTable, connection, transaction);
                                             }
@@ -458,7 +460,7 @@ namespace SmartxAPI.Controllers
 
                         //     }
 
-                        // }                   
+                        // }   
 
                         dLayer.SaveData("Crm_Products", "N_CrmItemID", Items, connection, transaction);
 
@@ -467,9 +469,14 @@ namespace SmartxAPI.Controllers
                             Materials.Rows[j]["N_OpportunityID"] = nOpportunityID;
                         }
                         int N_CrmMaterialID = dLayer.SaveData("Crm_Materials", "N_CrmMaterialID", Materials, connection, transaction);
+                        
 
                         transaction.Commit();
-                        return Ok(api.Success("Oppurtunity Created"));
+                             Result.Add("x_OpportunityCode",  MasterTable.Rows[0]["x_OpportunityCode"] );
+                        //    Result.Add("x_Msg", "Oppurtunity Created");
+                           return Ok(api.Success(Result, "Oppurtunity Created"));
+                        //   return Result;
+                        // return Ok(api.Success("Oppurtunity Created"));
                     }
                 }
             }
@@ -478,6 +485,7 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, ex));
             }
         }
+
         [HttpGet("stageupdate")]
         public ActionResult StageUpdate(string xstage, int nOpportunityID)
         {
@@ -580,6 +588,39 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, ex));
             }
         }
+
+                 [HttpGet("opportunityupdate")]
+        public ActionResult UpdateData(int nOpportunityID , int nClosingStatusID)
+        {
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            Params.Add("@p1", nCompanyId);
+            try
+            {
+          
+            using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    object n_Status = dLayer.ExecuteScalar("select N_StatusID from Inv_QuotationclosingStatus where n_companyid=1 and N_TypeID=308" , Params, connection);
+                    object nStatus=dLayer.ExecuteScalar("select N_StatusID from Inv_QuotationclosingStatus where n_companyid=1 and N_TypeID=309" , Params, connection);
+                    
+                    if(nClosingStatusID!=1){
+                dLayer.ExecuteNonQuery("Update CRM_Opportunity set X_ClosingDescription='Lose', N_ClosingStatusID="+ nStatus +" where N_OpportunityID="+nOpportunityID+" and n_CompanyId="+nCompanyId, Params, connection);
+                    }
+                   else dLayer.ExecuteNonQuery("Update CRM_Opportunity set X_ClosingDescription='WIN', N_ClosingStatusID="+ n_Status +" where N_OpportunityID="+nOpportunityID+" and n_CompanyId="+nCompanyId, Params, connection);
+                    }
+                        return Ok(api.Success("Successfully saved"));
+
+
+            }
+            
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+
+            }
+        }
+        
       
     }
 }

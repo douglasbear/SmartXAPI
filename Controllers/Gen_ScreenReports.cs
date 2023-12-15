@@ -156,7 +156,8 @@ namespace SmartxAPI.Controllers
                         if (isMyTeam == true)
                         {
                             object patternCode = dLayer.ExecuteScalar("select X_Pattern From Sec_UserHierarchy where N_CompanyID =@nCompanyID and N_UserID =@nUserID", TviewParams, connection);
-                            UserPattern = patternCode.ToString();
+                            if(patternCode!=null)
+                                UserPattern = patternCode.ToString();
                         }
                         else
                         {

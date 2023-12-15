@@ -245,6 +245,7 @@ namespace SmartxAPI.Controllers
                 if (ds.Tables.Contains("detailsImport"))
                     B_isImport = true;
                 SortedList Params = new SortedList();
+                SortedList Result = new SortedList();
 
                 DataTable Approvals;
                 Approvals = ds.Tables["approval"];
@@ -295,6 +296,7 @@ namespace SmartxAPI.Controllers
                         CostCenterTable.Columns.Remove("N_FormID");
                     }
                  }
+                 int N_ProcStatus = myFunctions.getIntVAL(masterRow["n_ProcStatus"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -367,6 +369,7 @@ namespace SmartxAPI.Controllers
                         //myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_SalesID, objCustName.ToString().Trim(), objCustCode.ToString(), N_CustomerID, "Customer Document", User, connection, transaction);
 
                         N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Acc_VoucherMaster where N_VoucherID=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, connection, transaction).ToString());
+                        N_ProcStatus = myFunctions.getIntVAL(dLayer.ExecuteScalar("select n_ProcStatus from Acc_VoucherMaster where N_VoucherID=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, connection, transaction).ToString());
                         if (N_SaveDraft == 0)
                         {
                             SortedList PostingParams = new SortedList();
@@ -380,7 +383,12 @@ namespace SmartxAPI.Controllers
 
                         //myFunctions.SendApprovalMail(N_NextApproverID, nFormID, N_PkeyID, xTransType, xVoucherNo, dLayer, connection, transaction, User);
                         transaction.Commit();
-                        return Ok(api.Success("Voucher Approved " + "-" + xVoucherNo));
+                         
+                       Result.Add("b_IsSaveDraft", N_SaveDraft);
+                       Result.Add("N_ProcStatus", N_ProcStatus);
+                       Result.Add("n_VoucherID", N_VoucherID);
+                       Result.Add("x_POrderNo", xVoucherNo);
+                       return Ok(api.Success(Result, "Voucher Approved " + "-" + xVoucherNo));
                     }
 
              
@@ -436,6 +444,7 @@ namespace SmartxAPI.Controllers
 
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+                    // MasterTable.Rows[0]["N_userID"] = myFunctions.GetUserID(User);
 
                     N_VoucherID = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId", DupCriteria, "", MasterTable, connection, transaction);
                     if (N_VoucherID > 0)
@@ -443,6 +452,7 @@ namespace SmartxAPI.Controllers
 
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, myFunctions.getIntVAL(nFnYearId.ToString()), xTransType, N_VoucherID, xVoucherNo, 1, "", 0, "",0, User, dLayer, connection, transaction);
                         N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Acc_VoucherMaster where N_VoucherId=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, connection, transaction).ToString());
+                        N_ProcStatus = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ProcStatus from Acc_VoucherMaster where N_VoucherId=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, connection, transaction).ToString());
 
                         SortedList LogParams = new SortedList();
                         LogParams.Add("N_CompanyID", nCompanyId);
@@ -608,10 +618,11 @@ namespace SmartxAPI.Controllers
                     //return Ok(api.Success("Data Saved"));
                     // return Ok(api.Success("Data Saved" + ":" + xVoucherNo));
                     transaction.Commit();
-                    SortedList Result = new SortedList();
                     Result.Add("n_VoucherID", N_VoucherID);
                     Result.Add("x_POrderNo", xVoucherNo);
                     Result.Add("x_TransType", xTransType);
+                    Result.Add("b_IsSaveDraft", N_SaveDraft);
+                    Result.Add("N_ProcStatus", N_ProcStatus);
                     return Ok(api.Success(Result, "Data Saved"));
                 }
             }

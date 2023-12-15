@@ -440,7 +440,7 @@ namespace SmartxAPI.Controllers
                                 SalesInvParam.Add("N_UserID", myFunctions.GetUserID(User));
                                 SalesInvParam.Add("N_BranchID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_BranchID"].ToString()));
                                 SalesInvParam.Add("N_LocationID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_LocationID"].ToString()));
-                              //  dLayer.ExecuteNonQueryPro("SP_SalesInvoiceImport", SalesInvParam, connection, transaction);
+                                dLayer.ExecuteNonQueryPro("SP_SalesInvoiceImport", SalesInvParam, connection, transaction);
                             }
                          else
                              {

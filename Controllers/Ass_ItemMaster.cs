@@ -265,6 +265,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nItemID = 0;
+            int nRentalItemID = 0;
             string sqlCommandText = "";
             string ExpirysqlCommand = "";
             string HistorysqlCommand = "";
@@ -294,6 +295,7 @@ namespace SmartxAPI.Controllers
 
                     if (MasterTable.Rows.Count == 0) { return Ok(api.Warning("No data found")); }
                     nItemID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_itemID"].ToString());
+                    nRentalItemID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RentalItemID"].ToString());
 
                     HistorysqlCommand = "Select D_StartDate, D_EndDate ,X_Description , X_RefNo ,N_Amount,X_Branch,N_BookValue,X_CostcentreName,X_ProjectName,ProjectPeriod,N_TypeOrder,X_EmpName,Dep_Amount from vw_Ass_ItemHistory where N_ItemID=@p4 and N_CompanyID=@p1 order by D_EndDate,N_TypeOrder";
                     Params.Add("@p4", nItemID);
@@ -333,6 +335,27 @@ namespace SmartxAPI.Controllers
                     DeprTable = dLayer.ExecuteDataTable(DeprsqlCommand, Params, connection);
 
                     DeprTable = api.Format(DeprTable, "Depreciation");
+
+                    if (nRentalItemID > 0)
+                    {
+                        string rentalQuotationSql = "SELECT COUNT(*) FROM Inv_SalesQuotation INNER JOIN Inv_SalesQuotationDetails ON Inv_SalesQuotation.N_QuotationId = Inv_SalesQuotationDetails.N_QuotationID AND Inv_SalesQuotation.N_CompanyId = Inv_SalesQuotationDetails.N_CompanyID LEFT OUTER JOIN "+
+                            "Ass_AssetMaster ON Inv_SalesQuotationDetails.N_ItemID = Ass_AssetMaster.N_RentalItemID AND Inv_SalesQuotationDetails.N_CompanyID = Ass_AssetMaster.N_CompanyID "+
+                            "WHERE Inv_SalesQuotation.N_CompanyId="+nCompanyId+" AND Inv_SalesQuotation.N_FnYearId="+nFnYearID+" AND Inv_SalesQuotationDetails.N_ItemID="+nRentalItemID+" AND Inv_SalesQuotation.N_FormID=1816 AND ISNULL(Ass_AssetMaster.N_ItemID,0)="+nItemID+"";
+                        object isUsedinQuotation = dLayer.ExecuteScalar(rentalQuotationSql, Params, connection);
+
+                        string jobOrderSql = "SELECT COUNT(*) FROM Inv_SalesOrder INNER JOIN Inv_SalesOrderDetails ON Inv_SalesOrder.N_SalesOrderId = Inv_SalesOrderDetails.N_SalesOrderID AND Inv_SalesOrder.N_CompanyId = Inv_SalesOrderDetails.N_CompanyID "+
+                            "LEFT OUTER JOIN Ass_AssetMaster ON Inv_SalesOrderDetails.N_CompanyID = Ass_AssetMaster.N_CompanyID AND Inv_SalesOrderDetails.N_ItemID = Ass_AssetMaster.N_RentalItemID "+
+                            "WHERE Inv_SalesOrder.N_CompanyId="+nCompanyId+" AND Inv_SalesOrder.N_FnYearId="+nFnYearID+" AND Inv_SalesOrderDetails.N_ItemID="+nRentalItemID+" AND Inv_SalesOrder.N_FormID=1571 AND ISNULL(Ass_AssetMaster.N_ItemID,0)="+nItemID+"";
+                        object isUsedinJO = dLayer.ExecuteScalar(jobOrderSql, Params, connection);
+
+                        string rentalDelSql = "SELECT COUNT(*) FROM Inv_DeliveryNote INNER JOIN Inv_DeliveryNoteDetails ON Inv_DeliveryNote.N_DeliveryNoteId = Inv_DeliveryNoteDetails.N_DeliveryNoteID AND Inv_DeliveryNote.N_CompanyId = Inv_DeliveryNoteDetails.N_CompanyID "+
+                            "LEFT OUTER JOIN Ass_AssetMaster ON Inv_DeliveryNoteDetails.N_CompanyID = Ass_AssetMaster.N_CompanyID AND Inv_DeliveryNoteDetails.N_ItemID = Ass_AssetMaster.N_RentalItemID "+
+                            "WHERE Inv_DeliveryNote.N_CompanyId="+nCompanyId+" AND Inv_DeliveryNote.N_FnYearId="+nFnYearID+" AND Inv_DeliveryNoteDetails.N_ItemID="+nRentalItemID+" AND Inv_DeliveryNote.N_FormID=1572 AND Ass_AssetMaster.N_ItemID="+nItemID+"";
+                        object isUsedinRentalDel = dLayer.ExecuteScalar(rentalDelSql, Params, connection);
+
+                        if (myFunctions.getIntVAL(isUsedinQuotation.ToString()) != 0 || myFunctions.getIntVAL(isUsedinJO.ToString()) != 0 || myFunctions.getIntVAL(isUsedinRentalDel.ToString()) != 0 )
+                            myFunctions.AddNewColumnToDataTable(MasterTable, "b_IsItemUsed", typeof(bool), 1);
+                    }
                 }
 
                 if (MasterTable.Rows.Count == 0)

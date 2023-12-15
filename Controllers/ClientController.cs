@@ -598,8 +598,9 @@ namespace SmartxAPI.Controllers
                     int sumValue= freeUservalue + settingsUservalue;    
                     dLayer.ExecuteNonQuery("Update GenSettings Set N_Value =  "+sumValue+" where  N_ClientID="+n_ClientID+" and X_Description='USER LIMIT'" , connection, transaction);
                     }
-
-                    dLayer.DeleteData("ClientApps", "n_AppID", n_AppID, "n_ClientID="+n_ClientID+" and  n_CompanyID="+n_CompanyID+"",connection, transaction);
+                    dLayer.ExecuteNonQuery("delete from ClientApps where n_AppID="+n_AppID+" and  n_ClientID="+n_ClientID+" and  n_CompanyID="+n_CompanyID+"",connection, transaction);
+                    object NrefID = dLayer.ExecuteScalar("SELECT max(N_RefID)+1  FROM clientApps",paramList, connection,transaction);
+                    MasterTable.Rows[0]["N_RefID"]=myFunctions.getIntVAL(NrefID.ToString());
                     int refID = dLayer.SaveData("ClientApps", "N_RefID", MasterTable,connection, transaction);
                     if (refID <= 0)
                     {

@@ -47,10 +47,9 @@ namespace SmartxAPI.Controllers
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
                     SortedList Params = new SortedList();
-                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
+                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nReconcilID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ReconcilID"].ToString());
                     int nfnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_fnYearID"].ToString());
-                    
                     string xReconcileCode = MasterTable.Rows[0]["X_ReconcileCode"].ToString();
                     String xButtonAction="";
 
@@ -59,11 +58,9 @@ namespace SmartxAPI.Controllers
                     if (xReconcileCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
-                        Params.Add("N_YearID", nfnYearID);
+                        Params.Add("N_fnYearID", nfnYearID);
                         Params.Add("N_FormID", 1806);
-                        Params.Add("N_ReconcilID",nReconcilID);
-                        
-                        xReconcileCode = dLayer.GetAutoNumber("Acc_BankReconcilation", "X_ReconcileCode", Params, connection, transaction);
+                        xReconcileCode = dLayer.GetAutoNumber("Acc_BankReconsilation", "X_ReconcilCode", Params, connection, transaction);
                         xButtonAction="Insert";
                         if (xReconcileCode == "")
                         {
@@ -83,14 +80,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Warning("Unable to save"));
                     }
 
-
-                     for (int j = 0; j < DetailTable.Rows.Count; j++)
-                    {
-
-                        DetailTable.Rows[j]["N_ReconcilID"] = nReconcilID;
-                    }
-
-                    int nReconcilDetailID = dLayer.SaveData("Acc_BankReconcilDetails", "N_ReconcildetailID",DetailTable, connection, transaction);
+                    int nReconcilDetailID = dLayer.SaveData("Acc_BankReconcilationDetails", "N_ReconcildetailID", DetailTable, connection, transaction);
                     if (nReconcilDetailID <= 0)
                     {
                         transaction.Rollback();
@@ -164,22 +154,19 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
-
         [HttpGet("filldetails")]
         public ActionResult GetBankReconcilValues(int N_FnYearID, int N_UserID,string X_DateFrom,string X_DateTo,int N_LedgerID)
         {
             DataTable dt = new DataTable();
             int N_CompanyID = myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
-            SortedList Params = new SortedList();
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SortedList Param = new SortedList()
+                    SortedList Params = new SortedList()
                     {
                         {"N_CompanyID", N_CompanyID},
                         {"N_FnYearID", N_FnYearID},
@@ -187,14 +174,12 @@ namespace SmartxAPI.Controllers
                         {"X_DateFrom", X_DateFrom},
                         {"X_DateTo", X_DateTo},
                         {"N_LedgerID", N_LedgerID},
-                          {"IsReconcil", 0}
-                     
-                       
+                        {"IsReconcil", 1},
                     };
-                    dLayer.ExecuteDataTablePro("SP_BankReconcilation_Details", Param, connection);
+                    dLayer.ExecuteDataTablePro("SP_BankReconcilation_Details", Params, connection);
 
                     sqlCommandText = "select * from Acc_BankAccountStatement where N_CompanyID="+N_CompanyID+"";
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection); 
+                    dt = dLayer.ExecuteDataTablePro(sqlCommandText, Params, connection); 
                     
                     dt = _api.Format(dt, "BankReconcil");
                     if (dt.Rows.Count == 0)
@@ -213,92 +198,54 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
         [HttpGet("details")]
-        public ActionResult GetReconcilDetails1(string xReconcileCode,int nCompanyID,int nFnYearID,int nUserID,DateTime xDateFrom, string xDateTo,int nLedgerID,int NCompanyID )
+        public ActionResult GetReconcilDetails(int nFnYearID, int nReconcilID, int nUserID,string xDateFrom,string xDateTo,int nLedgerID)
         {
-                    DataSet dt = new DataSet();
-                    SortedList Params = new SortedList();
-                    SortedList Param = new SortedList();
-                    DataTable MasterTable = new DataTable();
-                    DataTable DetailTable = new DataTable();
-                    DataTable DtTable = new DataTable();
-                    string Mastersql = "";
-                    string DetailSql = "";
-                    string DtSql ="";
+            DataSet dt = new DataSet();
+            DataTable MasterTable = new DataTable();
+            DataTable DetailTable = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "";
+            
+            Params.Add("@N_CompanyID", nCompanyID);
+            Params.Add("@N_FnYearID", nFnYearID);
+            Params.Add("@N_ReconcilID", nReconcilID);
 
-                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    Params.Add("@X_ReconcileCode",xReconcileCode);
-                    Mastersql = "select * from vw_BankReconcilation_Master  where N_CompanyID=@nCompanyID and X_ReconcileCode=@X_ReconcileCode";
-
+            sqlCommandText = "Select * from Acc_BankReconcilation Where N_CompanyID=@N_CompanyID And N_FnYearID=@N_FnYearID and N_ReconcilID=@N_ReconcilID";
+            
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                     
-                   MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
-                      MasterTable = _api.Format(MasterTable, "Master");
-                    if (MasterTable.Rows.Count == 0)
-                     {
-                         return Ok(_api.Warning("No data found")); 
-                     }
-      
-                    int nReconcilID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ReconcilID"].ToString());
-                    Params.Add("@nReconcilID", nReconcilID);
-                    bool bReconcil = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_Reconcil"].ToString());
-                     DateTime d_DateFrom = Convert.ToDateTime(MasterTable.Rows[0]["D_FromDate"]);
-                     DateTime d_Dateto = Convert.ToDateTime(MasterTable.Rows[0]["D_ToDate"]);
-                     
-                    // string dDateTo = MasterTable.Rows[0]["d_ToDate"].ToString(); 
+                    MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    MasterTable = _api.Format(MasterTable, "Master");
 
-                    string dDateFrom=myFunctions.getDateVAL(d_DateFrom);
-                    string dDateTo=myFunctions.getDateVAL(d_Dateto);
-                    int nLedgUD = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LedgerID"].ToString());
-                    
-                    
-                    
-                     if(bReconcil == true){
-                        DetailSql = "select * from vw_BankReconcilation_Detail  where N_CompanyID=@nCompanyID and X_ReconcileCode=@X_ReconcileCode";
-                        DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
-                        DetailTable = _api.Format(DetailTable, "Details");
-                           
-                    }
-                      else
-                      {
-
-                   SortedList ParamsList = new SortedList()
+                    SortedList ParamsList = new SortedList()
                     {
                         {"N_CompanyID", nCompanyID},
                         {"N_FnYearID", nFnYearID},
                         {"N_UserID", nUserID},
-                        {"X_DateFrom", dDateFrom},
-                        {"X_DateTo", dDateTo},
-                        {"N_LedgerID", nLedgUD},
-                        {"IsReconcil", 1}
-                       
-                       
-
+                        {"X_DateFrom", xDateFrom},
+                        {"X_DateTo", xDateTo},
+                        {"N_LedgerID", nLedgerID},
+                        {"IsReconcil", 1},
                     };
 
-                     Param.Add("@NCompanyID", myFunctions.GetCompanyID(User));
-                     
-                   
-                         DetailTable = dLayer.ExecuteDataTablePro("SP_BankReconcilation_Details", ParamsList, connection);
-                         DetailSql = "select * from Acc_BankAccountStatement where N_CompanyID="+nCompanyID+"";
-                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection); 
-                         DetailTable = _api.Format(DetailTable, "Details");
-                         DtSql= "select * from vw_Bankreconcilate where N_CompanyID="+@NCompanyID+"";
-                         DtTable = dLayer.ExecuteDataTable(DtSql, Param, connection);
-                         DtTable = _api.Format(DtTable, "Detail");
-                      }
+                    DetailTable = dLayer.ExecuteDataTablePro("SP_BankReconcilation_Details", ParamsList, connection);
+                    DetailTable = _api.Format(DetailTable, "Details");
 
-
-                    dt.Tables.Add(MasterTable);
-                    dt.Tables.Add(DetailTable);
-                    dt.Tables.Add(DtTable);
-                    
-                    return Ok(_api.Success(dt));
+                    if (DetailTable.Rows.Count == 0)
+                    {
+                        return Ok(_api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                        dt.Tables.Add(MasterTable);
+                        dt.Tables.Add(DetailTable);
+                        return Ok(_api.Success(dt));
+                    }
                 }
             }
             catch (Exception e)
@@ -306,10 +253,6 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User,e));
             }
         }
-       
-
-
-       
         
         [HttpGet("Reconcil")]
         public ActionResult GetReconcilValues()

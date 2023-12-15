@@ -423,8 +423,8 @@ namespace SmartxAPI.Controllers
                             object GRNNotProcessed = false;
                             for (int i = 0; i < DetailTable.Rows.Count; i++)
                             {
-                                Object POQty = dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseOrderdetails where n_porderid=" + N_POrderID + " and N_PorderDetailsID=" + myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString()) + " and N_CompanyID=" + nCompanyId, Params, connection);
-                                Object GRNQty = dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_MRNDetails where N_PONo=" + N_POrderID + " and N_PorderDetailsID=" + myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString()) + " and N_CompanyID=" + nCompanyId, Params, connection);
+                                object POQty = dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_PurchaseOrderdetails where n_porderid=" + N_POrderID + " and N_PorderDetailsID=" + myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString()) + " and N_CompanyID=" + nCompanyId, Params, connection);
+                                object GRNQty = dLayer.ExecuteScalar("select SUM(N_Qty) from Inv_MRNDetails where N_PONo=" + N_POrderID + " and N_PorderDetailsID=" + myFunctions.getIntVAL(DetailTable.Rows[i]["N_PorderDetailsID"].ToString()) + " and N_CompanyID=" + nCompanyId, Params, connection);
                                 if (POQty != null && GRNQty != null)
                                 {
                                     if (myFunctions.getVAL(POQty.ToString()) != myFunctions.getVAL(GRNQty.ToString()))
@@ -528,11 +528,13 @@ namespace SmartxAPI.Controllers
                 DataRow ApprovalRow = Approvals.Rows[0];
                 bool B_isImport = false;
                 SortedList Params = new SortedList();
+                 SortedList Result = new SortedList();
                 String xButtonAction = "";
                 int N_POrderID = 0; var X_POrderNo = "";
                 int nDivisionID = 0;
                 int N_NextApproverID = 0;
-                int N_SaveDraft = 0;
+                 int N_SaveDraft = 0;
+                int  N_ProcStatus =0;
                 object IsSaveDraft="0";
               
 
@@ -552,8 +554,11 @@ namespace SmartxAPI.Controllers
                     {
 
                     }
-                    X_POrderNo = MasterTable.Rows[0]["x_POrderNo"].ToString();
                     DataRow Master = MasterTable.Rows[0];
+                    X_POrderNo = MasterTable.Rows[0]["x_POrderNo"].ToString();
+                    //N_SaveDraft = myFunctions.getIntVAL(Master["b_IsSaveDraft"].ToString());
+                    //N_ProcStatus = myFunctions.getIntVAL(Master["N_ProcStatus"].ToString());
+                  
                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(Master["N_FnYearID"].ToString());
                     if (MasterTable.Columns.Contains("n_DivisionID"))
@@ -561,11 +566,11 @@ namespace SmartxAPI.Controllers
                         nDivisionID = myFunctions.getIntVAL(Master["n_DivisionID"].ToString());
                     }
                     N_POrderID = myFunctions.getIntVAL(Master["n_POrderID"].ToString());
-                    if (N_POrderID > 0)
-                    {
-                        if (CheckProcessed(N_POrderID))
-                            return Ok(api.Error(User, "Transaction Started!"));
-                    }
+                    // if (N_POrderID > 0)
+                    // {
+                    //     if (CheckProcessed(N_POrderID))
+                    //         return Ok(api.Error(User, "Transaction Started!"));
+                    // }
                     int N_VendorID = myFunctions.getIntVAL(Master["n_VendorID"].ToString());
                     if (myFunctions.checkIsNull(Master, "n_POTypeID"))
                         MasterTable.Rows[0]["n_POTypeID"] = 174;
@@ -636,15 +641,19 @@ namespace SmartxAPI.Controllers
                         string X_Criteria = "N_POrderID=" + N_PkeyID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + N_FnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Inv_PurchaseOrder", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "PURCHASE ORDER", N_PkeyID, values, 1, objVendorName.ToString(), 0, "", 0, User, dLayer, connection, transaction);
-                        // N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_PurchaseOrder where n_POrderID=" + N_POrderID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
+                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_PurchaseOrder where n_POrderID=" + N_POrderID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
+                        N_ProcStatus = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ProcStatus from Inv_PurchaseOrder where N_POrderID=" + N_POrderID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
+                      
                         transaction.Commit();
-                        return Ok(api.Success("purchase order Approved " + "-" + X_POrderNo));
+                        Result.Add("b_IsSaveDraft", N_SaveDraft);
+                        Result.Add("N_ProcStatus", N_ProcStatus);
+                        Result.Add("n_POrderID", N_POrderID);
+                        Result.Add("x_POrderNo", X_POrderNo);
+                        //Result.Add("x_Msg", "Purchase Approved " + "-" + X_POrderNo);
+                        return Ok(api.Success(Result,"purchase order Approved " + "-" + X_POrderNo));
+                        
                     }
-
-
-
-
-
+                
                     object B_YearEndProcess = dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID=" + nCompanyId + " and convert(date ,'" + MasterTable.Rows[0]["D_POrderDate"].ToString() + "') between D_Start and D_End", connection, transaction);
                     if (myFunctions.getBoolVAL(B_YearEndProcess.ToString()))
                     {
@@ -685,15 +694,15 @@ namespace SmartxAPI.Controllers
                         SortedList AdvParams = new SortedList();
                         AdvParams.Add("@companyId", Master["n_CompanyId"].ToString());
                         AdvParams.Add("@PorderId", Master["n_POrderID"].ToString());
-                        object AdvancePRProcessed = dLayer.ExecuteScalar("Select COUNT(N_TransID) From Inv_PaymentRequest Where  N_CompanyID=@companyId and N_TransID=@PorderId and N_FormID=82", AdvParams, connection, transaction);
-                        if (AdvancePRProcessed != null)
-                        {
-                            if (myFunctions.getIntVAL(AdvancePRProcessed.ToString()) > 0)
-                            {
-                                transaction.Rollback();
-                                return Ok(api.Success("Payment Request Processed"));
-                            }
-                        }
+                        // object AdvancePRProcessed = dLayer.ExecuteScalar("Select COUNT(N_TransID) From Inv_PaymentRequest Where  N_CompanyID=@companyId and N_TransID=@PorderId and N_FormID=82", AdvParams, connection, transaction);
+                        // if (AdvancePRProcessed != null)
+                        // {
+                        //     if (myFunctions.getIntVAL(AdvancePRProcessed.ToString()) > 0)
+                        //     {
+                        //         transaction.Rollback();
+                        //         return Ok(api.Success("Payment Request Processed"));
+                        //     }
+                        // }
 
                
 
@@ -937,13 +946,15 @@ namespace SmartxAPI.Controllers
                         
                      N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "Purchase Order", N_POrderID, X_POrderNo, 1, "", 0, "",0, User, dLayer, connection, transaction);
                     IsSaveDraft = dLayer.ExecuteScalar("Select b_IsSaveDraft From Inv_PurchaseOrder Where  N_CompanyID=" + nCompanyId + " and N_POrderID=" + N_POrderID , connection,transaction);
-                
+                    //N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Sales where N_POrderID=" + N_POrderID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
+                    N_ProcStatus = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ProcStatus from Inv_PurchaseOrder where N_POrderID=" + N_POrderID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
                     transaction.Commit();
                 }
 
-                SortedList Result = new SortedList();
+              
                 Result.Add("n_POrderID", N_POrderID);
                 Result.Add("x_POrderNo", X_POrderNo);
+                  Result.Add("N_ProcStatus", N_ProcStatus);
                 Result.Add("b_IsSaveDraft", myFunctions.getBoolVAL(IsSaveDraft.ToString()));
                 return Ok(api.Success(Result, "Purchase Order Saved"));
             }

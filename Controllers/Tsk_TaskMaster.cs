@@ -346,7 +346,7 @@ namespace SmartxAPI.Controllers
                     //History
                     HistorySql = "select * from (select N_TaskID,N_CreaterID, D_EntryDate,X_HistoryText,X_Assignee,D_DueDate,D_TaskDate,X_Creator,N_Status from vw_Tsk_TaskStatus  where N_CompanyId=@nCompanyID and N_TaskID=" + TaskID + " " +
                      "union all " +
-                     "select N_ActionID as N_TaskID ,N_Creator as N_CreaterID,D_EntryDate,'Commented by #CREATOR on #TIME - ' + X_Comments as X_HistoryText,'' as x_Assignee,GETDATE() as D_DueDate,GETDATE() as D_TaskDate,X_UserName as X_Creator,'' as N_Status  from vw_Tsk_TaskComments  where N_ActionID=" + TaskID + "  ) as temptable order by D_EntryDate";
+                     "select N_ActionID as N_TaskID ,N_Creator as N_CreaterID,D_EntryDate,'Commented by #CREATOR on #TIME - ' + X_Comments as X_HistoryText,'' as x_Assignee,GETDATE() as D_DueDate,GETDATE() as D_TaskDate,X_UserName as X_Creator,'' as N_Status  from vw_Tsk_TaskComments  where N_ActionID=" + TaskID + "  ) as temptable order by D_TaskDate";
                     HistoryTable = dLayer.ExecuteDataTable(HistorySql, Params, connection);
 
 
@@ -466,6 +466,8 @@ namespace SmartxAPI.Controllers
                     DataTable MasterTable;
                     DataTable DetailTable;
                     DataTable MaterialTable;
+                    DataTable TaskMaster;
+                    DataTable TaskStatus;
                     string DocNo = "";
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
@@ -474,8 +476,11 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
                     SortedList Paramsforstatus = new SortedList();
+                    SortedList Result = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     int nTaskId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
+                    int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
+                    int nWTaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_WTaskID"].ToString());
                     string X_TaskCode = MasterTable.Rows[0]["X_TaskCode"].ToString();
                     string xTaskSummery = MasterTable.Rows[0]["x_TaskSummery"].ToString();
                     int nProjectID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ProjectID"].ToString());
@@ -625,6 +630,8 @@ namespace SmartxAPI.Controllers
 
                     }
                     MasterTable.Columns.Remove("Senttasktomail");
+                    MasterTable.Columns.Remove("n_WTaskID");
+                    MasterTable.Columns.Remove("n_FnYearID");
                     nTaskId = dLayer.SaveData("Tsk_TaskMaster", "N_TaskID", MasterTable, connection, transaction);
                     if (nTaskId <= 0)
                     {
@@ -735,26 +742,74 @@ namespace SmartxAPI.Controllers
             
             
 
-                    if (nsndMail == true)
+                    // if (nsndMail == true)
+                    // {
+                    //     xSubject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyId=" + nCompanyID + " and N_TemplateID=" + nTemplateID, connection, transaction).ToString();
+                    //     xBodyText = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyId=" + nCompanyID + " and N_TemplateID=" + nTemplateID, connection, transaction).ToString();
+                    //     string xEmailData = dLayer.ExecuteScalar("select X_UserID from sec_user where N_CompanyId=" + nCompanyID + " and N_UserID=" + nAssigneeID, connection, transaction).ToString();
+
+                    //     xSubject = xSubject.Replace("@StartDate", Snddata.Rows[0]["D_TaskDate"].ToString());
+                    //     xSubject = xSubject.Replace("@ToDate", Snddata.Rows[0]["D_DueDate"].ToString());
+
+                    //     xBodyText = xBodyText.Replace("@Assignee", Snddata.Rows[0]["X_Assignee"].ToString());
+                    //     xBodyText = xBodyText.Replace("@Creator", Snddata.Rows[0]["X_Creator"].ToString());
+                    //     xBodyText = xBodyText.Replace("@StartDate", Snddata.Rows[0]["D_TaskDate"].ToString());
+                    //     xBodyText = xBodyText.Replace("@ToDate", Snddata.Rows[0]["D_DueDate"].ToString());
+                    //     xBodyText = xBodyText.Replace("@TaskName", Snddata.Rows[0]["X_taskSummery"].ToString());
+
+                    //     myFunctions.SendMail(xEmailData, xBodyText, xSubject, dLayer, 1, 1, 1, false);
+                    // }
+                    if (nWTaskID > 0)
                     {
-                        xSubject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyId=" + nCompanyID + " and N_TemplateID=" + nTemplateID, connection, transaction).ToString();
-                        xBodyText = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyId=" + nCompanyID + " and N_TemplateID=" + nTemplateID, connection, transaction).ToString();
-                        string xEmailData = dLayer.ExecuteScalar("select X_UserID from sec_user where N_CompanyId=" + nCompanyID + " and N_UserID=" + nAssigneeID, connection, transaction).ToString();
+                  
+                        TaskMaster = dLayer.ExecuteDataTable("select N_CompanyID,2 as N_StatusID,N_StageID,x_tasksummery,x_taskdescription,'"+DateTime.Today+"'  as D_TaskDate,'"+DateTime.Today+"' as D_DueDate, "+myFunctions.GetUserID(User)+" as N_CreatorID, "+myFunctions.GetUserID(User)+" as N_CurrentAssigneeID, "+myFunctions.GetUserID(User)+"  as n_ClosedUserID ,"+myFunctions.GetUserID(User)+"  as n_SubmitterID,"+myFunctions.GetUserID(User)+" as N_CurrentAssignerID,'" + DateTime.Today + "' as D_EntryDate, "+myFunctions.GetUserID(User)+" as N_AssigneeID, N_StartDateBefore,N_StartDateUnitID,N_EndDateBefore,N_EndUnitID,N_WTaskDetailID,N_Order,N_TemplateID,N_PriorityID,N_CategoryID from vw_Prj_WorkflowDetails where N_CompanyID=" + nCompanyID + " and N_WTaskID=" + nWTaskID + " order by N_Order", Params, connection, transaction);
+                        if (TaskMaster.Rows.Count > 0)
+                        {
+                            SortedList AParams = new SortedList();
+                            AParams.Add("N_CompanyID", nCompanyID);
+                            AParams.Add("N_YearID", nFnYearId);
+                            AParams.Add("N_FormID", 1056);
+                            string TaskCode = "";
+                            int N_TaskID = 0;
+                            TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "n_TaskID", typeof(int), 0);
+                            TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "x_TaskCode", typeof(string), "");
+                            TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "n_ParentID", typeof(int), 0);
+                            foreach (DataRow var in TaskMaster.Rows)
+                            {
+                                TaskCode = dLayer.GetAutoNumber("Tsk_TaskMaster", "X_TaskCode", AParams, connection, transaction);
+                                if (TaskCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Task Code")); }
+                                var["x_TaskCode"] = TaskCode;
+                                var["n_ParentID"] = nTaskId;
+                            }
+                            TaskMaster.Columns.Remove("N_StartDateBefore");
+                            TaskMaster.Columns.Remove("N_StartDateUnitID");
+                            TaskMaster.Columns.Remove("N_EndDateBefore");
+                            TaskMaster.Columns.Remove("N_EndUnitID");
+                            int N_CreatorID = myFunctions.GetUserID(User);
+                            for (int j = 0; j < TaskMaster.Rows.Count; j++)
+                            {
 
-                        xSubject = xSubject.Replace("@StartDate", Snddata.Rows[0]["D_TaskDate"].ToString());
-                        xSubject = xSubject.Replace("@ToDate", Snddata.Rows[0]["D_DueDate"].ToString());
+                                N_TaskID = dLayer.SaveDataWithIndex("Tsk_TaskMaster", "N_TaskID", "", "", j, TaskMaster, connection, transaction);
+                                TaskStatus = dLayer.ExecuteDataTable("select N_CompanyID,'" + DateTime.Today + "' as D_EntryDate,1 as N_Status from Prj_WorkflowTasks where N_CompanyID=" + nCompanyID + " and N_WTaskDetailID=" + TaskMaster.Rows[j]["N_WTaskDetailID"] + " order by N_Order", Params, connection, transaction);
+                                if (TaskStatus.Rows.Count > 0)
+                                {
+                                    TaskStatus = myFunctions.AddNewColumnToDataTable(TaskStatus, "n_TaskID", typeof(int), N_TaskID);
+                                    TaskStatus = myFunctions.AddNewColumnToDataTable(TaskStatus, "n_TaskStatusID", typeof(int), 0);
+                                    TaskStatus = myFunctions.AddNewColumnToDataTable(TaskStatus, "n_AssigneeID", typeof(int), nAssigneeID);
+                                    TaskStatus = myFunctions.AddNewColumnToDataTable(TaskStatus, "n_CreaterID", typeof(int), N_CreatorID);
+                                    dLayer.SaveData("Tsk_TaskStatus", "n_TaskStatusID", TaskStatus, connection, transaction);
+                                    TaskStatus.Clear();
 
-                        xBodyText = xBodyText.Replace("@PartyName", Snddata.Rows[0]["X_Assignee"].ToString());
-                        xBodyText = xBodyText.Replace("@Creator", Snddata.Rows[0]["X_Creator"].ToString());
-                        xBodyText = xBodyText.Replace("@StartDate", Snddata.Rows[0]["D_TaskDate"].ToString());
-                        xBodyText = xBodyText.Replace("@ToDate", Snddata.Rows[0]["D_DueDate"].ToString());
-                        xBodyText = xBodyText.Replace("@TaskName", Snddata.Rows[0]["X_taskSummery"].ToString());
-
-                        myFunctions.SendMail(xEmailData, xBodyText, xSubject, dLayer, 1, 1, 1, false);
+                                }
+                               
+                               
+                            }
+                        }
                     }
 
                     transaction.Commit();
-                    return Ok(_api.Success("Saved"));
+                     Result.Add("x_TaskCode",  MasterTable.Rows[0]["x_TaskCode"] );
+                    return Ok(_api.Success(Result,"Saved"));
 
 
                 }
@@ -1270,17 +1325,18 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-
+                    
                     connection.Open();
                     dLayer.DeleteData("Tsk_TaskStatus", "N_TaskID", nTaskID, "", connection);
                     Results = dLayer.DeleteData("Tsk_TaskComments", "N_ActionID", nTaskID, "", connection);
                     Results = dLayer.DeleteData("Gen_Mentions", "N_TransID", nTaskID, "", connection);
                     Results = dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskID, "", connection);
-                    
+
                     if (Results > 0)
                     {
                         SqlTransaction transaction = connection.BeginTransaction();
-
+                        dLayer.ExecuteNonQuery("delete from Tsk_TaskStatus where N_TaskID in (select N_TaskID from Tsk_TaskMaster where N_ParentID="+nTaskID+")", connection, transaction);
+                        dLayer.DeleteData("Tsk_TaskMaster", "N_ParentID", nTaskID, "", connection, transaction);
                         myAttachments.DeleteAttachment(dLayer, 1, nTaskID, nTaskID, nFnyearID, 1324, User, transaction, connection);
                         transaction.Commit();
                         return Ok(_api.Success("deleted"));

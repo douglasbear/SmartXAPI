@@ -282,6 +282,7 @@ namespace SmartxAPI.Controllers
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
 
                     MasterTable = _api.Format(MasterTable, "Master");
+                    if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found"));}
                     dt.Tables.Add(MasterTable);
 
                     //PurchaseOrder Details
@@ -339,6 +340,18 @@ namespace SmartxAPI.Controllers
                             }
                         }
                         DetailTable.AcceptChanges();
+
+                        //remove row if (N_PQTY<=0)
+                        if(DetailTable.Rows.Count>0){
+                            foreach(DataRow dr in DetailTable.Rows){
+                                if(myFunctions.getIntVAL(dr["N_PQty"].ToString())<=0){
+                                    dr.Delete();
+                                    continue;
+                                }
+                            }
+                        }
+                        DetailTable.AcceptChanges();
+
                     }
 
                     DetailTable = _api.Format(DetailTable, "Details");
@@ -517,27 +530,32 @@ namespace SmartxAPI.Controllers
 
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCreditNoteId, int? nCompanyId,int nFnYearID)
+        public ActionResult DeleteData(int nCreditNoteId, int? nCompanyId,int nFnYearID,string comments,int nFormID)
         {
+            if (comments == null)
+            {
+                comments = "";
+            }
             try
             {
+                string status="";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SortedList ParamList=new SortedList();
                     DataTable TransData = new DataTable();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    object objPaymentProcessed = dLayer.ExecuteScalar("Select Isnull(N_PayReceiptId,0) from Inv_PayReceiptDetails where N_InventoryId=" + nCreditNoteId + " and X_TransType='PURCHASE RETURN'", connection, transaction);
+                    object objPaymentProcessed = dLayer.ExecuteScalar("Select Isnull(N_PayReceiptId,0) from Inv_PayReceiptDetails where N_InventoryId=" + nCreditNoteId + " and X_TransType='PURCHASE RETURN'", connection);
                     SortedList Params = new SortedList();
                     ParamList.Add("@nFnYearID",nFnYearID);
                     ParamList.Add("@nTransID", nCreditNoteId);
                     ParamList.Add("@nCompanyId", nCompanyId);
 
-                     string Sql = "select N_CreditNoteId,X_CreditNoteNo from Inv_PurchaseReturnMaster where N_CreditNoteId=@nTransID and N_CompanyId=@nCompanyId and N_FnYearID=@nFnYearID";
+                     string Sql = "select N_CreditNoteId,X_CreditNoteNo,isNull(N_UserId,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_VendorID,0) as N_VendorID from Inv_PurchaseReturnMaster where N_CreditNoteId=@nTransID and N_CompanyId=@nCompanyId and N_FnYearID=@nFnYearID";
                     string xButtonAction="Delete";
                     string X_CreditNoteNo="";
+                    
 
-                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection,transaction);
+                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                      
 
                     if (TransData.Rows.Count == 0)
@@ -545,34 +563,73 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
+                     int N_VendorId = myFunctions.getIntVAL(TransRow["N_VendorID"].ToString());
+                    int N_CreditNoteId = myFunctions.getIntVAL(TransRow["N_CreditNoteId"].ToString());
+
+                    SortedList VendorParams = new SortedList();
+                    VendorParams.Add("@nCompanyID", nCompanyId);
+                    VendorParams.Add("@N_VendorID", N_VendorId);
+                    VendorParams.Add("@nFnYearID", nFnYearID);
+
+
+                     object objVendortName = dLayer.ExecuteScalar("Select X_VendorName From Inv_Vendor where N_VendorID=@N_VendorID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", VendorParams, connection);
+                     object objVendorCode = dLayer.ExecuteScalar("Select X_VendorCode From Inv_Vendor where N_VendorID=@N_VendorID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", VendorParams, connection);
+                       
+                     DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, 68, nCreditNoteId, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    
                    
                     if (objPaymentProcessed == null)
                         objPaymentProcessed = 0;
-                   object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Inv_PurchaseReturnMaster where n_CreditNoteId =" + nCreditNoteId + " and N_CompanyID=" + nCompanyId, Params, connection,transaction);
+                      object n_FnYearID = dLayer.ExecuteScalar("select N_FnyearID from Inv_PurchaseReturnMaster where n_CreditNoteId =" + nCreditNoteId + " and N_CompanyID=" + nCompanyId, Params, connection,transaction);
                    
                          //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                         string ipAddress = "";
+                         if (  Request.Headers.ContainsKey("X-Forwarded-For")){
+                          ipAddress = Request.Headers["X-Forwarded-For"];
+                         }
+                    
+                        else
+                        {
+                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
                        myFunctions.LogScreenActivitys(myFunctions.getIntVAL( n_FnYearID.ToString()),nCreditNoteId,TransRow["X_CreditNoteNo"].ToString(),68,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                        }
+                  
 
-                   
-                    SortedList deleteParams = new SortedList()
+                    if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) == 0)
+                    {
+                         string X_Criteria = "N_CreditNoteId=" + nCreditNoteId + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
+                        string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                        int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
+
+                         status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "PURCHASE RETURN", N_CreditNoteId, TransRow["X_CreditNoteNo"].ToString(), ProcStatus, "Inv_PurchaseReturnMaster", X_Criteria, objVendortName.ToString(), User, dLayer, connection, transaction);
+                    if (status != "Error")
+                        {
+                             if (ButtonTag == "6" || ButtonTag == "0")
                             {
+                               SortedList deleteParams = new SortedList()
+                               {
                                 {"N_CompanyID",nCompanyId},
                                 {"X_TransType","PURCHASE RETURN"},
                                 {"N_VoucherID",nCreditNoteId}
-                            };
-                    if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) == 0)
-                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", deleteParams, connection, transaction);
+                               };
+                         dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", deleteParams, connection, transaction);
+                           }
+                         }
+                        }
+                    
                     else
                         return Ok(_api.Error(User, "Payment processed! Unable to delete"));
                     transaction.Commit();
                 }
-
-                return Ok(_api.Success("Purchase Return Deleted"));
+                if(nFormID==68){
+                     return Ok(_api.Success("Purchase Return " + status + " Successfully"));
+                }
+                else{
+                    return Ok(_api.Success("Purchase Return Deleted"));
+                }
+               
 
             }
             catch (Exception ex)

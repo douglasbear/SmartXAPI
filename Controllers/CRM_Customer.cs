@@ -145,13 +145,21 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", xCustomerCode);
 
-
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+
+                    int nCustomerID = myFunctions.getIntVAL(dt.Rows[0]["n_CustomerID"].ToString());
+                    Params.Add("@nCustomerID", nCustomerID);
+                    object customerCountSQ = dLayer.ExecuteScalar("select Isnull(Count(N_QuotationId),0) from Inv_SalesQuotation where N_CrmCompanyID=@nCustomerID and N_CompanyID=@p1", Params, connection);
+                    if ( myFunctions.getIntVAL(customerCountSQ.ToString()) > 0 )
+                    {
+                        myFunctions.AddNewColumnToDataTable(dt, "b_CustomerCount", typeof(bool), true);
+                    }   
+                    
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -210,7 +218,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Company Created"));
+                        return Ok(api.Success("Customer Created"));
                     }
                 }
             }

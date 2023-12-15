@@ -234,7 +234,8 @@ namespace SmartxAPI.Controllers
         [HttpGet("details")]
         public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID, int nQuotationID, int n_OpportunityID, int nClaimID, string x_WarrantyNo,int nFormID)
         {
-            if (xOrderNo != null)
+        
+                if (xOrderNo != null)
                 xOrderNo = xOrderNo.Replace("%2F", "/");
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
@@ -417,7 +418,7 @@ namespace SmartxAPI.Controllers
                     if (myFunctions.getIntVAL(N_SalesOrderTypeID.ToString()) != 175)
                     {
                         DispatchNo = dLayer.ExecuteScalar("select x_dispatchNo from inv_materialDispatch where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
-                        if (Convert.ToBoolean(MasterRow["N_Processed"]))
+                       if (Convert.ToBoolean(MasterRow["N_Processed"]))
                         {
                             InSales = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
                             isProforma = dLayer.ExecuteScalar("select isnull(B_IsProforma,0) from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
@@ -450,6 +451,8 @@ namespace SmartxAPI.Controllers
                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), InSales != null ? "Invoice Processed" : "");
                     }
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "salesDone", typeof(int), InSales != null ? 1 : 0);
+                      
+
                     object DNQty = dLayer.ExecuteScalar("SELECT SUM(Inv_DeliveryNoteDetails.N_Qty * Inv_ItemUnit.N_Qty) FROM Inv_DeliveryNoteDetails INNER JOIN Inv_ItemUnit ON Inv_DeliveryNoteDetails.N_ItemUnitID = Inv_ItemUnit.N_ItemUnitID AND Inv_DeliveryNoteDetails.N_CompanyID = Inv_ItemUnit.N_CompanyID AND Inv_DeliveryNoteDetails.N_ItemID = Inv_ItemUnit.N_ItemID where Inv_DeliveryNoteDetails.N_CompanyID=" + nCompanyID + " and Inv_DeliveryNoteDetails.N_SalesOrderID=" + myFunctions.getIntVAL(N_SOrderID.ToString()), DetailParams, connection);
                     object OrderQty1 = dLayer.ExecuteScalar("select SUM(Inv_SalesOrderDetails.N_Qty) from Inv_SalesOrderDetails where N_CompanyID=" + nCompanyID + " and N_SalesOrderId=" + myFunctions.getIntVAL(N_SOrderID.ToString()), DetailParams, connection);
                     if (DNQty != null && OrderQty1 != null)
@@ -471,7 +474,10 @@ namespace SmartxAPI.Controllers
                    }
 
                    object countOfOrder =  dLayer.ExecuteScalar("Select count(1) from vw_pendingSO Where N_CompanyID = " + nCompanyID + "  and N_SalesOrderId=" + myFunctions.getIntVAL(N_SOrderID.ToString()), DetailParams, connection);
-                   if(countOfOrder!=null)
+                   
+                   
+
+                   
                    {
                     if(myFunctions.getIntVAL(countOfOrder.ToString())>0)
                     {
@@ -486,7 +492,7 @@ namespace SmartxAPI.Controllers
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "ChkCancelOrderEnabled", typeof(bool), true);
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "isProformaDone", typeof(bool), isProforma);
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_DispatchNo", typeof(string), DispatchNo);
-
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "debitNoteDone", typeof(bool), false);                           
 
                     if (InSales != null)
                     {
@@ -594,10 +600,49 @@ namespace SmartxAPI.Controllers
                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesOrderId"].ToString()), this.FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
                     Attachments = _api.Format(Attachments, "attachments");
 
-                    string TermsSql = "SELECT     Inv_Terms.N_CompanyId, Inv_Terms.N_TermsID, Inv_Terms.N_ReferanceID, Inv_Terms.X_Terms, Inv_Terms.N_Percentage, Inv_Terms.N_Duration, Inv_Terms.X_Type, Inv_Terms.N_Amount, isnull(Inv_Sales.N_BillAmt,0)+isnull(Inv_Sales.N_TaxAmtF,0) as N_Paidamt FROM  Inv_Terms LEFT OUTER JOIN Inv_Sales ON Inv_Terms.N_CompanyId = Inv_Sales.N_CompanyId AND Inv_Terms.N_TermsID = Inv_Sales.N_TermsID Where Inv_Terms.N_CompanyID=@nCompanyID and Inv_Terms.N_ReferanceID=" + N_SOrderID + " and Inv_Terms.X_Type='SO'";
+                    string TermsSql = "select * from vw_Termsdetails Where N_CompanyID=@nCompanyID and N_ReferanceID=" + N_SOrderID + " and X_Type='SO'";
                     DataTable Terms = dLayer.ExecuteDataTable(TermsSql, Params, connection);
+                    foreach (DataRow dr in Terms.Rows)
+                        {
+                            object TermsSales = dLayer.ExecuteScalar("select N_TermsID from Inv_salesdetails where N_CompanyID=@nCompanyID and n_salesorderid="+N_SOrderID+ " and N_TermsID="+dr["N_TermsID"].ToString(), Params, connection);
+                            object TermsDebit = dLayer.ExecuteScalar("select N_TermsID from Inv_BalanceAdjustmentMasterDetails where N_CompanyID=@nCompanyID and N_TermsID="+dr["N_TermsID"].ToString(), Params, connection);
+                            if(TermsSales!=null)
+                            {
+                               if(myFunctions.getIntVAL(TermsSales.ToString())>0) 
+                               {
+                                 dr["N_Paidamt"] = myFunctions.getVAL(dr["N_Amount"].ToString());
+
+
+                        object termamount=  dLayer.ExecuteScalar("select SUM(N_Amount) from Inv_Terms where N_CompanyID=@nCompanyID and N_ReferanceId=@nSOrderID and N_TypeID=451", DetailParams, connection);
+                        object orderamount= dLayer.ExecuteScalar("select SUM(N_TaxAmt + N_BillAmt)  from Inv_Sales where  N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
+                        object retamount=  dLayer.ExecuteScalar("select N_Amount from Inv_Terms where N_CompanyID=@nCompanyID and N_ReferanceId=@nSOrderID and N_TypeID=468", DetailParams, connection);
+                        
+                      if (myFunctions.getVAL(termamount.ToString()) != myFunctions.getVAL(orderamount.ToString())+ myFunctions.getVAL(retamount.ToString()))
+                        {
+                            MasterTable.Rows[0]["salesDone"] = 0;
+                        }
+
+                               }
+                            }
+                            if(TermsDebit!=null)
+                            {
+                               if(myFunctions.getIntVAL(TermsDebit.ToString())>0) 
+                               {
+                                 dr["N_Paidamt"] = myFunctions.getVAL(dr["N_Amount"].ToString());
+                                 MasterTable.Rows[0]["debitNoteDone"] = true;
+                               }
+                            }
+
+                        }
+                       
+                       
+                       
+                       
+
+
                     Terms = _api.Format(Terms, "Terms");
-                    string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID=" + N_SOrderID +crieteria;
+
+                    string RentalScheduleSql = "SELECT * FROM  vw_RentalScheduleItems  Where N_CompanyID=@nCompanyID and N_TransID="+N_SOrderID+crieteria+" order by N_TransDetailsID asc";
                     DataTable RentalSchedule = dLayer.ExecuteDataTable(RentalScheduleSql, Params, connection);
                     RentalSchedule = _api.Format(RentalSchedule, "RentalSchedule");
 
@@ -1039,6 +1084,7 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                         }
+                        
                         //StatusUpdate
                         int tempQuotationID = 0;
                         for (int j = 0; j < DetailTable.Rows.Count; j++)
@@ -1083,13 +1129,22 @@ namespace SmartxAPI.Controllers
                     }
                     if (Terms.Rows.Count > 0)
                     {
+                        object ItemID = dLayer.ExecuteScalar("Select N_ItemID from Inv_ItemMaster where N_CompanyID=" + N_CompanyID + " and X_ItemCode='005'", connection, transaction);
+                        object TaxCatID = dLayer.ExecuteScalar("select n_pkeyid from Acc_TaxCategory where X_CategoryName='Exempt' and N_CompanyID="+N_CompanyID, connection,transaction);
+                        Terms.Columns.Add("N_TaxCategoryID");
                         for (int j = 0; j < Terms.Rows.Count; j++)
                         {
+                            if(Terms.Rows[j]["x_Type"].ToString()=="Retention" || Terms.Rows[j]["x_Type"].ToString()=="Retention Reversal")
+                            {
+                                Terms.Rows[j]["n_ItemID"] = ItemID;
+                            }
                             Terms.Rows[j]["n_ReferanceID"] = n_SalesOrderId;
                             Terms.Rows[j]["x_Type"] = "SO";
+                            Terms.Rows[j]["N_TaxCategoryID"] = TaxCatID;
 
 
                         }
+                        dLayer.DeleteData("Inv_Terms", "N_ReferanceID", n_SalesOrderId, "", connection, transaction);
                         dLayer.SaveData("Inv_Terms", "N_TermsID", Terms, connection, transaction);
 
 
@@ -1260,6 +1315,7 @@ namespace SmartxAPI.Controllers
                                         }
                                     }
                                     dLayer.ExecuteScalar("delete from Inv_Prescription where N_SalesOrderID=" + nSalesOrderID.ToString() + "  and  N_CompanyID=" + nCompanyID, connection, transaction);                                       
+                                    dLayer.ExecuteScalar("delete from Inv_Terms where N_ReferanceID=" + nSalesOrderID.ToString() + "  and  N_CompanyID=" + nCompanyID, connection, transaction);                                       
                                 
                                 }
                             }

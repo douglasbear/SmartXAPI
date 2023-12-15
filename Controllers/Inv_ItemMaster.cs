@@ -407,7 +407,10 @@ namespace SmartxAPI.Controllers
             // Datatable products = new Datatable();
             products = ds.Tables["details"];
             if(products.Rows.Count>0)
-                GeneratePDFWithContent1(products,random);
+            if(products.Rows[0]["n_FormID"].ToString()=="452")
+                GeneratePDFASSET(products,random);
+            else
+                GeneratePDFWithContent(products,random);
 
            
             return Ok(_api.Success(new SortedList() { { "FileName", "barcode"+random+".pdf" } }));
@@ -420,7 +423,89 @@ namespace SmartxAPI.Controllers
             return new string(Enumerable.Repeat(chars, length)
               .Select(s => s[random.Next(s.Length)]).ToArray());
         }
-        public void GeneratePDFWithContent1(DataTable products,string random)
+        public void GeneratePDFASSET(DataTable products,string random)
+        {
+            string path = this.TempFilesPath + "//barcode"+random+".pdf";
+            // Define the page width and height in points (1 inch = 72 points)
+            float pageWidth = Utilities.MillimetersToPoints(115);    // 6.5 cm to points
+            float pageHeight = Utilities.MillimetersToPoints(30);   // 1.5 cm to points
+            string bimageloc = "C://Olivoserver2020/Barcode/";
+            // Create a new PDF document with the custom page size
+            iTextSharp.text.Document document = new iTextSharp.text.Document(new iTextSharp.text.Rectangle(pageWidth, pageHeight));
+            PdfWriter writer = PdfWriter.GetInstance(document, new FileStream(path, FileMode.Create));
+            // Open the PDF document
+            document.Open();
+            // Calculate the width and height of the page
+            float actualPageWidth = document.PageSize.Width;
+            float actualPageHeight = document.PageSize.Height;
+            // Define the top margin and spacing
+            float topMargin = 20; // Margin from the top of the page, adjusted to add blank space
+            float spacing = 5;    // Spacing between elements
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                string X_CurrencyName = dLayer.ExecuteScalar("select x_currency from Acc_Company where N_CompanyID=" + myFunctions.GetCompanyID(User), connection).ToString();
+                for (int k = 0; k < products.Rows.Count; k++)
+                {
+                    string xItemName = products.Rows[k]["x_ItemName"].ToString();
+                    string xBarcode = products.Rows[k]["x_Barcode"].ToString();
+                    string x_ItemCode = products.Rows[k]["x_ItemCode"].ToString();
+                    string physicalLocation = products.Rows[k]["physicalLocation"].ToString();
+                    if(xBarcode=="")
+                    xBarcode="Barcode Missing";
+                    string nPrice =products.Rows[k]["n_Cost"].ToString();
+                    if (decimal.TryParse(nPrice, out decimal value))
+                    {
+                        nPrice = value.ToString("0.00");
+                    }
+                    nPrice=X_CurrencyName + " " + nPrice;
+                    string xCompanyname = myFunctions.GetCompanyName(User);
+                    if (CreateBarcode(xBarcode,random))
+                    {
+                        // Define the left text position
+                        float leftTextX = 10;  // X-coordinate for left text
+                        float leftTextY = actualPageHeight - topMargin;  // Y-coordinate for left text
+                        // Write the left text to the PDF
+                        PdfContentByte contentByte = writer.DirectContent;
+                        contentByte.BeginText();
+                        contentByte.SetFontAndSize(BaseFont.CreateFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED), 12);
+                        contentByte.ShowTextAligned(Element.ALIGN_LEFT, xCompanyname, leftTextX, leftTextY, 0);
+                        contentByte.EndText();
+                        // Define the barcode position
+                        float barcodeX = 10;  // X-coordinate for barcode
+                        float barcodeY = actualPageHeight - topMargin - spacing - 30;  // Y-coordinate for barcode
+                        // Load the barcode image from the file path
+                        Bitmap barcodeImage = new Bitmap(bimageloc + xBarcode +random+ ".png");
+                        // Convert the barcode image to iTextSharp Image
+                        iTextSharp.text.Image itextImage = iTextSharp.text.Image.GetInstance(barcodeImage, System.Drawing.Imaging.ImageFormat.Png);
+                        itextImage.Alignment = Element.ALIGN_LEFT;
+                        itextImage.ScaleAbsolute(100, 30);  // Increase the size of the barcode
+                        // Add the barcode to the PDF document
+                        itextImage.SetAbsolutePosition(barcodeX, barcodeY);
+                        document.Add(itextImage);
+                        // Set font and size for the Phrase elements
+                        BaseFont baseFont = BaseFont.CreateFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+                        float fontSize = 9;  // Adjust the size as needed
+                        // Define the right text position
+                        float rightTextX = actualPageWidth - 180;  // X-coordinate for right text
+                        float rightTextY = actualPageHeight - topMargin - spacing - 8;  // Y-coordinate for right text
+                        // Create a ColumnText object
+                        ColumnText columnText = new ColumnText(contentByte);
+                        columnText.SetSimpleColumn(new iTextSharp.text.Rectangle(rightTextX-10, rightTextY+15, actualPageWidth - 5, 0));
+                        // Add the product name and price to the column
+                        columnText.AddElement(new Phrase(x_ItemCode + " - " +xItemName, new iTextSharp.text.Font(baseFont, fontSize)));
+                        columnText.AddElement(new Phrase(physicalLocation, new iTextSharp.text.Font(baseFont, fontSize)));
+                      // Go to the next line (you can adjust the spacing as needed)
+                     columnText.AddText(new Phrase("\n"));
+                     columnText.Go();
+                     document.NewPage();
+                    }
+                }
+            }
+            // Close the PDF document
+            document.Close();
+        }
+        public void GeneratePDFWithContent(DataTable products,string random)
         {
 
             string path = this.TempFilesPath + "//barcode"+random+".pdf";
@@ -431,6 +516,7 @@ namespace SmartxAPI.Controllers
 
             // Create a new PDF document with the custom page size
             iTextSharp.text.Document document = new iTextSharp.text.Document(new iTextSharp.text.Rectangle(pageWidth, pageHeight));
+            
             PdfWriter writer = PdfWriter.GetInstance(document, new FileStream(path, FileMode.Create));
 
             // Open the PDF document
@@ -1896,12 +1982,12 @@ namespace SmartxAPI.Controllers
             {
                 if (partNoEnable)
                 {
-                    qry = " and (Description like @query or [vw_InvItem_Search_Products].[Part No] like @query or [vw_InvItem_Search_Products].[itemCode] like @query) ";
+                    qry = " and (Description like @query or [vw_InvItem_Search_Products].[Part No] like @query or [vw_InvItem_Search_Products].[itemCode] like @query or vw_InvItem_Search_Products.X_Barcode like @query or [vw_InvItem_Search_Products].X_Category like @query) ";
                     Params.Add("@query", "%" + query + "%");
                 }
                 else
                 {
-                    qry = " and (Description like @query or [itemCode] like @query or [vw_InvItem_Search_Products].X_Barcode like @query or [vw_InvItem_Search_Products].[Part No] like @query) ";
+                    qry = " and (Description like @query or [itemCode] like @query or [vw_InvItem_Search_Products].X_Barcode like @query or [vw_InvItem_Search_Products].[Part No] like @query or [vw_InvItem_Search_Products].X_Category like @query) ";
                     Params.Add("@query", "%" + query + "%");
                 }
             }
@@ -1971,7 +2057,7 @@ namespace SmartxAPI.Controllers
             
          
          
-                 sqlComandText = " [vw_InvItem_Search_Products].N_CompanyID,vw_InvItem_Search_Products.n_AvlStock,[vw_InvItem_Search_Products].[Part No],vw_InvItem_Search_Products.N_LPrice,[vw_InvItem_Search_Products].N_ClassID, [vw_InvItem_Search_Products].N_ItemID, [vw_InvItem_Search_Products].[Description], [vw_InvItem_Search_Products].X_ItemCode,[vw_InvItem_Search_Products].[Item Code] as itemCode,[vw_InvItem_Search_Products].[Item Code], [vw_InvItem_Search_Products].x_PartNo"+showStock+ShowCost+" from [vw_InvItem_Search_Products] where [vw_InvItem_Search_Products].N_CompanyID=@p1 and [vw_InvItem_Search_Products].B_Inactive=@p2 and [vw_InvItem_Search_Products].[Item Code]<> @p3   and  [vw_InvItem_Search_Products].N_ClassID!=6 " + ownAssent + RentalItem + RentalPOItem + qry + Category + Condition + itemTypeCondition + warehouseSql + priceListCondition+otherItem;
+                 sqlComandText = " [vw_InvItem_Search_Products].N_CompanyID,vw_InvItem_Search_Products.n_AvlStock,[vw_InvItem_Search_Products].[Part No],vw_InvItem_Search_Products.N_LPrice,[vw_InvItem_Search_Products].N_ClassID, [vw_InvItem_Search_Products].N_ItemID, [vw_InvItem_Search_Products].[Description], [vw_InvItem_Search_Products].X_ItemCode,[vw_InvItem_Search_Products].[Item Code] as itemCode,[vw_InvItem_Search_Products].[Item Code], [vw_InvItem_Search_Products].x_PartNo,vw_InvItem_Search_Products.X_Barcode,[vw_InvItem_Search_Products].x_Category"+showStock+ShowCost+" from [vw_InvItem_Search_Products] where [vw_InvItem_Search_Products].N_CompanyID=@p1 and [vw_InvItem_Search_Products].B_Inactive=@p2 and [vw_InvItem_Search_Products].[Item Code]<> @p3   and  [vw_InvItem_Search_Products].N_ClassID!=6 " + ownAssent + RentalItem + RentalPOItem + qry + Category + Condition + itemTypeCondition + warehouseSql + priceListCondition+otherItem;
             // string sqlComandText = " * from [vw_InvItem_Search_Products] where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
 
      

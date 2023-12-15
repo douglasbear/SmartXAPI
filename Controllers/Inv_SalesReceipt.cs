@@ -239,7 +239,9 @@ namespace SmartxAPI.Controllers
                         {
                             int nCurrencyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CurrencyID"].ToString());
                             string X_CurrencyName = dLayer.ExecuteScalar("select X_CurrencyName from Acc_CurrencyMaster where N_CompanyID=" + nCompanyId + " and N_CurrencyID=" + nCurrencyID, connection).ToString();
+                            string Decimal = dLayer.ExecuteScalar("select n_Decimal from Acc_CurrencyMaster where N_CompanyID=" + nCompanyId + " and N_CurrencyID=" + nCurrencyID, connection).ToString();
                             myFunctions.AddNewColumnToDataTable(MasterTable, "X_CurrencyName", typeof(string), X_CurrencyName);
+                            myFunctions.AddNewColumnToDataTable(MasterTable, "n_Decimal", typeof(int), myFunctions.getIntVAL(Decimal).ToString());
 
                         }
 

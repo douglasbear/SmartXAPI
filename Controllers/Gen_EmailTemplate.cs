@@ -128,12 +128,17 @@ namespace SmartxAPI.Controllers
                     string[] BccAddresses = BCC.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                     object companyemail = "";
                     object companypassword = "";
+                    object X_SMTP = "";
                     object Company, Oppportunity, Contact, CustomerID;
                     int nCompanyId = myFunctions.GetCompanyID(User);
                     string base64Data ="";
+                    string SMTP="smtp.gmail.com";
 
                     companyemail = dLayer.ExecuteScalar("select X_Email from vw_MailGeneralScreenSettings where n_companyid="+companyid, Params, connection, transaction);
                     companypassword = dLayer.ExecuteScalar("select X_Password from vw_MailGeneralScreenSettings where n_companyid="+companyid, Params, connection, transaction);
+                    X_SMTP = dLayer.ExecuteScalar("select isnull(X_SMTP,'') from vw_MailGeneralScreenSettings where n_companyid="+companyid, Params, connection, transaction);
+                    if(X_SMTP!="")
+                        SMTP=X_SMTP.ToString();
 
                     string Subject = "";
                     if (Toemail.ToString() != "")
@@ -184,7 +189,52 @@ namespace SmartxAPI.Controllers
 
 
                             }
-                            if(N_FormID==1345)
+                             if(N_FormID==1345)
+                            {
+                           
+                            DateTime currentTime=DateTime.UtcNow;
+                            
+                            string Sender = companyemail.ToString();
+                            Subject = Subjectval;
+                            MailBody = Body.ToString();
+                            using (WebClient webClient = new WebClient())
+                             {
+                            SmtpClient client = new SmtpClient
+                            {
+                                Host = "smtp.gmail.com",
+                                Port = 587,
+                                EnableSsl = true,
+                                DeliveryMethod = SmtpDeliveryMethod.Network,
+                                Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString()),
+                                Timeout = 30000,
+                            };
+
+
+                            MailMessage message = new MailMessage();
+                            message.To.Add(Toemail.ToString()); // Add Receiver mail Address  
+                            foreach (string ccAddress in ccAddresses)
+                                message.CC.Add(ccAddress.Trim());
+                            foreach (string BccAddress in BccAddresses)
+                                message.Bcc.Add(BccAddress.Trim());
+                            message.From = new MailAddress(Sender, myFunctions.GetUserLoginName(User));
+                            message.Subject = Subject;
+                            message.Body = MailBody;
+                            message.IsBodyHtml = true; //HTML email  
+                            //  foreach (DataRow var in Attachments.Rows)
+                            //      {
+                            //         base64Data = var["FileData"].ToString();
+                            //         base64Data = base64Data.Substring(var["FileData"].ToString().IndexOf(',') + 1);
+                            //         byte[] fileData = Convert.FromBase64String(base64Data);
+                            //         MemoryStream stream = new MemoryStream(fileData);
+                            //         Attachment attachment = new Attachment(stream, var["x_File"].ToString());
+                            //         message.Attachments.Add(attachment);
+                            //      }
+                            client.Send(message);
+
+                        }
+
+                            }
+                            else if(N_FormID==0)
                             {
                            
                             DateTime currentTime=DateTime.UtcNow;
@@ -235,10 +285,14 @@ namespace SmartxAPI.Controllers
                             }
                             else
                             {
-                            object n_POID = dLayer.ExecuteScalar("select N_POrderID from vw_InvPurchaseOrder where OrderNo='"+MasterRow["n_PkeyID"].ToString()+"' and N_CompanyID="+nCompanyId, Params, connection, transaction);
-                      
-                            string url=invoicepdf(1793,myFunctions.getIntVAL(n_POID.ToString()), myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString()), 0,  "", "", "",false, false, 1);
-
+                                string url="";
+                                object n_POID = dLayer.ExecuteScalar("select N_POrderID from vw_InvPurchaseOrder where OrderNo='"+MasterRow["n_PkeyID"].ToString()+"' and N_CompanyID="+nCompanyId, Params, connection, transaction);
+                                try{url=invoicepdf(1793,myFunctions.getIntVAL(n_POID.ToString()), myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString()), 0,  "", "", "",false, false, 1);
+                                if(url=="")
+                                    url=invoicepdf(82,myFunctions.getIntVAL(n_POID.ToString()), myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString()), 0,  "", "", "",false, false, 1);
+                                
+                                }
+                                catch{}
                             string Sender = companyemail.ToString();
                             Subject = Subjectval;
                             MailBody = Body.ToString();
@@ -246,7 +300,8 @@ namespace SmartxAPI.Controllers
                              {
                             SmtpClient client = new SmtpClient
                             {
-                                Host = "smtp.gmail.com",
+                                
+                                Host = SMTP,
                                 Port = 587,
                                 EnableSsl = true,
                                 DeliveryMethod = SmtpDeliveryMethod.Network,
@@ -265,9 +320,12 @@ namespace SmartxAPI.Controllers
                             message.Subject = Subject;
                             message.Body = MailBody;
                             message.IsBodyHtml = true; //HTML email  
+                            if(url!="")
+                            {
                             byte[] pdfBytes = webClient.DownloadData(url);
                             if(myFunctions.getBoolVAL(MasterRow["b_AttachPdf"].ToString()))
                                 message.Attachments.Add(new Attachment(new System.IO.MemoryStream(pdfBytes), "PurchaseOrder.pdf"));
+                            }
 
                              foreach (DataRow var in Attachments.Rows)
                                  {
@@ -694,7 +752,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult TemplateList()
+        public ActionResult TemplateList(int n_FnYearID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
@@ -706,7 +764,7 @@ namespace SmartxAPI.Controllers
             string Criteria = "";
 
 
-            sqlCommandText = "select  * from Gen_MailTemplates where N_CompanyID=@p1";
+            sqlCommandText = "select  * from Gen_MailTemplates where N_CompanyID=@p1 and N_FnyearID=@p2";
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -717,6 +775,11 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    object N_YearID = dLayer.ExecuteScalar("select  max(N_fnyearID) from acc_fnyear where N_CompanyID=@p1", Params, connection);
+                    if (n_FnYearID>0)
+                        N_YearID=n_FnYearID.ToString();
+                    Params.Add("@p2", N_YearID);
+            
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     sqlCommandCount = "select count(1) as N_Count  from Gen_MailTemplates where N_CompanyID=@p1";

@@ -212,6 +212,7 @@ namespace SmartxAPI.Controllers
                 //int nFnYearId = myFunctions.getIntVAL(DetailTable.Rows[0]["n_FnYearId"].ToString());
                 int nLoanTransID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_LoanTransID"].ToString());
                  DetailTable.Columns.Remove("n_CalculatedAmt");
+                 DetailTable.Columns.Remove("n_FnYearId");
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
