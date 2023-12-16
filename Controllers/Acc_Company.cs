@@ -43,9 +43,9 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly string masterDBConnectionString;
         private readonly string TempFilesPath;
-         private string AppURL;
+        private string AppURL;
 
-        public Acc_Company(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf,IMyAttachments myAtt)
+        public Acc_Company(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             api = apifun;
             dLayer = dl;
@@ -154,11 +154,11 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList Output = new SortedList();
-            bool setReadOnly=false;
+            bool setReadOnly = false;
 
-            string sqlCommandText = "SELECT  Acc_Company.N_CompanyID, Acc_Company.X_CompanyName, Acc_Company.X_ShortName,Acc_Company.X_ContactPerson, Acc_Company.X_EmailID, Acc_Company.X_Address, Acc_Company.X_Website, Acc_Company.X_Country, Acc_Company.X_ZipCode, Acc_Company.X_Phone1, Acc_Company.X_Phone2, Acc_Company.X_CompanyCode, Acc_Company.B_Inactive, Acc_Company.I_Logo,"+ 
-                      "Acc_Company.X_FaxNo, Acc_Company.X_Slogan, Acc_Company.X_History, Acc_Company.X_Certifications, Acc_Company.X_OperatingSince, Acc_Company.X_CompanyName_Ar, Acc_Company.N_CurrencyID, Acc_Company.N_CountryID, Acc_Company.N_Country, Acc_Company.X_TaxRegistrationNo, Acc_Company.X_TaxRegistrationName,"+
-                     " Acc_Company.X_ShippingName, Acc_Company.X_ShippingStreet, Acc_Company.X_ShippingCity, Acc_Company.X_ShippingAppartment, Acc_Company.X_ShippingState, Acc_Company.X_ShippingZIP, Acc_Company.X_ShippingPhone, Acc_Company.I_Header, Acc_Company.I_Footer, Acc_Company.X_ColorCode, Acc_Company.X_CRNumber, "+
+            string sqlCommandText = "SELECT  Acc_Company.N_CompanyID, Acc_Company.X_CompanyName, Acc_Company.X_ShortName,Acc_Company.X_ContactPerson, Acc_Company.X_EmailID, Acc_Company.X_Address, Acc_Company.X_Website, Acc_Company.X_Country, Acc_Company.X_ZipCode, Acc_Company.X_Phone1, Acc_Company.X_Phone2, Acc_Company.X_CompanyCode, Acc_Company.B_Inactive, Acc_Company.I_Logo," +
+                      "Acc_Company.X_FaxNo, Acc_Company.X_Slogan, Acc_Company.X_History, Acc_Company.X_Certifications, Acc_Company.X_OperatingSince, Acc_Company.X_CompanyName_Ar, Acc_Company.N_CurrencyID, Acc_Company.N_CountryID, Acc_Company.N_Country, Acc_Company.X_TaxRegistrationNo, Acc_Company.X_TaxRegistrationName," +
+                     " Acc_Company.X_ShippingName, Acc_Company.X_ShippingStreet, Acc_Company.X_ShippingCity, Acc_Company.X_ShippingAppartment, Acc_Company.X_ShippingState, Acc_Company.X_ShippingZIP, Acc_Company.X_ShippingPhone, Acc_Company.I_Header, Acc_Company.I_Footer, Acc_Company.X_ColorCode, Acc_Company.X_CRNumber, " +
                      " Acc_Company.B_AllowMultipleCom, Acc_Company.N_ClientID, Acc_Company.B_IsDefault, Acc_Company.N_TimeZoneID, Acc_Company.N_Decimal, Acc_Company.N_LocationLimit, Acc_Company.N_BranchLimit, Acc_Company.N_BankID,Acc_TaxType.X_TypeName,Acc_CurrencyMaster.X_CurrencyName AS X_Currency, Gen_TimeZone.X_ZoneName + ' ' + 'GMT' + Gen_TimeZone.X_UtcOffSet AS X_ZoneName, Acc_BankMaster.X_BankName,lan_language.X_Language,Acc_Company.N_LangID As N_LanguageID FROM Acc_Company LEFT OUTER JOIN Acc_BankMaster ON Acc_Company.N_CompanyID = Acc_BankMaster.N_CompanyID AND Acc_Company.N_BankID = Acc_BankMaster.N_BankID LEFT OUTER JOIN Acc_CurrencyMaster ON Acc_Company.N_CompanyID = Acc_CurrencyMaster.N_CompanyID AND Acc_Company.N_CurrencyID = Acc_CurrencyMaster.N_CurrencyID  LEFT OUTER JOIN Gen_TimeZone ON Acc_Company.N_TimeZoneID = Gen_TimeZone.N_TimeZoneID LEFT OUTER JOIN Acc_FnYear ON Acc_Company.N_CompanyID = Acc_FnYear.N_CompanyID LEFT OUTER JOIN Acc_TaxType ON Acc_Company.N_CompanyID = Acc_TaxType.N_CompanyID AND Acc_FnYear.N_TaxType = Acc_TaxType.N_TypeID LEFT OUTER JOIN lan_language ON Acc_Company.N_LangID=lan_language.N_LanguageID where Acc_Company.B_Inactive =@p1 and Acc_Company.N_CompanyID=@p2 and Acc_FnYear.N_FnYearID=(select Top(1) N_FnYearID from Acc_FnYear where N_CompanyID=@p2 order by D_Start Desc) and Acc_Company.N_ClientID=@nClientID";
             Params.Add("@p1", 0);
             Params.Add("@p2", nCompanyID);
@@ -182,49 +182,50 @@ namespace SmartxAPI.Controllers
                     int N_FnYearID = myFunctions.getIntVAL(FnYearInfo.Rows[0]["N_FnYearID"].ToString());
 
                     DataTable TaxInfo = dLayer.ExecuteDataTable("SELECT  Top(1) Gen_Settings.N_Value AS n_PkeyID, Acc_TaxCategory.X_CategoryName AS x_DisplayName FROM Acc_TaxCategory INNER JOIN Acc_FnYear ON Acc_TaxCategory.N_TaxTypeID = Acc_FnYear.N_TaxType AND Acc_TaxCategory.N_CompanyID = Acc_FnYear.N_CompanyID INNER JOIN Gen_Settings ON Acc_TaxCategory.X_PkeyCode = Gen_Settings.N_Value AND Acc_TaxCategory.N_CompanyID = Gen_Settings.N_CompanyID WHERE (Gen_Settings.N_CompanyID = @p2) AND (Gen_Settings.X_Group = 'Inventory') AND (Gen_Settings.X_Description = 'DefaultTaxCategory') and Acc_FnYear.N_FnYearID=" + N_FnYearID, Params, connection);
-                       Params.Add("@nCompanyID", nCompanyID);
-                     object CompanyCount = dLayer.ExecuteScalar("select count(1) from Acc_VoucherDetails where N_CompanyID= " + nCompanyID, connection);
-                      
-                       if(myFunctions.getIntVAL(CompanyCount.ToString())>0){
-                          setReadOnly=true;
-                       } 
-                    DataTable Attachments =new DataTable();
-                    
+                    Params.Add("@nCompanyID", nCompanyID);
+                    object CompanyCount = dLayer.ExecuteScalar("select count(1) from Acc_VoucherDetails where N_CompanyID= " + nCompanyID, connection);
+
+                    if (myFunctions.getIntVAL(CompanyCount.ToString()) > 0)
+                    {
+                        setReadOnly = true;
+                    }
+                    DataTable Attachments = new DataTable();
+
                     SortedList ProParam = new SortedList();
                     ProParam.Add("@CompanyID", nCompanyID);
-                   // DataTable Details = dLayer.ExecuteSettingsPro("SP_GenSettings_Disp", QList, myFunctions.GetCompanyID(User), nFnYearID, connection);
+                    // DataTable Details = dLayer.ExecuteSettingsPro("SP_GenSettings_Disp", QList, myFunctions.GetCompanyID(User), nFnYearID, connection);
                     //Attachments = dLayer.ExecuteDataTablePro("SP_CompanyAttachments",ProParam, connection);
-                    Attachments = myAttachments.ViewAttachment(dLayer,nCompanyID,nCompanyID, 113,N_FnYearID, User, connection);
+                    Attachments = myAttachments.ViewAttachment(dLayer, nCompanyID, nCompanyID, 113, N_FnYearID, User, connection);
                     Attachments = api.Format(Attachments, "attachments");
                     // Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "FileData", typeof(string), null);
                     // Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "TempFileName", typeof(string), null);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "b_AllowEdit", typeof(bool), setReadOnly);
 
-            // if (Attachments.Rows.Count > 0)
-            // {
-            //     Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "n_CompanyID", typeof(int), myFunctions.GetCompanyID(User));
-            //     Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "n_FnYearID", typeof(int), N_FnYearID);
-               
-            // }
+                    // if (Attachments.Rows.Count > 0)
+                    // {
+                    //     Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "n_CompanyID", typeof(int), myFunctions.GetCompanyID(User));
+                    //     Attachments = myFunctions.AddNewColumnToDataTable(Attachments, "n_FnYearID", typeof(int), N_FnYearID);
 
-            // foreach (DataRow var in Attachments.Rows)
-            // {
-            //     if (var["x_refName"] != null)
-            //     {
-            //         var path = var["x_refName"].ToString();
-            //         if (System.IO.File.Exists(path))
-            //         {
-            //             Byte[] bytes = System.IO.File.ReadAllBytes(path);
-            //             var random = RandomString();
-            //             System.IO.File.Copy(path, this.TempFilesPath + random + "." + var["x_Extension"].ToString());
-            //             var["TempFileName"] = random + "." + var["x_Extension"].ToString();
-            //             var["FileData"] = "data:" + api.GetContentType(path) + ";base64," + Convert.ToBase64String(bytes);
-            //         }
-            //     }
+                    // }
 
-            // }
-            Attachments.AcceptChanges();
-                 
+                    // foreach (DataRow var in Attachments.Rows)
+                    // {
+                    //     if (var["x_refName"] != null)
+                    //     {
+                    //         var path = var["x_refName"].ToString();
+                    //         if (System.IO.File.Exists(path))
+                    //         {
+                    //             Byte[] bytes = System.IO.File.ReadAllBytes(path);
+                    //             var random = RandomString();
+                    //             System.IO.File.Copy(path, this.TempFilesPath + random + "." + var["x_Extension"].ToString());
+                    //             var["TempFileName"] = random + "." + var["x_Extension"].ToString();
+                    //             var["FileData"] = "data:" + api.GetContentType(path) + ";base64," + Convert.ToBase64String(bytes);
+                    //         }
+                    //     }
+
+                    // }
+                    Attachments.AcceptChanges();
+
                     Output.Add("CompanyInfo", dt);
                     Output.Add("AdminInfo", AdminInfo);
                     Output.Add("TaxInfo", TaxInfo);
@@ -247,8 +248,8 @@ namespace SmartxAPI.Controllers
             }
 
         }
-      private static Random random = new Random();
-      public string RandomString(int length = 6)
+        private static Random random = new Random();
+        public string RandomString(int length = 6)
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             return new string(Enumerable.Repeat(chars, length)
@@ -291,20 +292,20 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 DataTable GeneralTable;
-                 DataTable userApps = new DataTable();
+                DataTable userApps = new DataTable();
                 MasterTable = ds.Tables["master"];
                 GeneralTable = ds.Tables["general"];
                 DataTable Attachment = ds.Tables["attachments"];
                 string xUserName = GeneralTable.Rows[0]["X_AdminName"].ToString();
                 string xCompanyName = MasterTable.Rows[0]["X_CompanyName"].ToString();
                 string xPassword = myFunctions.EncryptString(GeneralTable.Rows[0]["X_AdminPwd"].ToString());
-                int n_userType=0;
-                int n_GBUserID=0;
-                int userID=0;
-                int n_ClientID=0;
-                int appID=0;
-                 DataTable clientCompany = new DataTable();
-                 DataTable clientApps = new DataTable();
+                int n_userType = 0;
+                int n_GBUserID = 0;
+                int userID = 0;
+                int n_ClientID = 0;
+                int appID = 0;
+                DataTable clientCompany = new DataTable();
+                DataTable clientApps = new DataTable();
 
 
                 string x_DisplayName = myFunctions.ContainColumn("x_DisplayName", GeneralTable) ? GeneralTable.Rows[0]["x_DisplayName"].ToString() : "";
@@ -380,18 +381,18 @@ namespace SmartxAPI.Controllers
                             string sqlGUserInfo = "SELECT X_Password FROM Users where x_EmailID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
                             pwd = dLayer.ExecuteScalar(sqlGUserInfo, cnn).ToString();
 
-                             string sqlGBUserInfo = "SELECT N_UserID FROM Users where x_EmailID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
-                            n_GBUserID =myFunctions.getIntVAL(dLayer.ExecuteScalar(sqlGBUserInfo, cnn).ToString());
+                            string sqlGBUserInfo = "SELECT N_UserID FROM Users where x_EmailID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
+                            n_GBUserID = myFunctions.getIntVAL(dLayer.ExecuteScalar(sqlGBUserInfo, cnn).ToString());
 
-                          
+
                             string sqlClientmaster = "SELECT TOP 1 * FROM clientmaster where x_EmailID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
                             DataTable dtClientmaster = dLayer.ExecuteDataTable(sqlClientmaster, Param, cnn);
                             xUsrName = dtClientmaster.Rows[0]["X_ClientName"].ToString();
                             xPhoneNo = dtClientmaster.Rows[0]["X_ContactNumber"].ToString();
                             //appID = myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_AppID"].ToString());
                             n_userType = myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_DefaultAppID"].ToString());
-                           n_ClientID =myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_ClientID"].ToString());
-                           
+                            n_ClientID = myFunctions.getIntVAL(dtClientmaster.Rows[0]["N_ClientID"].ToString());
+
 
 
                         }
@@ -412,109 +413,109 @@ namespace SmartxAPI.Controllers
                                         // {"X_UserName",xUsrName}
                                         };
                             dLayer.ExecuteNonQueryPro("SP_NewAdminCreation", proParams1, connection, transaction);
-                                string usersql = "SELECT N_UserID FROM Sec_User where X_UserID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
+                            string usersql = "SELECT N_UserID FROM Sec_User where X_UserID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
                             userID = myFunctions.getIntVAL(dLayer.ExecuteScalar(usersql, connection, transaction).ToString());
-                           using (SqlConnection cnn4 = new SqlConnection(masterDBConnectionString))
-                           {
-                            cnn4.Open();
-                            appID = myFunctions.getIntVAL(dLayer.ExecuteScalar( "SELECT Top(1) N_AppID FROM ClientApps where N_ClientID='" +n_ClientID + "'", cnn4).ToString());
-                            //insert companywise apps in clientapps //26-09
-                            SortedList companyParams = new SortedList(){
+                            using (SqlConnection cnn4 = new SqlConnection(masterDBConnectionString))
+                            {
+                                cnn4.Open();
+                                appID = myFunctions.getIntVAL(dLayer.ExecuteScalar("SELECT Top(1) N_AppID FROM ClientApps where N_ClientID='" + n_ClientID + "'", cnn4).ToString());
+                                //insert companywise apps in clientapps //26-09
+                                SortedList companyParams = new SortedList(){
                             {"N_ClientID",n_ClientID}};
 
-                            //
-                            // inserting new app to this coompany
+                                //
+                                // inserting new app to this coompany
 
-                           object count = dLayer.ExecuteScalar("select count(1) as N_Count from ClientApps where  N_ClientID=" +n_ClientID + " and N_CompanyID="+N_CompanyId+"",  cnn4);
-                           object MaxRefID = dLayer.ExecuteScalar("select Max(N_RefID)+1  from ClientApps ",  cnn4);
-                           object Negcount = dLayer.ExecuteScalar("select count(1) as N_Count from ClientApps where  N_ClientID=" +n_ClientID + " and N_CompanyID=-1",  cnn4);
-
-                           
-
-
-                           SqlTransaction clienttransaction = cnn4.BeginTransaction();
-                           if(myFunctions.getIntVAL(count.ToString())==0 && myFunctions.getIntVAL(Negcount.ToString())==0)
-                           {
-                            clientApps.Clear();
-                            clientApps.Columns.Add("N_ClientID");
-                            clientApps.Columns.Add("N_AppID");
-                            clientApps.Columns.Add("X_AppUrl");
-                            clientApps.Columns.Add("X_DbUri");
-
-                            clientApps.Columns.Add("N_UserLimit");
-                            clientApps.Columns.Add("B_InActive");
-                            clientApps.Columns.Add("X_Sector");
-                            clientApps.Columns.Add("N_RefID");
-
-                            clientApps.Columns.Add("D_ExpiryDate");
-                            clientApps.Columns.Add("B_Licensed");
-                            clientApps.Columns.Add("B_EnableAttachment");
-                            clientApps.Columns.Add("B_EnableApproval");
-
-                            clientApps.Columns.Add("N_SubscriptionAmount");
-                            clientApps.Columns.Add("N_DiscountAmount");
-                            clientApps.Columns.Add("D_StartDate");
-                            clientApps.Columns.Add("D_CreatedDate");
-
-                            clientApps.Columns.Add("N_CompanyID");
-                            clientApps.Columns.Add("B_IsDisable");
-
-                            DataRow row2 = clientApps.NewRow();
-                            row2["N_ClientID"] = n_ClientID;
-                            row2["N_AppID"] = appID;
-                            row2["X_AppUrl"] =AppURL;
-                            row2["X_DbUri"] ="SmartxConnection";
-
-                            row2["N_UserLimit"] = 1;
-                            row2["B_InActive"] = 0;
-                            row2["X_Sector"] ="Service";
-                            row2["N_RefID"] =myFunctions.getIntVAL(MaxRefID.ToString());
-
-                            row2["D_ExpiryDate"] = DateTime.Today.AddDays(14);;
-                            row2["B_Licensed"] = 0;
-                            row2["B_EnableAttachment"] =0;
-                            row2["B_EnableApproval"] =0.ToString();
-
-                            row2["N_SubscriptionAmount"] = 0;
-                            row2["N_DiscountAmount"] = 0;
-                            row2["D_StartDate"] =DateTime.Today;
-                            row2["D_CreatedDate"] =DateTime.Today;
-
-                            row2["N_CompanyID"] =N_CompanyId;
-                            row2["B_IsDisable"] = 0;
-                            clientApps.Rows.InsertAt(row2, 0);
-                          
-
-                            int clientppID = dLayer.SaveData("ClientApps", "N_RefID", clientApps, cnn4, clienttransaction);
-                           
-                           }
-                           else
-                           {
-                             string companyAppUpdate = "Update ClientApps set N_CompanyID= "+N_CompanyId+"where N_ClientID="+n_ClientID+" and N_AppID="+appID+"";
-                            dLayer.ExecuteScalar(companyAppUpdate, companyParams, cnn4,clienttransaction);
-                            
-                           }
-                            //client company creation
-                            clientCompany.Clear();
-                            clientCompany.Columns.Add("N_ClientCompanyID");
-                            clientCompany.Columns.Add("N_ClientID");
-                            clientCompany.Columns.Add("N_CompanyID");
-                            clientCompany.Columns.Add("X_CompanyName");
-                            DataRow row1 = clientCompany.NewRow();
-                            row1["N_ClientCompanyID"] = 0;
-                            row1["N_ClientID"] = n_ClientID;
-                            row1["N_CompanyID"] =N_CompanyId;
-                            row1["X_CompanyName"] =xCompanyName.ToString();
-                            clientCompany.Rows.InsertAt(row1, 0);
-                            int ClientCompanyID = dLayer.SaveData("ClientCompany", "N_ClientCompanyID", clientCompany, cnn4, clienttransaction);
-                            clienttransaction.Commit();
-
-                             }
+                                object count = dLayer.ExecuteScalar("select count(1) as N_Count from ClientApps where  N_ClientID=" + n_ClientID + " and N_CompanyID=" + N_CompanyId + "", cnn4);
+                                object MaxRefID = dLayer.ExecuteScalar("select Max(N_RefID)+1  from ClientApps ", cnn4);
+                                object Negcount = dLayer.ExecuteScalar("select count(1) as N_Count from ClientApps where  N_ClientID=" + n_ClientID + " and N_CompanyID=-1", cnn4);
 
 
 
 
-                             
+                                SqlTransaction clienttransaction = cnn4.BeginTransaction();
+                                if (myFunctions.getIntVAL(count.ToString()) == 0 && myFunctions.getIntVAL(Negcount.ToString()) == 0)
+                                {
+                                    clientApps.Clear();
+                                    clientApps.Columns.Add("N_ClientID");
+                                    clientApps.Columns.Add("N_AppID");
+                                    clientApps.Columns.Add("X_AppUrl");
+                                    clientApps.Columns.Add("X_DbUri");
+
+                                    clientApps.Columns.Add("N_UserLimit");
+                                    clientApps.Columns.Add("B_InActive");
+                                    clientApps.Columns.Add("X_Sector");
+                                    clientApps.Columns.Add("N_RefID");
+
+                                    clientApps.Columns.Add("D_ExpiryDate");
+                                    clientApps.Columns.Add("B_Licensed");
+                                    clientApps.Columns.Add("B_EnableAttachment");
+                                    clientApps.Columns.Add("B_EnableApproval");
+
+                                    clientApps.Columns.Add("N_SubscriptionAmount");
+                                    clientApps.Columns.Add("N_DiscountAmount");
+                                    clientApps.Columns.Add("D_StartDate");
+                                    clientApps.Columns.Add("D_CreatedDate");
+
+                                    clientApps.Columns.Add("N_CompanyID");
+                                    clientApps.Columns.Add("B_IsDisable");
+
+                                    DataRow row2 = clientApps.NewRow();
+                                    row2["N_ClientID"] = n_ClientID;
+                                    row2["N_AppID"] = appID;
+                                    row2["X_AppUrl"] = AppURL;
+                                    row2["X_DbUri"] = "SmartxConnection";
+
+                                    row2["N_UserLimit"] = 1;
+                                    row2["B_InActive"] = 0;
+                                    row2["X_Sector"] = "Service";
+                                    row2["N_RefID"] = myFunctions.getIntVAL(MaxRefID.ToString());
+
+                                    row2["D_ExpiryDate"] = DateTime.Today.AddDays(14); ;
+                                    row2["B_Licensed"] = 0;
+                                    row2["B_EnableAttachment"] = 0;
+                                    row2["B_EnableApproval"] = 0.ToString();
+
+                                    row2["N_SubscriptionAmount"] = 0;
+                                    row2["N_DiscountAmount"] = 0;
+                                    row2["D_StartDate"] = DateTime.Today;
+                                    row2["D_CreatedDate"] = DateTime.Today;
+
+                                    row2["N_CompanyID"] = N_CompanyId;
+                                    row2["B_IsDisable"] = 0;
+                                    clientApps.Rows.InsertAt(row2, 0);
+
+
+                                    int clientppID = dLayer.SaveData("ClientApps", "N_RefID", clientApps, cnn4, clienttransaction);
+
+                                }
+                                else
+                                {
+                                    string companyAppUpdate = "Update ClientApps set N_CompanyID= " + N_CompanyId + "where N_ClientID=" + n_ClientID + " and N_AppID=" + appID + "";
+                                    dLayer.ExecuteScalar(companyAppUpdate, companyParams, cnn4, clienttransaction);
+
+                                }
+                                //client company creation
+                                clientCompany.Clear();
+                                clientCompany.Columns.Add("N_ClientCompanyID");
+                                clientCompany.Columns.Add("N_ClientID");
+                                clientCompany.Columns.Add("N_CompanyID");
+                                clientCompany.Columns.Add("X_CompanyName");
+                                DataRow row1 = clientCompany.NewRow();
+                                row1["N_ClientCompanyID"] = 0;
+                                row1["N_ClientID"] = n_ClientID;
+                                row1["N_CompanyID"] = N_CompanyId;
+                                row1["X_CompanyName"] = xCompanyName.ToString();
+                                clientCompany.Rows.InsertAt(row1, 0);
+                                int ClientCompanyID = dLayer.SaveData("ClientCompany", "N_ClientCompanyID", clientCompany, cnn4, clienttransaction);
+                                clienttransaction.Commit();
+
+                            }
+
+
+
+
+
 
                             SortedList proParams2 = new SortedList(){
                                         {"N_CompanyID",N_CompanyId},
@@ -522,54 +523,54 @@ namespace SmartxAPI.Controllers
                                         {"D_Start",GeneralTable.Rows[0]["d_FromDate"].ToString()},
                                         {"D_End",GeneralTable.Rows[0]["d_ToDate"].ToString()}};
                             N_FnYearId = dLayer.ExecuteScalarPro("SP_FinancialYear_Create", proParams2, connection, transaction);
-                           dLayer.ExecuteNonQuery("insert into Sec_UserApps select "+N_CompanyId+",isnull(max(N_APPMappingID),0)+1,"+appID+","+userID+","+n_GBUserID+", NULL from Sec_UserApps",connection, transaction);
+                            dLayer.ExecuteNonQuery("insert into Sec_UserApps select " + N_CompanyId + ",isnull(max(N_APPMappingID),0)+1," + appID + "," + userID + "," + n_GBUserID + ", NULL from Sec_UserApps", connection, transaction);
                             SortedList proParams3 = new SortedList(){
                                         {"N_CompanyID",N_CompanyId},
                                         {"N_FnYearID",N_FnYearId}};
                             dLayer.ExecuteNonQueryPro("SP_AccGruops_Accounts_Create", proParams3, connection, transaction);
-                               using (SqlConnection cnn1 = new SqlConnection(masterDBConnectionString))
-                        {
-                            cnn1.Open();
-                           SortedList proParams6 = new SortedList(){
+                            using (SqlConnection cnn1 = new SqlConnection(masterDBConnectionString))
+                            {
+                                cnn1.Open();
+                                SortedList proParams6 = new SortedList(){
                                   {"N_ClientID",n_ClientID}};
-                          object SettingsCount = dLayer.ExecuteScalar("select count(1) from GenSettings where  N_ClientID=" + myFunctions.GetClientID(User), cnn1);
-                          if(myFunctions.getIntVAL(SettingsCount.ToString())>0)
-                          {
-                            string settingsUserUpdate = "Update GenSettings set N_Value= (SELECT N_Value + (select isnull(N_FreeUsers,0) from AppMaster where N_AppID="+appID+") as N_Value FROM GenSettings where N_ClientID="+n_ClientID+" and X_Description='USER LIMIT') WHERE N_ClientID="+n_ClientID+" and X_Description='USER LIMIT'";
-                            dLayer.ExecuteScalar(settingsUserUpdate, proParams6, cnn1);
+                                object SettingsCount = dLayer.ExecuteScalar("select count(1) from GenSettings where  N_ClientID=" + myFunctions.GetClientID(User), cnn1);
+                                if (myFunctions.getIntVAL(SettingsCount.ToString()) > 0)
+                                {
+                                    string settingsUserUpdate = "Update GenSettings set N_Value= (SELECT N_Value + (select isnull(N_FreeUsers,0) from AppMaster where N_AppID=" + appID + ") as N_Value FROM GenSettings where N_ClientID=" + n_ClientID + " and X_Description='USER LIMIT') WHERE N_ClientID=" + n_ClientID + " and X_Description='USER LIMIT'";
+                                    dLayer.ExecuteScalar(settingsUserUpdate, proParams6, cnn1);
 
-                            string settingsCompanyUpdate = "Update GenSettings set N_Value= (SELECT N_Value + 1 FROM GenSettings where N_ClientID="+n_ClientID+" and X_Description='COMPANY LIMIT') WHERE N_ClientID="+n_ClientID+" and X_Description='COMPANY LIMIT'";
-                            dLayer.ExecuteScalar(settingsCompanyUpdate, proParams6, cnn1);
+                                    string settingsCompanyUpdate = "Update GenSettings set N_Value= (SELECT N_Value + 1 FROM GenSettings where N_ClientID=" + n_ClientID + " and X_Description='COMPANY LIMIT') WHERE N_ClientID=" + n_ClientID + " and X_Description='COMPANY LIMIT'";
+                                    dLayer.ExecuteScalar(settingsCompanyUpdate, proParams6, cnn1);
 
-                            string settingsBranchUpdate = "Update GenSettings set N_Value= (SELECT N_Value + (select isnull(N_FreeBranches,0) from AppMaster where N_AppID="+appID+") as N_Value FROM GenSettings where N_ClientID="+n_ClientID+" and X_Description='BRANCH LIMIT') WHERE N_ClientID="+n_ClientID+" and X_Description='BRANCH LIMIT'";
-                            dLayer.ExecuteScalar(settingsBranchUpdate, proParams6, cnn1);
-                            string settingsEmpUpdate = "Update GenSettings set N_Value= (SELECT N_Value + (select isnull(N_FreeEmployees,0) from AppMaster where N_AppID="+appID+") as N_Value FROM GenSettings where N_ClientID="+n_ClientID+" and X_Description='EMPLOYEE LIMIT') WHERE N_ClientID="+n_ClientID+" and X_Description='EMPLOYEE LIMIT'";
-                            dLayer.ExecuteScalar(settingsEmpUpdate, proParams6, cnn1);
-                            string settingsStuUpdate = "Update GenSettings set N_Value= (SELECT N_Value + (select isnull(N_FreeStudents,0) from AppMaster where N_AppID="+appID+") as N_Value FROM GenSettings where N_ClientID="+n_ClientID+" and X_Description='STUDENT LIMIT') WHERE N_ClientID="+n_ClientID+" and X_Description='STUDENT LIMIT'";
-                            dLayer.ExecuteScalar(settingsStuUpdate, proParams6, cnn1);
-                          }
-                          else
-                          dLayer.ExecuteNonQueryPro("Sp_GenSettingInsert", proParams6, cnn1);
-                        }
+                                    string settingsBranchUpdate = "Update GenSettings set N_Value= (SELECT N_Value + (select isnull(N_FreeBranches,0) from AppMaster where N_AppID=" + appID + ") as N_Value FROM GenSettings where N_ClientID=" + n_ClientID + " and X_Description='BRANCH LIMIT') WHERE N_ClientID=" + n_ClientID + " and X_Description='BRANCH LIMIT'";
+                                    dLayer.ExecuteScalar(settingsBranchUpdate, proParams6, cnn1);
+                                    string settingsEmpUpdate = "Update GenSettings set N_Value= (SELECT N_Value + (select isnull(N_FreeEmployees,0) from AppMaster where N_AppID=" + appID + ") as N_Value FROM GenSettings where N_ClientID=" + n_ClientID + " and X_Description='EMPLOYEE LIMIT') WHERE N_ClientID=" + n_ClientID + " and X_Description='EMPLOYEE LIMIT'";
+                                    dLayer.ExecuteScalar(settingsEmpUpdate, proParams6, cnn1);
+                                    string settingsStuUpdate = "Update GenSettings set N_Value= (SELECT N_Value + (select isnull(N_FreeStudents,0) from AppMaster where N_AppID=" + appID + ") as N_Value FROM GenSettings where N_ClientID=" + n_ClientID + " and X_Description='STUDENT LIMIT') WHERE N_ClientID=" + n_ClientID + " and X_Description='STUDENT LIMIT'";
+                                    dLayer.ExecuteScalar(settingsStuUpdate, proParams6, cnn1);
+                                }
+                                else
+                                    dLayer.ExecuteNonQueryPro("Sp_GenSettingInsert", proParams6, cnn1);
+                            }
 
-                           userApps.Clear();
-                           userApps.Columns.Add("N_CompanyID");
-                           userApps.Columns.Add("N_AppMappingID");
-                           userApps.Columns.Add("N_AppID");
-                           userApps.Columns.Add("N_UserID");
-                           userApps.Columns.Add("N_GlobalUserID");
-                     
+                            userApps.Clear();
+                            userApps.Columns.Add("N_CompanyID");
+                            userApps.Columns.Add("N_AppMappingID");
+                            userApps.Columns.Add("N_AppID");
+                            userApps.Columns.Add("N_UserID");
+                            userApps.Columns.Add("N_GlobalUserID");
 
-                        DataRow row = userApps.NewRow();
-                        row["N_CompanyID"] = N_CompanyId;
-                        row["N_AppMappingID"] = 0;
-                        row["N_AppID"] =n_userType;
-                        row["N_UserID"] = userID;
-                        row["N_GlobalUserID"] =n_GBUserID;
-                        userApps.Rows.InsertAt(row, 0);
-                        int userAppsID = dLayer.SaveData("sec_userApps", "n_AppMappingID", userApps, connection, transaction);
 
-              
+                            DataRow row = userApps.NewRow();
+                            row["N_CompanyID"] = N_CompanyId;
+                            row["N_AppMappingID"] = 0;
+                            row["N_AppID"] = n_userType;
+                            row["N_UserID"] = userID;
+                            row["N_GlobalUserID"] = n_GBUserID;
+                            userApps.Rows.InsertAt(row, 0);
+                            int userAppsID = dLayer.SaveData("sec_userApps", "n_AppMappingID", userApps, connection, transaction);
+
+
 
                         }
                         SortedList taxParams = new SortedList(){
@@ -596,24 +597,24 @@ namespace SmartxAPI.Controllers
                         // SortedList proParams5 = new SortedList(){
                         //           {"N_CompanyID",N_CompanyId}};
 
-                        
+
                         //  dLayer.ExecuteNonQueryPro("UTL_UpdateGenSettings", proParams5, connection, transaction);
-                      
 
 
-                if (Attachment.Rows.Count > 0)
-                    {
-                        try
+
+                        if (Attachment.Rows.Count > 0)
                         {
-                            myAttachments.SaveAttachment(dLayer, Attachment,MasterTable.Rows[0]["X_CompanyCode"].ToString(),N_CompanyId, MasterTable.Rows[0]["X_CompanyName"].ToString().Trim(), MasterTable.Rows[0]["X_CompanyCode"].ToString(), N_CompanyId, "Company Document", User, connection, transaction);
+                            try
+                            {
+                                myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["X_CompanyCode"].ToString(), N_CompanyId, MasterTable.Rows[0]["X_CompanyName"].ToString().Trim(), MasterTable.Rows[0]["X_CompanyCode"].ToString(), N_CompanyId, "Company Document", User, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error(User, ex));
+                            }
                         }
-                        catch (Exception ex)
-                        {
-                            transaction.Rollback();
-                            return Ok(api.Error(User, ex));
-                        }
-                    }
-                    transaction.Commit();
+                        transaction.Commit();
 
                         return Ok(api.Success("Company successfully saved"));
                     }
@@ -635,7 +636,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-         [HttpGet("getCompanyAPIKey")]
+        [HttpGet("getCompanyAPIKey")]
         public ActionResult GetAPIKey()
         {
             string seperator = "$$";
@@ -650,7 +651,7 @@ namespace SmartxAPI.Controllers
     }
 
 
-     
 
-                                  
+
+
 }
