@@ -66,7 +66,7 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_BudgetCode"] = xBudgetCode;
                     }
                     MasterTable.AcceptChanges();
-                    
+
                     nBudgetID = dLayer.SaveData("Acc_BudgetMaster", "n_BudgetID", MasterTable, connection, transaction);
                     if (nBudgetID <= 0)
                     {
@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
                     if (nBudgetDetailsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User, "Unable to save"));
                     }
                     else
                     {
@@ -107,10 +107,10 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
                     Params.Add("@n_BudgetID", nBudgetID);
-        
+
                     dLayer.DeleteData("Acc_BudgetDetails", "n_BudgetID", nBudgetID, "", connection, transaction);
                     Results = dLayer.DeleteData("Acc_BudgetMaster", "n_BudgetID", nBudgetID, "", connection, transaction);
-                    
+
                     if (Results > 0)
                     {
                         transaction.Commit();
@@ -118,8 +118,8 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                       transaction.Rollback();
-                       return Ok(_api.Error(User, "Unable to delete"));
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable to delete"));
                     }
                 }
             }
@@ -150,7 +150,8 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    if (MasterTable.Rows.Count == 0){
+                    if (MasterTable.Rows.Count == 0)
+                    {
                         return Ok(_api.Warning("No Results Found"));
                     }
                     MasterTable.AcceptChanges();
@@ -166,7 +167,7 @@ namespace SmartxAPI.Controllers
                 DetailTable = _api.Format(DetailTable, "Details");
                 dt.Tables.Add(MasterTable);
                 dt.Tables.Add(DetailTable);
-                
+
                 return Ok(_api.Success(dt));
             }
             catch (Exception e)
@@ -175,14 +176,51 @@ namespace SmartxAPI.Controllers
             }
         }
 
-         [HttpGet("baseyearlist")]
-        public ActionResult GetbaseyearList(int nCompanyID,int nBudgetTypeID)
+        [HttpGet("baseyearlist")]
+        public ActionResult GetbaseyearList(int nCompanyID, int nyear,int nBudgetTypeID)
         {
             DataTable dt = new DataTable();
-            SortedList Params=new SortedList();
-            string sqlCommandText = "select N_Year from Acc_BudgetMaster WHERE N_CompanyID=@p1 and N_BudgetTypeID=@p2 GROUP BY N_Year";
-            Params.Add("@p1",nCompanyID);
-            Params.Add("@p2",nBudgetTypeID);
+            SortedList Params = new SortedList();
+
+
+            string sqlCommandText = "select CONVERT(NVARCHAR(MAX), N_Year) AS X_Year,N_Year from Acc_BudgetMaster WHERE N_CompanyID=@p1 and N_BudgetTypeID=@p2 and N_Year <= @p3 GROUP BY N_Year";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nBudgetTypeID);
+             Params.Add("@p3", nyear);
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+        [HttpGet("basemonthlist")]
+        public ActionResult GetbasemonthList(int nCompanyID, int nBudgetTypeID, int nYear)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string sqlCommandText = "select X_Month from Acc_BudgetMaster WHERE N_CompanyID=@p1 AND N_Year <=@p3 and N_BudgetTypeID=@p2 GROUP BY X_Month";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nBudgetTypeID);
+            Params.Add("@p3", nYear);
+
 
             try
             {
@@ -202,17 +240,43 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
-          [HttpGet("basemonthlist")]
-        public ActionResult GetbasemonthList(int nCompanyID,int nBudgetTypeID)
+
+        [HttpGet("basebudgetlist")]
+        public ActionResult GetbasebudgetList(int nCompanyID, int nYear,int nBudgetTypeID,string xMonth)
         {
             DataTable dt = new DataTable();
-            SortedList Params=new SortedList();
-            string sqlCommandText = "select X_Month from Acc_BudgetMaster WHERE N_CompanyID=@nCompanyID AND N_Year=@nYear and N_BudgetTypeID=@nBudgetTypeID GROUP BY X_Month";
-            Params.Add("@p1",nCompanyID);
-            Params.Add("@p2",nBudgetTypeID);
+          
+            SortedList Params = new SortedList();
+           
+
+            string sqlCommandText = "";
+           
+
+            Params.Add("@p1", nCompanyID);
+           
+            Params.Add("@p3", nYear);
+
+            if (nBudgetTypeID == 1){
+                 
+                Params.Add("@nCompanyID", nCompanyID);
+                Params.Add("@nYear", nYear);
+                Params.Add("@nBudgetTypeID", nBudgetTypeID);
+
+                sqlCommandText = "select N_BudgetID, X_BudgetCode, X_BudgetName from Acc_BudgetMaster WHERE N_CompanyID = @nCompanyID AND N_Year = @nYear and N_BudgetTypeID = @nBudgetTypeID";
+            }
+            else if (nBudgetTypeID == 2){
+
+                 Params.Add("@nCompanyID", nCompanyID);
+                Params.Add("@nYear", nYear);
+                Params.Add("@nBudgetTypeID", nBudgetTypeID);
+                Params.Add("@xMonth", xMonth);
+
+                sqlCommandText="select N_BudgetID, X_BudgetCode, X_BudgetName from Acc_BudgetMaster WHERE N_CompanyID = @nCompanyID AND N_Year = @nYear and X_Month = @xMonth and N_BudgetTypeID = @nBudgetTypeID GROUP BY X_Month,N_BudgetID,X_BudgetCode, X_BudgetName";
+
+            }
 
             try
             {
@@ -232,10 +296,9 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
-        }
-
+         }
 
     }
 }
