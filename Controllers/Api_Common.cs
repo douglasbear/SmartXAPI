@@ -211,6 +211,64 @@ namespace SmartxAPI.Controllers
                  return Ok(api.Error(User, ex));
             }
         }
+        [HttpPost("cusomerreceipt")]
+        public ActionResult Savecusomerreceipt([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable MasterTable;
+                DataTable dt;
+                MasterTable = ds.Tables["master"];
+                int nSalesID = 0;
+                string Auth = "";
+                if (Request.Headers.ContainsKey("Authorization"))
+                    Auth = Request.Headers["Authorization"];
+                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "pkey_code", typeof(int), 0);
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList Params = new SortedList();
+                    dt = dLayer.ExecuteDataTable("select * from sec_user where  X_Token='" + Auth + "'", Params, connection, transaction);
+                    if (dt.Rows.Count > 0)
+                    {
+                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_CompanyID", typeof(int), dt.Rows[0]["N_CompanyID"]);
+                        object N_FnyearID = dLayer.ExecuteScalar("select MAX(N_FnyearID) from Acc_Fnyear where N_CompanyID=" + dt.Rows[0]["N_CompanyID"], connection, transaction);
+                        Params.Add("N_CompanyID", dt.Rows[0]["N_CompanyID"]);
+                        Params.Add("N_FnyearID", N_FnyearID);
+                        Params.Add("X_Type", "customer payment");
+                        Params.Add("N_BranchID", dt.Rows[0]["N_BranchID"]);
+                        Params.Add("N_LocationID", dt.Rows[0]["N_LocationID"]);
+                        
+
+                        dLayer.ExecuteNonQuery("delete from Mig_CustomerPayment", Params, connection, transaction);
+                        nSalesID = dLayer.SaveData("Mig_CustomerPayment", "pkey_code", MasterTable, connection, transaction);
+                        dLayer.ExecuteNonQueryPro("SP_SetupData_cloud", Params, connection, transaction);
+                        dLayer.ExecuteNonQuery("Update sec_user Set X_Token= '' where N_UserID = " + dt.Rows[0]["N_UserID"], Params, connection, transaction);
+
+                    }
+                    else
+                        return Ok(api.Error(User, "Invalid Token"));
+
+
+
+                    if (nSalesID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error(User, "Unable to save"));
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                        return Ok(api.Success("Sales Receipt Saved"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                 return Ok(api.Error(User, ex));
+            }
+        }
         [HttpPost("FTPurchase")]
         public ActionResult SaveFTPurchase([FromBody] DataSet ds)
         {
@@ -270,6 +328,96 @@ namespace SmartxAPI.Controllers
             catch (Exception ex)
             {
                  return Ok(api.Error(User, ex));
+            }
+        }
+         [HttpGet("schClasslist")]
+        public ActionResult schClasslist(int nCompanyID)
+        {
+            try
+            {
+                DataTable MasterTable;
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList Params = new SortedList();
+                    MasterTable = dLayer.ExecuteDataTable("select * from Sch_Class where N_CompanyID="+nCompanyID, Params, connection,transaction);
+                    if(MasterTable.Rows.Count<=0)
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error(User, "No Data Found"));
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                        return Ok(MasterTable);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                 return Ok(api.Error(User, ex));
+            }
+        }
+         [HttpPost("schRegistration")]
+        public ActionResult schRegistration([FromBody] DataSet ds)
+        {
+           try
+            {
+                DataTable MasterTable = new DataTable();
+                DataRow row = MasterTable.NewRow();
+                MasterTable.Rows.Add(row);
+                int N_RegID = 0;
+                string Stud = "";
+                DataTable Details = ds.Tables["master"];
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList Params = new SortedList();
+
+                    string xencrypt=Details.Rows[0]["encrypt"].ToString();
+                    xencrypt=xencrypt.Replace("xx", "");
+                    int N_CompanyID=myFunctions.getIntVAL(xencrypt.ToString());
+                    object N_FnyearID = dLayer.ExecuteScalar("select MAX(N_FnyearID) from Acc_Fnyear where N_CompanyID=" + N_CompanyID, connection, transaction);
+                     Params.Add("N_CompanyID", N_CompanyID);
+                     Params.Add("N_YearID", N_FnyearID);
+                     Params.Add("N_FormID", 1517);
+                     Stud = dLayer.GetAutoNumber("Sch_Registration", "X_RegNo", Params, connection, transaction);
+                    if (Stud == "") { transaction.Rollback(); return Ok(api.Warning("Unable to Generate Registration Number")); }
+
+
+                    Details = myFunctions.AddNewColumnToDataTable(Details, "N_CompanyId", typeof(int), N_CompanyID);
+                    Details = myFunctions.AddNewColumnToDataTable(Details, "N_AcYearID", typeof(int), myFunctions.getIntVAL(N_FnyearID.ToString()));
+                    Details = myFunctions.AddNewColumnToDataTable(Details, "N_RegID", typeof(int), 0);
+                    Details = myFunctions.AddNewColumnToDataTable(Details, "X_RegNo", typeof(int), Stud);
+                    Details.Columns.Remove("encrypt");
+
+
+                    
+                    if (Details.Rows.Count > 0)
+                        N_RegID = dLayer.SaveData("Sch_Registration", "N_RegID", Details, connection, transaction);
+                    else
+                        return Ok(api.Error("Unable to save"));
+
+
+
+                    if (N_RegID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error("Unable to save"));
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                        return Ok(api.Success("Registration saved"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error("Unable to save"));
             }
         }
         

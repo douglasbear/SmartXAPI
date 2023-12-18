@@ -167,7 +167,7 @@ namespace SmartxAPI.Controllers
                     if (B_ShowManagerWise == false)
                     {
                         if (bAllBranchData == true)
-                            sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  (D_Date>=@d_DateFrom and D_Date<=@d_DateTo) and N_EmpID=@nEmpID union  Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and   isnull(D_Date,'1900-01-01')='1900-01-01' and N_EmpID not in (select N_EmpID from vw_Pay_Empshiftdetails where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and D_Date>=@d_DateFrom and D_Date<=@d_DateTo and N_EmpID=@nEmpID   )";
+                            sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  (D_Date>=@d_DateFrom and D_Date<=@d_DateTo) and N_EmpID=@nEmpID union  Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and   isnull(D_Date,'1900-01-01')='1900-01-01' and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  (D_Date>=@d_DateFrom and D_Date<=@d_DateTo) and  N_EmpID=@nEmpID order by D_Date ";
                         else
                             sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,x_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID  and N_EmpID=@nEmpID   and (N_BranchID=0 or N_BranchID=@nBranchID) and (D_Date>=@d_DateFrom and D_Date<=@d_DateTo or   isnull(D_Date,'1900-01-01')='1900-01-01')  ";
                     }
@@ -248,7 +248,7 @@ namespace SmartxAPI.Controllers
                                      Date = Date.AddDays(1);
                                 } while (Date <= d_DateTo);
                       
-                        
+                        dt.AcceptChanges();
                        foreach (DataRow row in dt.Rows){
                         DateTime Date5 = Convert.ToDateTime(row["D_date"].ToString());
                         string day = Date5.DayOfWeek.ToString();
