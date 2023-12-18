@@ -1112,5 +1112,73 @@ namespace SmartxAPI.Controllers
                 return StatusCode(403, _api.Error(User, e));
             }
         }
+
+        [HttpGet("userAppList")]
+        public ActionResult GetData(string xUser,int nUserID,int nCompanyID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    // int nCompanyID = myFunctions.GetCompanyID(User);
+
+                    string sqlCommandText = "SELECT Sec_UserApps.N_CompanyId, Sec_UserApps.N_AppMappingID, AppMaster.X_AppName AS X_Apps, Sec_UserApps.N_AppID, Sec_UserApps.N_UserID, Sec_UserApps.N_GlobalUserID, Sec_UserApps.X_LandingPage" +
+                                            " FROM Sec_UserApps INNER JOIN [Live_OlivoClients].dbo.AppMaster ON Sec_UserApps.N_AppID = AppMaster.N_AppID where Sec_UserApps.N_UserID=@nUserID and Sec_UserApps.N_CompanyId=@nCompanyID";
+                    Params.Add("@nUserID", nUserID);
+                    Params.Add("@nCompanyID", nCompanyID);
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    if (dt.Rows.Count == 0){
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else{
+                        return Ok(_api.Success(dt));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+        [HttpPost("landingPageUpdate")]
+        public ActionResult SaveLandingPage([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+
+                    DataTable DetailTable = ds.Tables["tableDetails"];
+                    int nCompanyID =  myFunctions.getIntVAL(DetailTable.Rows[0]["n_CompanyID"].ToString());
+                    int nUserID = myFunctions.getIntVAL(DetailTable.Rows[0]["n_UserID"].ToString());
+
+                    SortedList Params = new SortedList();
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@nUserID", nUserID);
+
+                    foreach (DataRow var in DetailTable.Rows)
+                    {
+                        int nAppID =  myFunctions.getIntVAL(var["n_AppID"].ToString());
+                        string landingPage = var["X_LandingPage"].ToString();
+                        dLayer.ExecuteNonQuery("Update Sec_UserApps Set X_LandingPage='" + landingPage.ToString() + "' Where N_AppID="+nAppID+" and N_UserID=@nUserID and N_CompanyID=@nCompanyID", Params, connection, transaction);
+                    }
+                    DetailTable.AcceptChanges();
+                    
+                    transaction.Commit();
+                    return Ok(_api.Success("Landing Page Saved"));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
     }
 }
