@@ -310,7 +310,7 @@ namespace SmartxAPI.Controllers
 
                      {
                     Params.Add("@PurchaseNo", nPurchaseNO);
-                    X_MasterSql = "select * from vw_Inv_PurchaseDisp where N_CompanyID=@CompanyID and X_InvoiceNo=@PurchaseNo and N_FnYearID=@YearID and X_TransType=@TransType" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                    X_MasterSql = "select * from vw_Inv_PurchaseDisp where N_CompanyID=@CompanyID and X_InvoiceNo=@PurchaseNo and N_FnYearID=@YearID and X_TransType=@TransType" + (showAllBranch ? " order by N_PurchaseID " : " and  N_BranchId=@BranchID order by N_PurchaseID");
                 }
                 else if (xPOrderNo != null)
                 {
