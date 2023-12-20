@@ -337,7 +337,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();  
                     DataTable detailsTable = ds.Tables["details"];
                     SortedList Params = new SortedList();
-                    DataTable shiftSave;
+                    DataTable dt = new DataTable();
                     string Sql = "";
                     int N_CompanyID = myFunctions.getIntVAL(detailsTable.Rows[0]["n_CompanyID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(detailsTable.Rows[0]["n_FnYearID"].ToString());
@@ -350,12 +350,23 @@ namespace SmartxAPI.Controllers
                      DateTime dDateTo = Convert.ToDateTime(detailsTable.Rows[0]["D_PeriodTo"].ToString());
 
 
-                    dLayer.ExecuteNonQuery("Delete from Pay_Empshiftdetails where D_PeriodFrom>='" + dDateFrom +"' and D_PeriodTo<='"+dDateTo+"' and N_EmpID in ("+empIds+")" + "  and N_CompanyID=N_CompanyID", Params, connection, transaction);
+                        DataTable d1=dLayer.ExecuteDataTable("select x_EmpName from pay_employee where n_empID in (select distinct(n_empId) from Pay_TimeSheetImport  Where d_date>='" + dDateFrom +"' and d_date<='"+dDateTo+"' and N_CompanyID=" + N_CompanyID+" and N_EmpID in ("+empIds+") "+"and ISNULL(N_TimeSheetID,0)>0" + ")",Params, connection, transaction);
+                        if (d1.Rows.Count > 0){
+                          var empList = d1.AsEnumerable().Select(r => r.Field<string>("x_EmpName"));
+                             string value = string.Join(",", empList);
+                             return Ok(_api.Notice("Time sheet entered for this employee, " + value + " in this date range "));
+                        }
+                       
+                 else{
+                 dLayer.ExecuteNonQuery("Delete from Pay_Empshiftdetails where D_PeriodFrom>='" + dDateFrom +"' and D_PeriodTo<='"+dDateTo+"' and N_EmpID in ("+empIds+")" + "  and N_CompanyID=N_CompanyID", Params, connection, transaction);
 
                     dLayer.SaveData("Pay_Empshiftdetails", "N_ShiftDetailsID", detailsTable, connection, transaction);
-                  dLayer.ExecuteNonQuery("update pay_empshiftDetails set N_SHIFTid=N_ShiftDetailsID where D_PeriodFrom='" + dDateFrom +"' and D_PeriodTo='"+dDateTo+"' and N_EmpID in ("+empIds+")" + "  and N_CompanyID=N_CompanyID", connection, transaction);
+                    dLayer.ExecuteNonQuery("update pay_empshiftDetails set N_SHIFTid=N_ShiftDetailsID where D_PeriodFrom='" + dDateFrom +"' and D_PeriodTo='"+dDateTo+"' and N_EmpID in ("+empIds+")" + "  and N_CompanyID=N_CompanyID", connection, transaction);
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
+                 }
+
+                  
                 }
             }
 
