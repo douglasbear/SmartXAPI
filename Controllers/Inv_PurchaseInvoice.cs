@@ -447,7 +447,6 @@ namespace SmartxAPI.Controllers
 
                     object Tax1ID = "";
                     if (multipleGrnNo != null && multipleGrnNo != "")
-
                         X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_UnitSPrice,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_SPrice,N_MrnID AS N_RsID  from vw_InvMRNDetailsDirect Where N_CompanyID=@CompanyID and N_MRNID in (" + multipleGrnNo + ")";
 
 
