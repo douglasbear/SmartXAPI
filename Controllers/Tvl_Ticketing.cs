@@ -246,8 +246,8 @@ namespace SmartxAPI.Controllers
                                                     " 565 AS N_FormID, Acc_Company.N_CurrencyID,1 AS N_ExchangeRate,Tvl_Ticketing.N_CustomerAmt AS N_BillAmtF,0 AS N_DiscountAmtF,0 AS N_CashReceivedF, "+
                                                     " Tvl_Ticketing.N_CreatedUser,Tvl_Ticketing.D_CreatedDate, 0 AS n_DeliveryNoteId, Tvl_Ticketing.N_SalesmanID "+
                                                     " FROM         Tvl_Ticketing INNER JOIN "+
-                                                    " Inv_Location ON Tvl_Ticketing.N_CompanyID = Inv_Location.N_CompanyID AND Inv_Location.B_IsDefault = 1 INNER JOIN "+
                                                     " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND Acc_BranchMaster.B_DefaultBranch = 1 INNER JOIN "+
+                                                    " Inv_Location ON Tvl_Ticketing.N_CompanyID = Inv_Location.N_CompanyID AND Inv_Location.B_IsDefault = 1 and Inv_Location.N_BranchID = Acc_BranchMaster.N_BranchID INNER JOIN "+                                                   
                                                     " Acc_Company ON Tvl_Ticketing.N_CompanyID = Acc_Company.N_CompanyID LEFT OUTER JOIN "+
                                                     " Inv_Sales ON Tvl_Ticketing.N_CompanyID = Inv_Sales.N_CompanyId AND Tvl_Ticketing.N_TicketID = Inv_Sales.N_SalesRefID AND Inv_Sales.N_SalesType=7 "+
                                                     " WHERE     Tvl_Ticketing.N_CompanyID= "+nCompanyID+" and Tvl_Ticketing.N_TicketID= "+nTicketID;
@@ -263,8 +263,8 @@ namespace SmartxAPI.Controllers
                                                 " Inv_Sales ON Inv_SalesDetails.N_CompanyID = Inv_Sales.N_CompanyId AND Inv_SalesDetails.N_SalesID = Inv_Sales.N_SalesId RIGHT OUTER JOIN "+
                                                 " Tvl_Ticketing INNER JOIN "+
                                                 " Inv_ItemMaster ON Tvl_Ticketing.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemMaster.X_ItemCode = '005' INNER JOIN "+
-                                                " Inv_Location ON Tvl_Ticketing.N_CompanyID = Inv_Location.N_CompanyID AND Inv_Location.B_IsDefault = 1 INNER JOIN "+
-                                                " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND Acc_BranchMaster.B_DefaultBranch = 1 ON Inv_Sales.N_CompanyId = Tvl_Ticketing.N_CompanyID AND "+
+                                                " Acc_BranchMaster ON Tvl_Ticketing.N_CompanyID = Acc_BranchMaster.N_CompanyID AND Acc_BranchMaster.B_DefaultBranch = 1 INNER JOIN "+
+                                                " Inv_Location ON Tvl_Ticketing.N_CompanyID = Inv_Location.N_CompanyID AND Inv_Location.B_IsDefault = 1 ON Inv_Sales.N_CompanyId = Tvl_Ticketing.N_CompanyID AND "+
                                                 " Inv_Sales.N_SalesRefID = Tvl_Ticketing.N_TicketID AND Inv_Sales.N_SalesType=7 "+
                                                 " WHERE         Tvl_Ticketing.N_CompanyID= "+nCompanyID+" and Tvl_Ticketing.N_TicketID= "+nTicketID;     
 

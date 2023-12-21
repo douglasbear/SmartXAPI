@@ -290,6 +290,31 @@ namespace SmartxAPI.Controllers
                                     dtRow["N_CompanyID"] = nCompanyID;
                                 }
                                 break;
+
+                        case "price list":
+                                xTableName = "Mig_PriceList";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;    
+                        case "asset purchase":
+                                xTableName = "Mig_AssetList";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;     
+                        case "purchase order":
+                                xTableName = "Mig_PurchaseOrder";
+                                Mastertable.Columns.Add("N_CompanyID");
+                                foreach (DataRow dtRow in Mastertable.Rows)
+                                {
+                                    dtRow["N_CompanyID"] = nCompanyID;
+                                }
+                                break;        
                             default: return Ok("Invalid File");
                         }
 
@@ -307,7 +332,7 @@ namespace SmartxAPI.Controllers
                         {
 
                             if (Mastertable.Columns.Contains("Notes") && !isRuleBasedImport)
-                                Mastertable.Columns.Remove("Notes");
+                               Mastertable.Columns.Remove("Notes");
 
                             dLayer.ExecuteNonQuery("delete from " + xTableName, Params, connection, transaction);
 
@@ -399,7 +424,7 @@ namespace SmartxAPI.Controllers
                             ValidationParam.Add("X_Type", dt.TableName);
                             try
                             {
-                             dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
+                        dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
                             }
                             catch (Exception ex)
                             {
@@ -419,7 +444,7 @@ namespace SmartxAPI.Controllers
                             }
                          else
                              {
-                               dLayer.ExecuteNonQueryPro("SP_SetupData_cloud", Params, connection, transaction);
+                            dLayer.ExecuteNonQueryPro("SP_SetupData_cloud", Params, connection, transaction);
                              }
 
                             if (nMasterID <= 0)

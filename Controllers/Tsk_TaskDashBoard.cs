@@ -49,6 +49,7 @@ namespace SmartxAPI.Controllers
             DataTable overDueList = new DataTable();
             DataTable TaskStatus = new DataTable();
             DataTable upComingTask = new DataTable();
+            DataTable unassignedTaskList = new DataTable();
 
             string critiria="";
             if(N_CategoryID>0)
@@ -77,7 +78,7 @@ namespace SmartxAPI.Controllers
             string sqlUpcomingTaskList = "select count(1) as N_UpcomingTaskList from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID in (" + UsersIDs + ") and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) > '" + d_Date + "' and Cast(D_TaskDate as DATE) >  '" + d_Date + "'"+critiria;
             string sqlCompletedList = "select count(1) as N_CompletedList from vw_Tsk_TaskCompletedStatus where N_CompanyID=" + nCompanyID + " and N_CreaterID in (" + UsersIDs + ") and  N_Status in(4) and MONTH(Cast(vw_Tsk_TaskCompletedStatus.D_Entrydate as Datetime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(vw_Tsk_TaskCompletedStatus.D_Entrydate)= YEAR(CURRENT_TIMESTAMP)"+critiria;
             string sqlOverDueList = "select count(1) as N_OverDueTaskList from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and N_AssigneeID in (" + UsersIDs + ")   and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and Cast(D_DueDate as DATE) < '" + d_Date + "'"+critiria;
-
+           string sqlUnassignedTaskList = "select count(1) as N_UnassignedTaskList from [vw_TaskCurrentStatus]  where N_CompanyID=" + nCompanyID + " and isnull(N_AssigneeID,0)=0 and x_tasksummery<> 'Project Created' and x_tasksummery<>'Project Closed' and isnull(B_Closed,0) =0 and N_CreaterID in (" + UsersIDs + ") "+critiria;
 
 
                     ActiveEmployees = dLayer.ExecuteDataTable(sqlActiveEmployees, Params, connection);
@@ -86,6 +87,7 @@ namespace SmartxAPI.Controllers
                     CompletedList = dLayer.ExecuteDataTable(sqlCompletedList, Params, connection);
                     overDueList = dLayer.ExecuteDataTable(sqlOverDueList, Params, connection);
                     upComingTask = dLayer.ExecuteDataTable(sqlUpcomingTaskList, Params, connection);
+                    unassignedTaskList = dLayer.ExecuteDataTable(sqlUnassignedTaskList, Params, connection);
 
 
                     SortedList statusParams = new SortedList();
@@ -113,6 +115,7 @@ namespace SmartxAPI.Controllers
                 overDueList.AcceptChanges();
                 TaskStatus.AcceptChanges();
                 upComingTask.AcceptChanges();
+                unassignedTaskList.AcceptChanges();
 
                 if (ActiveEmployees.Rows.Count > 0) Data.Add("ActiveEmployees", ActiveEmployees);
                 if (ScheduledList.Rows.Count > 0) Data.Add("ScheduledList", ScheduledList);
@@ -122,7 +125,7 @@ namespace SmartxAPI.Controllers
 
                 if (TaskStatus.Rows.Count > 0) Data.Add("TaskStatus", TaskStatus);
                 if (upComingTask.Rows.Count > 0) Data.Add("upComingTask", upComingTask);
-
+                if (unassignedTaskList.Rows.Count > 0) Data.Add("unassignedTaskList", unassignedTaskList);
                 return Ok(api.Success(Data));
 
             }
