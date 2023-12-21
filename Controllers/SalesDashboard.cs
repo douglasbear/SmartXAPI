@@ -671,14 +671,14 @@ namespace SmartxAPI.Controllers
 
 
                    if (Count == 0)
-                        sqlCommandText = "select * from vw_InvSales_BranchByDivision where  x_DivisionName!=''  and N_FnyearID="+nFnYearID+" and n_DivisionID ="+nDivision + crieteria + " " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSales_BranchByDivision where  N_FnyearID="+nFnYearID+" and N_BranchID="+nDivBranchID+" and n_DivisionID ="+nDivision + crieteria + " " + Searchkey + " " + xSortBy;
                    else
-                        sqlCommandText = "select * from vw_InvSales_BranchByDivision where  x_DivisionName!='' and N_FnyearID="+nFnYearID+" and n_DivisionID ="+nDivision + crieteria + " " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSales_BranchByDivision where  N_FnyearID="+nFnYearID+" and N_BranchID="+nDivBranchID+" and n_DivisionID ="+nDivision + crieteria + " " + Searchkey + " " + xSortBy;
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = api.Format(dt);
-                    sqlCommandCount = "Select count(1) from vw_InvSales_BranchByDivision Where  x_DivisionName!='' and  N_FnyearID="+nFnYearID + " and n_DivisionID ="+nDivision+crieteria;
+                    sqlCommandCount = "Select count(1) from vw_InvSales_BranchByDivision Where  N_FnyearID="+nFnYearID + " and N_BranchID="+nDivBranchID+" and n_DivisionID ="+nDivision+crieteria;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
