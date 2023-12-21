@@ -278,14 +278,14 @@ namespace SmartxAPI.Controllers
 
 
                    if (Count == 0)
-                        sqlCommandText = "select * from vw_InvDivisionWise_Sales where  x_DivisionName!=''  and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select * from vw_InvDivisionWise_Purchase where  x_DivisionName!=''  and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " " + xSortBy;
                    else
-                        sqlCommandText = "select * from vw_InvDivisionWise_Sales where  x_DivisionName!='' and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select * from vw_InvDivisionWise_Purchase where  x_DivisionName!='' and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " " + xSortBy;
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = api.Format(dt);
-                    sqlCommandCount = "Select count(1) from vw_InvDivisionWise_Sales Where  x_DivisionName!='' and  N_FnyearID="+nFnYearID + crieteria;
+                    sqlCommandCount = "Select count(1) from vw_InvDivisionWise_Purchase Where  x_DivisionName!='' and  N_FnyearID="+nFnYearID + crieteria;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
