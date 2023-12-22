@@ -45,7 +45,7 @@ namespace SmartxAPI.Controllers
             string transferCondition = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([PRS No] like '%" + xSearchkey + "%' or X_ProjectName like '%" + xSearchkey + "%' or location like '%" + xSearchkey + "%' or X_DeliveryPlace like '%" + xSearchkey + "%' or  X_Purpose like '%" + xSearchkey + "%' or  [PRS No] like '%" + xSearchkey + "%' or  D_PRSDate like '%" + xSearchkey + "%' )";
+                Searchkey = "and ([PRS No] like '%" + xSearchkey + "%' or X_ProjectName like '%" + xSearchkey + "%' or location like '%" + xSearchkey + "%' or X_DeliveryPlace like '%" + xSearchkey + "%' or  X_Purpose like '%" + xSearchkey + "%' or  [PRS No] like '%" + xSearchkey + "%' or  D_PRSDate like '%" + xSearchkey + "%' or  X_requestType like '%" + xSearchkey + "%' or  X_CustomerDocNO like '%" + xSearchkey + "%' )";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_PRSID desc";
