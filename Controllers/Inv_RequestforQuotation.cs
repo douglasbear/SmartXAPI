@@ -53,6 +53,9 @@ namespace SmartxAPI.Controllers
 
                     if (nFormID == 618)
                     {
+                          if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and ([Quotation NO] like '%" + xSearchkey + "%' or X_CustomerDocNo like '%" + xSearchkey + "%' or [Quotation Date] like '%" + xSearchkey + "%' )";
+
                         if (xSortBy == null || xSortBy.Trim() == "")
                             xSortBy = " order by [Quotation No]  desc";
                         else
@@ -100,6 +103,10 @@ namespace SmartxAPI.Controllers
                             xSortBy = " order by " + xSortBy;
                         }
 
+                      if (xSearchkey != null && xSearchkey.Trim() != "")
+                     Searchkey = "and (X_InwardsCode like '%" + xSearchkey + "%' or D_RFQInwardsDate like '%" + xSearchkey + "%' or QuotationNO like '%" + xSearchkey + "%' or X_VendorName like '%" + xSearchkey + "%' or D_DueDate like '%" + xSearchkey + "%' )";
+
+
                         if (Count == 0)
                             sqlCommandText = "select top(" + nSizeperpage + ") X_InwardsCode as quotationNo ,D_RFQInwardsDate as quotationDate, * from vw_RFQVendorListMaster where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
                         else
@@ -108,7 +115,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("@p1", nCompanyId);
 
                         dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                        sqlCommandCount = "select count(1) as N_Count from vw_InvVendorRequestNo_Search where N_CompanyID=@p1 " + Searchkey + "";
+                        sqlCommandCount = "select count(1) as N_Count from vw_RFQVendorListMaster where N_CompanyID=@p1 " + Searchkey + "";
                     }
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     SortedList OutPut = new SortedList();
