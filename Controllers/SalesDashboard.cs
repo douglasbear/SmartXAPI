@@ -650,7 +650,7 @@ namespace SmartxAPI.Controllers
           
             }
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = " and (X_DivisionName like '%" + xSearchkey + "%' OR x_BranchName like '%" + xSearchkey + "%')";
+                Searchkey = " and (invoiceNo like '%" + xSearchkey + "%' OR customner like '%" + xSearchkey + "%' OR invoiceDate like '%" + xSearchkey + "%' OR d_CustPODate like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by x_BillAmt desc";
@@ -673,7 +673,7 @@ namespace SmartxAPI.Controllers
                    if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSales_BranchByDivision where  N_FnyearID="+nFnYearID+" and N_BranchID="+nDivBranchID+" and n_DivisionID ="+nDivision + crieteria + " " + Searchkey + " " + xSortBy;
                    else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSales_BranchByDivision where  N_FnyearID="+nFnYearID+" and N_BranchID="+nDivBranchID+" and n_DivisionID ="+nDivision + crieteria + " " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSales_BranchByDivision where  N_FnyearID="+nFnYearID+" and N_BranchID="+nDivBranchID+" and n_DivisionID ="+nDivision + crieteria + " " + Searchkey + " and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSales_BranchByDivision where N_FnyearID="+nFnYearID + " and N_BranchID="+nDivBranchID+" and n_DivisionID ="+nDivision + crieteria + xSortBy + " ) " + xSortBy;
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
