@@ -239,7 +239,7 @@ namespace SmartxAPI.Controllers
                             }
                         }
 
-                        object objReturnProcessed = dLayer.ExecuteScalar("select ISNULL(N_MRNID,0) AS N_MRNID from vw_MRNToMRNReturn where N_MRNID="+nGRNID+" and N_CompanyID="+nCompanyId+" and N_FnYearID="+nFnYearId+" group by N_MRNID having SUM(N_BalanceQty)=0" , connection, transaction);
+                        object objReturnProcessed = dLayer.ExecuteScalar("select ISNULL(N_MRNID,0) AS N_MRNID from vw_MRNToMRNReturn where N_MRNID="+nGRNID+" and N_CompanyID="+nCompanyId+" and N_FnYearID="+nFnYearId+" group by N_MRNID having SUM(N_BalanceQty)<=0" , connection, transaction);
                         if (objReturnProcessed == null)
                             objReturnProcessed = 0;
 
