@@ -273,5 +273,223 @@ namespace SmartxAPI.Controllers
             }
         }
 
+
+        [HttpGet("incomeStatementDivisionlist")]
+        public ActionResult IncomeStatementDivisionlist(int nComapanyID, int nFnYearID, int nBranchID, int nPage, int nSizeperpage, bool bAllBranchData, DateTime d_Start, DateTime d_end, string xSearchkey, string xSortBy)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable dt = new DataTable();
+                    DataTable tb = new DataTable();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    int nUserID = myFunctions.GetUserID(User);
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string Searchkey = "";
+                    string d_Date = d_Start.ToString("dd-MMM-yyyy") + "|" + d_end.ToString("dd-MMM-yyyy") + "|";
+                    string sqlCondition = "";
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nFnYearID);
+                    Params.Add("@p3", nUserID);
+                    Params.Add("@p4", nBranchID);
+                    Params.Add("@p5", d_Date);
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and ( X_LedgerName like '%" + xSearchkey + "%' or N_BudgetAmount like '%" + xSearchkey + "%' ) ";
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " Order By N_LedgerID";
+                    else
+                    {
+                        switch (xSortBy.Split(" ")[0])
+                        {
+                            case "X_LedgerCode":
+                                xSortBy = "X_LedgerCode " + xSortBy.Split(" ")[1];
+                                break;
+                            default: break;
+                        }
+                        xSortBy = " order by " + xSortBy;
+                    }
+                    dLayer.ExecuteNonQuery("delete from Acc_LedgerBalForReporting Where  N_CompanyID=@p1", Params, connection, transaction);
+                    if (bAllBranchData == true)
+                    {
+                        sqlCommandText = "SP_OpeningBalanceGenerate @p1,@p2,0,44,@p5,@p3,0";
+                        sqlCondition= " ";
+                    }
+                    else
+                    {
+                        sqlCommandText = "SP_OpeningBalanceGenerate @p1,@p2,0,44,@p5,@p3,@p4";
+                        sqlCondition= " and N_BranchID=@p4 ";
+                    }
+                    tb = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
+                    tb = api.Format(tb, "Master");
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") X_LedgerName as X_DivisionName,N_LedgerID as N_DivisionID,-1*SUM(N_BudgetAmount) as N_Amount from Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Type=1 and X_Level=301 " + sqlCondition + Searchkey + " group by X_LedgerName,N_LedgerID   " + xSortBy + " ASC";
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") X_LedgerName as X_DivisionName,N_LedgerID as N_DivisionID,-1*SUM(N_BudgetAmount) as N_Amount from Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Type=1 and X_Level=301 " + sqlCondition + Searchkey  + " and N_LedgerID not in (select top(" + Count + ") N_LedgerID from Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and  N_Type=1 and X_Level=301 " + sqlCondition + Searchkey +" group by X_LedgerName,N_LedgerID  " + xSortBy + " ASC) group by X_LedgerName,N_LedgerID  " + xSortBy +" ASC";
+                    SortedList OutPut = new SortedList();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
+                    
+                    
+                    dt.AcceptChanges();
+                    string sqlCommandCount = "SELECT COUNT(1) FROM (select 1 as N_Count  from Acc_LedgerBalForReporting where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Type=1 and X_Level=301 " + sqlCondition + Searchkey +" group by X_LedgerName,N_LedgerID) AS TB ";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection, transaction);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return BadRequest(api.Error(User, e));
+            }
+        }
+  [HttpGet("incomeStatementDivisionBranchlist")]
+        public ActionResult IncomeStatementDivisionBranchlist(int nComapanyID, int nFnYearID, int nBranchID, int nPage, int nSizeperpage, bool bAllBranchData, string xSearchkey, string xSortBy,int nDivisionID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable dt = new DataTable();
+                    DataTable tb = new DataTable();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    int nUserID = myFunctions.GetUserID(User);
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string Searchkey = "";
+                   
+                    string sqlCondition = "";
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nFnYearID);
+                    Params.Add("@p3", nUserID);
+                    Params.Add("@p4", nBranchID);
+                   
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and ( X_DivisionName like '%" + xSearchkey + "%' or N_Amount like '%" + xSearchkey + "%' or x_BranchName like '%" + xSearchkey + "%' ) ";
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " Order By N_DivisionID";
+                    else
+                    {
+                        switch (xSortBy.Split(" ")[0])
+                        {
+                            case "X_LedgerCode":
+                                xSortBy = "X_LedgerCode " + xSortBy.Split(" ")[1];
+                                break;
+                            default: break;
+                        }
+                        xSortBy = " order by " + xSortBy;
+                    }
+                 
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Acc_IncomStateMentByDivisionBranch where N_CompanyID=@p1 and N_FnYearID=@p2 and N_DivisionID="+nDivisionID  + sqlCondition + Searchkey + xSortBy + " ASC";
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Acc_IncomStateMentByDivisionBranch where N_CompanyID=@p1 and N_FnYearID=@p2 and N_DivisionID="+nDivisionID + sqlCondition + Searchkey  + " and N_LedgerID not in (select top(" + Count + ") N_LedgerID from vw_Acc_IncomStateMentByDivisionBranch where N_CompanyID=@p1 and N_FnYearID=@p2 and  N_Type=1 and X_Level=301 " + sqlCondition + Searchkey + xSortBy + " ASC) " + xSortBy +" ASC";
+                    SortedList OutPut = new SortedList();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
+                    
+                    
+                    dt.AcceptChanges();
+                    string sqlCommandCount = "SELECT COUNT(1) FROM (select 1 as N_Count  from vw_Acc_IncomStateMentByDivisionBranch where N_CompanyID=@p1 and N_FnYearID=@p2 and N_DivisionID="+nDivisionID + sqlCondition + Searchkey +") AS TB ";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection, transaction);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return BadRequest(api.Error(User, e));
+            }
+        }
+
+         [HttpGet("incomeStatementDimensionlist")]
+        public ActionResult IncomeStatementDivisionDimensionlist(int nComapanyID, int nFnYearID, int nBranchID, int nPage, int nSizeperpage, bool bAllBranchData, string xSearchkey, string xSortBy,int nDivisionID,int nDivBranchID )
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable dt = new DataTable();
+                    DataTable tb = new DataTable();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    int nUserID = myFunctions.GetUserID(User);
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string Searchkey = "";
+                   
+                    string sqlCondition = "";
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nFnYearID);
+                    Params.Add("@p3", nUserID);
+                    Params.Add("@p4", nBranchID);
+                   
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and ( x_Dimesion like '%" + xSearchkey + "%' or N_Amount like '%" + xSearchkey + "%' or X_LedgerCode like '%" + xSearchkey + "%' ) ";
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " Order By N_DivisionID";
+                    else
+                    {
+                        switch (xSortBy.Split(" ")[0])
+                        {
+                            case "X_LedgerCode":
+                                xSortBy = "X_LedgerCode " + xSortBy.Split(" ")[1];
+                                break;
+                            default: break;
+                        }
+                        xSortBy = " order by " + xSortBy;
+                    }
+                 
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Acc_IncomStateMentByDivisionBranchDimension where N_CompanyID=@p1 and N_FnYearID=@p2 and N_DivisionID="+nDivisionID + " and N_BranchID="+nDivBranchID + sqlCondition + Searchkey + xSortBy + " ASC";
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Acc_IncomStateMentByDivisionBranchDimension where N_CompanyID=@p1 and N_FnYearID=@p2 and N_DivisionID="+nDivisionID + " and N_BranchID="+nDivBranchID + sqlCondition + Searchkey  + " and N_LedgerID not in (select top(" + Count + ") N_LedgerID from vw_Acc_IncomStateMentByDivisionBranch where N_CompanyID=@p1 and N_FnYearID=@p2 and  N_Type=1 and X_Level=301 " + sqlCondition + Searchkey + xSortBy + " ASC) " + xSortBy +" ASC";
+                    SortedList OutPut = new SortedList();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
+                    
+                    
+                    dt.AcceptChanges();
+                    string sqlCommandCount = "SELECT COUNT(1) FROM (select 1 as N_Count  from vw_Acc_IncomStateMentByDivisionBranchDimension where N_CompanyID=@p1 and N_FnYearID=@p2 and N_DivisionID="+nDivisionID+" and N_BranchID="+nDivBranchID + sqlCondition + Searchkey +") AS TB ";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection, transaction);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return BadRequest(api.Error(User, e));
+            }
+        }
     }
 }
