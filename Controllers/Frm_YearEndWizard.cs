@@ -187,7 +187,8 @@ namespace SmartxAPI.Controllers
                         d_DateTo = (MasterTable.Rows[0]["d_DateTo"].ToString());
                     bool B_CurTransferProcess = myFunctions.getBoolVAL(dLayer.ExecuteScalar("Select ISNULL(B_TransferProcess,'') as B_TransferProcess FRom Acc_FnYear Where N_FnYearID =" + n_FnYearId + " and N_CompanyID =" + nCompanyID + "", Params, connection, transaction).ToString());
                     object accCode = null;
-                    if (MasterTable.Columns.Contains("N_LedgerID"))
+                    if(b_TransferBalance==true){
+                           if (MasterTable.Columns.Contains("N_LedgerID"))
                     {
 
                         accCode = dLayer.ExecuteScalar("select [Account Code] from vw_AccMastLedger where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + n_FnYearId + " and N_LedgerID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_LedgerID"].ToString()) + " ", Params, connection, transaction);
@@ -198,7 +199,7 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Please select retained income account"));
                     }
-
+                    }
 
 
                     //var dEndDate = (MasterTable.Rows[0]["d_EndDate"].ToString());

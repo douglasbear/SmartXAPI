@@ -278,14 +278,14 @@ namespace SmartxAPI.Controllers
 
 
                    if (Count == 0)
-                        sqlCommandText = "select * from vw_InvDivisionWise_Sales where  x_DivisionName!=''  and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select * from vw_InvDivisionWise_Purchase where  x_DivisionName!=''  and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " " + xSortBy;
                    else
-                        sqlCommandText = "select * from vw_InvDivisionWise_Sales where  x_DivisionName!='' and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select * from vw_InvDivisionWise_Purchase where  x_DivisionName!='' and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " " + xSortBy;
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = api.Format(dt);
-                    sqlCommandCount = "Select count(1) from vw_InvDivisionWise_Sales Where  x_DivisionName!='' and  N_FnyearID="+nFnYearID + crieteria;
+                    sqlCommandCount = "Select count(1) from vw_InvDivisionWise_Purchase Where  x_DivisionName!='' and  N_FnyearID="+nFnYearID + crieteria;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -353,14 +353,14 @@ namespace SmartxAPI.Controllers
 
 
                    if (Count == 0)
-                        sqlCommandText = "select * from vw_InvBranchWise_Sales where  x_DivisionName!=''  and N_FnyearID="+nFnYearID+" and n_DivisionID ="+nDivision + crieteria + " " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select * from vw_InvBranchWise_Purchase where  x_DivisionName!=''  and N_FnyearID="+nFnYearID+" and n_DivisionID ="+nDivision + crieteria + " " + Searchkey + " " + xSortBy;
                    else
-                        sqlCommandText = "select * from vw_InvBranchWise_Sales where  x_DivisionName!='' and N_FnyearID="+nFnYearID+" and n_DivisionID ="+nDivision + crieteria + " " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select * from vw_InvBranchWise_Purchase where  x_DivisionName!='' and N_FnyearID="+nFnYearID+" and n_DivisionID ="+nDivision + crieteria + " " + Searchkey + " " + xSortBy;
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = api.Format(dt);
-                    sqlCommandCount = "Select count(1) from vw_InvBranchWise_Sales Where  x_DivisionName!='' and  N_FnyearID="+nFnYearID + " and n_DivisionID ="+nDivision+crieteria;
+                    sqlCommandCount = "Select count(1) from vw_InvBranchWise_Purchase Where  x_DivisionName!='' and  N_FnyearID="+nFnYearID + " and n_DivisionID ="+nDivision+crieteria;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -406,10 +406,10 @@ namespace SmartxAPI.Controllers
           
             }
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = " and (X_DivisionName like '%" + xSearchkey + "%' OR x_BranchName like '%" + xSearchkey + "%')";
+                Searchkey = " and (invoiceNo like '%" + xSearchkey + "%' OR vendor like '%" + xSearchkey + "%' OR invoiceDate like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by x_BillAmt desc";
+                xSortBy = " order by N_InvoiceAmt desc";
             else
                 xSortBy = " order by " + xSortBy;
 
@@ -427,17 +427,29 @@ namespace SmartxAPI.Controllers
 
 
                    if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSales_BranchByDivision where  N_FnyearID="+nFnYearID+" and N_BranchID="+nDivBranchID+" and n_DivisionID ="+nDivision + crieteria + " " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPurchase_BranchByDivision where  N_FnyearID="+nFnYearID+" and N_BranchID="+nDivBranchID+" and n_DivisionID ="+nDivision + crieteria + " " + Searchkey + " " + xSortBy;
                    else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSales_BranchByDivision where  N_FnyearID="+nFnYearID+" and N_BranchID="+nDivBranchID+" and n_DivisionID ="+nDivision + crieteria + " " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPurchase_BranchByDivision where  N_FnyearID="+nFnYearID+" and N_BranchID="+nDivBranchID+" and n_DivisionID ="+nDivision + crieteria + " " + Searchkey + " " + " and N_POrderID not in (select top(" + Count + ") N_POrderID from vw_InvPurchase_BranchByDivision where N_CompanyID=@p1 " + xSortBy + " )" + xSortBy;
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = api.Format(dt);
-                    sqlCommandCount = "Select count(1) from vw_InvSales_BranchByDivision Where  N_FnyearID="+nFnYearID + " and N_BranchID="+nDivBranchID+" and n_DivisionID ="+nDivision+crieteria;
-                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    sqlCommandCount = "Select count(1) as N_Count, sum(Cast(REPLACE(invoiceNetAmt,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvPurchase_BranchByDivision Where  N_FnyearID="+nFnYearID + " and N_BranchID="+nDivBranchID+" and n_DivisionID ="+nDivision+crieteria;
+                    DataTable TotalCountdt = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                    
+                    // OutPut.Add("TotalCount", TotalCount);
+                    string TotalCount = "0";
+                    string TotalSum = "0";
+                    if (TotalCountdt.Rows.Count > 0)
+                    {
+                        DataRow drow = TotalCountdt.Rows[0];
+                        TotalCount = drow["N_Count"].ToString();
+                        TotalSum = drow["TotalAmount"].ToString();
+                    }
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
+                    OutPut.Add("TotalSum", TotalSum);
+                    
                     if (dt.Rows.Count == 0)
                     {
                        return Ok(api.Success(OutPut));

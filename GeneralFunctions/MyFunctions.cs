@@ -1071,7 +1071,17 @@ namespace SmartxAPI.GeneralFunctions
                     }
                     else if ((nMaxLevel == nTransApprovalLevel || nSubmitter == nTransApprovalLevel) && nTransUserID != loggedInUserID)
                     {
-                        if (nTransStatus != 918 && nTransStatus != 919 && nTransStatus != 920 )//&& nTransStatus != 929)
+                        if(N_IsAdminUser==1)
+                        {
+                            nNextApprovalLevel = nTransApprovalLevel;
+                            Response["nextApprovalLevel"] = nNextApprovalLevel;
+
+                            nTransStatus = 933;
+                            ApprovalParams["@nTransStatus"] = nTransStatus;
+
+                            ApprovalParams["@isEditable"] = 1;
+                        }
+                        else if(nTransStatus != 918 && nTransStatus != 919 && nTransStatus != 920 )//&& nTransStatus != 929)
                         {
                             if (nTransStatus == 913 || nTransStatus == 7 || nTransStatus == 929 || nTransStatus == 932) 
                             {
@@ -1163,7 +1173,7 @@ namespace SmartxAPI.GeneralFunctions
                 }
 
                 //Blocking edit control of Approvers
-                if (this.getBoolVAL(bIsEditable.ToString()) || nNextApprovalLevel == 1)
+                if (this.getBoolVAL(bIsEditable.ToString()) || nNextApprovalLevel == 1 || N_IsAdminUser==1)
                 {
                     Response["isEditable"] = true;
                 }
