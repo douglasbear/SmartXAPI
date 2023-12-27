@@ -179,11 +179,11 @@ namespace SmartxAPI.Controllers
             if (nMRNNo != null)
             {
                 Params.Add("@GRNNo", nMRNNo);
-                X_MasterSql = "select N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS x_MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,N_FreightAmt,N_CreatedUser,D_CreatedDate,N_ExchangeRate,N_CurrencyID,X_CurrencyName,OrderDate,isnull(N_Processed,0) as N_Processed,N_PurchaseID,X_InvoiceNo,X_ProjectCode,X_ProjectName,N_ProjectID,N_FormID,N_Decimal,X_VendorName_Ar,N_POrderid from vw_InvMRNNo_Search where N_CompanyID=@CompanyID and [MRN No]=@GRNNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                X_MasterSql = "select N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS x_MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,N_FreightAmt,N_CreatedUser,D_CreatedDate,N_ExchangeRate,N_CurrencyID,X_CurrencyName,OrderDate,isnull(N_Processed,0) as N_Processed,N_PurchaseID,X_InvoiceNo,X_ProjectCode,X_ProjectName,N_ProjectID,N_FormID,N_Decimal,X_VendorName_Ar,N_POrderid,N_DivisionID,X_DivisionName from vw_InvMRNNo_Search where N_CompanyID=@CompanyID and [MRN No]=@GRNNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
             }
             if (poNo != null)
             {
-                X_MasterSql = "Select Inv_PurchaseOrder.*,Inv_Location.X_LocationName,Acc_CurrencyMaster.X_CurrencyName,Acc_CurrencyMaster.N_Decimal,Inv_Vendor.* from Inv_PurchaseOrder Inner Join Inv_Vendor On Inv_PurchaseOrder.N_VendorID=Inv_Vendor.N_VendorID and Inv_PurchaseOrder.N_CompanyID=Inv_Vendor.N_CompanyID and Inv_PurchaseOrder.N_FnYearID=Inv_Vendor.N_FnYearID LEFT OUTER JOIN Inv_Location ON Inv_Location.N_LocationID=Inv_PurchaseOrder.N_LocationID LEFT OUTER JOIN   Acc_CurrencyMaster ON Inv_PurchaseOrder.N_CompanyID = Acc_CurrencyMaster.N_CompanyID AND Inv_PurchaseOrder.N_CurrencyID = Acc_CurrencyMaster.N_CurrencyID Where Inv_PurchaseOrder.N_CompanyID=" + nCompanyId + " and X_POrderNo='" + poNo + "' "+crieteria+" and isNull(Inv_PurchaseOrder.B_IsSaveDraft, 0)<>1";
+                X_MasterSql = "Select Inv_PurchaseOrder.*,Inv_Location.X_LocationName,Acc_CurrencyMaster.X_CurrencyName,Acc_CurrencyMaster.N_Decimal,Inv_DivisionMaster.X_DivisionName,Inv_Vendor.* from Inv_PurchaseOrder Inner Join Inv_Vendor On Inv_PurchaseOrder.N_VendorID=Inv_Vendor.N_VendorID and Inv_PurchaseOrder.N_CompanyID=Inv_Vendor.N_CompanyID and Inv_PurchaseOrder.N_FnYearID=Inv_Vendor.N_FnYearID LEFT OUTER JOIN Inv_DivisionMaster ON Inv_PurchaseOrder.N_DivisionID = Inv_DivisionMaster.N_DivisionID AND Inv_PurchaseOrder.N_CompanyID = Inv_DivisionMaster.N_CompanyID LEFT OUTER JOIN Inv_Location ON Inv_Location.N_LocationID=Inv_PurchaseOrder.N_LocationID LEFT OUTER JOIN   Acc_CurrencyMaster ON Inv_PurchaseOrder.N_CompanyID = Acc_CurrencyMaster.N_CompanyID AND Inv_PurchaseOrder.N_CurrencyID = Acc_CurrencyMaster.N_CurrencyID Where Inv_PurchaseOrder.N_CompanyID=" + nCompanyId + " and X_POrderNo='" + poNo + "' "+crieteria+" and isNull(Inv_PurchaseOrder.B_IsSaveDraft, 0)<>1";
             }
             try
             {
@@ -239,7 +239,7 @@ namespace SmartxAPI.Controllers
                             }
                         }
 
-                        object objReturnProcessed = dLayer.ExecuteScalar("select ISNULL(N_MRNID,0) AS N_MRNID from vw_MRNToMRNReturn where N_MRNID="+nGRNID+" and N_CompanyID="+nCompanyId+" and N_FnYearID="+nFnYearId+" group by N_MRNID having SUM(N_BalanceQty)=0" , connection, transaction);
+                        object objReturnProcessed = dLayer.ExecuteScalar("select ISNULL(N_MRNID,0) AS N_MRNID from vw_MRNToMRNReturn where N_MRNID="+nGRNID+" and N_CompanyID="+nCompanyId+" and N_FnYearID="+nFnYearId+" group by N_MRNID having SUM(N_BalanceQty)<=0" , connection, transaction);
                         if (objReturnProcessed == null)
                             objReturnProcessed = 0;
 
@@ -345,10 +345,11 @@ namespace SmartxAPI.Controllers
             int n_POrderID = myFunctions.getIntVAL(masterRow["n_POrderID"].ToString());
             int n_FormID = myFunctions.getIntVAL(masterRow["n_FormID"].ToString());
              String xButtonAction="";
-
-            
-            
-
+             int nDivisionID = 0;
+                    if (MasterTable.Columns.Contains("n_DivisionID"))
+                    {
+                       nDivisionID=myFunctions.getIntVAL(masterRow["n_DivisionID"].ToString());
+                    }
 
             try
             {
@@ -482,6 +483,33 @@ namespace SmartxAPI.Controllers
                     //     DetailTable.Rows[j]["N_MRNID"] = N_GRNID;
                     // }
                     // int N_MRNDetailsID = dLayer.SaveData("Inv_MRNDetails", "N_MRNDetailsID", DetailTable, connection, transaction);
+
+                    
+                   if(nDivisionID>0)
+                    {
+                    if (DetailTable.Rows.Count > 0)
+                    {
+                     object xLevelsql = dLayer.ExecuteScalar("select X_LevelPattern from Inv_DivisionMaster where N_CompanyID=" + nCompanyID + " and N_DivisionID=" + nDivisionID + " and N_GroupID=0", Params, connection,transaction);
+                      
+                       if (xLevelsql != null && xLevelsql.ToString() != "")
+                        {
+                        for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        {
+
+                            //  detailTable.Rows[j]["N_SalesId"] = N_SalesID;
+                            object xLevelPattern = dLayer.ExecuteScalar("SELECT  Inv_DivisionMaster.X_LevelPattern FROM  Inv_DivisionMaster LEFT OUTER JOIN    Inv_ItemCategory ON Inv_DivisionMaster.N_DivisionID = Inv_ItemCategory.N_DivisionID AND Inv_DivisionMaster.N_CompanyID = Inv_ItemCategory.N_CompanyID RIGHT OUTER JOIN "+
+                            "Inv_ItemMaster ON Inv_ItemCategory.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemCategory.N_CategoryID = Inv_ItemMaster.N_CategoryID  where Inv_ItemMaster.N_ItemID="+ DetailTable.Rows[j]["N_ItemID"]+" and Inv_ItemMaster.N_CompanyID="+nCompanyID+" ", Params, connection,transaction);
+                           // object xLevelPattern = dLayer.ExecuteScalar("select X_LevelPattern from Acc_CostCentreMaster where N_CompanyID=" + N_CompanyID + " and N_CostCentreID=" + nDivisionID + " and N_GroupID=0", Params, connection);
+                             if (xLevelsql.ToString() != xLevelPattern.ToString().Substring(0, 3))
+                             {
+                                return Ok(_api.Error(User, "Unable To save!...Division Mismatch"));
+                             }
+                           
+                        }
+                        }
+                    
+                    }
+                    }
 
                     int N_MRNDetailsID = 0;
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
