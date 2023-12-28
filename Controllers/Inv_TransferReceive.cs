@@ -170,6 +170,7 @@ namespace SmartxAPI.Controllers
                     DetailTable = ds.Tables["details"];
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
+                    String xButtonAction="";
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nReceivableId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ReceivableId"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
@@ -216,10 +217,13 @@ namespace SmartxAPI.Controllers
                         }
                         X_ReferenceNo = DocNo;
 
-
+                        xButtonAction="Insert";
                         if (X_ReferenceNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate")); }
                         MasterTable.Rows[0]["X_ReferenceNo"] = X_ReferenceNo;
 
+                    }
+                    else{
+                        xButtonAction="Update"; 
                     }
 
                 //   object nprocessed= dLayer.ExecuteScalar("select n_processed from Inv_TransferStock where N_TransferId='"+N_TransferId+"' and N_CompanyID= " + nCompanyID,connection,transaction);
@@ -297,7 +301,14 @@ namespace SmartxAPI.Controllers
                     }
 
 
-
+                    // Activity Log
+                        string ipAddress = "";
+                        if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                           ipAddress = Request.Headers["X-Forwarded-For"];
+                        else
+                           ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                           myFunctions.LogScreenActivitys(nFnYearID,nReceivableId,X_ReferenceNo,this.FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                        
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
                 }
@@ -361,7 +372,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nReceivableId)
+        public ActionResult DeleteData(int nReceivableId, int nFnYearID)
         {
 
             try
@@ -372,6 +383,10 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     var nUserID = myFunctions.GetUserID(User);
+                    DataTable TransData = new DataTable();
+                    string xButtonAction="Delete";
+                    string X_ReferenceNo = "";
+                    string Sql = "select N_ReceivableId,X_ReferenceNo from Inv_ReceivableStock where N_CompanyID="+nCompanyID+" and N_ReceivableId="+nReceivableId+"";
                       SortedList Params = new SortedList(){
                                 {"N_CompanyID",nCompanyID}};
 
@@ -384,6 +399,14 @@ namespace SmartxAPI.Controllers
                                 {"X_SystemName","WebRequest"}};
 
 
+                    TransData = dLayer.ExecuteDataTable(Sql, DeleteParams, connection, transaction);
+                    // Activity Log
+                        string ipAddress = "";
+                        if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                            ipAddress = Request.Headers["X-Forwarded-For"];
+                        else
+                            ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                            myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nReceivableId,TransData.Rows[0]["X_ReferenceNo"].ToString(),this.FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
                     int Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
 
