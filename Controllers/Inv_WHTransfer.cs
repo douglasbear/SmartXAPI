@@ -304,6 +304,7 @@ namespace SmartxAPI.Controllers
                     DetailTable = ds.Tables["details"];
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
+                    String xButtonAction="";
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nTransferId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TransferId"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
@@ -350,7 +351,7 @@ namespace SmartxAPI.Controllers
                         }
                         X_ReferenceNo = DocNo;
 
-
+                        xButtonAction="Insert";
                         if (X_ReferenceNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate")); }
                         MasterTable.Rows[0]["X_ReferenceNo"] = X_ReferenceNo;
 
@@ -363,6 +364,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        xButtonAction="Update"; 
                         dLayer.DeleteData("Inv_TransferStock", "N_TransferId", nTransferId, "", connection, transaction);
                     }
 
@@ -481,7 +483,14 @@ namespace SmartxAPI.Controllers
 
 
                     }
-
+                    // Activity Log
+                        string ipAddress = "";
+                        if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                           ipAddress = Request.Headers["X-Forwarded-For"];
+                        else
+                           ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                           myFunctions.LogScreenActivitys(nFnYearID,nTransferId,X_ReferenceNo,this.FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                        
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
                 }
@@ -495,7 +504,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCompanyID, int nTransferId, int nfromLocationID)
+        public ActionResult DeleteData(int nCompanyID, int nTransferId, int nfromLocationID, int nFnYearID)
         {
             int Results = 0;
             string xTransType = "TRANSFER";
@@ -506,6 +515,10 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable TransData = new DataTable();
+                    string xButtonAction="Delete";
+                    string X_ReferenceNo = "";
+                    string Sql = "select N_TransferID,X_ReferenceNo from Inv_TransferStock where N_CompanyID="+nCompanyID+" and N_TransferID="+nTransferId+"";
                       int n_PRSID=myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_PrsID from Inv_TransferStock where N_CompanyID="+nCompanyID+" and N_TransferID="+nTransferId+"", connection, transaction).ToString());
 
                     SortedList deleteParams = new SortedList()
@@ -516,6 +529,15 @@ namespace SmartxAPI.Controllers
                                 {"N_UserID",myFunctions.GetUserID(User)},
                                  {"X_SystemName","WebRequest"}
                             };
+                    TransData = dLayer.ExecuteDataTable(Sql, deleteParams, connection, transaction);
+                    // Activity Log
+                        string ipAddress = "";
+                        if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                            ipAddress = Request.Headers["X-Forwarded-For"];
+                        else
+                            ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                            myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearID.ToString()),nTransferId,TransData.Rows[0]["X_ReferenceNo"].ToString(),this.FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                        
                     Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
                     if (Results > 0)
                     {
