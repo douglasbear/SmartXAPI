@@ -341,7 +341,7 @@ namespace SmartxAPI.Controllers
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(api.Warning("No Results Found"));
+                       return Ok(api.Success(OutPut));
                     }
                     else
                     {
@@ -409,7 +409,7 @@ namespace SmartxAPI.Controllers
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(api.Warning("No Results Found"));
+                       return Ok(api.Success(OutPut));
                     }
                     else
                     {
@@ -466,7 +466,7 @@ namespace SmartxAPI.Controllers
                     if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Acc_IncomStateMentByDivisionBranchDimension where N_CompanyID=@p1 and N_FnYearID=@p2 and N_DivisionID="+nDivisionID + " and N_BranchID="+nDivBranchID + sqlCondition + Searchkey + xSortBy + " ASC";
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Acc_IncomStateMentByDivisionBranchDimension where N_CompanyID=@p1 and N_FnYearID=@p2 and N_DivisionID="+nDivisionID + " and N_BranchID="+nDivBranchID + sqlCondition + Searchkey  + " and N_LedgerID not in (select top(" + Count + ") N_LedgerID from vw_Acc_IncomStateMentByDivisionBranch where N_CompanyID=@p1 and N_FnYearID=@p2 and  N_Type=1 and X_Level=301 " + sqlCondition + Searchkey + xSortBy + " ASC) " + xSortBy +" ASC";
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Acc_IncomStateMentByDivisionBranchDimension where N_CompanyID=@p1 and N_FnYearID=@p2 and N_DivisionID="+nDivisionID + " and N_BranchID="+nDivBranchID + sqlCondition + Searchkey  + " and N_LedgerID not in (select top(" + Count + ") N_LedgerID from vw_Acc_IncomStateMentByDivisionBranchDimension where N_CompanyID=@p1 and N_FnYearID=@p2 and  N_Type=1 and X_Level=301 " + sqlCondition + Searchkey + xSortBy + " ASC) " + xSortBy +" ASC";
                     SortedList OutPut = new SortedList();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
                     
@@ -478,7 +478,7 @@ namespace SmartxAPI.Controllers
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(api.Warning("No Results Found"));
+                        return Ok(api.Success(OutPut));
                     }
                     else
                     {
