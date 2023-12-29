@@ -1593,7 +1593,7 @@ namespace SmartxAPI.Controllers
 
         }
         [HttpGet("pendingGRN")]
-        public ActionResult ProductList(int nFnYearID, int nVendorID, bool bAllbranchData, int nBranchID)
+        public ActionResult ProductList(int nFnYearID, int nVendorID, bool bAllbranchData, int nBranchID,int nDivisionID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
 
@@ -1602,10 +1602,13 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
             Params.Add("@nVendorID", nVendorID);
+            Params.Add("@nDivisionID", nDivisionID);
 
 
             string sqlCommandText = "";
-            if (bAllbranchData)
+            if (bAllbranchData && nDivisionID > 0)
+                sqlCommandText = "Select N_MRNID,X_MRNNo,D_MRNDate,X_VendorName,N_CompanyID,N_VendorID,X_VendorInvoice,N_DivisionID from vw_Inv_PendingPurchases_rpt  Where N_CompanyID=@nCompanyID and N_VendorID=@nVendorID and N_DivisionID=@nDivisionID  GROUP BY N_MRNID,X_MRNNO,D_MRNDate,X_VendorName,N_CompanyID,N_VendorID,X_VendorInvoice,N_DivisionID ";
+            else if (bAllbranchData)
                 sqlCommandText = "Select N_MRNID,X_MRNNo,D_MRNDate,X_VendorName,N_CompanyID,N_VendorID,X_VendorInvoice from vw_Inv_PendingPurchases_rpt  Where N_CompanyID=@nCompanyID and N_VendorID=@nVendorID  GROUP BY N_MRNID,X_MRNNO,D_MRNDate,X_VendorName,N_CompanyID,N_VendorID,X_VendorInvoice ";
             else
                 sqlCommandText = "Select N_MRNID,X_MRNNo,D_MRNDate,X_VendorName,N_CompanyID,N_VendorID,X_VendorInvoice from vw_Inv_PendingPurchases_rpt  Where N_CompanyID=@nCompanyID  and N_VendorID=@nVendorID  GROUP BY N_MRNID,X_MRNNO,D_MRNDate,X_VendorName,N_CompanyID,N_VendorID,X_VendorInvoice ";
