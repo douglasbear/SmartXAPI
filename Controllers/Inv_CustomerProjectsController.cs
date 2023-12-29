@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllProjects(int? nCompanyId, int? nFnYearID, int nEmpID)
+        public ActionResult GetAllProjects(int? nCompanyId, int? nFnYearID, int nEmpID,int nDivisionID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -52,12 +52,16 @@ namespace SmartxAPI.Controllers
                 " Sec_User ON Tsk_ProjectSettingsDetails.N_CompanyID = Sec_User.N_CompanyID AND Tsk_ProjectSettingsDetails.N_UserID = Sec_User.N_UserID LEFT OUTER JOIN Inv_CustomerProjects ON Tsk_ProjectSettingsDetails.N_ProjectID = Inv_CustomerProjects.N_ProjectID where Sec_User.N_EmpID="+nEmpID+" and Tsk_ProjectSettingsDetails.B_View=1";
                       
             }
+            if(nDivisionID>0){
+                     sqlCommandText = "select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p2 and N_DivisionID=@p3 and X_ProjectCode is not null  order by N_ProjectID desc";
+            }
             else{
                      sqlCommandText = "select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p2  and X_ProjectCode is not null  order by N_ProjectID desc";
             }
       
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearID);
+            Params.Add("@p3", nDivisionID);
            // Params.Add("@p3", nCustomerID);
             
 
