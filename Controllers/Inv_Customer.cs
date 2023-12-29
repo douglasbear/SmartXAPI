@@ -53,7 +53,7 @@ namespace SmartxAPI.Controllers
             string qryCriteria = "";
             if (qry != "" && qry != null)
             {
-                qryCriteria = " and (X_CustomerCode like @qry or X_CustomerName like @qry or X_PhoneNo1 = CAST("+qry+" as VARCHAR) or X_TaxRegistrationNo = CAST("+qry+" as VARCHAR)) ";
+                qryCriteria = " and (X_CustomerCode like @qry or X_CustomerName like @qry or X_PhoneNo1 = CAST('"+qry+"' as VARCHAR) or X_TaxRegistrationNo = CAST('"+qry+"' as VARCHAR)) ";
                
                 Params.Add("@qry", "%" + qry + "%");
             }
@@ -335,7 +335,7 @@ namespace SmartxAPI.Controllers
                         
                          DataTable CustomerMaster = dLayer.ExecuteDataTable(
                                 " select N_CompanyID,N_FnYearId,0 as N_CustomerId,'@Auto' as X_CustomerCode,X_CustomerName as X_Customer,"
-                                + "X_PhoneNo1 as X_Phone,X_FaxNo as X_Fax,X_WebSite,D_EntryDate,X_Address,X_Email, N_CurrencyID,X_CustomerName_Ar"
+                                + "X_PhoneNo1 as X_Phone,X_FaxNo as X_Fax,X_WebSite,D_EntryDate,X_Address,X_Email, N_CurrencyID,X_CustomerName_Ar,N_StateTaxTypeID,N_CountryID"
                                 + " from Inv_Customer where  N_CustomerID =@nCustomerID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID ", customerParams, connection, transaction);
 
 

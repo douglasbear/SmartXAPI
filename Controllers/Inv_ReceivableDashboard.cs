@@ -1,0 +1,157 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using SmartxAPI.GeneralFunctions;
+using System;
+using System.Data;
+using System.Collections;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
+namespace SmartxAPI.Controllers
+
+{
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Route("receivableDashboard")]
+    [ApiController]
+    public class Inv_ReceivableDashboard : ControllerBase
+    {
+        private readonly IApiFunctions _api;
+        private readonly IDataAccessLayer dLayer;
+        private readonly IMyFunctions myFunctions;
+        private readonly string connectionString;
+        // private readonly int N_FormID = 1429;
+        public Inv_ReceivableDashboard(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        {
+            _api = api;
+            dLayer = dl;
+            myFunctions = myFun;
+            connectionString = conf.GetConnectionString("SmartxConnection");
+        }
+
+        [HttpGet("list")]
+        public ActionResult list(string date,int nCompanyID,int nFnYearID,int nPage,int nSizeperpage,string xSearchKey, string xSortBy)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    // int nCompanyID = myFunctions.GetCompanyID(User);
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string Searchkey="";
+                    string sqlCommandText="";
+                    string sqlCommandCount = "";
+
+                    Params.Add("N_CompanyID", nCompanyID);
+                    DateTime date1 = DateTime.Now;
+                    string formatted = date1.ToString("yyyy-M-dd");
+                    Params.Add("@D_AsOfDate", formatted);
+
+                    int N_decimalPlace = 2;
+                    N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("SALES", "Decimal_Place", "N_Value", nCompanyID, dLayer, connection, transaction));
+                    N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
+
+                    if (xSearchKey != null && xSearchKey.Trim() != ""){
+                        Searchkey = "and ( X_CustomerName like '%" + xSearchKey + "%' or X_CustomerCode like '%" + xSearchKey + "%' or X_PhoneNo1 like '%" + xSearchKey + "%'  ) ";
+                    }
+                    if (xSortBy == null || xSortBy.Trim() == ""){
+                        xSortBy = " order by X_CustomerCode desc";
+                    } else {
+                        xSortBy = " order by " + xSortBy;
+                    }
+
+                    dLayer.ExecuteDataTablePro("SP_InvReceivablesAsOfDate", Params, connection, transaction);
+                    sqlCommandText = "select * from Vw_customerreceivable where N_CompanyID=N_CompanyID" + Searchkey + "" + xSortBy ;
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection,transaction);
+
+                    if (Count == 0){
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_customerreceivable where N_CompanyID=N_CompanyID" + Searchkey + "";
+                    } else {
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_customerreceivable where N_CompanyID=N_CompanyID" + Searchkey + " and N_CustomerID not in (select top(" + Count + ") N_CustomerID from Vw_customerreceivable where N_CompanyID=N_CompanyID" + Searchkey + ")"+ xSortBy ;
+                    }
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
+
+                    SortedList OutPut = new SortedList();
+                    sqlCommandCount = "select count(1) as N_Count,sum(Cast(REPLACE(N_DueAmount,',','') as Numeric(10," + N_decimalPlace + ")) ) as TotalAmount from Vw_customerreceivable where N_CompanyID=N_CompanyID";
+                    DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection, transaction);
+                    string TotalCount = "0";
+                    string TotalSum = "0";
+                    if (Summary.Rows.Count > 0){
+                        DataRow drow = Summary.Rows[0];
+                        TotalCount = drow["N_Count"].ToString();
+                        TotalSum = drow["TotalAmount"].ToString();
+                    }
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    OutPut.Add("TotalSum", TotalSum);
+
+                    // dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+        [HttpGet("detailList")]
+        public ActionResult detailList(string xCustomerCode,string date,int nCompanyID,int nFnYearID,int nPage,int nSizeperpage,string xSearchKey,string xSortBy)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    // int nCompanyID = myFunctions.GetCompanyID(User);
+                    string sqlCommandText="";
+                string Searchkey="";
+                    Params.Add("N_CompanyID", nCompanyID);
+                    DateTime date1 = DateTime.Now;
+                    string formatted = date1.ToString("yyyy-M-dd");
+                    Params.Add("@D_AsOfDate", formatted);
+                     SortedList OutPut = new SortedList();
+                           if (xSearchKey != null && xSearchKey.Trim() != ""){
+                        Searchkey = "and ( X_CustomerName like '%" + xSearchKey + "%' or X_ReferenceNo like '%" + xSearchKey + "%' or X_ProjectName like '%" + xSearchKey + "%'  ) ";
+                    }
+                    if (xSortBy == null || xSortBy.Trim() == ""){
+                        xSortBy = " order by X_ReferenceNo desc";
+                    } else {
+                        xSortBy = " order by " + xSortBy;
+                    }
+                    dLayer.ExecuteDataTablePro("SP_InvReceivablesAsOfDate", Params, connection, transaction);
+                    sqlCommandText = "select * from Vw_customerReceivableDetails where N_CompanyID="+nCompanyID +"and X_CustomerCode=CAST('"+xCustomerCode+"' as VARCHAR)" + Searchkey + "" + xSortBy;
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
+
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+    }
+}   
