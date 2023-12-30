@@ -192,7 +192,12 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable(); 
             SortedList Params = new SortedList();
             string sqlCommandText ;
-            sqlCommandText = "select X_POrderNo,n_POrderID from Inv_PurchaseOrder where N_CompanyID="+nCompanyID+"and N_VendorID="+nVendorID+"and N_StatusID=1";  
+            if(nVendorID > 0){
+                sqlCommandText = "select X_POrderNo,n_POrderID from Inv_PurchaseOrder where N_CompanyID="+nCompanyID+"and N_VendorID="+nVendorID+"and N_StatusID=1";  
+            }
+            else {
+                sqlCommandText = "select X_POrderNo,n_POrderID,N_VendorID,X_VendorName from vw_PendingPOList where N_CompanyID="+nCompanyID+"and N_StatusID=1";  
+            }
             Params.Add("@p1", nCompanyID);
             try
             {
