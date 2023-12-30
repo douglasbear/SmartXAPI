@@ -67,6 +67,13 @@ namespace SmartxAPI.Controllers
                     MasterTable.AcceptChanges();
                     
                     nPaymentRequestID = dLayer.SaveData("Inv_PaymentRequest", "n_PaymentRequestID", MasterTable, connection, transaction);
+                    if (nPaymentRequestID > 0){
+                     if(!myFunctions.UpdateTxnStatus(nCompanyID, nPaymentRequestID, 1844, false, dLayer, connection, transaction)){
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                     }
+                    }
+
                     if (nPaymentRequestID <= 0)
                     {
                         transaction.Rollback();

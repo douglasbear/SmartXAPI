@@ -1447,6 +1447,13 @@ namespace SmartxAPI.Controllers
                     if (nMRNID > 0)
                         B_isDirectMRN = myFunctions.getBoolVAL(dLayer.ExecuteScalar("SELECT B_isDirectMRN from Inv_MRN where N_CompanyID=" + nCompanyID + " and N_MRNID = " + nMRNID, connection, transaction).ToString());
 
+                   string sqlPaymentRequestID = "select N_PaymentRequestID from Inv_Purchase where N_PurchaseID=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+                    object reqID = dLayer.ExecuteScalar(sqlPaymentRequestID, ParamList, connection,transaction);
+                    int PaymentRequestID = 0;
+                    if (reqID != null)
+                        PaymentRequestID = myFunctions.getIntVAL(reqID.ToString());
+                    
+
                     if (status != "Error")
                     {
                         if (ButtonTag == "6" || ButtonTag == "0")
@@ -1553,6 +1560,14 @@ namespace SmartxAPI.Controllers
                                 }
                                 tempPOrderID = n_POrderID;
                             };
+                               if (PaymentRequestID > 0)
+                                    {
+                                        if (!myFunctions.UpdateTxnStatus(nCompanyID, PaymentRequestID, 1844, false, dLayer, connection, transaction))
+                                        {
+                                            transaction.Rollback();
+                                            return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                        }
+                                    }
                         }
                         else if (ButtonTag == "4")
                         {

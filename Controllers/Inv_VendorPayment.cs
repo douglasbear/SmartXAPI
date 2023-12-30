@@ -739,6 +739,16 @@ namespace SmartxAPI.Controllers
                         ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
                     myFunctions.LogScreenActivitys(nFnYearID, n_PayReceiptID, PayReceiptNo, 67, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
 
+                       if (n_PayReceiptID > 0)
+                      {
+                        if(myFunctions.getIntVAL(MasterTable.Rows[0]["n_PaymentRequestID"].ToString())>0){
+                           if(!myFunctions.UpdateTxnStatus( myFunctions.GetCompanyID(User), myFunctions.getIntVAL(MasterTable.Rows[0]["n_PaymentRequestID"].ToString()), 1844, false, dLayer, connection, transaction)){
+                                transaction.Rollback();
+                                    return Ok(api.Error(User, "Unable To Update Txn Status"));
+                            }
+                        }
+                        }
+
 
 
                     transaction.Commit();
@@ -817,6 +827,13 @@ namespace SmartxAPI.Controllers
 
 
                     string status = myFunctions.UpdateApprovals(Approvals, nFnyearID, "PURCHASE PAYMENT", nPayReceiptId, TransRow["X_VoucherNo"].ToString(), ProcStatus, "Inv_PayReceipt", X_Criteria, "", User, dLayer, connection, transaction);
+
+                    string sqlPaymentRequestID = "select N_PaymentRequestID from Inv_PayReceipt where N_PayReceiptId=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+                    object reqID = dLayer.ExecuteScalar(sqlPaymentRequestID, ParamList, connection,transaction);
+                    int PaymentRequestID = 0;
+                    if (reqID != null)
+                        PaymentRequestID = myFunctions.getIntVAL(reqID.ToString());
+
                     if (status != "Error")
                     {
                         if (ButtonTag == "6" || ButtonTag == "0")
@@ -846,6 +863,16 @@ namespace SmartxAPI.Controllers
 
 
                                         }
+
+                                     if (PaymentRequestID > 0)
+                                    {
+                                        if (!myFunctions.UpdateTxnStatus(nCompanyID, PaymentRequestID, 1844, false, dLayer, connection, transaction))
+                                        {
+                                            transaction.Rollback();
+                                            return Ok(api.Error(User, "Unable To Update Txn Status"));
+                                        }
+                                    }
+                                    
                                     transaction.Commit();
                                     return Ok(api.Success("Vendor Payment Deleted"));
                                 }
@@ -856,6 +883,8 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails_Segments where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='"+xTransType+"' AND N_AccTransID  in (select N_AccTransID from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='"+xTransType+"' AND X_VoucherNo='"+TransRow["X_VoucherNo"].ToString()+"')", ParamList, connection, transaction);
                             dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='"+xTransType+"' AND X_VoucherNo='"+TransRow["X_VoucherNo"].ToString()+"'", ParamList, connection, transaction);
                         }
+
+                  
 
                         transaction.Commit();
                         return Ok(api.Success("Vendor Payment " + status + " Successfully"));

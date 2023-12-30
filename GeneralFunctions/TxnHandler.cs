@@ -809,6 +809,7 @@ namespace SmartxAPI.GeneralFunctions
 
                             //StatusUpdate
                             int tempPOrderID=0;
+                           
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
                             {
                                 
@@ -825,7 +826,9 @@ namespace SmartxAPI.GeneralFunctions
                                         
 
                                 }
-                                if (myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString())> 0 && tempPOrderID!=myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString()))
+                                
+                              
+                                    if (myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString())> 0 && tempPOrderID!=myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString()))
                                 {
                                     if (myFunctions.getIntVAL(masterRow["n_FormID"].ToString()) == 1605)
                                     {
@@ -851,7 +854,17 @@ namespace SmartxAPI.GeneralFunctions
                                     }
                                 }
                                 tempPOrderID=myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString());
+                             
                             };
+                             if(myFunctions.getIntVAL(masterRow["n_PaymentRequestID"].ToString())>0){
+                             if(!myFunctions.UpdateTxnStatus(nCompanyID,myFunctions.getIntVAL(masterRow["n_PaymentRequestID"].ToString()),1844,false,dLayer,connection,transaction))
+                                        {
+
+                                            Result.Add("b_IsCompleted", 0);
+                                            Result.Add("x_Msg", "Unable To Update Txn Status");
+                                            return Result;
+                                        }
+                                }
                     }
                     SortedList VendorParams = new SortedList();
                     VendorParams.Add("@nVendorID", N_VendorID);
