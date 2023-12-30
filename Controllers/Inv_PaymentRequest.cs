@@ -43,8 +43,11 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
+                    DataTable Approvals;
                     MasterTable = ds.Tables["master"];
+                     Approvals = ds.Tables["approval"];
                     SortedList Params = new SortedList();
+                    DataRow ApprovalRow = Approvals.Rows[0];
 
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
@@ -65,8 +68,17 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_PaymentRequestCode"] = xPaymentRequestCode;
                     }
                     MasterTable.AcceptChanges();
+                    MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);  
+                    MasterTable.Rows[0]["N_UserID"] = myFunctions.GetUserID(User);
                     
                     nPaymentRequestID = dLayer.SaveData("Inv_PaymentRequest", "n_PaymentRequestID", MasterTable, connection, transaction);
+                    if (nPaymentRequestID > 0){
+                     if(!myFunctions.UpdateTxnStatus(nCompanyID, nPaymentRequestID, 1844, false, dLayer, connection, transaction)){
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                     }
+                    }
+
                     if (nPaymentRequestID <= 0)
                     {
                         transaction.Rollback();
