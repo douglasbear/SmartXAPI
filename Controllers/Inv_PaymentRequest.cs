@@ -53,6 +53,22 @@ namespace SmartxAPI.Controllers
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                     int nPaymentRequestID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PaymentRequestID"].ToString());
                     string xPaymentRequestCode = MasterTable.Rows[0]["x_PaymentRequestCode"].ToString();
+                    int N_NextApproverID = 0;
+                    int N_SaveDraft = 0;
+                    int  N_ProcStatus =0;
+                    object IsSaveDraft="0";
+
+                       if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && nPaymentRequestID>0)
+                     {                                     
+                        int N_PkeyID = nPaymentRequestID;
+                        var value = MasterTable.Rows[0]["x_PaymentRequestCode"].ToString();
+                        string X_Criteria = "n_PaymentRequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                        myFunctions.UpdateApproverEntry(Approvals, "Inv_PaymentRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Payment Request", N_PkeyID, value, 1, "", 0, "", 0, User, dLayer, connection, transaction);
+                        // N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_PurchaseOrder where n_POrderID=" + N_POrderID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
+                          transaction.Commit();
+                        return Ok(_api.Success("Payment Request Approved " + "-" + xPaymentRequestCode));
+                    }
 
                     if (xPaymentRequestCode == "@Auto")
                     {
@@ -79,6 +95,7 @@ namespace SmartxAPI.Controllers
                      }
                     }
 
+                    N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Payment Request", nPaymentRequestID, xPaymentRequestCode, 1, "", 0, "",0, User, dLayer, connection, transaction);
                     if (nPaymentRequestID <= 0)
                     {
                         transaction.Rollback();
@@ -98,31 +115,65 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nPaymentRequestID)
+        public ActionResult DeleteData(int nPaymentRequestID,int nFnYearID,string comments)
         {
             int Results = 0;
             SortedList Params = new SortedList();
+              if (comments == null)
+            {
+                comments = "";
+            }
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     DataTable TransData = new DataTable();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+
+                     Params.Add("@n_PaymentRequestID", nPaymentRequestID);
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@nFnYearID", nFnYearID);
+
+
+                    string Sql = "select n_PaymentRequestID,x_PaymentRequestCode,N_UserID,N_ProcStatus,N_ApprovalLevelId from Inv_PaymentRequest where n_PaymentRequestID=@n_PaymentRequestID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+                   TransData = dLayer.ExecuteDataTable(Sql, Params, connection);
+                    if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+                   DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, 1844, nPaymentRequestID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
                     SqlTransaction transaction = connection.BeginTransaction();
 
-                    Params.Add("@n_PaymentRequestID", nPaymentRequestID);
-                    Results = dLayer.DeleteData("Inv_PaymentRequest", "n_PaymentRequestID", nPaymentRequestID, "", connection, transaction);
+                    string X_Criteria = "n_PaymentRequestID=" + nPaymentRequestID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                    string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
                     
-                    if (Results > 0)
+                     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Payment Request", nPaymentRequestID, TransRow["x_PaymentRequestCode"].ToString(), ProcStatus, "Inv_PaymentRequest", X_Criteria, "", User, dLayer, connection, transaction);
+
+                 if (status != "Error")
                     {
-                        transaction.Commit();
-                        return Ok(_api.Success("Payment Request Deleted Successfully"));
+                    if (ButtonTag == "6" || ButtonTag == "0")
+                 {
+                   
+                    Results = dLayer.DeleteData("Inv_PaymentRequest", "n_PaymentRequestID", nPaymentRequestID, "", connection, transaction);
+                 }
                     }
-                    else
-                    {
-                       transaction.Rollback();
-                       return Ok(_api.Error(User, "Unable to delete"));
-                    }
+                     transaction.Commit();
+                    return Ok(_api.Success("Payment Request " + status + " Successfully"));
+                    
+                    // if (Results > 0)
+                    // {
+                    //     transaction.Commit();
+                    //     return Ok(_api.Success("Payment Request Deleted Successfully"));
+                    // }
+                    // else
+                    // {
+                    //    transaction.Rollback();
+                    //    return Ok(_api.Error(User, "Unable to delete"));
+                    // }
                 }
             }
             catch (Exception ex)

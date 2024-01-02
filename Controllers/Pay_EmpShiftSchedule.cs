@@ -387,6 +387,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     DataTable dt = new DataTable();
+                    DataTable dt1 = new DataTable();
                     SortedList Params = new SortedList();
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@nFnYearID", nFnYearID);
@@ -394,6 +395,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nBranchID", nBranchID);
                     Params.Add("@p2", d_Date);
                     string sqlCommandText = "";
+                    string xUserID="";
 
                     bool B_ShowManagerWise = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("1260", "ShowManagerWiseEmployee", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
                     if (B_ShowManagerWise == false)
@@ -406,7 +408,17 @@ namespace SmartxAPI.Controllers
                     else
                     {
 
-                        object userCategory = dLayer.ExecuteScalar("Select N_UserCategoryID From Sec_User Where N_CompanyID =@nCompanyID and N_UserID=" + nUserID + " ", Params, connection);
+                        object userCategory = dLayer.ExecuteScalar("Select X_UserCategoryList From Sec_User Where N_CompanyID =@nCompanyID and N_UserID=" + nUserID + " ", Params, connection);
+                        string sql="Select * From Sec_UserCategory Where N_CompanyID =@nCompanyID and N_UserCategoryID in(" + userCategory + ")";
+                         dt1 = dLayer.ExecuteDataTable(sql, Params, connection);
+                         foreach (DataRow row in dt1.Rows){
+                            if(row["X_UserCategory"].ToString()=="Admin")
+                            {
+                                userCategory="2";
+
+                            }
+                         }
+
                         if (myFunctions.getIntVAL(userCategory.ToString()) == 2)
                         {
                             if (bAllBranchData == true)
