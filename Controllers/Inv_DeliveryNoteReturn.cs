@@ -125,6 +125,7 @@ namespace SmartxAPI.Controllers
                     int nFormID = myFunctions.getIntVAL(MasterRow["n_FormID"].ToString());
                     string xReturnNo = MasterRow["x_ReturnNo"].ToString();
                     int N_UserID = myFunctions.GetUserID(User);
+                    int nDeliveryNoteID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteId"].ToString());
 
                     if (xReturnNo == "@Auto")
                     {
@@ -162,6 +163,17 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                         return Ok("Unable to save Delivery Note Return");
+                    }
+
+                    if(nDeliveryNoteRtnID > 0)
+                    {
+                        object serviceSheetID = dLayer.ExecuteScalar("select N_ServiceSheetID from Inv_ServiceTimesheet where N_CompanyID="+nCompanyID+" and N_SOID in (SELECT Inv_SalesOrder.N_SalesOrderId FROM Inv_SalesOrder INNER JOIN Inv_DeliveryNote ON Inv_SalesOrder.N_SalesOrderId = Inv_DeliveryNote.N_SalesOrderID AND Inv_SalesOrder.N_CompanyId = Inv_DeliveryNote.N_CompanyId where Inv_DeliveryNote.N_CompanyId="+nCompanyID+" and Inv_DeliveryNote.N_DeliveryNoteId="+nDeliveryNoteID+") and convert(date ,'" + MasterTable.Rows[0]["d_ReturnDate"].ToString() + "') BETWEEN D_DateFrom AND D_DateTo", Params, connection, transaction);
+                        if (serviceSheetID == null) serviceSheetID = 0;
+                        if (myFunctions.getIntVAL(serviceSheetID.ToString()) > 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User,"Unable to save,Timesheet Processed for the date"));
+                        }
                     }
                     dLayer.DeleteData("Inv_DeliveryNoteReturnDetails", "N_DeliveryNoteRtnID", nDeliveryNoteRtnID, "", connection, transaction);
 
