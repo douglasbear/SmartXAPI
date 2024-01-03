@@ -536,6 +536,16 @@ namespace SmartxAPI.Controllers
                         transaction.Commit();
                         return Ok(api.Success("Vendor Payment Approved " + "-" + x_VoucherNo));
                     }
+                    if(n_PayReceiptID == 0){
+                      if (MasterTable.Columns.Contains("n_PaymentRequestID"))
+                      {
+                          int nPaymentRequestID = myFunctions.getIntVAL(Master["n_PaymentRequestID"].ToString());
+                          object Res = dLayer.ExecuteScalar("Select COUNT(N_PaymentRequestID) from Inv_PayReceipt Where N_CompanyID= " + nCompanyId + " and N_PaymentRequestID="+nPaymentRequestID, connection, transaction);
+                          if  (myFunctions.getIntVAL(Res.ToString()) > 0) {
+                          return Ok(api.Error(User, "Payment request already converted"));
+                          }
+                      }
+                    }
                    if (n_PayReceiptID == 0 && x_VoucherNo != "@Auto")
                     {
                     object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_PayReceipt Where x_VoucherNo ='" + x_VoucherNo + "' and N_CompanyID= " + nCompanyId + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
