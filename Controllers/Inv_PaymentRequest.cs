@@ -46,6 +46,7 @@ namespace SmartxAPI.Controllers
                     DataTable Approvals;
                     MasterTable = ds.Tables["master"];
                      Approvals = ds.Tables["approval"];
+                     DataTable Attachment = ds.Tables["attachments"];
                     SortedList Params = new SortedList();
                     DataRow ApprovalRow = Approvals.Rows[0];
 
@@ -102,7 +103,15 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Warning("Unable to save"));
                     }
                     else
-                    {
+                    {   try
+                        {
+                            myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["X_CustomerCode"].ToString() + "-" + MasterTable.Rows[0]["X_CustomerName"].ToString(), 0, MasterTable.Rows[0]["X_CustomerName"].ToString(), MasterTable.Rows[0]["X_CustomerCode"].ToString(), nCustomerID, "Customer Document", User, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, ex));
+                        }
                         transaction.Commit();
                         return Ok(_api.Success("Payment Request Saved Successfully"));
                     }
@@ -209,15 +218,15 @@ namespace SmartxAPI.Controllers
                     object N_Result = 0; 
                     if(PayTowardsID == 469 || PayTowardsID == 470 )  //Sadad Payment or Petty Cash
                     {
-                        N_Result = dLayer.ExecuteScalar("Select COUNT(*) from Acc_VoucherMaster where N_PaymentRequestID ='" + PRID + "' and N_CompanyID= " + nCompanyID + " and X_TransType ='PV' and N_FnYearID=" + nFnYearID, connection, transaction);
+                        N_Result = dLayer.ExecuteScalar("Select COUNT(*) from Acc_VoucherMaster where N_PaymentRequestID ='" + PRID + "' and N_CompanyID= " + nCompanyID + " and X_TransType ='PV'", connection, transaction);
                     }
                     if(PayTowardsID == 471) //vendor advance
                     {
-                        N_Result = dLayer.ExecuteScalar("Select COUNT(*) from Inv_PayReceipt where N_PaymentRequestID ='" + PRID + "' and N_CompanyID= " + nCompanyID + " and X_Type='PA' and N_FnYearID=" + nFnYearID, connection, transaction);
+                        N_Result = dLayer.ExecuteScalar("Select COUNT(*) from Inv_PayReceipt where N_PaymentRequestID ='" + PRID + "' and N_CompanyID= " + nCompanyID + " and X_Type='PA'", connection, transaction);
                     }
                     if(PayTowardsID == 472) //vendor payment
                     {
-                        N_Result = dLayer.ExecuteScalar("Select COUNT(*) from Inv_Purchase where N_PaymentRequestID ='" + PRID + "' and N_CompanyID= " + nCompanyID + " and N_DivisionID="+DivisionID+"and N_FnYearID=" + nFnYearID, connection, transaction);
+                        N_Result = dLayer.ExecuteScalar("Select COUNT(*) from Inv_Purchase where N_PaymentRequestID ='" + PRID + "' and N_CompanyID= " + nCompanyID + " and N_DivisionID="+DivisionID, connection, transaction);
                         string MRNID = dt.Rows[0]["X_MRN"].ToString();
                         string MRNCodeList = "Select N_MRNID,X_MRNNo,D_MRNDate,N_CompanyID,N_VendorID,X_VendorInvoice from Inv_MRN where N_MRNID in ("+MRNID+")";
                         MRNCode = dLayer.ExecuteDataTable(MRNCodeList, Params, connection,transaction);

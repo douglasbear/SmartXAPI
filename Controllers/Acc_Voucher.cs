@@ -391,6 +391,16 @@ namespace SmartxAPI.Controllers
                        Result.Add("x_POrderNo", xVoucherNo);
                        return Ok(api.Success(Result, "Voucher Approved " + "-" + xVoucherNo));
                     }
+                    if(N_VoucherID == 0){
+                      if (MasterTable.Columns.Contains("n_PaymentRequestID"))
+                      {
+                          int nPaymentRequestID = myFunctions.getIntVAL(masterRow["n_PaymentRequestID"].ToString());
+                          object Res = dLayer.ExecuteScalar("Select COUNT(N_PaymentRequestID) from Acc_VoucherMaster Where N_CompanyID= " + nCompanyId + " and N_PaymentRequestID="+nPaymentRequestID, connection, transaction);
+                          if  (myFunctions.getIntVAL(Res.ToString()) > 0) {
+                          return Ok(api.Error(User, "Payment request already converted"));
+                          }
+                      }
+                    }
 
              
 
