@@ -479,16 +479,21 @@ namespace SmartxAPI.Controllers
 
                         if (myFunctions.getIntVAL(masterTable.Rows[0]["N_FormID"].ToString()) == 1572)
                         {
-                            string dataSql = "SELECT Inv_ServiceTimesheet.N_ServiceSheetID FROM Inv_DeliveryNote INNER JOIN Inv_ServiceTimesheet ON Inv_DeliveryNote.N_CompanyId = Inv_ServiceTimesheet.N_CompanyID AND "+
-                                "Inv_DeliveryNote.N_FnYearId = Inv_ServiceTimesheet.N_FnYearID AND Inv_DeliveryNote.N_SalesOrderID = Inv_ServiceTimesheet.N_SOID "+
-                                "WHERE Inv_DeliveryNote.N_CompanyId="+nCompanyId+" AND Inv_DeliveryNote.N_FnYearId="+nFnYearId+" AND Inv_DeliveryNote.N_SalesOrderID="+myFunctions.getIntVAL(masterTable.Rows[0]["N_SalesOrderID"].ToString())+" AND Inv_DeliveryNote.N_FormID=1572";
+                            DataTable detailsData = dLayer.ExecuteDataTable("select N_DeliveryNoteDetailsID from Inv_DeliveryNoteDetails where N_CompanyID="+nCompanyId+" and N_DeliveryNoteID="+myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString())+" order by N_DeliveryNoteDetailsID", QueryParamsList, Con);
+                            DataTable itemData = dLayer.ExecuteDataTable("select N_DeliverNoteDetailsID from Inv_ServiceTimesheetItems where N_CompanyID="+nCompanyId+" and N_DeliverNoteID="+myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString())+" group by N_DeliverNoteDetailsID order by N_DeliverNoteDetailsID", QueryParamsList, Con);
 
-                            DataTable timesheetData = dLayer.ExecuteDataTable(dataSql, QueryParamsList, Con);
-                            if (timesheetData.Rows.Count > 0)
+                            foreach (DataRow Avar in detailsData.Rows)
                             {
-                                masterTable.Rows[0]["isTimesheetDone"] = true;
+                                foreach (DataRow Kvar in itemData.Rows)
+                                {
+                                    if (myFunctions.getIntVAL(Avar["N_DeliveryNoteDetailsID"].ToString()) == myFunctions.getIntVAL(Kvar["N_DeliverNoteDetailsID"].ToString()))
+                                    {
+                                        masterTable.Rows[0]["isTimesheetDone"] = true;
+                                    } else {
+                                        masterTable.Rows[0]["isTimesheetDone"] = false;
+                                    }
+                                }
                             }
-                        
 
                             DataTable returnData = dLayer.ExecuteDataTable("select N_DeliveryNoteId from vw_DeliveryNoteToDeliveryReturn where N_DeliveryNoteId="+myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString())+" and N_CompanyId="+nCompanyId+" and N_FnYearID="+nFnYearId+" group by N_DeliveryNoteId having SUM(N_BalanceQty)=0", QueryParamsList, Con);
                             if (returnData.Rows.Count > 0)
@@ -754,6 +759,17 @@ namespace SmartxAPI.Controllers
 
                     if (N_DeliveryNoteID > 0)
                     {
+                        if (N_FormID == 1572)
+                        {
+                            object serviceSheetID = dLayer.ExecuteScalar("select N_ServiceSheetID from Inv_ServiceTimesheet where N_CompanyID="+N_CompanyID+" and N_SOID in (SELECT Inv_SalesOrder.N_SalesOrderId FROM Inv_SalesOrder INNER JOIN Inv_DeliveryNote ON Inv_SalesOrder.N_SalesOrderId = Inv_DeliveryNote.N_SalesOrderID AND Inv_SalesOrder.N_CompanyId = Inv_DeliveryNote.N_CompanyId where Inv_DeliveryNote.N_CompanyId="+N_CompanyID+" and Inv_DeliveryNote.N_DeliveryNoteId="+N_DeliveryNoteID+") and convert(date ,'" + MasterTable.Rows[0]["d_DeliveryDate"].ToString() + "') BETWEEN D_DateFrom AND D_DateTo", Params, connection, transaction);
+                            if (serviceSheetID == null) serviceSheetID = 0;
+                            if (myFunctions.getIntVAL(serviceSheetID.ToString()) > 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User,"Unable to save,Timesheet Processed for the date"));
+                            }
+                        }
+
                         SortedList statusParams = new SortedList();
                         statusParams.Add("@N_CompanyID", N_CompanyID);
                         statusParams.Add("@N_TransID", N_DeliveryNoteID);

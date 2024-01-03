@@ -145,6 +145,17 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok("Unable to save MRN Return");
                     }
+
+                    if (nMRNReturnID > 0)
+                    {
+                        object serviceSheetID = dLayer.ExecuteScalar("select N_ServiceSheetID from Inv_ServiceTimesheet where N_CompanyID="+nCompanyID+" and N_POID in (SELECT Inv_PurchaseOrder.N_POrderID FROM Inv_PurchaseOrder INNER JOIN Inv_MRN ON Inv_PurchaseOrder.N_POrderID = Inv_MRN.N_POrderid AND Inv_PurchaseOrder.N_CompanyID = Inv_MRN.N_CompanyID where Inv_MRN.N_CompanyID="+nCompanyID+" and Inv_MRN.N_MRNID="+nMRNID+") and convert(date ,'" + MasterTable.Rows[0]["d_ReturnDate"].ToString() + "') BETWEEN D_DateFrom AND D_DateTo", Params, connection, transaction);
+                        if (serviceSheetID == null) serviceSheetID = 0;
+                        if (myFunctions.getIntVAL(serviceSheetID.ToString()) > 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User,"Unable to save,Timesheet Processed for the date"));
+                        }
+                    }
                     // if (nMRNID > 0)
                     // {
                     //     dLayer.ExecuteNonQuery("Update Inv_MRN Set N_Processed=1 Where N_MRNID=" + nMRNID + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID, connection, transaction);

@@ -257,7 +257,7 @@ namespace SmartxAPI.Controllers
           
             }
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = " and (x_DivisionCode like '%" + xSearchkey + "%')";
+                Searchkey = " and (x_DivisionCode like '%" + xSearchkey + "%' or x_DivisionName like '%" + xSearchkey + "%' or x_BillAmt like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by x_BillAmt desc";

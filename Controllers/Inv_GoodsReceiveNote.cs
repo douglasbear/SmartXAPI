@@ -228,14 +228,20 @@ namespace SmartxAPI.Controllers
 
                         if (myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_FormID"].ToString()) == 1593)
                         {
-                            string dataSql = "SELECT Inv_ServiceTimesheet.N_ServiceSheetID FROM Inv_MRN INNER JOIN Inv_ServiceTimesheet ON Inv_MRN.N_CompanyID = Inv_ServiceTimesheet.N_CompanyID AND "+
-                                "Inv_MRN.N_FnYearID = Inv_ServiceTimesheet.N_FnYearID AND Inv_MRN.N_POrderid = Inv_ServiceTimesheet.N_POID "+
-                                "WHERE Inv_MRN.N_CompanyID="+nCompanyId+" AND Inv_MRN.N_FnYearID="+nFnYearId+" AND Inv_MRN.N_POrderid="+myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_POrderid"].ToString())+" AND Inv_MRN.N_FormID=1593";
+                            DataTable detailsData = dLayer.ExecuteDataTable("select N_MRNDetailsID from Inv_MRNDetails where N_CompanyID="+nCompanyId+" and N_MRNID="+nGRNID+" order by N_MRNDetailsID", Params, connection, transaction);
+                            DataTable itemData = dLayer.ExecuteDataTable("select N_MRNDetailID from Inv_ServiceTimesheetItems where N_CompanyID="+nCompanyId+" and N_MRNID="+nGRNID+" group by N_MRNDetailID order by N_MRNDetailID", Params, connection, transaction);
 
-                            DataTable timesheetData = dLayer.ExecuteDataTable(dataSql, Params, connection, transaction);
-                            if (timesheetData.Rows.Count > 0)
+                            foreach (DataRow Avar in detailsData.Rows)
                             {
-                                dtGoodReceive.Rows[0]["isTimesheetDone"] = true;
+                                foreach (DataRow Kvar in itemData.Rows)
+                                {
+                                    if (myFunctions.getIntVAL(Avar["N_MRNDetailsID"].ToString()) == myFunctions.getIntVAL(Kvar["N_MRNDetailID"].ToString()))
+                                    {
+                                        dtGoodReceive.Rows[0]["isTimesheetDone"] = true;
+                                    } else {
+                                        dtGoodReceive.Rows[0]["isTimesheetDone"] = false;
+                                    }
+                                }
                             }
                         }
 
@@ -473,6 +479,20 @@ namespace SmartxAPI.Controllers
                     }
 
                     N_GRNID = dLayer.SaveData("Inv_MRN", "N_MRNID", MasterTable, connection, transaction);
+
+                    if (N_GRNID > 0)
+                    {
+                        if (n_FormID == 1593)
+                        {
+                            object serviceSheetID = dLayer.ExecuteScalar("select N_ServiceSheetID from Inv_ServiceTimesheet where N_CompanyID="+nCompanyID+" and N_POID in (SELECT Inv_PurchaseOrder.N_POrderID FROM Inv_PurchaseOrder INNER JOIN Inv_MRN ON Inv_PurchaseOrder.N_POrderID = Inv_MRN.N_POrderid AND Inv_PurchaseOrder.N_CompanyID = Inv_MRN.N_CompanyID where Inv_MRN.N_CompanyID="+nCompanyID+" and Inv_MRN.N_MRNID="+N_GRNID+") and convert(date ,'" + MasterTable.Rows[0]["d_MRNDate"].ToString() + "') BETWEEN D_DateFrom AND D_DateTo", Params, connection, transaction);
+                            if (serviceSheetID == null) serviceSheetID = 0;
+                            if (myFunctions.getIntVAL(serviceSheetID.ToString()) > 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User,"Unable to save,Timesheet Processed for the date"));
+                            }
+                        }
+                    }
 
                     if (N_GRNID <= 0)
                     {
