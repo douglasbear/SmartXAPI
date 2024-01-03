@@ -354,17 +354,17 @@ namespace SmartxAPI.Controllers
                         if (d1.Rows.Count > 0){
                           var empList = d1.AsEnumerable().Select(r => r.Field<string>("x_EmpName"));
                              string value = string.Join(",", empList);
+                             transaction.Rollback();
                              return Ok(_api.Notice("Time sheet entered for this employee, " + value + " in this date range "));
                         }
                        
-                 else{
-                 dLayer.ExecuteNonQuery("Delete from Pay_Empshiftdetails where D_PeriodFrom>='" + dDateFrom +"' and D_PeriodTo<='"+dDateTo+"' and N_EmpID in ("+empIds+")" + "  and N_CompanyID=N_CompanyID", Params, connection, transaction);
-
+              
+                    dLayer.ExecuteNonQuery("Delete from Pay_Empshiftdetails where D_Date>='" + dDateFrom +"' and D_Date<='"+dDateTo+"' and N_EmpID in ("+empIds+")" + "  and N_CompanyID=N_CompanyID", Params, connection, transaction);
                     dLayer.SaveData("Pay_Empshiftdetails", "N_ShiftDetailsID", detailsTable, connection, transaction);
-                    dLayer.ExecuteNonQuery("update pay_empshiftDetails set N_SHIFTid=N_ShiftDetailsID where D_PeriodFrom='" + dDateFrom +"' and D_PeriodTo='"+dDateTo+"' and N_EmpID in ("+empIds+")" + "  and N_CompanyID=N_CompanyID", connection, transaction);
+                    dLayer.ExecuteNonQuery("update pay_empshiftDetails set N_SHIFTid=N_ShiftDetailsID where D_Date>='" + dDateFrom +"' and D_Date<='"+dDateTo+"' and N_EmpID in ("+empIds+")" + "  and N_CompanyID=N_CompanyID", connection, transaction);
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
-                 }
+             
 
                   
                 }
