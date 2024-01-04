@@ -576,12 +576,12 @@ namespace SmartxAPI.Controllers
                     // }
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_AcYearID=" + nAcYearID + " and X_ReceiptNo='" + X_ReceiptNo + "'";
                     string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_AcYearID=" + nAcYearID;
-                     string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(nAcYearID,nReceiptID,X_ReceiptNo,198,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                //      string ipAddress = "";
+                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                //     ipAddress = Request.Headers["X-Forwarded-For"];
+                // else
+                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                //        myFunctions.LogScreenActivitys(nAcYearID,nReceiptID,X_ReceiptNo,198,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
           
 
                     nReceiptID = dLayer.SaveData("Pay_EmployeePayment", "N_ReceiptId", DupCriteria, X_Criteria, MasterTable, connection, transaction);
@@ -685,6 +685,13 @@ namespace SmartxAPI.Controllers
                         }
 
                     }
+
+                    string ipAddress = "";
+                    if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                        myFunctions.LogScreenActivitys(nAcYearID,nReceiptID,X_ReceiptNo,198,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));

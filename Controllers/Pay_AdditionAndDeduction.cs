@@ -514,22 +514,18 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Unable to save"));
                         }
                         else{
-
-                        // Activity Log
-                        string ipAddress = "";
-                        if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                            ipAddress = Request.Headers["X-Forwarded-For"];
-                        else
-                            ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                              myFunctions.LogScreenActivitys(nFnYearId,N_TransID,x_Batch,208,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-                    
-                    transaction.Commit();
-                    return Ok(_api.Success("Saved"));
-                        }
+                            // Activity Log
+                            string ipAddress = "";
+                            if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                                ipAddress = Request.Headers["X-Forwarded-For"];
+                            else
+                                ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                                myFunctions.LogScreenActivitys(nFnYearId,N_TransID,x_Batch,208,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
                         
+                            transaction.Commit();
+                            return Ok(_api.Success("Saved Successfully"));
+                        }
                     }
-                    
-                
                 }
             }
             catch (Exception ex)

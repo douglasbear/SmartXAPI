@@ -56,7 +56,7 @@ namespace SmartxAPI.Controllers
             string qryCriteria = "";
             if (qry != "" && qry != null)
             {
-                qryCriteria = " and (X_VendorCode like @qry or X_VendorName like @qry ) ";
+                qryCriteria = " and (X_VendorCode like @qry or X_VendorName like @qry or X_PhoneNo1 = CAST('"+qry+"' as VARCHAR) or X_TaxRegistrationNo = CAST('"+qry+"' as VARCHAR)) ";
                 Params.Add("@qry", "%" + qry + "%");
             }
             if (nQuotationID > 0) // Added for RFQ Vendor filltering in PO
