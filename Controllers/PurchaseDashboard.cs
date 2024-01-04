@@ -233,6 +233,242 @@ namespace SmartxAPI.Controllers
             }
         }
 
+           [HttpGet("purchaseDivisionInvoiceList")]
+        public ActionResult GetDivisionInvoiceList(int nFnYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nBranchID,bool bAllBranchData)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandCount = "";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string Searchkey = "";
+            string crieteria = "";
+            string MonthWiseDate="";
+            string YearWiseDate="";
+            if (bAllBranchData == true)
+            {
+            crieteria="";
+           
+            }
+            else
+            {
+            crieteria=" and N_BranchID="+nBranchID;
+          
+            }
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = " and (x_DivisionCode like '%" + xSearchkey + "%' or x_DivisionName like '%" + xSearchkey + "%' or x_BillAmt like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by x_BillAmt desc";
+            else
+                xSortBy = " order by " + xSortBy;
+
+          
+            Params.Add("@p1", nCompanyID);
+
+            SortedList OutPut = new SortedList();
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+
+                   if (Count == 0)
+                        sqlCommandText = "select * from vw_InvDivisionWise_Purchase where  x_DivisionName!=''  and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " " + xSortBy;
+                   else
+                        sqlCommandText = "select * from vw_InvDivisionWise_Purchase where  x_DivisionName!='' and N_FnyearID="+nFnYearID + crieteria + " " + Searchkey + " " + xSortBy;
+
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt = api.Format(dt);
+                    sqlCommandCount = "Select count(1) from vw_InvDivisionWise_Purchase Where  x_DivisionName!='' and  N_FnyearID="+nFnYearID + crieteria;
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                       return Ok(api.Success(OutPut));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+
+
+        [HttpGet("purchaseDivisionBranchInvoiceList")]
+        public ActionResult GetDivisionBranchInvoiceList(int nFnYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nBranchID,bool bAllBranchData,int nDivision)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandCount = "";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string Searchkey = "";
+            string crieteria = "";
+            string MonthWiseDate="";
+            string YearWiseDate="";
+            if (bAllBranchData == true)
+            {
+            crieteria="";
+           
+            }
+            else
+            {
+            crieteria=" and N_BranchID="+nBranchID;
+          
+            }
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = " and (X_DivisionName like '%" + xSearchkey + "%' OR x_BranchName like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by x_BillAmt desc";
+            else
+                xSortBy = " order by " + xSortBy;
+
+          
+            Params.Add("@p1", nCompanyID);
+
+            SortedList OutPut = new SortedList();
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+
+                   if (Count == 0)
+                        sqlCommandText = "select * from vw_InvBranchWise_Purchase where  x_DivisionName!=''  and N_FnyearID="+nFnYearID+" and n_DivisionID ="+nDivision + crieteria + " " + Searchkey + " " + xSortBy;
+                   else
+                        sqlCommandText = "select * from vw_InvBranchWise_Purchase where  x_DivisionName!='' and N_FnyearID="+nFnYearID+" and n_DivisionID ="+nDivision + crieteria + " " + Searchkey + " " + xSortBy;
+
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt = api.Format(dt);
+                    sqlCommandCount = "Select count(1) from vw_InvBranchWise_Purchase Where  x_DivisionName!='' and  N_FnyearID="+nFnYearID + " and n_DivisionID ="+nDivision+crieteria;
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                       return Ok(api.Success(OutPut));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+
+        [HttpGet("purchaseBranchInvoiceList")]
+        public ActionResult GetBranchInvoiceList(int nFnYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nBranchID,bool bAllBranchData,int nDivision,int nDivBranchID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandCount = "";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string Searchkey = "";
+            string crieteria = "";
+            string MonthWiseDate="";
+            string YearWiseDate="";
+            if (bAllBranchData == true)
+            {
+            crieteria="";
+           
+            }
+            else
+            {
+            crieteria=" and N_BranchID="+nBranchID;
+          
+            }
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = " and (invoiceNo like '%" + xSearchkey + "%' OR vendor like '%" + xSearchkey + "%' OR invoiceDate like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_InvoiceAmt desc";
+            else
+                xSortBy = " order by " + xSortBy;
+
+          
+            Params.Add("@p1", nCompanyID);
+
+            SortedList OutPut = new SortedList();
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+
+                   if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPurchase_BranchByDivision where  N_FnyearID="+nFnYearID+" and N_BranchID="+nDivBranchID+" and n_DivisionID ="+nDivision + crieteria + " " + Searchkey + " " + xSortBy;
+                   else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPurchase_BranchByDivision where  N_FnyearID="+nFnYearID+" and N_BranchID="+nDivBranchID+" and n_DivisionID ="+nDivision + crieteria + " " + Searchkey + " " + " and N_POrderID not in (select top(" + Count + ") N_POrderID from vw_InvPurchase_BranchByDivision where N_CompanyID=@p1 " + xSortBy + " )" + xSortBy;
+
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt = api.Format(dt);
+                    sqlCommandCount = "Select count(1) as N_Count, sum(Cast(REPLACE(invoiceNetAmt,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvPurchase_BranchByDivision Where  N_FnyearID="+nFnYearID + " and N_BranchID="+nDivBranchID+" and n_DivisionID ="+nDivision+crieteria;
+                    DataTable TotalCountdt = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                    
+                    // OutPut.Add("TotalCount", TotalCount);
+                    string TotalCount = "0";
+                    string TotalSum = "0";
+                    if (TotalCountdt.Rows.Count > 0)
+                    {
+                        DataRow drow = TotalCountdt.Rows[0];
+                        TotalCount = drow["N_Count"].ToString();
+                        TotalSum = drow["TotalAmount"].ToString();
+                    }
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    OutPut.Add("TotalSum", TotalSum);
+                    
+                    if (dt.Rows.Count == 0)
+                    {
+                       return Ok(api.Success(OutPut));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+
+
     }
 }
 

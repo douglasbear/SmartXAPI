@@ -310,7 +310,7 @@ namespace SmartxAPI.Controllers
 
                      {
                     Params.Add("@PurchaseNo", nPurchaseNO);
-                    X_MasterSql = "select * from vw_Inv_PurchaseDisp where N_CompanyID=@CompanyID and X_InvoiceNo=@PurchaseNo and N_FnYearID=@YearID and X_TransType=@TransType" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                    X_MasterSql = "select * from vw_Inv_PurchaseDisp where N_CompanyID=@CompanyID and X_InvoiceNo=@PurchaseNo and N_FnYearID=@YearID and X_TransType=@TransType" + (showAllBranch ? " order by N_PurchaseID " : " and  N_BranchId=@BranchID order by N_PurchaseID");
                 }
                 else if (xPOrderNo != null)
                 {
@@ -447,7 +447,6 @@ namespace SmartxAPI.Controllers
 
                     object Tax1ID = "";
                     if (multipleGrnNo != null && multipleGrnNo != "")
-
                         X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_UnitSPrice,dbo.SP_SellingPrice(vw_InvMRNDetailsDirect.N_ItemID,vw_InvMRNDetailsDirect.N_CompanyID) As N_SPrice,N_MrnID AS N_RsID  from vw_InvMRNDetailsDirect Where N_CompanyID=@CompanyID and N_MRNID in (" + multipleGrnNo + ")";
 
 

@@ -158,7 +158,7 @@ namespace SmartxAPI.Controllers
                     int nBudgetID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BudgetID"].ToString());
                     Params.Add("@n_BudgetID", nBudgetID);
 
-                    string sqlCommandText2 = "select * from vw_Acc_BudgetDetails where N_CompanyID=@n_CompanyID and N_BudgetID=@n_BudgetID ";
+                    string sqlCommandText2 = "select * from vw_Acc_BudgetDetailsWithBase where N_CompanyID=@n_CompanyID and N_BudgetID=@n_BudgetID ";
 
                     DetailTable = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
                 }
@@ -236,6 +236,70 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("baseDetails")]
+        public ActionResult GetBaseBudgetDetails(int nBudgetID)
+        {
+            DataTable dt = new DataTable();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    SortedList mParamsList = new SortedList();
+                    mParamsList.Add("N_CompanyID", nCompanyID);
+                    mParamsList.Add("N_BudgetID", nBudgetID);
+
+                    dt = dLayer.ExecuteDataTablePro("SP_GetBaseBudget", mParamsList, connection);
+
+                }
+                dt = _api.Format(dt);
+
+                return Ok(_api.Success(dt));
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+
+        }
+
+        [HttpGet("ledgerActualBase")]
+        public ActionResult GetActualBaseAmount(int nLedgerID, int nYear, string xMonth,int nBudgetTypeID)
+        {
+            DataTable dt = new DataTable();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    SortedList mParamsList = new SortedList();
+                    mParamsList.Add("N_CompanyID", nCompanyID);
+                    mParamsList.Add("N_LedgerID", nLedgerID);
+                    mParamsList.Add("N_Year", nYear);
+
+                    if(nBudgetTypeID==2)
+                        mParamsList.Add("X_Month", xMonth);
+                    else if(nBudgetTypeID==1)
+                        mParamsList.Add("X_Month", "");
+
+                    dt = dLayer.ExecuteDataTablePro("SP_GetActualBaseAmount_ByLedger", mParamsList, connection);
+
+                }
+                dt = _api.Format(dt);
+
+                return Ok(_api.Success(dt));
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
 
     }
 }

@@ -47,7 +47,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_RFQDecisionCode like '%" + xSearchkey + "%' OR X_QuotationNo like '%" + xSearchkey + "%')";
+                Searchkey = "and (X_RFQDecisionCode like '%" + xSearchkey + "%' OR X_QuotationNo like '%" + xSearchkey + "%' OR D_RFQDecisionDate like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_RFQDecisionID desc";

@@ -129,7 +129,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@D_AsOfDate", formatted);
 
                     if (xSearchKey != null && xSearchKey.Trim() != ""){
-                        Searchkey = "and ( X_VendorName like '%" + xSearchKey + "%' or X_ReferenceNo like '%" + xSearchKey + "%' or X_ProjectName like '%" + xSearchKey + "%'  ) ";
+                        Searchkey = "and ( X_ReferenceNo like '%" + xSearchKey + "%' or X_VendorCode like '%" + xSearchKey + "%' or N_BalanceAmount like '%" + xSearchKey + "%'or N_DueAmount like '%" + xSearchKey + "%' or x_VendorInvoice like '%" + xSearchKey + "%' or x_Remarks like '%" + xSearchKey + "%' or cast(D_Date as VarChar) like'%" + xSearchKey + "%') ";
                     }
                     if (xSortBy == null || xSortBy.Trim() == ""){
                         xSortBy = " order by X_ReferenceNo desc";
