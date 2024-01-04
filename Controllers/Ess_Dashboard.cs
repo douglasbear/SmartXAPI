@@ -379,7 +379,7 @@ namespace SmartxAPI.Controllers
             int nCompanyId = myFunctions.GetCompanyID(User);
             object CategoryID = "";
             string Sql = "";
-            string sqlCommandText = "select N_CompanyID,D_Date,D_In1,D_Out1,D_In2,D_Out2 from Pay_Empshiftdetails where N_EmpID=@p3 and N_CompanyID=@p1 and D_Date > getDate() and D_Date <(getDate()+9) order by D_Date asc";
+            string sqlCommandText = "select N_CompanyID,D_Date,D_In1,D_Out1,D_In2,D_Out2 from Pay_Empshiftdetails where N_EmpID=@p3 and N_CompanyID=@p1 and MONTH(Cast(Pay_Empshiftdetails.D_Date as DATE)) = MONTH(CURRENT_TIMESTAMP) and YEAR(Pay_Empshiftdetails.D_Date)= YEAR(CURRENT_TIMESTAMP) order by D_Date asc";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnyearID);
             Params.Add("@p3", nEmpID);
