@@ -153,6 +153,7 @@ namespace SmartxAPI.Controllers
 
                     DataTable dt = new DataTable();
                     SortedList Params = new SortedList();
+                    DataTable dt1 = new DataTable();
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@nFnYearID", nFnYearID);
                     Params.Add("@bAllBranchData", bAllBranchData);
@@ -174,11 +175,20 @@ namespace SmartxAPI.Controllers
                     else
                     {
 
-                        object userCategory = dLayer.ExecuteScalar("Select N_UserCategoryID From Sec_User Where N_CompanyID =@nCompanyID and N_UserID=" + nUserID + " ", Params, connection);
+                         object userCategory = dLayer.ExecuteScalar("Select X_UserCategoryList From Sec_User Where N_CompanyID =@nCompanyID and N_UserID=" + nUserID + " ", Params, connection);
+                        string sql="Select * From Sec_UserCategory Where N_CompanyID =@nCompanyID and N_UserCategoryID in(" + userCategory + ")";
+                         dt1 = dLayer.ExecuteDataTable(sql, Params, connection);
+                         foreach (DataRow row in dt1.Rows){
+                            if(row["X_UserCategory"].ToString()=="Admin")
+                            {
+                                userCategory="2";
+
+                            }
+                         }
                         if (myFunctions.getIntVAL(userCategory.ToString()) == 2)
                         {
                             if (bAllBranchData == true)
-                                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  (D_Date>=@d_DateFrom and D_Date<=@d_DateTo) and N_EmpID=@nEmpID union  Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and   isnull(D_Date,'1900-01-01')='1900-01-01' and N_EmpID not in (select N_EmpID from vw_Pay_Empshiftdetails where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and D_Date>=@d_DateFrom and D_Date<=@d_DateTo   )";
+                                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  (D_Date>=@d_DateFrom and D_Date<=@d_DateTo) and N_EmpID=@nEmpID union  Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and   isnull(D_Date,'1900-01-01')='1900-01-01' and N_EmpID=@nEmpID and D_Date>=@d_DateFrom and D_Date<=@d_DateTo ";
                             else
                                 sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,x_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID    and (N_BranchID=0 or N_BranchID=@nBranchID) and N_EmpID=@nEmpID and (D_Date>=@d_DateFrom and D_Date<=@d_DateTo or   isnull(D_Date,'1900-01-01')='1900-01-01')  ";
 
