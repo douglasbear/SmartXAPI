@@ -103,15 +103,16 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Warning("Unable to save"));
                     }
                     else
-                    {   try
-                        {
-                            myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["X_CustomerCode"].ToString() + "-" + MasterTable.Rows[0]["X_CustomerName"].ToString(), 0, MasterTable.Rows[0]["X_CustomerName"].ToString(), MasterTable.Rows[0]["X_CustomerCode"].ToString(), nCustomerID, "Customer Document", User, connection, transaction);
-                        }
-                        catch (Exception ex)
-                        {
-                            transaction.Rollback();
-                            return Ok(api.Error(User, ex));
-                        }
+                     {  
+                        // try
+                    //     {
+                    //         myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["X_CustomerCode"].ToString() + "-" + MasterTable.Rows[0]["X_CustomerName"].ToString(), 0, MasterTable.Rows[0]["X_CustomerName"].ToString(), MasterTable.Rows[0]["X_CustomerCode"].ToString(), nCustomerID, "Customer Document", User, connection, transaction);
+                    //     }
+                    //     catch (Exception ex)
+                    //     {
+                    //         transaction.Rollback();
+                    //         return Ok(api.Error(User, ex));
+                    //     }
                         transaction.Commit();
                         return Ok(_api.Success("Payment Request Saved Successfully"));
                     }
