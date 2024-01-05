@@ -450,8 +450,8 @@ namespace SmartxAPI.Controllers
                     if (DaysToExpire >= 0 && DaysToExpire <= 30)
                     {
                         object LastExpiryReminder = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_LastExpiryReminder)),5) as expiry from ClientApps where N_ClientID=" + nClientID+ " and N_AppID ="+AppID, cnn).ToString());
-                        // if (Math.Abs(myFunctions.getIntVAL(LastExpiryReminder.ToString())) >= 5)
-                        // {
+                        if (Math.Abs(myFunctions.getIntVAL(LastExpiryReminder.ToString())) >= 5)
+                        {
                             DateTime currentDate = DateTime.Now;
                             int currentYear = currentDate.Year;
                             string xClientName = dLayer.ExecuteScalar("select X_ClientName from ClientMaster where N_ClientID=" + nClientID, cnn).ToString();
@@ -465,7 +465,7 @@ namespace SmartxAPI.Controllers
                             {
                                 dLayer.ExecuteScalar("Update ClientApps set D_LastExpiryReminder=GETDATE()  where N_ClientID=" + nClientID, cnn);
                             }
-                        //}
+                        }
                     }
                 }
                 return true;

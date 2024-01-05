@@ -1456,7 +1456,7 @@ namespace SmartxAPI.Controllers
                             ipAddress = Request.Headers["X-Forwarded-For"];
                         else
                             ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                        myFunctions.LogScreenActivitys(nFnYearId, nTransID, x_Batch, 190, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
+                        myFunctions.LogScreenActivitys(nFnYearId, N_TransID, x_Batch, 190, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
 
 
 
