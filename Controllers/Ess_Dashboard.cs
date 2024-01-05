@@ -41,7 +41,7 @@ namespace SmartxAPI.Controllers
             int nUserID = myFunctions.GetUserID(User);
             object CategoryID = "";
 
-            string sqlCommandEmployeeDetails = "select * from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3";
+            string sqlCommandEmployeeDetails = "select n_empID,X_EmpCode,X_EmpName,x_EmpNameLocale,x_Position,x_PositionLocale,d_HireDate,x_Department,n_ReportingToID,x_ReportTo,x_Phone1 ,x_EmailID,x_ProjectName,i_Employe_Image from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3";
             // string sqlCommandLoan = "select SUM(N_LoanAmount) as N_LoanAmount from Pay_LoanIssue where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 group by N_CompanyID,N_EmpID";
             string sqlCommandLoan = "SELECT SUM(Pay_LoanIssueDetails.N_InstAmount) - SUM(ISNULL(Pay_LoanIssueDetails.N_RefundAmount, 0))AS balance FROM  Pay_LoanIssue LEFT OUTER JOIN Pay_LoanIssueDetails ON Pay_LoanIssue.N_LoanTransID = Pay_LoanIssueDetails.N_LoanTransID AND Pay_LoanIssue.N_CompanyID = Pay_LoanIssueDetails.N_CompanyID where isnull(Pay_LoanIssueDetails.B_IsLoanClose,0)=0 and Pay_LoanIssue.B_IsSaveDraft <> 1 and Pay_LoanIssue.N_CompanyID=@p1 and N_EmpID=@p3";
             string sqlCommandVacation = "Select SUM(N_VacDays) as N_VacDays from Pay_VacationDetails where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 group by N_CompanyID,N_EmpID";
@@ -379,7 +379,7 @@ namespace SmartxAPI.Controllers
             int nCompanyId = myFunctions.GetCompanyID(User);
             object CategoryID = "";
             string Sql = "";
-            string sqlCommandText = "select N_CompanyID,D_Date,D_In1,D_Out1,D_In2,D_Out2 from Pay_Empshiftdetails where N_EmpID=@p3 and N_CompanyID=@p1 and MONTH(Cast(Pay_Empshiftdetails.D_Date as DATE)) = MONTH(CURRENT_TIMESTAMP) and YEAR(Pay_Empshiftdetails.D_Date)= YEAR(CURRENT_TIMESTAMP) order by D_Date asc";
+            string sqlCommandText = "select N_CompanyID,D_Date,D_In1,D_Out1,D_In2,D_Out2,X_GroupName from vw_payEmpShiftDetails where N_EmpID=@p3 and N_CompanyID=@p1 and MONTH(Cast(vw_payEmpShiftDetails.D_Date as DATE)) = MONTH(CURRENT_TIMESTAMP) and YEAR(vw_payEmpShiftDetails.D_Date)= YEAR(CURRENT_TIMESTAMP) order by D_Date asc";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnyearID);
             Params.Add("@p3", nEmpID);
@@ -389,7 +389,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    string CatID = "select N_CatagoryId from Pay_Employee where N_EmpID=@p3 and N_CompanyID=@p1";
+                    string CatID = "select N_CatagoryId from Pay_Employee where N_EmpID=@p3 and N_CompanyID=@p1 and N_FnYearID=@p2";
                     CategoryID = dLayer.ExecuteScalar(CatID, Params, connection);
 
                     MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
@@ -412,7 +412,7 @@ namespace SmartxAPI.Controllers
                             var Date = myFunctions.getDateVAL(NewDate).ToString();
                             DayOfWeek dow = NewDate.DayOfWeek;
                             string str = dow.ToString();
-                            string qry = "select N_CompanyID,D_In1,D_Out1,D_In2,D_Out2,'" + NewDate + "' as  D_Date   from Pay_WorkingHours where N_CompanyID=@p1 and X_Day='" + str + "' and N_CatagoryID=@p7";
+                            string qry = "select N_CompanyID,D_In1,D_Out1,D_In2,D_Out2,'" + NewDate + "' as  D_Date,X_GroupName  from vw_PayWorkingHours where N_CompanyID=@p1 and X_Day='" + str + "' and N_CatagoryID=@p7";
                             Sql = Sql == "" ? qry : Sql + " UNION " + qry;
 
                         }
