@@ -22,15 +22,16 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int FormID;
+        private readonly IMyAttachments myAttachments;
 
-
-        public Inv_PaymentRequest(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Inv_PaymentRequest(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 1844;
+            myAttachments = myAtt;
         }
 
         [HttpPost("save")]
@@ -103,14 +104,15 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Warning("Unable to save"));
                     }
                     else
-                    {   try
+                    {   
+                        try
                         {
-                            myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["X_CustomerCode"].ToString() + "-" + MasterTable.Rows[0]["X_CustomerName"].ToString(), 0, MasterTable.Rows[0]["X_CustomerName"].ToString(), MasterTable.Rows[0]["X_CustomerCode"].ToString(), nCustomerID, "Customer Document", User, connection, transaction);
+                            myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["X_PaymentRequestCode"].ToString(), nPaymentRequestID, MasterTable.Rows[0]["X_PaymentRequestCode"].ToString(), MasterTable.Rows[0]["X_PaymentRequestCode"].ToString(), nPaymentRequestID, "Payment Request Document", User, connection, transaction);
                         }
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(api.Error(User, ex));
+                            return Ok(_api.Error(User, ex));
                         }
                         transaction.Commit();
                         return Ok(_api.Success("Payment Request Saved Successfully"));
@@ -170,6 +172,7 @@ namespace SmartxAPI.Controllers
                     Results = dLayer.DeleteData("Inv_PaymentRequest", "n_PaymentRequestID", nPaymentRequestID, "", connection, transaction);
                  }
                     }
+                     myAttachments.DeleteAttachment(dLayer, 1, nPaymentRequestID, nPaymentRequestID, nFnYearID, this.FormID, User, transaction, connection);
                      transaction.Commit();
                     return Ok(_api.Success("Payment Request " + status + " Successfully"));
                     
@@ -200,17 +203,20 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
+                    // SqlTransaction transaction = connection.BeginTransaction();
                     DataSet paymentRequest = new DataSet();
                     DataTable dt = new DataTable();
                     DataTable MRNCode = new DataTable();
                     SortedList Params = new SortedList();
+                    DataTable Attachments = new DataTable();
 
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     Params.Add("@n_CompanyID", nCompanyID);
                     Params.Add("@x_PaymentRequestCode", xPaymentRequestCode);
                     Params.Add("@n_FnYearID", nFnYearID);
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection,transaction);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dt.Rows[0]["N_PaymentRequestID"].ToString()), myFunctions.getIntVAL(dt.Rows[0]["N_PaymentRequestID"].ToString()), this.FormID, myFunctions.getIntVAL(dt.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                    Attachments = _api.Format(Attachments, "attachments");
                     int PRID = myFunctions.getIntVAL(dt.Rows[0]["N_PaymentRequestID"].ToString());
                     int PayTowardsID = myFunctions.getIntVAL(dt.Rows[0]["N_PayTowardsID"].ToString());
                     int POrderID = myFunctions.getIntVAL(dt.Rows[0]["N_POrderID"].ToString());
@@ -218,18 +224,18 @@ namespace SmartxAPI.Controllers
                     object N_Result = 0; 
                     if(PayTowardsID == 469 || PayTowardsID == 470 )  //Sadad Payment or Petty Cash
                     {
-                        N_Result = dLayer.ExecuteScalar("Select COUNT(*) from Acc_VoucherMaster where N_PaymentRequestID ='" + PRID + "' and N_CompanyID= " + nCompanyID + " and X_TransType ='PV'", connection, transaction);
+                        N_Result = dLayer.ExecuteScalar("Select COUNT(*) from Acc_VoucherMaster where N_PaymentRequestID ='" + PRID + "' and N_CompanyID= " + nCompanyID + " and X_TransType ='PV'", connection);
                     }
                     if(PayTowardsID == 471) //vendor advance
                     {
-                        N_Result = dLayer.ExecuteScalar("Select COUNT(*) from Inv_PayReceipt where N_PaymentRequestID ='" + PRID + "' and N_CompanyID= " + nCompanyID + " and X_Type='PA'", connection, transaction);
+                        N_Result = dLayer.ExecuteScalar("Select COUNT(*) from Inv_PayReceipt where N_PaymentRequestID ='" + PRID + "' and N_CompanyID= " + nCompanyID + " and X_Type='PA'", connection);
                     }
                     if(PayTowardsID == 472) //vendor payment
                     {
-                        N_Result = dLayer.ExecuteScalar("Select COUNT(*) from Inv_Purchase where N_PaymentRequestID ='" + PRID + "' and N_CompanyID= " + nCompanyID + " and N_DivisionID="+DivisionID, connection, transaction);
+                        N_Result = dLayer.ExecuteScalar("Select COUNT(*) from Inv_Purchase where N_PaymentRequestID ='" + PRID + "' and N_CompanyID= " + nCompanyID + " and N_DivisionID="+DivisionID, connection);
                         string MRNID = dt.Rows[0]["X_MRN"].ToString();
                         string MRNCodeList = "Select N_MRNID,X_MRNNo,D_MRNDate,N_CompanyID,N_VendorID,X_VendorInvoice from Inv_MRN where N_MRNID in ("+MRNID+")";
-                        MRNCode = dLayer.ExecuteDataTable(MRNCodeList, Params, connection,transaction);
+                        MRNCode = dLayer.ExecuteDataTable(MRNCodeList, Params, connection);
                         MRNCode = _api.Format(MRNCode, "MRNCode");
                         paymentRequest.Tables.Add(MRNCode);
                     }
@@ -238,16 +244,17 @@ namespace SmartxAPI.Controllers
                         dt.Columns.Add("B_IsProcessed");
                         dt.Rows[0]["B_IsProcessed"] = true;
                     }
-                   
+
                     dt = _api.Format(dt, "Master");
 
                     if (dt.Rows.Count == 0){
-                        transaction.Rollback();
+                        // transaction.Rollback();
                         return Ok(_api.Warning("No Results Found"));
                     }
                     else{
-                        transaction.Commit();
+                        // transaction.Commit();
                         paymentRequest.Tables.Add(dt);
+                        paymentRequest.Tables.Add(Attachments);
                         return Ok(_api.Success(paymentRequest));
                     }
                 }
