@@ -1036,7 +1036,7 @@ namespace SmartxAPI.Controllers
                                 };
                             int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
                             
-                            int Results1 = dLayer.DeleteData("Inv_othercharges", "N_TransID", nPayReceiptId ,  "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID +"X_Transtype"+xType, connection, transaction);
+                            int Results1 = dLayer.DeleteData("Inv_othercharges", "N_TransID", nPayReceiptId ,  "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID , connection, transaction);
                             
                             if (result > 0)
                             {
