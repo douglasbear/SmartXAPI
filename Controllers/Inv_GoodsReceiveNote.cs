@@ -179,7 +179,7 @@ namespace SmartxAPI.Controllers
             if (nMRNNo != null)
             {
                 Params.Add("@GRNNo", nMRNNo);
-                X_MasterSql = "select N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS x_MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,N_FreightAmt,N_CreatedUser,D_CreatedDate,N_ExchangeRate,N_CurrencyID,X_CurrencyName,OrderDate,isnull(N_Processed,0) as N_Processed,N_PurchaseID,X_InvoiceNo,X_ProjectCode,X_ProjectName,N_ProjectID,N_FormID,N_Decimal,X_VendorName_Ar,N_POrderid,N_DivisionID,X_DivisionName from vw_InvMRNNo_Search where N_CompanyID=@CompanyID and [MRN No]=@GRNNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                X_MasterSql = "select N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS x_MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,N_FreightAmt,N_CreatedUser,D_CreatedDate,N_ExchangeRate,N_CurrencyID,X_CurrencyName,OrderDate,isnull(N_Processed,0) as N_Processed,N_PurchaseID,X_InvoiceNo,X_ProjectCode,X_ProjectName,N_ProjectID,N_FormID,N_Decimal,X_VendorName_Ar,N_POrderid,N_DivisionID,X_DivisionName,N_StatusID,N_LastActionID from vw_InvMRNNo_Search where N_CompanyID=@CompanyID and [MRN No]=@GRNNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
             }
             if (poNo != null)
             {
@@ -632,6 +632,17 @@ namespace SmartxAPI.Controllers
                             else
                             {
                                 if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                }
+                            }
+                        }
+                        if (N_GRNID > 0)
+                        {
+                            if (myFunctions.getIntVAL(masterRow["n_FormID"].ToString()) == 1593)
+                            {
+                                if(!myFunctions.UpdateTxnStatus(nCompanyID,N_GRNID,1593,true,dLayer,connection,transaction))
                                 {
                                     transaction.Rollback();
                                     return Ok(_api.Error(User, "Unable To Update Txn Status"));

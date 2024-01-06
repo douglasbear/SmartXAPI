@@ -967,6 +967,15 @@ namespace SmartxAPI.Controllers
                                     }
                                 }
                                 tempSQID = N_SQID;
+
+                                if (N_FormID == 1572 && N_DeliveryNoteID > 0)
+                                {
+                                    if (!myFunctions.UpdateTxnStatus(N_CompanyID, N_DeliveryNoteID, 1572, true, dLayer, connection, transaction))
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                    }
+                                }
                             };
                         }
 

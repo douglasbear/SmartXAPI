@@ -208,6 +208,22 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok("Unable to save MRN Return");
                     }
+
+                    //StatusUpdate
+                    int n_MRNID = 0;
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        n_MRNID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_MRNID"].ToString());
+                        if (n_MRNID > 0)
+                        {
+                            if (!myFunctions.UpdateTxnStatus(nCompanyID, n_MRNID, 1593, false, dLayer, connection, transaction))
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                            }
+                        }
+                    };
+
                     transaction.Commit();
                     SortedList Result = new SortedList();
                     Result.Add("n_MRNReturnID", nMRNReturnID);
@@ -338,16 +354,34 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Object nMRNID=dLayer.ExecuteScalar("select N_MRNID from Inv_MRNReturn where N_MRNReturnID="+nMRNReturnID+" and N_CompanyID="+nCompanyID, QueryParams, connection);
-                    Results = dLayer.DeleteData("Inv_MRNReturn", "N_MRNReturnID", nMRNReturnID, "", connection);
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    Object nMRNID=dLayer.ExecuteScalar("select N_MRNID from Inv_MRNReturn where N_MRNReturnID="+nMRNReturnID+" and N_CompanyID="+nCompanyID, QueryParams, connection, transaction);
+                    DataTable DetailTable = dLayer.ExecuteDataTable("SELECT Inv_MRNDetails.N_MRNID FROM Inv_MRNDetails INNER JOIN Inv_MRNReturnDetails ON Inv_MRNDetails.N_CompanyID = Inv_MRNReturnDetails.N_CompanyID AND Inv_MRNDetails.N_MRNDetailsID = Inv_MRNReturnDetails.N_MRNDetailsID where Inv_MRNReturnDetails.N_CompanyID=@nCompanyID and Inv_MRNReturnDetails.N_MRNReturnID=@nMRNReturnID group by Inv_MRNDetails.N_MRNID", QueryParams, connection, transaction);
+
+                    Results = dLayer.DeleteData("Inv_MRNReturn", "N_MRNReturnID", nMRNReturnID, "", connection,transaction);
 
                     if (Results > 0)
                     {
-                        dLayer.DeleteData("Inv_MRNReturnDetails", "N_MRNReturnID", nMRNReturnID, "", connection);
+                        dLayer.DeleteData("Inv_MRNReturnDetails", "N_MRNReturnID", nMRNReturnID, "", connection,transaction);
+
+                        for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        {
+                            int n_MRNID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_MRNID"].ToString());
+                            if (n_MRNID > 0)
+                            {
+                                if(!myFunctions.UpdateTxnStatus(nCompanyID,n_MRNID,1593,true,dLayer,connection,transaction))
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                }
+                            }
+                        }
+
                         if (myFunctions.getIntVAL(nMRNID.ToString()) > 0)
                         {
-                            dLayer.ExecuteNonQuery("Update Inv_MRN Set N_Processed=0 Where N_MRNID=" + myFunctions.getIntVAL(nMRNID.ToString()) + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID, connection);
+                            dLayer.ExecuteNonQuery("Update Inv_MRN Set N_Processed=0 Where N_MRNID=" + myFunctions.getIntVAL(nMRNID.ToString()) + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                         }
+                        transaction.Commit();
                         return Ok(_api.Success("Rental MRN Return Deleted"));
                     }
                     else
