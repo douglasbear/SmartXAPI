@@ -322,12 +322,12 @@ namespace SmartxAPI.Controllers
                         }
 
                         //Activity Log
-                         string ipAddress = "";
-                         if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                         ipAddress = Request.Headers["X-Forwarded-For"];
-                         else
-                         ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                          myFunctions.LogScreenActivitys(nFnYearID,nDispatchID,X_DispatchNo,684,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                        //  string ipAddress = "";
+                        //  if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                        //  ipAddress = Request.Headers["X-Forwarded-For"];
+                        //  else
+                        //  ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                        //   myFunctions.LogScreenActivitys(nFnYearID,nDispatchID,X_DispatchNo,684,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
                          dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostParam, connection, transaction);
                         }
@@ -364,6 +364,13 @@ namespace SmartxAPI.Controllers
                          }
                
                      }
+                    //Activity Log
+                         string ipAddress = "";
+                         if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                         ipAddress = Request.Headers["X-Forwarded-For"];
+                         else
+                         ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                          myFunctions.LogScreenActivitys(nFnYearID,nDispatchID,X_DispatchNo,684,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
 
                      N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, transType, nDispatchID, X_DispatchNo, 1, "", 0, "",0, User, dLayer, connection, transaction);
                      transaction.Commit();
@@ -411,7 +418,9 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Error(User, "Transaction not Found"));
                     }
+                    string xButtonAction="delete";
                     DataRow TransRow = TransData.Rows[0];
+                    
                     string X_Criteria = "N_DispatchID=" + nDispatchID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) ;
 
                     DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, nFormID, nDispatchID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID,0, 0, User, dLayer, connection));
@@ -419,11 +428,20 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
-                  
+                   //Activity Log
+                         string ipAddress = "";
+                         if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                         ipAddress = Request.Headers["X-Forwarded-For"];
+                         else
+                         ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                          myFunctions.LogScreenActivitys(nFnYearID,nDispatchID,TransRow["X_DispatchNo"].ToString(),684,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, xTransType, nDispatchID, TransRow["X_DispatchNo"].ToString(), ProcStatus, "Inv_MaterialDispatch", X_Criteria, "", User, dLayer, connection, transaction);
                    
                    if (status != "Error")
                    {
+                    
+                   
                         if(ButtonTag=="3")
                         {
                             dLayer.ExecuteNonQuery("update Inv_MaterialDispatch set N_LastActionID=4 where N_CompanyID=" + nCompanyID + " and N_DispatchID=" + nDispatchID, Params, connection, transaction);
