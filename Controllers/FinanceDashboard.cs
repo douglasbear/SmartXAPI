@@ -355,7 +355,7 @@ namespace SmartxAPI.Controllers
             }
         }
   [HttpGet("incomeStatementDivisionBranchlist")]
-        public ActionResult IncomeStatementDivisionBranchlist(int nComapanyID, int nFnYearID, int nBranchID, int nPage, int nSizeperpage, bool bAllBranchData, string xSearchkey, string xSortBy,int nDivisionID)
+        public ActionResult IncomeStatementDivisionBranchlist(int nComapanyID, int nFnYearID, int nBranchID, int nPage, int nSizeperpage, bool bAllBranchData, string xSearchkey, string xSortBy,int nDivisionID, DateTime d_Start, DateTime d_end)
         {
             try
             {
@@ -371,13 +371,13 @@ namespace SmartxAPI.Controllers
                     int Count = (nPage - 1) * nSizeperpage;
                     string sqlCommandText = "";
                     string Searchkey = "";
-                   
+                    string d_Date = d_Start.ToString("dd-MMM-yyyy") + "|" + d_end.ToString("dd-MMM-yyyy") + "|";
                     string sqlCondition = "";
                     Params.Add("@p1", nCompanyID);
                     Params.Add("@p2", nFnYearID);
                     Params.Add("@p3", nUserID);
                     Params.Add("@p4", nBranchID);
-                   
+                    Params.Add("@p5", d_Date);
                     if (xSearchkey != null && xSearchkey.Trim() != "")
                         Searchkey = "and ( X_DivisionName like '%" + xSearchkey + "%' or N_Amount like '%" + xSearchkey + "%' or x_BranchName like '%" + xSearchkey + "%' ) ";
                     if (xSortBy == null || xSortBy.Trim() == "")
@@ -393,6 +393,19 @@ namespace SmartxAPI.Controllers
                         }
                         xSortBy = " order by " + xSortBy;
                     }
+                      dLayer.ExecuteNonQuery("delete from Acc_LedgerBalForReporting Where  N_CompanyID=@p1", Params, connection, transaction);
+                    if (bAllBranchData == true)
+                    {
+                        sqlCommandText = "SP_OpeningBalanceGenerate @p1,@p2,0,44,@p5,@p3,0";
+                        sqlCondition= " ";
+                    }
+                    else
+                    {
+                        sqlCommandText = "SP_OpeningBalanceGenerate @p1,@p2,0,44,@p5,@p3,@p4";
+                        sqlCondition= " and N_BranchID=@p4 ";
+                    }
+                    tb = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
+                    tb = api.Format(tb, "Master");
                  
                     if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Acc_IncomStateMentByDivisionBranch where N_CompanyID=@p1 and N_FnYearID=@p2 and N_DivisionID="+nDivisionID  + sqlCondition + Searchkey + xSortBy + " ASC";

@@ -354,17 +354,17 @@ namespace SmartxAPI.Controllers
                         if (d1.Rows.Count > 0){
                           var empList = d1.AsEnumerable().Select(r => r.Field<string>("x_EmpName"));
                              string value = string.Join(",", empList);
+                             transaction.Rollback();
                              return Ok(_api.Notice("Time sheet entered for this employee, " + value + " in this date range "));
                         }
                        
-                 else{
-                 dLayer.ExecuteNonQuery("Delete from Pay_Empshiftdetails where D_PeriodFrom>='" + dDateFrom +"' and D_PeriodTo<='"+dDateTo+"' and N_EmpID in ("+empIds+")" + "  and N_CompanyID=N_CompanyID", Params, connection, transaction);
-
+              
+                    dLayer.ExecuteNonQuery("Delete from Pay_Empshiftdetails where D_Date>='" + dDateFrom +"' and D_Date<='"+dDateTo+"' and N_EmpID in ("+empIds+")" + "  and N_CompanyID=N_CompanyID", Params, connection, transaction);
                     dLayer.SaveData("Pay_Empshiftdetails", "N_ShiftDetailsID", detailsTable, connection, transaction);
-                    dLayer.ExecuteNonQuery("update pay_empshiftDetails set N_SHIFTid=N_ShiftDetailsID where D_PeriodFrom='" + dDateFrom +"' and D_PeriodTo='"+dDateTo+"' and N_EmpID in ("+empIds+")" + "  and N_CompanyID=N_CompanyID", connection, transaction);
+                    dLayer.ExecuteNonQuery("update pay_empshiftDetails set N_SHIFTid=N_ShiftDetailsID where D_Date>='" + dDateFrom +"' and D_Date<='"+dDateTo+"' and N_EmpID in ("+empIds+")" + "  and N_CompanyID=N_CompanyID", connection, transaction);
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
-                 }
+             
 
                   
                 }
@@ -387,6 +387,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     DataTable dt = new DataTable();
+                    DataTable dt1 = new DataTable();
                     SortedList Params = new SortedList();
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@nFnYearID", nFnYearID);
@@ -394,6 +395,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nBranchID", nBranchID);
                     Params.Add("@p2", d_Date);
                     string sqlCommandText = "";
+                    string xUserID="";
 
                     bool B_ShowManagerWise = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("1260", "ShowManagerWiseEmployee", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
                     if (B_ShowManagerWise == false)
@@ -406,7 +408,17 @@ namespace SmartxAPI.Controllers
                     else
                     {
 
-                        object userCategory = dLayer.ExecuteScalar("Select N_UserCategoryID From Sec_User Where N_CompanyID =@nCompanyID and N_UserID=" + nUserID + " ", Params, connection);
+                        object userCategory = dLayer.ExecuteScalar("Select X_UserCategoryList From Sec_User Where N_CompanyID =@nCompanyID and N_UserID=" + nUserID + " ", Params, connection);
+                        string sql="Select * From Sec_UserCategory Where N_CompanyID =@nCompanyID and N_UserCategoryID in(" + userCategory + ")";
+                         dt1 = dLayer.ExecuteDataTable(sql, Params, connection);
+                         foreach (DataRow row in dt1.Rows){
+                            if(row["X_UserCategory"].ToString()=="Admin")
+                            {
+                                userCategory="2";
+
+                            }
+                         }
+
                         if (myFunctions.getIntVAL(userCategory.ToString()) == 2)
                         {
                             if (bAllBranchData == true)
