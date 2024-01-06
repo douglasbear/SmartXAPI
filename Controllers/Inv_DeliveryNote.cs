@@ -488,12 +488,13 @@ namespace SmartxAPI.Controllers
                             {
                                 masterTable.Rows[0]["isTimesheetDone"] = true;
                             }
-                        }
+                        
 
-                        DataTable returnData = dLayer.ExecuteDataTable("select N_DeliveryNoteId from vw_DeliveryNoteToDeliveryReturn where N_DeliveryNoteId="+myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString())+" and N_CompanyId="+nCompanyId+" and N_FnYearID="+nFnYearId+" group by N_DeliveryNoteId having SUM(N_BalanceQty)=0", QueryParamsList, Con);
-                        if (returnData.Rows.Count > 0)
-                        {
-                            masterTable.Rows[0]["isDeliveryReturnDone"] = true;
+                            DataTable returnData = dLayer.ExecuteDataTable("select N_DeliveryNoteId from vw_DeliveryNoteToDeliveryReturn where N_DeliveryNoteId="+myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString())+" and N_CompanyId="+nCompanyId+" and N_FnYearID="+nFnYearId+" group by N_DeliveryNoteId having SUM(N_BalanceQty)=0", QueryParamsList, Con);
+                            if (returnData.Rows.Count > 0)
+                            {
+                                masterTable.Rows[0]["isDeliveryReturnDone"] = true;
+                            }
                         }
                     }
                       bool Invoice2Enable = false;
@@ -707,7 +708,7 @@ namespace SmartxAPI.Controllers
 
                     DataTable count = new DataTable();
                     SortedList Paramss = new SortedList();
-                    string sql = "select * from Inv_DeliveryNote where x_ReceiptNo='" + values + "' and N_CompanyID=" + N_CompanyID + "";
+                    string sql = "select * from Inv_DeliveryNote where x_ReceiptNo='" + values + "' and N_CompanyID=" + N_CompanyID + "and N_FormID="+N_FormID+"";
                     count = dLayer.ExecuteDataTable(sql, Paramss, connection, transaction);
                     if (count.Rows.Count > 0)
                     {

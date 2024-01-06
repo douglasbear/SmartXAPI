@@ -566,11 +566,11 @@ namespace SmartxAPI.Controllers
                         nDivisionID = myFunctions.getIntVAL(Master["n_DivisionID"].ToString());
                     }
                     N_POrderID = myFunctions.getIntVAL(Master["n_POrderID"].ToString());
-                    if (N_POrderID > 0)
-                    {
-                        if (CheckProcessed(N_POrderID))
-                            return Ok(api.Error(User, "Transaction Started!"));
-                    }
+                    // if (N_POrderID > 0)
+                    // {
+                    //     if (CheckProcessed(N_POrderID))
+                    //         return Ok(api.Error(User, "Transaction Started!"));
+                    // }
                     int N_VendorID = myFunctions.getIntVAL(Master["n_VendorID"].ToString());
                     if (myFunctions.checkIsNull(Master, "n_POTypeID"))
                         MasterTable.Rows[0]["n_POTypeID"] = 174;
@@ -694,15 +694,15 @@ namespace SmartxAPI.Controllers
                         SortedList AdvParams = new SortedList();
                         AdvParams.Add("@companyId", Master["n_CompanyId"].ToString());
                         AdvParams.Add("@PorderId", Master["n_POrderID"].ToString());
-                        object AdvancePRProcessed = dLayer.ExecuteScalar("Select COUNT(N_TransID) From Inv_PaymentRequest Where  N_CompanyID=@companyId and N_TransID=@PorderId and N_FormID=82", AdvParams, connection, transaction);
-                        if (AdvancePRProcessed != null)
-                        {
-                            if (myFunctions.getIntVAL(AdvancePRProcessed.ToString()) > 0)
-                            {
-                                transaction.Rollback();
-                                return Ok(api.Success("Payment Request Processed"));
-                            }
-                        }
+                        // object AdvancePRProcessed = dLayer.ExecuteScalar("Select COUNT(N_TransID) From Inv_PaymentRequest Where  N_CompanyID=@companyId and N_TransID=@PorderId and N_FormID=82", AdvParams, connection, transaction);
+                        // if (AdvancePRProcessed != null)
+                        // {
+                        //     if (myFunctions.getIntVAL(AdvancePRProcessed.ToString()) > 0)
+                        //     {
+                        //         transaction.Rollback();
+                        //         return Ok(api.Success("Payment Request Processed"));
+                        //     }
+                        // }
 
                
 

@@ -47,8 +47,8 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nConsolidatedID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ConsolidatedID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SubCompanyFnYearID"].ToString());
+                    int nConsolidatedCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ConsolidatedCompanyID"].ToString());
                     string xConsolidatedCode = MasterTable.Rows[0]["x_ConsolidatedCode"].ToString();      
-
                     // if (xConsolidatedCode == "@Auto")
                     // {
                     //     Params.Add("N_CompanyID", nCompanyID);
@@ -64,9 +64,9 @@ namespace SmartxAPI.Controllers
                     //     MasterTable.Rows[0]["x_ConsolidatedCode"] = xConsolidatedCode;
                     // }
                     MasterTable.Columns.Remove("n_FnYearID");
-                    // MasterTable.Columns.Remove("x_LedgerCode");
+                    MasterTable.Columns.Remove("x_CompanyName");
                     MasterTable.Columns.Remove("x_LedgerName");
-                    dLayer.ExecuteDataTable("DELETE FROM Inv_ConsolidatedAccountMapping WHERE N_ConsolidatedLedgerID = "+nLedgerID+" AND N_CompanyID = "+nCompanyID+"",Params, connection, transaction);
+                    dLayer.ExecuteDataTable("DELETE FROM Inv_ConsolidatedAccountMapping WHERE N_ConsolidatedLedgerID = "+nLedgerID+" AND N_ConsolidatedCompanyID = "+nConsolidatedCompanyID+"",Params, connection, transaction);
                     nConsolidatedID = dLayer.SaveData("Inv_ConsolidatedAccountMapping", "n_ConsolidatedID", MasterTable, connection, transaction);
 
                     if (nConsolidatedID <= 0)
@@ -97,7 +97,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nClientID", myFunctions.GetClientID(User));
-            string sqlCommandText = "SELECT * FROM Acc_Company WHERE ISNULL( B_IsConsolidated,0)<>1 AND N_ClientID = @nClientID ";
+            string sqlCommandText = "SELECT X_CompanyName , X_CompanyCode, n_CompanyID FROM Acc_Company WHERE ISNULL( B_IsConsolidated,0)<>1 AND N_ClientID = @nClientID ";
              try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -161,7 +161,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select * from vw_Consolidated_AccountMapping where N_CompanyID=@p1 and N_ConsolidatedID=@p2";
+            string sqlCommandText = "select * from vw_Consolidated_AccountMapping where N_ConsolidatedCompanyID=@p1 and N_ConsolidatedLedgerID=@p2";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nLedgedID);
 
@@ -188,13 +188,58 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("filldetails")]
+       public ActionResult Autofill( string xledgercode ,int xFnyearID)
+        {
+            string sqlCommandText = "";
+            string subcompany = "";
+            DataTable dt = new DataTable();
+            DataTable Client = new DataTable();
+            SortedList Params = new SortedList();
+            int nconsolidatedCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nClientID", myFunctions.GetClientID(User));
+            Params.Add("@p1", nconsolidatedCompanyID);
+            Params.Add("@ledgercode", xledgercode);
+                sqlCommandText = "select X_CompanyName, X_LedgerName,n_ledgerid,x_ledgercode,n_CompanyID from vw_Autofill_Consolidated_AccountMapping where N_CompanyID in (SELECT n_CompanyID FROM Acc_Company WHERE ISNULL( B_IsConsolidated,0)<>1 AND N_ClientID = @nClientID) and x_ledgercode =@ledgercode GROUP BY X_LedgerName ,n_ledgerid , X_LedgerCode, n_CompanyID, X_CompanyName;";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+
+                    object date = dLayer.ExecuteScalar("SELECT MAX(D_Start) from Acc_Fnyear where N_CompanyID in (SELECT n_CompanyID FROM Acc_Company WHERE ISNULL( B_IsConsolidated,0)<>1 AND N_ClientID =@nClientID)", Params,connection, transaction);
+                    Params.Add("@p3", date);
+                    object N_FnyearID = dLayer.ExecuteScalar("SELECT N_FnYearID from Acc_FnYear where D_start ='"+date+"' and N_CompanyID in (SELECT n_CompanyID FROM Acc_Company WHERE ISNULL( B_IsConsolidated,0)<>1 AND N_ClientID = @nClientID)",Params, connection, transaction);
+                    
+                    Params.Add("@p2", N_FnyearID);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                } 
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
+
          [HttpGet("viewdetails")]
         public ActionResult GetledgerData(int nLedgedID , int nCompanyID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "SELECT * FROM vw_Consolidated_AccountMapping WHERE N_CompanyID="+nCompanyID+" and N_ConsolidatedLedgerID="+nLedgedID+"";
+            string sqlCommandText = "SELECT * FROM vw_Consolidated_AccountMapping WHERE N_ConsolidatedCompanyID="+nCompanyID+" and N_ConsolidatedLedgerID="+nLedgedID+"";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nLedgedID);
 
@@ -206,11 +251,11 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt =_api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Warning("No Results Found"));
-                }
-                else
+                // if (dt.Rows.Count == 0)
+                // {
+                //     return Ok(_api.Warning("No Results Found"));
+                // }
+                // else
                 {
                     return Ok(_api.Success(dt));
                 }

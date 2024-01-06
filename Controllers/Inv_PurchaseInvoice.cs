@@ -1401,8 +1401,8 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
             int Results = 0;
-            if (CheckProcessed(nPurchaseID))
-                return Ok(_api.Error(User, "Transaction Started"));
+            // if (CheckProcessed(nPurchaseID))
+            //     return Ok(_api.Error(User, "Transaction Started"));
             try
             {
 

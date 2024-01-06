@@ -159,14 +159,14 @@ namespace SmartxAPI.GeneralFunctions
 
                     if (N_PurchaseID > 0)
                     {
-                        if (myFunctions.CheckPRProcessed(N_PurchaseID,User,dLayer,connection,transaction))
-                        {
-                            //  transaction.Rollback();
-                            //  return Ok(_api.Error(User, "Transaction Started!"));
-                            Result.Add("b_IsCompleted", 0);
-                            Result.Add("x_Msg", "Transaction Started!");
-                            return Result;
-                        }
+                        // if (myFunctions.CheckPRProcessed(N_PurchaseID,User,dLayer,connection,transaction))
+                        // {
+                        //     //  transaction.Rollback();
+                        //     //  return Ok(_api.Error(User, "Transaction Started!"));
+                        //     Result.Add("b_IsCompleted", 0);
+                        //     Result.Add("x_Msg", "Transaction Started!");
+                        //     return Result;
+                        // }
                             
 
                         object Dir_PurchaseCount = dLayer.ExecuteScalar("SELECT COUNT(Inv_Purchase.N_PurchaseID) FROM Inv_Purchase INNER JOIN Inv_MRN ON Inv_Purchase.N_CompanyID = Inv_MRN.N_CompanyID AND Inv_Purchase.N_RsID = Inv_MRN.N_MRNID AND Inv_Purchase.N_FnYearID = Inv_MRN.N_FnYearID " +
@@ -873,14 +873,19 @@ namespace SmartxAPI.GeneralFunctions
                         }
                     }
                     Result.Add("b_IsCompleted", 1);
-                    if (myFunctions.getIntVAL(masterRow["n_FormID"].ToString()) == 1605)
+                    if (myFunctions.getIntVAL(masterRow["n_FormID"].ToString()) == 1605) {
                         Result.Add("x_Msg", "Rental Purchase Invoice Saved Successfully");
+                        Result.Add("n_InvoiceID", N_PurchaseID);
+                        Result.Add("b_IsSaveDraft", N_SaveDraft);         
+                        Result.Add("N_ProcStatus", N_ProcStatus);
+                        Result.Add("x_InvoiceNo", InvoiceNo);
+                    }
                     else {
-                     Result.Add("x_Msg", "Purchase Invoice Successfully Created");
-                    Result.Add("n_InvoiceID", N_PurchaseID);
-                    Result.Add("b_IsSaveDraft", N_SaveDraft);         
-                    Result.Add("N_ProcStatus", N_ProcStatus);
-                    Result.Add("x_InvoiceNo", InvoiceNo);
+                        Result.Add("x_Msg", "Purchase Invoice Successfully Created");
+                        Result.Add("n_InvoiceID", N_PurchaseID);
+                        Result.Add("b_IsSaveDraft", N_SaveDraft);         
+                        Result.Add("N_ProcStatus", N_ProcStatus);
+                        Result.Add("x_InvoiceNo", InvoiceNo);
                     }
                    
                     return Result;
@@ -955,7 +960,7 @@ namespace SmartxAPI.GeneralFunctions
             }
 
             int N_DeliveryNoteID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteId"].ToString());
-                int N_ServiceID = MasterTable.Columns.Contains("N_ServiceID")? myFunctions.getIntVAL(MasterRow["N_ServiceID"].ToString()):0;
+            int N_ServiceID = MasterTable.Columns.Contains("N_ServiceID")? myFunctions.getIntVAL(MasterRow["N_ServiceID"].ToString()):0;
             int N_CreatedUser = myFunctions.getIntVAL(MasterRow["n_CreatedUser"].ToString());
             int N_UserID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             int UserCategoryID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
@@ -1060,6 +1065,12 @@ namespace SmartxAPI.GeneralFunctions
                 N_ProcStatus = myFunctions.getIntVAL(dLayer.ExecuteScalar("select n_ProcStatus from Inv_Sales where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
                 if (N_SaveDraft == 0)
                 {
+
+                    dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails_Segments where N_CompanyID=" + N_CompanyID + " AND N_FnYearID="+N_FnYearID+" and X_TransType='SALES' AND N_AccTransID  in (select N_AccTransID from Acc_VoucherDetails where N_CompanyID=" + N_CompanyID + " AND N_FnYearID="+N_FnYearID+"  and X_TransType='SALES' AND X_VoucherNo='"+InvoiceNo+"')", QueryParams, connection, transaction);
+                    dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails where N_CompanyID=" + N_CompanyID + " AND N_FnYearID="+N_FnYearID+"  and X_TransType='SALES' AND X_VoucherNo='"+InvoiceNo+"'", QueryParams, connection, transaction);
+
+                    dLayer.ExecuteNonQuery("delete from Inv_SaleAmountDetails where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_BranchID=" + N_BranchID, connection, transaction);
+
                     if (dtsaleamountdetails.Columns.Contains("N_CommissionAmtF"))
                         dtsaleamountdetails.Columns.Remove("N_CommissionAmtF");
                     if (dtsaleamountdetails.Columns.Contains("N_CommissionAmt"))
@@ -1464,8 +1475,8 @@ namespace SmartxAPI.GeneralFunctions
                 }
                 else
                 {
-                        if (N_SaveDraft == 0)
-                        {
+                        // if (N_SaveDraft == 0)
+                        // {
                             if (dtsaleamountdetails.Columns.Contains("N_CommissionAmtF"))
                                 dtsaleamountdetails.Columns.Remove("N_CommissionAmtF");
                             if (dtsaleamountdetails.Columns.Contains("N_CommissionAmt"))
@@ -1517,7 +1528,7 @@ namespace SmartxAPI.GeneralFunctions
                             Result.Add("x_Msg", "Unable to save Sales Invoice!");
                             return Result;
                         }
-                    }
+                    //}
                 }
 
 
