@@ -151,7 +151,7 @@ namespace SmartxAPI.Controllers
                     string waiveSql="";
                     int saveDraft= 0;
 
-                    ElementSql = " Select N_EmpID as N_EmpId,* from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date >= '" + dtpSalaryFromdate + "' and D_Date<=' " + dtpSalaryToDate + "' and N_EmpID=" + nEmpID + " order by D_Date";
+                    ElementSql = " Select N_EmpID as N_EmpId,* from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and  D_Date >= '" + dtpSalaryFromdate + "' and D_Date<=' " + dtpSalaryToDate + "' and N_EmpID=" + nEmpID + " order by D_Date";
                     ElementsTable = dLayer.ExecuteDataTable(ElementSql, Params, connection);
                     ElementsTable = myFunctions.AddNewColumnToDataTable(ElementsTable, "X_Day", typeof(string),null);
                    // ElementsTable = myFunctions.AddNewColumnToDataTable(ElementsTable, "X_Remarks", typeof(string),null);
