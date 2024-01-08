@@ -856,7 +856,7 @@ namespace SmartxAPI.GeneralFunctions
                                 tempPOrderID=myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString());
                              
                             };
-                             if(myFunctions.getIntVAL(masterRow["n_PaymentRequestID"].ToString())>0){
+                             if(masterRow.Columns.Contains("n_PaymentRequestID") && myFunctions.getIntVAL(masterRow["n_PaymentRequestID"].ToString())>0){
                              if(!myFunctions.UpdateTxnStatus(nCompanyID,myFunctions.getIntVAL(masterRow["n_PaymentRequestID"].ToString()),1844,false,dLayer,connection,transaction))
                                         {
 
