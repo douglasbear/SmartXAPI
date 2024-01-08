@@ -296,7 +296,7 @@ namespace SmartxAPI.Controllers
                     ProductionLabourCost = ds.Tables["ProductionLabourCost"];
                     ProductionMachineCost = ds.Tables["ProductionMachineCost"];
                     DataTable OtherCost = ds.Tables["otherCostDetails"];
-
+                    string xButtonAction = "Insert";
 
 
                     DataRow MasterRow = MasterTable.Rows[0];
@@ -372,6 +372,7 @@ namespace SmartxAPI.Controllers
                     }
                     if (nAssemblyID > 0)
                     {
+                               xButtonAction = "Update";
                         object result = dLayer.ExecuteScalar("[SP_BuildorUnbuild] 'delete'," + nAssemblyID.ToString() + "," + N_LocationID.ToString() + ",'PRODUCTION ORDER'", connection, transaction);
                         dLayer.ExecuteNonQuery("delete from Inv_OtherCost where  N_CompanyID=" +nCompanyID+ "and N_TransID=" + nAssemblyID + "and X_TransType='Build'", Params, connection, transaction);
 
@@ -546,6 +547,16 @@ namespace SmartxAPI.Controllers
 
 
 
+                  int n_AssemblyID = nAssemblyID;
+
+                 //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearID,n_AssemblyID,X_ReferenceNo,N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                   
 
                     transaction.Commit();
                     return Ok(_api.Success("Saved Successfully"));
@@ -724,6 +735,7 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     Params.Add("@nCompanyID", nCompanyID);
                     SqlTransaction transaction = connection.BeginTransaction();
+                       string xButtonAction = "Insert";                
 
 
             //  if (!myFunctions.CheckActiveYearTransaction(nCompanyID,nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["d_ReleaseDate"].ToString()), dLayer, connection, transaction))
@@ -809,6 +821,13 @@ namespace SmartxAPI.Controllers
                         dLayer.SaveData("Inv_OtherCost", "N_OtherCostID", OtherCost, connection, transaction);
                     }
 
+                      string ipAddress = "";
+                    if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                           myFunctions.LogScreenActivitys(nFnYearID,n_AssemblyID,xAction,n_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       
 
                     transaction.Commit();
                     return Ok(_api.Success("Saved Successfully"));
@@ -821,7 +840,7 @@ namespace SmartxAPI.Controllers
 
         }
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nAssemblyID, int nLocationID, bool b_isProcessed)
+         public ActionResult DeleteData(int nAssemblyID, int nLocationID, bool b_isProcessed, string X_ReferenceNo, int nFnYearID,int N_FormID)
         {
 
             try
@@ -840,6 +859,16 @@ namespace SmartxAPI.Controllers
                     { "N_LocationID",nLocationID}
 
                     };  
+                     string xButtonAction = "delete";                    
+                    //Activity Log
+                    string ipAddress = "";
+                    if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                           myFunctions.LogScreenActivitys(nFnYearID,nAssemblyID,X_ReferenceNo,N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       
+
                         dLayer.ExecuteNonQuery("delete from Inv_OtherCost where  N_CompanyID=" +nCompanyID+ "and N_TransID=" + nAssemblyID + "and N_FormID="+N_FormID, DeleteParams, connection, transaction);
                         int Results = dLayer.ExecuteNonQueryPro("SP_BuildorUnbuild", DeleteParams, connection, transaction);
 
