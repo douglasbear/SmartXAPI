@@ -241,23 +241,29 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             int nCompanyID = myFunctions.GetCompanyID(User);
+             SortedList mParamsList = new SortedList();
+             mParamsList.Add("@N_CompanyID", nCompanyID);
+             mParamsList.Add("@N_BudgetID", nBudgetID);
+            string sqlCommandText = "select N_LedgerID,X_LedgerName,N_Amount as N_BaseAmount from vw_Acc_BudgetDetailsWithBase where N_BudgetID=@N_BudgetID and n_CompanyID=@N_CompanyID";
+            
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
 
-                    SortedList mParamsList = new SortedList();
-                    mParamsList.Add("N_CompanyID", nCompanyID);
-                    mParamsList.Add("N_BudgetID", nBudgetID);
-
-                    dt = dLayer.ExecuteDataTablePro("SP_GetBaseBudget", mParamsList, connection);
-
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, mParamsList, connection);
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
+              
                 }
-                dt = _api.Format(dt);
-
-                return Ok(_api.Success(dt));
-
             }
             catch (Exception e)
             {
