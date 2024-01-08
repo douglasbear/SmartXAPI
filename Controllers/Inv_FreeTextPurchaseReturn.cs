@@ -308,7 +308,7 @@ namespace SmartxAPI.Controllers
                         Result.Add("x_InvoiceNo", X_InvoiceNo);
 
                     transaction.Commit();
-                    return Ok(_api.Success(Result,"Successfully saved"));
+                    return Ok(_api.Success(Result,"Free text Purchase  Return Successfully saved"));
                 }
             }
             catch (Exception ex)
@@ -386,7 +386,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to delete Free text Purchase"));
                     }
                     transaction.Commit();
-                    return Ok(_api.Success(" Free text Purchase deleted"));
+                    return Ok(_api.Success(" Free text Purchase  Return deleted"));
                 }
             }
             catch (Exception ex)
