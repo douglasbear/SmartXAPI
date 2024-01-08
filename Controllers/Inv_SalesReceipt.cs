@@ -1008,7 +1008,9 @@ namespace SmartxAPI.Controllers
                                     {"N_VoucherID",nPayReceiptId}
                                 };
                             int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
-
+                            
+                            int Results1 = dLayer.DeleteData("Inv_othercharges", "N_TransID", nPayReceiptId ,  "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID+" and X_TransType='SR'" , connection, transaction);
+                            
                             if (result > 0)
                             {
                                 myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnYearID, 66, User, transaction, connection);

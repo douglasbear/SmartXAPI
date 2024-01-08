@@ -860,6 +860,7 @@ namespace SmartxAPI.Controllers
                                 int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
                                 if (result > 0)
                                 {
+                                    int Results1 = dLayer.DeleteData("Inv_othercharges", "N_TransID", nPayReceiptId, "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID+" and X_TransType='PP'", connection, transaction);
                                     myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnyearID, 67, User, transaction, connection);
 
                                     if (VendorData.Rows.Count > 0)
