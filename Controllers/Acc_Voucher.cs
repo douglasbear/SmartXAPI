@@ -613,7 +613,7 @@ namespace SmartxAPI.Controllers
                         for (int j = 0; j < DetailTable.Rows.Count; j++){
                       if (N_VoucherID > 0)
                       {
-                        if(masterRow.Columns.Contains("n_PaymentRequestID") && myFunctions.getIntVAL(masterRow["n_PaymentRequestID"].ToString())>0){
+                        if(myFunctions.getIntVAL(masterRow["n_PaymentRequestID"].ToString())>0){
                            if(!myFunctions.UpdateTxnStatus( myFunctions.GetCompanyID(User), myFunctions.getIntVAL(masterRow["n_PaymentRequestID"].ToString()), 1844, false, dLayer, connection, transaction)){
                                 transaction.Rollback();
                                     return Ok(api.Error(User, "Unable To Update Txn Status"));
