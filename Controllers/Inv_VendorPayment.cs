@@ -537,12 +537,14 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Success("Vendor Payment Approved " + "-" + x_VoucherNo));
                     }
                     if(n_PayReceiptID == 0){
-                      if (MasterTable.Columns.Contains("n_PaymentRequestID"))
+                      if (MasterTable.Columns.Contains("n_PaymentRequestID") && x_Type.ToLower() == "pa" )
                       {
                           int nPaymentRequestID = myFunctions.getIntVAL(Master["n_PaymentRequestID"].ToString());
+                          if(nPaymentRequestID > 0) {
                           object Res = dLayer.ExecuteScalar("Select COUNT(N_PaymentRequestID) from Inv_PayReceipt Where N_CompanyID= " + nCompanyId + " and N_PaymentRequestID="+nPaymentRequestID, connection, transaction);
                           if  (myFunctions.getIntVAL(Res.ToString()) > 0) {
-                          return Ok(api.Error(User, "Payment request already converted"));
+                            return Ok(api.Error(User, "Payment request already converted"));
+                           }
                           }
                       }
                     }
@@ -751,7 +753,7 @@ namespace SmartxAPI.Controllers
 
                        if (n_PayReceiptID > 0)
                       {
-                        if(myFunctions.getIntVAL(MasterTable.Rows[0]["n_PaymentRequestID"].ToString())>0){
+                        if(MasterTable.Columns.Contains("n_PaymentRequestID") && myFunctions.getIntVAL(MasterTable.Rows[0]["n_PaymentRequestID"].ToString())>0){
                            if(!myFunctions.UpdateTxnStatus( myFunctions.GetCompanyID(User), myFunctions.getIntVAL(MasterTable.Rows[0]["n_PaymentRequestID"].ToString()), 1844, false, dLayer, connection, transaction)){
                                 transaction.Rollback();
                                     return Ok(api.Error(User, "Unable To Update Txn Status"));
