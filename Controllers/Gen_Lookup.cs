@@ -82,7 +82,6 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nPkeyId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PkeyId"].ToString());
                 int N_FormID =  myFunctions.getIntVAL(MasterTable.Rows[0]["n_ReferId"].ToString());
-                string xname = MasterTable.Rows[0]["x_Name"].ToString();
                 int nSort = 0;
                 if(MasterTable.Columns.Contains("n_Sort"))
                  nSort = myFunctions.getIntVAL(MasterTable.Rows[0]["n_Sort"].ToString());
@@ -98,10 +97,8 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                      Params.Add("@nReferId",N_FormID);
                      Params.Add("@nSort",nSort);
-                    
                     // Auto Gen
                     string PkeyCode = "";
-                    string sql = "";
                     var values = MasterTable.Rows[0]["X_PkeyCode"].ToString();
                     if (values == "@Auto")
                     {
@@ -133,27 +130,7 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(api.Error(User,"Seq No Already Exists"));
                     }
-                    if(N_FormID == 1356)
-                    {
-                        int countNO = 0;
-                        // DataTable countNO = new DataTable();
-                      // sql = "select count(*) from Gen_LookupTable where X_Name='"+xname+"'" ;
-                       object count = dLayer.ExecuteScalar("select count(*) from Gen_LookupTable where X_Name='"+xname+"'and N_ReferId='"+N_FormID+"'", Params, connection, transaction);
-
-                        countNO = myFunctions.getIntVAL(count.ToString());
-                         if(countNO > 1)
-                         {
-                                transaction.Rollback();
-                             return Ok(api.Error(User,"Priority Already Exist"));
-                         }
-                         else
-                         {
-                            
-                            transaction.Commit();
-                            return Ok(api.Success("Successfully saved"));
-                         }
-
-                    }              
+                                    
                 
                     if (nPkeyId <= 0)
                     {

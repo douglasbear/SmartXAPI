@@ -218,8 +218,7 @@ namespace SmartxAPI.Controllers
                 int nFlag = myFunctions.getIntVAL(PartyListTable.Rows[0]["nFlag"].ToString());
                 string xTransType = PartyListTable.Rows[0]["x_TransType"].ToString();
                 object Count = 0;
-                // int nSalesID =0;
-                string xButtonAction = "Insert";
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -401,15 +400,6 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         }
                     }
-
- //Activity Log
-                // string ipAddress = "";
-                // if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                //     ipAddress = Request.Headers["X-Forwarded-For"];
-                // else
-                //     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                //     myFunctions.LogScreenActivitys(nFnYearID,nSalesID,xTransType,FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-                   
 
                     transaction.Commit();
                     return Ok(_api.Success("Opening Balance Saved"));

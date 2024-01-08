@@ -176,7 +176,6 @@ namespace SmartxAPI.Controllers
                 string X_ProjectCode = MasterTable.Rows[0]["X_ProjectCode"].ToString();
                 string X_ProjectName = MasterTable.Rows[0]["X_ProjectName"].ToString();
                 string xAction = "";
-                string xButtonAction = "Insert";
                 object N_WorkFlowID = "";
                 if (MasterTable.Columns.Contains("x_Action")){
                      xAction = MasterTable.Rows[0]["x_Action"].ToString();
@@ -212,9 +211,6 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_ProjectCode"] = X_ProjectCode;
 
                     }
-
-                     
-                          
                     // {
                     //     Params.Add("N_CompanyID", nCompanyID);
                     //     Params.Add("N_YearID", nFnYearId);
@@ -229,7 +225,6 @@ namespace SmartxAPI.Controllers
                     //Check for Existing Workflow
                     if (nProjectID > 0)
                     {
-                        xButtonAction = "Update";
                         N_WorkFlowID = dLayer.ExecuteScalar("select N_WTaskID from inv_customerprojects where N_CompanyID=" + nCompanyID + " and N_ProjectID=" + nProjectID, Params, connection, transaction);
                         dLayer.ExecuteNonQuery("delete from Inv_OtherCost where  N_CompanyID=" + nCompanyID + "and N_TransID=" + nProjectID + "and X_TransType='Job File' and N_FormID=1579", Params, connection, transaction);// add menuid
                     }
@@ -379,16 +374,6 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error(User, ex));
                         }
                     }
-                                                                
-                 //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(nFnYearId,nProjectID,X_ProjectCode,N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-                      
-                          
                         transaction.Commit();
                         return Ok(api.Success("Project Information Created"));
                     }
@@ -401,7 +386,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nProjectID,int nFnyearID,string X_ProjectCode)
+        public ActionResult DeleteData(int nProjectID,int nFnyearID)
         {
 
             int Results = 0;
@@ -416,15 +401,6 @@ namespace SmartxAPI.Controllers
                      object objNProjectIDCount = dLayer.ExecuteScalar("Select count(N_ProjectID) from inv_Sales where N_CompanyID=" + nCompanyID + " and N_ProjectID=" + nProjectID + " and N_FnYearID="+nFnyearID, connection, transaction);
                      object objPurchaseCount = dLayer.ExecuteScalar("Select count(N_ProjectID) from inv_Purchase where N_CompanyID=" + nCompanyID + " and N_ProjectID=" + nProjectID + " and N_FnYearID="+nFnyearID, connection, transaction);
                      object objVoucherCount = dLayer.ExecuteScalar("Select count(N_ProjectID) from Acc_VoucherMaster where N_CompanyID=" + nCompanyID + " and N_ProjectID=" + nProjectID + " and N_FnYearID="+nFnyearID, connection, transaction);
-                     string xButtonAction ="Delete";
-                      //Activity Log
-                        string ipAddress = "";
-                   if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                   else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(nFnyearID,nProjectID,X_ProjectCode,N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-                  
                      if (objNProjectIDCount == null)
                         objNProjectIDCount = 0;
                     if (objPurchaseCount == null)
