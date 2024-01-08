@@ -379,7 +379,7 @@ namespace SmartxAPI.Controllers
             int nCompanyId = myFunctions.GetCompanyID(User);
             object CategoryID = "";
             string Sql = "";
-            string sqlCommandText = "select N_CompanyID,D_Date,D_In1,D_Out1,D_In2,D_Out2,X_GroupName from vw_payEmpShiftDetails where N_EmpID=@p3 and N_CompanyID=@p1 and MONTH(Cast(vw_payEmpShiftDetails.D_Date as DATE)) = MONTH(CURRENT_TIMESTAMP) and YEAR(vw_payEmpShiftDetails.D_Date)= YEAR(CURRENT_TIMESTAMP) order by D_Date asc";
+            string sqlCommandText = "select top(10) N_CompanyID,D_Date,D_In1,D_Out1,D_In2,D_Out2,X_GroupName,x_dutyPlace1,x_dutyPlace2 from vw_payEmpShiftDetails where N_EmpID=@p3 and N_CompanyID=@p1 and MONTH(Cast(vw_payEmpShiftDetails.D_Date as DATE)) = MONTH(CURRENT_TIMESTAMP) and YEAR(vw_payEmpShiftDetails.D_Date)= YEAR(CURRENT_TIMESTAMP) order by D_Date asc";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnyearID);
             Params.Add("@p3", nEmpID);
@@ -482,6 +482,76 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,e));
             }
           }
+
+
+
+          [HttpGet("EmpLeaveList")]
+        public ActionResult EmpLeaveList(int nEmpID, int nFnyearID)
+        {
+            DataSet dt = new DataSet();
+            DataTable MasterTable = new DataTable();
+            DataTable ScheduledDate = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+             string Sql = "";
+
+            Params.Add("@nCompanyID", nCompanyId);
+            Params.Add("@nFnyearID", nFnyearID);
+            Params.Add("@nEmpID", nEmpID);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+
+                     DateTime Start = DateTime.Now;
+                    DateTime End = Start.AddDays(-6);
+
+                    double a = (Start-End).TotalDays;
+                    bool dayFlag = false;
+
+                     Params.Add("@dtpFromdate", Start);
+                     Params.Add("@dtpTodate", End);
+
+                         Sql = "SP_Pay_TimeSheet @nCompanyID,@nFnyearID,@dtpTodate,@dtpFromdate,@nEmpID";
+                        MasterTable = dLayer.ExecuteDataTable(Sql, Params, connection);
+
+                           DateTime Date = Convert.ToDateTime(Start.ToString());
+                          do
+                                {
+                                    DataRow[] CheckDate = MasterTable.Select("D_date = '" + myFunctions.getDateVAL(Date).ToString() + "'");
+                                    if (CheckDate.Length == 0)
+                                    {
+                                        DataRow rowPA = MasterTable.NewRow();
+                                        rowPA["D_date"] = Date;
+
+                                        DateTime Date5 = Convert.ToDateTime(Date.ToString());
+                                        string day = Date5.DayOfWeek.ToString();
+                                        MasterTable.Rows.Add(rowPA);
+                                    }
+                                     Date = Date.AddDays(-1);
+                                } while (Date >= End);
+                                 MasterTable.AcceptChanges();
+
+
+
+                    MasterTable = api.Format(MasterTable, "Master");
+                    dt.Tables.Add(MasterTable);
+                }
+                return Ok(api.Success(dt));
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
+
+      
+
+     
+
+
 
 
     }
