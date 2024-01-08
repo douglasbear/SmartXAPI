@@ -65,7 +65,7 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string sqlCommandText = "select * from vw_AirPort where N_AirportID=@p1";
+            string sqlCommandText = "select * from vw_AirPort where X_AirportCode=@p1";
             Params.Add("@p1", xAirportCode);
             try
             {

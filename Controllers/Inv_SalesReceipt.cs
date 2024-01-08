@@ -180,7 +180,6 @@ namespace SmartxAPI.Controllers
             if (xInvoiceNo != null)
                 xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
             DataTable MasterTable = new DataTable();
-            DataTable otherCharges = new DataTable();
             DataTable DetailTable = new DataTable();
             DataTable Attachments = new DataTable();
             SortedList general = new SortedList();
@@ -224,10 +223,6 @@ namespace SmartxAPI.Controllers
                             nCustomerId = myFunctions.getIntVAL(PayInfo.Rows[0]["N_PartyID"].ToString());
                             dTransDate = myFunctions.getDateVAL(Convert.ToDateTime(PayInfo.Rows[0]["D_Date"].ToString()));
                         }
-                        if (PayInfo.Rows.Count > 0){
-                        String sqlOtherCharges = "select * from VW_Inv_Othercharges_details where N_CompanyID="+nCompanyId+" and N_TransID="+n_PayReceiptId+" and X_TransType='SR'";
-                        otherCharges = dLayer.ExecuteDataTable(sqlOtherCharges,  connection);
-                    }
 
 
                         SortedList mParamsList = new SortedList()
@@ -308,7 +303,7 @@ namespace SmartxAPI.Controllers
 
                                 ds.Tables.Add(MasterTable);
                                 ds.Tables.Add(DetailTable);
-                                return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) }, { "master", MasterTable }, { "masterData", OutPut }, {"otherCharges" , otherCharges} }));
+                                return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) }, { "master", MasterTable }, { "masterData", OutPut } }));
                             }
                         }
                         else
@@ -443,20 +438,16 @@ namespace SmartxAPI.Controllers
                             }
                         }
                     }
-                    
                     DetailTable.AcceptChanges();
 
                     ds.Tables.Add(Attachments);
                     ds.Tables.Add(MasterTable);
                     ds.Tables.Add(DetailTable);
-                    
-                    
                 }
-                   
+
 
 
                 return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) },
-                 { "otherCharges", api.Format(otherCharges)},
                 { "master", MasterTable },
                  { "attachments", Attachments},
                  { "masterData", OutPut } }));
@@ -568,8 +559,6 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 DataTable DetailTable;
-                DataTable otherCharges;
-                otherCharges = ds.Tables["otherChargesDetail"];
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
                 DataTable Attachment = ds.Tables["attachments"];
@@ -772,23 +761,7 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    if (otherCharges.Rows.Count > 0)
-                    if (otherCharges.Columns.Contains("n_Taxcategoryid")){
-                        {
-                            foreach (DataRow var in otherCharges.Rows)
-                            {
-                                var["N_TransID"] = PayReceiptId;
-                                var["X_TransType"] = xType;
-                                if(!otherCharges.Columns.Contains("N_MenuID")){
-                                    otherCharges.Columns.Add("N_MenuID");
-                                }
-                                var["N_MenuID"] = N_FormID;
-                                
-                            }
-                        int nOtherChargesID = myFunctions.getIntVAL(otherCharges.Rows[0]["n_OtherChargesID"].ToString());
-                        dLayer.SaveData("Inv_Othercharges", "n_OtherChargesID", otherCharges, connection, transaction);
-                    }
-                    }
+                  
             
                           
 
@@ -1036,7 +1009,7 @@ namespace SmartxAPI.Controllers
                                 };
                             int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
                             
-                            int Results1 = dLayer.DeleteData("Inv_othercharges", "N_TransID", nPayReceiptId ,  "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID , connection, transaction);
+                            int Results1 = dLayer.DeleteData("Inv_othercharges", "N_TransID", nPayReceiptId ,  "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID+" and X_TransType='SR'" , connection, transaction);
                             
                             if (result > 0)
                             {

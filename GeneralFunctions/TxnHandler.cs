@@ -2519,7 +2519,7 @@ namespace SmartxAPI.GeneralFunctions
                             {"X_InventoryMode","PURCHASE RETURN"},
                             {"N_InternalID",N_CreditNoteID},
                             {"N_UserID",N_UserID}};
-                 dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostParams, connection, transaction);
+             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostParams, connection, transaction);
             }
             catch (Exception ex)
             {

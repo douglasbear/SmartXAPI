@@ -205,7 +205,6 @@ namespace SmartxAPI.Controllers
             // ProductCostTable = ds.Tables["productCost"];
             // MachineCostTable = ds.Tables["machineCost"];
             OtherCostTable = ds.Tables[" OtherCost"];
-            string xButtonAction = "Insert";
             SortedList Params = new SortedList();
             // Auto Gen
             try
@@ -221,8 +220,8 @@ namespace SmartxAPI.Controllers
                     int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
                     int N_LocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationID"].ToString());
                     int N_UserID = myFunctions.GetUserID(User);
-                    X_ReferenceNo = MasterTable.Rows[0]["X_ReferenceNo"].ToString();
-                    if (X_ReferenceNo == "@Auto")
+                    var values = MasterTable.Rows[0]["X_ReferenceNo"].ToString();
+                    if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_YearID", N_FnYearID);
@@ -240,8 +239,6 @@ namespace SmartxAPI.Controllers
                                 {"N_LocationID",N_LocationID}//,
                                 //{"X_TransType",N_CreditNoteID}
                                 };
-                                xButtonAction = "Update";
-
                         dLayer.ExecuteNonQuery("delete from Inv_OtherCost where  N_CompanyID=" +N_CompanyID+ "and N_TransID=" + N_AssemblyID + "and N_FormID="+N_FormID, Params, connection, transaction);
                         try
                         {
@@ -311,17 +308,6 @@ namespace SmartxAPI.Controllers
                     SortedList Result = new SortedList();
                     Result.Add("N_AssemblyID", N_AssemblyID);
                     Result.Add("X_ReferenceNo", X_ReferenceNo);
-
-                    
-                 //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(N_FnYearID,N_AssemblyID,X_ReferenceNo,N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-                   
-
                     transaction.Commit();
                     return Ok(_api.Success(Result, "Product Unbuilt"));
                 }
@@ -397,7 +383,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int N_AssemblyID, int N_LocationID, string X_ReferenceNo,int N_FnYearID)
+        public ActionResult DeleteData(int N_AssemblyID, int N_LocationID)
         {
             int Results = 0;
             int N_CompanyID = myFunctions.GetCompanyID(User);
@@ -410,12 +396,9 @@ namespace SmartxAPI.Controllers
             {   
                 connection.Open();
                 SqlTransaction transaction = connection.BeginTransaction();
-                string xButtonAction ="delete";
-
                 if (N_AssemblyID > 0)
                 {
     
-               
                     try
                     {
                         Results=dLayer.ExecuteNonQueryPro("SP_BuildorUnbuild", DeleteParams, connection, transaction);
@@ -429,14 +412,6 @@ namespace SmartxAPI.Controllers
                 }                
                 if (Results > 0)
                 {
-                          //Activity Log
-                string ipAddress = "";
-                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(N_FnYearID,N_AssemblyID,X_ReferenceNo,N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-                   
                     dLayer.ExecuteNonQuery("delete from Inv_OtherCost where  N_CompanyID=" +N_CompanyID+ "and N_TransID=" + N_AssemblyID + "and N_FormID="+N_FormID, DeleteParams, connection, transaction);
                     return Ok(_api.Success( "Production Unbuild deleted"));
                 }

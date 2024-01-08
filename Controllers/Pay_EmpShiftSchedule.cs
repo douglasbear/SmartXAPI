@@ -242,6 +242,8 @@ namespace SmartxAPI.Controllers
                      dt = myFunctions.AddNewColumnToDataTable(dt, "D_CurrentOut", typeof(string), null);
                      dt = myFunctions.AddNewColumnToDataTable(dt, "X_VacationType", typeof(string), null);
                      dt = myFunctions.AddNewColumnToDataTable(dt, "b_Vacation", typeof(bool), false);
+                     dt = myFunctions.AddNewColumnToDataTable(dt, "X_DutyPlace1", typeof(string), null);
+                     dt = myFunctions.AddNewColumnToDataTable(dt, "X_DutyPlace2", typeof(string), null);
 
                  
                      
@@ -277,10 +279,15 @@ namespace SmartxAPI.Controllers
 
                                   row["X_Day"] = day;
                                      object ncatID = dLayer.ExecuteScalar("Select n_CatagoryID from Pay_Employee Where N_CompanyID =" + nCompanyID + " and N_FNyearID= " + nFnYearID + "  and N_EmpID="+nEmpID+"", Params, connection);
+                                     object xDutyPlace1 = dLayer.ExecuteScalar("Select X_DutyPlace1 from Pay_Empshiftdetails Where N_CompanyID =" + nCompanyID + " and N_FNyearID= " + nFnYearID + "  and N_EmpID="+nEmpID+"", Params, connection);
+                                     object xDutyPlace2 = dLayer.ExecuteScalar("Select X_DutyPlace2 from Pay_Empshiftdetails Where N_CompanyID =" + nCompanyID + " and N_FNyearID= " + nFnYearID + "  and N_EmpID="+nEmpID+"", Params, connection);
+
                                         object DIn1= dLayer.ExecuteScalar("Select D_In1 from Pay_WorkingHours Where N_CompanyID =" + nCompanyID + " and n_CatagoryID= " + ncatID + " and x_day='"+day+"'", Params, connection);
                                         object Dout2= dLayer.ExecuteScalar("Select D_Out2 from Pay_WorkingHours Where N_CompanyID =" + nCompanyID + " and n_CatagoryID= " + ncatID + " and x_day='"+day+"'", Params, connection);
                                          row["D_CurrentIn"] = DIn1;
                                         row["D_CurrentOut"] = Dout2;
+                                        row["X_DutyPlace1"] = xDutyPlace1;
+                                        row["X_DutyPlace2"] = xDutyPlace2;
                     object nVacationID = dLayer.ExecuteScalar("Select ISNULL(N_VacTypeID,0) From Pay_VacationDetails Where N_CompanyID =@nCompanyID and N_EmpID=@nEmpID and D_VacDateFrom<='"+Date5+"' and D_VacDateTo>='"+Date5+"' and B_IsAdjustEntry=0 and B_IsSaveDraft=0",Params,connection);
                     if(nVacationID!=null){
                         object xVacationType = dLayer.ExecuteScalar("Select X_vacType from Pay_VacationType Where N_CompanyID =" + nCompanyID + "  and N_VacTypeID="+nVacationID+"", Params, connection);

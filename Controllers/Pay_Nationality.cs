@@ -57,16 +57,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
-                       DataTable count = new DataTable();
-                        string sql = "select * from Pay_Nationality where x_Nationality='"+xNationality+"'" ;
-                        count = dLayer.ExecuteDataTable(sql, Params, connection, transaction);
-                        if(nNationalityID == 0){
-                        if(count.Rows.Count > 0 )
-                        {
-                            //transaction.Rollback();
-                            return Ok(_api.Error(User, "Nationality  already exists"));
-                        }
-                        }
+                       
                         while (true)
                         {
                             xNationalityCode = (string)dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction);

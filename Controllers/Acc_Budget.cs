@@ -66,7 +66,7 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_BudgetCode"] = xBudgetCode;
                     }
                     MasterTable.AcceptChanges();
-
+                    
                     nBudgetID = dLayer.SaveData("Acc_BudgetMaster", "n_BudgetID", MasterTable, connection, transaction);
                     if (nBudgetID <= 0)
                     {
@@ -74,16 +74,11 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Warning("Unable to save"));
                     }
 
-                    for (int i = 0; i < DetailTable.Rows.Count; i++)
-                    {
-                        DetailTable.Rows[i]["n_BudgetID"] = nBudgetID;
-                    }
-                    dLayer.ExecuteNonQuery("delete from Acc_BudgetDetails where  N_CompanyID=" +nCompanyID+ "and N_BudgetID=" + nBudgetID ,  Params, connection, transaction);
                     int nBudgetDetailsID = dLayer.SaveData("Acc_BudgetDetails", "n_BudgetDetailsID", DetailTable, connection, transaction);
                     if (nBudgetDetailsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -112,10 +107,10 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
                     Params.Add("@n_BudgetID", nBudgetID);
-
+        
                     dLayer.DeleteData("Acc_BudgetDetails", "n_BudgetID", nBudgetID, "", connection, transaction);
                     Results = dLayer.DeleteData("Acc_BudgetMaster", "n_BudgetID", nBudgetID, "", connection, transaction);
-
+                    
                     if (Results > 0)
                     {
                         transaction.Commit();
@@ -123,8 +118,8 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to delete"));
+                       transaction.Rollback();
+                       return Ok(_api.Error(User, "Unable to delete"));
                     }
                 }
             }
@@ -155,8 +150,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    if (MasterTable.Rows.Count == 0)
-                    {
+                    if (MasterTable.Rows.Count == 0){
                         return Ok(_api.Warning("No Results Found"));
                     }
                     MasterTable.AcceptChanges();
@@ -172,7 +166,7 @@ namespace SmartxAPI.Controllers
                 DetailTable = _api.Format(DetailTable, "Details");
                 dt.Tables.Add(MasterTable);
                 dt.Tables.Add(DetailTable);
-
+                
                 return Ok(_api.Success(dt));
             }
             catch (Exception e)
@@ -181,54 +175,14 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("baseyearlist")]
-        public ActionResult GetbaseyearList(int nCompanyID, int nFnyearID,int nBudgetTypeID)
+         [HttpGet("baseyearlist")]
+        public ActionResult GetbaseyearList(int nCompanyID,int nBudgetTypeID)
         {
             DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            string sqlCommandText="";
-
-
-            // string sqlCommandText = "select CONVERT(NVARCHAR(MAX), N_Year) AS X_Year,N_Year from Acc_BudgetMaster WHERE N_CompanyID=@p1 and N_BudgetTypeID=@p2 and N_Year <= @p3 GROUP BY N_Year";
-            if(nBudgetTypeID==2)
-                 sqlCommandText = "select X_FnYearDescr AS X_Year,N_FnYearID AS N_YearID from Acc_FnYear  where N_CompanyID=@p1 and D_Start <= (select D_Start from Acc_FnYear where N_CompanyID=@p1 and N_FnYearID=@p3) and N_FnYearID in (select N_YearID from Acc_BudgetMaster WHERE N_CompanyID=@p1 and N_BudgetTypeID=@p2)";
-            else
-                sqlCommandText = "select X_FnYearDescr AS X_Year,N_FnYearID AS N_YearID from Acc_FnYear  where N_CompanyID=@p1 and D_Start < (select D_Start from Acc_FnYear where N_CompanyID=@p1 and N_FnYearID=@p3) and N_FnYearID in (select N_YearID from Acc_BudgetMaster WHERE N_CompanyID=@p1 and N_BudgetTypeID=@p2)";
-            Params.Add("@p1", nCompanyID);
-            Params.Add("@p2", nBudgetTypeID);
-            Params.Add("@p3", nFnyearID);
-            
-
-
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-
-                }
-                return Ok(_api.Success(dt));
-            }
-            catch (Exception e)
-            {
-                return Ok(_api.Error(User, e));
-            }
-        }
-        [HttpGet("basemonthlist")]
-        public ActionResult GetbasemonthList(int nCompanyID, int nBudgetTypeID, int nYear,string nMonth)
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            string sqlCommandText = "select X_Month from Acc_BudgetMaster WHERE N_CompanyID=@p1 AND N_YearID=@p3 and N_BudgetTypeID=@p2 GROUP BY X_Month";
-            //string sqlCommandText = "select X_Month from Acc_BudgetMaster WHERE N_CompanyID=@p1 AND N_YearID=@p2 and N_BudgetTypeID=@p3 GROUP BY X_Month";
-
-            Params.Add("@p1", nCompanyID);
-            Params.Add("@p2", nBudgetTypeID);
-            Params.Add("@p3", nYear);
-           //Params.Add("@p4", nMonth);
-
-
+            SortedList Params=new SortedList();
+            string sqlCommandText = "select N_Year from Acc_BudgetMaster WHERE N_CompanyID=@p1 and N_BudgetTypeID=@p2 GROUP BY N_Year";
+            Params.Add("@p1",nCompanyID);
+            Params.Add("@p2",nBudgetTypeID);
 
             try
             {
@@ -248,39 +202,17 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User, e));
+                return Ok(_api.Error(User,e));
             }
         }
-
-        [HttpGet("basebudgetlist")]
-        public ActionResult GetbasebudgetList(int nCompanyID, int nYear,int nBudgetTypeID,string xMonth)
+          [HttpGet("basemonthlist")]
+        public ActionResult GetbasemonthList(int nCompanyID,int nBudgetTypeID)
         {
             DataTable dt = new DataTable();
-          
-            SortedList Params = new SortedList();
-           
-
-            string sqlCommandText = "";
-           
-
-            if (nBudgetTypeID == 1){
-                 
-                Params.Add("@nCompanyID", nCompanyID);
-                Params.Add("@nYear", nYear);
-                Params.Add("@nBudgetTypeID", nBudgetTypeID);
-
-                sqlCommandText = "select N_BudgetID, X_BudgetCode, X_BudgetName from Acc_BudgetMaster WHERE N_CompanyID = @nCompanyID AND N_YearID = @nYear and N_BudgetTypeID = @nBudgetTypeID";
-            }
-            else if (nBudgetTypeID == 2){
-
-                 Params.Add("@nCompanyID", nCompanyID);
-                Params.Add("@nYear", nYear);
-                Params.Add("@nBudgetTypeID", nBudgetTypeID);
-                Params.Add("@xMonth", xMonth);
-
-                sqlCommandText="select N_BudgetID, X_BudgetCode, X_BudgetName from Acc_BudgetMaster WHERE N_CompanyID = @nCompanyID AND N_YearID = @nYear and X_Month = @xMonth and N_BudgetTypeID = @nBudgetTypeID GROUP BY X_Month,N_BudgetID,X_BudgetCode, X_BudgetName";
-
-            }
+            SortedList Params=new SortedList();
+            string sqlCommandText = "select X_Month from Acc_BudgetMaster WHERE N_CompanyID=@nCompanyID AND N_Year=@nYear and N_BudgetTypeID=@nBudgetTypeID GROUP BY X_Month";
+            Params.Add("@p1",nCompanyID);
+            Params.Add("@p2",nBudgetTypeID);
 
             try
             {
@@ -300,7 +232,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User, e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -309,6 +241,10 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             int nCompanyID = myFunctions.GetCompanyID(User);
+             SortedList mParamsList = new SortedList();
+             mParamsList.Add("@N_CompanyID", nCompanyID);
+             mParamsList.Add("@N_BudgetID", nBudgetID);
+            string sqlCommandText = "select N_LedgerID,X_LedgerName,N_Amount as N_BaseAmount from vw_Acc_BudgetDetailsWithBase where N_BudgetID=@N_BudgetID and n_CompanyID=@N_CompanyID";
             
             try
             {
@@ -316,17 +252,18 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    SortedList mParamsList = new SortedList();
-                    mParamsList.Add("N_CompanyID", nCompanyID);
-                    mParamsList.Add("N_BudgetID", nBudgetID);
-
-                    dt = dLayer.ExecuteDataTablePro("SP_GetBaseBudget", mParamsList, connection);
-
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, mParamsList, connection);
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
+              
                 }
-                dt = _api.Format(dt);
-
-                return Ok(_api.Success(dt));
-
             }
             catch (Exception e)
             {
@@ -356,7 +293,7 @@ namespace SmartxAPI.Controllers
                     else if(nBudgetTypeID==1)
                         mParamsList.Add("X_Month", "");
 
-                    dt = dLayer.ExecuteDataTablePro("[SP_GetActualAmount_ByLedger]", mParamsList, connection);
+                    dt = dLayer.ExecuteDataTablePro("SP_GetActualBaseAmount_ByLedger", mParamsList, connection);
 
                 }
                 dt = _api.Format(dt);
@@ -369,50 +306,6 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-          [HttpGet("ledger/list")]
-        public ActionResult ledgerList(int nCompanyId, int nFnyearID, int nCashBahavID,int nGroupID)
-        {
-            string sqlCommandText = "";
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnyearID);
 
-           
-                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type,X_LedgerName_Ar as account_Ar,N_TransBehavID from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and B_Inactive = 0  order by [Account Code]";
-
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-
-                    // object date = dLayer.ExecuteScalar("select n_fnyearid from Acc_FnYear where x_fnyeardescr =@nYear and n_companyid = @nComoanyid" +nCompanyId+"", connection, transaction);
-                    // Params.Add("@p3", date);
-                    //object N_FnyearID = dLayer.ExecuteScalar("select n_fnyearid from Acc_FnYear where x_fnyeardescr ="+xyear+" and n_companyid  = " +nCompanyId+"", connection, transaction);
-                    
-                   // Params.Add("@p2", N_FnyearID);
-
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
-                }
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Warning("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(dt));
-                }
-
-            }
-            catch (Exception e)
-            {
-                return Ok(_api.Error(User,e));
-            }
-        }
     }
-    
 }
-

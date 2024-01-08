@@ -671,7 +671,6 @@ namespace SmartxAPI.Controllers
 
                     //saving data
                     var values = MasterRow["x_ReceiptNo"].ToString();
-                    xButtonAction = "Insert";
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
@@ -679,6 +678,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 729);
                         Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
                         InvoiceNo = dLayer.GetAutoNumber("Inv_DeliveryNote", "x_ReceiptNo", Params, connection, transaction);
+                        xButtonAction = "Insert";
 
                         if (InvoiceNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Delivery Number")); }
                         MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
@@ -967,6 +967,15 @@ namespace SmartxAPI.Controllers
                                     }
                                 }
                                 tempSQID = N_SQID;
+
+                                if (N_FormID == 1572 && N_DeliveryNoteID > 0)
+                                {
+                                    if (!myFunctions.UpdateTxnStatus(N_CompanyID, N_DeliveryNoteID, 1572, true, dLayer, connection, transaction))
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                    }
+                                }
                             };
                         }
 
