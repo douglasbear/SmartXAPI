@@ -210,6 +210,19 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+
+                    object objEmp = dLayer.ExecuteScalar("select count(1) from Pay_Employee where N_CompanyID="+nCompanyID+" and N_PositionID="+nPositionID, connection);
+                    object objSupervisor = dLayer.ExecuteScalar("select count(1) from Pay_Supervisor where N_CompanyID="+nCompanyID+" and N_PositionID="+nPositionID, connection);
+                    object objReg = dLayer.ExecuteScalar("select count(1) from Rec_Registration where N_CompanyID="+nCompanyID+" and N_PositionID="+nPositionID, connection);
+                    object objJobOfr = dLayer.ExecuteScalar("select count(1) from Rec_JobOfferAdditionalDetails where N_CompanyID="+nCompanyID+" and N_PositionID="+nPositionID, connection);
+                    if (objEmp == null) objEmp = 0; if (objSupervisor == null) objSupervisor = 0;
+                    if (objReg == null) objReg = 0; if (objJobOfr == null) objJobOfr = 0;
+
+                    if(myFunctions.getIntVAL(objEmp.ToString()) > 0 || myFunctions.getIntVAL(objSupervisor.ToString()) > 0 || myFunctions.getIntVAL(objReg.ToString()) > 0 || myFunctions.getIntVAL(objJobOfr.ToString()) > 0)
+                    {
+                        return Ok(_api.Error(User, "Already Used! Unable to delete."));
+                    }
+
                     dLayer.DeleteData("Pay_Supervisor", "N_PositionID", nPositionID, "N_CompanyID=" + nCompanyID + "", connection);
                     Results = dLayer.DeleteData("Pay_Position", "N_PositionID", nPositionID, "N_CompanyID=" + nCompanyID + "", connection);
                     if (Results > 0)
