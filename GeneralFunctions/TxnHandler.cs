@@ -856,6 +856,8 @@ namespace SmartxAPI.GeneralFunctions
                                 tempPOrderID=myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString());
                              
                             };
+                             if(MasterTable.Columns.Contains("n_PaymentRequestID"))
+                             {
                              if(myFunctions.getIntVAL(masterRow["n_PaymentRequestID"].ToString())>0){
                              if(!myFunctions.UpdateTxnStatus(nCompanyID,myFunctions.getIntVAL(masterRow["n_PaymentRequestID"].ToString()),1844,false,dLayer,connection,transaction))
                                         {
@@ -865,6 +867,7 @@ namespace SmartxAPI.GeneralFunctions
                                             return Result;
                                         }
                                 }
+                             }
                     }
                     SortedList VendorParams = new SortedList();
                     VendorParams.Add("@nVendorID", N_VendorID);

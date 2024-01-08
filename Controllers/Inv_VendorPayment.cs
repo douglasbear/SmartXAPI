@@ -238,6 +238,7 @@ namespace SmartxAPI.Controllers
             DataTable PayReceipt = new DataTable();
             DataTable PayInfo = new DataTable();
             DataTable Attachments = new DataTable();
+            DataTable otherCharges = new DataTable();
             string sql = "";
             int AllBranch = 1;
             int nPayReceiptID = 0;
@@ -283,6 +284,7 @@ namespace SmartxAPI.Controllers
                             myFunctions.AddNewColumnToDataTable(PayInfo, "N_Decimal", typeof(int), N_CurrencyDecimal);
                             dTransDate = myFunctions.getDateVAL(Convert.ToDateTime(PayInfo.Rows[0]["D_Date"].ToString()));
                         }
+                        
                     }
 
                     SortedList paramList = new SortedList();
@@ -348,6 +350,10 @@ namespace SmartxAPI.Controllers
                         Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), 67, 0, User, connection);
                     //Attachments = api.Format(Attachments, "attachments");
                     decimalobj = dLayer.ExecuteScalar("Select isnull(N_Decimal, 0)  from Acc_Company where N_CompanyID=@nCompanyID ", paramList, connection);
+                        if (PayInfo.Rows.Count > 0){
+                            String sqlOtherCharges = "select * from VW_Inv_Othercharges_details where N_CompanyID="+nCompanyId+" and N_TransID="+nPayReceiptID+" and X_TransType='PP'";
+                            otherCharges = dLayer.ExecuteDataTable(sqlOtherCharges, paramList, connection);
+                         }
                 }
 
                 PayReceipt = myFunctions.AddNewColumnToDataTable(PayReceipt, "n_DueAmount", typeof(double), 0);
@@ -385,6 +391,7 @@ namespace SmartxAPI.Controllers
 
                 return Ok(api.Success(new SortedList() {
               { "details", api.Format(PayReceipt) },
+               { "otherCharges", api.Format(otherCharges)},
                 { "masterData", OutPut },
                  { "attachments", api.Format(Attachments) },
                  { "master", PayInfo } }));
@@ -407,6 +414,8 @@ namespace SmartxAPI.Controllers
                 DataTable Attachment = ds.Tables["attachments"];
                 DataTable Approvals;
                 Approvals = ds.Tables["approval"];
+                 DataTable otherCharges;
+                otherCharges = ds.Tables["otherChargesDetail"];
                 DataRow ApprovalRow = Approvals.Rows[0];
 
                 SortedList Params = new SortedList();
@@ -716,6 +725,23 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows.Add(row);
 
                     }
+                   if (otherCharges.Rows.Count > 0)
+                        {
+                             if (otherCharges.Columns.Contains("n_Taxcategoryid"))
+                             {
+                                foreach (DataRow var in otherCharges.Rows)
+                                    {
+                                var["N_TransID"] = n_PayReceiptID;
+                                var["X_TransType"] = x_Type;
+                                if(!otherCharges.Columns.Contains("N_MenuID")){
+                                    otherCharges.Columns.Add("N_MenuID");
+                                }
+                                var["N_MenuID"] = N_FormID;
+                                 }
+                        int nOtherChargesID = myFunctions.getIntVAL(otherCharges.Rows[0]["n_OtherChargesID"].ToString());
+                        dLayer.SaveData("Inv_Othercharges", "n_OtherChargesID", otherCharges, connection, transaction);
+                    }
+                    }
 
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -753,12 +779,16 @@ namespace SmartxAPI.Controllers
 
                        if (n_PayReceiptID > 0)
                       {
-                        if(MasterTable.Columns.Contains("n_PaymentRequestID") && myFunctions.getIntVAL(MasterTable.Rows[0]["n_PaymentRequestID"].ToString())>0){
+                        if(MasterTable.Columns.Contains("n_PaymentRequestID"))
+                        {
+                          if(myFunctions.getIntVAL(MasterTable.Rows[0]["n_PaymentRequestID"].ToString())>0){
                            if(!myFunctions.UpdateTxnStatus( myFunctions.GetCompanyID(User), myFunctions.getIntVAL(MasterTable.Rows[0]["n_PaymentRequestID"].ToString()), 1844, false, dLayer, connection, transaction)){
                                 transaction.Rollback();
                                     return Ok(api.Error(User, "Unable To Update Txn Status"));
                             }
                         }
+
+                        } 
                         }
 
 

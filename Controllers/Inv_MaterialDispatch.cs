@@ -411,6 +411,7 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Error(User, "Transaction not Found"));
                     }
+                       string xButtonAction="delete";
                     DataRow TransRow = TransData.Rows[0];
                     string X_Criteria = "N_DispatchID=" + nDispatchID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) ;
 
@@ -419,7 +420,14 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
-                  
+                   //Activity Log
+                         string ipAddress = "";
+                         if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                         ipAddress = Request.Headers["X-Forwarded-For"];
+                         else
+                         ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                          myFunctions.LogScreenActivitys(nFnYearID,nDispatchID,TransRow["X_DispatchNo"].ToString(),684,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+
                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, xTransType, nDispatchID, TransRow["X_DispatchNo"].ToString(), ProcStatus, "Inv_MaterialDispatch", X_Criteria, "", User, dLayer, connection, transaction);
                    
                    if (status != "Error")
