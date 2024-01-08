@@ -408,7 +408,7 @@ namespace SmartxAPI.Controllers
                     if (nGradeID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User,"Grade name already exist"));
                     }
                     else
                     {
