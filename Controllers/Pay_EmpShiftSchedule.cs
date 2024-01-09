@@ -153,6 +153,8 @@ namespace SmartxAPI.Controllers
 
                     DataTable dt = new DataTable();
                     SortedList Params = new SortedList();
+                    DataTable dt1 = new DataTable();
+                    DataTable dt2 = new DataTable();
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@nFnYearID", nFnYearID);
                     Params.Add("@bAllBranchData", bAllBranchData);
@@ -174,11 +176,20 @@ namespace SmartxAPI.Controllers
                     else
                     {
 
-                        object userCategory = dLayer.ExecuteScalar("Select N_UserCategoryID From Sec_User Where N_CompanyID =@nCompanyID and N_UserID=" + nUserID + " ", Params, connection);
+                         object userCategory = dLayer.ExecuteScalar("Select X_UserCategoryList From Sec_User Where N_CompanyID =@nCompanyID and N_UserID=" + nUserID + " ", Params, connection);
+                        string sql="Select * From Sec_UserCategory Where N_CompanyID =@nCompanyID and N_UserCategoryID in(" + userCategory + ")";
+                         dt1 = dLayer.ExecuteDataTable(sql, Params, connection);
+                         foreach (DataRow row in dt1.Rows){
+                            if(row["X_UserCategory"].ToString()=="Admin")
+                            {
+                                userCategory="2";
+
+                            }
+                         }
                         if (myFunctions.getIntVAL(userCategory.ToString()) == 2)
                         {
                             if (bAllBranchData == true)
-                                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  (D_Date>=@d_DateFrom and D_Date<=@d_DateTo) and N_EmpID=@nEmpID union  Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and   isnull(D_Date,'1900-01-01')='1900-01-01' and N_EmpID not in (select N_EmpID from vw_Pay_Empshiftdetails where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and D_Date>=@d_DateFrom and D_Date<=@d_DateTo   )";
+                                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  (D_Date>=@d_DateFrom and D_Date<=@d_DateTo) and N_EmpID=@nEmpID union  Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and   isnull(D_Date,'1900-01-01')='1900-01-01' and N_EmpID=@nEmpID and D_Date>=@d_DateFrom and D_Date<=@d_DateTo ";
                             else
                                 sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,x_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID    and (N_BranchID=0 or N_BranchID=@nBranchID) and N_EmpID=@nEmpID and (D_Date>=@d_DateFrom and D_Date<=@d_DateTo or   isnull(D_Date,'1900-01-01')='1900-01-01')  ";
 
@@ -229,6 +240,13 @@ namespace SmartxAPI.Controllers
                      dt = myFunctions.AddNewColumnToDataTable(dt, "X_Day", typeof(string), null);
                      dt = myFunctions.AddNewColumnToDataTable(dt, "D_CurrentIn", typeof(string), null);
                      dt = myFunctions.AddNewColumnToDataTable(dt, "D_CurrentOut", typeof(string), null);
+                     dt = myFunctions.AddNewColumnToDataTable(dt, "X_VacationType", typeof(string), null);
+                     dt = myFunctions.AddNewColumnToDataTable(dt, "b_Vacation", typeof(bool), false);
+                     dt = myFunctions.AddNewColumnToDataTable(dt, "X_DutyPlace1", typeof(string), null);
+                     dt = myFunctions.AddNewColumnToDataTable(dt, "X_DutyPlace2", typeof(string), null);
+
+                 
+                     
 
                     DateTime Date = d_DateFrom;
                           do
@@ -249,22 +267,35 @@ namespace SmartxAPI.Controllers
                                 } while (Date <= d_DateTo);
                       
                         dt.AcceptChanges();
-                       foreach (DataRow row in dt.Rows){
+
+                    
+
+                 foreach (DataRow row in dt.Rows){
+
+        
                         DateTime Date5 = Convert.ToDateTime(row["D_date"].ToString());
                         string day = Date5.DayOfWeek.ToString();
                                     //Default Paycodes
 
                                   row["X_Day"] = day;
                                      object ncatID = dLayer.ExecuteScalar("Select n_CatagoryID from Pay_Employee Where N_CompanyID =" + nCompanyID + " and N_FNyearID= " + nFnYearID + "  and N_EmpID="+nEmpID+"", Params, connection);
+                                     object xDutyPlace1 = dLayer.ExecuteScalar("Select X_DutyPlace1 from Pay_Empshiftdetails Where N_CompanyID =" + nCompanyID + " and N_FNyearID= " + nFnYearID + "  and N_EmpID="+nEmpID+"", Params, connection);
+                                     object xDutyPlace2 = dLayer.ExecuteScalar("Select X_DutyPlace2 from Pay_Empshiftdetails Where N_CompanyID =" + nCompanyID + " and N_FNyearID= " + nFnYearID + "  and N_EmpID="+nEmpID+"", Params, connection);
+
                                         object DIn1= dLayer.ExecuteScalar("Select D_In1 from Pay_WorkingHours Where N_CompanyID =" + nCompanyID + " and n_CatagoryID= " + ncatID + " and x_day='"+day+"'", Params, connection);
-                                        // object DIn2= dLayer.ExecuteScalar("Select D_In2 from Pay_WorkingHours Where N_CompanyID =" + nCompanyID + " and n_CatagoryID= " + ncatID + " and x_day='"+day+"'", Params, connection);
-                                        // object Dout1= dLayer.ExecuteScalar("Select D_Out1 from Pay_WorkingHours Where N_CompanyID =" + nCompanyID + " and n_CatagoryID= " + ncatID + " and x_day='"+day+"'", Params, connection);
                                         object Dout2= dLayer.ExecuteScalar("Select D_Out2 from Pay_WorkingHours Where N_CompanyID =" + nCompanyID + " and n_CatagoryID= " + ncatID + " and x_day='"+day+"'", Params, connection);
                                          row["D_CurrentIn"] = DIn1;
-                                        // rowPA["D_In2"] = DIn2;
-                                        // rowPA["D_Out1"] = Dout1;
                                         row["D_CurrentOut"] = Dout2;
-                        
+                                        row["X_DutyPlace1"] = xDutyPlace1;
+                                        row["X_DutyPlace2"] = xDutyPlace2;
+                    object nVacationID = dLayer.ExecuteScalar("Select ISNULL(N_VacTypeID,0) From Pay_VacationDetails Where N_CompanyID =@nCompanyID and N_EmpID=@nEmpID and D_VacDateFrom<='"+Date5+"' and D_VacDateTo>='"+Date5+"' and B_IsAdjustEntry=0 and B_IsSaveDraft=0",Params,connection);
+                    if(nVacationID!=null){
+                        object xVacationType = dLayer.ExecuteScalar("Select X_vacType from Pay_VacationType Where N_CompanyID =" + nCompanyID + "  and N_VacTypeID="+nVacationID+"", Params, connection);
+                           row["b_Vacation"] = true;
+                           row["X_VacationType"] = xVacationType;
+                           
+                    }
+
                     }
                     dt.AcceptChanges();
 
