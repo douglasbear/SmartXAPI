@@ -167,7 +167,7 @@ namespace SmartxAPI.Controllers
                     do
                     {
 
-                        object objDatePresent = dLayer.ExecuteScalar("Select N_EmpID from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date = '" + Date + "' and N_EmpID=" + nEmpID, Params, connection);
+                        object objDatePresent = dLayer.ExecuteScalar("Select N_EmpID from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and D_Date = '" + Date + "' and N_EmpID=" + nEmpID, Params, connection);
                         if (objDatePresent == null)
                         {
                             DataRow rowET = ElementsTable.NewRow();
