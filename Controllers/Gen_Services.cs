@@ -119,10 +119,20 @@ namespace SmartxAPI.Controllers
                         masterTable = "Inv_DeliveryNote";
                         column = "x_ReceiptNo";
                     }
-                        if(formID==555){
+                    if(formID==555){
                         masterTable = "Inv_MRN";
                         column = "x_MRNNo";
                     }
+                     if(formID==52){
+                        masterTable = "Inv_Vendor";
+                        column = "x_VendorCode";
+                    }
+                     if(formID==51){
+                        masterTable = "Inv_customer";
+                        column = "x_CustomerCode";
+                    }
+
+
 
 
 
