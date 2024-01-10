@@ -443,6 +443,7 @@ namespace SmartxAPI.Controllers
 
                     GRNNo = MasterTable.Rows[0]["X_MRNNo"].ToString();
 
+                    
                     if (N_GRNID > 0)
                     {
                         if (n_POrderID > 0)
@@ -476,6 +477,16 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(_api.Error(User,ex));
                         }
+                    }
+
+                    DataTable count = new DataTable();
+                    SortedList Paramss = new SortedList();
+                    string sql = "select * from Inv_MRN where x_MRNNo='" + values + "' and N_CompanyID=" + nCompanyID + "and N_FormID="+n_FormID+"";
+                    count = dLayer.ExecuteDataTable(sql, Paramss, connection, transaction);
+                    if (count.Rows.Count > 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Doc Number Already in Use"));
                     }
 
                     N_GRNID = dLayer.SaveData("Inv_MRN", "N_MRNID", MasterTable, connection, transaction);
