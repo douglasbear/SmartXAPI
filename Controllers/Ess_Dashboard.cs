@@ -118,17 +118,20 @@ namespace SmartxAPI.Controllers
                     // object EnableLeaveData = "";
                     object Loan = dLayer.ExecuteScalar(sqlCommandLoan, Params, connection);
                     object TotalVacation = null;
-                    if (EnableLeaveData.ToString() == "1")
-                        TotalVacation = dLayer.ExecuteScalar(sqlCommandVacation, Params, connection);
+                    if (EnableLeaveData.ToString() == "1"){
+                          TotalVacation = dLayer.ExecuteScalar(sqlCommandVacation, Params, connection);
                     object PendingVacation = dLayer.ExecuteScalar(sqlCommandPendingVacation, Params, connection);
                     object PendingLeaveApproval = dLayer.ExecuteScalar(sqlPendingLeaveApproval, Params, connection);
+                    DashboardDetails = myFunctions.AddNewColumnToDataTable(DashboardDetails, "PendingVacation", typeof(string), PendingVacation);
+                    DashboardDetails = myFunctions.AddNewColumnToDataTable(DashboardDetails, "PendingLeaveApproval", typeof(string), PendingLeaveApproval);
+                    }
+                   
 
 
                     DashboardDetails = myFunctions.AddNewColumnToDataTable(DashboardDetails, "Loan", typeof(string), Loan);
                     DashboardDetails = myFunctions.AddNewColumnToDataTable(DashboardDetails, "Vacation", typeof(string), TotalVacation);
-                    DashboardDetails = myFunctions.AddNewColumnToDataTable(DashboardDetails, "PendingVacation", typeof(string), PendingVacation);
                     DashboardDetails = myFunctions.AddNewColumnToDataTable(DashboardDetails, "EnableLeave", typeof(string), EnableLeaveData);
-                    DashboardDetails = myFunctions.AddNewColumnToDataTable(DashboardDetails, "PendingLeaveApproval", typeof(string), PendingLeaveApproval);
+                 
                     DataRow row = DashboardDetails.NewRow();
                     DashboardDetails.Rows.Add(row);
                     DashboardDetails.AcceptChanges();
