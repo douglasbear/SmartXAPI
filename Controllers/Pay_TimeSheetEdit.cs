@@ -383,7 +383,7 @@ namespace SmartxAPI.Controllers
                         int EmpID=myFunctions.getIntVAL(DetailTable.Rows[l]["N_EmpID"].ToString());
                         if(EmpID==tempEMP)
                         continue;
-                        dLayer.ExecuteNonQuery("delete from Pay_TimeSheetImport where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and  D_Date >= '" + myFunctions.getDateVAL(dFromDate) + "' and D_Date<=' " + myFunctions.getDateVAL(dToDate) + "' and N_EmpID=" + EmpID, connection, transaction);
+                        dLayer.ExecuteNonQuery("delete from Pay_TimeSheetImport where N_CompanyID=" + nCompanyID + " and  D_Date >= '" + myFunctions.getDateVAL(dFromDate) + "' and D_Date<=' " + myFunctions.getDateVAL(dToDate) + "' and N_EmpID=" + EmpID, connection, transaction);
                         tempEMP=EmpID;
                     }
 
