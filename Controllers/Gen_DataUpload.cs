@@ -59,8 +59,8 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     foreach (DataTable dt in ds.Tables)
                     {
-                        if (dt.Columns.Contains("notes") && !isRuleBasedImport)
-                            dt.Columns.Remove("notes");
+                        // if (dt.Columns.Contains("notes") && !isRuleBasedImport)
+                        //     dt.Columns.Remove("notes");
 
                         Params["X_Type"] = dt.TableName;
                         Mastertable = ds.Tables[dt.TableName];
@@ -331,8 +331,8 @@ namespace SmartxAPI.Controllers
                         if (Mastertable.Rows.Count > 0)
                         {
 
-                            if (Mastertable.Columns.Contains("Notes") && !isRuleBasedImport)
-                               Mastertable.Columns.Remove("Notes");
+                        //    if (Mastertable.Columns.Contains("Notes") && !isRuleBasedImport)
+                        //       Mastertable.Columns.Remove("Notes");
 
                             dLayer.ExecuteNonQuery("delete from " + xTableName, Params, connection, transaction);
 

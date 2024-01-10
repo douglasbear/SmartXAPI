@@ -519,6 +519,17 @@ namespace SmartxAPI.GeneralFunctions
             ApprovalParams.Add("@loggedInUserID", loggedInUserID);
             ApprovalParams.Add("@GUserID", GUserID);
 
+            if(nTransID>0)
+            {
+                 object objFormID = dLayer.ExecuteScalar("select distinct N_FormID from Log_ApprovalProcess where N_TransID=@nTransID and X_TransType=( select X_Type from vw_ScreenTables where N_FormID=@nFormID)",ApprovalParams,connection);
+                if(objFormID!=null)
+                {
+                    nFormID = this.getIntVAL(objFormID.ToString());
+                    ApprovalParams["@nFormID"] = nFormID;
+                    Response["@nFormID"] = nFormID;
+                }
+            }
+
             object objUserCategory = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User where N_CompanyID=" + nCompanyID + " and N_UserID=" + loggedInUserID, ApprovalParams, connection);
 
             objUserCategory = objUserCategory != null ? objUserCategory : 0;
@@ -601,7 +612,7 @@ namespace SmartxAPI.GeneralFunctions
             }
             else
             {
-                if (nActiveID != null && getIntVAL(nActiveID.ToString()) == 2) //temp
+                if (nActiveID != null && getIntVAL(nActiveID.ToString()) == 2 && nFormID!=1844) //temp
                 {
                     Response["btnSaveText"] = "Save";
                     Response["btnDeleteText"] = "Delete";
@@ -1536,6 +1547,13 @@ namespace SmartxAPI.GeneralFunctions
             LogParams.Add("@xDepLevel", DepLevel);
             LogParams.Add("@dTransDate", DateTime.Now.ToString("dd/MMM/yyyy"));
             LogParams.Add("@nTransOwnUserID", N_TransOwnUserID);
+
+            object objFormID = dLayer.ExecuteScalar("select distinct N_FormID from Log_ApprovalProcess where N_TransID=@nTransID and X_TransType=( select X_Type from vw_ScreenTables where N_FormID=@nFormID)",LogParams,connection,transaction);
+            if(objFormID!=null)
+            {
+                N_FormID = this.getIntVAL(objFormID.ToString());
+                LogParams["@nFormID"] = N_FormID;
+            }
 
             if (N_IsApprovalSystem == 1)
             {

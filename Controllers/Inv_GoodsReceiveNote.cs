@@ -179,7 +179,7 @@ namespace SmartxAPI.Controllers
             if (nMRNNo != null)
             {
                 Params.Add("@GRNNo", nMRNNo);
-                X_MasterSql = "select N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS x_MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,N_FreightAmt,N_CreatedUser,D_CreatedDate,N_ExchangeRate,N_CurrencyID,X_CurrencyName,OrderDate,isnull(N_Processed,0) as N_Processed,N_PurchaseID,X_InvoiceNo,X_ProjectCode,X_ProjectName,N_ProjectID,N_FormID,N_Decimal,X_VendorName_Ar,N_POrderid,N_DivisionID,X_DivisionName from vw_InvMRNNo_Search where N_CompanyID=@CompanyID and [MRN No]=@GRNNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                X_MasterSql = "select N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS x_MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,N_FreightAmt,N_CreatedUser,D_CreatedDate,N_ExchangeRate,N_CurrencyID,X_CurrencyName,OrderDate,isnull(N_Processed,0) as N_Processed,N_PurchaseID,X_InvoiceNo,X_ProjectCode,X_ProjectName,N_ProjectID,N_FormID,N_Decimal,X_VendorName_Ar,N_POrderid,N_DivisionID,X_DivisionName,N_StatusID,N_LastActionID from vw_InvMRNNo_Search where N_CompanyID=@CompanyID and [MRN No]=@GRNNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
             }
             if (poNo != null)
             {
@@ -228,14 +228,20 @@ namespace SmartxAPI.Controllers
 
                         if (myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_FormID"].ToString()) == 1593)
                         {
-                            string dataSql = "SELECT Inv_ServiceTimesheet.N_ServiceSheetID FROM Inv_MRN INNER JOIN Inv_ServiceTimesheet ON Inv_MRN.N_CompanyID = Inv_ServiceTimesheet.N_CompanyID AND "+
-                                "Inv_MRN.N_FnYearID = Inv_ServiceTimesheet.N_FnYearID AND Inv_MRN.N_POrderid = Inv_ServiceTimesheet.N_POID "+
-                                "WHERE Inv_MRN.N_CompanyID="+nCompanyId+" AND Inv_MRN.N_FnYearID="+nFnYearId+" AND Inv_MRN.N_POrderid="+myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_POrderid"].ToString())+" AND Inv_MRN.N_FormID=1593";
+                            DataTable detailsData = dLayer.ExecuteDataTable("select N_MRNDetailsID from Inv_MRNDetails where N_CompanyID="+nCompanyId+" and N_MRNID="+nGRNID+" order by N_MRNDetailsID", Params, connection, transaction);
+                            DataTable itemData = dLayer.ExecuteDataTable("select N_MRNDetailID from Inv_ServiceTimesheetItems where N_CompanyID="+nCompanyId+" and N_MRNID="+nGRNID+" group by N_MRNDetailID order by N_MRNDetailID", Params, connection, transaction);
 
-                            DataTable timesheetData = dLayer.ExecuteDataTable(dataSql, Params, connection, transaction);
-                            if (timesheetData.Rows.Count > 0)
+                            foreach (DataRow Avar in detailsData.Rows)
                             {
-                                dtGoodReceive.Rows[0]["isTimesheetDone"] = true;
+                                foreach (DataRow Kvar in itemData.Rows)
+                                {
+                                    if (myFunctions.getIntVAL(Avar["N_MRNDetailsID"].ToString()) == myFunctions.getIntVAL(Kvar["N_MRNDetailID"].ToString()))
+                                    {
+                                        dtGoodReceive.Rows[0]["isTimesheetDone"] = true;
+                                    } else {
+                                        dtGoodReceive.Rows[0]["isTimesheetDone"] = false;
+                                    }
+                                }
                             }
                         }
 
@@ -342,6 +348,7 @@ namespace SmartxAPI.Controllers
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nFnYearID = myFunctions.getIntVAL(masterRow["n_FnYearId"].ToString());
+            int n_OldFnYearId =myFunctions.getIntVAL(masterRow["n_FnYearId"].ToString());
             int n_POrderID = myFunctions.getIntVAL(masterRow["n_POrderID"].ToString());
             int n_FormID = myFunctions.getIntVAL(masterRow["n_FormID"].ToString());
              String xButtonAction="";
@@ -472,6 +479,20 @@ namespace SmartxAPI.Controllers
                     }
 
                     N_GRNID = dLayer.SaveData("Inv_MRN", "N_MRNID", MasterTable, connection, transaction);
+
+                    if (N_GRNID > 0)
+                    {
+                        if (n_FormID == 1593)
+                        {
+                            object serviceSheetID = dLayer.ExecuteScalar("select N_ServiceSheetID from Inv_ServiceTimesheet where N_CompanyID="+nCompanyID+" and N_POID in (SELECT Inv_PurchaseOrder.N_POrderID FROM Inv_PurchaseOrder INNER JOIN Inv_MRN ON Inv_PurchaseOrder.N_POrderID = Inv_MRN.N_POrderid AND Inv_PurchaseOrder.N_CompanyID = Inv_MRN.N_CompanyID where Inv_MRN.N_CompanyID="+nCompanyID+" and Inv_MRN.N_MRNID="+N_GRNID+") and convert(date ,'" + MasterTable.Rows[0]["d_MRNDate"].ToString() + "') BETWEEN D_DateFrom AND D_DateTo", Params, connection, transaction);
+                            if (serviceSheetID == null) serviceSheetID = 0;
+                            if (myFunctions.getIntVAL(serviceSheetID.ToString()) > 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User,"Unable to save,Timesheet Processed for the date"));
+                            }
+                        }
+                    }
 
                     if (N_GRNID <= 0)
                     {
@@ -612,6 +633,17 @@ namespace SmartxAPI.Controllers
                             else
                             {
                                 if(!myFunctions.UpdateTxnStatus(nCompanyID,n_POrderID,82,false,dLayer,connection,transaction))
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                }
+                            }
+                        }
+                        if (N_GRNID > 0)
+                        {
+                            if (myFunctions.getIntVAL(masterRow["n_FormID"].ToString()) == 1593)
+                            {
+                                if(!myFunctions.UpdateTxnStatus(nCompanyID,N_GRNID,1593,true,dLayer,connection,transaction))
                                 {
                                     transaction.Rollback();
                                     return Ok(_api.Error(User, "Unable To Update Txn Status"));

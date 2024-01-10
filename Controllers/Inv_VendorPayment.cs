@@ -238,6 +238,7 @@ namespace SmartxAPI.Controllers
             DataTable PayReceipt = new DataTable();
             DataTable PayInfo = new DataTable();
             DataTable Attachments = new DataTable();
+            DataTable otherCharges = new DataTable();
             string sql = "";
             int AllBranch = 1;
             int nPayReceiptID = 0;
@@ -283,6 +284,7 @@ namespace SmartxAPI.Controllers
                             myFunctions.AddNewColumnToDataTable(PayInfo, "N_Decimal", typeof(int), N_CurrencyDecimal);
                             dTransDate = myFunctions.getDateVAL(Convert.ToDateTime(PayInfo.Rows[0]["D_Date"].ToString()));
                         }
+                        
                     }
 
                     SortedList paramList = new SortedList();
@@ -348,6 +350,10 @@ namespace SmartxAPI.Controllers
                         Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), 67, 0, User, connection);
                     //Attachments = api.Format(Attachments, "attachments");
                     decimalobj = dLayer.ExecuteScalar("Select isnull(N_Decimal, 0)  from Acc_Company where N_CompanyID=@nCompanyID ", paramList, connection);
+                        if (PayInfo.Rows.Count > 0){
+                            String sqlOtherCharges = "select * from VW_Inv_Othercharges_details where N_CompanyID="+nCompanyId+" and N_TransID="+nPayReceiptID+" and X_TransType='PP'";
+                            otherCharges = dLayer.ExecuteDataTable(sqlOtherCharges, paramList, connection);
+                         }
                 }
 
                 PayReceipt = myFunctions.AddNewColumnToDataTable(PayReceipt, "n_DueAmount", typeof(double), 0);
@@ -385,6 +391,7 @@ namespace SmartxAPI.Controllers
 
                 return Ok(api.Success(new SortedList() {
               { "details", api.Format(PayReceipt) },
+               { "otherCharges", api.Format(otherCharges)},
                 { "masterData", OutPut },
                  { "attachments", api.Format(Attachments) },
                  { "master", PayInfo } }));
@@ -407,6 +414,8 @@ namespace SmartxAPI.Controllers
                 DataTable Attachment = ds.Tables["attachments"];
                 DataTable Approvals;
                 Approvals = ds.Tables["approval"];
+                 DataTable otherCharges;
+                otherCharges = ds.Tables["otherChargesDetail"];
                 DataRow ApprovalRow = Approvals.Rows[0];
 
                 SortedList Params = new SortedList();
@@ -535,6 +544,18 @@ namespace SmartxAPI.Controllers
                         //myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "PURCHASE PAYMENT", x_VoucherNo, dLayer, connection, transaction, User);
                         transaction.Commit();
                         return Ok(api.Success("Vendor Payment Approved " + "-" + x_VoucherNo));
+                    }
+                    if(n_PayReceiptID == 0){
+                      if (MasterTable.Columns.Contains("n_PaymentRequestID") && x_Type.ToLower() == "pa" )
+                      {
+                          int nPaymentRequestID = myFunctions.getIntVAL(Master["n_PaymentRequestID"].ToString());
+                          if(nPaymentRequestID > 0) {
+                          object Res = dLayer.ExecuteScalar("Select COUNT(N_PaymentRequestID) from Inv_PayReceipt Where N_CompanyID= " + nCompanyId + " and N_PaymentRequestID="+nPaymentRequestID, connection, transaction);
+                          if  (myFunctions.getIntVAL(Res.ToString()) > 0) {
+                            return Ok(api.Error(User, "Payment request already converted"));
+                           }
+                          }
+                      }
                     }
                    if (n_PayReceiptID == 0 && x_VoucherNo != "@Auto")
                     {
@@ -704,6 +725,23 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows.Add(row);
 
                     }
+                   if (otherCharges.Rows.Count > 0)
+                        {
+                             if (otherCharges.Columns.Contains("n_Taxcategoryid"))
+                             {
+                                foreach (DataRow var in otherCharges.Rows)
+                                    {
+                                var["N_TransID"] = n_PayReceiptID;
+                                var["X_TransType"] = x_Type;
+                                if(!otherCharges.Columns.Contains("N_MenuID")){
+                                    otherCharges.Columns.Add("N_MenuID");
+                                }
+                                var["N_MenuID"] = N_FormID;
+                                 }
+                        int nOtherChargesID = myFunctions.getIntVAL(otherCharges.Rows[0]["n_OtherChargesID"].ToString());
+                        dLayer.SaveData("Inv_Othercharges", "n_OtherChargesID", otherCharges, connection, transaction);
+                    }
+                    }
 
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -738,6 +776,20 @@ namespace SmartxAPI.Controllers
                     else
                         ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
                     myFunctions.LogScreenActivitys(nFnYearID, n_PayReceiptID, PayReceiptNo, 67, xButtonAction, ipAddress, "", User, dLayer, connection, transaction);
+
+                       if (n_PayReceiptID > 0)
+                      {
+                        if(MasterTable.Columns.Contains("n_PaymentRequestID"))
+                        {
+                          if(myFunctions.getIntVAL(MasterTable.Rows[0]["n_PaymentRequestID"].ToString())>0){
+                           if(!myFunctions.UpdateTxnStatus( myFunctions.GetCompanyID(User), myFunctions.getIntVAL(MasterTable.Rows[0]["n_PaymentRequestID"].ToString()), 1844, false, dLayer, connection, transaction)){
+                                transaction.Rollback();
+                                    return Ok(api.Error(User, "Unable To Update Txn Status"));
+                            }
+                        }
+
+                        } 
+                        }
 
 
 
@@ -817,6 +869,13 @@ namespace SmartxAPI.Controllers
 
 
                     string status = myFunctions.UpdateApprovals(Approvals, nFnyearID, "PURCHASE PAYMENT", nPayReceiptId, TransRow["X_VoucherNo"].ToString(), ProcStatus, "Inv_PayReceipt", X_Criteria, "", User, dLayer, connection, transaction);
+
+                    string sqlPaymentRequestID = "select N_PaymentRequestID from Inv_PayReceipt where N_PayReceiptId=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+                    object reqID = dLayer.ExecuteScalar(sqlPaymentRequestID, ParamList, connection,transaction);
+                    int PaymentRequestID = 0;
+                    if (reqID != null)
+                        PaymentRequestID = myFunctions.getIntVAL(reqID.ToString());
+
                     if (status != "Error")
                     {
                         if (ButtonTag == "6" || ButtonTag == "0")
@@ -831,6 +890,7 @@ namespace SmartxAPI.Controllers
                                 int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
                                 if (result > 0)
                                 {
+                                    int Results1 = dLayer.DeleteData("Inv_othercharges", "N_TransID", nPayReceiptId, "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID+" and X_TransType='PP'", connection, transaction);
                                     myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnyearID, 67, User, transaction, connection);
 
                                     if (VendorData.Rows.Count > 0)
@@ -846,6 +906,16 @@ namespace SmartxAPI.Controllers
 
 
                                         }
+
+                                     if (PaymentRequestID > 0)
+                                    {
+                                        if (!myFunctions.UpdateTxnStatus(nCompanyID, PaymentRequestID, 1844, false, dLayer, connection, transaction))
+                                        {
+                                            transaction.Rollback();
+                                            return Ok(api.Error(User, "Unable To Update Txn Status"));
+                                        }
+                                    }
+                                    
                                     transaction.Commit();
                                     return Ok(api.Success("Vendor Payment Deleted"));
                                 }
@@ -856,6 +926,8 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails_Segments where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='"+xTransType+"' AND N_AccTransID  in (select N_AccTransID from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='"+xTransType+"' AND X_VoucherNo='"+TransRow["X_VoucherNo"].ToString()+"')", ParamList, connection, transaction);
                             dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='"+xTransType+"' AND X_VoucherNo='"+TransRow["X_VoucherNo"].ToString()+"'", ParamList, connection, transaction);
                         }
+
+                  
 
                         transaction.Commit();
                         return Ok(api.Success("Vendor Payment " + status + " Successfully"));

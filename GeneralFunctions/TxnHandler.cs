@@ -809,6 +809,7 @@ namespace SmartxAPI.GeneralFunctions
 
                             //StatusUpdate
                             int tempPOrderID=0;
+                           
                             for (int j = 0; j < DetailTable.Rows.Count; j++)
                             {
                                 
@@ -825,7 +826,9 @@ namespace SmartxAPI.GeneralFunctions
                                         
 
                                 }
-                                if (myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString())> 0 && tempPOrderID!=myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString()))
+                                
+                              
+                                    if (myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString())> 0 && tempPOrderID!=myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString()))
                                 {
                                     if (myFunctions.getIntVAL(masterRow["n_FormID"].ToString()) == 1605)
                                     {
@@ -851,7 +854,20 @@ namespace SmartxAPI.GeneralFunctions
                                     }
                                 }
                                 tempPOrderID=myFunctions.getIntVAL(DetailTable.Rows[j]["n_POrderID"].ToString());
+                             
                             };
+                             if(MasterTable.Columns.Contains("n_PaymentRequestID"))
+                             {
+                             if(myFunctions.getIntVAL(masterRow["n_PaymentRequestID"].ToString())>0){
+                             if(!myFunctions.UpdateTxnStatus(nCompanyID,myFunctions.getIntVAL(masterRow["n_PaymentRequestID"].ToString()),1844,false,dLayer,connection,transaction))
+                                        {
+
+                                            Result.Add("b_IsCompleted", 0);
+                                            Result.Add("x_Msg", "Unable To Update Txn Status");
+                                            return Result;
+                                        }
+                                }
+                             }
                     }
                     SortedList VendorParams = new SortedList();
                     VendorParams.Add("@nVendorID", N_VendorID);
@@ -2506,7 +2522,7 @@ namespace SmartxAPI.GeneralFunctions
                             {"X_InventoryMode","PURCHASE RETURN"},
                             {"N_InternalID",N_CreditNoteID},
                             {"N_UserID",N_UserID}};
-                dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostParams, connection, transaction);
+             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostParams, connection, transaction);
             }
             catch (Exception ex)
             {

@@ -259,6 +259,7 @@ namespace SmartxAPI.Controllers
                 var InvoiceNo = masterRow["x_TransType"].ToString();
                 var nCompanyId = masterRow["n_CompanyId"].ToString();
                 var nFnYearId = masterRow["n_FnYearId"].ToString();
+                 int n_OldFnYearId =myFunctions.getIntVAL(masterRow["n_FnYearId"].ToString());
                 int N_VoucherID = myFunctions.getIntVAL(masterRow["n_VoucherID"].ToString());
                 var nUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var nFormID = 0;
@@ -361,7 +362,7 @@ namespace SmartxAPI.Controllers
                     }
                         if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_VoucherID > 0)
                     {
-                        int dltRes = dLayer.DeleteData("Acc_VoucherDetails", "N_InventoryID", N_VoucherID, "x_transtype='" + xTransType + "' and x_voucherno ='" + xVoucherNo + "' and N_CompanyID =" + nCompanyId + " and N_FnYearID =" + nFnYearId, connection, transaction);
+                        int dltRes = dLayer.DeleteData("Acc_VoucherDetails", "N_InventoryID", N_VoucherID, "x_transtype='" + xTransType + "' and x_voucherno ='" + xVoucherNo + "' and N_CompanyID =" + nCompanyId + " and N_FnYearID =" + n_OldFnYearId, connection, transaction);
                         int N_PkeyID = N_VoucherID;
                         string X_Criteria = "N_VoucherID=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId;
                         myFunctions.UpdateApproverEntry(Approvals, "Acc_VoucherMaster", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
@@ -389,6 +390,18 @@ namespace SmartxAPI.Controllers
                        Result.Add("n_VoucherID", N_VoucherID);
                        Result.Add("x_POrderNo", xVoucherNo);
                        return Ok(api.Success(Result, "Voucher Approved " + "-" + xVoucherNo));
+                    }
+                    if(N_VoucherID == 0 && xTransType.ToLower() == "pv"){
+                      if (MasterTable.Columns.Contains("n_PaymentRequestID"))
+                      {
+                          int nPaymentRequestID = myFunctions.getIntVAL(masterRow["n_PaymentRequestID"].ToString());
+                          if(nPaymentRequestID > 0) {
+                            object Res = dLayer.ExecuteScalar("Select COUNT(N_PaymentRequestID) from Acc_VoucherMaster Where N_CompanyID= " + nCompanyId + " and N_PaymentRequestID="+nPaymentRequestID+"and N_FnYearID=" + nFnYearId, connection, transaction);
+                          if  (myFunctions.getIntVAL(Res.ToString()) > 0) {
+                            return Ok(api.Error(User, "Payment request already converted"));
+                            }
+                          }
+                      }
                     }
 
              
@@ -426,9 +439,9 @@ namespace SmartxAPI.Controllers
                              xVoucherNo = MasterTable.Rows[0]["x_VoucherNo"].ToString();
                         if (N_VoucherID > 0)
                         {
-                            int dltRes = dLayer.DeleteData("Acc_VoucherDetails", "N_InventoryID", N_VoucherID, "x_transtype='" + xTransType + "' and x_voucherno ='" + xVoucherNo + "' and N_CompanyID =" + nCompanyId + " and N_FnYearID =" + nFnYearId, connection, transaction);
+                            int dltRes = dLayer.DeleteData("Acc_VoucherDetails", "N_InventoryID", N_VoucherID, "x_transtype='" + xTransType + "' and x_voucherno ='" + xVoucherNo + "' and N_CompanyID =" + nCompanyId + " and N_FnYearID =" + n_OldFnYearId, connection, transaction);
                             // if (dltRes <= 0){transaction.Rollback();return Ok(api.Error(User,"Unable to Update"));}
-                            dltRes = dLayer.DeleteData("Acc_VoucherMaster_Details_Segments", "N_VoucherID", N_VoucherID, "N_VoucherID= " + N_VoucherID + " and N_CompanyID = " + nCompanyId + " and N_FnYearID=" + nFnYearId, connection, transaction);
+                            dltRes = dLayer.DeleteData("Acc_VoucherMaster_Details_Segments", "N_VoucherID", N_VoucherID, "N_VoucherID= " + N_VoucherID + " and N_CompanyID = " + nCompanyId + " and N_FnYearID=" + n_OldFnYearId, connection, transaction);
                             // if (dltRes <= 0){transaction.Rollback();return Ok(api.Error(User,"Unable to Update"));}
                             dltRes = dLayer.DeleteData("Acc_VoucherMaster_Details", "N_VoucherID", N_VoucherID, "N_VoucherID= " + N_VoucherID + " and N_CompanyID = " + nCompanyId, connection, transaction);
                              if (dltRes <= 0){transaction.Rollback();return Ok(api.Error(User,"Unable to Update"));}
@@ -596,6 +609,23 @@ namespace SmartxAPI.Controllers
                         }
 
                     }
+
+                        for (int j = 0; j < DetailTable.Rows.Count; j++){
+                      if (N_VoucherID > 0)
+                      {
+                        if(MasterTable.Columns.Contains("n_PaymentRequestID"))
+                        {
+                          if(myFunctions.getIntVAL(masterRow["n_PaymentRequestID"].ToString())>0){
+                           if(!myFunctions.UpdateTxnStatus( myFunctions.GetCompanyID(User), myFunctions.getIntVAL(masterRow["n_PaymentRequestID"].ToString()), 1844, false, dLayer, connection, transaction)){
+                                transaction.Rollback();
+                                    return Ok(api.Error(User, "Unable To Update Txn Status"));
+                            }
+                        }
+
+                        } 
+                        }
+                      
+                     }
                        //Activity Log
                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearId.ToString()),N_VoucherID,xVoucherNo,nFormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
                           
@@ -682,6 +712,12 @@ namespace SmartxAPI.Controllers
                     string X_Criteria = "N_VoucherID=" + nVoucherID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
+
+                    string sqlPaymentRequestID = "select N_PaymentRequestID from Acc_VoucherMaster where N_VoucherID=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+                    object reqID = dLayer.ExecuteScalar(sqlPaymentRequestID, ParamList, connection,transaction);
+                    int PaymentRequestID = 0;
+                    if (reqID != null)
+                        PaymentRequestID = myFunctions.getIntVAL(reqID.ToString());
                     
 
                     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, xTransType, nVoucherID, TransRow["X_VoucherNo"].ToString(), ProcStatus, "Acc_VoucherMaster", X_Criteria, "", User, dLayer, connection, transaction);
@@ -721,6 +757,16 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails_Segments where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='"+xTransType+"' AND N_AccTransID  in (select N_AccTransID from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='"+xTransType+"' AND X_VoucherNo='"+TransRow["X_VoucherNo"].ToString()+"')", ParamList, connection, transaction);
                             dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails where N_CompanyID=@nCompanyID AND N_FnYearID=@nFnYearID and X_TransType='"+xTransType+"' AND X_VoucherNo='"+TransRow["X_VoucherNo"].ToString()+"'", ParamList, connection, transaction);
                         }
+
+
+                           if (PaymentRequestID > 0)//Updating SQ Status
+                                    {
+                                        if (!myFunctions.UpdateTxnStatus(nCompanyID, PaymentRequestID, 1844, true, dLayer, connection, transaction))
+                                        {
+                                            transaction.Rollback();
+                                            return Ok(api.Error(User, "Unable To Update Txn Status"));
+                                        }
+                                    }
 
                         transaction.Commit();
                         return Ok(api.Success("Voucher " + status + " Successfully"));

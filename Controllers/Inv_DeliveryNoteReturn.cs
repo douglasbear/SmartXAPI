@@ -125,6 +125,7 @@ namespace SmartxAPI.Controllers
                     int nFormID = myFunctions.getIntVAL(MasterRow["n_FormID"].ToString());
                     string xReturnNo = MasterRow["x_ReturnNo"].ToString();
                     int N_UserID = myFunctions.GetUserID(User);
+                    int nDeliveryNoteID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteId"].ToString());
 
                     if (xReturnNo == "@Auto")
                     {
@@ -162,6 +163,17 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                         return Ok("Unable to save Delivery Note Return");
+                    }
+
+                    if(nDeliveryNoteRtnID > 0)
+                    {
+                        object serviceSheetID = dLayer.ExecuteScalar("select N_ServiceSheetID from Inv_ServiceTimesheet where N_CompanyID="+nCompanyID+" and N_SOID in (SELECT Inv_SalesOrder.N_SalesOrderId FROM Inv_SalesOrder INNER JOIN Inv_DeliveryNote ON Inv_SalesOrder.N_SalesOrderId = Inv_DeliveryNote.N_SalesOrderID AND Inv_SalesOrder.N_CompanyId = Inv_DeliveryNote.N_CompanyId where Inv_DeliveryNote.N_CompanyId="+nCompanyID+" and Inv_DeliveryNote.N_DeliveryNoteId="+nDeliveryNoteID+") and convert(date ,'" + MasterTable.Rows[0]["d_ReturnDate"].ToString() + "') BETWEEN D_DateFrom AND D_DateTo", Params, connection, transaction);
+                        if (serviceSheetID == null) serviceSheetID = 0;
+                        if (myFunctions.getIntVAL(serviceSheetID.ToString()) > 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User,"Unable to save,Timesheet Processed for the date"));
+                        }
                     }
                     dLayer.DeleteData("Inv_DeliveryNoteReturnDetails", "N_DeliveryNoteRtnID", nDeliveryNoteRtnID, "", connection, transaction);
 
@@ -262,6 +274,21 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Product is not available for delivery"));
                         else return Ok(_api.Error(User, ex));
                     }
+
+                    //StatusUpdate
+                    int n_DeliveryNoteID = 0;
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        n_DeliveryNoteID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_DeliveryNoteID"].ToString());
+                        if (n_DeliveryNoteID > 0)
+                        {
+                            if (!myFunctions.UpdateTxnStatus(nCompanyID, n_DeliveryNoteID, 1572, false, dLayer, connection, transaction))
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                            }
+                        }
+                    };
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
@@ -439,6 +466,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable rentalItem = dLayer.ExecuteDataTable("select * from Inv_RentalSchedule where N_CompanyID=@nCompanyID and N_FormID=1585 and N_TransID=@nDeliveryNoteRtnID ", QueryParams, connection,transaction);
+                    DataTable DetailTable = dLayer.ExecuteDataTable("SELECT Inv_DeliveryNoteDetails.N_DeliveryNoteID FROM Inv_DeliveryNoteDetails INNER JOIN Inv_DeliveryNoteReturnDetails ON Inv_DeliveryNoteDetails.N_CompanyID = Inv_DeliveryNoteReturnDetails.N_CompanyID AND Inv_DeliveryNoteDetails.N_DeliveryNoteDetailsID = Inv_DeliveryNoteReturnDetails.N_DeliveryNoteDetailsID where Inv_DeliveryNoteReturnDetails.N_CompanyID=@nCompanyID and Inv_DeliveryNoteReturnDetails.N_DeliveryNoteRtnID=@nDeliveryNoteRtnID group by Inv_DeliveryNoteDetails.N_DeliveryNoteID", QueryParams, connection, transaction);
                     //Results = dLayer.DeleteData("Inv_DeliveryNoteReturn", "N_DeliveryNoteRtnID", nDeliveryNoteRtnID, "", connection,transaction);
 
                     SortedList DeleteParams = new SortedList(){
@@ -466,6 +494,19 @@ namespace SmartxAPI.Controllers
                                 dLayer.ExecuteNonQuery("update Ass_AssetMaster Set N_RentalStatus=1 where N_ItemID=" + nAssItemID + " and N_CompanyID=@nCompanyID ", QueryParams, connection,transaction);
                             if (nRentalEmpID > 0)
                                 dLayer.ExecuteNonQuery("update Pay_Employee Set N_RentalStatus=1 where N_EmpID=" + nRentalEmpID + " and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ", QueryParams, connection,transaction);
+                        }
+
+                        for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        {
+                            int n_DeliveryNoteID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_DeliveryNoteID"].ToString());
+                            if (n_DeliveryNoteID > 0)
+                            {
+                                if(!myFunctions.UpdateTxnStatus(nCompanyID,n_DeliveryNoteID,1572,true,dLayer,connection,transaction))
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, "Unable To Update Txn Status"));
+                                }
+                            }
                         }
 
                         transaction.Commit();

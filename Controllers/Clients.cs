@@ -450,20 +450,22 @@ namespace SmartxAPI.Controllers
                     if (DaysToExpire >= 0 && DaysToExpire <= 30)
                     {
                         object LastExpiryReminder = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_LastExpiryReminder)),5) as expiry from ClientApps where N_ClientID=" + nClientID+ " and N_AppID ="+AppID, cnn).ToString());
-                        // if (Math.Abs(myFunctions.getIntVAL(LastExpiryReminder.ToString())) >= 5)
-                        // {
+                        if (Math.Abs(myFunctions.getIntVAL(LastExpiryReminder.ToString())) >= 5)
+                        {
+                            DateTime currentDate = DateTime.Now;
+                            int currentYear = currentDate.Year;
                             string xClientName = dLayer.ExecuteScalar("select X_ClientName from ClientMaster where N_ClientID=" + nClientID, cnn).ToString();
                             string xEmail = dLayer.ExecuteScalar("select X_EmailID from ClientMaster where N_ClientID=" + nClientID, cnn).ToString();
                             string xExpiryInfo = DaysToExpire > 0 ? "expiring within " + DaysToExpire + " days " : "expired";
                             string dExpiryDate = dLayer.ExecuteScalar("select cast(FORMAT (min(D_ExpiryDate), 'dd MMMM yyyy') as varchar)  as expiry from ClientApps where N_ClientID=" + nClientID+" and N_AppID ="+AppID, cnn).ToString();
                             string xProductName = dLayer.ExecuteScalar("SELECT X_AppDescription FROM AppMaster INNER JOIN ClientMaster ON ClientMaster.N_DefaultAppID = AppMaster.N_AppID where N_ClientID=" + nClientID+" and N_AppID ="+AppID, cnn).ToString();
-                            string EmailBody = "<div><div><div>Hello " + xClientName + ",</div>&nbsp;<div>Your subscription for " + xProductName + " is " + xExpiryInfo + ". It is time to renew.</div>&nbsp;<div>It is important to keep your subscription up to date in order to continue using service.</div>&nbsp;<div>If you wish to renew your subscription, contact your salesperson.</div>&nbsp;<div>Your license expires on: " + dExpiryDate + ".</div>&nbsp;<div>Your product name: " + xProductName + ".</div>&nbsp;<div>Best regards,<br /><br /><span style=\"background-color:rgb(255, 255, 255); color:rgb(44, 106, 246); font-family:sans-serif\">Olivo Cloud Solutions</span><br /><br /><span style=\"background-color:rgb(244, 245, 246); color:rgb(134, 137, 142); font-family:sans-serif; font-size:14px\">Copyright &copy; 2021 Olivo Cloud Solutions, All rights reserved.</span><span style=\"color:rgb(0, 0, 0)\"> </span></div></div><div>&nbsp;</div></div>";
+                            string EmailBody = "<div><div><div>Hello " + xClientName + ",</div>&nbsp;<div>Your subscription for " + xProductName + " is " + xExpiryInfo + ". It is time to renew.</div>&nbsp;<div>It is important to keep your subscription up to date in order to continue using service.</div>&nbsp;<div>If you wish to renew your subscription, contact your salesperson.</div>&nbsp;<div>Your license expires on: " + dExpiryDate + ".</div>&nbsp;<div>Your product name: " + xProductName + ".</div>&nbsp;<div>Best regards,<br /><br /><span style=\"background-color:rgb(255, 255, 255); color:rgb(44, 106, 246); font-family:sans-serif\">Olivo Cloud Solutions</span><br /><br /><span style=\"background-color:rgb(244, 245, 246); color:rgb(134, 137, 142); font-family:sans-serif; font-size:14px\">Copyright &copy; "+currentYear+" Olivo Cloud Solutions, All rights reserved.</span><span style=\"color:rgb(0, 0, 0)\"> </span></div></div><div>&nbsp;</div></div>";
                             string EmailSubject = "Renewal Reminder";
                             if (myFunctions.SendMail(xEmail, EmailBody, EmailSubject, dLayer, 1, 1, 1,true))
                             {
                                 dLayer.ExecuteScalar("Update ClientApps set D_LastExpiryReminder=GETDATE()  where N_ClientID=" + nClientID, cnn);
                             }
-                        //}
+                        }
                     }
                 }
                 return true;

@@ -184,6 +184,7 @@ namespace SmartxAPI.Controllers
             DataTable Attachments = new DataTable();
             SortedList general = new SortedList();
             SortedList OutPut = new SortedList();
+             DataTable otherCharges = new DataTable();
 
             SortedList salesParams = new SortedList();
 
@@ -223,6 +224,10 @@ namespace SmartxAPI.Controllers
                             nCustomerId = myFunctions.getIntVAL(PayInfo.Rows[0]["N_PartyID"].ToString());
                             dTransDate = myFunctions.getDateVAL(Convert.ToDateTime(PayInfo.Rows[0]["D_Date"].ToString()));
                         }
+                              if (PayInfo.Rows.Count > 0){
+                        String sqlOtherCharges = "select * from VW_Inv_Othercharges_details where N_CompanyID="+nCompanyId+" and N_TransID="+n_PayReceiptId+" and X_TransType='SR'";
+                        otherCharges = dLayer.ExecuteDataTable(sqlOtherCharges,  connection);
+                    }
 
 
                         SortedList mParamsList = new SortedList()
@@ -303,7 +308,7 @@ namespace SmartxAPI.Controllers
 
                                 ds.Tables.Add(MasterTable);
                                 ds.Tables.Add(DetailTable);
-                                return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) }, { "master", MasterTable }, { "masterData", OutPut } }));
+                                 return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) }, { "master", MasterTable }, { "masterData", OutPut }, {"otherCharges" , otherCharges} }));
                             }
                         }
                         else
@@ -448,6 +453,7 @@ namespace SmartxAPI.Controllers
 
 
                 return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) },
+                 { "otherCharges", api.Format(otherCharges)},
                 { "master", MasterTable },
                  { "attachments", Attachments},
                  { "masterData", OutPut } }));
@@ -561,6 +567,8 @@ namespace SmartxAPI.Controllers
                 DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
+                DataTable otherCharges;
+                otherCharges = ds.Tables["otherChargesDetail"];
                 DataTable Attachment = ds.Tables["attachments"];
 
                 DataTable Approvals;
@@ -758,6 +766,23 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                         return Ok(api.Error(User, "Unable To Save Customer Payment"));
+                    }
+                   if (otherCharges.Rows.Count > 0)
+                     if (otherCharges.Columns.Contains("n_Taxcategoryid")){
+                        {
+                            foreach (DataRow var in otherCharges.Rows)
+                            {
+                                var["N_TransID"] = PayReceiptId;
+                                var["X_TransType"] = xType;
+                                if(!otherCharges.Columns.Contains("N_MenuID")){
+                                    otherCharges.Columns.Add("N_MenuID");
+                                }
+                                var["N_MenuID"] = N_FormID;
+                                
+                            }
+                        int nOtherChargesID = myFunctions.getIntVAL(otherCharges.Rows[0]["n_OtherChargesID"].ToString());
+                        dLayer.SaveData("Inv_Othercharges", "n_OtherChargesID", otherCharges, connection, transaction);
+                    }
                     }
 
 
@@ -1008,7 +1033,9 @@ namespace SmartxAPI.Controllers
                                     {"N_VoucherID",nPayReceiptId}
                                 };
                             int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
-
+                            
+                            int Results1 = dLayer.DeleteData("Inv_othercharges", "N_TransID", nPayReceiptId ,  "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID+" and X_TransType='SR'" , connection, transaction);
+                            
                             if (result > 0)
                             {
                                 myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnYearID, 66, User, transaction, connection);

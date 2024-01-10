@@ -129,7 +129,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(_api.Success("Country Created"));
+                        return Ok(_api.Success("Country Saved"));
                     }
                 }
             }
@@ -171,7 +171,7 @@ namespace SmartxAPI.Controllers
             catch (Exception ex)
                 {
                     if (ex.Message.Contains("REFERENCE constraint"))
-                    return Ok(_api.Error(User, "Unable to delete customer! It has been used."));
+                    return Ok(_api.Error(User, "Unable to delete country! It has been used."));
                 else
         
                     return Ok(_api.Error(User,ex));
