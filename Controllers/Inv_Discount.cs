@@ -326,7 +326,7 @@ namespace SmartxAPI.Controllers
                     transaction.Commit();
                     SortedList Result = new SortedList();
 
-                    return Ok(api.Success(Result, "Discount Saved"));
+                    return Ok(api.Success(Result, "Pricelist Saved Successfully"));
                 }
             }
             catch (Exception ex)
@@ -364,7 +364,7 @@ namespace SmartxAPI.Controllers
                 }
                 if (Results > 0)
                 {
-                    return Ok(api.Success("Discount deleted"));
+                    return Ok(api.Success("Pricelist Deleted"));
                 }
                 else
                 {
