@@ -225,7 +225,7 @@ namespace SmartxAPI.Controllers
                             dTransDate = myFunctions.getDateVAL(Convert.ToDateTime(PayInfo.Rows[0]["D_Date"].ToString()));
                         }
                               if (PayInfo.Rows.Count > 0){
-                        String sqlOtherCharges = "select * from VW_Inv_Othercharges_details where N_CompanyID="+nCompanyId+" and N_TransID="+n_PayReceiptId+" and X_TransType='SR'";
+                        String sqlOtherCharges = "select * from VW_Inv_Othercharges_details where N_CompanyID="+nCompanyId+" and N_TransID="+n_PayReceiptId+" and X_TransType='"+xTransType+"'";
                         otherCharges = dLayer.ExecuteDataTable(sqlOtherCharges,  connection);
                     }
 
@@ -1034,7 +1034,7 @@ namespace SmartxAPI.Controllers
                                 };
                             int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
                             
-                            int Results1 = dLayer.DeleteData("Inv_othercharges", "N_TransID", nPayReceiptId ,  "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID+" and X_TransType='SR'" , connection, transaction);
+                            int Results1 = dLayer.DeleteData("Inv_othercharges", "N_TransID", nPayReceiptId ,  "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID+" and X_TransType='"+xType+"'" , connection, transaction);
                             
                             if (result > 0)
                             {
