@@ -215,42 +215,71 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-    
         [HttpGet("basemonthlist")]
         public ActionResult GetbasemonthList(int nCompanyID, int nBudgetTypeID, int nYear,string nMonth)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandText = "select X_Month from Acc_BudgetMaster WHERE N_CompanyID=@p1 AND N_YearID=@p3 and N_BudgetTypeID=@p2 GROUP BY X_Month";
+            //string sqlCommandText = "select X_Month from Acc_BudgetMaster WHERE N_CompanyID=@p1 AND N_YearID=@p2 and N_BudgetTypeID=@p3 GROUP BY X_Month";
 
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nBudgetTypeID);
             Params.Add("@p3", nYear);
-            //Params.Add("@p4", nMonth);
+           //Params.Add("@p4", nMonth);
+
+
 
             try
             {
-               
-                
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
                 }
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(dt));
-                }
+                return Ok(_api.Success(dt));
             }
             catch (Exception e)
             {
                 return Ok(_api.Error(User, e));
             }
         }
+        // [HttpGet("basemonthlist")]
+        // public ActionResult GetbasemonthList(int nCompanyID, int nBudgetTypeID, int nYear,string nMonth)
+        // {
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
+        //     string sqlCommandText = "select X_Month from Acc_BudgetMaster WHERE N_CompanyID=@p1 AND N_YearID=@p3 and N_BudgetTypeID=@p2 GROUP BY X_Month";
+
+        //     Params.Add("@p1", nCompanyID);
+        //     Params.Add("@p2", nBudgetTypeID);
+        //     Params.Add("@p3", nYear);
+        //     //Params.Add("@p4", nMonth);
+
+        //     try
+        //     {
+               
+                
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+        //         }
+        //         if (dt.Rows.Count == 0)
+        //         {
+        //             return Ok(_api.Notice("No Results Found"));
+        //         }
+        //         else
+        //         {
+        //             return Ok(_api.Success(dt));
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(User, e));
+        //     }
+        // }
 
         [HttpGet("basebudgetlist")]
         public ActionResult GetbasebudgetList(int nCompanyID, int nYear,int nBudgetTypeID,string xMonth)
