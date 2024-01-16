@@ -126,6 +126,11 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    object sql = dLayer.ExecuteScalar("SELECT COUNT (N_roomid) FROM vw_Pay_RoomMaster WHERE n_VillaID ='"+nVillaID+"' ",connection);
+
+                    if(myFunctions.getIntVAL(sql.ToString()) > 1){
+                        return Ok(_api.Error("Unable to delete Villa is already used"));
+                    }
                     Results = dLayer.DeleteData("Pay_VillaMaster", "n_VillaID", nVillaID, "", connection);
                     if (Results > 0)
                     {
