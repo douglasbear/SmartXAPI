@@ -373,7 +373,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("EmphiftDetails")]
-        public ActionResult EmphiftDetails(int nEmpID, int nFnyearID)
+        public ActionResult EmphiftDetails(int nEmpID, int nFnyearID,int nSizeperpage,int nPage)
         {
             DataSet dt = new DataSet();
             DataTable MasterTable = new DataTable();
@@ -382,10 +382,26 @@ namespace SmartxAPI.Controllers
             int nCompanyId = myFunctions.GetCompanyID(User);
             object CategoryID = "";
             string Sql = "";
-            string sqlCommandText = "select top(10) N_CompanyID,D_Date,D_In1,D_Out1,D_In2,D_Out2,X_GroupName,x_dutyPlace1,x_dutyPlace2 from vw_payEmpShiftDetails where N_EmpID=@p3 and N_CompanyID=@p1 and MONTH(Cast(vw_payEmpShiftDetails.D_Date as DATE)) = MONTH(CURRENT_TIMESTAMP) and YEAR(vw_payEmpShiftDetails.D_Date)= YEAR(CURRENT_TIMESTAMP) order by D_Date asc";
+            string sqlCommandText="";
+            string sqlCommandCount = "";
+            object TotalCount=0;
+            int Count = (nPage - 1) * nSizeperpage;
+             SortedList OutPut = new SortedList();
+            
+            if(Count==0){
+                 sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,D_Date,D_In1,D_Out1,D_In2,D_Out2,X_GroupName,x_dutyPlace1,x_dutyPlace2,N_ShiftID from vw_payEmpShiftDetails where N_EmpID=@p3 and N_CompanyID=@p1 and MONTH(Cast(vw_payEmpShiftDetails.D_Date as DATE)) = MONTH(CURRENT_TIMESTAMP) and YEAR(vw_payEmpShiftDetails.D_Date)= YEAR(CURRENT_TIMESTAMP) order by D_Date asc";
+            }
+            else{
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,D_Date,D_In1,D_Out1,D_In2,D_Out2,X_GroupName,x_dutyPlace1,x_dutyPlace2,N_ShiftID from vw_payEmpShiftDetails where N_EmpID=@p3 and N_CompanyID=@p1 and MONTH(Cast(vw_payEmpShiftDetails.D_Date as DATE)) = MONTH(CURRENT_TIMESTAMP) and YEAR(vw_payEmpShiftDetails.D_Date)= YEAR(CURRENT_TIMESTAMP) and N_ShiftID not in (select top(" + Count + ") N_ShiftID from vw_payEmpShiftDetails where N_EmpID=@p3 and N_CompanyID=@p1 and MONTH(Cast(vw_payEmpShiftDetails.D_Date as DATE)) = MONTH(CURRENT_TIMESTAMP) and YEAR(vw_payEmpShiftDetails.D_Date)= YEAR(CURRENT_TIMESTAMP)order by D_Date asc) order by D_Date asc";
+            }
+          
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnyearID);
             Params.Add("@p3", nEmpID);
+               Params.Add("@p7", CategoryID);
+
+            sqlCommandCount="select count(*) from vw_payEmpShiftDetails where N_EmpID=@p3 and N_CompanyID=@p1 and MONTH(Cast(vw_payEmpShiftDetails.D_Date as DATE)) = MONTH(CURRENT_TIMESTAMP) and YEAR(vw_payEmpShiftDetails.D_Date)= YEAR(CURRENT_TIMESTAMP)";
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -396,14 +412,16 @@ namespace SmartxAPI.Controllers
                     CategoryID = dLayer.ExecuteScalar(CatID, Params, connection);
 
                     MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                     TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                   
 
 
                     DateTime Start = DateTime.Now;
-                    DateTime End = Start.AddDays(9);
+                    DateTime End = Start.AddDays(6);
 
                     double a = (End - Start).TotalDays;
                     bool dayFlag = false;
-                    Params.Add("@p7", CategoryID);
+                
 
                     if (MasterTable.Rows.Count == 0)
                     {
@@ -420,13 +438,16 @@ namespace SmartxAPI.Controllers
 
                         }
                         MasterTable = dLayer.ExecuteDataTable(Sql, Params, connection);
+                        TotalCount=7;
 
                     }
+                     
 
-                    MasterTable = api.Format(MasterTable, "Master");
-                    dt.Tables.Add(MasterTable);
+                   
+                        OutPut.Add("Master", api.Format(MasterTable));
+                        OutPut.Add("TotalCount", TotalCount);
                 }
-                return Ok(api.Success(dt));
+                return Ok(api.Success(OutPut));
             }
             catch (Exception e)
             {
