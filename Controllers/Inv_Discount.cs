@@ -71,7 +71,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             SortedList dParamList = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            int Count = (nPage - 1) * nSizeperpage;
+            // int Count = (nPage - 1) * nSizeperpage;
 
             string MasterDiscount = "Select * from vw_inv_DiscountMaster Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_DiscID = @p3";
             string DetailsDiscount = "Select top(22) * from vw_Discount Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_DiscID = @p3";
