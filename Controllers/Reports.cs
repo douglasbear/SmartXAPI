@@ -467,7 +467,7 @@ namespace SmartxAPI.Controllers
                             docNumber = "DocNo";
                         partyName = partyName.Replace("&", "");
                         partyName = partyName.Replace(":", "");
-                        partyName = partyName.ToString().Substring(0, Math.Min(12, partyName.ToString().Length));
+                        partyName = partyName.ToString().Substring(0, Math.Min(2, partyName.ToString().Length));
                         if (docNumber == null)
                             docNumber = "";
                         docNumber = Regex.Replace(docNumber, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);

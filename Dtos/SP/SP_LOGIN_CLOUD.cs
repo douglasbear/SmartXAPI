@@ -100,6 +100,7 @@ namespace SmartxAPI.Dtos.SP
         [NotMapped]
         public string Warning { get; set; }
         public bool B_IsConsolidated { get; set; }
+        public bool B_EnableZatcaValidation { get; set; }
 
 
 

@@ -25,6 +25,7 @@ namespace SmartxAPI.Dtos.Login
         public string X_UtcOffSet { get; set; }
         public string X_ZoneName { get; set; }
         public bool B_IsConsolidated { get; set; }
+        public bool B_EnableZatcaValidation { get; set; }
 
 
         
