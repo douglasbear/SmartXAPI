@@ -111,6 +111,15 @@ namespace SmartxAPI.Controllers
               using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+
+                    object objBrand = dLayer.ExecuteScalar("select count(1) from Inv_ItemMaster where N_ItemBrandID="+nBrandID, connection);
+                    if (objBrand == null) { 
+                        objBrand = 0;
+                    }
+                    if(myFunctions.getIntVAL(objBrand.ToString()) > 0) {
+                        return Ok(_api.Error(User, "Already Used! Unable to delete."));
+                    }
+
                 Results=dLayer.DeleteData("Inv_ItemBrand","N_ItemBrandID",nBrandID,"",connection);
                 if(Results>0){
                     return Ok(_api.Success("Brand deleted" ));
