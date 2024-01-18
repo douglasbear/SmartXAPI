@@ -65,6 +65,7 @@ namespace SmartxAPI.GeneralFunctions
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nFnYearID = myFunctions.getIntVAL(masterRow["n_FnYearId"].ToString());
+            int n_OldFnYearId =myFunctions.getIntVAL(masterRow["n_FnYearId"].ToString());
             int n_POrderID = myFunctions.getIntVAL(masterRow["N_POrderID"].ToString());
             int nDivisionID = 0;
 
@@ -465,7 +466,7 @@ namespace SmartxAPI.GeneralFunctions
                             }
                         }
 
-                        dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + nCompanyID + " and X_VoucherNo='" + values + "' and N_FnYearID=" + nFnYearID + " and X_TransType = 'PURCHASE'", connection, transaction);
+                        dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + nCompanyID + " and X_VoucherNo='" + values + "' and N_FnYearID=" + n_OldFnYearId + " and X_TransType = 'PURCHASE'", connection, transaction);
                         dLayer.ExecuteNonQuery("Delete FROM Inv_PurchaseFreights WHERE N_PurchaseID = " + N_PurchaseID + " and N_CompanyID = " + nCompanyID, connection, transaction);
                         dLayer.ExecuteNonQuery("Delete from Inv_PurchaseWarranty where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.ExecuteNonQuery("Delete from Inv_PurchaseDetails where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
@@ -958,6 +959,8 @@ namespace SmartxAPI.GeneralFunctions
             int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
             int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
             int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
+            int n_OldFnYearId =myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
+
             int nDivisionID = 0;
             if (MasterTable.Columns.Contains("n_DivisionID"))
             {
@@ -1082,8 +1085,8 @@ namespace SmartxAPI.GeneralFunctions
                 if (N_SaveDraft == 0)
                 {
 
-                    dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails_Segments where N_CompanyID=" + N_CompanyID + " AND N_FnYearID="+N_FnYearID+" and X_TransType='SALES' AND N_AccTransID  in (select N_AccTransID from Acc_VoucherDetails where N_CompanyID=" + N_CompanyID + " AND N_FnYearID="+N_FnYearID+"  and X_TransType='SALES' AND X_VoucherNo='"+InvoiceNo+"')", QueryParams, connection, transaction);
-                    dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails where N_CompanyID=" + N_CompanyID + " AND N_FnYearID="+N_FnYearID+"  and X_TransType='SALES' AND X_VoucherNo='"+InvoiceNo+"'", QueryParams, connection, transaction);
+                    dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails_Segments where N_CompanyID=" + N_CompanyID + " AND N_FnYearID="+n_OldFnYearId+" and X_TransType='SALES' AND N_AccTransID  in (select N_AccTransID from Acc_VoucherDetails where N_CompanyID=" + N_CompanyID + " AND N_FnYearID="+n_OldFnYearId+"  and X_TransType='SALES' AND X_VoucherNo='"+InvoiceNo+"')", QueryParams, connection, transaction);
+                    dLayer.ExecuteNonQuery("delete from Acc_VoucherDetails where N_CompanyID=" + N_CompanyID + " AND N_FnYearID="+n_OldFnYearId+"  and X_TransType='SALES' AND X_VoucherNo='"+InvoiceNo+"'", QueryParams, connection, transaction);
 
                     dLayer.ExecuteNonQuery("delete from Inv_SaleAmountDetails where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_BranchID=" + N_BranchID, connection, transaction);
 
@@ -1347,10 +1350,10 @@ namespace SmartxAPI.GeneralFunctions
                     object nRecieptID = dLayer.ExecuteScalar(payRecieptqry, Params, connection, transaction);
                     if (nRecieptID != null && myFunctions.getIntVAL(nRecieptID.ToString()) > 0)
                     {
-                        dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + N_CompanyID + " and N_InventoryID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " and N_FnYearID=" + N_FnYearID + " and X_TransType = 'SA'", connection, transaction);
+                        dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + N_CompanyID + " and N_InventoryID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " and N_FnYearID=" + n_OldFnYearId + " and X_TransType = 'SA'", connection, transaction);
                         dLayer.ExecuteNonQuery(" delete from Inv_PayReceiptDetails Where N_CompanyID=" + N_CompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " ", connection, transaction);
-                        dLayer.ExecuteNonQuery(" delete from Inv_PayReceipt Where N_CompanyID=" + N_CompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " and  N_FnYearID=" + N_FnYearID + " ", connection, transaction);
-                        dLayer.DeleteData("Inv_SalesAdvanceSettlement", "N_SalesID", N_SalesID, "N_CompanyID = " + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+                        dLayer.ExecuteNonQuery(" delete from Inv_PayReceipt Where N_CompanyID=" + N_CompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " and  N_FnYearID=" + n_OldFnYearId + " ", connection, transaction);
+                        dLayer.DeleteData("Inv_SalesAdvanceSettlement", "N_SalesID", N_SalesID, "N_CompanyID = " + N_CompanyID + " and N_FnYearID=" + n_OldFnYearId + "", connection, transaction);
                     }
 
                 SortedList DeleteParams = new SortedList(){
