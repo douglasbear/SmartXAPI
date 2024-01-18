@@ -526,12 +526,15 @@ namespace SmartxAPI.Controllers
                         else
                             ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
                             myFunctions.LogScreenActivitys(myFunctions.getIntVAL( nFnYearId.ToString()),nTimesheetID,TransData.Rows[0]["X_BatchCode"].ToString(),793,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
-                       dLayer.ExecuteNonQuery("Update Pay_TimeSheetImport Set n_timesheetID=null Where N_CompanyID=" + nCompanyID + " and N_FnYearID= "+ nFnYearId +" and N_TimesheetID= "+ nTimesheetID +"", QueryParams, connection, transaction);
-                       
+
+                      dLayer.ExecuteNonQuery("Update Pay_TimeSheetImport Set n_timesheetID=null Where N_CompanyID=" + nCompanyID + " and N_FnYearID= "+ nFnYearId +" and N_TimesheetID= "+ nTimesheetID +"", QueryParams, connection, transaction);
+
                     Results = dLayer.DeleteData("Pay_TimesheetEntryEmp", "N_TimesheetID", nTimesheetID,"N_CompanyID=" + nCompanyID, connection, transaction);
                     if (Results > 0)
                     {
+                        
                         dLayer.DeleteData("Pay_TimeSheetEntry", "N_TimesheetID", nTimesheetID, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearId, connection, transaction);
+                        // dLayer.ExecuteNonQuery("Update Pay_TimeSheetImport Set n_timesheetID=null Where N_CompanyID=" + nCompanyID + " and N_FnYearID= "+ nFnYearId +" and N_TimesheetID= "+ nTimesheetID +"", QueryParams, connection, transaction);
                         transaction.Commit();
                         return Ok(_api.Success("timeSheetEntry deleted"));
                     }

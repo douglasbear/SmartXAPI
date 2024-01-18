@@ -584,6 +584,13 @@ namespace SmartxAPI.Controllers
                     bool SigEnable = false;
                     String xButtonAction = "";
 
+                   int nDivisionID = 0;
+                    if (MasterTable.Columns.Contains("n_DivisionID"))
+                     {
+                     nDivisionID=myFunctions.getIntVAL(MasterRow["n_DivisionID"].ToString());
+                     }
+
+                    SortedList Result = new SortedList();
                     if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_DeliveryDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
                     {
                         object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=" + N_CompanyID + " and convert(date ,'" + MasterTable.Rows[0]["D_DeliveryDate"].ToString() + "') between D_Start and D_End", connection, transaction);
@@ -871,6 +878,40 @@ namespace SmartxAPI.Controllers
                     if (rentalItem.Rows.Count > 0)
                         dLayer.SaveData("Inv_RentalSchedule", "N_ScheduleID", rentalItem, connection, transaction);
 
+
+
+
+                        if(nDivisionID>0)
+                    {
+                    if (DetailTable.Rows.Count > 0)
+                    {
+                     object xLevelsql = dLayer.ExecuteScalar("select X_LevelPattern from Inv_DivisionMaster where N_CompanyID=" + N_CompanyID + " and N_DivisionID=" + nDivisionID + " and N_GroupID=0", Params, connection,transaction);
+                      
+                       if (xLevelsql != null && xLevelsql.ToString() != "")
+                        {
+                        for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        {
+
+                            //  detailTable.Rows[j]["N_SalesId"] = N_SalesID;
+                            object xLevelPattern = dLayer.ExecuteScalar("SELECT  Inv_DivisionMaster.X_LevelPattern FROM         Inv_DivisionMaster LEFT OUTER JOIN    Inv_ItemCategory ON Inv_DivisionMaster.N_DivisionID = Inv_ItemCategory.N_DivisionID AND Inv_DivisionMaster.N_CompanyID = Inv_ItemCategory.N_CompanyID RIGHT OUTER JOIN "+
+                            "Inv_ItemMaster ON Inv_ItemCategory.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemCategory.N_CategoryID = Inv_ItemMaster.N_CategoryID  where Inv_ItemMaster.N_ItemID="+ DetailTable.Rows[j]["N_ItemID"]+" and Inv_ItemMaster.N_CompanyID="+N_CompanyID+"", Params, connection,transaction);
+                           // object xLevelPattern = dLayer.ExecuteScalar("select X_LevelPattern from Acc_CostCentreMaster where N_CompanyID=" + N_CompanyID + " and N_CostCentreID=" + nDivisionID + " and N_GroupID=0", Params, connection);
+                             if (xLevelsql.ToString() != xLevelPattern.ToString().Substring(0, 3))
+                             {
+                                 transaction.Rollback();
+                                return Ok(_api.Error(User, "Unable To save!...Division Mismatch"));
+                             }
+                           
+                        }
+                        }
+                     
+
+
+
+                    }
+                    }
+
+
                     //int N_DeliveryNoteDetailsID = dLayer.SaveData("Inv_DeliveryNoteDetails", "n_DeliveryNoteDetailsID", DetailTable, connection, transaction);
                     if (N_DeliveryNoteDetailsID <= 0)
                     {
@@ -992,7 +1033,7 @@ namespace SmartxAPI.Controllers
                                 dLayer.ExecuteNonQuery("update Pay_Employee Set N_RentalStatus=1 where N_EmpID=" + nRentalEmpID + " and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ", QueryParams, connection, transaction);
                         }
 
-                        SortedList Result = new SortedList();
+                        
                         Result.Add("n_DeliveryNoteID", N_DeliveryNoteID);
                         Result.Add("InvoiceNo", InvoiceNo);
                         transaction.Commit();
@@ -1304,7 +1345,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("multipleSalesOrder")]
-        public ActionResult ProductList(int nFnYearID, int nCustomerID, bool bAllbranchData, int nBranchID)
+        public ActionResult ProductList(int nFnYearID, int nCustomerID, bool bAllbranchData, int nBranchID,int nDivisionID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
 
@@ -1313,14 +1354,23 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
             Params.Add("@nCustomerID", nCustomerID);
+            Params.Add("@nDivisionID", nDivisionID);
 
 
             string sqlCommandText = "";
-            if (bAllbranchData)
-                sqlCommandText = "Select * from vw_pendingSO Where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID";
-            else
+            if (bAllbranchData){
+                 if(nDivisionID>0){
+                sqlCommandText = "Select * from vw_pendingSO Where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID and N_DivisionID=@nDivisionID"; 
+                  }
+                 else{
+                   sqlCommandText = "Select * from vw_pendingSO Where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID";
+                  }
+              }
+              else{
                 sqlCommandText = "Select * from vw_pendingSO Where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID";
 
+              }
+                
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

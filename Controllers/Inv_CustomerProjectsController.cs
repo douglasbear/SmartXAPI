@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllProjects(int? nCompanyId, int? nFnYearID, int nEmpID)
+        public ActionResult GetAllProjects(int? nCompanyId, int? nFnYearID, int nEmpID,int nDivisionID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -52,12 +52,16 @@ namespace SmartxAPI.Controllers
                 " Sec_User ON Tsk_ProjectSettingsDetails.N_CompanyID = Sec_User.N_CompanyID AND Tsk_ProjectSettingsDetails.N_UserID = Sec_User.N_UserID LEFT OUTER JOIN Inv_CustomerProjects ON Tsk_ProjectSettingsDetails.N_ProjectID = Inv_CustomerProjects.N_ProjectID where Sec_User.N_EmpID="+nEmpID+" and Tsk_ProjectSettingsDetails.B_View=1";
                       
             }
+            if(nDivisionID>0){
+                     sqlCommandText = "select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p2 and N_DivisionID=@p3 and X_ProjectCode is not null  order by N_ProjectID desc";
+            }
             else{
                      sqlCommandText = "select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p2  and X_ProjectCode is not null  order by N_ProjectID desc";
             }
       
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearID);
+            Params.Add("@p3", nDivisionID);
            // Params.Add("@p3", nCustomerID);
             
 
@@ -176,7 +180,7 @@ namespace SmartxAPI.Controllers
                 if (MasterTable.Columns.Contains("x_Action")){
                      xAction = MasterTable.Rows[0]["x_Action"].ToString();
                 }
-               
+                string xButtonAction = "Insert";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -221,6 +225,7 @@ namespace SmartxAPI.Controllers
                     //Check for Existing Workflow
                     if (nProjectID > 0)
                     {
+                          xButtonAction = "Update";
                         N_WorkFlowID = dLayer.ExecuteScalar("select N_WTaskID from inv_customerprojects where N_CompanyID=" + nCompanyID + " and N_ProjectID=" + nProjectID, Params, connection, transaction);
                         dLayer.ExecuteNonQuery("delete from Inv_OtherCost where  N_CompanyID=" + nCompanyID + "and N_TransID=" + nProjectID + "and X_TransType='Job File' and N_FormID=1579", Params, connection, transaction);// add menuid
                     }
@@ -370,6 +375,15 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error(User, ex));
                         }
                     }
+                        //Activity Log
+                string ipAddress = "";
+                if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnYearId,nProjectID,X_ProjectCode,N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                      
+                         
                         transaction.Commit();
                         return Ok(api.Success("Project Information Created"));
                     }
@@ -382,7 +396,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nProjectID,int nFnyearID)
+          public ActionResult DeleteData(int nProjectID,int nFnyearID,string X_ProjectCode)
         {
 
             int Results = 0;
@@ -397,6 +411,15 @@ namespace SmartxAPI.Controllers
                      object objNProjectIDCount = dLayer.ExecuteScalar("Select count(N_ProjectID) from inv_Sales where N_CompanyID=" + nCompanyID + " and N_ProjectID=" + nProjectID + " and N_FnYearID="+nFnyearID, connection, transaction);
                      object objPurchaseCount = dLayer.ExecuteScalar("Select count(N_ProjectID) from inv_Purchase where N_CompanyID=" + nCompanyID + " and N_ProjectID=" + nProjectID + " and N_FnYearID="+nFnyearID, connection, transaction);
                      object objVoucherCount = dLayer.ExecuteScalar("Select count(N_ProjectID) from Acc_VoucherMaster where N_CompanyID=" + nCompanyID + " and N_ProjectID=" + nProjectID + " and N_FnYearID="+nFnyearID, connection, transaction);
+                     string xButtonAction ="Delete";
+                      //Activity Log
+                        string ipAddress = "";
+                   if (  Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                   else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                       myFunctions.LogScreenActivitys(nFnyearID,nProjectID,X_ProjectCode,N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                  
                      if (objNProjectIDCount == null)
                         objNProjectIDCount = 0;
                     if (objPurchaseCount == null)

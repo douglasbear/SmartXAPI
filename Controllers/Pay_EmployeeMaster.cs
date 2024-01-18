@@ -1291,7 +1291,7 @@ namespace SmartxAPI.Controllers
 
                     if (xPhone1 != "")
                     {
-                        object NPhnCount = dLayer.ExecuteScalar("Select count(1) from pay_Employee Where X_Phone1 ='" + xPhone1 + "' and N_EmpID <> '" + nEmpID + "' and N_Status not in (2,3) and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                        object NPhnCount = dLayer.ExecuteScalar("Select count(1) from pay_Employee Where X_Phone1 ='" + xPhone1 + "' and N_EmpID <> " + nEmpID + " and N_Status not in (2,3) and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
                         if (NPhnCount == null)
                         {
                             NPhnCount = 0;
@@ -1306,7 +1306,7 @@ namespace SmartxAPI.Controllers
                     }
                     if (xEmailID != "")
                     {
-                        object NEmailCount = dLayer.ExecuteScalar("Select count(1) from pay_Employee Where X_EmailID ='" + xEmailID + "' and N_EmpID <> '" + nEmpID + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                        object NEmailCount = dLayer.ExecuteScalar("Select count(1) from pay_Employee Where X_EmailID ='" + xEmailID + "' and N_EmpID <> " + nEmpID + " and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
                         if (NEmailCount == null)
                         {
                             NEmailCount = 0;
@@ -1622,6 +1622,11 @@ namespace SmartxAPI.Controllers
                             if (dtSch_Teacher.Rows.Count > 0)
                                 Sch_TeacherRes = dLayer.SaveData("Sch_Teacher", "N_TeacherID", dtSch_Teacher, connection, transaction);
                         }
+
+                           if (nEmpID > 0)
+                          {
+                          dLayer.DeleteData("Pay_EmployeeEducation", "N_EmpID", nEmpID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                           }
                         int Pay_EmployeeEducationRes = 0;
                         if (dtPay_EmployeeEducation.Rows.Count > 0)
                             foreach (DataRow dRow in dtPay_EmployeeEducation.Rows)
@@ -1631,6 +1636,10 @@ namespace SmartxAPI.Controllers
                         dtPay_EmployeeEducation.AcceptChanges();
                         Pay_EmployeeEducationRes = dLayer.SaveData("Pay_EmployeeEducation", "N_EduID", dtPay_EmployeeEducation, connection, transaction);
 
+                          if (nEmpID > 0)
+                          {
+                          dLayer.DeleteData("Pay_EmploymentHistory", "N_EmpID", nEmpID, "N_CompanyID =" + nCompanyID, connection, transaction);
+                           }
                         int Pay_EmploymentHistoryRes = 0;
                         if (dtPay_EmploymentHistory.Rows.Count > 0)
                             foreach (DataRow dRow in dtPay_EmploymentHistory.Rows)

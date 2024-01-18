@@ -71,9 +71,16 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             SortedList dParamList = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
+            // int Count = (nPage - 1) * nSizeperpage;
 
             string MasterDiscount = "Select * from vw_inv_DiscountMaster Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_DiscID = @p3";
-            string DetailsDiscount = "Select * from vw_Discount Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_DiscID = @p3";
+            string DetailsDiscount = "Select top(22) * from vw_Discount Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_DiscID = @p3";
+            // string DetailsDiscount = "";
+
+                    //             if (Count == 0)
+                    //     DetailsDiscount = "select top(" + nSizeperpage + ") * from vw_Discount Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_DiscID = @p3";
+                    // else
+                    //     DetailsDiscount = "select top(" + nSizeperpage + ") * from vw_Discount Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_DiscID = @p3 and N_DiscDetailsID not in (select top(" + Count + ") N_DiscDetailsID from vw_Discount where N_CompanyID = @p1 and N_FnYearID = @p2 and N_DiscID = @p3)";
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearID);
@@ -326,7 +333,7 @@ namespace SmartxAPI.Controllers
                     transaction.Commit();
                     SortedList Result = new SortedList();
 
-                    return Ok(api.Success(Result, "Discount Saved"));
+                    return Ok(api.Success(Result, "Pricelist Saved Successfully"));
                 }
             }
             catch (Exception ex)
@@ -364,7 +371,7 @@ namespace SmartxAPI.Controllers
                 }
                 if (Results > 0)
                 {
-                    return Ok(api.Success("Discount deleted"));
+                    return Ok(api.Success("Pricelist Deleted"));
                 }
                 else
                 {

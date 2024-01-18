@@ -437,7 +437,9 @@ namespace SmartxAPI.Controllers
 
                     if (isDepartment)
                     {
-                        string DupCriteria = "X_Department='" + X_CostcentreName.Replace("'", "''") + "' and N_CompanyID=" + N_CompanyID + "and  X_DepartmentCode='" + X_CostCentreCode + "'";
+                        // string DupCriteria = "X_Department='" + X_CostcentreName.Replace("'", "''") + "' and N_CompanyID=" + N_CompanyID + "and  X_DepartmentCode='" + X_CostCentreCode + "'";
+                        string DupCriteria = "X_Department='" + X_CostcentreName.Replace("'", "''") + "' and N_CompanyID=" + N_CompanyID;
+
                         string X_Criteria = "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID;
 
                         N_CostCentreID = dLayer.SaveData("" + tableName + "", "" + tablid + "", DupCriteria, X_Criteria, MasterTable, connection, transaction);
@@ -451,7 +453,7 @@ namespace SmartxAPI.Controllers
                     if (N_CostCentreID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to save"));
+                        return Ok(_api.Error(User, "Unable to save.The DepartMent/Group Already Exist"));
                     }
                     else
                     {
