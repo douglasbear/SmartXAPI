@@ -212,9 +212,9 @@ namespace SmartxAPI.Controllers
                                 {"@nBranchID",nBranchId}};
                         string sql = "";
                         if (bShowAllbranch == true)
-                            sql = "select N_PayReceiptId,X_Type,N_PartyID,D_Date,N_UserId,N_ProcStatus,N_ApprovalLevelId,B_IssaveDraft from Inv_PayReceipt where N_CompanyID=@nCompanyID and X_VoucherNo=@xInvoiceNo and N_FnYearID=@nFnYearID";
+                            sql = "select N_PayReceiptId,X_Type,N_PartyID,D_Date,N_UserId,N_ProcStatus,N_ApprovalLevelId,B_IssaveDraft from Inv_PayReceipt where N_CompanyID=@nCompanyID and X_VoucherNo=@xInvoiceNo";
                         else
-                            sql = "select N_PayReceiptId,X_Type,N_PartyID,D_Date,N_UserId,N_ProcStatus,N_ApprovalLevelId,B_IssaveDraft from Inv_PayReceipt where N_CompanyID=@nCompanyID and X_VoucherNo=@xInvoiceNo and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
+                            sql = "select N_PayReceiptId,X_Type,N_PartyID,D_Date,N_UserId,N_ProcStatus,N_ApprovalLevelId,B_IssaveDraft from Inv_PayReceipt where N_CompanyID=@nCompanyID and X_VoucherNo=@xInvoiceNo and N_BranchID=@nBranchID";
 
                         DataTable PayInfo = dLayer.ExecuteDataTable(sql, proParams1, connection);
                         if (PayInfo.Rows.Count > 0)
