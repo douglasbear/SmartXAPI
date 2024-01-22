@@ -337,6 +337,9 @@ namespace SmartxAPI.Controllers
                     string X_MasterSql = "";
                     string X_DetailsSql = "";
 
+                    if (xInvoiceNO != null){
+                        xInvoiceNO = xInvoiceNO.Replace("%2F", "/");
+                    }
                     X_MasterSql = "select * from Vw_FreeTextSalesReturnMaster Where  N_CompanyID=" + nCompanyId + " and X_TransType = '" + xTransType + "' and  N_FnYearID=" + nFnYearId + " and X_ReceiptNo='" + xInvoiceNO + "'";
 
                     Master = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
