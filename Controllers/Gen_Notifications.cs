@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("count")]
-        public ActionResult NotificationCount(bool bShowAllBranch, int nBranchID)
+        public ActionResult NotificationCount(bool bShowAllBranch, int nBranchID,int nFnYearID)
         {
             SortedList Params = new SortedList();
 
@@ -44,19 +44,26 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
 
             string sqlCommandText = "";
+            string criteria = "";
+                
+           if (nFnYearID>0){
+              criteria="and n_fnyearID=@nFnYearID";
+            }
+
 
             if (bShowAllBranch)
             {
-                sqlCommandText = "select count(1) from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID ";
+                sqlCommandText = "select count(1) from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID " + criteria + " ";
             }
             else
             {
-                sqlCommandText = "select count(1) from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID and N_Branchid = @nBranchID ";
+                sqlCommandText = "select count(1) from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID and N_Branchid = @nBranchID " + criteria +"";
                 Params.Add("@nBranchID", nBranchID);
             }
 
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nUserID", nUserID);
+            Params.Add("@nFnYearID", nFnYearID);
 
             try
             {
@@ -78,7 +85,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("notificationList")]
-        public ActionResult GetNotification()
+        public ActionResult GetNotification(int nFnYearID)
         {
             SortedList Params = new SortedList();
             DataTable dt = new DataTable();
@@ -87,15 +94,21 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
             string sqlCommandCount = "";
+            string criteria = "";
+
+            if (nFnYearID>0){
+              criteria="and n_fnyearID=@nFnYearID";
+            }
 
             // sqlCommandText = "select X_Type, count(1) as N_Count from vw_Gen_Notification where N_CompanyID=@nCompanyID and N_UserID=@nUserID and N_LanguageID=1 group by X_Type ";
-            sqlCommandText = "select List.X_Type,count(1) as N_Count  from (Select 'Approval' AS X_Type, X_Type AS X_Notification, '' as X_Title, N_CompanyID, N_FormID,NULL AS D_ExpiryDate, 0 AS N_PartyID, N_NextApproverID AS N_UserID,1 AS N_LanguageID from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID "
+            sqlCommandText = "select List.X_Type,count(1) as N_Count  from (Select 'Approval' AS X_Type, X_Type AS X_Notification, '' as X_Title, N_CompanyID, N_FormID,NULL AS D_ExpiryDate, 0 AS N_PartyID, N_NextApproverID AS N_UserID,1 AS N_LanguageID from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID " + criteria + " "
                             + "UNION  all "
                             + "Select 'Reminder' AS X_Type,X_Subject AS X_Notification, X_Title, N_CompanyId, N_FormID, D_ExpiryDate, N_PartyID, N_UserID,N_LanguageID from vw_Gen_ReminderDashboard where isNull(N_Processed,0)=0 and N_CompanyID=@nCompanyID and N_LanguageID=1 "
                             + "UNION all "
                             + "Select 'Review' AS X_Type, X_Comment AS X_Notification, '' AS X_Title, N_CompanyID, N_FormID, NULL AS D_ExpiryDate, 0 AS N_PartyID, N_UserID, 1 AS N_LanguageID from (SELECT vw_ApprovalReview_Disp.*, Log_ApprovalProcess.N_ActionUserID FROM vw_ApprovalReview_Disp LEFT OUTER JOIN Log_ApprovalProcess ON vw_ApprovalReview_Disp.N_FormID = Log_ApprovalProcess.N_FormID AND vw_ApprovalReview_Disp.N_TransID = Log_ApprovalProcess.N_TransID AND vw_ApprovalReview_Disp.N_CompanyID = Log_ApprovalProcess.N_CompanyID AND vw_ApprovalReview_Disp.N_FnYearID = Log_ApprovalProcess.N_FnYearID AND vw_ApprovalReview_Disp.X_TransCode = Log_ApprovalProcess.X_TransCode AND vw_ApprovalReview_Disp.N_NextApproverID = Log_ApprovalProcess.N_ActionUserID where vw_ApprovalReview_Disp.N_NextApproverID=@nUserID and Log_ApprovalProcess.N_ActionUserID is null) AS Review) AS List GROUP BY List.X_Type";
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nUserID", nUserID);
+            Params.Add("@nFnYearID", nFnYearID);
 
             try
             {
