@@ -570,13 +570,24 @@ namespace SmartxAPI.GeneralFunctions
 
             if (nApprovalID == 0)
             {
-                if (nEmpID.ToString() != null && nActionID.ToString() != null && nEmpID.ToString() != "" && nActionID.ToString() != "" && nEmpID != 0)
-                {
-                    SortedList EmpParams = new SortedList();
+                  SortedList EmpParams = new SortedList();
                     EmpParams.Add("@nCompanyID", nCompanyID);
                     EmpParams.Add("@nFnYearID", nFnYearID);
                     EmpParams.Add("@nEmpID", nEmpID);
                     EmpParams.Add("@nActionID", nActionID);
+                    EmpParams.Add("@nFormID", nFormID);
+                    EmpParams.Add("@nTransID", nTransID);
+              
+                  object objApprovaltrans = dLayer.ExecuteScalar("Select isnull(N_ApprovalID,0) as N_ApprovalID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID  group by N_ApprovalID,N_CompanyID,N_TransID,N_FormID", EmpParams, connection);
+                    if (objApprovaltrans != null)
+                    {
+                        nApprovalID = this.getIntVAL(objApprovaltrans.ToString());
+                        ApprovalParams["@nApprovalID"] = nApprovalID;
+                    }
+
+                if (nEmpID.ToString() != null && nActionID.ToString() != null && nEmpID.ToString() != "" && nActionID.ToString() != "" && nEmpID != 0)
+                {
+                  
                     object objApproval = dLayer.ExecuteScalar("Select isnull(N_ApprovalID,0) as N_ApprovalID from vw_EmpApprovalSettings where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpID=@nEmpID and N_ActionID=@nActionID", EmpParams, connection);
                     if (objApproval != null)
                     {
@@ -612,7 +623,7 @@ namespace SmartxAPI.GeneralFunctions
             }
             else
             {
-                if (nActiveID != null && getIntVAL(nActiveID.ToString()) == 2 && nFormID!=1844) //temp
+                if (nActiveID != null && getIntVAL(nActiveID.ToString()) == 2 && nFormID!=1844 && nTransID==0 )//temp
                 {
                     Response["btnSaveText"] = "Save";
                     Response["btnDeleteText"] = "Delete";
