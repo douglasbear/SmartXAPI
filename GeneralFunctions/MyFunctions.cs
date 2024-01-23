@@ -578,14 +578,17 @@ namespace SmartxAPI.GeneralFunctions
                     EmpParams.Add("@nFormID", nFormID);
                     EmpParams.Add("@nTransID", nTransID);
               
-                  object objApprovaltrans = dLayer.ExecuteScalar("Select isnull(N_ApprovalID,0) as N_ApprovalID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID  group by N_ApprovalID,N_CompanyID,N_TransID,N_FormID", EmpParams, connection);
+               if(nTransID>0){
+                     object objApprovaltrans = dLayer.ExecuteScalar("Select isnull(N_ApprovalID,0) as N_ApprovalID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID  group by N_ApprovalID,N_CompanyID,N_TransID,N_FormID", EmpParams, connection);
                     if (objApprovaltrans != null)
                     {
                         nApprovalID = this.getIntVAL(objApprovaltrans.ToString());
                         ApprovalParams["@nApprovalID"] = nApprovalID;
                     }
 
-                if (nEmpID.ToString() != null && nActionID.ToString() != null && nEmpID.ToString() != "" && nActionID.ToString() != "" && nEmpID != 0)
+               }
+               else{
+                         if (nEmpID.ToString() != null && nActionID.ToString() != null && nEmpID.ToString() != "" && nActionID.ToString() != "" && nEmpID != 0)
                 {
                   
                     object objApproval = dLayer.ExecuteScalar("Select isnull(N_ApprovalID,0) as N_ApprovalID from vw_EmpApprovalSettings where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpID=@nEmpID and N_ActionID=@nActionID", EmpParams, connection);
@@ -614,6 +617,9 @@ namespace SmartxAPI.GeneralFunctions
                         ApprovalParams["@nApprovalID"] = nApprovalID;
                     }
                 }
+               }
+             
+        
             }
 
             if (nApprovalID > 0)
