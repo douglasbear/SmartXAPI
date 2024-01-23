@@ -310,7 +310,7 @@ namespace SmartxAPI.Controllers
 
                      {
                     Params.Add("@PurchaseNo", nPurchaseNO);
-                    X_MasterSql = "select * from vw_Inv_PurchaseDisp where N_CompanyID=@CompanyID and X_InvoiceNo=@PurchaseNo and N_FnYearID=@YearID and X_TransType=@TransType" + (showAllBranch ? " order by N_PurchaseID " : " and  N_BranchId=@BranchID order by N_PurchaseID");
+                    X_MasterSql = "select * from vw_Inv_PurchaseDisp where N_CompanyID=@CompanyID and X_InvoiceNo=@PurchaseNo  and X_TransType=@TransType" + (showAllBranch ? " order by N_PurchaseID " : " and  N_BranchId=@BranchID order by N_PurchaseID");
                 }
                 else if (xPOrderNo != null)
                 {
@@ -582,7 +582,7 @@ namespace SmartxAPI.Controllers
             double InvoicePaidAmt = 0, BalanceAmt = 0;
             string PurchaseID = "";
 
-            string PurchaseSql = "Select N_PurchaseID from vw_Inv_PurchaseDisp Where N_CompanyID=" + nCompanyID + " and X_InvoiceNo='" + x_InvoiceNo + "' and N_FnYearID=" + nFnYearID + " and X_TransType='PURCHASE'";
+            string PurchaseSql = "Select N_PurchaseID from vw_Inv_PurchaseDisp Where N_CompanyID=" + nCompanyID + " and X_InvoiceNo='" + x_InvoiceNo + "' and X_TransType='PURCHASE'";
             DataTable PurchaseTable = dLayer.ExecuteDataTable(PurchaseSql, connection);
             foreach (DataRow kvar in PurchaseTable.Rows)
             {
@@ -592,7 +592,6 @@ namespace SmartxAPI.Controllers
 
             if (N_PaymentMethod == 2)
             {
-
                 objPaid = dLayer.ExecuteScalar("SELECT  isnull(Sum(dbo.Inv_PayReceiptDetails.N_Amount),0) as PaidAmount FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and  isnull(dbo.Inv_PayReceipt.B_IsDraft,0) <> 1 and dbo.Inv_PayReceiptDetails.N_InventoryId in (" + PurchaseID + ") group by dbo.Inv_PayReceiptDetails.N_PayReceiptId", connection);
             }
             else

@@ -28,13 +28,12 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboard")]
-        public ActionResult GetApprovalDetails( bool bShowAll, bool bShowAllBranch, int N_Branchid, int nApprovalType,int nFnyearID)
+        public ActionResult GetApprovalDetails( bool bShowAll, bool bShowAllBranch, int N_Branchid, int nApprovalType)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandText = "";
             string DateCol="D_ApprovedDate";
-            Params.Add("@p4", nFnyearID);
             
             if(nApprovalType == 0)
             {
@@ -42,16 +41,16 @@ namespace SmartxAPI.Controllers
                 if (bShowAllBranch)
                 {
                     if (bShowAll)
-                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and n_FnyearID=@p4";
+                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1";
                     else
-                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_ReqUserID=@p2 and n_FnyearID=@p4";
+                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_ReqUserID=@p2";
                 }
                 else
                 {
                     if (bShowAll)
-                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and n_FnyearID=@p4";
+                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 ";
                     else
-                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_ReqUserID=@p2 and n_FnyearID=@p4";
+                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_ReqUserID=@p2 ";
                     Params.Add("@p3", N_Branchid);
                 }
             }
@@ -63,18 +62,17 @@ namespace SmartxAPI.Controllers
                 if (bShowAllBranch)
                 {
                     if (bShowAll)
-                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and n_FnyearID=@p4";
+                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1";
                     else
-                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_NextApproverID=@p2 and n_FnyearID=@p4";
+                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_NextApproverID=@p2";
                 }
                 else
                 {
                     if (bShowAll)
-                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and n_FnyearID=@p4";
+                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 ";
                     else
-                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_NextApproverID=@p2 and n_FnyearID=@p4";
+                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_NextApproverID=@p2 ";
                     Params.Add("@p3", N_Branchid);
-                    
                 }
     
             }

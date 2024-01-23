@@ -403,18 +403,100 @@ namespace SmartxAPI.Controllers
         public ActionResult GenerateBarcode([FromBody] DataSet ds)
         {
             DataTable products = new DataTable();
+             int nCompanyID = myFunctions.GetCompanyID(User);
             var random = RandomString();
             // Datatable products = new Datatable();
             products = ds.Tables["details"];
             if(products.Rows.Count>0)
             if(products.Rows[0]["n_FormID"].ToString()=="452")
                 GeneratePDFASSET(products,random);
+            else if(nCompanyID==96)
+                GeneratePDFWithContentLatest(products,random);
             else
                 GeneratePDFWithContent(products,random);
 
            
             return Ok(_api.Success(new SortedList() { { "FileName", "barcode"+random+".pdf" } }));
 
+        }
+        public void GeneratePDFWithContentLatest(DataTable products,string random)
+        {
+            string path = this.TempFilesPath + "//barcode"+random+".pdf";
+            // Define the page width and height in points (1 inch = 72 points)
+            float pageWidth = Utilities.MillimetersToPoints(115);    // 6.5 cm to points
+            float pageHeight = Utilities.MillimetersToPoints(30);   // 1.5 cm to points
+            string bimageloc = "C://Olivoserver2020/Barcode/";
+            // Create a new PDF document with the custom page size
+            iTextSharp.text.Document document = new iTextSharp.text.Document(new iTextSharp.text.Rectangle(pageWidth, pageHeight));
+            PdfWriter writer = PdfWriter.GetInstance(document, new FileStream(path, FileMode.Create));
+            // Open the PDF document
+            document.Open();
+            // Calculate the width and height of the page
+            float actualPageWidth = document.PageSize.Width;
+            float actualPageHeight = document.PageSize.Height;
+            // Define the top margin and spacing
+            float topMargin = 10; // Margin from the top of the page, adjusted to add blank space
+            float spacing = 5;    // Spacing between elements
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                string X_CurrencyName = dLayer.ExecuteScalar("select x_currency from Acc_Company where N_CompanyID=" + myFunctions.GetCompanyID(User), connection).ToString();
+                for (int k = 0; k < products.Rows.Count; k++)
+                {
+                    string xItemName = products.Rows[k]["x_ItemName"].ToString();
+                    //string xBarcode = products.Rows[k]["x_ItemCode"].ToString();
+                    string xBarcode = dLayer.ExecuteScalar("select isnull(X_barcode,'') as X_barcode  from Inv_Itemmaster where N_CompanyID=" + myFunctions.GetCompanyID(User) +" and N_ItemID="+products.Rows[k]["n_ItemID"].ToString(), connection).ToString();
+                    if(xBarcode=="")
+                    xBarcode="Barcode Missing";
+                    string nPrice =products.Rows[k]["n_Cost"].ToString();
+                    if (decimal.TryParse(nPrice, out decimal value))
+                    {
+                        nPrice = value.ToString("0.00");
+                    }
+                    nPrice=X_CurrencyName + " " + nPrice;
+                    string xCompanyname = myFunctions.GetCompanyName(User);
+                    if (CreateBarcode(xBarcode,random))
+                    {
+                        // Define the left text position
+                        float leftTextX = 30;  // X-coordinate for left text
+                        float leftTextY = actualPageHeight - topMargin;  // Y-coordinate for left text
+                        // Write the left text to the PDF
+                        PdfContentByte contentByte = writer.DirectContent;
+                        contentByte.BeginText();
+                        contentByte.SetFontAndSize(BaseFont.CreateFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED), 12);
+                        contentByte.ShowTextAligned(Element.ALIGN_LEFT, xCompanyname, leftTextX, leftTextY, 0);
+                        contentByte.EndText();
+                        // Define the barcode position
+                        float barcodeX = 60;  // X-coordinate for barcode
+                        float barcodeY = actualPageHeight - topMargin - spacing - 30;  // Y-coordinate for barcode
+                        // Load the barcode image from the file path
+                        Bitmap barcodeImage = new Bitmap(bimageloc + xBarcode +random+ ".png");
+                        // Convert the barcode image to iTextSharp Image
+                        iTextSharp.text.Image itextImage = iTextSharp.text.Image.GetInstance(barcodeImage, System.Drawing.Imaging.ImageFormat.Png);
+                        itextImage.Alignment = Element.ALIGN_LEFT;
+                        itextImage.ScaleAbsolute(150, 30);  // Increase the size of the barcode
+                        // Add the barcode to the PDF document
+                        itextImage.SetAbsolutePosition(barcodeX, barcodeY);
+                        document.Add(itextImage);
+                        // Define the right text position
+                        float rightTextX = 30;  // X-coordinate for right text
+                        float rightTextY = actualPageHeight - topMargin-spacing - 40;  // Y-coordinate for right text
+                         // Create a ColumnText object
+                        ColumnText columnText = new ColumnText(contentByte);
+                       columnText.SetSimpleColumn(new iTextSharp.text.Rectangle(rightTextX, rightTextY+15, actualPageWidth - 5, 0));
+                       // Set font and size for the Phrase elements
+                        BaseFont baseFont = BaseFont.CreateFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+                        float fontSize = 9;  // Adjust the size as needed
+                        // Add the product name and price to the column
+                        columnText.AddElement(new Phrase(xItemName + " . "+nPrice, new iTextSharp.text.Font(baseFont, fontSize)));
+                        columnText.AddText(new Phrase("\n"));
+                        columnText.Go();
+                        document.NewPage();
+                    }
+                }
+            }
+            // Close the PDF document
+            document.Close();
         }
         private static Random random = new Random();
         public string RandomString(int length = 6)
