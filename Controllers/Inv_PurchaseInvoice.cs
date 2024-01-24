@@ -1505,7 +1505,13 @@ namespace SmartxAPI.Controllers
                                 else
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error(User, "Unable to delete Purchase Invoice"));
+                                    if (ex.Message == "ResponseText- Transaction Started on this invoice "){
+                                        return Ok(_api.Error(User, "Vendor payment processed! Unable to delete"));
+                                    } else if (ex.Message == "Unable to delete! Purchase Return processed against this purchase."){
+                                        return Ok(_api.Error(User, "Purchase Return processed! Unable to delete"));
+                                    } else {
+                                        return Ok(_api.Error(User, "Unable to delete Purchase Invoice"));
+                                    }
 
                                 }
 
