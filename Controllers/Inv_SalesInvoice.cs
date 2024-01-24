@@ -12,6 +12,13 @@ using System.Net;
 using System.IO;
 using System.Drawing.Imaging;
 using QRCoder;
+using ZatcaIntegrationSDK;
+using ZatcaIntegrationSDK.APIHelper;
+using ZatcaIntegrationSDK.BLL;
+using ZatcaIntegrationSDK.HelperContracts;
+using ZXing;
+using ZXing.Common;
+using System.Collections.Generic;
 
 namespace SmartxAPI.Controllers
 {
@@ -27,6 +34,35 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly int N_FormID;
         private readonly ITxnHandler txnHandler;
+        
+        //Zatca Phase 2 START
+        string QRurl = "";
+        string Xmlpath="";
+        public string ProductName { get; set; }
+        public decimal ProductPrice { get; set; }
+        public decimal ProductQuantity { get; set; }
+        public decimal TotalPrice { get; set; }
+        public decimal DiscountValue { get; set; }
+        public decimal TotalPriceAfterDiscount { get; set; }
+        public decimal VatPercentage { get; set; }
+        public decimal VatValue { get; set; }
+        public decimal TotalWithVat { get; set; }
+
+        private Mode mode = Mode.developer;
+        
+        public class InvoiceItems
+        {
+            public string ProductName { get; set; }
+            public decimal ProductPrice { get; set; }
+            public decimal ProductQuantity { get; set; }
+            public decimal TotalPrice { get; set; }
+            public decimal DiscountValue { get; set; }
+            public decimal TotalPriceAfterDiscount { get; set; }
+            public decimal VatPercentage { get; set; }
+            public decimal VatValue { get; set; }
+            public decimal TotalWithVat { get; set; }
+        }
+        List<InvoiceItems> invlines;
         public Inv_SalesInvoice(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt, ITxnHandler txn)
         {
             dLayer = dl;
@@ -1319,6 +1355,9 @@ namespace SmartxAPI.Controllers
                     if (n_IsCompleted == 1)
                     {
                         transaction.Commit();
+                        //Zatca
+                        if(myFunctions.getIntVAL(Result["b_IsSaveDraft"].ToString())==0)
+                            ZatcaIntegration(myFunctions.getIntVAL(Result["n_SalesID"].ToString()));
                         return Ok(_api.Success(Result, x_Message));
                     }
                     else
@@ -1333,6 +1372,366 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(_api.Error(User, ex));
             }
+
+        }
+        public void ZatcaIntegration(int N_SalesID)
+        {
+            Xmlpath="";
+            string TotalPrice="";
+            string invoicediscountDetails="";
+            string TotalPriceAfterDiscount = "";
+            string TotalVat="";
+            string InvoiceTotalWithVAT="";
+            int N_CustomerID=0;
+            int nCompanyId = myFunctions.GetCompanyID(User);
+
+            SortedList QueryParams = new SortedList();
+            using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                connection.Open();
+                SqlTransaction transaction;
+                transaction = connection.BeginTransaction();
+
+                object b_EnableZatcaValidation = dLayer.ExecuteScalar("select isnull(b_EnableZatcaValidation,0) from acc_company  where n_companyid=" + nCompanyId, QueryParams, connection, transaction);
+                if(!myFunctions.getBoolVAL(b_EnableZatcaValidation.ToString()))  
+                    return;
+                object b_Processed = dLayer.ExecuteScalar("select isnull(b_ZatcaVerified,0) from Inv_Sales  where n_companyid=" + nCompanyId +" and N_SalesID="+N_SalesID, QueryParams, connection, transaction);
+                if(myFunctions.getBoolVAL(b_Processed.ToString()))  
+                    return;
+                
+
+            //Products
+
+            try
+            {
+                invlines = new List<InvoiceItems>();
+                DataTable SalesDetailsMaster = dLayer.ExecuteDataTable("select x_itemname,n_sprice,n_qty,(n_qty*n_sprice) as TotalPrice,isnull(n_itemdiscamt,0) as n_itemdiscamt,(n_qty*n_sprice)-isnull(n_itemdiscamt,0) as TotalPriceAfterDiscount,N_TaxPercentage1,N_TaxAmt1,(n_qty*n_sprice)-isnull(n_itemdiscamt,0)+ISNULL(N_TaxAmt1,0) as TotalWithVat,N_CustomerID from vw_invsalesdetails where N_SalesID=" + N_SalesID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                foreach (DataRow DetailsMaster in SalesDetailsMaster.Rows)
+                {
+                   
+                        var line = new InvoiceItems();
+                        line.ProductName = DetailsMaster["x_itemname"].ToString();
+                        line.ProductPrice = Convert.ToDecimal(DetailsMaster["n_sprice"].ToString());
+                        line.ProductQuantity = Convert.ToDecimal(DetailsMaster["n_qty"].ToString());
+                        line.TotalPrice = Convert.ToDecimal(DetailsMaster["TotalPrice"].ToString());
+                        line.DiscountValue = Convert.ToDecimal(DetailsMaster["n_itemdiscamt"].ToString());
+                        line.TotalPriceAfterDiscount = Convert.ToDecimal(DetailsMaster["TotalPriceAfterDiscount"].ToString());
+                        line.VatPercentage = Convert.ToDecimal(DetailsMaster["N_TaxPercentage1"].ToString());
+                        line.VatValue = Convert.ToDecimal(DetailsMaster["N_TaxAmt1"].ToString());
+                        line.TotalWithVat = Convert.ToDecimal(DetailsMaster["TotalWithVat"].ToString());
+                        invlines.Add(line);
+                        N_CustomerID=myFunctions.getIntVAL(DetailsMaster["N_CustomerID"].ToString());
+
+                }
+                // TotalPrice = invlines.Sum(m => m.TotalPrice).ToString();
+                // invoicediscountDetails = invlines.Sum(m => m.DiscountValue).ToString();
+                // TotalPriceAfterDiscount = invlines.Sum(m => m.TotalPriceAfterDiscount).ToString();
+                // TotalVat = invlines.Sum(m => m.VatValue).ToString();
+                // InvoiceTotalWithVAT = invlines.Sum(m => m.TotalWithVat).ToString();
+
+            }
+            catch (Exception ex)
+            {
+                
+            }
+
+
+
+            UBLXML ubl = new UBLXML();
+            Invoice inv = new Invoice();
+            ZatcaIntegrationSDK.Result res = new ZatcaIntegrationSDK.Result();
+
+            DataTable SalesMaster = dLayer.ExecuteDataTable("select * from Inv_Sales where N_SalesID=" + N_SalesID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+            foreach (DataRow salesvar in SalesMaster.Rows)
+            {
+            inv.ID = salesvar["x_receiptno"].ToString(); // مثال SME00010
+            DateTime salesDate = (DateTime)salesvar["D_Salesdate"];
+            inv.IssueDate = salesDate.ToString("yyyy-MM-dd"); // "2023-02-07"
+            inv.IssueTime = salesDate.ToString("HH:mm:ss"); // "09:32:40"
+            inv.invoiceTypeCode.id = 388;
+            inv.invoiceTypeCode.Name = "0100000";
+            inv.DocumentCurrencyCode = "SAR";
+            inv.TaxCurrencyCode = "SAR";
+               // هنا ممكن اضيف ال pih من قاعدة البيانات  
+            inv.AdditionalDocumentReferencePIH.EmbeddedDocumentBinaryObject = "NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjNzljMmRiYzIzOWRkNGU5MWI0NjcyOWQ3M2EyN2ZiNTdlOQ==";
+            // قيمة عداد الفاتورة
+            inv.AdditionalDocumentReferenceICV.UUID = Int32.Parse(salesvar["N_SalesID"].ToString()); // لابد ان يكون ارقام فقط
+            // فى حالة فاتورة مبسطة وفاتورة ملخصة هانكتب تاريخ التسليم واخر تاريخ التسليم
+            inv.delivery.ActualDeliveryDate =  salesDate.ToString("yyyy-MM-dd");
+            inv.delivery.LatestDeliveryDate =  salesDate.ToString("yyyy-MM-dd");
+            // 
+            // بيانات الدفع 
+            // اكواد معين
+            // اختيارى كود الدفع
+            string paymentcode = "10";
+            if (!string.IsNullOrEmpty(paymentcode))
+            {
+                PaymentMeans paymentMeans = new PaymentMeans();
+                paymentMeans.PaymentMeansCode = paymentcode; // اختيارى
+                paymentMeans.InstructionNote = "Payment Notes"; // اجبارى فى الاشعارات
+                inv.paymentmeans.Add(paymentMeans);
+            }
+            //DiscountValue=myFunctions.getVAL(var["N_MainDiscountF"].ToString());
+
+
+            }
+
+            DataTable CompanyMaster = dLayer.ExecuteDataTable("select * from Acc_Company where N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+            foreach (DataRow var in CompanyMaster.Rows)
+            {
+                // بيانات البائع 
+            inv.SupplierParty.partyIdentification.ID = var["N_CompanyID"].ToString(); // رقم السجل التجارى الخاض بالبائع
+            inv.SupplierParty.partyIdentification.schemeID = "CRN"; // رقم السجل التجارى
+            inv.SupplierParty.postalAddress.StreetName = "street"; // اجبارى
+            //inv.SupplierParty.postalAddress.AdditionalStreetName = ""; // اختيارى
+            inv.SupplierParty.postalAddress.BuildingNumber = "1234"; // اجبارى رقم المبنى
+            inv.SupplierParty.postalAddress.PlotIdentification = "9833"; //اختيارى
+            inv.SupplierParty.postalAddress.CityName = "CityName"; // اسم المدينة
+            inv.SupplierParty.postalAddress.PostalZone = "12345"; // الرقم البريدي
+            //inv.SupplierParty.postalAddress.CountrySubentity = "Riyadh Region"; // اسم المحافظة او المدينة مثال (مكة) اختيارى
+            inv.SupplierParty.postalAddress.CitySubdivisionName = "CitySubdivisionName"; // اسم المنطقة او الحى 
+            inv.SupplierParty.postalAddress.country.IdentificationCode = "SA";
+            inv.SupplierParty.partyLegalEntity.RegistrationName = var["X_Companyname"].ToString(); // اسم الشركة المسجل فى الهيئة
+            inv.SupplierParty.partyTaxScheme.CompanyID = var["x_taxregistrationno"].ToString();  // رقم التسجيل الضريبي
+            }
+
+            DataTable PartyMaster = dLayer.ExecuteDataTable("select * from Inv_Customer where N_CompanyID=" + nCompanyId + " and N_CustomerID="+N_CustomerID, QueryParams, connection, transaction);
+            foreach (DataRow var in PartyMaster.Rows)
+            {
+            //if (inv.invoiceTypeCode.Name == "0100000")
+            //{
+            // بيانات المشترى
+            inv.CustomerParty.partyIdentification.ID = var["N_CustomerID"].ToString(); // رقم القومى الخاض بالمشترى
+            inv.CustomerParty.partyIdentification.schemeID = "NAT"; // الرقم القومى
+            inv.CustomerParty.postalAddress.StreetName = "street"; // اجبارى
+            //inv.CustomerParty.postalAddress.AdditionalStreetName = "street name"; // اختيارى
+            inv.CustomerParty.postalAddress.BuildingNumber = "1234"; // اجبارى رقم المبنى
+           // inv.CustomerParty.postalAddress.PlotIdentification = "9833"; // اختيارى رقم القطعة
+            inv.CustomerParty.postalAddress.CityName = "Jeddah"; // اسم المدينة
+            inv.CustomerParty.postalAddress.PostalZone = "12345"; // الرقم البريدي
+            //inv.CustomerParty.postalAddress.CountrySubentity = "Makkah"; // اسم المحافظة او المدينة مثال (مكة) اختيارى
+            inv.CustomerParty.postalAddress.CitySubdivisionName = "CitySubdivisionName"; // اسم المنطقة او الحى 
+            inv.CustomerParty.postalAddress.country.IdentificationCode = "SA";
+            inv.CustomerParty.partyLegalEntity.RegistrationName = var["X_Customername"].ToString(); // اسم الشركة المسجل فى الهيئة
+            inv.CustomerParty.partyTaxScheme.CompanyID = var["x_taxregistrationno"].ToString(); // رقم التسجيل الضريبي
+                                                                         //}
+            inv.CustomerParty.contact.Name = var["X_Customername"].ToString();  
+            inv.CustomerParty.contact.Telephone =  var["x_phoneno1"].ToString(); 
+            inv.CustomerParty.contact.ElectronicMail =  var["x_email"].ToString(); 
+            inv.CustomerParty.contact.Note = "notes";
+
+            }
+            
+         
+            
+
+          
+            decimal invoicediscount = 0;
+            Decimal.TryParse(invoicediscountDetails, out invoicediscount);
+            if (invoicediscount > 0)
+            {
+                AllowanceCharge allowance = new AllowanceCharge();
+                allowance.ChargeIndicator = false;
+                //write this lines in case you will make discount as percentage
+                allowance.MultiplierFactorNumeric = 0; //dscount percentage like 10
+                allowance.BaseAmount = 0; // the amount we will apply percentage on example (MultiplierFactorNumeric=10 ,BaseAmount=1000 then AllowanceAmount will be 100 SAR)
+
+                // in case we will make discount as Amount 
+                allowance.Amount =  invoicediscount; // 
+                allowance.AllowanceChargeReasonCode = ""; //سبب الخصم
+                allowance.AllowanceChargeReason = "discount"; //سبب الخصم
+                allowance.taxCategory.ID = "S";// كود الضريبة
+                allowance.taxCategory.Percent = 15;// نسبة الضريبة
+                //فى حالة عندى اكثر من خصم بعمل loop على الاسطر السابقة
+                inv.allowanceCharges.Add(allowance);
+            }
+            decimal payableroundingamount = 0;
+            Decimal.TryParse("", out payableroundingamount);
+
+            inv.legalMonetaryTotal.PayableRoundingAmount = payableroundingamount;
+
+            inv.legalMonetaryTotal.PrepaidAmount = 0;
+            
+            decimal payableamount = 0;
+            Decimal.TryParse("", out payableamount);
+
+            inv.legalMonetaryTotal.PayableAmount = payableamount;
+            // فى حالة فى اكتر من منتج فى الفاتورة هانعمل ليست من invoiceline مثال الكود التالى
+
+            foreach (InvoiceItems item in invlines)
+            {
+                InvoiceLine invline = new InvoiceLine();
+               
+                invline.InvoiceQuantity = item.ProductQuantity;
+                invline.item.Name = item.ProductName;
+                if (item.VatPercentage == 0)
+                {
+                    invline.item.classifiedTaxCategory.ID = "Z"; // كود الضريبة
+                    invline.taxTotal.TaxSubtotal.taxCategory.ID = "Z"; // كود الضريبة
+                    invline.taxTotal.TaxSubtotal.taxCategory.TaxExemptionReasonCode = "VATEX-SA-HEA"; // كود الضريبة
+                    invline.taxTotal.TaxSubtotal.taxCategory.TaxExemptionReason = "Private healthcare to citizen"; // كود الضريبة
+                }
+                else
+                {
+                    invline.item.classifiedTaxCategory.ID = "S"; // كود الضريبة
+                    invline.taxTotal.TaxSubtotal.taxCategory.ID = "S"; // كود الضريبة
+                }
+                invline.item.classifiedTaxCategory.Percent = item.VatPercentage; // نسبة الضريبة
+                invline.taxTotal.TaxSubtotal.taxCategory.Percent = item.VatPercentage; // نسبة الضريبة
+
+                invline.price.EncludingVat = false;
+                invline.price.PriceAmount = item.ProductPrice;
+
+                if (item.DiscountValue > 0)
+                {
+                    AllowanceCharge allowanceCharge = new AllowanceCharge();
+                    // فى حالة الرسوم
+                    // allowanceCharge.ChargeIndicator = true;
+                    // فى حالة الخصم
+                    allowanceCharge.ChargeIndicator = false;
+
+                    allowanceCharge.AllowanceChargeReason = "discount"; // سبب الخصم على مستوى المنتج
+                    // allowanceCharge.AllowanceChargeReasonCode = "90"; // سبب الخصم على مستوى المنتج
+                    allowanceCharge.Amount = item.DiscountValue; // قيم الخصم
+
+                    allowanceCharge.MultiplierFactorNumeric = 0;
+                    allowanceCharge.BaseAmount = 0;
+                    invline.allowanceCharges.Add(allowanceCharge);
+                }
+                inv.InvoiceLines.Add(invline);
+            }
+            InvoiceTotal invoiceTotal = ubl.CalculateInvoiceTotal(inv.InvoiceLines, inv.allowanceCharges);
+            // txtTotalPrice.Text = invoiceTotal.LineExtensionAmount.ToString("0.00");
+            // txtTotalPriceAfterDiscount.Text = invoiceTotal.TaxExclusiveAmount.ToString("0.00");
+            // txtInvoiceTotalWithVAT.Text = invoiceTotal.TaxInclusiveAmount.ToString("0.00");
+            // txtVAT.Text = (invoiceTotal.TaxInclusiveAmount - invoiceTotal.TaxExclusiveAmount).ToString("0.00");
+
+            // here you can pass csid data
+            //this is csid or publickey
+            inv.cSIDInfo.CertPem = "MIIFFjCCBLygAwIBAgITeAAAL+DMEC+cj/cWOQABAAAv4DAKBggqhkjOPQQDAjBiMRUwEwYKCZImiZPyLGQBGRYFbG9jYWwxEzARBgoJkiaJk/IsZAEZFgNnb3YxFzAVBgoJkiaJk/IsZAEZFgdleHRnYXp0MRswGQYDVQQDExJQRVpFSU5WT0lDRVNDQTQtQ0EwHhcNMjQwMTIyMTIwOTMxWhcNMjYwMTIyMTIxOTMxWjB4MQswCQYDVQQGEwJTQTErMCkGA1UEChMiQS5IYWsgUGlqcGxlaWRpbmdlbiBTYXVkaSBDby4gTHRkLjETMBEGA1UECxMKMjA1MDA4NTgyMzEnMCUGA1UEAxMeVFNULTIwNTAwMTIwOTUtMzAwMDAwMTM0MzEwMDAzMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEv3luY9ahmbFje9ycPeGNssSwST0zw9KoMuIEHnG9BW9+a1fOe1y+xAjuVeXbLgj6tlxAEcr/XlfyEjkSvc/Yq6OCAzwwggM4MIGmBgNVHREEgZ4wgZukgZgwgZUxOzA5BgNVBAQMMjEtVFNUfDItVFNUfDMtYTM0OGI2Y2YtNWY3My00MmM0LWJhM2MtMTE3MWVhYWI4MmEyMR8wHQYKCZImiZPyLGQBAQwPMzExMjE4NDU1ODEwMDAzMQ0wCwYDVQQMDAQxMDAwMQ8wDQYDVQQaDAZSaXlhZGgxFTATBgNVBA8MDENvbnN0cnVjdGlvbjAdBgNVHQ4EFgQUyzDp6csx4zU/FUzJGH8OYRWp6+UwHwYDVR0jBBgwFoAUx8Dmt6ndEspPPW1ogpYhRfMBdaQwgeUGA1UdHwSB3TCB2jCB16CB1KCB0YaBzmxkYXA6Ly8vQ049UEVaRUlOVk9JQ0VTQ0E0LUNBKDEpLENOPVBSWkVJTlZPSUNFUEtJNCxDTj1DRFAsQ049UHVibGljJTIwS2V5JTIwU2VydmljZXMsQ049U2VydmljZXMsQ049Q29uZmlndXJhdGlvbixEQz1leHR6YXRjYSxEQz1nb3YsREM9bG9jYWw/Y2VydGlmaWNhdGVSZXZvY2F0aW9uTGlzdD9iYXNlP29iamVjdENsYXNzPWNSTERpc3RyaWJ1dGlvblBvaW50MIHOBggrBgEFBQcBAQSBwTCBvjCBuwYIKwYBBQUHMAKGga5sZGFwOi8vL0NOPVBFWkVJTlZPSUNFU0NBNC1DQSxDTj1BSUEsQ049UHVibGljJTIwS2V5JTIwU2VydmljZXMsQ049U2VydmljZXMsQ049Q29uZmlndXJhdGlvbixEQz1leHR6YXRjYSxEQz1nb3YsREM9bG9jYWw/Y0FDZXJ0aWZpY2F0ZT9iYXNlP29iamVjdENsYXNzPWNlcnRpZmljYXRpb25BdXRob3JpdHkwDgYDVR0PAQH/BAQDAgeAMDwGCSsGAQQBgjcVBwQvMC0GJSsGAQQBgjcVCIGGqB2E0PsShu2dJIfO+xnTwFVmgZzYLYPlxV0CAWQCARAwHQYDVR0lBBYwFAYIKwYBBQUHAwIGCCsGAQUFBwMDMCcGCSsGAQQBgjcVCgQaMBgwCgYIKwYBBQUHAwIwCgYIKwYBBQUHAwMwCgYIKoZIzj0EAwIDSAAwRQIhAN4KfzmgNtDFvZZlITwqwV0EvkuGMK5RE8FmUWfsxbJPAiAKzRAHXwbz/uygvg+QosvV3KlPniiOeP3TO8Mx5wmC1A==";
+            inv.cSIDInfo.PrivateKey = @"MHQCAQEEIBR9JxDyy9DFsxbwkLZnGDVCXWv0lYA8rd3ti9KglzZ2oAcGBSuBBAAKoUQDQgAEv3luY9ahmbFje9ycPeGNssSwST0zw9KoMuIEHnG9BW9+a1fOe1y+xAjuVeXbLgj6tlxAEcr/XlfyEjkSvc/Yqw==";
+            string secretkey = "MRPB0Y396Be7G0ZXcjib3TEVJfACrKUUY0KhenOfjpY=";
+            try
+            {
+                //string g=Guid.NewGuid().ToString();
+                //if you need to save xml file true if not false;
+                bool savexmlfile = true;
+                res = ubl.GenerateInvoiceXML(inv, Directory.GetCurrentDirectory(), savexmlfile);
+                 
+            }
+            catch (Exception ex)
+            {
+                // MessageBox.Show(ex.Message.ToString() + "\n\n" + ex.InnerException.ToString());
+            }
+
+            if (!res.IsValid)
+            {
+                //return res.ErrorMessage;
+            }
+            //
+
+
+            // if (rdb_simulation.Checked)
+            //     mode = Mode.Simulation;
+            // else if (rdb_production.Checked)
+            //     mode = Mode.Production;
+            // else
+                mode = Mode.Simulation;
+
+
+            // zatca call api
+            ApiRequestLogic apireqlogic = new ApiRequestLogic(mode);
+
+            InvoiceReportingRequest invrequestbody = new InvoiceReportingRequest();
+            invrequestbody.invoice = res.EncodedInvoice;
+            invrequestbody.invoiceHash = res.InvoiceHash;
+            invrequestbody.uuid = res.UUID;
+//             if (rdb_compliance.Checked)
+//             {
+//                 ComplianceCsrResponse tokenresponse = new ComplianceCsrResponse();
+//                 string csr = @"-----BEGIN CERTIFICATE REQUEST-----
+// MIICFjCCAbsCAQAweDELMAkGA1UEBhMCU0ExEzARBgNVBAsMCjIwNTAwODU4MjMx
+// KzApBgNVBAoMIkEuSGFrIFBpanBsZWlkaW5nZW4gU2F1ZGkgQ28uIEx0ZC4xJzAl
+// BgNVBAMMHlRTVC0yMDUwMDEyMDk1LTMwMDAwMDEzNDMxMDAwMzBWMBAGByqGSM49
+// AgEGBSuBBAAKA0IABL95bmPWoZmxY3vcnD3hjbLEsEk9M8PSqDLiBB5xvQVvfmtX
+// zntcvsQI7lXl2y4I+rZcQBHK/15X8hI5Er3P2KuggeMwgeAGCSqGSIb3DQEJDjGB
+// 0jCBzzAkBgkrBgEEAYI3FAIEFwwVUFJFWkFUQ0EtQ29kZS1TaWduaW5nMIGmBgNV
+// HREEgZ4wgZukgZgwgZUxOzA5BgNVBAQMMjEtVFNUfDItVFNUfDMtYTM0OGI2Y2Yt
+// NWY3My00MmM0LWJhM2MtMTE3MWVhYWI4MmEyMR8wHQYKCZImiZPyLGQBAQwPMzEx
+// MjE4NDU1ODEwMDAzMQ0wCwYDVQQMDAQxMDAwMQ8wDQYDVQQaDAZSaXlhZGgxFTAT
+// BgNVBA8MDENvbnN0cnVjdGlvbjAKBggqhkjOPQQDAgNJADBGAiEA5C3Csgkc9z1o
+// OznBMtrqoP8CXRkD7Zyas4NBnJYVPkcCIQCm6UGYa/Yku0AH363B/irGDNLZ5j28
+// fXPpkDy6unqfuA==
+// -----END CERTIFICATE REQUEST-----
+// ";
+//                 tokenresponse = apireqlogic.GetComplianceCSIDAPI("675220", csr);
+//                 if (String.IsNullOrEmpty(tokenresponse.ErrorMessage))
+//                 {
+//                     InvoiceReportingResponse invoicereportingmodel = apireqlogic.CallComplianceInvoiceAPI(tokenresponse.BinarySecurityToken, tokenresponse.Secret, invrequestbody);
+//                     if (invoicereportingmodel.IsSuccess)
+//                     {
+//                         //MessageBox.Show(invoicereportingmodel.ReportingStatus + invoicereportingmodel.ClearanceStatus); //REPORTED
+//                         QRurl= res.QRCode;
+//                         Xmlpath = res.SingedXMLFileNameFullPath;
+//                     }
+//                     else
+//                     {
+//                         //MessageBox.Show(invoicereportingmodel.ErrorMessage);
+//                     }
+//                 }
+//                 else
+//                 {
+//                    // MessageBox.Show(tokenresponse.ErrorMessage);
+//                 }
+//             }
+            // else
+            // {
+                
+                
+                if (inv.invoiceTypeCode.Name == "0100000")
+                {
+                    InvoiceClearanceResponse responsemodel = apireqlogic.CallClearanceAPI(Utility.ToBase64Encode(inv.cSIDInfo.CertPem), secretkey, invrequestbody);
+                    if (responsemodel.IsSuccess)
+                    {
+                        // QRurl= res.QRCode;
+                        // Xmlpath = res.SingedXMLFileNameFullPath;
+                        dLayer.ExecuteScalar("update inv_sales set b_ZatcaVerified=1 where N_CompanyID= " + nCompanyId + " and N_SalesID=" + N_SalesID, connection, transaction);
+                        dLayer.ExecuteScalar("update inv_sales set X_ZatcaQr='"+res.QRCode+"' where N_CompanyID= " + nCompanyId + " and N_SalesID=" + N_SalesID, connection, transaction);
+                        dLayer.ExecuteScalar("update inv_sales set X_ZatcaXml='"+res.SingedXMLFileNameFullPath+"' where N_CompanyID= " + nCompanyId + " and N_SalesID=" + N_SalesID, connection, transaction);
+                        dLayer.ExecuteScalar("update inv_sales set X_ZatcaStatus='"+responsemodel.ClearanceStatus +"' where N_CompanyID= " + nCompanyId + " and N_SalesID=" + N_SalesID, connection, transaction);
+
+                       
+                    }
+                    else
+                    {
+                        dLayer.ExecuteScalar("update inv_sales set b_ZatcaVerified=0 where N_CompanyID= " + nCompanyId + " and N_SalesID=" + N_SalesID, connection, transaction);
+                        dLayer.ExecuteScalar("update inv_sales set X_ZatcaStatus='"+responsemodel.ErrorMessage+"' where N_CompanyID= " + nCompanyId + " and N_SalesID=" + N_SalesID, connection, transaction);
+                        // MessageBox.Show(responsemodel.ErrorMessage);
+                    }
+                }
+                else
+                {
+                    InvoiceReportingResponse responsemodel = apireqlogic.CallReportingAPI(Utility.ToBase64Encode(inv.cSIDInfo.CertPem), secretkey, invrequestbody);
+                    
+                    if (responsemodel.IsSuccess)
+                    {
+                         dLayer.ExecuteScalar("update inv_sales set b_ZatcaVerified=1 where N_CompanyID= " + nCompanyId + " and N_SalesID=" + N_SalesID, connection, transaction);
+                        dLayer.ExecuteScalar("update inv_sales set X_ZatcaQr='"+res.QRCode+"' where N_CompanyID= " + nCompanyId + " and N_SalesID=" + N_SalesID, connection, transaction);
+                        dLayer.ExecuteScalar("update inv_sales set X_ZatcaXml='"+res.SingedXMLFileNameFullPath+"' where N_CompanyID= " + nCompanyId + " and N_SalesID=" + N_SalesID, connection, transaction);
+                       
+                    }
+                    else
+                    {
+                        dLayer.ExecuteScalar("update inv_sales set b_ZatcaVerified=0 where N_CompanyID= " + nCompanyId + " and N_SalesID=" + N_SalesID, connection, transaction);
+                        dLayer.ExecuteScalar("update inv_sales set X_ZatcaStatus='"+responsemodel.ErrorMessage+"' where N_CompanyID= " + nCompanyId + " and N_SalesID=" + N_SalesID, connection, transaction);
+                        // MessageBox.Show(responsemodel.ErrorMessage);
+                    }
+                }
+                transaction.Commit();
+
+
+            // }
+                }
 
         }
 

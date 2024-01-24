@@ -724,9 +724,17 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                         }
-                        object b_EnableZatcaValidation = dLayer.ExecuteScalar("select isnull(b_EnableZatcaValidation,0) from acc_company  where n_companyid=" + nCompanyId, QueryParams, connection, transaction);
+                        
+                        object b_EnableZatcaValidation = dLayer.ExecuteScalar("select isnull(b_EnableZatcaValidation,0) from acc_company where n_companyid=" + nCompanyId, QueryParams, connection, transaction);
                         if(myFunctions.getBoolVAL(b_EnableZatcaValidation.ToString()))
-                            ZatcaIntegration(nPkeyID);
+                        {
+                             object QR = dLayer.ExecuteScalar("select isnull(X_ZatcaQr,'') from Inv_Sales where n_companyid=" + nCompanyId + " and N_SalesID="+nPkeyID, QueryParams, connection, transaction);
+                             object XML = dLayer.ExecuteScalar("select isnull(X_ZatcaXml,'') from Inv_Sales where n_companyid=" + nCompanyId + " and N_SalesID="+nPkeyID, QueryParams, connection, transaction);
+                              if(QR.ToString()!="")
+                                QRurl=QR.ToString();
+                              if(XML.ToString()!="")
+                                 Xmlpath=XML.ToString();
+                        }
 
 
 
@@ -825,7 +833,10 @@ namespace SmartxAPI.Controllers
 
 
                         // ReportName = FormName + "_" + docNumber + "_" + partyName.Trim()+".pdf";
-                        ReportName = FormName + "_" + docNumber + "_" + partyName.Trim() + "_" + random + ".pdf";
+                        if(Xmlpath!="")
+                            ReportName = FormName + "_" + docNumber + "_" + partyName.Trim() + "_" + random + "xml.pdf";
+                        else
+                            ReportName = FormName + "_" + docNumber + "_" + partyName.Trim() + "_" + random + ".pdf";
                         path.Wait();
 
                         if (env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName))
