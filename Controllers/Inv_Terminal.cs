@@ -131,6 +131,7 @@ namespace SmartxAPI.Controllers
                         object preSessionID = dLayer.ExecuteScalar(presessionsql, Params, connection,transaction);
                         string cashBalancesql = "select cast(isnull(N_CashBalance,0) as decimal(10,2)) from Acc_PosSession where N_CompanyID= "+nCompanyId+" and N_SessionID="+myFunctions.getIntVAL(preSessionID.ToString())+"";
                         object cashBalance = dLayer.ExecuteScalar(cashBalancesql, Params, connection,transaction);
+                        if(cashBalance==null){cashBalance=0;}
                         sqlCommandText = "select Top(1) N_CompanyID," + n_FnYearID + " as N_FnYearID," + n_BranchID + " as N_BranchID,cast(@sessionTime as datetime) as D_SessionDate,0 as N_SessionID,N_TerminalID, "+myFunctions.getVAL(cashBalance.ToString())+" as n_CashBalance,cast(@sessionTime as datetime) as D_EntryDate," + nUserID + " as N_UserID,0 as B_Closed,"+myFunctions.getVAL(cashBalance.ToString())+" as n_CashOpening,'" + HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString() + "' as X_SessionStartIP,cast(@sessionTime as datetime) as D_SessionStartTime,'" + System.Net.Dns.GetHostName() + "' as X_SystemName from vw_InvTerminal_Disp where N_CompanyID=@nCompanyID and N_TerminalID=" + n_TerminalID;
                         
                         // Params.Add("@sessionTime", DateTime.ParseExact(d_SessionStartTime, "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture));

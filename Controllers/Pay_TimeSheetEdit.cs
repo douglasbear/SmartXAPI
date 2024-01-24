@@ -187,7 +187,7 @@ namespace SmartxAPI.Controllers
                          var["X_Day"] = Date5.ToString("dddd");
                              
 
-                        ActualSql = "Select * from Pay_EmpShiftDetails  Where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + var["D_Date"].ToString() + "' and N_ShiftID=(select Max(N_ShiftID) from Pay_EmpShiftDetails Where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + var["D_Date"].ToString() + "')";
+                        ActualSql = "Select * from Pay_EmpShiftDetails  Where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and ISNULL(N_GroupID,0)<>0  and D_Date='" + var["D_Date"].ToString() + "' and N_ShiftID=(select Max(N_ShiftID) from Pay_EmpShiftDetails Where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + var["D_Date"].ToString() + "')";
                         ActualTable = dLayer.ExecuteDataTable(ActualSql, Params, connection);
                         ActualTable.AcceptChanges();
                         if (ActualTable.Rows.Count != 0)

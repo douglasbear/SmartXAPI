@@ -491,7 +491,7 @@ namespace SmartxAPI.Controllers
                                 }
                                 else
                                 {
-                                    string companyAppUpdate = "Update ClientApps set N_CompanyID= " + N_CompanyId + "where N_ClientID=" + n_ClientID + " and N_AppID=" + appID + "";
+                                    string companyAppUpdate = "Update ClientApps set N_CompanyID= " + N_CompanyId + " where N_ClientID=" + n_ClientID + " and N_AppID=" + appID + "";
                                     dLayer.ExecuteScalar(companyAppUpdate, companyParams, cnn4, clienttransaction);
 
                                 }
