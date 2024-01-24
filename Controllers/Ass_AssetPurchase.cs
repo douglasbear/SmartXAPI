@@ -525,6 +525,8 @@ namespace SmartxAPI.Controllers
                                         AssMasterTableNew.Rows.Add(newRow2);
                                         TransactionTableNew.Rows.Add(newRow3);
                                         DetailTableNew1.Rows.Add(newRow4);
+                                AssMasterTableNew = myFunctions.AddNewColumnToDataTable(AssMasterTableNew, "D_LastDeprDate", typeof(DateTime), null);
+
                                     }
                                     
                                 }                            
@@ -544,6 +546,8 @@ namespace SmartxAPI.Controllers
                                     AssMasterTableNew.Rows.Add(newRow2);
                                     TransactionTableNew.Rows.Add(newRow3);
                                     DetailTableNew1.Rows.Add(newRow4);
+                                AssMasterTableNew = myFunctions.AddNewColumnToDataTable(AssMasterTableNew, "D_LastDeprDate", typeof(DateTime), null);
+
                                 }
                                 
                             }
@@ -621,6 +625,7 @@ namespace SmartxAPI.Controllers
                                 AssMasterTableNew.Rows[j]["N_ItemCodeId"] = N_ItemCodeId;
                                 AssMasterTableNew.Rows[j]["X_Author"] = DetailTableNew.Rows[j]["X_Author"];
                                 AssMasterTableNew.Rows[j]["X_Notes"] = DetailTableNew.Rows[j]["X_Description"];
+                                AssMasterTableNew.Rows[j]["D_LastDeprDate"] = DetailTableNew.Rows[j]["D_PurchaseDate"];
                                 if(FormID==1755){
                                   AssMasterTableNew.Rows[j]["N_FormID"]=1761;
                                 }
