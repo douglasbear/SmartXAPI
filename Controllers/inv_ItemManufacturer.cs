@@ -51,7 +51,8 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(_api.Warning("No Results Found"));
+                    //return Ok(_api.Warning("No Results Found"));
+                    return Ok(_api.Success(dt));
                 }
                 else
                 {
@@ -111,6 +112,15 @@ namespace SmartxAPI.Controllers
               using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+
+                    object objManufacturer = dLayer.ExecuteScalar("select count(1) from Inv_ItemMaster where N_ItemManufacturerID="+nManufacturerID, connection);
+                    if (objManufacturer == null) { 
+                        objManufacturer = 0;
+                    }
+                    if(myFunctions.getIntVAL(objManufacturer.ToString()) > 0) {
+                        return Ok(_api.Error(User, "Already Used! Unable to delete."));
+                    }
+
                 Results=dLayer.DeleteData("Inv_ItemManufacturer","N_ItemManufacturerID",nManufacturerID,"",connection);
                 if(Results>0){
                     return Ok(_api.Success("Deleted Sucessfully" ));

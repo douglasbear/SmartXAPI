@@ -118,7 +118,7 @@ namespace SmartxAPI.Controllers
                 Condition = Condition + " and vw_InvItem_Search_cloud.N_ItemID<> " + nNotGridItemID;
 
             if (nLocationID != 0)
-                Condition = Condition + "  and vw_InvItem_Search_cloud.N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=@p1 and N_WarehouseID=" + nLocationID + " )  ";
+                Condition = Condition + "  and vw_InvItem_Search_cloud.N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=@p1 and N_WarehouseID=" + nLocationID + " ) and N_WarehouseID=" + nLocationID + "";
             if (isStockItem)
                 Condition = Condition + " and N_ClassID =2";
             if (isServiceItem)
@@ -1746,7 +1746,7 @@ namespace SmartxAPI.Controllers
                         bool bStockByDate = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "ShowAvlStockByDate", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
                         if (!bStockByDate && !lastCost)
                         {
-                            sqlCommandText = "Select vw_InvItem_Search.N_ItemID,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID," + nLocationID + ",'" + xBatch + "', 'location')As N_AvlStock ,dbo.SP_LastPCost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID," + nLocationID + ") As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice From vw_InvItem_Search Where N_ItemID=" + nItemID + " and N_CompanyID=" + nCompanyID;
+                            sqlCommandText = "Select vw_InvItem_Search.N_ItemID,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID," + nLocationID + ",'" + xBatch + "', 'location')As N_AvlStock ,dbo.SP_LastPCost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID," + nLocationID + ") As N_LPrice ,dbo.Fn_LastCost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,'') As N_LastCost ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice From vw_InvItem_Search Where N_ItemID=" + nItemID + " and N_CompanyID=" + nCompanyID;
                         }
                         else if(lastCost)
                         {

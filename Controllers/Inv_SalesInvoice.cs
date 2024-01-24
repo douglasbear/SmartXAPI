@@ -2697,7 +2697,7 @@ namespace SmartxAPI.Controllers
 
         }
         [HttpGet("deliveryNoteProduct")]
-        public ActionResult ProductList(int nFnYearID, int nCustomerID, bool bAllbranchData, int nBranchID,bool isShipping)
+        public ActionResult ProductList(int nFnYearID, int nCustomerID, bool bAllbranchData, int nBranchID,bool isShipping,int nDivisionID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
 
@@ -2706,10 +2706,19 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
             Params.Add("@nCustomerID", nCustomerID);
+            Params.Add("@nDivisionID", nDivisionID);
 
 
 
             string sqlCommandText = "";
+            string criteria = "";
+
+            if(nDivisionID>0){
+                criteria = " and Inv_DeliveryNote.N_DivisionID=@nDivisionID";
+            }
+            else{
+                criteria="";
+            }
             if(isShipping)
             {
                  if (bAllbranchData)
@@ -2740,7 +2749,7 @@ namespace SmartxAPI.Controllers
                                 + "Inv_Customer ON  Inv_DeliveryNote.N_CustomerId = Inv_Customer.N_CustomerID AND  "
                                 + "Inv_DeliveryNote.N_FnYearId = Inv_Customer.N_FnYearID LEFT OUTER JOIN "
                                 + "Inv_CustomerProjects ON Inv_DeliveryNote.N_ProjectID = Inv_CustomerProjects.N_ProjectID AND Inv_DeliveryNote.N_CompanyId = Inv_CustomerProjects.N_CompanyID "
-                                + "WHERE        (Inv_DeliveryNote.N_CompanyId = @nCompanyID) AND (Inv_DeliveryNote.N_CustomerId = @nCustomerID) AND (isnull(Inv_DeliveryNote.B_IsSaveDraft,0) = 0) AND (isnull(Inv_DeliveryNote.B_BeginingBalEntry,0) = 0) AND (Inv_DeliveryNote.N_DeliveryNoteID NOT IN "
+                                + "WHERE        (Inv_DeliveryNote.N_CompanyId = @nCompanyID) AND (Inv_DeliveryNote.N_CustomerId = @nCustomerID) AND (isnull(Inv_DeliveryNote.B_IsSaveDraft,0) = 0) AND (isnull(Inv_DeliveryNote.B_BeginingBalEntry,0) = 0) "+criteria+" AND (Inv_DeliveryNote.N_DeliveryNoteID NOT IN "
                                 + "    (SELECT        ISNULL(N_DeliveryNoteID, 0) AS N_DeliveryNoteID "
                                 + "     FROM            Inv_SalesDetails  "
                                 + "   WHERE        (N_CompanyID = @nCompanyID)  "
@@ -2756,7 +2765,7 @@ namespace SmartxAPI.Controllers
                                 + "Inv_Customer ON Inv_DeliveryNote.N_CompanyId = Inv_Customer.N_CompanyID AND Inv_DeliveryNote.N_CustomerId = Inv_Customer.N_CustomerID AND  "
                                 + "Inv_DeliveryNote.N_FnYearId = Inv_Customer.N_FnYearID LEFT OUTER JOIN "
                                 + "Inv_CustomerProjects ON Inv_DeliveryNote.N_ProjectID = Inv_CustomerProjects.N_ProjectID AND Inv_DeliveryNote.N_CompanyId = Inv_CustomerProjects.N_CompanyID "
-                                + "WHERE        (Inv_DeliveryNote.N_CompanyId = @nCompanyID) AND (Inv_DeliveryNote.N_CustomerId = @nCustomerID) AND (isnull(Inv_DeliveryNote.B_BeginingBalEntry,0) = 0) AND (isnull(Inv_DeliveryNote.B_IsSaveDraft,0) = 0)  AND (Inv_DeliveryNote.N_BranchID = " + nBranchID + ") AND (Inv_DeliveryNote.N_DeliveryNoteID NOT IN "
+                                + "WHERE        (Inv_DeliveryNote.N_CompanyId = @nCompanyID) AND (Inv_DeliveryNote.N_CustomerId = @nCustomerID) AND (isnull(Inv_DeliveryNote.B_BeginingBalEntry,0) = 0) AND (isnull(Inv_DeliveryNote.B_IsSaveDraft,0) = 0)  AND (Inv_DeliveryNote.N_BranchID = " + nBranchID + ") "+criteria+" AND (Inv_DeliveryNote.N_DeliveryNoteID NOT IN "
                                 + "    (SELECT        ISNULL(N_DeliveryNoteID, 0) AS N_DeliveryNoteID "
                                 + "     FROM            Inv_SalesDetails  "
                                 + "   WHERE        (N_CompanyID = @nCompanyID)  "

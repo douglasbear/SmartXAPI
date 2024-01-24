@@ -1291,7 +1291,7 @@ namespace SmartxAPI.Controllers
 
                     if (xPhone1 != "")
                     {
-                        object NPhnCount = dLayer.ExecuteScalar("Select count(1) from pay_Employee Where X_Phone1 ='" + xPhone1 + "' and N_EmpID <> '" + nEmpID + "' and N_Status not in (2,3) and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                        object NPhnCount = dLayer.ExecuteScalar("Select count(1) from pay_Employee Where X_Phone1 ='" + xPhone1 + "' and N_EmpID <> " + nEmpID + " and N_Status not in (2,3) and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
                         if (NPhnCount == null)
                         {
                             NPhnCount = 0;
@@ -1306,7 +1306,7 @@ namespace SmartxAPI.Controllers
                     }
                     if (xEmailID != "")
                     {
-                        object NEmailCount = dLayer.ExecuteScalar("Select count(1) from pay_Employee Where X_EmailID ='" + xEmailID + "' and N_EmpID <> '" + nEmpID + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                        object NEmailCount = dLayer.ExecuteScalar("Select count(1) from pay_Employee Where X_EmailID ='" + xEmailID + "' and N_EmpID <> " + nEmpID + " and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
                         if (NEmailCount == null)
                         {
                             NEmailCount = 0;

@@ -139,6 +139,9 @@ namespace SmartxAPI.Data
                                         X_ZoneName = dr["X_ZoneName"].ToString(),
                                         N_TimeZoneID = Convert.ToInt32(dr["N_TimeZoneID"]),
                                         B_IsConsolidated = (bool)(dr["B_IsConsolidated"] == System.DBNull.Value ? false : dr["B_IsConsolidated"]),
+                                        B_EnableZatcaValidation = (bool)(dr["B_EnableZatcaValidation"] == System.DBNull.Value ? false : dr["B_EnableZatcaValidation"]),
+                                       
+
 
                                     }).ToList()
                             .FirstOrDefault();

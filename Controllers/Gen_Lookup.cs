@@ -95,6 +95,10 @@ namespace SmartxAPI.Controllers
                 {
                     N_FormID=1097;
                 }
+                if(N_FormID==1646)
+                {
+                    N_FormID=1097;
+                }
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();

@@ -42,6 +42,39 @@
     <PackageReference Include="Vse.Web.Serialization.ControlledSerializationJsonConverter" Version="1.0.4" />
     <PackageReference Include="Zen.Barcode.Rendering.Framework" Version="3.1.10729.1" />
     <PackageReference Include="ZXing.Net" Version="0.16.8" />
+    
+    <Reference Include="ZatcaIntegrationSDK">
+    <HintPath>.\ZatcaIntegrationSDK.dll</HintPath>
+  </Reference>
+  <Reference Include="saxon-he-api-10.8">
+    <HintPath>.\saxon-he-api-10.8.dll</HintPath>
+  </Reference>
+<Reference Include="saxon-he-10.8">
+    <HintPath>.\saxon-he-10.8.dll</HintPath>
+  </Reference>
+ <Reference Include="IKVM.OpenJDK.Core">
+    <HintPath>.\IKVM.OpenJDK.Core.dll</HintPath>
+  </Reference>
+  <Reference Include="IKVM.OpenJDK.XML.API">
+    <HintPath>.\IKVM.OpenJDK.XML.API.dll</HintPath>
+  </Reference>
+  <Reference Include="itextsharp.pdfa">
+    <HintPath>.\itextsharp.pdfa.dll</HintPath>
+  </Reference>
+  <Reference Include="IKVM.Runtime">
+    <HintPath>.\IKVM.Runtime.dll</HintPath>
+  </Reference>
+    <Reference Include="IKVM.OpenJDK.Util">
+    <HintPath>.\IKVM.OpenJDK.Util.dll</HintPath>
+  </Reference>
+   <Reference Include="IKVM.OpenJDK.Text">
+    <HintPath>.\IKVM.OpenJDK.Text.dll</HintPath>
+  </Reference>
+  <Reference Include="BouncyCastle.Crypto">
+    <HintPath>.\BouncyCastle.Crypto.dll</HintPath>
+  </Reference>
+
+
   </ItemGroup>
 
 

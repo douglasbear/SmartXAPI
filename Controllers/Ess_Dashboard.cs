@@ -35,13 +35,13 @@ namespace SmartxAPI.Controllers
         [HttpGet("listDetails")]
         public ActionResult GetCustomerDetails(int nEmpID, int nFnyearID)
         {
-            DataSet dt = new DataSet();
-            SortedList Params = new SortedList();
+         DataSet dt = new DataSet();
+         SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
             object CategoryID = "";
 
-            string sqlCommandEmployeeDetails = "select n_empID,X_EmpCode,X_EmpName,x_EmpNameLocale,x_Position,x_PositionLocale,d_HireDate,x_Department,n_ReportingToID,x_ReportTo,x_Phone1 ,x_EmailID,x_ProjectName,i_Employe_Image from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3";
+            string sqlCommandEmployeeDetails = "select n_empID,X_EmpCode,X_EmpName,x_EmpNameLocale,x_Position,x_PositionLocale,d_HireDate,x_Department,n_ReportingToID,x_ReportingTo,x_Phone1,n_ReportToID,x_ReportTo,x_EmailID,x_ProjectName,i_Employe_Image from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3";
             // string sqlCommandLoan = "select SUM(N_LoanAmount) as N_LoanAmount from Pay_LoanIssue where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 group by N_CompanyID,N_EmpID";
             string sqlCommandLoan = "SELECT SUM(Pay_LoanIssueDetails.N_InstAmount) - SUM(ISNULL(Pay_LoanIssueDetails.N_RefundAmount, 0))AS balance FROM  Pay_LoanIssue LEFT OUTER JOIN Pay_LoanIssueDetails ON Pay_LoanIssue.N_LoanTransID = Pay_LoanIssueDetails.N_LoanTransID AND Pay_LoanIssue.N_CompanyID = Pay_LoanIssueDetails.N_CompanyID where isnull(Pay_LoanIssueDetails.B_IsLoanClose,0)=0 and Pay_LoanIssue.B_IsSaveDraft <> 1 and Pay_LoanIssue.N_CompanyID=@p1 and N_EmpID=@p3";
             string sqlCommandVacation = "Select SUM(N_VacDays) as N_VacDays from Pay_VacationDetails where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 group by N_CompanyID,N_EmpID";
@@ -55,8 +55,9 @@ namespace SmartxAPI.Controllers
             string WorkerHours = "select top(7) D_Date,N_EmpID,convert(varchar(5),DateDiff(s, D_In, D_Out)/3600)+':'+convert(varchar(5),DateDiff(s, D_In, D_Out)%3600/60)+':'+convert(varchar(5),(DateDiff(s, D_In, D_Out)%60)) as [hh:mm:ss] from Pay_TimeSheetImport where N_EmpID = @p3 order by D_Date desc";
             string sqlPendingLeaveApproval = "select count(1) from (select N_VacationGroupID From vw_PayVacationList where N_CompanyID=@p1 and B_IsAdjustEntry<>1 and N_VacationGroupID in ( select N_TransID from vw_ApprovalPending where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type='LEAVE REQUEST' and N_NextApproverID=@p4) group by N_VacationGroupID) as tbl";
             string sqlLastApproval = "SELECT      Top(1) vw_ApprovalSummary.*,vw_PayVacationDetails_Disp.VacTypeId ,vw_PayVacationDetails_Disp.[Vacation Type], vw_PayVacationDetails_Disp.D_VacDateFrom, vw_PayVacationDetails_Disp.D_VacDateTo, vw_PayVacationDetails_Disp.N_VacDays FROM vw_ApprovalSummary INNER JOIN vw_PayVacationDetails_Disp ON vw_ApprovalSummary.N_CompanyID = vw_PayVacationDetails_Disp.N_CompanyID AND  vw_ApprovalSummary.N_FnYearID = vw_PayVacationDetails_Disp.N_FnYearID AND vw_ApprovalSummary.N_TransID = vw_PayVacationDetails_Disp.N_VacationGroupID AND vw_ApprovalSummary.X_Type='LEAVE REQUEST' where vw_ApprovalSummary.N_CompanyID=@p1 and vw_ApprovalSummary.N_ActionUserID=@p4 and vw_ApprovalSummary.N_ProcStatusID<>6 and vw_ApprovalSummary.N_ActionUserID<>vw_ApprovalSummary.N_ReqUserID and vw_ApprovalSummary.X_Type='LEAVE REQUEST'  ORDER BY vw_ApprovalSummary.X_ActionDate DESC";
-
+            string sqlshifthours = "SELECT D_In1,D_Out1,D_In2,D_Out2 from Pay_EmpShiftDetails where N_EmpID=@p3 and D_Date=@today";
             DateTime date = DateTime.Now;
+            string formatted = date.ToString("yyyy-MM-dd");
             // string url = "http://worldtimeapi.org/api/timezone/Asia/Kolkata";
             // using (var client = new WebClient())
             // {
@@ -71,7 +72,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p2", nFnyearID);
             Params.Add("@p3", nEmpID);
             Params.Add("@p4", nUserID);
-            Params.Add("@today", date);
+            Params.Add("@today", formatted);
 
             DataTable EmployeeDetails = new DataTable();
             DataTable DashboardDetails = new DataTable();
@@ -79,6 +80,7 @@ namespace SmartxAPI.Controllers
             DataTable NextLeaveDetails = new DataTable();
             DataTable DailyLogin = new DataTable();
             DataTable WorkedHours = new DataTable();
+            DataTable ShiftHours = new DataTable();
             DataTable LastApproval = new DataTable();
             DataTable ShiftSchedule = new DataTable();
             DataTable scheduledDate = new DataTable();
@@ -215,7 +217,10 @@ namespace SmartxAPI.Controllers
                     DailyLogin = api.Format(DailyLogin, "DailyLogin");
 
                     WorkedHours = dLayer.ExecuteDataTable(WorkerHours, Params, connection);
-                    WorkedHours = api.Format(WorkedHours, "Worked Hour");
+                    WorkedHours = api.Format(WorkedHours, "Worked Hour");  
+
+                    ShiftHours = dLayer.ExecuteDataTable(sqlshifthours, Params, connection);
+                    ShiftHours = api.Format(ShiftHours, "ShiftHours");
 
                     LastApproval = dLayer.ExecuteDataTable(sqlLastApproval, Params, connection);
                     LastApproval = api.Format(LastApproval, "LastApproval");
@@ -232,6 +237,7 @@ namespace SmartxAPI.Controllers
                 dt.Tables.Add(NextLeaveDetails);
                 dt.Tables.Add(DailyLogin);
                 dt.Tables.Add(WorkedHours);
+                dt.Tables.Add(ShiftHours);
                 dt.Tables.Add(LastApproval);
                 // dt.Tables.Add(ShiftSchedule);
 
@@ -373,66 +379,58 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("EmphiftDetails")]
-        public ActionResult EmphiftDetails(int nEmpID, int nFnyearID)
+        public ActionResult EmphiftDetails(int nEmpID, int nFnyearID,int nSizeperpage,int nPage)
         {
-            DataSet dt = new DataSet();
-            DataTable MasterTable = new DataTable();
-            DataTable ScheduledDate = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyId = myFunctions.GetCompanyID(User);
-            object CategoryID = "";
-            string Sql = "";
-            string sqlCommandText = "select top(10) N_CompanyID,D_Date,D_In1,D_Out1,D_In2,D_Out2,X_GroupName,x_dutyPlace1,x_dutyPlace2 from vw_payEmpShiftDetails where N_EmpID=@p3 and N_CompanyID=@p1 and MONTH(Cast(vw_payEmpShiftDetails.D_Date as DATE)) = MONTH(CURRENT_TIMESTAMP) and YEAR(vw_payEmpShiftDetails.D_Date)= YEAR(CURRENT_TIMESTAMP) order by D_Date asc";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnyearID);
-            Params.Add("@p3", nEmpID);
+    
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                                DataSet dt = new DataSet();
+                                DataTable MasterTable = new DataTable();
+                                DataTable MasterTable1 = new DataTable();
+                                DataTable ScheduledDate = new DataTable();
+                                SortedList Params = new SortedList();
+                               int nCompanyId = myFunctions.GetCompanyID(User);
+                             object CategoryID = "";
+                             string Sql = "";
+                             string sqlCommandText="";
+                             string sqlCommandCount = "";
+                             object TotalCount=0;
+                             int Count = (nPage - 1) * nSizeperpage;
+                               SortedList OutPut = new SortedList();
+                                Params.Add("@p1", nCompanyId);
+                                Params.Add("@p2", nFnyearID);
+                                Params.Add("@p3", nEmpID);
+                                 DateTime Start = DateTime.Now;
+                              DateTime NewDate = Convert.ToDateTime(Start);
 
+                             if(Count==0){
+                       SortedList proParams1 = new SortedList(){
+                                {"N_CompanyID",nCompanyId},
+                                {"N_FnYearID",nFnyearID},
+                                {"N_EmpID",nEmpID}};
+                        MasterTable1 = dLayer.ExecuteDataTablePro("SP_Pay_EmpShiftDetails", proParams1, connection) ;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from pay_employeeShiftDetails where N_EmpID=@p3 and N_CompanyID=@p1 and MONTH(Cast(pay_employeeShiftDetails.D_Date as DATE)) = MONTH(CURRENT_TIMESTAMP) and YEAR(pay_employeeShiftDetails.D_Date)= YEAR(CURRENT_TIMESTAMP) and pay_employeeShiftDetails.D_Date>='" + NewDate + "' order by D_Date asc";
+
+                       }
                     string CatID = "select N_CatagoryId from Pay_Employee where N_EmpID=@p3 and N_CompanyID=@p1 and N_FnYearID=@p2";
                     CategoryID = dLayer.ExecuteScalar(CatID, Params, connection);
 
                     MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-
-
-                    DateTime Start = DateTime.Now;
-                    DateTime End = Start.AddDays(9);
-
-                    double a = (End - Start).TotalDays;
-                    bool dayFlag = false;
-                    Params.Add("@p7", CategoryID);
-
-                    if (MasterTable.Rows.Count == 0)
-                    {
-
-                        for (int j = 0; j <= a; j++)
-                        {
-                            dayFlag = false;
-                            DateTime NewDate = Convert.ToDateTime(Start).AddDays(j);
-                            var Date = myFunctions.getDateVAL(NewDate).ToString();
-                            DayOfWeek dow = NewDate.DayOfWeek;
-                            string str = dow.ToString();
-                            string qry = "select N_CompanyID,D_In1,D_Out1,D_In2,D_Out2,'" + NewDate + "' as  D_Date,X_GroupName  from vw_PayWorkingHours where N_CompanyID=@p1 and X_Day='" + str + "' and N_CatagoryID=@p7";
-                            Sql = Sql == "" ? qry : Sql + " UNION " + qry;
-
-                        }
-                        MasterTable = dLayer.ExecuteDataTable(Sql, Params, connection);
-
-                    }
-
-                    MasterTable = api.Format(MasterTable, "Master");
-                    dt.Tables.Add(MasterTable);
-                }
-                return Ok(api.Success(dt));
+                    //  TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                        OutPut.Add("Master", api.Format(MasterTable));
+                        // OutPut.Add("TotalCount", TotalCount);
+                        return Ok(api.Success(OutPut));
+               }
             }
-            catch (Exception e)
+
+                catch (Exception e)
             {
-                return Ok(api.Error(User, e));
+                return Ok(api.Error(User,e));
             }
-        }
+          }
 
       
 
@@ -550,12 +548,8 @@ namespace SmartxAPI.Controllers
             }
         }
 
-      
-
-     
-
-
-
-
     }
 }
+
+
+

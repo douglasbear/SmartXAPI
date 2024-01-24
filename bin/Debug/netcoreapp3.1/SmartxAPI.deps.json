@@ -61,6 +61,15 @@
           "Zen.Barcode.Rendering.Framework": "3.1.10729.1",
           "iTextSharp": "5.5.13.3",
           "Twilio": "5.75.1",
+          "IKVM.OpenJDK.Core": "8.1.5717.0",
+          "IKVM.OpenJDK.Text": "8.1.5717.0",
+          "IKVM.OpenJDK.Util": "8.1.5717.0",
+          "IKVM.OpenJDK.XML.API": "8.1.5717.0",
+          "IKVM.Runtime": "8.1.5717.0",
+          "itextsharp.pdfa": "5.5.13.3",
+          "saxon-he-10.8": "10.8.0.0",
+          "saxon-he-api-10.8": "10.8.0.0",
+          "ZatcaIntegrationSDK": "1.0.8778.27649",
           "Microsoft.AspNetCore.Antiforgery": "3.1.0.0",
           "Microsoft.AspNetCore.Authentication.Abstractions": "3.1.0.0",
           "Microsoft.AspNetCore.Authentication.Cookies": "3.1.0.0",
@@ -1953,6 +1962,105 @@
         },
         "compile": {
           "lib/netcoreapp3.1/zxing.dll": {}
+        }
+      },
+      "IKVM.OpenJDK.Core/8.1.5717.0": {
+        "runtime": {
+          "IKVM.OpenJDK.Core.dll": {
+            "assemblyVersion": "8.1.5717.0",
+            "fileVersion": "8.1.5717.0"
+          }
+        },
+        "compile": {
+          "IKVM.OpenJDK.Core.dll": {}
+        }
+      },
+      "IKVM.OpenJDK.Text/8.1.5717.0": {
+        "runtime": {
+          "IKVM.OpenJDK.Text.dll": {
+            "assemblyVersion": "8.1.5717.0",
+            "fileVersion": "8.1.5717.0"
+          }
+        },
+        "compile": {
+          "IKVM.OpenJDK.Text.dll": {}
+        }
+      },
+      "IKVM.OpenJDK.Util/8.1.5717.0": {
+        "runtime": {
+          "IKVM.OpenJDK.Util.dll": {
+            "assemblyVersion": "8.1.5717.0",
+            "fileVersion": "8.1.5717.0"
+          }
+        },
+        "compile": {
+          "IKVM.OpenJDK.Util.dll": {}
+        }
+      },
+      "IKVM.OpenJDK.XML.API/8.1.5717.0": {
+        "runtime": {
+          "IKVM.OpenJDK.XML.API.dll": {
+            "assemblyVersion": "8.1.5717.0",
+            "fileVersion": "8.1.5717.0"
+          }
+        },
+        "compile": {
+          "IKVM.OpenJDK.XML.API.dll": {}
+        }
+      },
+      "IKVM.Runtime/8.1.5717.0": {
+        "runtime": {
+          "IKVM.Runtime.dll": {
+            "assemblyVersion": "8.1.5717.0",
+            "fileVersion": "8.1.5717.0"
+          }
+        },
+        "compile": {
+          "IKVM.Runtime.dll": {}
+        }
+      },
+      "itextsharp.pdfa/5.5.13.3": {
+        "runtime": {
+          "itextsharp.pdfa.dll": {
+            "assemblyVersion": "5.5.13.3",
+            "fileVersion": "5.5.13.3"
+          }
+        },
+        "compile": {
+          "itextsharp.pdfa.dll": {}
+        }
+      },
+      "saxon-he-10.8/10.8.0.0": {
+        "runtime": {
+          "saxon-he-10.8.dll": {
+            "assemblyVersion": "10.8.0.0",
+            "fileVersion": "10.8.0.0"
+          }
+        },
+        "compile": {
+          "saxon-he-10.8.dll": {}
+        }
+      },
+      "saxon-he-api-10.8/10.8.0.0": {
+        "runtime": {
+          "saxon-he-api-10.8.dll": {
+            "assemblyVersion": "10.8.0.0",
+            "fileVersion": "10.8.0.0"
+          }
+        },
+        "compile": {
+          "saxon-he-api-10.8.dll": {}
+        }
+      },
+      "ZatcaIntegrationSDK/1.0.8778.27649": {
+        "runtime": {
+          "ZatcaIntegrationSDK.dll": {
+            "assemblyVersion": "1.0.8778.27649",
+            "fileVersion": "1.0.8778.27649"
+          }
+        },
+        "compile": {
+          "ZatcaIntegrationSDK.dll": {}
         }
       },
       "Microsoft.AspNetCore.Antiforgery/3.1.0.0": {
@@ -4554,6 +4662,51 @@
       "sha512": "sha512-Cbbe+x7I7E+VJ0VxU1fPc7AktIw/9xea/ZY/fh38sXqTQ75LJp9ooGUjpzFqfpPfIKozAoXgJ4yvY4GzKpPBzQ==",
       "path": "zxing.net/0.16.8",
       "hashPath": "zxing.net.0.16.8.nupkg.sha512"
+    },
+    "IKVM.OpenJDK.Core/8.1.5717.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "IKVM.OpenJDK.Text/8.1.5717.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "IKVM.OpenJDK.Util/8.1.5717.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "IKVM.OpenJDK.XML.API/8.1.5717.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "IKVM.Runtime/8.1.5717.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "itextsharp.pdfa/5.5.13.3": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "saxon-he-10.8/10.8.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "saxon-he-api-10.8/10.8.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "ZatcaIntegrationSDK/1.0.8778.27649": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
     },
     "Microsoft.AspNetCore.Antiforgery/3.1.0.0": {
       "type": "referenceassembly",

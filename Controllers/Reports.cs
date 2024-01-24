@@ -21,6 +21,14 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Net;
 using System.Threading;
+using ZatcaIntegrationSDK;
+using ZatcaIntegrationSDK.APIHelper;
+using ZatcaIntegrationSDK.BLL;
+using ZatcaIntegrationSDK.HelperContracts;
+using ZXing;
+using ZXing.Common;
+using System.Collections.Generic;
+
 namespace SmartxAPI.Controllers
 {
     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -46,6 +54,32 @@ namespace SmartxAPI.Controllers
         string TableName = "";
         string QRurl = "";
         string FormName = "";
+
+        string Xmlpath="";
+        //Zatca Phase 2 START
+        public string ProductName { get; set; }
+        public decimal ProductPrice { get; set; }
+        public decimal ProductQuantity { get; set; }
+        public decimal TotalPrice { get; set; }
+        public decimal DiscountValue { get; set; }
+        public decimal TotalPriceAfterDiscount { get; set; }
+        public decimal VatPercentage { get; set; }
+        public decimal VatValue { get; set; }
+        public decimal TotalWithVat { get; set; }
+        private Mode mode = Mode.developer;
+        private class InvoiceItems
+        {
+            public string ProductName { get; set; }
+            public decimal ProductPrice { get; set; }
+            public decimal ProductQuantity { get; set; }
+            public decimal TotalPrice { get; set; }
+            public decimal DiscountValue { get; set; }
+            public decimal TotalPriceAfterDiscount { get; set; }
+            public decimal VatPercentage { get; set; }
+            public decimal VatValue { get; set; }
+            public decimal TotalWithVat { get; set; }
+        }
+        List<InvoiceItems> invlines;
         // private string X_CompanyField = "", X_YearField = "", X_BranchField="", X_UserField="",X_DefReportFile = "", X_GridPrevVal = "", X_SelectionFormula = "", X_ProcName = "", X_ProcParameter = "", X_ReprtTitle = "",X_Operator="";
         public Reports(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IWebHostEnvironment envn, IConfiguration conf)
         {
@@ -252,7 +286,7 @@ namespace SmartxAPI.Controllers
                     var random = RandomString();
                     var dbName = connection.Database;
                     //string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
-                    string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=0&QRUrl=&N_PkeyID=0&partyName=&docNumber=&formName=";
+                    string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=0&QRUrl=&N_PkeyID=0&partyName=&docNumber=&formName=&xml="+Xmlpath;;
                     var path = client.GetAsync(URL);
                     path.Wait();
                     return Ok(_api.Success(new SortedList() { { "FileName", reportName.Trim() + random + ".pdf" } }));
@@ -467,7 +501,7 @@ namespace SmartxAPI.Controllers
                             docNumber = "DocNo";
                         partyName = partyName.Replace("&", "");
                         partyName = partyName.Replace(":", "");
-                        partyName = partyName.ToString().Substring(0, Math.Min(12, partyName.ToString().Length));
+                        partyName = partyName.ToString().Substring(0, Math.Min(2, partyName.ToString().Length));
                         if (docNumber == null)
                             docNumber = "";
                         docNumber = Regex.Replace(docNumber, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
@@ -690,9 +724,13 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                         }
+                        object b_EnableZatcaValidation = dLayer.ExecuteScalar("select isnull(b_EnableZatcaValidation,0) from acc_company  where n_companyid=" + nCompanyId, QueryParams, connection, transaction);
+                        if(myFunctions.getBoolVAL(b_EnableZatcaValidation.ToString()))
+                            ZatcaIntegration(nPkeyID);
 
 
-                        string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
+
+                        string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName + "&xml="+Xmlpath;
                         var path = client.GetAsync(URL);
 
                         //WHATSAPP MODE
@@ -961,7 +999,7 @@ namespace SmartxAPI.Controllers
                             critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
                         }
                         //string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
-                        string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=0&QRUrl=&N_PkeyID=0&partyName=&docNumber=&formName=";
+                        string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=0&QRUrl=&N_PkeyID=0&partyName=&docNumber=&formName=&xml="+Xmlpath;;
                         var path = client.GetAsync(URL);
                         path.Wait();
 
@@ -1422,7 +1460,7 @@ namespace SmartxAPI.Controllers
 
 
                 //string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;
-                string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention + "&N_FormID=0&QRUrl=&N_PkeyID=0&partyName=&docNumber=&formName=";
+                string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention + "&N_FormID=0&QRUrl=&N_PkeyID=0&partyName=&docNumber=&formName=&xml="+Xmlpath;;
                 var path = client.GetAsync(URL);
 
                 path.Wait();
@@ -1441,6 +1479,309 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(_api.Error(User, e));
             }
+        }
+        public void ZatcaIntegration(int N_SalesID)
+        {
+            Xmlpath="";
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string TotalPrice="";
+            string invoicediscountDetails="";
+            string TotalPriceAfterDiscount = "";
+            string TotalVat="";
+            string InvoiceTotalWithVAT="";
+            int N_CustomerID=0;
+
+            SortedList QueryParams = new SortedList();
+            using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                connection.Open();
+                SqlTransaction transaction;
+                transaction = connection.BeginTransaction();
+
+            //Products
+
+            try
+            {
+                invlines = new List<InvoiceItems>();
+                DataTable SalesDetailsMaster = dLayer.ExecuteDataTable("select x_itemname,n_sprice,n_qty,(n_qty*n_sprice) as TotalPrice,isnull(n_itemdiscamt,0) as n_itemdiscamt,(n_qty*n_sprice)-isnull(n_itemdiscamt,0) as TotalPriceAfterDiscount,N_TaxPercentage1,N_TaxAmt1,(n_qty*n_sprice)-isnull(n_itemdiscamt,0)+ISNULL(N_TaxAmt1,0) as TotalWithVat,N_CustomerID from vw_invsalesdetails where N_SalesID=" + N_SalesID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+                foreach (DataRow DetailsMaster in SalesDetailsMaster.Rows)
+                {
+                   
+                        var line = new InvoiceItems();
+                        line.ProductName = DetailsMaster["x_itemname"].ToString();
+                        line.ProductPrice = Convert.ToDecimal(DetailsMaster["n_sprice"].ToString());
+                        line.ProductQuantity = Convert.ToDecimal(DetailsMaster["n_qty"].ToString());
+                        line.TotalPrice = Convert.ToDecimal(DetailsMaster["TotalPrice"].ToString());
+                        line.DiscountValue = Convert.ToDecimal(DetailsMaster["n_itemdiscamt"].ToString());
+                        line.TotalPriceAfterDiscount = Convert.ToDecimal(DetailsMaster["TotalPriceAfterDiscount"].ToString());
+                        line.VatPercentage = Convert.ToDecimal(DetailsMaster["N_TaxPercentage1"].ToString());
+                        line.VatValue = Convert.ToDecimal(DetailsMaster["N_TaxAmt1"].ToString());
+                        line.TotalWithVat = Convert.ToDecimal(DetailsMaster["TotalWithVat"].ToString());
+                        invlines.Add(line);
+                        N_CustomerID=myFunctions.getIntVAL(DetailsMaster["N_CustomerID"].ToString());
+
+                }
+                TotalPrice = invlines.Sum(m => m.TotalPrice).ToString();
+                invoicediscountDetails = invlines.Sum(m => m.DiscountValue).ToString();
+                TotalPriceAfterDiscount = invlines.Sum(m => m.TotalPriceAfterDiscount).ToString();
+                TotalVat = invlines.Sum(m => m.VatValue).ToString();
+                InvoiceTotalWithVAT = invlines.Sum(m => m.TotalWithVat).ToString();
+
+            }
+            catch (Exception ex)
+            {
+                
+            }
+
+
+
+            UBLXML ubl = new UBLXML();
+            Invoice inv = new Invoice();
+            ZatcaIntegrationSDK.Result res = new ZatcaIntegrationSDK.Result();
+
+            DataTable SalesMaster = dLayer.ExecuteDataTable("select * from Inv_Sales where N_SalesID=" + N_SalesID + " and N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+            foreach (DataRow salesvar in SalesMaster.Rows)
+            {
+            inv.ID = salesvar["x_receiptno"].ToString(); // مثال SME00010
+            DateTime salesDate = (DateTime)salesvar["D_Salesdate"];
+            inv.IssueDate = salesDate.ToString("yyyy-MM-dd"); // "2023-02-07"
+            inv.IssueTime = salesDate.ToString("HH:mm:ss"); // "09:32:40"
+            inv.invoiceTypeCode.id = 388;
+            inv.invoiceTypeCode.Name = "0100000";
+            inv.DocumentCurrencyCode = "SAR";
+            inv.TaxCurrencyCode = "SAR";
+               // هنا ممكن اضيف ال pih من قاعدة البيانات  
+            inv.AdditionalDocumentReferencePIH.EmbeddedDocumentBinaryObject = "NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjNzljMmRiYzIzOWRkNGU5MWI0NjcyOWQ3M2EyN2ZiNTdlOQ==";
+            // قيمة عداد الفاتورة
+            inv.AdditionalDocumentReferenceICV.UUID = Int32.Parse(salesvar["N_SalesID"].ToString()); // لابد ان يكون ارقام فقط
+            // فى حالة فاتورة مبسطة وفاتورة ملخصة هانكتب تاريخ التسليم واخر تاريخ التسليم
+            inv.delivery.ActualDeliveryDate =  salesDate.ToString("yyyy-MM-dd");
+            inv.delivery.LatestDeliveryDate =  salesDate.ToString("yyyy-MM-dd");
+            // 
+            // بيانات الدفع 
+            // اكواد معين
+            // اختيارى كود الدفع
+            string paymentcode = "10";
+            if (!string.IsNullOrEmpty(paymentcode))
+            {
+                PaymentMeans paymentMeans = new PaymentMeans();
+                paymentMeans.PaymentMeansCode = paymentcode; // اختيارى
+                paymentMeans.InstructionNote = "Payment Notes"; // اجبارى فى الاشعارات
+                inv.paymentmeans.Add(paymentMeans);
+            }
+            //DiscountValue=myFunctions.getVAL(var["N_MainDiscountF"].ToString());
+
+
+            }
+
+            DataTable CompanyMaster = dLayer.ExecuteDataTable("select * from Acc_Company where N_CompanyID=" + nCompanyId, QueryParams, connection, transaction);
+            foreach (DataRow var in CompanyMaster.Rows)
+            {
+                // بيانات البائع 
+            inv.SupplierParty.partyIdentification.ID = var["N_CompanyID"].ToString(); // رقم السجل التجارى الخاض بالبائع
+            inv.SupplierParty.partyIdentification.schemeID = "CRN"; // رقم السجل التجارى
+            inv.SupplierParty.postalAddress.StreetName = "street"; // اجبارى
+            //inv.SupplierParty.postalAddress.AdditionalStreetName = ""; // اختيارى
+            inv.SupplierParty.postalAddress.BuildingNumber = "1234"; // اجبارى رقم المبنى
+            inv.SupplierParty.postalAddress.PlotIdentification = "9833"; //اختيارى
+            inv.SupplierParty.postalAddress.CityName = "CityName"; // اسم المدينة
+            inv.SupplierParty.postalAddress.PostalZone = "12345"; // الرقم البريدي
+            //inv.SupplierParty.postalAddress.CountrySubentity = "Riyadh Region"; // اسم المحافظة او المدينة مثال (مكة) اختيارى
+            inv.SupplierParty.postalAddress.CitySubdivisionName = "CitySubdivisionName"; // اسم المنطقة او الحى 
+            inv.SupplierParty.postalAddress.country.IdentificationCode = "SA";
+            inv.SupplierParty.partyLegalEntity.RegistrationName = var["X_Companyname"].ToString(); // اسم الشركة المسجل فى الهيئة
+            inv.SupplierParty.partyTaxScheme.CompanyID = var["x_taxregistrationno"].ToString();  // رقم التسجيل الضريبي
+            }
+
+            DataTable PartyMaster = dLayer.ExecuteDataTable("select * from Inv_Customer where N_CompanyID=" + nCompanyId + " and N_CustomerID="+N_CustomerID, QueryParams, connection, transaction);
+            foreach (DataRow var in PartyMaster.Rows)
+            {
+            //if (inv.invoiceTypeCode.Name == "0100000")
+            //{
+            // بيانات المشترى
+            inv.CustomerParty.partyIdentification.ID = var["N_CustomerID"].ToString(); // رقم القومى الخاض بالمشترى
+            inv.CustomerParty.partyIdentification.schemeID = "NAT"; // الرقم القومى
+            inv.CustomerParty.postalAddress.StreetName = "street"; // اجبارى
+            //inv.CustomerParty.postalAddress.AdditionalStreetName = "street name"; // اختيارى
+            inv.CustomerParty.postalAddress.BuildingNumber = "1234"; // اجبارى رقم المبنى
+           // inv.CustomerParty.postalAddress.PlotIdentification = "9833"; // اختيارى رقم القطعة
+            inv.CustomerParty.postalAddress.CityName = "Jeddah"; // اسم المدينة
+            inv.CustomerParty.postalAddress.PostalZone = "12345"; // الرقم البريدي
+            //inv.CustomerParty.postalAddress.CountrySubentity = "Makkah"; // اسم المحافظة او المدينة مثال (مكة) اختيارى
+            inv.CustomerParty.postalAddress.CitySubdivisionName = "CitySubdivisionName"; // اسم المنطقة او الحى 
+            inv.CustomerParty.postalAddress.country.IdentificationCode = "SA";
+            inv.CustomerParty.partyLegalEntity.RegistrationName = var["X_Customername"].ToString(); // اسم الشركة المسجل فى الهيئة
+            inv.CustomerParty.partyTaxScheme.CompanyID = var["x_taxregistrationno"].ToString(); // رقم التسجيل الضريبي
+                                                                         //}
+            inv.CustomerParty.contact.Name = var["X_Customername"].ToString();  
+            inv.CustomerParty.contact.Telephone =  var["x_phoneno1"].ToString(); 
+            inv.CustomerParty.contact.ElectronicMail =  var["x_email"].ToString(); 
+            inv.CustomerParty.contact.Note = "notes";
+
+            }
+            
+         
+            
+
+          
+            decimal invoicediscount = 0;
+            Decimal.TryParse(invoicediscountDetails, out invoicediscount);
+            if (invoicediscount > 0)
+            {
+                AllowanceCharge allowance = new AllowanceCharge();
+                allowance.ChargeIndicator = false;
+                //write this lines in case you will make discount as percentage
+                allowance.MultiplierFactorNumeric = 0; //dscount percentage like 10
+                allowance.BaseAmount = 0; // the amount we will apply percentage on example (MultiplierFactorNumeric=10 ,BaseAmount=1000 then AllowanceAmount will be 100 SAR)
+
+                // in case we will make discount as Amount 
+                allowance.Amount =  invoicediscount; // 
+                allowance.AllowanceChargeReasonCode = ""; //سبب الخصم
+                allowance.AllowanceChargeReason = "discount"; //سبب الخصم
+                allowance.taxCategory.ID = "S";// كود الضريبة
+                allowance.taxCategory.Percent = 15;// نسبة الضريبة
+                //فى حالة عندى اكثر من خصم بعمل loop على الاسطر السابقة
+                inv.allowanceCharges.Add(allowance);
+            }
+            decimal payableroundingamount = 0;
+            Decimal.TryParse("", out payableroundingamount);
+
+            inv.legalMonetaryTotal.PayableRoundingAmount = payableroundingamount;
+
+            inv.legalMonetaryTotal.PrepaidAmount = 0;
+            
+            decimal payableamount = 0;
+            Decimal.TryParse("", out payableamount);
+
+            inv.legalMonetaryTotal.PayableAmount = payableamount;
+            // فى حالة فى اكتر من منتج فى الفاتورة هانعمل ليست من invoiceline مثال الكود التالى
+
+            foreach (InvoiceItems item in invlines)
+            {
+                InvoiceLine invline = new InvoiceLine();
+               
+                invline.InvoiceQuantity = item.ProductQuantity;
+                invline.item.Name = item.ProductName;
+                if (item.VatPercentage == 0)
+                {
+                    invline.item.classifiedTaxCategory.ID = "Z"; // كود الضريبة
+                    invline.taxTotal.TaxSubtotal.taxCategory.ID = "Z"; // كود الضريبة
+                    invline.taxTotal.TaxSubtotal.taxCategory.TaxExemptionReasonCode = "VATEX-SA-HEA"; // كود الضريبة
+                    invline.taxTotal.TaxSubtotal.taxCategory.TaxExemptionReason = "Private healthcare to citizen"; // كود الضريبة
+                }
+                else
+                {
+                    invline.item.classifiedTaxCategory.ID = "S"; // كود الضريبة
+                    invline.taxTotal.TaxSubtotal.taxCategory.ID = "S"; // كود الضريبة
+                }
+                invline.item.classifiedTaxCategory.Percent = item.VatPercentage; // نسبة الضريبة
+                invline.taxTotal.TaxSubtotal.taxCategory.Percent = item.VatPercentage; // نسبة الضريبة
+
+                invline.price.EncludingVat = false;
+                invline.price.PriceAmount = item.ProductPrice;
+
+                if (item.DiscountValue > 0)
+                {
+                    AllowanceCharge allowanceCharge = new AllowanceCharge();
+                    // فى حالة الرسوم
+                    // allowanceCharge.ChargeIndicator = true;
+                    // فى حالة الخصم
+                    allowanceCharge.ChargeIndicator = false;
+
+                    allowanceCharge.AllowanceChargeReason = "discount"; // سبب الخصم على مستوى المنتج
+                    // allowanceCharge.AllowanceChargeReasonCode = "90"; // سبب الخصم على مستوى المنتج
+                    allowanceCharge.Amount = item.DiscountValue; // قيم الخصم
+
+                    allowanceCharge.MultiplierFactorNumeric = 0;
+                    allowanceCharge.BaseAmount = 0;
+                    invline.allowanceCharges.Add(allowanceCharge);
+                }
+                inv.InvoiceLines.Add(invline);
+            }
+            InvoiceTotal invoiceTotal = ubl.CalculateInvoiceTotal(inv.InvoiceLines, inv.allowanceCharges);
+            // txtTotalPrice.Text = invoiceTotal.LineExtensionAmount.ToString("0.00");
+            // txtTotalPriceAfterDiscount.Text = invoiceTotal.TaxExclusiveAmount.ToString("0.00");
+            // txtInvoiceTotalWithVAT.Text = invoiceTotal.TaxInclusiveAmount.ToString("0.00");
+            // txtVAT.Text = (invoiceTotal.TaxInclusiveAmount - invoiceTotal.TaxExclusiveAmount).ToString("0.00");
+
+            // here you can pass csid data
+            //this is csid or publickey
+            inv.cSIDInfo.CertPem = "MIIFADCCBKWgAwIBAgITbQAAGw/UXgsmTms9LgABAAAbDzAKBggqhkjOPQQDAjBiMRUwEwYKCZImiZPyLGQBGRYFbG9jYWwxEzARBgoJkiaJk/IsZAEZFgNnb3YxFzAVBgoJkiaJk/IsZAEZFgdleHRnYXp0MRswGQYDVQQDExJQRVpFSU5WT0lDRVNDQTItQ0EwHhcNMjMwOTIxMDgxODAyWhcNMjUwOTIxMDgyODAyWjBcMQswCQYDVQQGEwJTQTEMMAoGA1UEChMDVFNUMRYwFAYDVQQLEw1SaXlhZGggQnJhbmNoMScwJQYDVQQDEx5UU1QtMjA1MDAxMjA5NS0zMDAwMDAxMzUyMjAwMDMwVjAQBgcqhkjOPQIBBgUrgQQACgNCAASbUK/x5nG7tMATY9Z/u60/eKzfGtdM2WbAFe654OPM1Fb1aBj/JEqgSp5dJQtuahldiKPfJ8aCH8I1tN0cbRxBo4IDQTCCAz0wJwYJKwYBBAGCNxUKBBowGDAKBggrBgEFBQcDAjAKBggrBgEFBQcDAzA8BgkrBgEEAYI3FQcELzAtBiUrBgEEAYI3FQiBhqgdhND7EobtnSSHzvsZ08BVZoGc2C2D5cVdAgFkAgETMIHNBggrBgEFBQcBAQSBwDCBvTCBugYIKwYBBQUHMAKGga1sZGFwOi8vL0NOPVBFWkVJTlZPSUNFU0NBMi1DQSxDTj1BSUEsQ049UHVibGljJTIwS2V5JTIwU2VydmljZXMsQ049U2VydmljZXMsQ049Q29uZmlndXJhdGlvbixEQz1leHRnYXp0LERDPWdvdixEQz1sb2NhbD9jQUNlcnRpZmljYXRlP2Jhc2U/b2JqZWN0Q2xhc3M9Y2VydGlmaWNhdGlvbkF1dGhvcml0eTAdBgNVHQ4EFgQU6PKLogVxfkECr0gYpM0CSaBn1m8wDgYDVR0PAQH/BAQDAgeAMIGtBgNVHREEgaUwgaKkgZ8wgZwxOzA5BgNVBAQMMjEtVFNUfDItVFNUfDMtOTVjNjRhZjgtYTI4NS00ZGFlLTg4MDMtYWYwNzNhZmU4ZjBkMR8wHQYKCZImiZPyLGQBAQwPMzAwMDAwMTM1MjIwMDAzMQ0wCwYDVQQMDAQxMTAwMQ4wDAYDVQQaDAVNYWtrYTEdMBsGA1UEDwwUTWVkaWNhbCBMYWJvcmF0b3JpZXMwgeQGA1UdHwSB3DCB2TCB1qCB06CB0IaBzWxkYXA6Ly8vQ049UEVaRUlOVk9JQ0VTQ0EyLUNBKDEpLENOPVBFWkVpbnZvaWNlc2NhMixDTj1DRFAsQ049UHVibGljJTIwS2V5JTIwU2VydmljZXMsQ049U2VydmljZXMsQ049Q29uZmlndXJhdGlvbixEQz1leHRnYXp0LERDPWdvdixEQz1sb2NhbD9jZXJ0aWZpY2F0ZVJldm9jYXRpb25MaXN0P2Jhc2U/b2JqZWN0Q2xhc3M9Y1JMRGlzdHJpYnV0aW9uUG9pbnQwHwYDVR0jBBgwFoAUgfKje3J7vVCjap/x6NON1nuccLUwHQYDVR0lBBYwFAYIKwYBBQUHAwIGCCsGAQUFBwMDMAoGCCqGSM49BAMCA0kAMEYCIQD52GbWVIWpbdu7B4BnDe+fIKlrAxRUjnGtcc8HiKCEDAIhAJqHLuv0Krp5+HiNCB6w5VPXBPhTKbKidRkZHeb2VTJ+";
+            inv.cSIDInfo.PrivateKey = @"MHQCAQEEIFMxGrBBfmGxmv3rAmuAKgGrqnyNQYAfKqr7OVKDzgDYoAcGBSuBBAAKoUQDQgAEm1Cv8eZxu7TAE2PWf7utP3is3xrXTNlmwBXuueDjzNRW9WgY/yRKoEqeXSULbmoZXYij3yfGgh/CNbTdHG0cQQ==";
+            string secretkey = "lHntHtEGWi+ZJtssv167Dy+R64uxf/PTMXg3CEGYfvM=";
+            try
+            {
+                //string g=Guid.NewGuid().ToString();
+                //if you need to save xml file true if not false;
+                bool savexmlfile = true;
+                res = ubl.GenerateInvoiceXML(inv, Directory.GetCurrentDirectory(), savexmlfile);
+                 
+            }
+            catch (Exception ex)
+            {
+                // MessageBox.Show(ex.Message.ToString() + "\n\n" + ex.InnerException.ToString());
+            }
+
+            if (!res.IsValid)
+            {
+                //return res.ErrorMessage;
+            }
+            //
+
+
+            // if (rdb_simulation.Checked)
+            //     mode = Mode.Simulation;
+            // else if (rdb_production.Checked)
+            //     mode = Mode.Production;
+            // else
+                mode = Mode.developer;
+
+
+            // zatca call api
+            ApiRequestLogic apireqlogic = new ApiRequestLogic(mode);
+
+            InvoiceReportingRequest invrequestbody = new InvoiceReportingRequest();
+            invrequestbody.invoice = res.EncodedInvoice;
+            invrequestbody.invoiceHash = res.InvoiceHash;
+            invrequestbody.uuid = res.UUID;
+            // if (rdb_compliance.Checked)
+            // {
+                ComplianceCsrResponse tokenresponse = new ComplianceCsrResponse();
+                string csr = @"-----BEGIN CERTIFICATE REQUEST-----
+MIIB5DCCAYoCAQAwVTELMAkGA1UEBhMCU0ExFjAUBgNVBAsMDUVuZ2F6YXRCcmFu
+Y2gxEDAOBgNVBAoMB0VuZ2F6YXQxHDAaBgNVBAMME1RTVC0zMDAzMDA4Njg2MDAw
+MDMwVjAQBgcqhkjOPQIBBgUrgQQACgNCAARYvqwxwBzinhARQZYQnWBoSr8wMmmw
+CdfTSleD+rZoh/NeJMF8reXaBFrMCrlPK0hTRXmCyXuc6nFUfjSvZU/goIHVMIHS
+BgkqhkiG9w0BCQ4xgcQwgcEwIgYJKwYBBAGCNxQCBBUTE1RTVFpBVENBQ29kZVNp
+Z25pbmcwgZoGA1UdEQSBkjCBj6SBjDCBiTE7MDkGA1UEBAwyMS1UU1R8Mi1UU1R8
+My1lZDIyZjFkOC1lNmEyLTExMTgtOWI1OC1kOWE4ZjExZTQ0NWYxHzAdBgoJkiaJ
+k/IsZAEBDA8zMDAzMDA4Njg2MDAwMDMxDTALBgNVBAwMBDExMDAxDDAKBgNVBBoM
+A1RTVDEMMAoGA1UEDwwDVFNUMAoGCCqGSM49BAMCA0gAMEUCIQDRroaukEGwwRXW
+RhOudGrd/OGrcUnnn2ftb6Jk4dDGFgIgaV+sXmaZlKbxR7k/lMhnf/2j95XHDkso
+hup1ROPc+cc=
+-----END CERTIFICATE REQUEST-----
+";
+                tokenresponse = apireqlogic.GetComplianceCSIDAPI("12345", csr);
+                if (String.IsNullOrEmpty(tokenresponse.ErrorMessage))
+                {
+                    InvoiceReportingResponse invoicereportingmodel = apireqlogic.CallComplianceInvoiceAPI(tokenresponse.BinarySecurityToken, tokenresponse.Secret, invrequestbody);
+                    if (invoicereportingmodel.IsSuccess)
+                    {
+                        //MessageBox.Show(invoicereportingmodel.ReportingStatus + invoicereportingmodel.ClearanceStatus); //REPORTED
+                        QRurl= res.QRCode;
+                        Xmlpath = res.SingedXMLFileNameFullPath;
+                    }
+                    else
+                    {
+                        //MessageBox.Show(invoicereportingmodel.ErrorMessage);
+                    }
+                }
+                else
+                {
+                   // MessageBox.Show(tokenresponse.ErrorMessage);
+                }
+                }
+
         }
 
 

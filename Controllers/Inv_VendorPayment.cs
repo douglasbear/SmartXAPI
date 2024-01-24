@@ -351,7 +351,7 @@ namespace SmartxAPI.Controllers
                     //Attachments = api.Format(Attachments, "attachments");
                     decimalobj = dLayer.ExecuteScalar("Select isnull(N_Decimal, 0)  from Acc_Company where N_CompanyID=@nCompanyID ", paramList, connection);
                         if (PayInfo.Rows.Count > 0){
-                            String sqlOtherCharges = "select * from VW_Inv_Othercharges_details where N_CompanyID="+nCompanyId+" and N_TransID="+nPayReceiptID+" and X_TransType='PP'";
+                            String sqlOtherCharges = "select * from VW_Inv_Othercharges_details where N_CompanyID="+nCompanyId+" and N_TransID="+nPayReceiptID+" and X_TransType=@xTransType";
                             otherCharges = dLayer.ExecuteDataTable(sqlOtherCharges, paramList, connection);
                          }
                 }
@@ -890,7 +890,7 @@ namespace SmartxAPI.Controllers
                                 int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
                                 if (result > 0)
                                 {
-                                    int Results1 = dLayer.DeleteData("Inv_othercharges", "N_TransID", nPayReceiptId, "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID+" and X_TransType='PP'", connection, transaction);
+                                    int Results1 = dLayer.DeleteData("Inv_othercharges", "N_TransID", nPayReceiptId, "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID+" and X_TransType='"+xTransType+"'", connection, transaction);
                                     myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnyearID, 67, User, transaction, connection);
 
                                     if (VendorData.Rows.Count > 0)
