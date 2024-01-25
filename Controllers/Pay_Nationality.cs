@@ -77,9 +77,11 @@ namespace SmartxAPI.Controllers
                     nNationalityID = dLayer.SaveData("Pay_Nationality", "n_NationalityID",DupCriteria,"", MasterTable, connection, transaction);
                     if (nNationalityID <= 0)
                     {
+                    
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User,"Nationality Already Exist"));
                     }
+    
                     else
                     {
                         transaction.Commit();
