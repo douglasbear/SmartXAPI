@@ -41,7 +41,7 @@ namespace SmartxAPI.Controllers
             int nUserID = myFunctions.GetUserID(User);
             object CategoryID = "";
 
-            string sqlCommandEmployeeDetails = "select n_empID,X_EmpCode,X_EmpName,x_EmpNameLocale,x_Position,x_PositionLocale,d_HireDate,x_Department,n_ReportingToID,x_ReportingTo,x_Phone1 ,x_EmailID,x_ProjectName,i_Employe_Image from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3";
+            string sqlCommandEmployeeDetails = "select n_empID,X_EmpCode,X_EmpName,x_EmpNameLocale,x_Position,x_PositionLocale,d_HireDate,x_Department,n_ReportingToID,x_ReportingTo,x_Phone1,n_ReportToID,x_ReportTo,x_EmailID,x_ProjectName,i_Employe_Image from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3";
             // string sqlCommandLoan = "select SUM(N_LoanAmount) as N_LoanAmount from Pay_LoanIssue where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 group by N_CompanyID,N_EmpID";
             string sqlCommandLoan = "SELECT SUM(Pay_LoanIssueDetails.N_InstAmount) - SUM(ISNULL(Pay_LoanIssueDetails.N_RefundAmount, 0))AS balance FROM  Pay_LoanIssue LEFT OUTER JOIN Pay_LoanIssueDetails ON Pay_LoanIssue.N_LoanTransID = Pay_LoanIssueDetails.N_LoanTransID AND Pay_LoanIssue.N_CompanyID = Pay_LoanIssueDetails.N_CompanyID where isnull(Pay_LoanIssueDetails.B_IsLoanClose,0)=0 and Pay_LoanIssue.B_IsSaveDraft <> 1 and Pay_LoanIssue.N_CompanyID=@p1 and N_EmpID=@p3";
             string sqlCommandVacation = "Select SUM(N_VacDays) as N_VacDays from Pay_VacationDetails where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 group by N_CompanyID,N_EmpID";

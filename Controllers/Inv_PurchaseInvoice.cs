@@ -582,7 +582,7 @@ namespace SmartxAPI.Controllers
             double InvoicePaidAmt = 0, BalanceAmt = 0;
             string PurchaseID = "";
 
-            string PurchaseSql = "Select N_PurchaseID from vw_Inv_PurchaseDisp Where N_CompanyID=" + nCompanyID + " and X_InvoiceNo='" + x_InvoiceNo + "' and X_TransType='PURCHASE'";
+           string PurchaseSql = "Select N_PurchaseID from vw_Inv_PurchaseDisp Where N_CompanyID=" + nCompanyID + " and X_InvoiceNo='" + x_InvoiceNo + "' and N_FnYearID=" + nFnYearID + " and X_TransType='PURCHASE'";
             DataTable PurchaseTable = dLayer.ExecuteDataTable(PurchaseSql, connection);
             foreach (DataRow kvar in PurchaseTable.Rows)
             {

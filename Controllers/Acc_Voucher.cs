@@ -149,9 +149,9 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             DataSet ds=new DataSet();
 
-            string sqlCommandText = "select * from Acc_VoucherMaster_CloudDisplay "+
+               string sqlCommandText = "select * from Acc_VoucherMaster_CloudDisplay "+
                                     " Where X_VoucherNo=@VoucherNo and N_CompanyID=@CompanyID and X_TransType=@TransType  " + 
-                                     " Order By D_VoucherDate";
+                                     " AND N_FnYearID =@FnYearID Order By D_VoucherDate";
             Params.Add("@CompanyID", nCompanyId);
             Params.Add("@FnYearID", nFnYearId);
             Params.Add("@VoucherNo", xVoucherNo);
@@ -190,7 +190,7 @@ namespace SmartxAPI.Controllers
                     nFnYearId= myFunctions.getIntVAL(Voucher.Rows[0]["N_VoucherID"].ToString());
                     Params.Add("@VoucherID", nVoucherID);
 
-                    string sqlCommandText2 = "Select Acc_VoucherMaster_Details.*,Acc_MastLedger.*,Acc_MastGroup.X_Type,Acc_TaxCategory.X_DisplayName,Acc_TaxCategory.N_Amount,Acc_CashFlowCategory.X_Description AS X_TypeCategory from Acc_VoucherMaster_Details inner join Acc_MastLedger on Acc_VoucherMaster_Details.N_LedgerID = Acc_MastLedger.N_LedgerID and Acc_VoucherMaster_Details.N_CompanyID=Acc_MastLedger.N_CompanyID inner join Acc_MastGroup On Acc_MastLedger.N_GroupID=Acc_MastGroup.N_GroupID and Acc_MastLedger.N_CompanyID=Acc_MastGroup.N_CompanyID   LEFT OUTER JOIN Acc_TaxCategory ON Acc_VoucherMaster_Details.N_TaxCategoryID1 = Acc_TaxCategory.N_PkeyID LEFT OUTER JOIN Acc_CashFlowCategory on Acc_VoucherMaster_Details.N_TypeID=Acc_CashFlowCategory.N_CategoryID Where N_VoucherID =@VoucherID and Acc_VoucherMaster_Details.N_CompanyID=@CompanyID ";
+                     string sqlCommandText2 = "Select Acc_VoucherMaster_Details.*,Acc_MastLedger.*,Acc_MastGroup.X_Type,Acc_TaxCategory.X_DisplayName,Acc_TaxCategory.N_Amount,Acc_CashFlowCategory.X_Description AS X_TypeCategory from Acc_VoucherMaster_Details inner join Acc_MastLedger on Acc_VoucherMaster_Details.N_LedgerID = Acc_MastLedger.N_LedgerID and Acc_VoucherMaster_Details.N_CompanyID=Acc_MastLedger.N_CompanyID inner join Acc_MastGroup On Acc_MastLedger.N_GroupID=Acc_MastGroup.N_GroupID and Acc_MastLedger.N_CompanyID=Acc_MastGroup.N_CompanyID  and Acc_MastLedger.N_FnYearID=Acc_MastGroup.N_FnYearID  LEFT OUTER JOIN Acc_TaxCategory ON Acc_VoucherMaster_Details.N_TaxCategoryID1 = Acc_TaxCategory.N_PkeyID LEFT OUTER JOIN Acc_CashFlowCategory on Acc_VoucherMaster_Details.N_TypeID=Acc_CashFlowCategory.N_CategoryID Where N_VoucherID =@VoucherID and Acc_VoucherMaster_Details.N_CompanyID=@CompanyID and Acc_MastGroup.N_FnYearID=@FnYearID";
                     DataTable VoucherDetails = new DataTable();
                     VoucherDetails = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
                     VoucherDetails = api.Format(VoucherDetails, "details");
@@ -420,7 +420,7 @@ namespace SmartxAPI.Controllers
 
                             xVoucherNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
                            xButtonAction="Insert"; 
-                            object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_VoucherMaster Where X_VoucherNo ='" + xVoucherNo + "' and N_CompanyID= " + nCompanyId + " and X_TransType ='" + xTransType + "' and N_FnYearID =" + nFnYearId, connection, transaction);
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_VoucherMaster Where X_VoucherNo ='" + xVoucherNo + "' and N_CompanyID= " + nCompanyId + " and X_TransType ='" + xTransType + "'", connection, transaction);
                             if (N_Result == null)
                                 break;
                         }

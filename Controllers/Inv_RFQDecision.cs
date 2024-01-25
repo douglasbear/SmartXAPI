@@ -231,7 +231,8 @@ namespace SmartxAPI.Controllers
                     DataTable Attachment = ds.Tables["attachments"];
                     int N_RFQDecisionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RFQDecisionID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
-                    int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
+                    // int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
+                    var N_FnYearID = MasterTable.Rows[0]["N_FnYearID"].ToString();
                      string X_RFQDecisionCode =MasterTable.Rows[0]["X_RFQDecisionCode"].ToString();
                     int n_RFQDecisionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RFQDecisionID"].ToString());
                     int N_UserID = myFunctions.GetUserID(User);
@@ -241,7 +242,28 @@ namespace SmartxAPI.Controllers
                      if (MasterTable.Columns.Contains("n_CustomerId"))
                       MasterTable.Columns.Remove("n_CustomerId");
 
-                    var values = MasterTable.Rows[0]["X_RFQDecisionCode"].ToString();
+                        var values = MasterTable.Rows[0]["X_RFQDecisionCode"].ToString();
+
+                       if (!myFunctions.CheckActiveYearTransaction(myFunctions.getIntVAL(N_CompanyID.ToString()),myFunctions.getIntVAL(N_FnYearID.ToString()), DateTime.ParseExact(MasterTable.Rows[0]["d_RFQDecisionDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                        {
+                            object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["d_RFQDecisionDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                            if (DiffFnYearID != null)
+                            {
+                                MasterTable.Rows[0]["N_FnYearID"] = DiffFnYearID.ToString();
+                                 foreach (DataRow var in MasterTable.Rows)
+                                 {
+                                    var["n_FnYearID"]=DiffFnYearID.ToString();
+                                 }
+                                MasterTable.AcceptChanges();
+                                N_FnYearID = DiffFnYearID.ToString();
+                                  
+                            }
+                            else
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error(User, "Transaction date must be in the active Financial Year."));
+                            }
+                        }
 
 
                        if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_RFQDecisionID>0)
@@ -250,7 +272,7 @@ namespace SmartxAPI.Controllers
                         var value = MasterTable.Rows[0]["x_RFQDecisionCode"].ToString();
                         string X_Criteria = "N_RFQDecisionID=" + N_PkeyID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Inv_RFQDecisionMaster", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "RFQ DECISION", N_PkeyID, value, 1, "", 0, "", 0, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(N_FnYearID.ToString()), "RFQ DECISION", N_PkeyID, value, 1, "", 0, "", 0, User, dLayer, connection, transaction);
                         // N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_PurchaseOrder where n_POrderID=" + N_POrderID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
                           transaction.Commit();
                         return Ok(api.Success("RFQ Decision Approved " + "-" + X_RFQDecisionCode));
@@ -311,7 +333,7 @@ namespace SmartxAPI.Controllers
                     ipAddress = Request.Headers["X-Forwarded-For"];
                 else
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(N_FnYearID,N_RFQDecisionID,X_RFQDecisionCode,955,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL(N_FnYearID.ToString()),N_RFQDecisionID,X_RFQDecisionCode,955,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
                           
                           
                     int N_RFQDecisionDetailsID = dLayer.SaveData("Inv_RFQDecisionDetails", "N_RFQDecisionDetailsID", DetailTable, connection, transaction);
@@ -322,7 +344,7 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Error(User,"Unable to save"));
                     }
 
-                     N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "RFQ DECISION", N_RFQDecisionID, X_RFQDecisionCode, 1, "", 0, "",0, User, dLayer, connection, transaction);
+                     N_NextApproverID = myFunctions.LogApprovals(Approvals, myFunctions.getIntVAL(N_FnYearID.ToString()), "RFQ DECISION", N_RFQDecisionID, X_RFQDecisionCode, 1, "", 0, "",0, User, dLayer, connection, transaction);
                     transaction.Commit();
 
                     SortedList Result = new SortedList();

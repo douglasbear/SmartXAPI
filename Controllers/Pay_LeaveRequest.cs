@@ -711,7 +711,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_VacationMaster", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
                         dLayer.DeleteData("Pay_VacationDetails", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
                     }
-                    // MasterTable.Rows[0]["N_UserID"] = myFunctions.GetUserID(User);
+                    MasterTable.Rows[0]["N_UserID"] = myFunctions.GetUserID(User);
                     if (n_VacationGroupID > 0)
                     {
                         try

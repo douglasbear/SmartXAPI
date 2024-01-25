@@ -168,9 +168,31 @@ namespace SmartxAPI.Controllers
                         SortedList Params = new SortedList();
                         int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                         int nQuotationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_QuotationID"].ToString());
-                        int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                        var nFnYearID = MasterTable.Rows[0]["N_FnYearID"].ToString();
+                        // int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                         string X_QuotationNo = MasterTable.Rows[0]["x_QuotationNo"].ToString();
                         int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+
+                        if (!myFunctions.CheckActiveYearTransaction(myFunctions.getIntVAL(nCompanyID.ToString()),myFunctions.getIntVAL(nFnYearID.ToString()), DateTime.ParseExact(MasterTable.Rows[0]["d_QuotationDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                        {
+                            object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyID+" and convert(date ,'" + MasterTable.Rows[0]["d_QuotationDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                            if (DiffFnYearID != null)
+                            {
+                                MasterTable.Rows[0]["N_FnYearID"] = DiffFnYearID.ToString();
+                                 foreach (DataRow var in MasterTable.Rows)
+                                 {
+                                    var["n_FnYearID"]=DiffFnYearID.ToString();
+                                 }
+                                MasterTable.AcceptChanges();
+                                nFnYearID = DiffFnYearID.ToString();
+                                  
+                            }
+                            else
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                            }
+                        }
 
                         if (nQuotationID > 0)
                         {
