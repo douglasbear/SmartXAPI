@@ -247,7 +247,7 @@ namespace SmartxAPI.Controllers
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
                 // Auto Gen
-                DataRow MasterRow = MasterTable.Rows[0];
+                DataRow MasterRow = MasterTable.Rows[0];                
                 string VendorCode = "";
                 var xVendorCode = MasterRow["x_VendorCode"].ToString();
                 int nVendorID = myFunctions.getIntVAL(MasterRow["n_VendorID"].ToString());
@@ -290,7 +290,17 @@ namespace SmartxAPI.Controllers
                     if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
                         return Ok(_api.Warning("Year is closed, Cannot create new Vendor..."));
 
-                    SqlTransaction transaction = connection.BeginTransaction(); ;
+                    SqlTransaction transaction = connection.BeginTransaction();
+                      
+                        
+                  
+                    if(nVendorID==0 && xVendorCode!="@Auto"){
+                    object VendoCount = dLayer.ExecuteScalar("select count(N_VendorID) from Inv_Vendor  Where N_CompanyID=" + nCompanyID + " and  X_VendorCode='" + xVendorCode+"'",  Params, connection,transaction);
+                      if( myFunctions.getIntVAL(VendoCount.ToString())==0){
+                       xVendorCode = "@Auto";                   
+                    }
+                    } 
+
                     if (xVendorCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);

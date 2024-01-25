@@ -259,8 +259,8 @@ namespace SmartxAPI.Controllers
                     CustomerCode = MasterTable.Rows[0]["X_CustomerCode"].ToString();
                     if(nCustomerID==0 && CustomerCode!="@Auto"){
                      CustCount = dLayer.ExecuteScalar("select count(N_customerID) from Inv_Customer  Where N_CompanyID=" + nCompanyID + " and  X_CustomerCode='" + CustomerCode+"'",  Params, connection,transaction);
-                      if( myFunctions.getIntVAL(CustCount.ToString())>0){
-                       CustomerCode = "@Auto";
+                      if( myFunctions.getIntVAL(CustCount.ToString())==0){
+                       CustomerCode = "@Auto";                   
                     }
                     } 
                    
