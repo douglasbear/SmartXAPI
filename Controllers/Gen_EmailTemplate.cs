@@ -114,7 +114,7 @@ namespace SmartxAPI.Controllers
                     int nTemplateID = 0;//myFunctions.getIntVAL(MasterRow["n_TemplateID"].ToString());
                     int nopportunityID = 0;//myFunctions.getIntVAL(MasterRow["N_OpportunityID"].ToString());
                     int nProjectID=myFunctions.getIntVAL(MasterRow["n_ProjectID"].ToString());
-                    
+                   int  creator = myFunctions.GetUserID(User);
                     if (Master.Columns.Contains("x_RecruitmentCode"))
                         xRecruitmentCode = MasterRow["x_RecruitmentCode"].ToString();
                     if (Master.Columns.Contains("x_TemplateName"))
@@ -195,11 +195,15 @@ namespace SmartxAPI.Controllers
                             {
                                  object projectname = dLayer.ExecuteScalar("select X_ProjectName from vw_InvCustomerProjects where N_CompanyID="+nCompanyId+ "  and   n_ProjectID="+nProjectID, Params, connection, transaction);
                                  object contactPerson = dLayer.ExecuteScalar("select cntctprsn from vw_InvCustomerProjects  where N_CompanyID="+nCompanyId+"  and  n_ProjectID="+nProjectID, Params, connection, transaction);
-                            
+                                  object creatr=dLayer.ExecuteScalar("select X_UserName from sec_user  where N_CompanyID="+nCompanyId+"  and  N_UserID="+creator, Params, connection, transaction);
+
                               Body = Body.ToString().Replace("@CompanyName", myFunctions.GetCompanyName(User));
                                 Body = Body.ToString().Replace("@PartyName", x_PartyName);
                                 Body = Body.ToString().Replace("@project", projectname.ToString());
                                 Body = Body.ToString().Replace("@ContactName", contactPerson.ToString());
+                                Body = Body.ToString().Replace("@Creator", creatr.ToString());
+
+                       
 
 
 
@@ -207,6 +211,8 @@ namespace SmartxAPI.Controllers
                                 Subjectval = Subjectval.ToString().Replace("@PartyName", x_PartyName);
                                 Subjectval = Subjectval.ToString().Replace("@project", projectname.ToString());
                                 Subjectval = Subjectval.ToString().Replace("@ContactName", contactPerson.ToString());
+                                Subjectval = Subjectval.ToString().Replace("@Creator",creatr.ToString());
+
                             
                             }
                              if(N_FormID==1345)
@@ -758,6 +764,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                         X_Body = X_Body.Replace("'", "''");
                         dLayer.ExecuteNonQuery("update Gen_MailTemplates set X_Body='" + X_Body + "' where N_CompanyID=@N_CompanyID and N_TemplateID=" + nTemplateID, Params, connection, transaction);
                         transaction.Commit();
 
