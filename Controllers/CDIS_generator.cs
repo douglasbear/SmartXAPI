@@ -223,7 +223,6 @@ namespace SmartxAPI.Controllers
                     }
 
                 }
-                // return Ok(_api.Success(" Saved"));
             }
             catch (Exception ex)
             {
@@ -232,8 +231,6 @@ namespace SmartxAPI.Controllers
         }
         public ZatcaIntegrationSDK.HelperContracts.CertificateRequest GetCSRRequest(DataSet ds)
         {
-            // connection.Open();
-            // SqlTransaction transaction = connection.BeginTransaction();
             DataTable MasterTable;
             SortedList Params = new SortedList();
             MasterTable = ds.Tables["master"];
