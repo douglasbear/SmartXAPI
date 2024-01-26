@@ -164,6 +164,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@d_DateTo", d_DateTo);
                     Params.Add("@nEmpID", nEmpID);
                     string sqlCommandText = "";
+                    bool allowShiftEdit=false;
 
                     bool B_ShowManagerWise = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("1260", "ShowManagerWiseEmployee", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
                     if (B_ShowManagerWise == false)
@@ -184,6 +185,9 @@ namespace SmartxAPI.Controllers
                             {
                                 userCategory="2";
 
+                            }
+                            if(row["X_UserCategory"].ToString()=="OP"){
+                                allowShiftEdit=true;
                             }
                          }
                         if (myFunctions.getIntVAL(userCategory.ToString()) == 2)
@@ -242,6 +246,7 @@ namespace SmartxAPI.Controllers
                      dt = myFunctions.AddNewColumnToDataTable(dt, "D_CurrentOut", typeof(string), null);
                      dt = myFunctions.AddNewColumnToDataTable(dt, "X_VacationType", typeof(string), null);
                      dt = myFunctions.AddNewColumnToDataTable(dt, "b_Vacation", typeof(bool), false);
+                     dt = myFunctions.AddNewColumnToDataTable(dt, "EnableShiftEdit", typeof(bool), allowShiftEdit);
                     //  dt = myFunctions.AddNewColumnToDataTable(dt, "X_DutyPlace1", typeof(string), null);
                     //  dt = myFunctions.AddNewColumnToDataTable(dt, "X_DutyPlace2", typeof(string), null);
 
