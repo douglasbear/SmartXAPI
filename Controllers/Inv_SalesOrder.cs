@@ -615,8 +615,12 @@ namespace SmartxAPI.Controllers
 
                         object termamount=  dLayer.ExecuteScalar("select SUM(N_Amount) from Inv_Terms where N_CompanyID=@nCompanyID and N_ReferanceId=@nSOrderID and N_TypeID=451", DetailParams, connection);
                         object orderamount= dLayer.ExecuteScalar("select SUM(N_TaxAmt + N_BillAmt)  from Inv_Sales where  N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
+                       
                         object retamount=  dLayer.ExecuteScalar("select N_Amount from Inv_Terms where N_CompanyID=@nCompanyID and N_ReferanceId=@nSOrderID and N_TypeID=468", DetailParams, connection);
-                        
+                          if(retamount==null)
+                         {
+                            retamount=0;
+                         }
                       if (myFunctions.getVAL(termamount.ToString()) != myFunctions.getVAL(orderamount.ToString())+ myFunctions.getVAL(retamount.ToString()))
                         {
                             MasterTable.Rows[0]["salesDone"] = 0;
@@ -1130,6 +1134,7 @@ namespace SmartxAPI.Controllers
                     if (Terms.Rows.Count > 0)
                     {
                         object ItemID = dLayer.ExecuteScalar("Select N_ItemID from Inv_ItemMaster where N_CompanyID=" + N_CompanyID + " and X_ItemCode='005'", connection, transaction);
+                        object ItemAdvID = dLayer.ExecuteScalar("Select N_ItemID from Inv_ItemMaster where N_CompanyID=" + N_CompanyID + " and X_ItemCode='006'", connection, transaction);
                         object TaxCatID = dLayer.ExecuteScalar("select n_pkeyid from Acc_TaxCategory where X_CategoryName='Exempt' and N_CompanyID="+N_CompanyID, connection,transaction);
                         Terms.Columns.Add("N_TaxCategoryID");
                         for (int j = 0; j < Terms.Rows.Count; j++)
@@ -1137,6 +1142,10 @@ namespace SmartxAPI.Controllers
                             if(Terms.Rows[j]["x_Type"].ToString()=="Retention" || Terms.Rows[j]["x_Type"].ToString()=="Retention Reversal")
                             {
                                 Terms.Rows[j]["n_ItemID"] = ItemID;
+                            }
+                             else if(Terms.Rows[j]["x_Type"].ToString()=="Advance" || Terms.Rows[j]["x_Type"].ToString()=="Advance Received")
+                            {
+                                Terms.Rows[j]["n_ItemID"] = ItemAdvID;
                             }
                             Terms.Rows[j]["n_ReferanceID"] = n_SalesOrderId;
                             Terms.Rows[j]["x_Type"] = "SO";
