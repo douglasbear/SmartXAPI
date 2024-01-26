@@ -113,7 +113,9 @@ namespace SmartxAPI.Controllers
                     string Subjectval = MasterRow["x_TempSubject"].ToString();
                     int nTemplateID = 0;//myFunctions.getIntVAL(MasterRow["n_TemplateID"].ToString());
                     int nopportunityID = 0;//myFunctions.getIntVAL(MasterRow["N_OpportunityID"].ToString());
-                    int nProjectID=myFunctions.getIntVAL(MasterRow["n_ProjectID"].ToString());
+                    int nProjectID=0;
+                    if (Master.Columns.Contains("n_ProjectID"))
+                        nProjectID=myFunctions.getIntVAL(MasterRow["n_ProjectID"].ToString());
                    int  creator = myFunctions.GetUserID(User);
                     if (Master.Columns.Contains("x_RecruitmentCode"))
                         xRecruitmentCode = MasterRow["x_RecruitmentCode"].ToString();
