@@ -355,12 +355,35 @@ namespace SmartxAPI.Controllers
                     string X_PRSNo = "", X_TransType = "";
                     int N_PRSID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PRSID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
-                    int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
-                    int N_FormID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FormID"].ToString());
+                     int n_OldFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
+                     int N_FormID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FormID"].ToString());
+                    var N_FnYearID = MasterTable.Rows[0]["N_FnYearID"].ToString();
                     int N_SalesOrderId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesOrderId"].ToString());
                     int N_TransTypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TransTypeID"].ToString());
                     int N_UserID = myFunctions.GetUserID(User);
                     int N_NextApproverID = 0;
+                 
+                          if (!myFunctions.CheckActiveYearTransaction(myFunctions.getIntVAL(N_CompanyID.ToString()),myFunctions.getIntVAL(N_FnYearID.ToString()), DateTime.ParseExact(MasterTable.Rows[0]["d_PRSDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                        {
+                            object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["d_PRSDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                            if (DiffFnYearID != null)
+                            {
+                                MasterTable.Rows[0]["N_FnYearID"] = DiffFnYearID.ToString();
+                                 foreach (DataRow var in MasterTable.Rows)
+                                 {
+                                    var["n_FnYearID"]=DiffFnYearID.ToString();
+                                 }
+                                MasterTable.AcceptChanges();
+                                N_FnYearID = DiffFnYearID.ToString();
+                                  
+                            }
+                            else
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error(User, "Transaction date must be in the active Financial Year."));
+                            }
+                        }
+
                     // if(N_FormID==556)
                     var values = MasterTable.Rows[0]["X_PRSNo"].ToString();
                     if (values == "@Auto")
@@ -412,7 +435,7 @@ namespace SmartxAPI.Controllers
                     ipAddress = Request.Headers["X-Forwarded-For"];
                 else
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                       myFunctions.LogScreenActivitys(N_FnYearID,N_PRSID,X_PRSNo,N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
+                       myFunctions.LogScreenActivitys(myFunctions.getIntVAL(N_FnYearID.ToString()),N_PRSID,X_PRSNo,N_FormID,xButtonAction,ipAddress,"",User,dLayer,connection,transaction);
                           
                           
 
