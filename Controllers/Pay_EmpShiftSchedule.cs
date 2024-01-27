@@ -165,6 +165,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nEmpID", nEmpID);
                     string sqlCommandText = "";
                     bool allowShiftEdit=false;
+                    object userCat="";
 
                     bool B_ShowManagerWise = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("1260", "ShowManagerWiseEmployee", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
                     if (B_ShowManagerWise == false)
@@ -183,14 +184,14 @@ namespace SmartxAPI.Controllers
                          foreach (DataRow row in dt1.Rows){
                             if(row["X_UserCategory"].ToString()=="Admin")
                             {
-                                userCategory="2";
+                                userCat="2";
 
                             }
                             if(row["X_UserCategory"].ToString()=="OP"){
                                 allowShiftEdit=true;
                             }
                          }
-                        if (myFunctions.getIntVAL(userCategory.ToString()) == 2)
+                        if (myFunctions.getIntVAL(userCat.ToString()) == 2)
                         {
                             if (bAllBranchData == true)
                                 sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2,x_DutyPlace1,x_DutyPlace2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  (D_Date>=@d_DateFrom and D_Date<=@d_DateTo) and N_EmpID=@nEmpID union  Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2,x_DutyPlace1,x_DutyPlace2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and   isnull(D_Date,'1900-01-01')='1900-01-01' and N_EmpID=@nEmpID and D_Date>=@d_DateFrom and D_Date<=@d_DateTo ";
@@ -433,6 +434,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p2", d_Date);
                     string sqlCommandText = "";
                     string xUserID="";
+                    object userCat="";
 
                     bool B_ShowManagerWise = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("1260", "ShowManagerWiseEmployee", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
                     if (B_ShowManagerWise == false)
@@ -451,12 +453,12 @@ namespace SmartxAPI.Controllers
                          foreach (DataRow row in dt1.Rows){
                             if(row["X_UserCategory"].ToString()=="Admin")
                             {
-                                userCategory="2";
+                                userCat="2";
 
                             }
                          }
 
-                        if (myFunctions.getIntVAL(userCategory.ToString()) == 2)
+                        if (myFunctions.getIntVAL(userCat.ToString()) == 2)
                         {
                             if (bAllBranchData == true)
                                 sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  (D_Date=@p2) union  Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and   isnull(D_Date,'1900-01-01')='1900-01-01' and N_EmpID not in (select N_EmpID from vw_Pay_Empshiftdetails where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and D_Date=@p2   )";
