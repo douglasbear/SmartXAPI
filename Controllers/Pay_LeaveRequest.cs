@@ -80,9 +80,9 @@ namespace SmartxAPI.Controllers
             // if (empID == 0 || empID == null)
             // {
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays,N_VacationGroupID,isnull(B_IsSaveDraft,0) AS B_IsSaveDraft,X_BranchName,X_VacationRemarks  From vw_PayVacationList where N_CompanyID=@nCompanyID and  N_EmpID=@nEmpID and B_IsAdjustEntry<>1  " + Searchkey + "  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,B_IsSaveDraft,N_VacationGroupID,X_BranchName,X_VacationRemarks" + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays,N_VacationGroupID,isnull(B_IsSaveDraft,0) AS B_IsSaveDraft,X_BranchName,X_VacationRemarks  From vw_PayVacationList where N_CompanyID=@nCompanyID and  N_EmpID=@nEmpID and B_IsAdjustEntry<>1 and B_IsSaveDraft=0 " + Searchkey + "  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,B_IsSaveDraft,N_VacationGroupID,X_BranchName,X_VacationRemarks" + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays,N_VacationGroupID,isnull(B_IsSaveDraft,0) AS B_IsSaveDraft,X_BranchName,X_VacationRemarks From vw_PayVacationList where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID  and B_IsAdjustEntry<>1  " + Searchkey + " and N_VacationGroupID not in (select top(" + Count + ") N_VacationGroupID from vw_PayVacationList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and B_IsAdjustEntry<>1   group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,B_IsSaveDraft,N_VacationGroupID,X_BranchName,X_VacationRemarks" + xSortBy + "  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus ,B_IsSaveDraft,N_VacationGroupID,X_BranchName,X_VacationRemarks ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays,N_VacationGroupID,isnull(B_IsSaveDraft,0) AS B_IsSaveDraft,X_BranchName,X_VacationRemarks From vw_PayVacationList where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID  and B_IsAdjustEntry<>1  and B_IsSaveDraft=0 " + Searchkey + " and N_VacationGroupID not in (select top(" + Count + ") N_VacationGroupID from vw_PayVacationList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and B_IsAdjustEntry<>1 and B_IsSaveDraft=0)  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,B_IsSaveDraft,N_VacationGroupID,X_BranchName,X_VacationRemarks" + xSortBy;
             // }
             SortedList OutPut = new SortedList();
 
@@ -104,7 +104,7 @@ namespace SmartxAPI.Controllers
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
                         dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                        sqlCommandCount = "select count(*) as N_Count From vw_PayVacationList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  and B_IsAdjustEntry<>1 " + Searchkey + " ";
+                        sqlCommandCount = "select count(*) as N_Count From vw_PayVacationList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  and B_IsAdjustEntry<>1 and B_IsSaveDraft=0 " + Searchkey + " ";
                         object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
                         dt = api.Format(dt);
                         OutPut.Add("Details", api.Format(dt));
