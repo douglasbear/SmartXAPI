@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections;
 using System.Data;
@@ -27,9 +28,12 @@ namespace SmartxAPI.GeneralFunctions
         private readonly string TempFilesPath;
         private readonly IApiFunctions api;
         private readonly string DocumentsFolder;
+        private readonly IApiFunctions _api;
+
         public MyAttachments(IApiFunctions apifun, IMyFunctions myFun, IConfiguration conf, IMyReminders rem)
         {
             api = apifun;
+            _api = api;
             myFunctions = myFun;
             TempFilesPath = conf.GetConnectionString("TempFilesPath");
             DocumentsFolder = conf.GetConnectionString("DocumentsFolder");
@@ -234,6 +238,19 @@ namespace SmartxAPI.GeneralFunctions
                         if (dsAttachment.Columns.Contains("x_Category"))
                             dsAttachment.Columns.Remove("x_Category");
                         dsAttachment.AcceptChanges();
+                        object result = dLayer.ExecuteScalar("SELECT SUM(isnull(n_filesize,0)) AS total_filesize FROM Dms_ScreenAttachments WHERE N_CompanyID = "+nCompanyID+"",  connection, transaction);
+                        double totalSize = Convert.ToDouble(result);
+                        for (int i = 0; i <= dsAttachment.Rows.Count - 1; i++)
+                    {
+                        totalSize=totalSize+myFunctions.getVAL(dsAttachment.Rows[i]["n_FileSize"].ToString());
+                    }
+
+                        if (totalSize > 1024){
+                        {
+                            throw new Exception(("The allowed 1 GB quota has been exceeded. Please purchase additional storage to continue enjoying our services. For assistance, please contact our support team."));
+                            // return Ok(_api.Error(User, "The allowed 1 GB quota has been exceeded. Please purchase additional storage to continue enjoying our services. For assistance, please contact our support team."));
+                        }
+                        }
                         dLayer.SaveData("Dms_ScreenAttachments", "N_AttachmentID", dsAttachment, connection, transaction);
                         if (myFunctions.getIntVAL(Result.ToString()) > 0)
                         {
