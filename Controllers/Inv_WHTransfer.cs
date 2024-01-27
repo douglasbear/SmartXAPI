@@ -428,7 +428,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         }
 
-                        bAutoReceive = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_AutoReceive From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_LocationID = " + nLocationIDtoInGrid, StockParam, connection, transaction));
+                        bAutoReceive = Convert.ToBoolean(dLayer.ExecuteScalar("Select isnull(B_AutoReceive,0) From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_LocationID = " + nLocationIDtoInGrid, StockParam, connection, transaction));
                         if (bAutoReceive)
                         {
 
@@ -463,7 +463,7 @@ namespace SmartxAPI.Controllers
                         }
                           if(nLocationIDto>0)
                         { 
-                            bool bAutoReceiveMaster = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_AutoReceive From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_LocationID = " + nLocationIDto, StockParam, connection, transaction));
+                            bool bAutoReceiveMaster = Convert.ToBoolean(dLayer.ExecuteScalar("Select isnull(B_AutoReceive,0)  From Inv_Location Where N_CompanyID=" + nCompanyID + " and N_LocationID = " + nLocationIDto, StockParam, connection, transaction));
                             if (bAutoReceiveMaster)
                             {
                                 if(myFunctions.getIntVAL(MasterTable.Rows[0]["n_PRSID"].ToString())>0)
