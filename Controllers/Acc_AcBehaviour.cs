@@ -1,3 +1,4 @@
+//this is demo
 using AutoMapper;
 using SmartxAPI.Data;
 using Microsoft.AspNetCore.Mvc;
