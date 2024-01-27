@@ -26,6 +26,7 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly int FormID = 1863;
         private readonly IApiFunctions api;
+        private readonly IMyReminders myReminder;
         private ZatcaIntegrationSDK.APIHelper.Mode mode { get; set; }
         public CSID_generator(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
@@ -50,7 +51,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SortedList QueryParamsList = new SortedList();
                     string Mastersql = "";
-                    Mastersql = "select * from Acc_Company where N_CompanyId=" + nCompanyId + " ";
+                    Mastersql = "select n_ZatcaOTP,x_ZatcaCSR,x_ZatcaInvoicetype,x_ZatcaSerial,x_ZatcaSecret,x_ZatcaPublickey,x_ZatcaMode,x_ZatcaPrivatekey,x_ZatcaName from Acc_Company where N_CompanyId=" + nCompanyId + " ";
                     dt = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, connection);
                     MasterTable = _api.Format(MasterTable, "Master");
                     if(dt.Rows.Count==0)

@@ -1370,7 +1370,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User, ex));
+                return Ok(_api.Error(User, ex.Message));
             }
 
         }
